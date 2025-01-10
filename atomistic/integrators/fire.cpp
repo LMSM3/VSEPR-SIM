@@ -84,6 +84,13 @@ FIREStats FIRE::minimize(State& s, const FIREParams& fp) const {
             s.X[i] = s.X[i] + s.V[i] * dt;
         }
 
+        // Wrap positions into primary cell if PBC enabled
+        if (s.box.enabled) {
+            for (uint32_t i = 0; i < s.N; i++) {
+                s.X[i] = s.box.wrap(s.X[i]);
+            }
+        }
+
         Uprev = U;
     }
 
@@ -93,3 +100,4 @@ FIREStats FIRE::minimize(State& s, const FIREParams& fp) const {
 }
 
 } // namespace atomistic
+// Although the original FIRE method exists, this is a minimal optimized version.

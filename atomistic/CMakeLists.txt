@@ -104,6 +104,8 @@ message(STATUS "║  ✓ Reaction discovery (random exploration, pattern mining)
 message(STATUS "║  ✓ Causal modeling (mechanistic reaction networks)                             ║")
 message(STATUS "║  ✓ XYZ I/O (parsing, compilation, validation)                                  ║")
 message(STATUS "║  ✓ Markdown reporting (automated result generation)                            ║")
+message(STATUS "║  ✓ Crystal benchmark library (31 presets: fluorite, spinel, perovskite,        ║")
+message(STATUS "║    garnet, apatite, monazite, pyrochlore, actinide oxide polymorphs)           ║")
 message(STATUS "╠════════════════════════════════════════════════════════════════════════════════╣")
 message(STATUS "║  PHILOSOPHY: No Reliance on External Data Sources O                                            ║")
 message(STATUS "╠════════════════════════════════════════════════════════════════════════════════╣")
@@ -145,10 +147,29 @@ add_library(atomistic STATIC
     core/maxwell_boltzmann.cpp
     analysis/pmf.hpp
     analysis/pmf.cpp
+    crystal/lattice.hpp
+    crystal/lattice.cpp
+    crystal/unit_cell.hpp
+    crystal/unit_cell.cpp
+    crystal/supercell.hpp
+    crystal/supercell.cpp
+    crystal/crystal_metrics.hpp
+    crystal/crystal_metrics.cpp
+    crystal/reference_data.hpp
+    classify/fingerprints.hpp
+    classify/fingerprints.cpp
+    classify/cluster.hpp
+    classify/cluster.cpp
     models/model.hpp
     models/lj_coulomb.cpp
     models/bonded.hpp
     models/bonded.cpp
+    models/atomic_descriptors.hpp
+    models/alpha_model.hpp
+    models/nuclear_stability.hpp
+    models/alpha_stability.hpp
+    models/polarization_scf.hpp
+    models/polarization_scf.cpp
     integrators/fire.hpp
     integrators/fire.cpp
     integrators/velocity_verlet.hpp
@@ -171,10 +192,16 @@ add_library(atomistic STATIC
     reaction/discovery_viz.cpp
     report/report_md.hpp
     report/report_md.cpp
+    validation/experiment_match.hpp
+    validation/experiment_match.cpp
+    validation/nanoparticle_ref.hpp
 )
 
 message(STATUS "")
-message(STATUS "  Modules:         ${ATOMISTIC_MODULE_COUNT}/8   ✓ ")
+message(STATUS "  Modules:         ${ATOMISTIC_MODULE_COUNT}/10  ✓ ")
+message(STATUS "    + crystal_metrics (6-category verification scorecard)")
+message(STATUS "    + classify (polymorph / isomorph / defect detection)")
+message(STATUS "    + validation (experimental data matching, 4-6nm nanoparticle regime)")
 
 target_include_directories(atomistic PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..

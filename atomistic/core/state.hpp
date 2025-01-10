@@ -75,7 +75,8 @@ struct EnergyTerms {
     double UvdW{};
     double UCoul{};
     double Uext{};
-    double total() const { return Ubond + Uangle + Utors + UvdW + UCoul + Uext; }
+    double Upol{};   // SCF polarization energy (Phase 1)
+    double total() const { return Ubond + Uangle + Utors + UvdW + UCoul + Uext + Upol; }
 };
 
 // Canonical state S = (N, X, V, T, Q, M/type, F, E, L, box)
@@ -97,6 +98,12 @@ struct State {
 
     // Periodic boundary conditions (added for crystal support)
     BoxPBC box;                  // PBC box (disabled by default)
+
+    // SCF polarization (Phase 1: see atomistic/models/polarization_scf.hpp)
+    // Populated by SCFPolarizationSolver::solve(); zero-sized = polarization off.
+    std::vector<Vec3>   induced_dipoles;   // μ_i (e·Å, i.e. AMBER units)
+    std::vector<double> polarizabilities;  // α_i (Å³, scalar isotropic)
+    std::vector<Vec3>   permanent_dipoles; // μ_i^0 (optional; zero if absent)
 };
 
 inline bool sane(const State& s) {

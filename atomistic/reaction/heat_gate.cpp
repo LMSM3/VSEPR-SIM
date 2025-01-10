@@ -25,6 +25,11 @@ void HeatGateController::set_heat(uint16_t h) {
     recompute_weights();
 }
 
+void HeatGateController::set_heat_from_temperature(double T_kelvin, double slope) {
+    uint16_t h = temperature_to_heat(T_kelvin, slope);
+    set_heat(h);
+}
+
 double HeatGateController::mode_index() const {
     // Default peptide-family thresholds
     constexpr double X0 = 250.0 / 999.0;
