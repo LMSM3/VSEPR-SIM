@@ -79,6 +79,55 @@ x \;=\; \frac{h}{999} \;\in\; [0,\,1]
 $x=0$ corresponds to ``cold'' (general organic mode), $x=1$ to ``hot''
 (full biochemical scaffolding mode).
 
+\subsection{Temperature-to-Heat Conversion}
+
+While the heat parameter $h$ is a \textbf{configuration knob} (not a
+physical temperature), a deterministic mapping from MD thermostat temperature
+$T$ (Kelvin) to $h$ is necessary for reproducible simulations.
+
+\paragraph{Default linear mapping with saturation:}
+
+\begin{equation}
+\label{eq:temp_to_heat}
+h(T) \;=\; \mathrm{clamp}\!\bigl(\lfloor T \cdot \lambda \rfloor,\; 0,\; 999\bigr)
+\end{equation}
+
+where $\lambda$ is a slope parameter (default: $\lambda = 1.5$).
+
+\paragraph{Physical interpretation with $\lambda = 1.5$:}
+
+\begin{center}
+\begin{tabular}{rcl}
+\toprule
+Temperature Range & $\to$ & Heat Range \& Mode \\
+\midrule
+$T < 167$ K & $\to$ & $h < 250$ (organic mode) \\
+$167 \le T < 433$ K & $\to$ & $250 \le h < 650$ (transitional) \\
+$433 \le T < 666$ K & $\to$ & $650 \le h < 999$ (full biochemical) \\
+$T \ge 666$ K & $\to$ & $h = 999$ (saturated) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Inverse mapping (for reporting):}
+
+\begin{equation}
+\label{eq:heat_to_temp}
+T(h) \;\approx\; \frac{h}{\lambda}
+\end{equation}
+
+\paragraph{Rationale:}
+\begin{itemize}
+\item \textbf{Deterministic:} Same $T \to$ same $h$ $\to$ same active templates.
+\item \textbf{Physically motivated:} Higher thermal energy $\to$ higher
+      activation barriers accessible $\to$ more biochemical reactions enabled.
+\item \textbf{Tunable:} The slope $\lambda$ can be adjusted to match
+      experimental temperature regimes (e.g., cryogenic, ambient,
+      hydrothermal).
+\item \textbf{Not a force field:} This mapping does \textit{not} affect
+      MD integration, only template selection.
+\end{itemize}
+
 \subsection{Data Representation}
 
 \begin{lstlisting}
@@ -654,13 +703,25 @@ be used for filtering.
 
 \paragraph{Implementation status:}
 \begin{itemize}
-\item \textbf{Heat normalization and gating:} Interface designed, ready for
-      integration.
-\item \textbf{Bond scoring with heat bias:} Equations defined; requires
-      coupling to the reaction template structure in \S8.
-\item \textbf{Amino acid reference table:} Complete (20 entries).
+\item \textbf{Heat normalization and gating:} ✅ Fully implemented in
+      \texttt{atomistic/reaction/heat\_gate.{hpp,cpp}}.
+\item \textbf{Temperature-to-heat conversion:} ✅ Implemented with
+      \texttt{temperature\_to\_heat()} and \texttt{heat\_to\_temperature()}.
+      Default linear mapping with slope=1.5 gives:
+      \begin{itemize}
+      \item $T < 167$~K $\to$ $h < 250$ (organic mode)
+      \item $167 \le T < 433$~K $\to$ $250 \le h < 650$ (transitional)
+      \item $T \ge 433$~K $\to$ $h \ge 650$ (full biochemical)
+      \item $T \ge 666$~K $\to$ $h = 999$ (saturated)
+      \end{itemize}
+\item \textbf{Bond scoring with heat bias:} ✅ Equations defined and implemented
+      in \texttt{HeatGateController::score\_candidate()}.
+\item \textbf{Amino acid reference table:} ✅ Complete (20 entries) in
+      \texttt{heat\_gate.cpp}.
 \item \textbf{500-simulation campaign:} Protocol defined; execution pending
       completion of the reaction template library.
+\item \textbf{Validation:} ✅ Test suite includes 12 tests covering all
+      core functionality in \texttt{tests/test\_heat\_gate.cpp}.
 \end{itemize}
 
 \section{Conclusion: Deterministic Control of Chemical Complexity}

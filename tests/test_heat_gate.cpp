@@ -99,6 +99,49 @@ void test_enable_weights() {
         CHECK_CLOSE(ctrl_cold.enable_weight(id), 0.0, 1e-9,
                     std::string("cold: wk(") + bio_template_name(id) + ") == 0");
     }
+}
+
+// ============================================================================
+// Test 4: Temperature → Heat Conversion (CRITICAL - Item #7)
+// ============================================================================
+void test_temperature_to_heat_conversion() {
+    // Default slope = 1.5
+
+    // Cold regime: T < 167 K → h < 250 (organic mode)
+    CHECK(temperature_to_heat(100.0) < 250, "T=100K → h < 250");
+    CHECK(temperature_to_heat(166.0) < 250, "T=166K → h < 250");
+
+    // Transitional regime: 167 K < T < 433 K → 250 ≤ h < 650
+    uint16_t h_mid = temperature_to_heat(300.0);  // Room temperature
+    CHECK(h_mid >= 250 && h_mid < 650, "T=300K → 250 ≤ h < 650 (transitional)");
+
+    // Hot regime: T > 433 K → h ≥ 650 (full bio)
+    CHECK(temperature_to_heat(500.0) >= 650, "T=500K → h ≥ 650");
+    CHECK(temperature_to_heat(700.0) == 999, "T=700K → h = 999 (saturated)");
+
+    // Monotonicity: higher T → higher h
+    for (double T = 0; T < 800; T += 50) {
+        uint16_t h1 = temperature_to_heat(T);
+        uint16_t h2 = temperature_to_heat(T + 50);
+        CHECK(h2 >= h1, "temperature_to_heat is non-decreasing");
+    }
+
+    // Inverse mapping
+    CHECK_CLOSE(heat_to_temperature(0), 0.0, 0.1, "h=0 → T~0K");
+    CHECK_CLOSE(heat_to_temperature(375), 250.0, 1.0, "h=375 → T~250K");
+    CHECK_CLOSE(heat_to_temperature(999), 666.0, 1.0, "h=999 → T~666K");
+
+    // Controller integration
+    HeatGateController ctrl;
+    ctrl.set_heat_from_temperature(300.0);  // Room temperature
+
+    // At 300K, we expect h ~ 450 → transitional mode
+    uint16_t h_rt = ctrl.config().heat_3;
+    CHECK(h_rt >= 250 && h_rt < 650, "Controller: T=300K → transitional mode");
+
+    // Mode index should be between 0 and 1
+    double mode = ctrl.mode_index();
+    CHECK(mode > 0.0 && mode < 1.0, "Controller: mode_index ∈ (0,1) at T=300K");
 
     // Heat = 999: all bio templates at full alpha
     HeatGateController ctrl_hot(999);
@@ -402,6 +445,7 @@ int main() {
     test_heat_normalisation();
     test_gate_function();
     test_enable_weights();
+    test_temperature_to_heat_conversion();  // NEW: Critical Item #7
     test_scoring_deterministic();
     test_sigmoid_accept();
     test_active_templates();
