@@ -1,0 +1,32 @@
+{
+  "description": "Alpha Method D (v2.8.X) fitted parameters",
+  "model": "alpha = r_eff^3 * g_block * g_period * g_f(n_f) * g_bind",
+  "source": "tools/fit_alpha_model.cpp (iterative reweighting + Huber)",
+  "k_period": [
+    64.693016,  // period 1
+    17.702243,  // period 2
+    13.189942,  // period 3
+    11.384511,  // period 4
+    10.593905,  // period 5
+    9.222588,  // period 6
+    8.852070  // period 7
+  ],
+  "c_block": [
+    1.686493,  // s-block
+    1.057991,  // p-block
+    1.837791,  // d-block
+    2.358852  // f-block
+  ],
+  "c_rel":     -0.000004065,
+  "beta_f":    0.218376640,
+  "a_f1":      -0.705554,
+  "a_f2":      0.097563,
+  "a_f3":      -0.367200,
+  "sigma_f1":  11.326547,
+  "sigma_f2":  2.652071,
+  "b_bind":    0.430499,
+  "q_drude":   0.976305,
+  "blob_f_lin": 1.361618,
+  "blob_f_half": 0.000000,
+  "blob_f_full": 0.000000
+}

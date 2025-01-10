@@ -132,6 +132,41 @@ inline std::vector<BioTemplateGateParams> default_bio_gate_params() {
 }
 
 // ============================================================================
+// Temperature → Heat Parameter Conversion
+// ============================================================================
+
+/**
+ * Map thermodynamic temperature T (Kelvin) to heat parameter h ∈ [0, 999].
+ * 
+ * Physical interpretation:
+ *   - Low T (< 250 K): General organic chemistry only (h < 250)
+ *   - Mid T (250-650 K): Transitional regime (bio templates ramp up)
+ *   - High T (> 650 K): Full biochemical scaffolding (h ≥ 650)
+ * 
+ * This is a **deterministic configuration mapping**, not a physical law.
+ * The heat parameter controls template selection, not MD thermostat temperature.
+ * 
+ * Default mapping: linear with saturation
+ *   h = clamp(T * slope, 0, 999)
+ *   slope ≈ 1.5 gives h=250 at T=167K, h=650 at T=433K, h=999 at T=666K
+ */
+inline uint16_t temperature_to_heat(double T_kelvin, double slope = 1.5) {
+    if (T_kelvin < 0.0) return 0;
+    double h_raw = T_kelvin * slope;
+    if (h_raw > 999.0) return 999;
+    return static_cast<uint16_t>(h_raw);
+}
+
+/**
+ * Inverse mapping: heat parameter → approximate temperature.
+ * Used for reporting/logging, not for physical calculations.
+ */
+inline double heat_to_temperature(uint16_t h, double slope = 1.5) {
+    if (slope <= 0.0) return 0.0;
+    return static_cast<double>(h) / slope;
+}
+
+// ============================================================================
 // Heat-Gated Template Controller
 // ============================================================================
 
@@ -141,6 +176,7 @@ public:
 
     // Reconfigure heat without rebuilding
     void set_heat(uint16_t h);
+    void set_heat_from_temperature(double T_kelvin, double slope = 1.5);
     const HeatConfig& config() const { return config_; }
 
     // Mode index m(h) = g(h/999) using default peptide-family thresholds
