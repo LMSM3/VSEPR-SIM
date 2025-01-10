@@ -47,18 +47,19 @@ SPEC:
 
 ACTIONS:
     emit     Generate structure without optimization
-             --cloud <N>       Generate N atoms randomly
-             --density <ρ>     Set packing density
-             --preset <ID>     Use known template
-    
+             --cloud <N>         Generate N atoms randomly
+             --density <ρ>       Set packing density
+             --preset <ID>       Use known crystal template
+             --supercell n,n,n   Replicate unit cell (for crystals)
+
     relax    Energy minimization (FIRE algorithm)
-             --steps <INT>     Max steps (default: 1000)
-             --dt <FLOAT>      Timestep (default: 0.001)
-             --in <PATH>       Input structure
-             --config <PATH>   Full config file
-    
+             --steps <INT>       Max steps (default: 1000)
+             --dt <FLOAT>        Timestep (default: 0.001)
+             --in <PATH>         Input structure
+             --config <PATH>     Full config file
+
     test     Validate against known expectations
-             --preset <ID>     Known structure to test
+             --preset <ID>       Known structure to test
 
 DOMAIN PARAMETERS:
     --cell a,b,c    Unit cell dimensions (Å)
@@ -84,17 +85,23 @@ DOMAIN RULES (Enforced):
     @molecule → PBC OFF by default, --pbc enables it
 
 EXAMPLES:
-    # Generate NaCl crystal
-    vsepr NaCl@crystal emit --cell 5.64,5.64,5.64 --preset rocksalt
-    
+    # Generate NaCl crystal (atomistic preset with fixed params)
+    vsepr NaCl@crystal emit --preset nacl_atomistic --out nacl_unit.xyz
+
+    # Build 3×3×3 supercell of aluminum FCC
+    vsepr Al@crystal emit --preset al --supercell 3,3,3 --out al_supercell.xyz
+
     # Relax water molecule
     vsepr H2O@molecule relax --steps 2000 --out water.xyz
-    
+
     # Periodic gas box
     vsepr H2O@gas emit --cloud 200 --box 50,50,50 --pbc --seed 42
-    
+
+    # Custom NaCl with user-defined cell (motif-based preset)
+    vsepr NaCl@crystal emit --preset rocksalt --cell 5.7,5.7,5.7 --out nacl_custom.xyz
+
     # Test crystal structure
-    vsepr Al@crystal test --cell 4.05,4.05,4.05 --preset fcc
+    vsepr Al@crystal test --preset fcc
 
 SEE ALSO:
     Full documentation: docs/VSEPR_CLI_GUIDE.md
