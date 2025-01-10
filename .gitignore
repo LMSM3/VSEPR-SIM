@@ -152,3 +152,17 @@ _graveyard_DO_NOT_USE/
 # Ignore auto-generated preview PNGs
 resources/*_preview.png
 resources/*_256.png
+
+# Build directories (WSL / local variants)
+build-wsl/
+build-v26/
+build-v27/
+
+# LaTeX auxiliary files
+*.aux
+*.toc
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk

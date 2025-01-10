@@ -324,6 +324,14 @@ if(BUILD_APPS)
         src/cli/rdf_accumulator.cpp
         src/cli/viewer_launcher.cpp
     )
+
+    # Add crystal visualizer bridge if visualization enabled
+    if(BUILD_VIS)
+        target_sources(vsepr_cli PRIVATE src/cli/crystal_visualizer.cpp)
+        target_link_libraries(vsepr_cli PUBLIC vsepr_vis)
+        target_compile_definitions(vsepr_cli PRIVATE ENABLE_CRYSTAL_VIZ)
+    endif()
+
     target_include_directories(vsepr_cli PUBLIC include/ ${PROJECT_SOURCE_DIR})
     target_link_libraries(vsepr_cli PUBLIC vsepr_core atomistic vsepr_io)
 
@@ -348,6 +356,51 @@ if(BUILD_APPS)
     add_executable(problem2_three_body_cluster tests/problem2_three_body_cluster.cpp)
     target_link_libraries(problem2_three_body_cluster atomistic)
     target_include_directories(problem2_three_body_cluster PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # SCF Polarization Phase 1 — Ar dimer + water trimer (50-seed determinism)
+    add_executable(test_scf_polarization tests/test_scf_polarization.cpp)
+    target_link_libraries(test_scf_polarization atomistic)
+    target_include_directories(test_scf_polarization PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Polarizability model fitter (offline tool, reads data/polarizability_ref.csv)
+    add_executable(fit_alpha_model tools/fit_alpha_model.cpp)
+    target_link_libraries(fit_alpha_model atomistic)
+    target_include_directories(fit_alpha_model PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Auto-fit: self-improving infinite training loop
+    add_executable(auto_fit_alpha tools/auto_fit_alpha.cpp)
+    target_link_libraries(auto_fit_alpha atomistic)
+    target_include_directories(auto_fit_alpha PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Alpha model descriptor & prediction tests (T1/T2/T3/T4)
+    add_executable(test_alpha_model tests/test_alpha_model.cpp)
+    target_link_libraries(test_alpha_model atomistic)
+    target_include_directories(test_alpha_model PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Polarization Phases 2-4 validation (Thole damping, energy/forces, campaign)
+    add_executable(test_polarization_phases tests/test_polarization_phases.cpp)
+    target_link_libraries(test_polarization_phases atomistic)
+    target_include_directories(test_polarization_phases PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Phase 6: Nuclear Chemical Module (Z=79-120, ext module, actinide regression)
+    add_executable(test_nuclear_chemical tests/test_nuclear_chemical.cpp)
+    target_link_libraries(test_nuclear_chemical atomistic)
+    target_include_directories(test_nuclear_chemical PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # v2.6.1: AlphaCalibrator — 1% auto-override gate (runtime self-calibration)
+    add_executable(test_alpha_calibrator tests/test_alpha_calibrator.cpp)
+    target_link_libraries(test_alpha_calibrator atomistic)
+    target_include_directories(test_alpha_calibrator PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # v2.6.3: Nuclear Stability — ab-initio stability predictor from Z
+    add_executable(test_nuclear_stability tests/test_nuclear_stability.cpp)
+    target_link_libraries(test_nuclear_stability atomistic)
+    target_include_directories(test_nuclear_stability PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Experimental data matching — near-atomistic nanoparticle regime (4-6 nm)
+    add_executable(test_experiment_match tests/test_experiment_match.cpp)
+    target_link_libraries(test_experiment_match atomistic)
+    target_include_directories(test_experiment_match PRIVATE ${PROJECT_SOURCE_DIR})
 
     # ========================================================================
 
@@ -733,6 +786,18 @@ if(BUILD_TESTS)
     target_link_libraries(test_heat_gate atomistic vsepr_core)
     target_include_directories(test_heat_gate PRIVATE ${PROJECT_SOURCE_DIR})
     add_test(NAME HeatGateTest COMMAND test_heat_gate)
+
+    # Crystal Pipeline Tests (SS10 - Supercell, Lattice, Coordination)
+    add_executable(test_crystal_pipeline tests/test_crystal_pipeline.cpp)
+    target_link_libraries(test_crystal_pipeline atomistic vsepr_core)
+    target_include_directories(test_crystal_pipeline PRIVATE ${PROJECT_SOURCE_DIR})
+    add_test(NAME CrystalPipelineTest COMMAND test_crystal_pipeline)
+
+    # Crystal Metrics & Verification Scorecard Tests (SS10b)
+    add_executable(test_crystal_metrics tests/test_crystal_metrics.cpp)
+    target_link_libraries(test_crystal_metrics atomistic vsepr_core)
+    target_include_directories(test_crystal_metrics PRIVATE ${PROJECT_SOURCE_DIR})
+    add_test(NAME CrystalMetricsTest COMMAND test_crystal_metrics)
 endif()
 
 # ============================================================================
