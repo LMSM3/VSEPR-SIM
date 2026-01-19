@@ -1,0 +1,128 @@
+╔════════════════════════════════════════════════════════════════╗
+║                  VSEPR-Sim Quick Reference                     ║
+║                    Universal Scripts                           ║
+╚════════════════════════════════════════════════════════════════╝
+
+┌─ BUILD ─────────────────────────────────────────────────────────┐
+│                                                                 │
+│  Linux/WSL:          ./build_universal.sh                       │
+│  Windows:            build_universal.bat                        │
+│                                                                 │
+│  Options:                                                       │
+│    --clean, -c       Clean before building                     │
+│    --debug, -d       Debug mode (default: Release)             │
+│    --jobs N, -j N    Parallel jobs (default: 8)                │
+│    --target T, -t T  Build specific target                     │
+│    --verbose, -v     Show full output                          │
+│                                                                 │
+│  Examples:                                                      │
+│    ./build_universal.sh                                         │
+│    ./build_universal.sh --clean --jobs 16                       │
+│    build_universal.bat --target vsepr                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ TEST THERMAL ──────────────────────────────────────────────────┐
+│                                                                 │
+│  Linux/WSL:          ./test_thermal.sh                          │
+│  Windows:            test_thermal.bat                           │
+│                                                                 │
+│  Automatically tests:                                           │
+│    • H2O (water) - Molecular                                    │
+│    • NH3 (ammonia) - Molecular                                  │
+│    • CH4 (methane) - Molecular                                  │
+│    • Br2 (bromine) - Molecular                                  │
+│    • NaCl (salt) - Ionic                                        │
+│    • Cu8 (copper) - Metallic                                    │
+│    • C6H6 (benzene) - Covalent                                  │
+│                                                                 │
+│  Pass/Fail summary at end                                       │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ DEBUG ─────────────────────────────────────────────────────────┐
+│                                                                 │
+│  Linux/WSL:          ./debug.sh [mode]                          │
+│  Windows:            debug.bat [mode]                           │
+│                                                                 │
+│  Modes:                                                         │
+│    info              System info (default)                      │
+│    build             Debug build with verbose                   │
+│    test              Quick functionality tests                  │
+│    clean             Remove build artifacts                     │
+│    rebuild           Clean + build                              │
+│    thermal           Run thermal tests                          │
+│    colocation        Test atom validation (bash only)           │
+│    help              Show help                                  │
+│                                                                 │
+│  Windows WSL mode:                                              │
+│    debug.bat wsl [mode]   Force bash version                    │
+│                                                                 │
+│  Examples:                                                      │
+│    ./debug.sh info                                              │
+│    ./debug.sh thermal                                           │
+│    debug.bat rebuild                                            │
+│    debug.bat wsl thermal                                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ USAGE VSEPR BINARY ────────────────────────────────────────────┐
+│                                                                 │
+│  Location:           ./build/bin/vsepr                          │
+│                                                                 │
+│  Commands:                                                      │
+│    build             Build molecules from formulas              │
+│    therm             Thermal properties analysis                │
+│    optimize          Optimize geometry                          │
+│    energy            Calculate energy                           │
+│    help              Show help                                  │
+│    version           Show version                               │
+│                                                                 │
+│  Examples:                                                      │
+│    ./build/bin/vsepr build H2O --output water.xyz               │
+│    ./build/bin/vsepr therm water.xyz                            │
+│    ./build/bin/vsepr therm water.xyz -T 373.15                  │
+│    ./build/bin/vsepr therm metal.xyz -T 1000 --generate-object  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ COMMON WORKFLOWS ──────────────────────────────────────────────┐
+│                                                                 │
+│  Fresh setup:                                                   │
+│    ./build_universal.sh --clean                                 │
+│    ./test_thermal.sh                                            │
+│                                                                 │
+│  After code changes:                                            │
+│    ./build_universal.sh --target vsepr                          │
+│    ./debug.sh test                                              │
+│                                                                 │
+│  Debug build issues:                                            │
+│    ./debug.sh info                                              │
+│    ./debug.sh rebuild                                           │
+│                                                                 │
+│  Full validation:                                               │
+│    ./build_universal.sh --clean                                 │
+│    ./test_thermal.sh                                            │
+│    ./debug.sh colocation                                        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─ CROSS-PLATFORM NOTES ──────────────────────────────────────────┐
+│                                                                 │
+│  Windows batch scripts (.bat):                                  │
+│    • Auto-detect WSL and use bash if available                  │
+│    • Fallback to native batch if WSL not found                  │
+│    • Consistent interface with bash versions                    │
+│                                                                 │
+│  Linux/WSL bash scripts (.sh):                                  │
+│    • Full featured with colored output                          │
+│    • Better error handling                                      │
+│    • More detailed diagnostic modes                             │
+│                                                                 │
+│  All scripts work identically across platforms!                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════╗
+║  See UNIVERSAL_SCRIPTS.md for complete documentation           ║
+╚════════════════════════════════════════════════════════════════╝
