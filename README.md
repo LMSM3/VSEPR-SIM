@@ -1,213 +1,230 @@
-# VSEPR-Sim: Physics-First Molecular Simulation Engine
+<!-- =========================================================
+     VSEPR-Sim README (GitHub-Ready, Professional Formatting)
+     ========================================================= -->
 
-## 🚀 Quick Start - Universal Scripts
+<div align="center">
 
-### One-Command Build & Test (Cross-Platform)
+# VSEPR-Sim  
+**Physics-First Molecular Simulation Engine**
 
-**Linux/WSL:**
+![C++](https://img.shields.io/badge/C%2B%2B-17-blue)
+![CMake](https://img.shields.io/badge/CMake-3.15%2B-informational)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20WSL-success)
+![Status](https://img.shields.io/badge/Status-0.1.0--dev-orange)
+
+A molecular simulation engine built on **explicit, interpretable mechanics**  
+(bond/angle/torsion/nonbonded + optimization). Machine learning is planned **only** for  
+force-field parameter refinement, not as a replacement for physics.
+
+> **Guiding principle:** Physics enforces reality. ML fills in what we don’t know yet.
+
+</div>
+
+---
+
+## Table of Contents
+- [Quick Start](#quick-start)
+- [Overview](#overview)
+- [Project Vision](#project-vision)
+- [Roadmap](#roadmap)
+- [Technical Architecture](#technical-architecture)
+- [Quantum Module (v1.0)](#quantum-module-v10)
+- [Build](#build)
+- [Current Status](#current-status)
+- [Dependencies](#dependencies)
+- [License](#license)
+- [Contact](#contact)
+
+---
+
+## Quick Start
+
+> [!TIP]
+> Use the **Universal Scripts** for the cleanest cross-platform experience.
+
+### Universal Scripts (Recommended)
+
+**Linux / WSL**
 ```bash
 ./build_universal.sh           # Build everything
 ./test_thermal.sh              # Test thermal properties system
 ./debug.sh info                # System diagnostics
-```
+Windows
 
-**Windows:**
-```batch
+bat
+COPY CODE
 build_universal.bat            # Build everything (auto-detects WSL)
 test_thermal.bat               # Test thermal system
 debug.bat info                 # System diagnostics
-```
+Documentation
 
-**📖 See [UNIVERSAL_SCRIPTS.md](UNIVERSAL_SCRIPTS.md) for complete documentation**  
-**📝 See [QUICK_REFERENCE_UNIVERSAL.txt](QUICK_REFERENCE_UNIVERSAL.txt) for command reference**
+📖 UNIVERSAL_SCRIPTS.md (complete guide)
 
----
+📝 QUICK_REFERENCE_UNIVERSAL.txt (command reference)
 
-## Quick Start (Original Scripts)
+Original Scripts
+WSL / Linux / macOS
 
-### 🎯 Grab-Their-Attention Quick Start
-
-**WSL/Linux/macOS (30 seconds):**
-```bash
+bash
+COPY CODE
 ./build.sh --clean && source activate.sh
-vsepr build random --watch        # ← Interactive 3D visualization!
-vsepr build discover --thermal    # ← 100 molecules + HGST + thermal analysis
-```
+vsepr build random --watch
+vsepr build discover --thermal
+Windows (PowerShell)
 
-**Windows (PowerShell):**
-```powershell
+powershell
+COPY CODE
 .\build.ps1 -Clean
 .\vsepr.bat build random --watch
-```
+Overview
+VSEPR-Sim models molecular structure using classical potential energy terms and numerical optimization.
+The goal is for geometry to emerge from physics rather than being hard-coded as VSEPR rules.
 
-### One-Command Build
+Project Vision
+Core Goals
+Model geometry from first-principles-inspired physical terms: bonding topology, repulsion energetics, electron-driven structure
 
-**Linux / macOS / WSL:**
-```bash
-./build.sh --install --clean
-source activate.sh               # Adds 'vsepr' command to PATH
-vsepr build H2O --optimize --viz
-```
+Allow shape to emerge naturally from forces rather than rules
 
-**Windows (PowerShell or Command Prompt):**
-```powershell
-# PowerShell
-.\build.ps1 -Install -Clean
+Provide an interactive 3D sandbox for exploring molecular behavior in real time
 
-# Or Command Prompt
-build.bat --clean --viz
-```
+Preserve interpretability and stability across all features
 
-**Run the application:**
-```bash
-# After activation (WSL/Linux):
-vsepr build H2O --optimize --viz
+Roadmap
+v0.1–v0.3: Foundation & Validation
+Classical energy terms (bond, angle, torsion, nonbonded)
 
-# Or use full path:
-./build/bin/vsepr build H2O --optimize --viz
+Analytic gradient computation
 
-# Windows:
-.\vsepr.bat build H2O --optimize --viz
-```
+Geometry optimization
 
-**See [BUILD_INSTRUCTIONS.md](BUILD_INSTRUCTIONS.md) for detailed build documentation.**
+Validation against canonical structures (H₂O bend, CH₄ tetrahedral, C₂H₆ torsion)
 
----
+v0.4+: ML Parameter Refinement
+Curated training data (organics, metals, salts, MOFs)
 
-## Overview
+Learn parameter trends while preserving physical stability
 
-A molecular simulation engine built on **explicit classical mechanics** rather than machine-learned geometry. The system models chemical structure through validated physics—bond stretching, angle bending, torsion, and nonbonded interactions—with machine learning introduced only to refine force-field parameters, never to replace fundamental physics.
+Maintain full interpretability
 
-### Guiding Principle
-**Physics enforces reality. ML fills in what we don't know yet.**
+Future: Interactive Simulation Environment
+Real-time molecular relaxation
 
----
+Visual inspection of forces, strain, and torsional barriers
 
-## Project Vision
+Dynamic property prediction + reporting
 
-### Core Goals
-- Model molecular geometry from **first principles**: electron distribution, bonding topology, repulsion energetics
-- Allow shape to **emerge naturally** from physics rather than hard-coded VSEPR rules
-- Provide an **interactive 3D sandbox** for exploring molecular behavior in real time
+Chemically literate exploration tools
 
-### Development Roadmap
-
-**v0.1–v0.3**: Foundation & Validation
-- Implement classical energy terms (bond, angle, torsion, nonbonded)
-- Analytic gradient computation
-- Geometry optimization
-- Validate against known structures (H₂O bend, CH₄ tetrahedral, C₂H₆ torsion)
-
-**v0.4+**: ML Parameter Refinement
-- Curated training data (organics, metals, salts, MOFs)
-- Learn parameter trends while preserving physical stability
-- Maintain full interpretability
-
-**Future**: 3D Interactive Environment
-- Real-time molecular relaxation
-- Visual inspection of forces, strain, torsional barriers
-- Dynamic property prediction
-- Chemically literate exploration tools
-
----
-
-## Technical Architecture
-
-### Core Data Types
-```cpp
+Technical Architecture
+Core Data Types
+cpp
+COPY CODE
 Atom      { id, Z, mass, flags }
 Bond      { i, j, order }
 Angle     { i, j, k }
 Torsion   { i, j, k, l }
 Improper  { i, j, k, l }
-Cell      { lattice_vectors, periodicity }  // For crystals, MOFs
-```
+Cell      { lattice_vectors, periodicity }  // Crystals, MOFs
+Energy Components
+Bond stretching: harmonic or Morse potential
 
-### Energy Components
-1. **Bond stretching**: Harmonic or Morse potential
-2. **Angle bending**: Harmonic angular deviation
-3. **Torsional rotation**: Fourier series barriers
-4. **Van der Waals**: Lennard-Jones 12-6 with element-specific parameters
-5. **Electrostatics**: Coulomb with screening/cutoffs
+Angle bending: harmonic angular deviation
 
-### Quantum Module (NEW - v1.0)
+Torsional rotation: Fourier series barriers
+
+Van der Waals: Lennard-Jones 12-6 with element-specific parameters
+
+Electrostatics: Coulomb with screening/cutoffs
+
+Optimization
+Gradient descent with line search
+
+Conjugate gradient / L-BFGS for efficiency
+
+Constrained optimization (frozen atoms, distance constraints)
+
+Quantum Module (v1.0)
 Electronic excitation and spectroscopy capabilities:
-- **UV-Vis Absorption**: π→π*, n→π* transitions
-- **Fluorescence**: Emission spectra with Stokes shift
-- **Simple Hückel Theory**: Conjugated π-systems
-- **HTML Export**: Interactive 3D + spectrum visualization
-- **Integration**: Seamless tie-in to OpenGL and HTML outputs
 
-**See:** [QunatumModel/README.md](QunatumModel/README.md) | [QUANTUM_INTEGRATION.md](docs/QUANTUM_INTEGRATION.md)
+UV-Vis absorption: π→π*, n→π* transitions
 
-```cpp
+Fluorescence: emission spectra with Stokes shift
+
+Simple Hückel theory: conjugated π-systems
+
+HTML export: interactive 3D + spectrum visualization
+
+Integration: ties into OpenGL and HTML outputs
+
+Docs
+
+QunatumModel/README.md
+
+docs/QUANTUM_INTEGRATION.md
+
+[!IMPORTANT]
+The folder name appears as QunatumModel/ in references.
+If this is a typo, fix it everywhere (folder + includes + docs) to avoid broken builds and links.
+
+cpp
+COPY CODE
 // Example: Benzene spectroscopy
 #include "QunatumModel/qm_output_bridge.hpp"
+
 auto qm_data = quantum::QuantumCLI::analyze_molecule(benzene);
 quantum::QuantumWebExport::export_with_spectrum(benzene, qm_data, "output.html");
-```
-
-### Optimization
-- Gradient descent with line search
-- Conjugate gradient / L-BFGS for efficiency
-- Constrained optimization (frozen atoms, distance constraints)
-
----
-
-## Building
-
-```bash
-mkdir build && cd build
+Build
+Standard CMake
+bash
+COPY CODE
+mkdir -p build && cd build
 cmake ..
-make
-```
+cmake --build . -j
+Current Status
+Version: 0.1.0-dev
+Stage: Initial structure definition
 
----
+Completed
+ Project structure
 
-## Current Status
+ Core type definitions
 
-**Version**: 0.1.0-dev  
-**Stage**: Initial structure definition
+ Molecule container class
 
-### Completed
-- [x] Project structure
-- [x] Core type definitions
-- [x] Molecule container class
-- [x] Build system (CMake)
+ Build system (CMake)
 
-### In Progress
-- [ ] Periodic table data
-- [ ] Energy term implementations
-- [ ] Gradient computation
-- [ ] Geometry optimizer
+In Progress
+ Periodic table data
 
-### Planned
-- [ ] Validation suite
-- [ ] Force field parameter library
-- [ ] 3D visualization
-- [ ] ML parameter training pipeline
+ Energy term implementations
 
----
+ Gradient computation
 
-## Dependencies
+ Geometry optimizer
 
-### Current
-- C++17 compiler
-- CMake 3.15+
+Planned
+ Validation suite
 
-### Planned
-- Eigen or similar (linear algebra)
-- Python 3.8+ (data processing, web scraping)
-- Visualization library (TBD: OpenGL, Three.js, etc.)
+ Force field parameter library
 
----
+ 3D visualization
 
-## License
+ ML parameter refinement pipeline
 
-TBD
+Dependencies
+Current
+C++17 compiler
 
----
+CMake 3.15+
 
-## Contact
+Planned
+Eigen or similar (linear algebra)
 
-Project started: January 2026
+Python 3.8+ (data processing / reporting)
+
+Visualization backend (OpenGL, Three.js, etc.)
+
+Contact
+
+Current Itteration started: Early January 2026
