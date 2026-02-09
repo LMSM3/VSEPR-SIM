@@ -1,0 +1,205 @@
+```
+VSEPR PROFESSIONAL MOLECULAR VISUALIZATION SYSTEM
+==================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        vsepr-gui.exe (Main Application)                 │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ Menu Bar: File | View | Tools | Help                            │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                                                          │
+│  ┌────────────────────────────────────────────┬──────────────────────┐ │
+│  │ Workspace (60-70% width)                   │ Instrument Stack     │ │
+│  │                                            │                      │ │
+│  │  ╔══════════╗  ╔══════════╗                │ ┌─ Command Panel ─┐ │ │
+│  │  ║ Structure║  ║ Property ║                │ │ [Build All]      │ │ │
+│  │  ║ View     ║  ║ Plots    ║                │ │ [Build Status]   │ │ │
+│  │  ║  (TL)    ║  ║  (TR)    ║                │ │ [Run CTest]      │ │ │
+│  │  ║          ║  ║          ║                │ │ ...              │ │ │
+│  │  ╚══════════╝  ╚══════════╝                │ └──────────────────┘ │ │
+│  │                                            │                      │ │
+│  │  ╔══════════╗  ╔══════════╗                │ ┌─ Parameters ────┐ │ │
+│  │  ║ Crystal  ║  ║ Animation║                │ │ Count: [250]     │ │ │
+│  │  ║ Grid     ║  ║ Player   ║                │ │ Runs:  [10]      │ │ │
+│  │  ║  (BL)    ║  ║  (BR)    ║                │ │ Seed:  [42]      │ │ │
+│  │  ║          ║  ║          ║                │ └──────────────────┘ │ │
+│  │  ╚══════════╝  ╚══════════╝                │                      │ │
+│  │                                            │ ┌─ Output Log ─────┐ │ │
+│  │  (Draggable, Snappable, Fullscreen)       │ │ ✓ Build complete │ │ │
+│  │                                            │ │ > Running...     │ │ │
+│  └────────────────────────────────────────────┴──────────────────────┘ │
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │ Run Bar: [Start] [Pause] [Stop] [Reset] Progress: ████░░░░░░    │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                                 │ subprocess (stdin/stdout)
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           tui.py (Command Backend)                       │
+├─────────────────────────────────────────────────────────────────────────┤
+│ 18 commands: Build, Validation, CLI Tools, Python Tools, Data Collection│
+│                                                                          │
+│  [1] Build all          [7] vsepr CLI        [13] Formation freq       │
+│  [2] Build status       [8] meso-sim         [14] Baseline gen         │
+│  [3] Run ctest          [9] meso-discover    [15] View results         │
+│  [4] Problem 1          [10] meso-build      [16] Compare baselines    │
+│  [5] Problem 2          [11] Scoring test                              │
+│  [6] QA tests           [12] Classification                            │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+                                 │
+                ┌────────────────┼────────────────┐
+                │                │                │
+                ▼                ▼                ▼
+┌───────────────────────┐  ┌──────────────┐  ┌──────────────────┐
+│ C++ Executables       │  │ Python Tools │  │ Build System     │
+├───────────────────────┤  ├──────────────┤  ├──────────────────┤
+│ vsepr (unified CLI)   │  │ scoring.py   │  │ cmake + make     │
+│ meso-sim              │  │ classif.py   │  │ 60/65 targets ✓  │
+│ meso-discover         │  │ formation.py │  │ 5 known failures │
+│ meso-build            │  │ baseline.py  │  │                  │
+│ meso-align            │  │ validator.py │  │                  │
+│ meso-relax            │  │              │  │                  │
+│ problem1/2            │  │              │  │                  │
+│ qa_golden_tests       │  │              │  │                  │
+└───────────────────────┘  └──────────────┘  └──────────────────┘
+
+
+DATA FLOW: Crystal Object System
+=================================
+
+foo.xyz (Raw Input)
+    │
+    │ [Load]
+    ▼
+┌────────────────────────────┐
+│ Crystal Object             │
+│ - atoms: Vec<Atom>         │
+│ - xyz_path: "foo.xyz"      │
+│ - format: xyzZ             │
+└────────────────────────────┘
+    │
+    │ [Annotate: Infer Bonds]
+    ▼
+foo.xyzA (Annotated)
+    │ # xyzA v1
+    │ # bonds: [{a: "a1", b: "a2", order: 1}, ...]
+    │ # atom_props: {a1: {q: -0.03}, ...}
+    │
+    │ [Construct: Supercell 3×3×3]
+    ▼
+foo.xyzC (Constructed)
+    │ # xyzC v1  source_raw="foo.xyz"
+    │ # provenance:
+    │ #   pipeline_id: "supercell-001"
+    │ #   hash: "a3f7c8..."
+    │ #   steps:
+    │ #     - {name: "supercell", params: {a: 3, b: 3, c: 3}}
+    │ # reserved_slots:
+    │ #   bulk: {density: null, elastic_modulus: null}
+    │ #   cg: {beads: null, pmf: null}
+    │
+    │ [Watch Mode: File Changed]
+    │
+    └──> Regenerate xyzA/xyzC → Update Visualization
+
+
+WINDOW MANAGER: 8 ViewModels
+==============================
+
+VM0 (Default Microscope):
+    workspace_ratio: 0.65
+    font_scale: 1.00
+    default_grid: 4 panes
+
+VM1 (Wide):
+    workspace_ratio: 0.70
+    font_scale: 1.05
+
+VM2 (Compact):
+    workspace_ratio: 0.60
+    ui_density: dense
+
+VM3 (Dense UI):
+    font_scale: 0.85
+    ui_density: 1.20
+
+VM4 (Spacious UI):
+    font_scale: 1.15
+    ui_density: 0.90
+
+VM5 (Focus):
+    workspace_ratio: 0.70
+    default_grid: 1 pane
+
+VM6 (Quad Split):
+    default_grid: 4 panes
+    corner snap: TL/TR/BL/BR
+
+VM7 (Ultra-wide):
+    workspace_ratio: 0.75
+    (for 21:9 monitors)
+
+Tuning: Each VM can be adjusted ±10% per iteration
+
+
+FILE FORMAT EXAMPLES
+====================
+
+foo.xyz (xyzZ):
+---------------
+2
+# xyzZ v1  units=angstrom  title="NaCl unit cell"
+Na  0.0  0.0  0.0
+Cl  2.8  0.0  0.0
+
+foo.xyzA (Annotated):
+---------------------
+2
+# xyzA v1  source="foo.xyz"
+# data:
+#   bonds: [{a: "a1", b: "a2", order: 1, type: "ionic"}]
+#   atom_props:
+#     a1: {q: +1.0, tag: "cation"}
+#     a2: {q: -1.0, tag: "anion"}
+Na  0.0  0.0  0.0
+Cl  2.8  0.0  0.0
+
+foo.xyzC (Supercell 3×3×3):
+---------------------------
+54
+# xyzC v1  source_raw="foo.xyz"
+# provenance:
+#   pipeline_id: "supercell-001"
+#   hash: "a3f7c8d..."
+#   steps:
+#     - {name: "supercell", params: {a: 3, b: 3, c: 3}}
+# lattice:
+#   a: [8.4, 0.0, 0.0]
+#   b: [0.0, 8.4, 0.0]
+#   c: [0.0, 0.0, 8.4]
+# reserved_slots:
+#   bulk:
+#     density: {value: 2.165, units: "g/cm3"}
+#     elastic_modulus: {value: null, units: "GPa"}
+#   results:
+#     energy: {value: -104.3, units: "eV"}
+#     converged: true
+Na  0.0  0.0  0.0
+Cl  2.8  0.0  0.0
+Na  5.6  0.0  0.0
+...
+(54 atoms total)
+
+
+STATUS: ✅ COMPLETE SPECIFICATION — READY TO IMPLEMENT
+======================================================
+
+Next: Begin 8-day implementation plan (Phase 1: xyzA/xyzC parsers)
+```
