@@ -51,9 +51,9 @@ VSEPR-Sim is a **production-ready atomistic simulation instrument** for generati
 ```
 
 ### Tools
-- **`meso-build`**: Interactive CLI for molecular construction
-- **`meso-sim`**: MD/minimization engine
-- **`interactive-viewer`**: OpenGL 3D visualizer
+- **Interactive CLI**: Molecular construction and manipulation
+- **Simulation engine**: MD/minimization with FIRE, Verlet, and Langevin integrators
+- **OpenGL viewer**: 3D visualization with atom tooltips
 - **Self-audit suite**: Python tools for failure analysis and regression detection
 
 ---
@@ -107,20 +107,20 @@ chmod +x vseprw
 cmake -B build && cmake --build build -j8
 
 # Interactive molecular builder
-./build/meso-build
+./build/apps/cli
 ⚛ build water
 ⚛ info
 ⚛ save water.xyz
 ⚛ exit
 
 # Energy minimization
-./build/meso-sim relax water.xyz
+./build/apps/relax water.xyz
 
 # Molecular dynamics
-./build/meso-sim simulate water.xyz --temp 300 --steps 10000
+./build/apps/simulate water.xyz --temp 300 --steps 10000
 
 # 3D viewer
-./build/interactive-viewer water.xyz
+./build/apps/viewer water.xyz
 ```
 
 ---
@@ -138,9 +138,10 @@ vsepr-sim/
 │   └── cli/          Command-line interface
 ├── include/          Public headers (51 files)
 ├── apps/             Entry points (35 applications)
-│   ├── meso-build.cpp
-│   ├── meso-sim.cpp
-│   └── interactive-viewer.cpp
+│   ├── cli.cpp           # Interactive builder
+│   ├── relax.cpp         # Energy minimization
+│   ├── simulate.cpp      # MD engine
+│   └── viewer.cpp        # OpenGL visualization
 ├── tests/            Validation suite (56 files)
 │   ├── energy_tests.cpp
 │   ├── ensemble_consistency_test.cpp
