@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>H2SO4 - Sulfuric Acid</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial; background: #1a1a2e; color: #eee; }
+        #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 5px; max-width: 300px; }
+        #info h2 { margin: 0 0 10px 0; color: #4CAF50; }
+        #info p { margin: 5px 0; font-size: 14px; }
+        .label { color: #FFD700; font-weight: bold; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="info">
+        <h2>H₂SO₄ - Sulfuric Acid</h2>
+        <p><span class="label">Formula:</span> H₂SO₄</p>
+        <p><span class="label">Geometry:</span> Tetrahedral (S center)</p>
+        <p><span class="label">Atoms:</span> 7 (1 S + 4 O + 2 H)</p>
+        <p><span class="label">Structure:</span> O=S(=O)(OH)₂</p>
+        <p><span class="label">Energy:</span> 30.5 kcal/mol</p>
+        <p style="margin-top: 10px; font-size: 12px; color: #888;">
+            Left click + drag: rotate<br>
+            Right click + drag: pan<br>
+            Scroll: zoom
+        </p>
+    </div>
+    <script>
+        // H2SO4 coordinates from VSEPR-Sim (optimized)
+        const atoms = [
+            {element: 'S', x: 0.153725, y: -0.113283, z: 0.058469, color: 0xFFFF30, radius: 1.8},
+            {element: 'O', x: 1.266941, y: -0.332308, z: 1.269948, color: 0xFF0000, radius: 1.52},
+            {element: 'O', x: -1.298284, y: -0.742268, z: 0.559572, color: 0xFF0000, radius: 1.52},
+            {element: 'O', x: -0.043711, y: 1.496563, z: -0.293127, color: 0xFF0000, radius: 1.52},
+            {element: 'O', x: 0.646024, y: -0.936945, z: -1.296067, color: 0xFF0000, radius: 1.52},
+            {element: 'H', x: 1.352645, y: 0.527210, z: 1.664949, color: 0xFFFFFF, radius: 1.2},
+            {element: 'H', x: -1.372561, y: -1.550065, z: 0.066017, color: 0xFFFFFF, radius: 1.2}
+        ];
+
+        const bonds = [
+            [0, 1], // S-O
+            [0, 2], // S-O
+            [0, 3], // S-O
+            [0, 4], // S-O
+            [1, 5], // O-H
+            [2, 6]  // O-H
+        ];
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5, 5, 5);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const pointLight1 = new THREE.PointLight(0xffffff, 0.8);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0xffffff, 0.4);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+        
+        // Draw atoms
+        atoms.forEach(atom => {
+            const geometry = new THREE.SphereGeometry(atom.radius / 10, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: atom.color,
+                shininess: 100,
+                specular: 0x444444
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(atom.x, atom.y, atom.z);
+            scene.add(sphere);
+        });
+        
+        // Draw bonds
+        bonds.forEach(([i, j]) => {
+            const points = [];
+            points.push(new THREE.Vector3(atoms[i].x, atoms[i].y, atoms[i].z));
+            points.push(new THREE.Vector3(atoms[j].x, atoms[j].y, atoms[j].z));
+            const bondGeometry = new THREE.BufferGeometry().setFromPoints(points);
+            const bondMaterial = new THREE.LineBasicMaterial({color: 0xcccccc, linewidth: 3});
+            const bond = new THREE.Line(bondGeometry, bondMaterial);
+            scene.add(bond);
+        });
+        
+        // Add coordinate axes
+        const axesHelper = new THREE.AxesHelper(2);
+        scene.add(axesHelper);
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        animate();
+    </script>
+</body>
+</html>

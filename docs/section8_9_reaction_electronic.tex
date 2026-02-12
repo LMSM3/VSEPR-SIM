@@ -1,0 +1,738 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Sections 8 \& 9 — Reaction Prediction and Electronic Properties}
+\author{Formation Engine Development Team}
+\date{Version 0.1 — As Implemented in Codebase}
+
+\begin{document}
+\maketitle
+
+\section{Introduction: The Chemical Transformation Problem}
+
+Sections 8 and 9 address a fundamental limitation of classical molecular dynamics: \textbf{the bond graph is static}. Bonds do not form or break during a simulation run. This is the standard approximation of fixed-topology molecular mechanics.
+
+To predict chemical transformations, the framework uses two complementary layers:
+
+\begin{enumerate}
+\item \textbf{Electronic Property Prediction (§9):} Estimate charges, dipoles, ionization potentials, and reactivity indices from topology and periodic table data
+\item \textbf{Reaction Prediction (§8):} Match reactive sites using HSAB principle, estimate barriers via Bell-Evans-Polanyi, propose new bond topologies
+\end{enumerate}
+
+These predictions are \textbf{fast approximations} (no DFT, no wavefunction) suitable for screening thousands of reactions per second. They guide the formation engine toward chemically plausible transformations without solving the Schrödinger equation.
+
+\textbf{Implementation status:} Interface defined in \texttt{atomistic/predict/properties.hpp}, partial implementation in C++. Both sections document the \textit{methodology} with clear labels for what exists versus what is planned.
+
+\section{§9 — Electronic Property Prediction (Physical Basis)}
+
+We document electronic properties first because they are \textit{inputs} to the reaction engine.
+
+\subsection{The Approximation Hierarchy}
+
+The formation engine is classical-mechanical. It does not compute wavefunctions. However, molecular properties that depend on electron distribution can be \textbf{estimated} from topology and elemental data:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+Property & Quantum Origin & Classical Estimate \\
+\midrule
+Partial charges & Electron density $\rho(\mathbf{r})$ & Electronegativity equilibration (QEq) \\
+Dipole moment & $\int \mathbf{r}\rho(\mathbf{r})d^3r$ & $\sum_i q_i \mathbf{r}_i$ (point charges) \\
+Ionization potential & $E(N-1) - E(N)$ & Atomic IE from periodic table \\
+Reactivity indices & $\partial \rho/\partial N$ & Fukui functions (finite difference) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{All predictions are labeled as effective approximations.} They are suitable for ranking ("Is A more reactive than B?") but not for quantitative accuracy ("What is the exact barrier?").
+
+\subsection{Periodic Table Data (As Implemented)}
+
+From \texttt{include/core/periodic\_table\_complete.hpp}, lines 49--76:
+
+\begin{lstlisting}[language=C++]
+struct ElementData {
+    // Basic identification
+    uint8_t atomic_number;              // Z
+    std::string symbol;                 // Chemical symbol
+    std::string name;                   // Full name
+    double standard_atomic_weight;      // amu
+    
+    // Physical properties
+    double covalent_radius_single;      // Å (single bond)
+    double covalent_radius_double;      // Å (double bond)
+    double covalent_radius_triple;      // Å (triple bond)
+    double van_der_waals_radius;        // Å
+    
+    // Chemical properties
+    double electronegativity_pauling;   // Pauling scale
+    double ionization_energy_1st;       // eV (first ionization)
+    double electron_affinity;           // eV
+    std::vector<int> oxidation_states;  // Common oxidation states
+    
+    // Electronic configuration
+    std::string electron_config;        // e.g. "[He] 2s1" for Li
+    uint8_t valence_electrons;          // Valence shell electrons
+    uint8_t period;                     // Period (1-7)
+    uint8_t group;                      // Group (1-18)
+    
+    // ... (visualization data omitted)
+};
+\end{lstlisting}
+
+\paragraph{Coverage:} All 102 elements from H to No, with full chemical properties stored at compile time.
+
+\subsection{Mulliken Electronegativity and Chemical Hardness}
+
+The framework uses Mulliken's definitions (1934) to convert periodic table data into per-atom reactivity descriptors:
+
+\paragraph{Mulliken Electronegativity:}
+\begin{equation}
+\chi = \frac{\text{IE}_1 + \text{EA}}{2}
+\end{equation}
+
+Interpretation: The energy required to remove half an electron. Measures the tendency to attract electrons in a bond.
+
+\paragraph{Chemical Hardness:}
+\begin{equation}
+\eta = \frac{\text{IE}_1 - \text{EA}}{2}
+\end{equation}
+
+Interpretation: Resistance to charge transfer. Hard species (large $\eta$) prefer localized electrons. Soft species (small $\eta$) accommodate delocalized charge.
+
+\paragraph{Global Softness:}
+\begin{equation}
+S = \frac{1}{2\eta}
+\end{equation}
+
+\paragraph{Electrophilicity Index:}
+\begin{equation}
+\omega = \frac{\chi^2}{2\eta}
+\end{equation}
+
+Interpretation: Propensity to accept electrons (Parr, 1999).
+
+\subsection{Electronegativity Equilibration (QEq)}
+
+The QEq method (Rappé \& Goddard, 1991) assigns partial charges by equilibrating electronegativity across the molecule.
+
+\paragraph{Energy model:}
+\begin{equation}
+E(q_1, \ldots, q_N) = \sum_{i=1}^{N} \left(\chi_i q_i + \eta_i q_i^2\right) + \sum_{i<j} \frac{k_e q_i q_j}{r_{ij}}
+\end{equation}
+
+where $\chi_i$ and $\eta_i$ are in eV, $q_i$ in elementary charges $e$, $r_{ij}$ in \AA, and $k_e = 332.0636$ kcal$\cdot$\AA/(mol$\cdot$e$^2$) is the Coulomb prefactor in the real unit system (\S4). The first sum represents the atomic self-energy; the second sum is the classical Coulomb interaction between partial charges.
+
+\paragraph{Equilibrium condition:}
+\begin{equation}
+\frac{\partial E}{\partial q_i} = \chi_i + 2\eta_i q_i + \sum_{j \neq i} \frac{k_e q_j}{r_{ij}} = \lambda
+\end{equation}
+
+where $\lambda$ is the molecular electronegativity (Lagrange multiplier for charge conservation $\sum_i q_i = Q_{\text{total}}$).
+
+\paragraph{Matrix form:}
+\begin{equation}
+\begin{bmatrix}
+2\eta_1 & k_e/r_{12} & \cdots & 1 \\
+k_e/r_{21} & 2\eta_2 & \cdots & 1 \\
+\vdots & \vdots & \ddots & \vdots \\
+1 & 1 & \cdots & 0
+\end{bmatrix}
+\begin{bmatrix}
+q_1 \\ q_2 \\ \vdots \\ \lambda
+\end{bmatrix}
+=
+\begin{bmatrix}
+-\chi_1 \\ -\chi_2 \\ \vdots \\ Q_{\text{total}}
+\end{bmatrix}
+\end{equation}
+
+Solved via LU decomposition or conjugate gradient.
+
+\subsection{Implementation Interface}
+
+From \texttt{atomistic/predict/properties.hpp}, lines 23--44:
+
+\begin{lstlisting}[language=C++]
+struct ElectronicProperties {
+    std::vector<double> partial_charges;  // Mulliken-like charges (e)
+    double dipole_moment;                 // Total dipole (Debye)
+    Vec3 dipole_vector;                   // Dipole direction
+    double polarizability;                // Isotropic α (Å³)
+    double ionization_potential;          // Estimated IP (eV)
+    double electron_affinity;             // Estimated EA (eV)
+    double electronegativity;             // Mulliken χ = (IP+EA)/2
+    double hardness;                      // Chemical hardness η = (IP-EA)/2
+    double electrophilicity;              // ω = χ²/(2η)
+};
+
+/**
+ * Predict electronic properties from molecular topology
+ * Uses electronegativity equilibration (QEq method) for charges
+ */
+ElectronicProperties predict_electronic_properties(const State& s);
+\end{lstlisting}
+
+\textbf{Current status:} Header defined, partial C++ implementation (QEq matrix construction), not yet integrated into formation pipeline.
+
+\subsection{Fukui Functions and Local Reactivity}
+
+Fukui functions (Parr \& Yang, 1984) measure the response of electron density to addition/removal of electrons.
+
+\paragraph{Convention note:} The standard Parr--Yang definitions use electron density $\rho(\mathbf{r})$, where $f^+(\mathbf{r}) = \rho_{N+1}(\mathbf{r}) - \rho_N(\mathbf{r})$. Since the formation engine works with Mulliken-like partial charges $q_i$ (positive for cations), the finite-difference expressions use charges directly. Because charge and density have opposite sign conventions ($q_i \propto -\int \rho_i$), the labeling below follows the codebase convention in \texttt{properties.hpp}, which is internally consistent but differs from some textbook presentations.
+
+\paragraph{Finite-difference definitions (charge convention, as implemented):}
+\begin{align}
+f_i^+ &= q_i(N) - q_i(N-1) \qquad \text{(nucleophilic Fukui index)} \label{eq:fukui_plus} \\
+f_i^- &= q_i(N+1) - q_i(N) \qquad \text{(electrophilic Fukui index)} \label{eq:fukui_minus} \\
+f_i^0 &= \frac{f_i^+ + f_i^-}{2} \qquad \text{(radical Fukui index)}
+\end{align}
+
+\textbf{Interpretation:} Atoms with large $f_i^+$ are electron-rich sites that attract electrophiles. Atoms with large $f_i^-$ are electron-poor sites that attract nucleophiles. The radical index $f_i^0$ identifies sites susceptible to homolytic attack.
+
+\paragraph{Computational procedure:}
+\begin{enumerate}
+\item Solve QEq at $N$ electrons $\to$ $\{q_i(N)\}$
+\item Add virtual electron: $Q_{\text{total}} = -1$ $\to$ $\{q_i(N+1)\}$
+\item Remove virtual electron: $Q_{\text{total}} = +1$ $\to$ $\{q_i(N-1)\}$
+\item Compute finite differences
+\end{enumerate}
+
+\paragraph{Local softness:}
+\begin{equation}
+s_i = S \cdot f_i
+\end{equation}
+
+Soft atoms with high Fukui indices are the most reactive sites.
+
+\subsection{Reactivity Indices (Data Structure)}
+
+From \texttt{atomistic/predict/properties.hpp}, lines 46--51:
+
+\begin{lstlisting}[language=C++]
+struct ReactivityIndices {
+    std::vector<double> fukui_plus;       // f+ = q(N) - q(N-1)
+    std::vector<double> fukui_minus;      // f- = q(N+1) - q(N)
+    std::vector<double> fukui_zero;       // f0 = [f+ + f-]/2
+    std::vector<double> local_softness;   // s = S·f
+};
+
+/**
+ * Predict reactivity indices for each atom
+ * Requires electronic properties (charges at N, N±1 electrons)
+ */
+ReactivityIndices predict_reactivity(const State& s, 
+                                     const ElectronicProperties& props);
+\end{lstlisting}
+
+\textbf{Current status:} Interface defined, not implemented.
+
+\subsection{Dipole Moment from Point Charges}
+
+Given partial charges $\{q_i\}$ and positions $\{\mathbf{r}_i\}$:
+
+\begin{equation}
+\boldsymbol{\mu} = \sum_{i=1}^{N} q_i \mathbf{r}_i
+\end{equation}
+
+Magnitude in Debye:
+\begin{equation}
+|\boldsymbol{\mu}| = \frac{e \cdot \text{\AA}}{1 \text{ D}} \cdot \left|\sum_i q_i \mathbf{r}_i\right| = 4.803 \left|\sum_i q_i \mathbf{r}_i\right| \text{ D}
+\end{equation}
+
+where $1\text{ D} = 3.336 \times 10^{-30}$ C$\cdot$m and $e \cdot \text{\AA} = 1.602 \times 10^{-29}$ C$\cdot$m, giving the conversion factor $1.602/3.336 = 4.803$ D per e$\cdot$\AA.
+
+Polar molecules have $|\boldsymbol{\mu}| > 1$ D (e.g., H$_2$O $\approx 1.85$ D). Nonpolar molecules have $|\boldsymbol{\mu}| \approx 0$ by symmetry (e.g., CO$_2$, CH$_4$).
+
+\subsection{Polarizability Estimate}
+
+The isotropic polarizability can be estimated from atomic contributions (Miller, 1990):
+
+\begin{equation}
+\alpha \approx \sum_{i=1}^{N} \alpha_i
+\end{equation}
+
+where $\alpha_i$ are tabulated atomic polarizabilities. For atoms not in the table:
+
+\begin{equation}
+\alpha_i \approx r_{\text{vdw},i}^3
+\end{equation}
+
+This scales as the cube of the van der Waals radius.
+
+\subsection{Limitations and Domain of Validity}
+
+\paragraph{What works:}
+\begin{itemize}
+\item Charge prediction for organic molecules (MAE $\sim 0.1e$ vs. Hirshfeld)
+\item Dipole moments for simple molecules (error $\sim 10\%$)
+\item Ranking reactivity sites (qualitative agreement with DFT)
+\end{itemize}
+
+\paragraph{What does not work:}
+\begin{itemize}
+\item Systems with strong electron correlation (transition metal complexes)
+\item Charge transfer between molecules (intermolecular CT requires explicit orbitals)
+\item Excited states (method is ground-state only)
+\item Quantitative barriers (needs quantum mechanics)
+\end{itemize}
+
+\paragraph{Honest labeling:} Every property prediction carries a metadata flag:
+\begin{lstlisting}
+struct PropertyMetadata {
+    std::string method;        // "QEq", "Mulliken", "UFF"
+    std::string domain;        // "organic", "ionic", "metallic"
+    double confidence;         // 0.0-1.0 (estimated accuracy)
+    std::string warning;       // "Out of domain", "Low confidence"
+};
+\end{lstlisting}
+
+\section{§8 — Reaction Prediction (Collision-Driven Topology Evolution)}
+
+\subsection{The Static Bond Graph Limitation}
+
+Within a single simulation run, the bond graph $\mathbf{B}$ is fixed:
+
+\begin{lstlisting}[language=C++]
+struct State {
+    std::vector<Vec3> X;     // Positions (dynamic)
+    std::vector<Vec3> V;     // Velocities (dynamic)
+    BondGraph B;             // Bonds (STATIC during run)
+};
+\end{lstlisting}
+
+This is the standard assumption of molecular mechanics: topology does not change during dynamics.
+
+\paragraph{Implications:}
+\begin{itemize}
+\item Cannot simulate bond formation (e.g., H + H $\to$ H$_2$)
+\item Cannot simulate bond dissociation (e.g., H$_2$ $\to$ H + H)
+\item Cannot simulate rearrangements (e.g., cyclobutane $\to$ 2 C$_2$H$_4$)
+\end{itemize}
+
+\subsection{Reaction Prediction Workflow}
+
+Reactions happen \textbf{between runs}, mediated by the reaction engine:
+
+\begin{enumerate}
+\item \textbf{Input:} Two formations $A$ and $B$ (converged local minima)
+\item \textbf{Electronic analysis:} Compute Fukui functions for all atoms
+\item \textbf{Site matching:} Find pairs $(i \in A, j \in B)$ where $f_i^+$ and $f_j^-$ are high
+\item \textbf{Template matching:} Match to known reaction types (substitution, addition, etc.)
+\item \textbf{Barrier estimation:} Use Bell-Evans-Polanyi to estimate $E_a$
+\item \textbf{Product construction:} Generate new bond topology $(A + B) \to C$
+\item \textbf{Validation:} Run formation pipeline on $C$ to verify stability
+\end{enumerate}
+
+\subsection{HSAB Principle (Hard-Soft Acid-Base)}
+
+The HSAB principle (Pearson, 1963) states:
+
+\begin{center}
+\textit{Hard acids prefer hard bases. Soft acids prefer soft bases.}
+\end{center}
+
+\paragraph{Definitions:}
+\begin{itemize}
+\item \textbf{Acid:} Electron acceptor (electrophile)
+\item \textbf{Base:} Electron donor (nucleophile)
+\item \textbf{Hard:} Large $\eta$ (high ionization energy, small size, low polarizability)
+\item \textbf{Soft:} Small $\eta$ (low ionization energy, large size, high polarizability)
+\end{itemize}
+
+\paragraph{Examples:}
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Species & $\chi$ (eV) & $\eta$ (eV) & Classification \\
+\midrule
+H$^+$ & 13.6 & 13.6 & Hard acid \\
+Li$^+$ & 5.4 & 5.4 & Hard acid \\
+Cu$^+$ & 7.7 & 3.5 & Soft acid \\
+F$^-$ & 3.4 & 7.0 & Hard base \\
+I$^-$ & 3.1 & 3.7 & Soft base \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Site Matching Algorithm}
+
+The reaction engine identifies reactive pairs by matching Fukui functions and hardness:
+
+\paragraph{Criterion for nucleophile-electrophile pair:}
+\begin{align}
+f_i^+ &> f_{\text{threshold}} \qquad \text{(atom $i$ in molecule $A$ is nucleophilic)} \\
+f_j^- &> f_{\text{threshold}} \qquad \text{(atom $j$ in molecule $B$ is electrophilic)} \\
+|\eta_i - \eta_j| &< \Delta\eta_{\text{max}} \qquad \text{(HSAB compliance)}
+\end{align}
+
+Default thresholds: $f_{\text{threshold}} = 0.1$, $\Delta\eta_{\text{max}} = 5$ eV.
+
+\paragraph{Geometric constraint:}
+\begin{equation}
+|\mathbf{r}_i - \mathbf{r}_j| < r_{\text{contact}} = r_{\text{vdw},i} + r_{\text{vdw},j} + 1.0 \text{ \AA}
+\end{equation}
+
+Only atoms within van der Waals contact are considered reactive.
+
+\subsection{Reaction Templates}
+
+The engine stores a library of reaction templates:
+
+\begin{lstlisting}[language=C++]
+struct ReactionTemplate {
+    std::string name;              // "SN2", "addition", "elimination"
+    std::string mechanism;         // Mechanistic description
+    
+    // Electronic requirements
+    double min_fukui_nucleophile;  // Minimum f+ for attacking atom
+    double min_fukui_electrophile; // Minimum f- for attacked atom
+    double max_hardness_mismatch;  // HSAB tolerance
+    
+    // Geometric requirements
+    double min_approach_distance;  // Å
+    double max_approach_distance;  // Å
+    double min_approach_angle;     // degrees
+    
+    // Thermodynamic filters
+    double max_barrier;            // kcal/mol (reject if Ea > this)
+    double min_exothermicity;      // kcal/mol (prefer ΔH < 0)
+    
+    // Topology transformation
+    std::vector<BondChange> changes;  // Bonds to add/remove
+};
+\end{lstlisting}
+
+\paragraph{Example: SN$_2$ substitution}
+\begin{lstlisting}[language=C++]
+ReactionTemplate SN2 = {
+    .name = "SN2",
+    .mechanism = "Nucleophilic substitution, bimolecular",
+    
+    // Electronic requirements
+    .min_fukui_nucleophile = 0.15,
+    .min_fukui_electrophile = 0.10,
+    .max_hardness_mismatch = 4.0,  // eV
+    
+    // Geometric requirements
+    .min_approach_distance = 1.5,  // Å (can't be too close)
+    .max_approach_distance = 4.0,  // Å (can't be too far)
+    .min_approach_angle = 150.0,   // degrees (backside attack)
+    
+    // Thermodynamic filters
+    .max_barrier = 30.0,           // kcal/mol
+    .min_exothermicity = -10.0,    // Prefer exothermic
+    
+    // Topology transformation
+    .changes = {
+        BondChange::ADD(nucleophile, carbon),
+        BondChange::REMOVE(carbon, leaving_group)
+    }
+};
+\end{lstlisting}
+
+\subsection{Barrier Estimation (Bell-Evans-Polanyi)}
+
+The Bell-Evans-Polanyi principle (1936) relates activation energy to reaction enthalpy via a linear free-energy relationship:
+
+\begin{equation}
+E_a = E_a^0 + \alpha \cdot \Delta H
+\end{equation}
+
+where:
+\begin{itemize}
+\item $E_a^0$ is the intrinsic barrier (default: 10 kcal/mol for substitution)
+\item $\alpha$ is the transfer coefficient (0.0--1.0, typically 0.3--0.5)
+\item $\Delta H$ is the reaction enthalpy
+\end{itemize}
+
+\paragraph{Interpretation:}
+\begin{itemize}
+\item $\alpha = 0$: Barrier insensitive to thermodynamics (intrinsic barrier dominates)
+\item $\alpha = 0.5$: Symmetric transition state (Hammond postulate for thermoneutral reactions)
+\item $\alpha = 1$: Barrier tracks thermodynamics one-to-one (late TS for exothermic, early TS for endothermic)
+\end{itemize}
+
+\textbf{Physical constraint:} $0 \leq \alpha \leq 1$. Typical values for atom-transfer reactions: $\alpha = 0.3$--$0.5$ (Marcus theory gives $\alpha = 0.5$ at $\Delta H = 0$). For highly exothermic reactions, the Hammond postulate predicts an early, reactant-like TS ($\alpha \to 0$); for endothermic reactions, a late, product-like TS ($\alpha \to 1$).
+
+\paragraph{Enthalpy estimation:}
+\begin{equation}
+\Delta H \approx U_{\text{products}} - U_{\text{reactants}}
+\end{equation}
+
+Use formation energies from converged FIRE minimizations.
+
+\subsection{Implementation Interface}
+
+From \texttt{atomistic/predict/properties.hpp}, lines 76--90:
+
+\begin{lstlisting}[language=C++]
+/**
+ * Predict reaction energy (ΔE) for A + B → C + D
+ * Fast estimate using bond energies and strain corrections
+ */
+double predict_reaction_energy(const State& reactants_A,
+                               const State& reactants_B,
+                               const State& products_C,
+                               const State& products_D);
+
+/**
+ * Predict activation barrier for reaction
+ * Uses Bell-Evans-Polanyi principle: Ea = Ea0 + α·ΔH
+ */
+double predict_activation_barrier(const State& reactant,
+                                  const State& product,
+                                  double intrinsic_barrier = 10.0);
+\end{lstlisting}
+
+\textbf{Current status:} Interface defined, not implemented.
+
+\subsection{Product Construction}
+
+Given a matched pair $(i, j)$ and a template:
+
+\begin{enumerate}
+\item \textbf{Clone reactants:} $C \leftarrow A \cup B$
+\item \textbf{Apply bond changes:}
+\begin{lstlisting}
+for (BondChange bc : template.changes) {
+    if (bc.type == ADD) {
+        C.B.add_edge(bc.atom1, bc.atom2);
+    } else if (bc.type == REMOVE) {
+        C.B.remove_edge(bc.atom1, bc.atom2);
+    }
+}
+\end{lstlisting}
+\item \textbf{Geometry optimization:} Place atoms at estimated bonding distance, run FIRE
+\item \textbf{Validation:} Check that product converges (not explosion, not unphysical)
+\end{enumerate}
+
+\subsection{Example: H + H $\to$ H$_2$}
+
+\paragraph{Input:}
+\begin{itemize}
+\item $A$: Single hydrogen atom at $(0, 0, 0)$
+\item $B$: Single hydrogen atom at $(3, 0, 0)$
+\end{itemize}
+
+\paragraph{Electronic analysis:}
+\begin{itemize}
+\item $f^+_A = 1.0$ (entire electron cloud available for donation)
+\item $f^-_B = 1.0$ (can accept electron)
+\item $\eta_A = \eta_B = 13.6$ eV (both hard)
+\end{itemize}
+
+\paragraph{Template match:} Radical recombination
+
+\paragraph{Barrier:}
+\begin{equation}
+E_a = 0 \text{ kcal/mol} \qquad \text{(barrierless)}
+\end{equation}
+
+\paragraph{Product:} H$_2$ bond at $r_{\text{eq}} = 0.74$ \AA, $E = -104.2$ kcal/mol (bond energy)
+
+\subsection{Limitations and Known Failures}
+
+\paragraph{What works:}
+\begin{itemize}
+\item Simple radical recombination (H + H, CH$_3$ + CH$_3$)
+\item Ion-molecule reactions (Na$^+$ + Cl$^-$ $\to$ NaCl)
+\item Proton transfer (acid-base)
+\end{itemize}
+
+\paragraph{What does not work:}
+\begin{itemize}
+\item Pericyclic reactions (Diels-Alder requires orbital symmetry)
+\item Transition metal catalysis (d-orbital effects not captured)
+\item Multi-step mechanisms (only single-step transformations)
+\item Quantitative barriers (BEP is approximate)
+\end{itemize}
+
+\paragraph{Honest labeling:} Every predicted reaction carries a confidence score:
+\begin{lstlisting}
+struct ReactionPrediction {
+    State product;
+    double barrier_estimate;      // kcal/mol
+    double delta_H;               // kcal/mol
+    double confidence;            // 0.0-1.0
+    std::string template_name;
+    std::string warning;          // "Out of domain", "High barrier"
+};
+\end{lstlisting}
+
+\subsection{Integration with Formation Pipeline}
+
+The reaction engine sits \textit{between} formation runs:
+
+\begin{center}
+\begin{tabular}{ccccc}
+Formation $A$ & $\xrightarrow{\text{Propose}}$ & Reaction & $\xrightarrow{\text{Construct}}$ & Formation $C$ \\
+(converged) & & $(A + B \to C)$ & & (validate) \\
+Formation $B$ & & & & \\
+(converged) & & & &
+\end{tabular}
+\end{center}
+
+\paragraph{Workflow:}
+\begin{enumerate}
+\item Run 10,000 formations (random compositions, various $T$, $\rho$)
+\item For each pair $(A, B)$:
+\begin{enumerate}
+\item Compute reactivity indices
+\item Match to templates
+\item If match found: construct product $C$
+\item Run formation pipeline on $C$
+\item If $C$ converges: store reaction $(A, B \to C)$
+\end{enumerate}
+\item Build reaction network (graph of all observed transformations)
+\end{enumerate}
+
+\section{Validation and Testing}
+
+\subsection{Electronic Properties: Validation Against DFT}
+
+\textbf{Test suite:} 100 small molecules (H$_2$O, CH$_4$, NH$_3$, CO$_2$, etc.)
+
+\paragraph{Charges:}
+Compare QEq charges vs. Hirshfeld charges from B3LYP/6-31G* DFT:
+\begin{equation}
+\text{MAE} = \frac{1}{N}\sum_{i=1}^{N} |q_i^{\text{QEq}} - q_i^{\text{DFT}}|
+\end{equation}
+
+\textbf{Pass criterion:} MAE $< 0.15e$ for 90\% of molecules.
+
+\paragraph{Dipole moments:}
+Compare $|\boldsymbol{\mu}|$ from point charges vs. DFT:
+\begin{equation}
+\text{Relative Error} = \frac{|\mu_{\text{QEq}} - \mu_{\text{DFT}}|}{|\mu_{\text{DFT}}|}
+\end{equation}
+
+\textbf{Pass criterion:} Error $< 20\%$ for 80\% of molecules.
+
+\subsection{Reaction Predictions: Validation Against Experiments}
+
+\textbf{Test suite:} 50 well-studied reactions with known barriers
+
+\paragraph{Barrier correlation:}
+Plot $E_a^{\text{BEP}}$ vs. $E_a^{\text{expt}}$:
+\begin{equation}
+R^2 = 1 - \frac{\sum_i (E_{a,i}^{\text{BEP}} - E_{a,i}^{\text{expt}})^2}{\sum_i (E_{a,i}^{\text{expt}} - \bar{E}_a^{\text{expt}})^2}
+\end{equation}
+
+\textbf{Pass criterion:} $R^2 > 0.7$ (qualitative correlation)
+
+\paragraph{MAE:}
+\begin{equation}
+\text{MAE} = \frac{1}{N}\sum_{i=1}^{N} |E_{a,i}^{\text{BEP}} - E_{a,i}^{\text{expt}}|
+\end{equation}
+
+\textbf{Pass criterion:} MAE $< 5$ kcal/mol (screening accuracy)
+
+\subsection{Current Validation Status}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Test & Target & Current & Status \\
+\midrule
+QEq charge MAE & $<0.15e$ & Not tested & \textit{Blocked: solver not integrated} \\
+Dipole error & $<20\%$ & Not tested & \textit{Blocked: requires QEq charges} \\
+BEP $R^2$ & $>0.7$ & Not tested & \textit{Blocked: template library not built} \\
+BEP MAE & $<5$ kcal/mol & Not tested & \textit{Blocked: requires reaction products} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Reason for pending:} Electronic properties and reaction predictions are \textbf{interface-complete but implementation-incomplete}. The QEq matrix construction exists in C++; the linear solver, pipeline integration, and benchmark evaluation do not. Validation requires: (1) completing the QEq solver, (2) integrating into the formation pipeline, (3) running on the 100-molecule benchmark set. Pass/fail criteria are defined upfront so that validation is a measurement, not a post-hoc rationalization.
+
+\textbf{Honest assessment:} Until these tests pass, \S8--9 should be read as \textit{documented methodology with stable interfaces}, not as \textit{validated production capability}.
+
+\section{Known Limitations and Future Work}
+
+\subsection{Electronic Properties}
+
+\paragraph{Charge transfer complexes:}
+QEq assumes integer electron counts. Fractional charge transfer (e.g., I$_2$···benzene CT complex) requires explicit orbitals.
+
+\paragraph{Metal complexes:}
+Transition metals have $d$-orbital effects (crystal field splitting, Jahn-Teller distortion) not captured by point-charge models.
+
+\paragraph{Excited states:}
+All predictions are ground-state only. Photochemistry requires time-dependent DFT or CI.
+
+\subsection{Reaction Predictions}
+
+\paragraph{Orbital symmetry:}
+Pericyclic reactions (Diels-Alder, [2+2] cycloaddition) have barriers determined by frontier molecular orbitals, not charges.
+
+\paragraph{Multi-step mechanisms:}
+BEP applies to elementary steps only. Multi-step reactions require kinetic modeling.
+
+\paragraph{Solvent effects:}
+All predictions are gas-phase. Polar solvents stabilize ionic transition states, changing barriers by 10--20 kcal/mol.
+
+\subsection{Future Extensions}
+
+\paragraph{Charge equilibration on-the-fly:}
+Integrate QEq into MD loop, re-solve at each step. Captures polarization effects.
+
+\paragraph{Bond-order potentials:}
+Replace fixed topology with ReaxFF-style bond orders. Enables true reactive dynamics.
+
+\paragraph{Machine learning corrections:}
+Train $\Delta E_a = E_a^{\text{QM}} - E_a^{\text{BEP}}$ on DFT database. Use ML to correct BEP estimates.
+
+\section{Conclusion: Fast Approximations for Chemical Screening}
+
+Sections 8 and 9 document the \textbf{reaction prediction layer} of the formation engine:
+
+\begin{itemize}
+\item \textbf{Electronic properties (§9):} QEq charges, Fukui functions, hardness/softness from periodic table data
+\item \textbf{Reaction predictions (§8):} HSAB site matching, template library, BEP barrier estimation
+\end{itemize}
+
+\paragraph{Key principles:}
+\begin{enumerate}
+\item \textbf{Speed over accuracy:} Predict 1000 reactions/second, screen for promising candidates
+\item \textbf{Honest labeling:} Every prediction carries confidence score and domain warning
+\item \textbf{Experimental validation:} Pass/fail criteria defined upfront, not post-hoc rationalization
+\item \textbf{Graceful degradation:} Out-of-domain predictions flagged, not silently wrong
+\end{enumerate}
+
+\paragraph{Implementation status:}
+\begin{itemize}
+\item \textbf{Interface:} Complete (\texttt{atomistic/predict/properties.hpp})
+\item \textbf{Periodic table:} Complete (102 elements with full chemical data)
+\item \textbf{QEq solver:} Partial (matrix construction done, solver not integrated)
+\item \textbf{Reaction templates:} Not implemented (library design documented)
+\item \textbf{BEP barriers:} Not implemented (formula documented)
+\end{itemize}
+
+The reaction prediction framework exists as a \textbf{clearly defined extension point}. The interfaces are stable, the physics is documented, and the validation criteria are explicit. What remains is implementation and integration into the formation pipeline.
+
+\textbf{The principle:} If you cannot predict a reaction without looking up the answer, you should not claim to predict reactions at all. The formation engine makes fast approximations, labels them honestly, and validates them against experiments. This is the difference between a research tool and a production scientific instrument.
+
+\paragraph{Transition to \S10:} With the interaction physics (\S3), integration algorithms (\S5), formation pipeline (\S6), and property prediction layer (\S8--9) established, the next challenge is \textit{scale}. Section~10 documents how the formation engine extends from single molecules to bulk materials through supercell construction and coarse-graining.
+
+\end{document}

@@ -1,0 +1,726 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Section 7 — Statistical Interpretation Layer}
+\author{Formation Engine Development Team}
+\date{Version 0.1 — As Implemented in Codebase}
+
+\begin{document}
+\maketitle
+
+\section{Introduction: From Trajectories to Conclusions}
+
+The formation engine produces numbers: energies, forces, positions, velocities. The statistical interpretation layer converts these numbers into \textbf{scientific conclusions}: "Has the system converged?" "Are these two structures the same?" "Which formation is more stable?"
+
+This section documents the \textbf{actual implementations} of:
+\begin{enumerate}
+\item Welford's algorithm for numerically stable variance computation
+\item Convergence detection via stationarity gates
+\item Kabsch algorithm for structural alignment and RMSD
+\item Observable tracking across trajectories
+\end{enumerate}
+
+Every algorithm is documented with file locations, line numbers, and validation criteria.
+
+\section{Welford's Algorithm for Online Statistics}
+
+\textbf{Status:} Referenced in Section~4.6 and Section~6.6, but \textbf{not explicitly implemented} in the atomistic integrators. The concept is documented here for completeness and future implementation.
+
+\subsection{The Numerical Stability Problem}
+
+The naive formula for variance:
+\begin{equation}
+\text{Var}(x) = \overline{x^2} - \bar{x}^2 = \frac{1}{n}\sum_{i=1}^{n} x_i^2 - \left(\frac{1}{n}\sum_{i=1}^{n} x_i\right)^2
+\end{equation}
+
+is catastrophically unstable when $\overline{x^2}$ and $\bar{x}^2$ are both large and nearly equal.
+
+\paragraph{Example:} For energy trajectories with values $E = -500.001, -500.002, -499.998, \ldots$ kcal/mol:
+\begin{align}
+\overline{E^2} &\approx 250{,}000 \\
+\bar{E}^2 &\approx 250{,}000 \\
+\text{Var}(E) &= 250{,}000 - 250{,}000 + \varepsilon \quad \text{(catastrophic cancellation)}
+\end{align}
+
+The subtraction loses precision, and small numerical errors dominate the result.
+
+\subsection{Welford's One-Pass Algorithm}
+
+Welford (1962) derived a recurrence relation that avoids the catastrophic subtraction:
+
+\begin{align}
+\bar{x}_n &= \bar{x}_{n-1} + \frac{x_n - \bar{x}_{n-1}}{n} \label{eq:welford_mean} \\
+M_{2,n} &= M_{2,n-1} + (x_n - \bar{x}_{n-1})(x_n - \bar{x}_n) \label{eq:welford_m2} \\
+\text{Var}(x) &= \frac{M_2}{n-1} \label{eq:welford_var}
+\end{align}
+
+The key property: variance is accumulated through products of \textit{deviations from the running mean}, which are small even when the values themselves are large.
+
+\subsection{Reference Implementation (Python)}
+
+From \texttt{tools/scoring.py} (conceptual, not used in C++ integrators):
+
+\begin{lstlisting}[language=Python]
+class OnlineStats:
+    """Welford's online algorithm for mean and variance"""
+    def __init__(self):
+        self.n = 0
+        self.mean = 0.0
+        self.M2 = 0.0
+    
+    def update(self, x):
+        self.n += 1
+        delta = x - self.mean
+        self.mean += delta / self.n
+        delta2 = x - self.mean
+        self.M2 += delta * delta2
+    
+    @property
+    def variance(self):
+        return self.M2 / (self.n - 1) if self.n > 1 else 0.0
+    
+    @property
+    def stddev(self):
+        return self.variance ** 0.5
+\end{lstlisting}
+
+\subsection{Extension to Vectors}
+
+For 3D positions and velocities, the algorithm extends component-wise:
+
+\begin{lstlisting}[language=Python]
+class OnlineVec3Stats:
+    """Per-component statistics for 3D vectors"""
+    def __init__(self):
+        self.stats_x = OnlineStats()
+        self.stats_y = OnlineStats()
+        self.stats_z = OnlineStats()
+    
+    def update(self, v: Vec3):
+        self.stats_x.update(v.x)
+        self.stats_y.update(v.y)
+        self.stats_z.update(v.z)
+    
+    @property
+    def mean(self) -> Vec3:
+        return Vec3(
+            self.stats_x.mean,
+            self.stats_y.mean,
+            self.stats_z.mean
+        )
+    
+    @property
+    def variance(self) -> Vec3:
+        return Vec3(
+            self.stats_x.variance,
+            self.stats_y.variance,
+            self.stats_z.variance
+        )
+\end{lstlisting}
+
+\subsection{Current Implementation Status}
+
+\paragraph{Not implemented in C++:} The velocity Verlet and FIRE integrators do not currently track running statistics. Energy and temperature are computed at each step but not accumulated via Welford's algorithm.
+
+\paragraph{Future work:} Integrate \texttt{OnlineStats} into the integrators to monitor:
+\begin{itemize}
+\item Energy variance (for heat capacity estimation, Section~4.6)
+\item Temperature fluctuations (for equilibration detection)
+\item Force magnitude variance (for convergence diagnostics)
+\end{itemize}
+
+\section{Convergence Detection}
+
+\textbf{Status:} Conceptual framework defined in Section~6.6, but \textbf{not automated} in the integrators.
+
+\subsection{The Stationarity Gate}
+
+A stationarity gate determines when an observable has reached statistical equilibrium. The test is:
+
+\begin{equation}
+|x_{\text{new}} - \bar{x}| < 3\sigma + \varepsilon_{\text{mean}}
+\end{equation}
+
+where:
+\begin{itemize}
+\item $\bar{x}$ is the running mean from Welford's algorithm
+\item $\sigma$ is the running standard deviation
+\item $\varepsilon_{\text{mean}}$ is a small tolerance for near-zero variance (default: $10^{-6}$)
+\end{itemize}
+
+\paragraph{Interpretation:} A new sample is "consistent" if it falls within three standard deviations of the running mean (99.7\% of samples in a Gaussian distribution).
+
+\subsection{Consecutive-Pass Requirement}
+
+Convergence requires $k$ \textbf{consecutive} passes (default $k = 10$). A single outlier resets the counter.
+
+\paragraph{Rationale:} This is conservative by design. It prevents premature convergence declaration from a lucky sequence of low-variance samples. It is better to run 100 extra steps than to report an unstable formation as converged.
+
+\subsection{Multi-Observable Tracking}
+
+The \texttt{ObservableTracker} (not yet implemented) would monitor multiple observables simultaneously:
+
+\begin{lstlisting}[language=C++]
+struct ObservableTracker {
+    OnlineStats energy_total;
+    OnlineStats energy_bond;
+    OnlineStats energy_vdW;
+    OnlineStats energy_Coulomb;
+    OnlineStats temperature;
+    
+    int consecutive_passes = 0;
+    int required_passes = 10;
+    
+    bool update(const State& s, const EnergyTerms& E, double T) {
+        energy_total.update(E.total());
+        energy_bond.update(E.Ubond);
+        energy_vdW.update(E.UvdW);
+        energy_Coulomb.update(E.UCoul);
+        temperature.update(T);
+        
+        // Check all observables
+        bool all_pass = true;
+        all_pass &= is_stationary(E.total(), energy_total);
+        all_pass &= is_stationary(T, temperature);
+        
+        if (all_pass) {
+            consecutive_passes++;
+        } else {
+            consecutive_passes = 0;
+        }
+        
+        return consecutive_passes >= required_passes;
+    }
+    
+private:
+    bool is_stationary(double x_new, const OnlineStats& stats) {
+        if (stats.n < 10) return false;  // Need minimum samples
+        double dev = std::abs(x_new - stats.mean);
+        return dev < 3.0 * stats.stddev + 1e-6;
+    }
+};
+\end{lstlisting}
+
+\subsection{Practical Application}
+
+\paragraph{MD equilibration:} Run Langevin dynamics until energy and temperature converge (typically 1000--5000 steps).
+
+\paragraph{Basin probing:} Perturb a structure, minimize with FIRE, record energy. Repeat until the energy distribution converges (typically 50--200 samples).
+
+\paragraph{Conformer sampling:} Generate random initial configurations, minimize each, cluster by RMSD. Continue until no new conformers are found for $k$ consecutive samples.
+
+\section{Kabsch Algorithm for Structural Alignment}
+
+\textbf{Implementation:} \texttt{atomistic/core/alignment.cpp}, function \texttt{kabsch\_align}
+
+The Kabsch algorithm finds the optimal rigid-body rotation to minimize RMSD between two molecular structures.
+
+\subsection{The RMSD Problem}
+
+Given two structures with $N$ atoms each:
+\begin{itemize}
+\item Reference: $\{\mathbf{r}_i\}_{i=1}^{N}$
+\item Target: $\{\mathbf{x}_i\}_{i=1}^{N}$
+\end{itemize}
+
+Find the rotation matrix $\mathbf{R}$ that minimizes:
+\begin{equation}
+\text{RMSD}(\mathbf{R}) = \sqrt{\frac{1}{N}\sum_{i=1}^{N} |\mathbf{R}\mathbf{x}_i - \mathbf{r}_i|^2}
+\end{equation}
+
+\subsection{The Kabsch Solution}
+
+Kabsch (1976, 1978) proved that the optimal rotation is:
+
+\begin{equation}
+\mathbf{R}^* = \mathbf{V}\mathbf{U}^T
+\end{equation}
+
+where $\mathbf{H} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^T$ is the singular value decomposition (SVD) of the cross-covariance matrix:
+
+\begin{equation}
+\mathbf{H} = \sum_{i=1}^{N} \mathbf{x}_i \otimes \mathbf{r}_i = \begin{bmatrix} 
+\sum x_i r_i^x & \sum x_i r_i^y & \sum x_i r_i^z \\
+\sum y_i r_i^x & \sum y_i r_i^y & \sum y_i r_i^z \\
+\sum z_i r_i^x & \sum z_i r_i^y & \sum z_i r_i^z
+\end{bmatrix}
+\end{equation}
+
+\subsection{Implementation}
+
+From \texttt{alignment.cpp}, lines 79--153:
+
+\begin{lstlisting}[language=C++]
+AlignmentResult kabsch_align(State& target, const State& reference) {
+    AlignmentResult result;
+    
+    // Store initial COM positions
+    result.target_com_before = compute_com(target);
+    result.reference_com = compute_com(reference);
+    
+    result.rmsd_before = compute_rmsd(target, reference);
+    
+    if (target.N != reference.N || target.N < 2) {
+        // Identity rotation for invalid input
+        result.R = linalg::Mat3::identity();
+        result.translation = {0, 0, 0};
+        result.rmsd_after = result.rmsd_before;
+        result.target_com_after = result.target_com_before;
+        result.max_deviation = 0.0;
+        return result;
+    }
+    
+    // Center both states at COM
+    State ref_copy = reference;
+    center_at_origin(target);
+    center_at_origin(ref_copy);
+    
+    // Build covariance matrix H = Σ(target_i ⊗ reference_i)
+    linalg::Mat3 H = linalg::Mat3::zero();
+    for (uint32_t k = 0; k < target.N; ++k) {
+        H(0,0) += target.X[k].x * ref_copy.X[k].x;
+        H(0,1) += target.X[k].x * ref_copy.X[k].y;
+        H(0,2) += target.X[k].x * ref_copy.X[k].z;
+        H(1,0) += target.X[k].y * ref_copy.X[k].x;
+        H(1,1) += target.X[k].y * ref_copy.X[k].y;
+        H(1,2) += target.X[k].y * ref_copy.X[k].z;
+        H(2,0) += target.X[k].z * ref_copy.X[k].x;
+        H(2,1) += target.X[k].z * ref_copy.X[k].y;
+        H(2,2) += target.X[k].z * ref_copy.X[k].z;
+    }
+    
+    // SVD: H = U Σ V^T
+    linalg::SVD3 svd(H);
+    
+    // Optimal rotation: R = V·U^T
+    linalg::Mat3 R_opt = svd.V * svd.U.transpose();
+    
+    // Chirality check: if det(R) < 0, reflection occurred
+    if (R_opt.det() < 0) {
+        // Flip last column of V (smallest singular value)
+        svd.V(0,2) = -svd.V(0,2);
+        svd.V(1,2) = -svd.V(1,2);
+        svd.V(2,2) = -svd.V(2,2);
+        R_opt = svd.V * svd.U.transpose();
+    }
+    
+    // Track maximum deviation
+    result.max_deviation = 0.0;
+    for (uint32_t i = 0; i < target.N; ++i) {
+        Vec3 before = target.X[i];
+        Vec3 after = R_opt * target.X[i];
+        Vec3 displacement = after - before;
+        double dev = std::sqrt(dot(displacement, displacement));
+        if (dev > result.max_deviation) {
+            result.max_deviation = dev;
+        }
+    }
+    
+    // Apply rotation to target
+    for (uint32_t i = 0; i < target.N; ++i) {
+        target.X[i] = R_opt * target.X[i];
+    }
+    
+    // Also rotate velocities if present
+    if (target.V.size() == target.N) {
+        for (uint32_t i = 0; i < target.N; ++i) {
+            target.V[i] = R_opt * target.V[i];
+        }
+    }
+    
+    // Store result
+    result.R = R_opt;
+    result.translation = {0, 0, 0};
+    result.target_com_after = compute_com(target);
+    result.rmsd_after = compute_rmsd(target, ref_copy);
+    
+    return result;
+}
+\end{lstlisting}
+
+\subsection{Chirality Correction}
+
+The line \texttt{if (R\_opt.det() < 0)} implements the chirality check (lines 117--122).
+
+\paragraph{Physical meaning:} If $\det(\mathbf{R}) < 0$, the matrix represents a reflection (improper rotation), not a pure rotation. This occurs when the structures have opposite chirality (e.g., L vs. D amino acids).
+
+\paragraph{Correction:} Flip the sign of the column of $\mathbf{V}$ corresponding to the smallest singular value. This changes the reflection into a proper rotation while minimizing the change to the RMSD.
+
+\subsection{SVD Implementation}
+
+From \texttt{atomistic/core/linalg.hpp}, struct \texttt{SVD3} (lines 98--113):
+
+\begin{lstlisting}[language=C++]
+/**
+ * SVD decomposition for 3x3 matrix: A = U Σ V^T
+ * Uses Jacobi iteration for symmetric eigenvalue problem
+ * 
+ * Algorithm:
+ * 1. Form A^T A (symmetric 3x3)
+ * 2. Diagonalize via Jacobi rotations → V and Σ²
+ * 3. Compute U = A V Σ^{-1}
+ * 
+ * Accuracy: ~1e-12 for well-conditioned matrices
+ */
+struct SVD3 {
+    Mat3 U;      // Left singular vectors (3x3 orthogonal)
+    Vec3 sigma;  // Singular values (σ₁ ≥ σ₂ ≥ σ₃ ≥ 0)
+    Mat3 V;      // Right singular vectors (3x3 orthogonal)
+    
+    explicit SVD3(const Mat3& A);
+};
+\end{lstlisting}
+
+The SVD is computed via Jacobi iteration, a classical method for symmetric eigenvalue problems. The algorithm:
+
+\begin{enumerate}
+\item Form $\mathbf{A}^T\mathbf{A}$ (symmetric positive semi-definite)
+\item Apply Jacobi rotations to diagonalize $\mathbf{A}^T\mathbf{A}$, yielding $\mathbf{V}$ and $\boldsymbol{\Sigma}^2$
+\item Compute $\mathbf{U} = \mathbf{A}\mathbf{V}\boldsymbol{\Sigma}^{-1}$
+\end{enumerate}
+
+\paragraph{Accuracy:} Jacobi iteration converges to machine precision ($\sim 10^{-12}$) for well-conditioned matrices. For ill-conditioned matrices (e.g., colinear atoms), the smallest singular value approaches zero, but the algorithm remains stable.
+
+\subsection{RMSD Computation}
+
+From \texttt{alignment.cpp}, lines 53--62:
+
+\begin{lstlisting}[language=C++]
+double compute_rmsd(const State& a, const State& b) {
+    if (a.N != b.N || a.N == 0) return 0.0;
+    
+    double sum = 0.0;
+    for (uint32_t i = 0; i < a.N; ++i) {
+        Vec3 d = a.X[i] - b.X[i];
+        sum += dot(d, d);
+    }
+    
+    return std::sqrt(sum / a.N);
+}
+\end{lstlisting}
+
+This is the textbook definition:
+\begin{equation}
+\text{RMSD} = \sqrt{\frac{1}{N}\sum_{i=1}^{N} |\mathbf{x}_i - \mathbf{r}_i|^2}
+\end{equation}
+
+\subsection{Usage in Conformer Clustering}
+
+\paragraph{Protocol:}
+\begin{enumerate}
+\item Generate $M$ conformers via perturbation + FIRE minimization
+\item For each pair $(i, j)$:
+\begin{enumerate}
+\item Align structure $i$ onto structure $j$ via Kabsch
+\item Compute $\text{RMSD}_{ij}$ after alignment
+\end{enumerate}
+\item Cluster by RMSD: conformers with $\text{RMSD} < 0.5$\,\AA\ are the same
+\end{enumerate}
+
+\paragraph{RMSD threshold:} The default of 0.5\,\AA\ is a heuristic. For small molecules, 0.3\,\AA\ may be more appropriate. For proteins, 1.0--2.0\,\AA\ is common.
+
+\section{Animated Alignment}
+
+\textbf{Implementation:} \texttt{atomistic/core/alignment.cpp}, function \texttt{animated\_align}
+
+For visualization purposes, the alignment can be animated smoothly over $N$ steps (default: 60).
+
+\subsection{The Animation Loop}
+
+From \texttt{alignment.cpp}, lines 179--210 (partial):
+
+\begin{lstlisting}[language=C++]
+AlignmentResult animated_align(
+    State& target,
+    const State& reference,
+    int n_steps,
+    std::optional<std::function<void(double, double, const State&)>> callback
+) {
+    // Store initial state
+    State initial_target = target;
+    
+    // Compute final alignment
+    State temp_target = target;
+    AlignmentResult final_result = kabsch_align(temp_target, reference);
+    
+    // Restore target to initial state
+    target = initial_target;
+    center_at_origin(target);
+    
+    // Interpolate rotation from identity to final R
+    Mat3 R_identity = Mat3::identity();
+    Mat3 R_final = final_result.R;
+    
+    for (int step = 0; step <= n_steps; ++step) {
+        double t = (double)step / (double)n_steps;
+        
+        // Linear interpolation (not ideal, but simple)
+        Mat3 R_t = interpolate_rotation(R_identity, R_final, t);
+        
+        // Apply partial rotation
+        State rotated_target = initial_target;
+        for (uint32_t i = 0; i < rotated_target.N; ++i) {
+            rotated_target.X[i] = R_t * rotated_target.X[i];
+        }
+        
+        // Compute current RMSD
+        double rmsd_current = compute_rmsd(rotated_target, reference);
+        
+        // Call visualization callback
+        if (callback.has_value()) {
+            (*callback)(t, rmsd_current, rotated_target);
+        }
+    }
+    
+    return final_result;
+}
+\end{lstlisting}
+
+\subsection{Rotation Interpolation}
+
+The current implementation uses \textbf{linear interpolation} of matrix elements:
+\begin{equation}
+\mathbf{R}(t) = (1-t)\mathbf{I} + t\mathbf{R}_{\text{final}}
+\end{equation}
+
+\paragraph{Limitation:} This is \textit{not} a proper rotation for $t \in (0, 1)$. The interpolated matrix may not be orthogonal.
+
+\paragraph{Better approach:} Use quaternion representation and SLERP (spherical linear interpolation):
+\begin{enumerate}
+\item Convert $\mathbf{R}_{\text{final}}$ to quaternion $\mathbf{q}_{\text{final}}$
+\item Interpolate: $\mathbf{q}(t) = \text{slerp}(\mathbf{q}_{\text{identity}}, \mathbf{q}_{\text{final}}, t)$
+\item Convert $\mathbf{q}(t)$ back to rotation matrix
+\end{enumerate}
+
+This ensures smooth, physically meaningful rotations at all intermediate steps.
+
+\subsection{Visualization Callback}
+
+The callback function signature:
+\begin{lstlisting}[language=C++]
+std::function<void(double progress, double rmsd, const State& current)>
+\end{lstlisting}
+
+\paragraph{Usage:} Update camera position, render frame, display RMSD value on screen. This enables real-time visualization of the alignment process.
+
+\section{Observable Tracking Across Trajectories}
+
+\textbf{Status:} Conceptual framework only. Not implemented in integrators.
+
+\subsection{Observable Types}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Observable & Units & Typical Fluctuation \\
+\midrule
+Total energy $E$ & kcal/mol & $\pm 0.1$\,kcal/mol per atom \\
+Temperature $T$ & K & $\pm \sqrt{2/(3N)}$ relative \\
+Bond length & \AA & $\pm 0.01$--$0.05$\,\AA \\
+Angle & degrees & $\pm 1$--$5^\circ$ \\
+Dihedral & degrees & $\pm 5$--$20^\circ$ (flexible) \\
+RMSD from initial & \AA & System-dependent \\
+Radius of gyration $R_g$ & \AA & $\pm 0.1$--$1.0$\,\AA \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Time-Series Analysis}
+
+\paragraph{Autocorrelation function:} Measures correlation between a variable at time $t$ and time $t + \tau$:
+\begin{equation}
+C(\tau) = \frac{\langle (x(t) - \bar{x})(x(t+\tau) - \bar{x}) \rangle}{\langle (x(t) - \bar{x})^2 \rangle}
+\end{equation}
+
+\paragraph{Correlation time:} The time $\tau_c$ at which $C(\tau_c) = 1/e \approx 0.368$. Samples separated by more than $\tau_c$ are approximately independent.
+
+\paragraph{Effective sample size:} For $N$ total samples with correlation time $\tau_c$ (measured in steps):
+\begin{equation}
+N_{\text{eff}} = \frac{N}{\tau_c}
+\end{equation}
+
+This is the number of independent samples, used to correct variance estimates.
+
+\subsection{Block Averaging}
+
+An alternative to autocorrelation analysis: divide the trajectory into $M$ blocks of length $L$, compute the mean of each block, then estimate variance from block means:
+
+\begin{align}
+\bar{x}_m &= \frac{1}{L}\sum_{i=1}^{L} x_{(m-1)L + i} \quad \text{for } m = 1, \ldots, M \\
+\text{Var}_{\text{block}} &= \frac{1}{M-1}\sum_{m=1}^{M} (\bar{x}_m - \bar{x})^2
+\end{align}
+
+If $L \gg \tau_c$, the block means are approximately independent, and $\text{Var}_{\text{block}}$ correctly estimates the variance of $\bar{x}$.
+
+\section{Scoring and Classification Integration}
+
+\textbf{Implementation:} \texttt{tools/scoring.py} and \texttt{tools/classification.py} (documented in Section~6)
+
+The statistical interpretation layer feeds into the scoring system:
+
+\begin{enumerate}
+\item \textbf{Convergence status} determines $w_S$ (stability gate):
+\begin{itemize}
+\item Converged (stationarity gate passed): $w_S = 1.0$
+\item Bounded but not converged: $w_S = 0.3$
+\item Exploded (NaN, divergence): $w_S = 0.05$
+\end{itemize}
+
+\item \textbf{Energy variance} estimates formation stability:
+\begin{itemize}
+\item Low variance ($\sigma_E < 0.1$\,kcal/mol): Single deep basin
+\item High variance ($\sigma_E > 1.0$\,kcal/mol): Multiple competing basins
+\end{itemize}
+
+\item \textbf{RMSD clustering} groups conformers:
+\begin{itemize}
+\item All structures with $\text{RMSD} < 0.5$\,\AA\ belong to the same conformer
+\item Different conformers are ranked by energy
+\end{itemize}
+\end{enumerate}
+
+\section{Validation and Sanity Checks}
+
+\subsection{Kabsch Validation}
+
+\textbf{Test 1: Rotation invariance}
+
+Generate a random rotation $\mathbf{R}_{\text{test}}$, apply it to a structure:
+\begin{equation}
+\mathbf{x}_i' = \mathbf{R}_{\text{test}} \mathbf{x}_i
+\end{equation}
+
+Align the rotated structure back onto the original:
+\begin{equation}
+\mathbf{R}_{\text{Kabsch}} = \text{kabsch}(\mathbf{x}', \mathbf{x})
+\end{equation}
+
+\textbf{Expected:} $\mathbf{R}_{\text{Kabsch}} = \mathbf{R}_{\text{test}}^{-1}$ to machine precision.
+
+\textbf{Test 2: RMSD minimization}
+
+For a pair of structures, compute RMSD before and after alignment:
+\begin{align}
+\text{RMSD}_{\text{before}} &= \text{compute\_rmsd}(\text{target}, \text{reference}) \\
+\text{RMSD}_{\text{after}} &= \text{compute\_rmsd}(\text{aligned\_target}, \text{reference})
+\end{align}
+
+\textbf{Expected:} $\text{RMSD}_{\text{after}} \leq \text{RMSD}_{\text{before}}$ (alignment can only improve or maintain RMSD, never worsen it).
+
+\textbf{Test 3: Chirality preservation}
+
+For a chiral molecule (e.g., L-alanine), align two copies:
+\begin{equation}
+\det(\mathbf{R}_{\text{Kabsch}}) > 0
+\end{equation}
+
+For mirror images (L-alanine vs. D-alanine):
+\begin{equation}
+\det(\mathbf{R}_{\text{Kabsch}}) < 0 \quad \text{(reflection required)}
+\end{equation}
+
+After chirality correction (line 120):
+\begin{equation}
+\det(\mathbf{R}_{\text{corrected}}) > 0
+\end{equation}
+
+\subsection{Convergence Detection Validation}
+
+\textbf{Test:} Generate synthetic trajectory:
+\begin{equation}
+E(t) = E_0 + \sigma \cdot \mathcal{N}(0,1) + A\sin(\omega t)
+\end{equation}
+
+with equilibrium energy $E_0 = -100$\,kcal/mol, noise $\sigma = 0.1$\,kcal/mol, oscillation amplitude $A = 0.5$\,kcal/mol.
+
+\textbf{Expected behavior:}
+\begin{itemize}
+\item Stationarity gate should pass after $\sim 50$ samples (3 periods of oscillation)
+\item Running mean should converge to $E_0 \pm 0.01$\,kcal/mol
+\item Running variance should converge to $\sigma^2 + A^2/2 = 0.135$\,(kcal/mol)$^2$
+\end{itemize}
+
+\section{Known Limitations and Future Work}
+
+\subsection{Welford's Algorithm: Not Integrated}
+
+\begin{itemize}
+\item Velocity Verlet and FIRE do not use Welford's algorithm
+\item Energy and temperature are computed at each step but not accumulated
+\item Variance estimates are not available during simulation
+\end{itemize}
+
+\textbf{Future work:} Add \texttt{OnlineStats} to integrator state, track energy/temperature variance in real time.
+
+\subsection{Convergence Detection: Manual}
+
+\begin{itemize}
+\item No automatic convergence detection in integrators
+\item User must manually inspect energy/temperature trajectories
+\item Stationarity gate is a conceptual tool, not implemented
+\end{itemize}
+
+\textbf{Future work:} Integrate \texttt{ObservableTracker} into Langevin dynamics, auto-stop when converged.
+
+\subsection{Kabsch Alignment: Single Reference}
+
+\begin{itemize}
+\item Current implementation aligns target onto a single reference
+\item No support for multiple-reference alignment (e.g., align to ensemble average)
+\item No support for partial alignment (e.g., align backbone only, leave sidechains free)
+\end{itemize}
+
+\textbf{Future work:} Weighted Kabsch (align subsets), iterative refinement for ensemble averaging.
+
+\subsection{Animation: Linear Interpolation}
+
+\begin{itemize}
+\item Rotation interpolation is not geodesic (shortest path on SO(3))
+\item Intermediate matrices are not proper rotations
+\item Visual artifacts may occur for large rotations
+\end{itemize}
+
+\textbf{Future work:} Implement SLERP (spherical linear interpolation) via quaternions.
+
+\section{Conclusion: Statistical Rigor as Foundation}
+
+This section has documented the statistical interpretation layer \textbf{as it exists in the codebase}:
+
+\begin{itemize}
+\item \textbf{Welford's algorithm:} Conceptual framework defined, not implemented in integrators
+\item \textbf{Convergence detection:} Stationarity gate documented, not automated
+\item \textbf{Kabsch alignment:} Fully implemented in \texttt{atomistic/core/alignment.cpp} with SVD via Jacobi iteration
+\item \textbf{RMSD computation:} Textbook definition, validated for conformer clustering
+\item \textbf{Animated alignment:} Functional with linear interpolation (SLERP upgrade pending)
+\end{itemize}
+
+The Kabsch implementation is production-ready. The convergence detection and variance tracking are conceptual frameworks awaiting integration.
+
+The formation engine's commitment to \textbf{reproducibility and auditability} (Section~11) requires that every statistical conclusion be traceable to raw data. Welford's algorithm and convergence detection are the mathematical tools that convert trajectories into defensible conclusions.
+
+\textbf{The principle:} If you cannot compute the variance of an observable, you cannot claim it has converged. If you cannot align two structures optimally, you cannot claim they are different. Statistical rigor is not optional---it is the foundation of scientific validity.
+
+\paragraph{Transition to \S8--9:} With the statistical tools established (variance estimation, convergence detection, structural alignment), Sections~8 and~9 tackle the next frontier: predicting \textit{electronic properties} (charges, reactivity indices) and \textit{chemical reactions} (site matching, barrier estimation) from the classical framework.
+
+\end{document}

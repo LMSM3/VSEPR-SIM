@@ -1,0 +1,1256 @@
+% ============================================================================
+%  Formation Engine — §0: Formal Identity–State Decomposition Framework
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Formation Engine Methodology}}
+\fancyhead[R]{\small\textit{§0 — Identity–State Decomposition}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {§\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}
+  {\thesubsubsection}{1em}{}
+
+\setcounter{section}{-1}  % first \section produces §0
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage[
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue
+]{hyperref}
+
+% ── Theorem-like environments ──────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{postulate}{Postulate}[section]
+\newtheorem{defn}[postulate]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[postulate]{Remark}
+
+% ── Convenience macros ─────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Bset}{\mathbb{B}}
+\newcommand{\Kcal}{\text{kcal}}
+\newcommand{\mol}{\text{mol}}
+\newcommand{\boldI}{\mathbf{I}}
+\newcommand{\boldG}{\mathbf{G}}
+\newcommand{\boldC}{\mathbf{C}}
+\newcommand{\boldK}{\mathbf{K}}
+\newcommand{\boldL}{\mathbf{L}}
+\newcommand{\boldS}{\mathbf{S}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator*{\argmax}{arg\,max}
+
+% ── Document ───────────────────────────────────────────────────────────────
+\begin{document}
+
+% ── Title block ────────────────────────────────────────────────────────────
+\begin{center}
+  {\LARGE\bfseries Formation Engine}\\[0.3em]
+  {\LARGE\bfseries Canonical Simulation Methodology}\\[1.2em]
+  {\large §0 — Formal Identity–State Decomposition Framework}\\[1.5em]
+  {\normalsize
+    \textit{A deterministic classical-mechanical framework for the prediction
+    of molecular and crystalline structure from elemental identity and
+    thermodynamic boundary conditions, without recourse to empirical
+    molecular data.}}\\[1.5em]
+  {\small Version 0.1 — First Principles Draft}
+\end{center}
+
+\vspace{1em}
+\hrule
+\vspace{2em}
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Formal Identity–State Decomposition Framework}
+% ════════════════════════════════════════════════════════════════════════════
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Identity}
+\label{sec:identity-vector}
+% ────────────────────────────────────────────────────────────────────────────
+
+Define a time-invariant identity vector for particle~$i$:
+%
+\begin{equation}
+\boldI_i \in \R^{6}, \qquad
+\boldI_i =
+\begin{bmatrix}
+  Z_i \\ A_i \\ Q_i \\ \Sigma_i \\ \Lambda_i \\ \Theta_i
+\end{bmatrix}
+\label{eq:identity-vector}
+\end{equation}
+%
+with components defined as follows.
+
+% ·········································································
+\subsubsection{Nuclear Identity \texorpdfstring{$Z_i$}{Zi}}
+\label{sec:nuclear-identity}
+
+\[
+  Z_i \in \N^{+}
+\]
+
+Atomic number.  Immutable under all non-nuclear transformations.
+Serves as the identity anchor for all downstream mappings.
+
+% ·········································································
+\subsubsection{Mass Identity \texorpdfstring{$A_i$}{Ai}}
+\label{sec:mass-identity}
+
+\[
+  A_i \in \R^{+}
+\]
+
+Represents either:
+\begin{itemize}
+  \item exact mass number (isotopic resolution), or
+  \item effective mass bucket under coarse-graining.
+\end{itemize}
+
+\noindent Constraint:
+\[
+  A_i^{(\text{fast})} \approx \bar{A}(Z_i),
+  \qquad
+  A_i^{(\text{audit})} = A_i^{\,\text{exact}}
+\]
+
+% ·········································································
+\subsubsection{Effective Charge Participation
+              \texorpdfstring{$Q_i$}{Qi}}
+\label{sec:charge-participation}
+
+\[
+  Q_i \in \R
+\]
+
+Not an oxidation state.  Instead, define $Q_i$ as a participation
+coefficient modulating interaction strength:
+%
+\begin{equation}
+  Q_i = \frac{1}{|\mathcal{N}_i|}
+        \sum_{j \in \mathcal{N}_i} \chi_{ij}
+  \label{eq:charge-participation}
+\end{equation}
+%
+where $\chi_{ij}$ is an interaction asymmetry measure (electron
+donation/withdrawal bias) and $\mathcal{N}_i$ is the local
+neighbourhood.
+
+This allows:
+\begin{itemize}
+  \item fractional values,
+  \item environment dependence,
+  \item smooth behaviour under coarse-graining.
+\end{itemize}
+
+% ·········································································
+\subsubsection{Structural Role Signature
+              \texorpdfstring{$\Sigma_i$}{Sigma-i}}
+\label{sec:structural-role}
+
+\[
+  \Sigma_i \in \{0,\,1,\,2,\,3,\,4\}
+\]
+
+Discrete structural prior encoding dominant bonding topology:
+%
+\[
+  \Sigma_i =
+  \begin{cases}
+    0 & \text{inert / closed shell}    \\
+    1 & \text{ionic-dominant}           \\
+    2 & \text{directional covalent}     \\
+    3 & \text{metallic / delocalized}   \\
+    4 & \text{mixed / transitional}
+  \end{cases}
+\]
+%
+This parameter biases search and interaction kernels without
+explicit bond constraints.
+
+% ·········································································
+\subsubsection{Stability Class
+              \texorpdfstring{$\Lambda_i$}{Lambda-i}}
+\label{sec:stability-class}
+
+\[
+  \Lambda_i \in \{0,\,1,\,2,\,3\}
+\]
+
+Defines statistical persistence under thermal and configurational
+perturbation:
+%
+\begin{equation}
+  \Lambda_i = \argmax_k \;
+    P_i\!\bigl(\text{survival} \mid \Delta E,\, T,\, t\bigr)
+  \label{eq:stability-class}
+\end{equation}
+
+Interpretation:
+%
+\begin{center}
+\begin{tabular}{cl}
+  \toprule
+  $\Lambda$ & Meaning \\
+  \midrule
+  0 & transient \\
+  1 & metastable \\
+  2 & ambient-stable \\
+  3 & bulk-lattice candidate \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ·········································································
+\subsubsection{Provenance Memory
+              \texorpdfstring{$\Theta_i$}{Theta-i}}
+\label{sec:provenance-memory}
+
+\[
+  \Theta_i \in \Bset^{n}, \qquad n \in [8,\,16]
+\]
+
+Binary provenance hash encoding transformation lineage:
+%
+\begin{equation}
+  \Theta_i = \mathcal{H}\!\bigl(
+    \text{origin},\;
+    \text{generation},\;
+    \text{relaxation depth}
+  \bigr)
+  \label{eq:provenance-hash}
+\end{equation}
+
+Used for:
+\begin{itemize}
+  \item audit trails,
+  \item anomaly detection,
+  \item irreversible-history awareness.
+\end{itemize}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+%  PRIMED EXTENSION: Canonical Particle Container Postulate
+% ════════════════════════════════════════════════════════════════════════════
+
+\bigskip
+\subsection*{0.1.3$'$\quad Canonical Particle Container Postulate (CPCP)}
+\addcontentsline{toc}{subsection}%
+  {0.1.3$'$ Canonical Particle Container Postulate (CPCP)}
+\label{sec:cpcp}
+
+% ·········································································
+\subsubsection*{0.1.3$'$.1\quad Postulate Statement}
+\addcontentsline{toc}{subsubsection}{0.1.3$'$.1 Postulate Statement}
+\label{sec:cpcp-postulate}
+
+\begin{postulate}[Canonical Particle Container]
+Any time-independent identical atomic or subatomic particle species
+admits an idealised canonical container representation:
+%
+\begin{equation}
+  \mathcal{C}_i =
+  \bigl(
+    \boldI_i,\;
+    \boldG_i,\;
+    \boldC_i^{\,\mathrm{comp}}
+  \bigr)
+  \label{eq:container}
+\end{equation}
+%
+where:
+\begin{itemize}
+  \item $\boldI_i$ = Identity vector (§\ref{sec:identity-vector}),
+  \item $\boldG_i$ = Fundamental internal quantum descriptor set,
+  \item $\boldC_i^{\,\mathrm{comp}}$ = Computational annotation payload
+        (non-physical but simulation-critical).
+\end{itemize}
+\end{postulate}
+
+% ·········································································
+\subsubsection*{0.1.3$'$.2\quad Fundamental Quantum Descriptor Bundle
+               \texorpdfstring{$\boldG_i$}{Gi}}
+\addcontentsline{toc}{subsubsection}%
+  {0.1.3$'$.2 Fundamental Quantum Descriptor Bundle}
+\label{sec:quantum-bundle}
+
+For any identical species class:
+%
+\begin{equation}
+  \boldG_i =
+  \begin{bmatrix}
+    s_i \\ c_i \\ f_i \\ \kappa_i \\ \eta_i
+  \end{bmatrix}
+  \label{eq:quantum-bundle}
+\end{equation}
+
+\paragraph{Spin \texorpdfstring{$s_i$}{si}.}
+
+\[
+  s_i \in \tfrac{1}{2}\,\Z
+\]
+
+Intrinsic angular momentum.
+Defines statistics class:
+%
+\[
+  s_i \in \Z \;\Rightarrow\; \text{Bosonic regime},
+  \qquad
+  s_i \in \tfrac{1}{2} + \Z \;\Rightarrow\; \text{Fermionic regime}
+\]
+
+\paragraph{Colour charge \texorpdfstring{$c_i$}{ci}.}
+
+For quark-level modelling:
+\[
+  c_i \in \{r,\,g,\,b,\,\bar{r},\,\bar{g},\,\bar{b}\}
+\]
+or abstracted as $c_i \in \Z_3$.
+Under coarse projection: $\langle c_i \rangle \to 0$
+(enforced colour neutrality constraint).
+
+\paragraph{Flavour index \texorpdfstring{$f_i$}{fi}.}
+
+Discrete particle family label:
+\[
+  f_i \in \N_{\text{flavour classes}}
+\]
+For atoms, this collapses to nuclear composition mapping via
+$(Z_i, A_i)$.
+For subatomic simulations, it remains explicit.
+
+\paragraph{Internal projection coupling
+          \texorpdfstring{$\kappa_i$}{kappa-i}.}
+
+Represents coupling between core particle and embedded field
+carriers:
+%
+\begin{equation}
+  \kappa_i =
+  \begin{bmatrix}
+    \kappa^{(g)} \\[3pt]
+    \kappa^{(em)} \\[3pt]
+    \kappa^{(w)}
+  \end{bmatrix}
+  \label{eq:kappa}
+\end{equation}
+%
+mapping to embedded co-particle field contributions (graviton /
+dimagneton / magneton-style internal carriers).
+
+\paragraph{Projection information density
+          \texorpdfstring{$\eta_i$}{eta-i}.}
+
+Minimal information content proxy:
+%
+\begin{equation}
+  \eta_i = \frac{I_{\text{struct}}}{V_{\text{proj}}}
+  \label{eq:info-density}
+\end{equation}
+%
+Used for:
+\begin{itemize}
+  \item collapse behaviour heuristics,
+  \item coarse-graining fidelity loss tracking,
+  \item MIT alignment scoring.
+\end{itemize}
+
+% ·········································································
+\subsubsection*{0.1.3$'$.3\quad Canonical Container Geometry
+               Approximation}
+\addcontentsline{toc}{subsubsection}%
+  {0.1.3$'$.3 Canonical Container Geometry Approximation}
+\label{sec:container-geometry}
+
+For computational purposes, define an effective interaction envelope:
+%
+\begin{equation}
+  \Omega_i =
+  \bigl(
+    R_i,\;
+    \mathcal{T}_i(\theta,\phi),\;
+    \rho_i(r)
+  \bigr)
+  \label{eq:envelope}
+\end{equation}
+
+\paragraph{Effective radius.}
+
+\begin{equation}
+  R_i = \alpha_Z \, Z_i^{\,1/3} + \alpha_Q \, |Q_i|
+  \label{eq:effective-radius}
+\end{equation}
+
+\paragraph{Angular texture.}
+
+\begin{equation}
+  \mathcal{T}_i(\theta,\phi) =
+  \sum_{\ell=0}^{L}
+  \sum_{m=-\ell}^{\ell}
+  a_{\ell m}\, Y_{\ell m}(\theta,\phi)
+  \label{eq:angular-texture}
+\end{equation}
+
+\paragraph{Radial density envelope.}
+
+\begin{equation}
+  \rho_i(r) = \rho_0 \, e^{-r/\lambda_i}
+  \label{eq:radial-density}
+\end{equation}
+
+This allows identical species to share container topology while
+differing only in parameterisation.
+
+
+% ════════════════════════════════════════════════════════════════════════════
+%  PRIMED EXTENSION: Computational Annotation Extension Layer
+% ════════════════════════════════════════════════════════════════════════════
+
+\bigskip
+\subsection*{0.1.4$'$\quad Computational Annotation Extension Layer}
+\addcontentsline{toc}{subsection}%
+  {0.1.4$'$ Computational Annotation Extension Layer}
+\label{sec:comp-annotation}
+
+These attributes are not fundamental physics.
+They exist because compute is finite and because unstructured
+metadata degrades into noise.
+
+Define:
+%
+\begin{equation}
+  \boldC_i^{\,\mathrm{comp}} =
+  \begin{bmatrix}
+    \Gamma_i \\ \Xi_i \\ \Pi_i \\ \Upsilon_i
+  \end{bmatrix}
+  \label{eq:comp-annotation}
+\end{equation}
+
+\paragraph{Complexity class tag \texorpdfstring{$\Gamma_i$}{Gamma-i}.}
+
+\[
+  \Gamma_i \in \{0,\,1,\,2,\,3,\,4\}
+\]
+
+Used for adaptive solver selection:
+%
+\begin{center}
+\begin{tabular}{cl}
+  \toprule
+  Value & Meaning \\
+  \midrule
+  0 & inert, low interaction \\
+  1 & pairwise dominant \\
+  2 & directional bonding \\
+  3 & collective electron behaviour \\
+  4 & multi-scale coupled \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Interaction kernel selector
+          \texorpdfstring{$\Xi_i$}{Xi-i}.}
+
+Maps particle to preferred interaction kernel family:
+\[
+  \Xi_i \in
+  \{\,\text{LJ},\;
+     \text{Coulomb},\;
+     \text{Screened},\;
+     \text{EAM-like},\;
+     \text{Hybrid}\,\}
+\]
+Allows hot-swapping physics models without identity rewrite.
+
+\paragraph{Solver priority weight
+          \texorpdfstring{$\Pi_i$}{Pi-i}.}
+
+\[
+  \Pi_i \in [0,\,1]
+\]
+
+Used in adaptive timestep / refinement scheduling:
+%
+\begin{equation}
+  \Delta t_i = \frac{\Delta t_{\max}}{1 + \beta\,\Pi_i}
+  \label{eq:adaptive-dt}
+\end{equation}
+
+\paragraph{Annotation confidence
+          \texorpdfstring{$\Upsilon_i$}{Upsilon-i}.}
+
+Tracks reliability of assigned metadata:
+\begin{equation}
+  \Upsilon_i = 1 - P(\text{misclassification})
+  \label{eq:annotation-confidence}
+\end{equation}
+Critical for self-audit subsystems.
+
+% ·········································································
+\subsubsection*{0.1.4$'$.5\quad Container Invariance Condition}
+\addcontentsline{toc}{subsubsection}%
+  {0.1.4$'$.5 Container Invariance Condition}
+\label{sec:container-invariance}
+
+For identical species:
+%
+\begin{equation}
+  \mathcal{C}_i \equiv \mathcal{C}_j
+  \quad \text{iff} \quad
+  \boldI_i = \boldI_j
+  \;\land\;
+  \boldG_i = \boldG_j
+  \label{eq:container-invariance}
+\end{equation}
+
+But computational layers may differ:
+\[
+  \boldC_i^{\,\mathrm{comp}} \neq \boldC_j^{\,\mathrm{comp}}
+\]
+
+This is deliberate and necessary for performance scaling.
+
+% ·········································································
+\subsubsection*{0.1.4$'$.6\quad Practical Consequence}
+\addcontentsline{toc}{subsubsection}%
+  {0.1.4$'$.6 Practical Consequence}
+\label{sec:container-consequence}
+
+\noindent\textbf{Physics layer.}
+Identical particle $=$ identical fundamental container.
+
+\medskip
+\noindent\textbf{Compute layer.}
+Identical particle can be simulated differently depending on context.
+
+\medskip
+\noindent
+That is exactly how you triple effective data density without
+multiplying particle count or neighbour graph size.
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\subsection{Cells}
+\label{sec:cell-container}
+% ════════════════════════════════════════════════════════════════════════════
+
+% ·········································································
+\subsubsection{Postulate}
+\label{sec:cell-postulate}
+
+A simulation ``cell'' (molecular box, periodic crystal cell, or
+derived supercell) is represented as a minimal container:
+%
+\begin{equation}
+  \mathcal{K} =
+  \bigl(
+    \boldK^{\mathrm{id}},\;
+    \boldK^{\mathrm{geom}},\;
+    \boldK^{\mathrm{comp}}
+  \bigr)
+  \label{eq:cell-container}
+\end{equation}
+%
+where:
+\begin{itemize}
+  \item $\boldK^{\mathrm{id}}$ is immutable lineage / provenance,
+  \item $\boldK^{\mathrm{geom}}$ is the geometric definition of the cell,
+  \item $\boldK^{\mathrm{comp}}$ is the minimal computational annotation
+        payload (caches are explicitly \emph{not} part of the container).
+\end{itemize}
+
+% ·········································································
+\subsubsection{Lineage \texorpdfstring{$\boldK^{\mathrm{id}}$}{Kid}}
+\label{sec:cell-identity}
+
+\begin{equation}
+  \boldK^{\mathrm{id}} =
+  \begin{bmatrix}
+    \Theta_{\mathcal{K}} \\[3pt]
+    \Pi_{\mathcal{K}} \\[3pt]
+    F_{\mathcal{K}}
+  \end{bmatrix}
+  \label{eq:cell-identity}
+\end{equation}
+
+\paragraph{Provenance hash.}
+\[
+  \Theta_{\mathcal{K}} =
+  \mathcal{H}\!\bigl(\text{sources},\;
+                      \text{recipe},\;
+                      \text{version}\bigr)
+\]
+
+\paragraph{Pipeline / recipe identifier.}
+\[
+  \Pi_{\mathcal{K}} \in \Bset^{n}, \qquad n \in [64,\,256]
+\]
+(hash of ordered construction steps).
+
+\paragraph{Source layer flag.}
+\[
+  F_{\mathcal{K}} \in \{Z,\,A,\,C\}
+\]
+matching the \texttt{XYZFormat} enumeration.
+
+\medskip\noindent
+This is the cell-level analogue of the particle provenance memory
+$\Theta_i$, except it fingerprints \emph{structure lineage}, not a
+single site.
+
+% ·········································································
+\subsubsection{Geometry \texorpdfstring{$\boldK^{\mathrm{geom}}$}{Kgeom}}
+\label{sec:cell-geometry}
+
+The cell geometry is defined by a lattice matrix and a boundary mode.
+
+\paragraph{Lattice matrix.}
+Let the lattice vectors be
+$\mathbf{a},\,\mathbf{b},\,\mathbf{c} \in \R^3$.  Then:
+%
+\begin{equation}
+  \boldL =
+  \begin{bmatrix}
+    \mathbf{a}^{\!\top} \\
+    \mathbf{b}^{\!\top} \\
+    \mathbf{c}^{\!\top}
+  \end{bmatrix}
+  \in \R^{3 \times 3}
+  \label{eq:lattice-matrix}
+\end{equation}
+%
+Cell volume: $\;V = \det(\boldL)$.
+
+\paragraph{Boundary condition mode.}
+\[
+  \mathcal{B} \in \{\text{vac},\;\text{pbc},\;\text{slab}\}
+\]
+
+\noindent The geometry bundle is:
+\begin{equation}
+  \boldK^{\mathrm{geom}} =
+  \bigl[\,
+    \boldL,\;\;
+    \mathcal{B},\;\;
+    \mathbf{u}
+  \,\bigr]
+  \label{eq:cell-geometry}
+\end{equation}
+where $\mathbf{u}$ denotes units metadata (e.g.\ \AA).
+
+\paragraph{Replication (supercell operator).}
+
+For constructed cells:
+\begin{equation}
+  \mathbf{n} = (n_x,\,n_y,\,n_z) \in \N^3,
+  \qquad
+  \boldL' = \mathrm{diag}(\mathbf{n})\,\boldL
+  \label{eq:supercell}
+\end{equation}
+
+% ·········································································
+\subsubsection{Annotations \texorpdfstring{$\boldK^{\mathrm{comp}}$}{Kcomp}}
+\label{sec:cell-comp}
+
+Intentionally small and non-physical:
+%
+\begin{equation}
+  \boldK^{\mathrm{comp}} =
+  \begin{bmatrix}
+    \Gamma_{\mathcal{K}} \\[3pt]
+    \Xi_{\mathcal{K}} \\[3pt]
+    \Upsilon_{\mathcal{K}}
+  \end{bmatrix}
+  \label{eq:cell-comp}
+\end{equation}
+
+\paragraph{Complexity class.}
+$\;\Gamma_{\mathcal{K}} \in \{0,\,1,\,2,\,3\}$
+\;(0: molecule, 1: small periodic, 2: bulk candidate,
+   3: coupled / heterogeneous).
+
+\paragraph{Kernel family selector.}
+$\;\Xi_{\mathcal{K}} \in
+  \{\text{pairwise},\;\text{screened},\;
+   \text{EAM-like},\;\text{hybrid}\}$
+
+\paragraph{Annotation confidence.}
+$\;\Upsilon_{\mathcal{K}} = 1 - P(\text{misclassification})$
+
+\bigskip\noindent
+\textbf{Explicit exclusion:}
+Runtime caches (bonds, neighbour lists, acceleration structures)
+are not part of~$\mathcal{K}$; they live in a separate mutable
+cache set:
+%
+\begin{equation}
+  \mathcal{M}_{\mathcal{K}}(t) =
+  \{\,\text{bonds},\;
+     \text{neighbour lists},\;
+     \text{BVH},\;
+     \text{RDF bins},\;
+     \ldots\,\}
+  \label{eq:cell-cache}
+\end{equation}
+
+% ·········································································
+\subsubsection{Contents}
+\label{sec:cell-content}
+
+A cell contains particles (or clusters) each with its own container:
+\[
+  \mathcal{K} \;\Rightarrow\;
+  \{\mathcal{C}_i\}_{i=1}^{N}
+\]
+Optionally with a connectivity relation~$\mathcal{E}$ (bonds /
+adjacency) treated as derived:
+\begin{equation}
+  \mathcal{E} = \mathrm{Infer}\!\bigl(
+    \{\boldS_i\},\;
+    \{\boldI_i\},\;
+    \boldL,\;
+    \mathcal{B}
+  \bigr)
+  \label{eq:connectivity}
+\end{equation}
+
+% ·········································································
+\subsubsection{Implementation}
+\label{sec:cell-comparison}
+
+\begin{remark}[Alignment with \texttt{Crystal.hpp}]
+The existing implementation already aligns with the container split:
+%
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{>{\ttfamily}l c X}
+  \toprule
+  \textnormal{Code field} & $\longleftrightarrow$ & Formal layer \\
+  \midrule
+  xyz\_path, xyzA\_path, xyzC\_path
+    & & $\boldK^{\mathrm{id}}$ (immutable references) \\
+  lattice, replication
+    & & $\boldK^{\mathrm{geom}}$ (geometry) \\
+  ConstructionRecipe\{steps, hash\}
+    & & $\Pi_{\mathcal{K}},\;\Theta_{\mathcal{K}}$ (recipe lineage) \\
+  mutable inferred\_bonds, bonds\_computed
+    & & $\mathcal{M}_{\mathcal{K}}(t)$ (caches, explicitly mutable) \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+%
+The notation imposes one discipline: caches never become ``truth.''
+Humans enjoy turning caches into truth, then acting surprised when
+it rots.
+\end{remark}
+
+If you keep your cell container this minimal, you get: deterministic
+rebuild decisions, clean coarse-graining transitions, and provenance
+you can actually defend in writing.
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\subsection{Worlds}
+\label{sec:world-container}
+% ════════════════════════════════════════════════════════════════════════════
+
+% ·········································································
+\subsubsection{Definition}
+\label{sec:world-def}
+
+Define a world (a simulation ``instance'' that may contain many
+cells, phases, or time segments) as:
+%
+\begin{equation}
+  \mathcal{W} =
+  \bigl(
+    W^{\mathrm{id}},\;\;
+    W^{\mathrm{top}},\;\;
+    W^{\mathrm{ctrl}},\;\;
+    W^{\mathrm{comp}}
+  \bigr)
+  \label{eq:world}
+\end{equation}
+%
+\begin{itemize}
+  \item $W^{\mathrm{id}}$: immutable provenance + dataset identity,
+  \item $W^{\mathrm{top}}$: topology — cells, links, domains, boundaries,
+  \item $W^{\mathrm{ctrl}}$: run controls — integrators, schedules, objectives,
+  \item $W^{\mathrm{comp}}$: minimal compute annotation (not caches).
+\end{itemize}
+
+\noindent
+Runtime caches are again excluded and live in
+$\mathcal{M}_{\mathcal{W}}(t)$.
+
+% ·········································································
+\subsubsection{Identity \texorpdfstring{$W^{\mathrm{id}}$}{Wid}}
+\label{sec:world-identity}
+
+\begin{equation}
+  W^{\mathrm{id}} =
+  \bigl[\,
+    \Theta_{\mathcal{W}},\;\;
+    \Pi_{\mathcal{W}},\;\;
+    D_{\mathcal{W}},\;\;
+    \tau_{\mathcal{W}}
+  \,\bigr]
+  \label{eq:world-identity}
+\end{equation}
+
+\paragraph{World provenance hash.}
+\begin{equation}
+  \Theta_{\mathcal{W}} =
+  \mathcal{H}\!\bigl(
+    \{\Theta_{\mathcal{K}_m}\},\;
+    \text{controls},\;
+    \text{code version}
+  \bigr)
+  \label{eq:world-hash}
+\end{equation}
+
+\paragraph{Pipeline identifier.}
+\[
+  \Pi_{\mathcal{W}} \in \Bset^{n}, \qquad n \in [128,\,512]
+\]
+
+\paragraph{Dataset manifest.}
+\begin{equation}
+  D_{\mathcal{W}} =
+  \bigl\{
+    (\text{path}_j,\;\text{fmt}_j,\;\text{hash}_j)
+  \bigr\}_{j=1}^{J}
+  \label{eq:dataset-manifest}
+\end{equation}
+
+\paragraph{Timebase / epoch definition.}
+
+Not ``\texttt{created\_utc}''—a real timebase:
+\begin{equation}
+  \tau_{\mathcal{W}} =
+  \bigl(t_0,\;\Delta t,\;\mathcal{T}\bigr)
+  \label{eq:timebase}
+\end{equation}
+where $\mathcal{T}$ is time domain type (continuous, bucketed,
+event-driven).
+
+% ·········································································
+\subsubsection{Topology \texorpdfstring{$W^{\mathrm{top}}$}{Wtop}}
+\label{sec:world-topology}
+
+World contains a set of cells:
+\[
+  \{\mathcal{K}_m\}_{m=1}^{M}
+\]
+and a connectivity graph describing interactions / adjacency /
+exchange between cells:
+\begin{equation}
+  G_{\mathcal{W}} = (V,\,E),
+  \qquad V = \{1,\ldots,M\}
+  \label{eq:world-graph}
+\end{equation}
+
+Each edge $e = (u,v) \in E$ carries a boundary operator:
+\begin{equation}
+  B_{uv} =
+  \bigl(
+    X_{uv},\;\;
+    R_{uv},\;\;
+    S_{uv}
+  \bigr)
+  \label{eq:boundary-operator}
+\end{equation}
+%
+\begin{itemize}
+  \item $X_{uv}$: exchange type (matter, charge, heat, constraints),
+  \item $R_{uv}$: mapping operator (index map, ghost region,
+        interpolation),
+  \item $S_{uv}$: schedule (when exchange occurs).
+\end{itemize}
+
+\noindent Minimal world topology bundle:
+\begin{equation}
+  W^{\mathrm{top}} =
+  \bigl[\,
+    \{\mathcal{K}_m\},\;\;
+    G_{\mathcal{W}}
+  \,\bigr]
+  \label{eq:world-top}
+\end{equation}
+
+\noindent
+This is how you model multi-phase systems, slabs + vacuum cells,
+reservoirs, defect domains, coarse-grained / atomistic coupling —
+without duct-taping everything into one mega-cell.
+
+% ·········································································
+\subsubsection{Controls \texorpdfstring{$W^{\mathrm{ctrl}}$}{Wctrl}}
+\label{sec:world-ctrl}
+
+Controls are not ``global variables''; they are a formal program.
+%
+\begin{equation}
+  W^{\mathrm{ctrl}} =
+  \bigl[\,
+    \mathcal{I},\;\;
+    \mathcal{O},\;\;
+    \mathcal{S},\;\;
+    \mathcal{A}
+  \,\bigr]
+  \label{eq:world-ctrl}
+\end{equation}
+
+\paragraph{Integrator family.}
+$\;\mathcal{I} \in \{\text{MD},\;\text{MC},\;\text{hybrid},\;\text{relax}\}$
+
+\paragraph{Objectives (scoring / constraints).}
+\begin{equation}
+  \mathcal{O} = \{O_k\}_{k=1}^{K},
+  \qquad O_k : \mathcal{W} \to \R
+  \label{eq:objectives}
+\end{equation}
+
+\paragraph{Schedule (what runs when).}
+\begin{equation}
+  \mathcal{S} = \{(t_j,\;\mathrm{op}_j)\}_{j=1}^{J}
+  \label{eq:schedule}
+\end{equation}
+
+\paragraph{Audit policy (self-checks).}
+\begin{equation}
+  \mathcal{A} = \{A_\ell\}_{\ell=1}^{L},
+  \qquad A_\ell : \mathcal{W} \to \{0,\,1\}
+  \label{eq:audit-policy}
+\end{equation}
+
+\noindent
+This makes the always-on self-auditing system first-class, not an
+afterthought.
+
+% ·········································································
+\subsubsection{Annotations \texorpdfstring{$W^{\mathrm{comp}}$}{Wcomp}}
+\label{sec:world-comp}
+
+\begin{equation}
+  W^{\mathrm{comp}} =
+  \begin{bmatrix}
+    \Gamma_{\mathcal{W}} \\[3pt]
+    \Xi_{\mathcal{W}} \\[3pt]
+    \Upsilon_{\mathcal{W}}
+  \end{bmatrix}
+  \label{eq:world-comp}
+\end{equation}
+
+Complexity class, kernel family selector, annotation confidence.
+Same pattern as particle and cell.
+Consistency is boring, which is why it works.
+
+% ·········································································
+\subsubsection{Caches}
+\label{sec:world-cache}
+
+\begin{equation}
+  \mathcal{M}_{\mathcal{W}}(t) =
+  \{\,\text{neighbour lists},\;
+     \text{domain decompositions},\;
+     \text{GPU buffers},\;
+     \text{BVHs},\;
+     \text{RDF histograms},\;
+     \text{FFT plans},\;
+     \ldots\,\}
+  \label{eq:world-cache}
+\end{equation}
+
+These are derivable artifacts.  If you serialise them, it is only as
+optional acceleration, never as truth.
+
+
+% ════════════════════════════════════════════════════════════════════════════
+%  0.3.7 — Nano–Meso Boundary Extensions
+% ════════════════════════════════════════════════════════════════════════════
+
+\bigskip
+\subsubsection*{0.3.7\quad Nano–Meso Boundary Extensions}
+\addcontentsline{toc}{subsubsection}{0.3.7 Nano–Meso Boundary Extensions}
+\label{sec:nano-meso}
+
+% ·········································································
+\paragraph{0.3.7.1\quad Surface–Interior Decomposition.}
+\label{sec:surface-interior}
+\mbox{}\\[0.4em]
+
+For any cell or domain $\mathcal{K}$ containing $N$ sites, define a
+partition into surface and interior subsets:
+\begin{equation}
+  \mathcal{K} = \mathcal{K}^{\partial}
+  \cup \mathcal{K}^{\circ},
+  \qquad
+  \mathcal{K}^{\partial}
+  \cap \mathcal{K}^{\circ} = \varnothing
+  \label{eq:surface-split}
+\end{equation}
+
+A minimal deterministic definition uses a local coordination deficit:
+\begin{equation}
+  \delta_i = z_{\text{bulk}}(Z_i,\,\Sigma_i) - z_i
+  \label{eq:coord-deficit}
+\end{equation}
+where $z_i$ is measured coordination, and $z_{\text{bulk}}$ is the
+expected interior coordination for species class
+$(Z_i,\,\Sigma_i)$.  Then:
+\[
+  i \in \mathcal{K}^{\partial}
+  \;\Longleftrightarrow\;
+  \delta_i \geq \delta_{\min},
+  \qquad
+  \text{else } i \in \mathcal{K}^{\circ}
+\]
+
+This split matters because the surface carries:
+\begin{itemize}
+  \item dominant chemical reactivity,
+  \item defect nucleation and healing,
+  \item adsorption and morphology selection,
+\end{itemize}
+while the interior carries:
+\begin{itemize}
+  \item bulk stiffness,
+  \item long-time stability regimes,
+  \item lattice ordering and transport baselines.
+\end{itemize}
+
+\noindent
+Coarse graining that erases this split produces beads with
+``average'' behaviour that matches nothing.
+
+% ·········································································
+\paragraph{0.3.7.2\quad Formation-Condition Determinism as a
+  First-Class Map.}
+\label{sec:formation-determinism}
+\mbox{}\\[0.4em]
+
+At the nano–meso boundary, emergent structure is highly sensitive to
+formation conditions.  The design goal is not to ``fit'' outcomes,
+but to model a deterministic projection from formation controls to
+mesoscopic identity.
+
+Define a formation condition vector:
+\begin{equation}
+  \mathcal{E} =
+  \bigl[\,
+    T(t),\;\;
+    c(t),\;\;
+    p(t),\;\;
+    P,\;\;
+    R
+  \,\bigr]
+  \label{eq:formation-conditions}
+\end{equation}
+where:
+\begin{itemize}
+  \item $T(t)$ is the thermal history (dominant driver),
+  \item $c(t)$ is composition / concentration history,
+  \item $p(t)$ is pressure history (or constraint proxy),
+  \item $P$ denotes pathway class (reaction / assembly route),
+  \item $R$ denotes environmental regime (solvent, vacuum, ionic
+        melt, etc.).
+\end{itemize}
+
+The core postulate for the boundary scale is:
+\begin{equation}
+  \boxed{\;
+    M(t^{*}) = \mathcal{F}\!\bigl(\mathcal{E}\bigr)
+  \;}
+  \label{eq:formation-map}
+\end{equation}
+where $M(t^{*})$ is a mesoscopic descriptor at the end of formation
+(or at a chosen observation epoch~$t^{*}$).
+
+This is framed positively because it is exactly what makes the
+nano–meso boundary scientifically valuable: formation is not noise,
+it is structure selection.
+
+% ·········································································
+\paragraph{0.3.7.3\quad Lower Meso Descriptor (Precise Boundary
+  Definition).}
+\label{sec:lower-meso}
+\mbox{}\\[0.4em]
+
+Define ``lower meso'' (nano–meso boundary) as the regime where:
+\begin{itemize}
+  \item individual atoms are no longer the preferred degrees of
+        freedom,
+  \item yet the structure is not fully bulk-continuum.
+\end{itemize}
+
+Operationally, represent the system as domains $D_k$ built from
+atoms:
+\[
+  D_k \subset \{1,\ldots,N\}, \qquad k = 1,\ldots,K
+\]
+
+Each domain carries a minimal descriptor vector:
+\begin{equation}
+  M_k =
+  \bigl[\,
+    \phi_k,\;\;
+    \psi_k,\;\;
+    \chi_k,\;\;
+    \omega_k,\;\;
+    E_k
+  \,\bigr]
+  \label{eq:meso-descriptor}
+\end{equation}
+where:
+
+\paragraph{Surface fraction.}
+\begin{equation}
+  \phi_k = \frac{|D_k^{\partial}|}{|D_k|}
+  \label{eq:surface-fraction}
+\end{equation}
+
+\paragraph{Ordering / crystallinity proxy.}
+Any stable scalar order parameter:
+\begin{equation}
+  \psi_k = \langle \Psi(\mathbf{r}_i) \rangle_{i \in D_k}
+  \label{eq:ordering}
+\end{equation}
+
+\paragraph{Defect density.}
+\begin{equation}
+  \chi_k = \frac{1}{|D_k|}
+  \sum_{i \in D_k}
+  \mathbf{1}[\delta_i \geq \delta_{\min}]
+  \label{eq:defect-density}
+\end{equation}
+
+\paragraph{Composition / identity mean.}
+\begin{equation}
+  \omega_k = \sum_{i \in D_k} w_i\, \boldI_i
+  \label{eq:comp-mean}
+\end{equation}
+
+\paragraph{Identity entropy (heterogeneity retained).}
+\begin{equation}
+  E_k = \Var(\boldI_i)_{i \in D_k}
+  \label{eq:identity-entropy}
+\end{equation}
+
+\medskip\noindent
+This is the boundary-scale sweet spot: you can now distinguish
+\begin{itemize}
+  \item uniform crystal domains vs.\ mixed disordered aggregates,
+  \item smooth surfaces vs.\ high-defect catalytic skins,
+  \item pathway-selected polymorphs vs.\ temperature-quenched glassy
+        states.
+\end{itemize}
+
+% ·········································································
+\paragraph{0.3.7.4\quad Temperature as the Dominant Deterministic
+  Driver.}
+\label{sec:temperature-driver}
+\mbox{}\\[0.4em]
+
+Treat temperature not as a scalar input but as a history operator:
+\begin{equation}
+  T(t) \;\Rightarrow\;
+  \beta(t) = \frac{1}{k_B\, T(t)}
+  \label{eq:inverse-temp}
+\end{equation}
+
+Formation and relaxation become biased flows on the state manifold:
+\begin{equation}
+  \frac{d\boldS}{dt} =
+  -\nabla U(\boldS;\,\boldI) + \eta(t)
+  \label{eq:biased-flow}
+\end{equation}
+but in deterministic coarse graining, the randomness term $\eta(t)$
+is replaced by a reproducible stencil driven by the provenance hash:
+\begin{equation}
+  \eta(t) \equiv
+  \mathcal{G}\!\bigl(\mathcal{H}(\boldI,\,\boldS,\,t)\bigr)
+  \label{eq:deterministic-noise}
+\end{equation}
+
+So the mapping $\mathcal{F}(\mathcal{E})$ remains stable across
+reruns.
+
+This is precisely why temperature is ``the main one'' at this
+boundary: thermal history controls which basins are accessible, which
+defects persist, and whether the surface freezes into metastable
+motifs.
+
+% ·········································································
+\paragraph{0.3.7.5\quad Emergence Is a Feature, Not a Problem.}
+\label{sec:emergence}
+\mbox{}\\[0.4em]
+
+The hard part is not that formation conditions influence outcome.
+The hard part is doing it without losing determinism and without
+lying about coarse-grained meaning.
+
+This framework treats emergence as a structured output:
+\[
+  \{M_k\}_{k=1}^{K} \;\text{is the emergence layer}
+\]
+and preserves the full trace:
+\begin{equation}
+  \mathcal{E}
+  \;\longrightarrow\;
+  M
+  \;\longrightarrow\;
+  \text{CG beads / fields}
+  \label{eq:emergence-trace}
+\end{equation}
+
+So rather than coarse graining being a destructive step, it becomes
+the formal bridge between formation physics and mesoscopic realism.
+
+% ════════════════════════════════════════════════════════════════════════════
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{Formation Engine Methodology v0.1 —
+          End of §0 (Pre-Section Theory Layer)}
+\end{center}
+
+\end{document}

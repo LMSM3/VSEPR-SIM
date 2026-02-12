@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XeF4 - VSEPR-Sim Viewer</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a1a; color: #eee; }
+        #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.85); padding: 20px; border-radius: 8px; max-width: 350px; border: 1px solid #333; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
+        #info h2 { margin: 0 0 15px 0; color: #4CAF50; font-size: 24px; border-bottom: 2px solid #4CAF50; padding-bottom: 8px; }
+        #info p { margin: 8px 0; font-size: 14px; line-height: 1.6; }
+        .label { color: #FFD700; font-weight: bold; display: inline-block; width: 100px; }
+        .value { color: #FFFFFF; }
+        .controls { margin-top: 15px; padding-top: 15px; border-top: 1px solid #444; font-size: 12px; color: #888; }
+        .controls kbd { background: #333; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #aaa; }
+        #stats { position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; font-size: 12px; }
+        .watermark { position: absolute; bottom: 10px; right: 10px; color: #444; font-size: 11px; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="info">
+        <h2>XeF4</h2>
+        <p><span class="label">Formula:</span> <span class="value">XeF4</span></p>
+        <p><span class="label">Atoms:</span> <span class="value">5</span></p>
+        <p><span class="label">Bonds:</span> <span class="value">4</span></p>
+        <p><span class="label">Source:</span> <span class="value">xenon_tetrafluoride.xyz</span></p>
+        
+        <div class="controls">
+            <p><kbd>Left Drag</kbd> Rotate • <kbd>Right Drag</kbd> Pan • <kbd>Scroll</kbd> Zoom</p>
+            <p><kbd>R</kbd> Reset View • <kbd>F</kbd> Toggle Fullscreen</p>
+        </div>
+    </div>
+    
+    <div id="stats">FPS: <span id="fps">--</span></div>
+    <div class="watermark">VSEPR-Sim Molecular Viewer • Generated from xenon_tetrafluoride.xyz</div>
+    
+    <script>
+        const atoms = [
+            {
+                        "element": "Xe",
+                        "x": 0.012052,
+                        "y": -0.003409,
+                        "z": -0.003122,
+                        "color": "#429EB0",
+                        "radius": 2.16
+            },
+            {
+                        "element": "F",
+                        "x": 1.268846,
+                        "y": -0.083534,
+                        "z": 1.485973,
+                        "color": "#90E050",
+                        "radius": 1.47
+            },
+            {
+                        "element": "F",
+                        "x": -1.626168,
+                        "y": -0.929805,
+                        "z": 0.507234,
+                        "color": "#90E050",
+                        "radius": 1.47
+            },
+            {
+                        "element": "F",
+                        "x": -0.253899,
+                        "y": 1.859615,
+                        "z": -0.513531,
+                        "color": "#90E050",
+                        "radius": 1.47
+            },
+            {
+                        "element": "F",
+                        "x": 0.838021,
+                        "y": -0.960029,
+                        "z": -1.488382,
+                        "color": "#90E050",
+                        "radius": 1.47
+            }
+];
+        const bonds = [
+            [
+                        0,
+                        1
+            ],
+            [
+                        0,
+                        2
+            ],
+            [
+                        0,
+                        3
+            ],
+            [
+                        0,
+                        4
+            ]
+];
+        
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a1a);
+        scene.fog = new THREE.Fog(0x0a0a1a, 10, 50);
+        
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(5, 5, 8);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        document.body.appendChild(renderer.domElement);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.minDistance = 2;
+        controls.maxDistance = 50;
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(ambientLight);
+        
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        keyLight.position.set(10, 10, 10);
+        scene.add(keyLight);
+        
+        const fillLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+        fillLight.position.set(-10, 0, -10);
+        scene.add(fillLight);
+        
+        const backLight = new THREE.DirectionalLight(0xff8844, 0.2);
+        backLight.position.set(0, -10, -10);
+        scene.add(backLight);
+        
+        // Draw atoms
+        const atomMeshes = [];
+        atoms.forEach((atom, i) => {
+            const geometry = new THREE.SphereGeometry(atom.radius / 10, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: atom.color,
+                shininess: 80,
+                specular: 0x666666,
+                emissive: atom.color,
+                emissiveIntensity: 0.1
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(atom.x, atom.y, atom.z);
+            sphere.userData = { element: atom.element, index: i };
+            scene.add(sphere);
+            atomMeshes.push(sphere);
+        });
+        
+        // Draw bonds
+        bonds.forEach(([i, j]) => {
+            const start = new THREE.Vector3(atoms[i].x, atoms[i].y, atoms[i].z);
+            const end = new THREE.Vector3(atoms[j].x, atoms[j].y, atoms[j].z);
+            const mid = start.clone().lerp(end, 0.5);
+            
+            // Half-bond coloring (each half gets atom's color)
+            const points1 = [start, mid];
+            const geometry1 = new THREE.BufferGeometry().setFromPoints(points1);
+            const material1 = new THREE.LineBasicMaterial({ 
+                color: atoms[i].color, 
+                linewidth: 2,
+                transparent: true,
+                opacity: 0.9
+            });
+            const bond1 = new THREE.Line(geometry1, material1);
+            scene.add(bond1);
+            
+            const points2 = [mid, end];
+            const geometry2 = new THREE.BufferGeometry().setFromPoints(points2);
+            const material2 = new THREE.LineBasicMaterial({ 
+                color: atoms[j].color, 
+                linewidth: 2,
+                transparent: true,
+                opacity: 0.9
+            });
+            const bond2 = new THREE.Line(geometry2, material2);
+            scene.add(bond2);
+        });
+        
+        // Add subtle coordinate grid
+        const gridHelper = new THREE.GridHelper(10, 10, 0x222244, 0x111122);
+        gridHelper.position.y = -3;
+        scene.add(gridHelper);
+        
+        // FPS counter
+        let frameCount = 0;
+        let lastTime = performance.now();
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // Gentle atom pulsing
+            const time = Date.now() * 0.001;
+            atomMeshes.forEach((mesh, i) => {
+                const scale = 1.0 + 0.05 * Math.sin(time * 2 + i * 0.5);
+                mesh.scale.set(scale, scale, scale);
+            });
+            
+            renderer.render(scene, camera);
+            
+            // Update FPS
+            frameCount++;
+            const now = performance.now();
+            if (now - lastTime >= 1000) {
+                document.getElementById('fps').textContent = frameCount;
+                frameCount = 0;
+                lastTime = now;
+            }
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'r' || e.key === 'R') {
+                camera.position.set(5, 5, 8);
+                camera.lookAt(0, 0, 0);
+                controls.reset();
+            }
+            if (e.key === 'f' || e.key === 'F') {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen();
+                } else {
+                    document.exitFullscreen();
+                }
+            }
+        });
+        
+        // Responsive resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        animate();
+    </script>
+</body>
+</html>

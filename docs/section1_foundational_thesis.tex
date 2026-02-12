@@ -1,0 +1,917 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+
+\geometry{letterpaper, margin=1in}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Section 1 — Foundational Thesis and Scope}
+\author{Formation Engine Development Team}
+\date{Version 0.1 — First Principles Draft}
+
+\begin{document}
+\maketitle
+
+\section{Motivation: The Emergence Boundary}
+
+Modern materials science operates across multiple descriptive regimes, each internally successful but structurally disconnected. Quantum methods provide high-fidelity descriptions of small systems but are computationally prohibitive for large ensembles. Classical force-field simulations scale efficiently but are rarely used as generative tools for structure discovery under explicit physical constraints. Mesoscale models often assume structural statistics rather than deriving them from underlying interaction physics.
+
+This creates a practical discontinuity: we can accurately describe systems \textit{once structure is known}, but we lack reproducible tools for generating physically admissible structural ensembles at intermediate scales. The result is an implicit reliance on heuristic structure selection and opaque initialization pipelines.
+
+The formation engine described in this work is motivated by this specific gap. It is not intended to replace higher-fidelity physics, nor to predict materials in isolation. Instead, it provides a reproducible computational instrument for generating and evaluating candidate structures under explicit physical assumptions, allowing structure to be treated as a measurable, auditable simulation output rather than an implicit starting condition.
+
+\subsection{Where Systems Stop Being Molecules}
+
+The transition from molecular to material behavior does not occur at a specific size threshold. Rather, it emerges when:
+
+\begin{itemize}
+\item Collective interactions dominate local bonding energetics
+\item Long-range order becomes thermodynamically significant
+\item Surface-to-volume effects no longer control system properties
+\item Statistical ensembles replace individual configuration determinism
+\end{itemize}
+
+For a 10-atom water cluster, the system is fundamentally molecular: each molecule retains discrete hydrogen-bonding identity, the cluster has a well-defined lowest-energy structure, and thermodynamic behavior is dominated by entropic mixing of conformers.
+
+For bulk liquid water at 300\,K with $10^{23}$ molecules, the system is fundamentally statistical: individual molecules are indistinguishable, the macroscopic state is defined by temperature and density, and thermodynamic behavior emerges from ensemble averages.
+
+The methodological challenge arises in the intermediate regime: 100-atom clusters, 1000-atom nanoparticles, 10,000-atom crystalline seeds. These systems are:
+
+\begin{itemize}
+\item Too large for brute-force quantum methods
+\item Too small for continuum approximations
+\item Too structured for pure statistical mechanics
+\item Too flexible for rigid lattice models
+\end{itemize}
+
+Existing tools tend to project these systems into one of the two established regimes — either treating them as large molecules (with increasingly intractable quantum calculations) or as small bulk samples (with questionable validity of thermodynamic limits). The formation engine is designed to operate natively in this intermediate regime.
+
+\subsection{The Opacity of Initialization}
+
+A recurring pattern in simulation workflows is the treatment of structure as an exogenous input. A typical protocol might read:
+
+\begin{quote}
+\textit{``The system was initialized in a face-centered cubic lattice with lattice parameter 5.64\,Å and equilibrated for 100\,ps at 300\,K before production sampling.''}
+\end{quote}
+
+This statement embeds several assumptions:
+
+\begin{enumerate}
+\item The initial lattice choice (FCC) is physically reasonable
+\item The equilibration time is sufficient to erase initial condition artifacts
+\item The final state is independent of the initialization path
+\item The structure has actually reached a relevant local minimum
+\end{enumerate}
+
+For well-studied systems (e.g., argon), these assumptions are often justified by decades of experimental validation. For novel compositions or non-equilibrium conditions, they represent unverified choices.
+
+The problem is not that these choices are wrong — often they are correct — but that they are \textit{opaque}. The physical reasoning behind the initialization is not recorded, the sensitivity to alternative initializations is not tested, and the provenance of the starting structure is not preserved.
+
+This creates a reproducibility gap. If someone attempts to replicate the simulation with a different initialization protocol, differences in results cannot be cleanly attributed to:
+
+\begin{itemize}
+\item Physical sensitivity to initial conditions
+\item Implementation differences in the integration scheme
+\item Numerical precision artifacts
+\item Errors in the reported protocol
+\end{itemize}
+
+The formation engine addresses this by treating initialization not as a preparatory step but as a \textbf{primary experimental parameter}. Every structure generated by the engine carries full provenance: the seed that controlled stochastic sampling, the temperature and density conditions, the force field parameters, and the convergence criteria. This transforms initialization from an opaque procedure into an auditable record.
+
+\subsection{The Missing Middle Layer}
+
+The computational materials science landscape has clear strengths at two extremes:
+
+\paragraph{Small-system quantum methods} deliver chemical accuracy for molecules and clusters up to $\sim$100 atoms. Density functional theory (DFT), coupled cluster methods, and configuration interaction provide energies and forces that can be directly compared to spectroscopic measurements. The limitation is computational cost: scaling ranges from $\mathcal{O}(N^3)$ for DFT to $\mathcal{O}(N^7)$ for high-level post-Hartree-Fock methods.
+
+\paragraph{Bulk statistical models} describe materials at thermodynamic equilibrium using ensemble-averaged properties. Coarse-grained models, continuum mechanics, and phenomenological theories provide tractable descriptions of systems with $10^{20}$ particles. The limitation is structural detail: these models assume structure rather than generating it.
+
+Between these regimes lies a middle layer — systems with 100 to 10,000 atoms — where neither extreme is fully satisfactory. This is precisely the scale where:
+
+\begin{itemize}
+\item Nanomaterials exhibit size-dependent properties
+\item Crystallization nuclei first exhibit bulk-like order
+\item Self-assembled structures reach functional complexity
+\item Surface reconstruction competes with bulk stability
+\end{itemize}
+
+Current approaches to this middle layer typically involve:
+
+\begin{enumerate}
+\item \textbf{Empirical structure databases}: Start from known crystal structures (ICSD, COD) and perturb them. This works only for compositions with documented structures.
+
+\item \textbf{Evolutionary algorithms}: Propose structures randomly and select based on energy. This often converges slowly and produces unphysical intermediate states.
+
+\item \textbf{Machine learning surrogates}: Train on existing data to predict properties. This requires training data and does not generalize beyond the training distribution.
+
+\item \textbf{Heuristic builders}: Use chemical intuition (VSEPR, Pauling rules) to construct starting points. This relies on chemist expertise and may miss non-intuitive structures.
+\end{enumerate}
+
+Each approach has merit. The formation engine does not replace them. Instead, it provides an alternative pathway: generate structures through physically motivated dynamics, classify the results, and build ensembles that can be interrogated statistically.
+
+The key distinction is that the formation engine generates structure ensembles \textit{under declared physical constraints}, not through black-box optimization or data-driven fitting. This makes it complementary to, rather than competitive with, existing tools.
+
+\section{The Failure Mode of Current Toolchains}
+
+To understand the design philosophy of the formation engine, it is useful to examine where existing simulation toolchains encounter limitations. This is not a critique of individual methods — each is successful within its intended domain — but an observation about the \textit{integration gaps} between them.
+
+\subsection{Quantum Methods: The Tractability Ceiling}
+
+Quantum chemistry provides the gold standard for molecular energetics and electronic structure. However, practical quantum calculations face hard computational limits:
+
+\begin{itemize}
+\item \textbf{DFT}: $\mathcal{O}(N^3)$ scaling limits routine calculations to $\sim$200 atoms
+\item \textbf{MP2}: $\mathcal{O}(N^5)$ scaling limits routine calculations to $\sim$50 atoms  
+\item \textbf{CCSD(T)}: $\mathcal{O}(N^7)$ scaling limits routine calculations to $\sim$20 atoms
+\end{itemize}
+
+Linear-scaling and fragment-based methods extend these limits, but they introduce approximations that must be validated case-by-case.
+
+For formation problems, quantum methods face a more fundamental challenge: \textbf{they are not inherently generative}. A quantum calculation evaluates the energy and forces at a single geometry. To explore the configuration space of a 100-atom cluster:
+
+\begin{enumerate}
+\item Generate candidate structures (via some other method)
+\item Run quantum calculations on each candidate
+\item Compare energies to identify low-energy structures
+\end{enumerate}
+
+This is computationally tractable only if the number of candidates is small (dozens, not thousands). Exhaustive sampling is impossible.
+
+The formation engine does not replace quantum methods. Instead, it generates physically plausible candidate structures that can then be refined with higher-fidelity calculations. This is the standard protocol in computational chemistry: coarse search followed by fine refinement.
+
+The distinction is that the formation engine makes the coarse search reproducible and auditable.
+
+\subsection{Force Field Molecular Dynamics: The Generative Gap}
+
+Classical molecular dynamics (MD) using empirical force fields is the workhorse of biomolecular simulation and materials modeling. It scales to millions of atoms and microsecond timescales.
+
+However, force field MD is rarely used as a \textit{structure discovery} tool. The typical workflow assumes the starting structure:
+
+\begin{enumerate}
+\item Start from experimental structure (PDB, CIF)
+\item Equilibrate to the target temperature
+\item Sample from the equilibrated ensemble
+\end{enumerate}
+
+This works beautifully for studying dynamics around a known structure — protein folding, ligand binding, phase transitions — but it does not generate structure de novo.
+
+Attempts to use MD for structure discovery encounter three challenges:
+
+\paragraph{Initialization bias} If the initial configuration is far from equilibrium (e.g., random placement of atoms), the system often gets trapped in high-energy metastable states rather than finding the global minimum.
+
+\paragraph{Timescale separation} Structural relaxation may require milliseconds, while MD timesteps are femtoseconds. The resulting $10^9$-step simulations are often impractical.
+
+\paragraph{Ergodicity breaking} At low temperatures, the system may fail to cross energy barriers between basins, meaning the sampled ensemble depends on the starting configuration.
+
+Enhanced sampling methods (replica exchange, metadynamics, umbrella sampling) address these issues but require careful tuning and are not fully automated.
+
+The formation engine uses MD not as an equilibration tool but as an \textbf{exploration tool}. Short dynamical runs at elevated temperature allow the system to cross barriers. Periodic quenching extracts local minima. Multiple seeds generate an ensemble of structures. The goal is not to sample thermal fluctuations but to discover stable configurations.
+
+\subsection{Mesoscale Models: The Structure Assumption}
+
+Coarse-grained and continuum models describe materials at scales where atomistic detail is impractical. These models assume:
+
+\begin{itemize}
+\item Local structure is known (e.g., amorphous, crystalline FCC)
+\item Interactions are parameterized phenomenologically
+\item Thermodynamic properties emerge from ensemble statistics
+\end{itemize}
+
+This works when the material structure is well-characterized. For novel compositions or non-equilibrium conditions, the structure assumption becomes a liability.
+
+Consider modeling a binary alloy $\text{A}_x\text{B}_{1-x}$. A continuum model might assume:
+
+\begin{itemize}
+\item Phase-separated domains with sharp interfaces
+\item Random solid solution with uniform mixing
+\item Ordered superlattice with specific stoichiometry
+\end{itemize}
+
+Each assumption leads to different predicted properties. Without experimental guidance or atomistic calculations, choosing the correct structure is guesswork.
+
+The formation engine provides a bridge: generate atomistic structures at intermediate scales, extract structural statistics (coordination numbers, radial distribution functions), and use those statistics to parameterize coarse-grained models.
+
+This is not a replacement for mesoscale modeling but a way to ground mesoscale assumptions in atomistically generated structure.
+
+\subsection{Data-Driven Methods: Correlation Without Constraint}
+
+Machine learning has transformed materials informatics, enabling rapid screening of millions of hypothetical compounds. However, ML models face a fundamental limitation: they interpolate within the training distribution but extrapolate poorly outside it.
+
+For structure prediction, this means:
+
+\begin{itemize}
+\item \textbf{Training phase}: Learn patterns from known crystal structures (ICSD, Materials Project)
+\item \textbf{Prediction phase}: Propose structures for new compositions by interpolating learned patterns
+\end{itemize}
+
+This works when the new composition is chemically similar to the training set. For truly novel compositions — unusual stoichiometries, high-pressure phases, metastable polymorphs — the model has no physical constraint to guide it.
+
+Generative models (VAEs, GANs, diffusion models) address this by learning the \textit{distribution} of structures rather than individual mappings. However, they still face the same limitation: the learned distribution reflects the training data.
+
+The formation engine provides an alternative: generate structures through physical dynamics rather than statistical patterns. This does not eliminate the need for ML (ML can still be used for post-processing and classification) but ensures that the generated structures satisfy basic physical constraints (energy conservation, force balance, thermodynamic consistency).
+
+In this framework, ML becomes a \textit{filter} on physically generated candidates rather than the generator itself.
+
+\section{Philosophy: Physics-First Generative Simulation}
+
+The formation engine is built on four core principles that distinguish it from typical simulation frameworks.
+
+\subsection{Axiom 1: Explicit Units Everywhere}
+
+Every quantity in the framework has explicit units, and unit conversions are performed through named constants with full derivations.
+
+\paragraph{The Boltzmann constant:}
+\[
+k_B = 0.001987204\,\text{kcal/(mol·K)}
+\]
+
+This is not $k_B = 1$ in ``simulation units.'' This is the exact value in the framework's declared unit system (Ångströms, femtoseconds, kcal/mol, amu).
+
+\paragraph{The kinetic energy conversion:}
+\[
+C_{\text{KE}} = 2390.057
+\]
+
+This converts $\frac{1}{2}mv^2$ from amu·Å$^2$/fs$^2$ to kcal/mol. The derivation is documented:
+\[
+C_{\text{KE}} = \frac{(10^5\,\text{m/s per Å/fs})^2 \times 1.66054\times10^{-27}\,\text{kg/amu} \times N_A}{4184\,\text{J/kcal}}
+\]
+
+\paragraph{The Coulomb constant:}
+\[
+k_e = 332.0636\,\text{kcal·Å/(mol·e}^2\text{)}
+\]
+
+Every constant appears in the code exactly as written in the documentation. No hidden normalization. No silent factor-of-two corrections. No ``natural units'' where $\hbar = c = k_B = 1$.
+
+\textbf{Why this matters:} Unit errors are the most common source of catastrophic silent failures in simulation codes. A missing Avogadro constant, an incorrect unit conversion, a swapped mass/charge ratio — these produce results that look reasonable numerically but are physically meaningless.
+
+By making units explicit, the framework ensures that dimensional analysis can catch errors at compile time (via strong typing) or runtime (via unit-aware assertions).
+
+\subsection{Axiom 2: No Hidden Normalization}
+
+Many simulation codes internally normalize quantities to simplify numerics:
+\begin{itemize}
+\item Distances scaled by the van der Waals radius: $r \to r/\sigma$
+\item Energies scaled by the well depth: $U \to U/\varepsilon$  
+\item Temperatures scaled by the critical temperature: $T \to T/T_c$
+\end{itemize}
+
+These ``reduced units'' make sense for single-component Lennard-Jones systems where every particle has the same $\sigma$ and $\varepsilon$. They become a source of confusion and error in multi-component systems where different atom types have different normalization factors.
+
+The formation engine never normalizes. Positions are always in Ångströms. Energies are always in kcal/mol. Temperatures are always in Kelvin.
+
+If you read a position from the state and write it to a file, the number you see is the position in Ångströms. No hidden factors. No back-conversion. No ambiguity.
+
+\subsection{Axiom 3: No Silent Domain Switching}
+
+Some frameworks automatically switch between models based on system properties:
+\begin{itemize}
+\item Use quantum mechanics for small systems ($N < 50$)
+\item Use force fields for medium systems ($50 < N < 10{,}000$)
+\item Use coarse-grained models for large systems ($N > 10{,}000$)
+\end{itemize}
+
+This is a reasonable design for automated workflows, but it introduces a reproducibility hazard: the model selection logic is implementation-dependent and may not be documented.
+
+The formation engine requires explicit model selection. The user specifies:
+\begin{itemize}
+\item The force field (Lennard-Jones + Coulomb, or bonded MM, or combined)
+\item The integrator (velocity Verlet, Langevin, FIRE)
+\item The boundary conditions (periodic box or open space)
+\end{itemize}
+
+Once specified, the model does not change during the simulation. No adaptive switching. No behind-the-scenes optimization. The physics is declared upfront and applied consistently.
+
+\subsection{Axiom 4: Deterministic Core + Stochastic Exploration Layer}
+
+The formation engine separates two distinct concepts that are often conflated:
+
+\paragraph{Deterministic physics:} Once the system state is known (positions, velocities, identities), the evolution is deterministic. The same initial state always produces the same trajectory. This is Newton's laws.
+
+\paragraph{Stochastic exploration:} The initial state is drawn from a probability distribution. Different random seeds produce different initial states, and therefore different trajectories. This is statistical sampling.
+
+The key insight: \textbf{the physics is deterministic; only the sampling is stochastic}.
+
+This matters because:
+\begin{itemize}
+\item Reproducibility is guaranteed: the same seed produces the same result
+\item Ensemble generation is explicit: different seeds explore different basins
+\item Convergence can be tested: when the ensemble statistics stabilize, sampling is sufficient
+\end{itemize}
+
+Many frameworks inject stochasticity into the physics itself (e.g., Langevin dynamics with random forces). This is physically justified for modeling thermal fluctuations in contact with a heat bath. But it must be clearly distinguished from stochastic sampling.
+
+In the formation engine:
+\begin{itemize}
+\item NVE dynamics: fully deterministic physics, stochastic initial conditions
+\item NVT dynamics: stochastic forces for thermalization, but still seeded and reproducible
+\item FIRE minimization: deterministic once started, but initial velocities are sampled
+\end{itemize}
+
+The rule is simple: \textbf{all randomness is controlled by the seed}.
+
+\section{The Tool as an Instrument, Not a Claim}
+
+This work does not attempt to directly predict new materials, nor does it attempt to replace quantum chemistry or high-fidelity electronic structure methods. Instead, it defines and implements a reproducible structure-generation instrument operating under explicitly declared physical assumptions.
+
+In experimental science, progress rarely begins with discovery; it begins with instrumentation. Microscopes preceded cell theory. Spectroscopy preceded modern quantum chemistry. In this same spirit, the formation engine described here is positioned as an observational and generative instrument for exploring the space between atomic structure and emergent material behavior.
+
+The distinction is intentional. Discovery claims require validation pipelines far beyond the scope of a single computational framework. Instrument claims require only that:
+
+\begin{enumerate}
+\item The assumptions are explicit
+\item The physics is internally consistent  
+\item The outputs are reproducible
+\item The failure modes are observable and classifiable
+\end{enumerate}
+
+This work therefore focuses on building a tool that produces physically interpretable ensembles, rather than asserting material novelty or predictive dominance.
+
+\subsection{The Microscope Analogy}
+
+When Antonie van Leeuwenhoek first observed bacteria under a microscope in 1676, he did not publish ``A Theory of Microbial Life.'' He published detailed observational reports: drawings of what he saw, descriptions of sample preparation, specifications of lens magnification.
+
+The microscope was not a discovery claim. It was an \textit{instrument that enabled discovery}.
+
+The formation engine follows the same philosophy. It does not claim to predict which crystal structure iron will adopt at 100\,GPa. It provides an instrument for:
+
+\begin{itemize}
+\item Generating candidate structures under specified conditions
+\item Evaluating their energetic stability
+\item Classifying their structural motifs
+\item Recording the full provenance of how they were generated
+\end{itemize}
+
+Other researchers can then take those candidates and refine them with DFT, compare them to experiments, or use them as starting points for enhanced sampling.
+
+The value is not in the final answer but in the \textit{reproducible generation protocol}.
+
+\subsection{What Instrument Claims Require}
+
+An instrument paper must demonstrate four things:
+
+\paragraph{1. Explicit assumptions}
+
+Every approximation is documented:
+\begin{itemize}
+\item Classical mechanics (Born-Oppenheimer approximation)
+\item Pairwise additive potentials (Lennard-Jones + Coulomb)
+\item Harmonic bonded terms (valid near equilibrium)
+\item Finite cutoff radius (neglects long-range dispersion tail)
+\end{itemize}
+
+The framework does not hide these. Section~3 of the full methodology document derives every potential, specifies every parameter, and explains where the approximation breaks down.
+
+\paragraph{2. Internal consistency}
+
+Physical conservation laws are tested:
+\begin{itemize}
+\item Energy drift in NVE dynamics: $|\Delta E|/N < 10^{-3}$\,kcal/mol over $10^4$ steps
+\item Momentum conservation: $|\mathbf{P}(t) - \mathbf{P}(0)| < 10^{-10}$
+\item Temperature stability in NVT: $|\langle T \rangle - T_{\text{target}}|/T_{\text{target}} < 0.05$
+\end{itemize}
+
+These are not performance benchmarks. They are \textit{sanity checks} that the code implements the stated physics correctly.
+
+\paragraph{3. Reproducibility}
+
+The same inputs produce the same outputs:
+\begin{itemize}
+\item Same formula + same seed + same parameters = bit-identical result
+\item Cross-platform reproducibility (Linux, Windows, macOS)
+\item Version-pinned dependencies (library versions recorded in output files)
+\end{itemize}
+
+This is enforced through:
+\begin{itemize}
+\item Seeded random number generation (\texttt{std::mt19937})
+\item Index-ordered force evaluation (no thread-dependent accumulation)
+\item IEEE 754 floating-point compliance (no fast-math flags)
+\end{itemize}
+
+\paragraph{4. Observable failure modes}
+
+When the simulation fails, the failure is classified:
+\begin{itemize}
+\item NUMERICAL: NaN, overflow, loss of precision
+\item PHYSICS: Atom overlap, unphysical velocities  
+\item OUT-OF-DOMAIN: Undefined parameters, unsupported composition
+\item CONVERGENCE: FIRE stalled, energy plateau
+\end{itemize}
+
+The self-audit system (Section~11) logs every failure with a minimal reproduction command. This allows systematic debugging rather than case-by-case troubleshooting.
+
+\subsection{The Periodic Table as Sole Authority}
+
+A central constraint of this work is that the only external data source is the periodic table:
+
+\begin{itemize}
+\item Atomic number $Z$
+\item Standard atomic weight $m$
+\item Covalent radii (single, double, triple)
+\item Van der Waals radius
+\item Pauling electronegativity
+\item First ionization energy
+\item Electron affinity
+\item Valence electron count
+\end{itemize}
+
+No molecular databases. No empirical crystal structures. No bond-length tables for specific molecules.
+
+The Lennard-Jones parameters ($\sigma$, $\varepsilon$) are drawn from the Universal Force Field (UFF) parameterization, which itself was derived from periodic trends. For elements without UFF parameters, carbon-like defaults are used (explicitly flagged in the output).
+
+This constraint serves three purposes:
+
+\paragraph{1. Generality} The framework can handle any composition, even ones never synthesized. There is no training set and no out-of-distribution failure.
+
+\paragraph{2. Transparency} The data sources are unambiguous. Anyone can verify the values.
+
+\paragraph{3. Testability} If the engine predicts the wrong structure for a well-known system, the failure is traceable to:
+\begin{itemize}
+\item Inadequate force field (fixable by parameterization)
+\item Insufficient sampling (fixable by more seeds)
+\item Incorrect integration (a bug, fixable by debugging)
+\end{itemize}
+
+There is no hidden dataset to blame.
+
+\section{What ``Physically Admissible'' Means in This Framework}
+
+A central concept in this work is \textbf{physical admissibility}, which is deliberately narrower than chemical correctness or experimental validation.
+
+A configuration is considered physically admissible if it satisfies:
+
+\begin{enumerate}
+\item \textbf{Bounded energy evolution under integration}
+
+Energy $E(t)$ remains finite and bounded for $t \in [0, t_{\text{max}}]$. No divergence to $\infty$ or $-\infty$. No overflow in any energy term.
+
+\item \textbf{Stable force continuity under applied interaction models}
+
+Forces $\mathbf{F}_i$ are continuous in time (no impulses except from explicit collisions). Force magnitudes remain below $10^3$\,kcal/(mol·Å) (the empirical threshold for Lennard-Jones singularities).
+
+\item \textbf{Domain-consistent boundary behavior}
+
+For periodic systems: positions stay within the primary cell after wrapping.
+For open systems: the system does not evaporate (kinetic energy does not exceed potential energy by more than a factor of 10).
+
+\item \textbf{Charge consistency at the system scale}
+
+Total charge $Q_{\text{total}} = \sum_i q_i$ remains constant (no spurious charge creation). For neutral systems, $|Q_{\text{total}}| < 10^{-6}\,e$.
+
+\item \textbf{Numerical stability under timestep perturbation}
+
+Halving the timestep $\Delta t$ does not change the trajectory qualitatively (energy values may differ by $<10\%$, but local minima remain local minima).
+\end{enumerate}
+
+This definition reflects a practical truth: simulation tools must first ensure internal physical coherence before external chemical realism can be meaningfully evaluated.
+
+\subsection{What Admissibility Does Not Imply}
+
+Importantly, admissibility does \textit{not} imply:
+
+\paragraph{Thermodynamic equilibrium} A configuration can be admissible even if it is metastable. Ethane in the eclipsed conformation is higher in energy than the staggered conformation, but it is still a local minimum and therefore admissible.
+
+\paragraph{Synthetic feasibility} A configuration can be admissible even if it cannot be synthesized experimentally. High-pressure phases, strained molecules, and defect-rich structures may all be admissible.
+
+\paragraph{Experimental observability} A configuration can be admissible even if it has never been observed. The point of a generative tool is to explore possibilities, not to reproduce known results.
+
+\subsection{Why This Definition Matters}
+
+The admissibility criterion creates a \textit{first filter} on generated structures. Before comparing to experiments or running expensive quantum calculations, we ask:
+
+\begin{quote}
+\textit{Does this configuration survive integration without numerical failure?}
+\end{quote}
+
+If yes, it merits further investigation.
+
+If no, it indicates:
+\begin{itemize}
+\item Force field breakdown (e.g., atoms too close)
+\item Integration instability (timestep too large)
+\item Boundary condition error (incorrect periodic wrapping)
+\end{itemize}
+
+This filter is computationally cheap (it runs during generation) and physically motivated (it tests basic physical constraints).
+
+The self-audit system classifies non-admissible configurations and flags them for inspection. This prevents garbage structures from entering the dataset.
+
+\section{Deterministic Physics, Probabilistic Exploration}
+
+The engine operates on a dual-layer philosophy:
+
+\subsection{Deterministic Layer}
+
+\paragraph{Classical equations of motion:}
+\[
+\mathbf{F}_i = m_i \mathbf{a}_i
+\]
+
+Given positions $\mathbf{X}(t)$ and velocities $\mathbf{V}(t)$, the forces $\mathbf{F}(t)$ are computed from the potential $U(\mathbf{X})$:
+\[
+\mathbf{F}_i = -\nabla_{\mathbf{x}_i} U(\mathbf{X})
+\]
+
+The potential is a fixed function (Lennard-Jones, Coulomb, bonded terms). No parameters change during the simulation.
+
+\paragraph{Explicit interaction potentials:}
+
+Every interaction is defined by closed-form expressions. The Lennard-Jones potential:
+\[
+U_{\text{LJ}}(r) = 4\varepsilon\left[\left(\frac{\sigma}{r}\right)^{12} - \left(\frac{\sigma}{r}\right)^6\right]
+\]
+
+The Coulomb potential:
+\[
+U_{\text{Coul}}(r) = \frac{k_e q_i q_j}{r}
+\]
+
+No black-box force evaluation. No neural network surrogate. The physics is transparent.
+
+\paragraph{Fully specified boundary conditions:}
+
+For periodic systems: box dimensions $(L_x, L_y, L_z)$ are declared.
+For open systems: the simulation volume is explicitly unbounded.
+
+\paragraph{No hidden stochastic force injection:}
+
+In NVE dynamics, there are no random forces. The trajectory is fully deterministic once started.
+
+In NVT dynamics (Langevin), random forces are present:
+\[
+\mathbf{F}_i^{\text{random}} = \sqrt{2\gamma m_i k_B T}\,\boldsymbol{\xi}_i(t)
+\]
+
+but these are \textit{explicitly declared} as part of the thermostat model. They are not hidden numerical artifacts.
+
+\subsection{Exploration Layer}
+
+\paragraph{Stochastic initialization:}
+
+Initial velocities are drawn from the Maxwell-Boltzmann distribution:
+\[
+v_{i,\alpha} \sim \mathcal{N}\left(0,\,\sqrt{\frac{k_B T}{m_i}}\right)
+\]
+
+This sampling is controlled by the random seed. The same seed produces the same initial velocities.
+
+\paragraph{Ensemble generation:}
+
+Multiple simulations are run with different seeds. Each seed produces a different trajectory. The ensemble of results is analyzed statistically.
+
+\paragraph{Controlled randomization in adjacency proposals:}
+
+The reaction engine (Section~8) proposes reactions by matching reactive sites. The search over possible pairings is randomized (to avoid exponential enumeration) but seeded.
+
+\subsection{Why This Separation Matters}
+
+This dual-layer design prevents a common failure mode in modern simulation pipelines: \textbf{conflating stochastic sampling with stochastic physics}.
+
+Many frameworks introduce randomness at multiple levels:
+\begin{itemize}
+\item Random initial positions (to avoid bias)
+\item Random integration noise (to mimic thermal fluctuations)
+\item Random force cutoffs (to speed up computation)
+\item Random parameter selection (for hyperparameter tuning)
+\end{itemize}
+
+The result is that reproducibility is lost. Two researchers running the same protocol on the same system may get different results, and it is unclear whether the difference is:
+
+\begin{itemize}
+\item Physical (different parts of phase space were sampled)
+\item Numerical (different integration errors accumulated)
+\item Implementation-dependent (different random number generators)
+\end{itemize}
+
+The formation engine enforces a strict rule:
+
+\begin{quote}
+\textbf{All randomness is controlled by the seed. The physics is deterministic.}
+\end{quote}
+
+This makes ensemble analysis interpretable. If two seeds produce similar results, it suggests a robust formation. If they produce different results, it suggests competing metastable states. The physics does not have hidden randomness that might obscure this distinction.
+
+\section{Reproducibility as a Primary Output}
+
+Traditional simulation workflows often treat reproducibility as a post-processing concern:
+
+\begin{enumerate}
+\item Run simulations
+\item Analyze results
+\item (Maybe) document parameters in a methods section
+\item (Rarely) provide raw data or code
+\end{enumerate}
+
+The formation engine inverts this priority. Reproducibility is a \textit{first-class output}, recorded with every simulation artifact.
+
+\subsection{The Provenance Record}
+
+Each formation carries a structured provenance record:
+
+\begin{verbatim}
+---
+structure_state:
+  atoms: 18
+  formula: H2O (6 molecules)
+  hash: a7f3c21b89d4e...
+engine:
+  version: 0.1.0-dev
+  commit: f8a32c1
+  build: Release (gcc 11.2.0)
+units:
+  distance: Angstrom
+  energy: kcal_mol
+  time: femtosecond
+  temperature: Kelvin
+sampling:
+  seed: 42
+  temperature: 300.0
+  density: 0.997
+boundary:
+  type: periodic
+  box: [18.6, 18.6, 18.6]
+force_field:
+  nonbonded: LJ12-6 + Coulomb
+  cutoff: 10.0
+  switch: quintic [9.0, 10.0]
+scoring:
+  priority: 87.3
+  stability: converged
+  classification: molecular_cluster
+validation:
+  energy_conservation: 0.00034 kcal/mol/atom
+  momentum_drift: 3.2e-11
+  temperature_error: 0.017
+---
+\end{verbatim}
+
+This is not optional metadata. It is \textit{part of the output}.
+
+\subsection{Cross-Institution Comparison}
+
+With full provenance, two independent research groups can:
+
+\begin{enumerate}
+\item Verify they are running the same protocol (same force field, same integrator)
+\item Compare results at the same seed (should be bit-identical)
+\item Compare ensemble statistics across different seed ranges (should converge)
+\end{enumerate}
+
+If results disagree, the provenance record allows debugging:
+
+\begin{itemize}
+\item Different engine versions?
+\item Different compiler optimizations?
+\item Different random number generator implementations?
+\item Different floating-point rounding modes?
+\end{itemize}
+
+The goal is to eliminate ambiguity.
+
+\subsection{Regression Detection}
+
+When the code is updated (new feature, bugfix, refactoring), the regression detector (Section~11.4) reruns a benchmark suite and compares:
+
+\begin{itemize}
+\item Energy values (should be identical to machine precision)
+\item Force magnitudes (should be identical to machine precision)
+\item Final structures (should have RMSD $< 10^{-6}$\,Å)
+\item Classification labels (should be identical)
+\end{itemize}
+
+If any of these change, the update is flagged for review. This prevents silent breakage.
+
+\subsection{Long-Term Dataset Integrity}
+
+Simulation datasets degrade over time if the generation protocol is not preserved. Published results become irreproducible as:
+
+\begin{itemize}
+\item Software versions become unavailable
+\item Documentation is incomplete or ambiguous
+\item Raw data is lost
+\end{itemize}
+
+The formation engine addresses this by treating every output file as a \textit{self-contained artifact}. The provenance record includes:
+
+\begin{itemize}
+\item Full parameter specification
+\item Software version and commit hash
+\item Complete calculation history (MD steps, minimization convergence)
+\end{itemize}
+
+Given the output file alone, someone can:
+
+\begin{enumerate}
+\item Check out the exact code version
+\item Rerun the simulation with the same parameters
+\item Verify that the result matches
+\end{enumerate}
+
+This transforms simulation results from transient calculations into persistent experimental records.
+
+\section{Explicit Scope Boundaries}
+
+To maintain clarity, this work intentionally excludes certain physical phenomena. These exclusions are not limitations but design choices.
+
+\subsection{Full Electronic Structure Resolution}
+
+The formation engine does not solve the Schrödinger equation. It uses classical potentials parameterized from quantum calculations (UFF, OPLS) or periodic table data.
+
+This means:
+\begin{itemize}
+\item Bond dissociation energies are approximate
+\item Charge transfer is not captured dynamically
+\item Spin states and magnetic properties are absent
+\item Optical spectra cannot be predicted
+\end{itemize}
+
+For systems where these effects dominate (transition metal complexes, radical species, conjugated molecules), the formation engine provides only a coarse description.
+
+However, the classical description is sufficient for:
+\begin{itemize}
+\item Structural motifs (packing, coordination, symmetry)
+\item Thermodynamic stability ordering (relative energies)
+\item Mechanical properties (bulk modulus, surface tension)
+\end{itemize}
+
+The strategy is to use the formation engine for coarse screening, then refine promising candidates with DFT or higher-level methods.
+
+\subsection{Excited States and Non-Adiabatic Phenomena}
+
+The Born-Oppenheimer approximation is implicit: electrons instantaneously adjust to nuclear positions, and the potential energy surface is independent of electronic excitation.
+
+This excludes:
+\begin{itemize}
+\item Photochemistry (light-driven reactions)
+\item Singlet-triplet crossings
+\item Conical intersections
+\item Rydberg states
+\end{itemize}
+
+These phenomena require non-adiabatic dynamics or multi-reference quantum methods, which are beyond the scope of this work.
+
+\subsection{Reaction Kinetics Prediction}
+
+The reaction engine (Section~8) proposes thermodynamically favorable reactions and estimates activation barriers using linear free-energy relationships. It does \textit{not} predict:
+
+\begin{itemize}
+\item Rate constants
+\item Transition state geometries
+\item Pre-exponential factors
+\item Tunneling corrections
+\end{itemize}
+
+These require transition-state theory calculations or kinetic Monte Carlo, which are complementary tools.
+
+\subsection{Quantum Coherence Modeling}
+
+The framework is entirely classical. Quantum effects (zero-point energy, tunneling, delocalization) are not included.
+
+For light atoms at low temperatures (hydrogen below 100\,K, helium always), quantum effects can be significant. The formation engine may produce incorrect structures in these regimes.
+
+The domain of validity is therefore: \textbf{heavy atoms ($Z \geq 6$) at moderate temperatures ($T > 50$\,K)}.
+
+\subsection{Extension Points for Higher-Fidelity Overlays}
+
+These exclusions do not preclude future extensions. The architecture is designed to support:
+
+\begin{itemize}
+\item Quantum-corrected potentials: $U = U_{\text{classical}} + \Delta U_{\text{QM}}$
+\item Polarizable force fields (Drude oscillators, fluctuating charges)
+\item Reactive bond-order potentials (ReaxFF, COMB)
+\end{itemize}
+
+The key requirement is that the classical description remains independently evaluable. The correction is an optional layer, not a replacement.
+
+This ensures that:
+\begin{itemize}
+\item The baseline model is always available
+\item Failures can be diagnosed at the classical level before invoking higher-fidelity physics
+\item Computational cost scales gracefully with accuracy requirements
+\end{itemize}
+
+\section{Structure as a Primary Simulation Result}
+
+The most fundamental shift embodied by this framework is philosophical:
+
+\begin{quote}
+\textbf{In this framework, structure is not assumed, imported, or heuristically stabilized; it is generated under declared physical rules and recorded as a primary simulation result.}
+\end{quote}
+
+This statement has implications for how simulation data is produced, analyzed, and interpreted.
+
+\subsection{Structure is Not an Input Assumption}
+
+Traditional workflows:
+\begin{enumerate}
+\item Assume a structure (PDB, CIF, or hand-drawn)
+\item Simulate dynamics or properties
+\item Validate against experiments
+\end{enumerate}
+
+Formation engine workflow:
+\begin{enumerate}
+\item Specify composition, temperature, density
+\item Generate structure ensemble through dynamics + quenching
+\item Classify and rank structures
+\item (Optionally) refine with higher-fidelity methods
+\end{enumerate}
+
+The distinction is subtle but consequential. In the traditional workflow, the structure is treated as \textit{given}. In the formation workflow, the structure is treated as \textit{emergent}.
+
+\subsection{Implications for Discovery}
+
+This shift enables a different style of computational exploration:
+
+\paragraph{Inverse design} Instead of asking ``What are the properties of structure X?'' we can ask ``What structures have property Y?''
+
+The formation engine generates candidates. A post-processing filter evaluates the property. Structures that pass the filter are kept.
+
+\paragraph{Metastable polymorphs} Many materials have multiple metastable phases (diamond vs.\ graphite, polymorphs of ice). Traditional simulations often miss these because they start from a single structure.
+
+The formation engine generates ensembles. If multiple distinct structures appear repeatedly across seeds, they represent competing metastable states.
+
+\paragraph{Size-dependent phases} Nanoparticles often adopt structures different from the bulk. A 55-atom gold cluster is icosahedral, not FCC.
+
+The formation engine can probe this transition by systematically varying $N$ and observing when the preferred structure changes.
+
+\subsection{Structure as Data}
+
+By treating structure as an output, the formation engine produces datasets where:
+
+\begin{itemize}
+\item Structures are labeled by generation conditions (seed, temperature, density)
+\item Structures carry provenance (software version, force field parameters)
+\item Structures are reproducible (same inputs $\to$ same outputs)
+\end{itemize}
+
+These datasets can be analyzed statistically:
+\begin{itemize}
+\item What fraction of seeds produce crystalline vs.\ amorphous structures?
+\item How does the energy distribution change with temperature?
+\item Are there preferred structural motifs (coordination shells, symmetries)?
+\end{itemize}
+
+This is analogous to how high-throughput crystallography produces structure databases. The formation engine produces \textit{computational structure databases} with full provenance.
+
+\section{Conclusion: The Instrument Framing}
+
+This section has established the foundational philosophy of the formation engine. It is not a discovery tool but an \textit{instrument} for reproducible structure generation.
+
+The key claims are modest:
+
+\begin{enumerate}
+\item The engine implements classical mechanics under explicit assumptions
+\item The outputs are reproducible from declared inputs
+\item The failure modes are observable and classifiable
+\item The results provide physically admissible candidate structures for further refinement
+\end{enumerate}
+
+These are \textit{instrument claims}, not \textit{prediction claims}.
+
+The value proposition is equally modest:
+
+\begin{quote}
+If you need to explore the structure space of a composition under specified thermodynamic conditions, and you want the exploration to be reproducible and auditable, the formation engine provides a way to do that.
+\end{quote}
+
+This framing is deliberate. It positions the work as:
+
+\begin{itemize}
+\item Complementary to existing methods (not competing)
+\item Useful even if predictions are imperfect (because reproducibility has value)
+\item Testable through self-consistency (not requiring expensive validation)
+\end{itemize}
+
+The subsequent sections (2–13) build on this foundation by specifying:
+
+\begin{itemize}
+\item The data structures (Section~2)
+\item The interaction models (Section~3)
+\item The thermodynamic framework (Section~4)
+\item The integration schemes (Section~5)
+\item The formation protocol (Section~6)
+\item The statistical analysis (Section~7)
+\item The reaction engine (Section~8)
+\item The electronic estimates (Section~9)
+\item The multiscale extensions (Section~10)
+\item The self-audit system (Section~11)
+\item The validation doctrine (Section~12)
+\item The future directions (Section~13)
+\end{itemize}
+
+Each section maintains the same tone: explicit assumptions, transparent limitations, reproducible protocols.
+
+The result is not a revolutionary method but a reliable instrument.
+
+And that is exactly the point.
+
+\paragraph{Transition to \S2:} With the formation problem defined (what the engine solves and what it does not), Section~2 establishes the fundamental data structures: the State ontology that every operation in the framework reads from and writes to.
+
+\end{document}

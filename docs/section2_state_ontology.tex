@@ -1,0 +1,886 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Section 2 — Information and State Ontology}
+\author{Formation Engine Development Team}
+\date{Version 0.1 — First Principles Draft}
+
+\begin{document}
+\maketitle
+
+\section{The State as the Fundamental Object}
+
+In computational physics, the choice of how to represent system state determines nearly every downstream design decision. The formation engine is built on a single principle: there exists one canonical data structure — the \textbf{State} — that completely describes the physical system at any instant.
+
+This is not a software engineering decision. It is a reflection of the physics: classical mechanics operates on phase space, the space of all possible positions and momenta. The State is the discrete representation of a point in this continuous space.
+
+Every operation in the framework — force evaluation, time integration, energy computation, structural analysis, file I/O — reads from or writes to this structure. Nothing physical exists outside of it. No hidden global variables. No implicit caches. No side-channel state.
+
+This constraint has profound consequences:
+
+\begin{itemize}
+\item \textbf{Reproducibility}: Given a State at time $t$, the State at time $t + \Delta t$ is uniquely determined by the equations of motion.
+\item \textbf{Testability}: Any physical operation can be tested by comparing States before and after.
+\item \textbf{Serializability}: The State can be written to disk and restored exactly, enabling checkpointing and provenance tracking.
+\item \textbf{Composability}: Operations can be chained: each takes a State and returns a State.
+\end{itemize}
+
+This section defines the State formally, specifies what each field means physically, and explains how States are persisted through the file format hierarchy.
+
+\subsection{Formal Definition}
+
+A State $\mathcal{S}$ at time $t$ is the tuple:
+\begin{equation}
+\mathcal{S}(t) = \bigl(N, \; \mathbf{M}, \; \boldsymbol{\tau}, \; \mathbf{X}(t), \; \mathbf{V}(t), \; \mathbf{Q}(t), \; \mathbf{B}(t), \; \mathbf{F}(t), \; \mathcal{E}(t), \; \mathcal{L}, \; \mathcal{B}\bigr)
+\end{equation}
+
+where each component is defined as:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Symbol & Type & Description \\
+\midrule
+$N$ & $\mathbb{Z}^+$ & Number of particles \\
+$\mathbf{M}$ & $\mathbb{R}^N$ & Masses (amu) \\
+$\boldsymbol{\tau}$ & $\mathbb{Z}^N$ & Atomic numbers (element identities) \\
+$\mathbf{X}(t)$ & $\mathbb{R}^{N \times 3}$ & Positions (\AA) \\
+$\mathbf{V}(t)$ & $\mathbb{R}^{N \times 3}$ & Velocities (\AA/fs) \\
+$\mathbf{Q}(t)$ & $\mathbb{R}^N$ & Partial charges ($e$) \\
+$\mathbf{B}(t)$ & Edge set & Bond graph (pairs of atom indices) \\
+$\mathbf{F}(t)$ & $\mathbb{R}^{N \times 3}$ & Forces (kcal/(mol·\AA)) \\
+$\mathcal{E}(t)$ & $\mathbb{R}^6$ & Energy ledger (kcal/mol) \\
+$\mathcal{L}$ & List & Event log (metadata) \\
+$\mathcal{B}$ & $\mathbb{R}^3 \times \{0,1\}$ & Periodic box + enable flag \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The explicit time dependence $\mathcal{S}(t)$ indicates that some fields evolve during dynamics. However, not all components change at the same rate or for the same reasons. This motivates the tripartite classification.
+
+\subsection{Tripartite Classification: Identity, Phase, Scratch}
+
+The State components partition into three categories based on their mutability and physical meaning.
+
+\subsubsection{Identity (Immutable)}
+
+The identity components define \textit{what} the system is:
+\begin{align}
+N &: \text{Number of particles (fixed at construction)} \\
+\mathbf{M} &: \text{Atomic masses (set from periodic table, never modified)} \\
+\boldsymbol{\tau} &: \text{Element identities (defines chemical composition)}
+\end{align}
+
+These fields are set once during initialization and never change. No integrator, no force evaluator, no analysis tool may modify them. This is not a performance optimization — it is a physical constraint. The number of particles in a classical system does not change spontaneously. The mass of an atom is an intrinsic property. The element identity is defined by the nuclear charge.
+
+In practice, this means:
+\begin{itemize}
+\item $N$ is a compile-time constant for static-size systems or a runtime constant for dynamic-size systems
+\item $\mathbf{M}$ is populated from the periodic table via a lookup: $M_i = \text{AtomicWeight}(\tau_i)$
+\item $\boldsymbol{\tau}$ is read from the input file (e.g., \texttt{H}, \texttt{C}, \texttt{O}) and converted to atomic numbers
+\end{itemize}
+
+Attempting to modify these fields after initialization is a compile error in C++ (via \texttt{const} correctness) or a runtime error in Python (via property setters that raise exceptions).
+
+\subsubsection{Phase (Dynamic)}
+
+The phase components define \textit{where} the system is in configuration space:
+\begin{align}
+\mathbf{X}(t) &: \text{Positions (evolve under equations of motion)} \\
+\mathbf{V}(t) &: \text{Velocities (evolve under equations of motion)} \\
+\mathbf{Q}(t) &: \text{Partial charges (formally dynamic, typically static)} \\
+\mathbf{B}(t) &: \text{Bond graph (currently static, future: reactive)}
+\end{align}
+
+These are the degrees of freedom. In Hamiltonian mechanics, the phase space is the space of all possible $(\mathbf{X}, \mathbf{V})$ pairs. The charges $\mathbf{Q}$ are formally part of the phase space to permit future charge-equilibration models (e.g., QEq, fluctuating charge methods) but are currently treated as parameters rather than dynamical variables.
+
+The bond graph $\mathbf{B}$ is an edge set:
+\begin{equation}
+\mathbf{B} = \{(i, j) \mid i < j, \; \text{atoms } i \text{ and } j \text{ are bonded}\}
+\end{equation}
+
+Bonds are currently inferred from geometry via distance criteria and held fixed during dynamics. Section~8 describes how the reaction engine proposes bond changes \textit{between} simulation runs.
+
+\subsubsection{Scratch (Recomputed)}
+
+The scratch components are derived quantities that can be regenerated from the phase:
+\begin{align}
+\mathbf{F}(t) &: \text{Forces (computed from } \mathbf{X}(t) \text{ via force field)} \\
+\mathcal{E}(t) &: \text{Energy ledger (computed from } \mathbf{X}(t) \text{, } \mathbf{Q}(t) \text{, } \mathbf{B}(t) \text{)} \\
+\mathcal{L} &: \text{Event log (append-only metadata)} \\
+\mathcal{B} &: \text{Periodic box (boundary conditions)}
+\end{align}
+
+These are \textit{not} persistent state in the thermodynamic sense. They are computational artifacts. Forces are the negative gradient of the potential:
+\begin{equation}
+\mathbf{F}_i = -\nabla_{\mathbf{x}_i} U(\mathbf{X}, \mathbf{Q}, \mathbf{B})
+\end{equation}
+
+This is a pure function of the positions (and charges and topology). No history dependence. No hysteresis. Given $\mathbf{X}$, $\mathbf{F}$ is uniquely determined.
+
+The distinction matters for two reasons:
+
+\paragraph{Checkpointing} To save the State to disk, only the identity and phase components need to be written. The scratch components can be regenerated on restore. This reduces file sizes and prevents inconsistency (e.g., storing forces that don't match the positions).
+
+\paragraph{Validation} To verify that a force model is implemented correctly, compute $\mathbf{F}$ from $\mathbf{X}$, perturb $\mathbf{X}$ slightly, recompute $\mathbf{F}$, and check that the finite-difference gradient matches the analytic force. This test is only valid if $\mathbf{F}$ is \textit{purely} a function of $\mathbf{X}$.
+
+The event log $\mathcal{L}$ is a special case: it is metadata (convergence flags, warnings, provenance notes) that does not affect physics but is useful for post-processing. It is append-only and never read by physics code.
+
+The periodic box $\mathcal{B}$ specifies boundary conditions:
+\begin{equation}
+\mathcal{B} = \bigl(L_x, L_y, L_z, \text{enabled}\bigr)
+\end{equation}
+
+For non-periodic systems, $\text{enabled} = 0$. For periodic systems, the box dimensions define the fundamental domain $[0, L_x) \times [0, L_y) \times [0, L_z)$.
+
+\subsection{Why This Decomposition Is Not Obvious}
+
+Many simulation codes conflate these categories. Common anti-patterns:
+
+\paragraph{Forces stored as State} Some frameworks store forces as persistent fields, updated incrementally during integration. This creates opportunities for inconsistency: if the force evaluation is modified (e.g., changing the cutoff radius), old force values may linger. The formation engine zeroes $\mathbf{F}$ before every evaluation, ensuring it always matches the current positions.
+
+\paragraph{Topology as input} Some frameworks read bond tables from files and assume they are correct. The formation engine \textit{infers} $\mathbf{B}$ from $\mathbf{X}$ using distance criteria. This makes the bond graph a derived quantity, not an input. Section~2.5 explains the inference rules.
+
+\paragraph{Masses as parameters} Some frameworks allow users to specify masses independently of element types. This permits unphysical systems (e.g., a carbon atom with the mass of uranium). The formation engine locks $\mathbf{M}$ to $\boldsymbol{\tau}$ via the periodic table, making it impossible to create mass-inconsistent states.
+
+These constraints may seem restrictive, but they prevent entire classes of errors. The State is designed to be \textit{self-consistent by construction}.
+
+\section{The Energy Ledger}
+
+The potential energy $U$ is not a single scalar. It is a sum of physically distinct contributions:
+\begin{equation}
+U = U_{\text{bond}} + U_{\text{angle}} + U_{\text{torsion}} + U_{\text{vdW}} + U_{\text{Coulomb}} + U_{\text{external}}
+\end{equation}
+
+The framework requires that every force model report its contribution to each term. The energy ledger $\mathcal{E}$ is a 6-component vector:
+\begin{equation}
+\mathcal{E} = \begin{pmatrix}
+U_{\text{bond}} \\
+U_{\text{angle}} \\
+U_{\text{torsion}} \\
+U_{\text{vdW}} \\
+U_{\text{Coulomb}} \\
+U_{\text{external}}
+\end{pmatrix}
+\end{equation}
+
+This is not bookkeeping. It is physics. The decomposition reveals \textit{why} a structure formed the way it did.
+
+\subsection{Physical Interpretation}
+
+Consider two formations of the same composition:
+
+\paragraph{Formation A:}
+\begin{align*}
+U_{\text{bond}} &= -50.0 \text{ kcal/mol} \\
+U_{\text{vdW}} &= -2.0 \text{ kcal/mol} \\
+U_{\text{Coulomb}} &= 0.0 \text{ kcal/mol} \\
+U_{\text{total}} &= -52.0 \text{ kcal/mol}
+\end{align*}
+
+\paragraph{Formation B:}
+\begin{align*}
+U_{\text{bond}} &= -10.0 \text{ kcal/mol} \\
+U_{\text{vdW}} &= -35.0 \text{ kcal/mol} \\
+U_{\text{Coulomb}} &= -7.0 \text{ kcal/mol} \\
+U_{\text{total}} &= -52.0 \text{ kcal/mol}
+\end{align*}
+
+Both have the same total energy. But their physical character is entirely different:
+
+\begin{itemize}
+\item Formation A is a \textbf{covalently bonded molecule}. The bonding energy dominates. Disrupting this structure requires breaking chemical bonds.
+\item Formation B is a \textbf{molecular cluster}. Van der Waals and electrostatic interactions dominate. This structure can dissociate by thermal fluctuations at modest temperature.
+\end{itemize}
+
+Without the energy decomposition, these two formations would be indistinguishable. The ledger makes the physics transparent.
+
+\subsection{Implementation Requirement}
+
+Every force model implements the interface:
+\begin{equation}
+\texttt{eval}: \mathcal{S} \to (\mathbf{F}, \mathcal{E})
+\end{equation}
+
+The model must:
+\begin{enumerate}
+\item Zero the ledger: $\mathcal{E} \gets \mathbf{0}$
+\item Compute forces and accumulate energies: $\mathbf{F} \gets \mathbf{F} + \mathbf{f}_{\text{contribution}}$, $\mathcal{E}_k \gets \mathcal{E}_k + U_{\text{contribution}}$
+\item Return $(\mathbf{F}, \mathcal{E})$
+\end{enumerate}
+
+The zeroing step is mandatory. A model that fails to zero the ledger before accumulation produces drift: energies from previous evaluations persist and contaminate the current result.
+
+For composite models (e.g., bonded + nonbonded), each sub-model contributes to the appropriate ledger entry:
+\begin{itemize}
+\item Harmonic bonds $\to U_{\text{bond}}$
+\item Harmonic angles $\to U_{\text{angle}}$
+\item Periodic torsions $\to U_{\text{torsion}}$
+\item Lennard-Jones $\to U_{\text{vdW}}$
+\item Coulomb $\to U_{\text{Coulomb}}$
+\end{itemize}
+
+External fields (restraints, walls, applied forces) contribute to $U_{\text{external}}$.
+
+\subsection{Kinetic Energy: Not Part of the Ledger}
+
+Kinetic energy $K$ is computed from velocities:
+\begin{equation}
+K = \sum_{i=1}^{N} \frac{1}{2} m_i |\mathbf{v}_i|^2
+\end{equation}
+
+It is \textit{not} part of $\mathcal{E}$. The ledger contains only potential energy contributions. Total energy $E = K + U$ is computed on demand:
+\begin{equation}
+E = K(\mathbf{V}) + \sum_{k=1}^{6} \mathcal{E}_k
+\end{equation}
+
+This distinction matters for thermostatted dynamics. In NVT (canonical) ensemble, the system exchanges energy with a heat bath. Total energy $E$ fluctuates by design. But the potential energy decomposition remains meaningful: it describes the instantaneous force balance, independent of kinetic effects.
+
+\section{State Persistence: The File Hierarchy}
+
+States must be serializable. The framework defines a layered file format hierarchy where each level adds information without modifying the previous level.
+
+\subsection{Design Principle: Strict Additivity}
+
+The hierarchy is:
+\begin{equation}
+\text{xyzZ} \;\subset\; \text{xyzA} \;\subset\; \text{xyzC} \;\subset\; \text{xyzF}
+\end{equation}
+
+where $\subset$ denotes ``is a subset of'': every xyzZ file is a valid xyzA file, every xyzA is a valid xyzC, and so on. This means:
+
+\begin{itemize}
+\item A parser for xyzF can read xyzC, xyzA, or xyzZ
+\item Adding metadata (e.g., bond table) never breaks backward compatibility
+\item Legacy tools that expect bare XYZ can still read xyzA/xyzC/xyzF files
+\end{itemize}
+
+The additive principle is enforced by embedding structured comments. Standard XYZ parsers ignore comment lines, so they see only atom count, element symbols, and coordinates. Advanced parsers extract YAML metadata from comments.
+
+\subsection{Level 0: xyzZ — Raw Geometry}
+
+Standard XYZ format:
+\begin{lstlisting}
+18
+Water cluster (6 molecules)
+O    0.0000   0.0000   0.0000
+H    0.9572   0.0000   0.0000
+H   -0.2400   0.9272   0.0000
+O    3.0000   0.0000   0.0000
+H    3.9572   0.0000   0.0000
+H    2.7600   0.9272   0.0000
+...
+\end{lstlisting}
+
+Line 1: atom count $N$. Line 2: comment (arbitrary text). Lines 3+: element symbol and Cartesian coordinates in \AA.
+
+This is the only format the engine \textit{requires} as input. Any molecular visualization tool (VMD, PyMOL, Avogadro) can read it.
+
+\subsection{Level 1: xyzA — Annotated}
+
+Adds structured metadata via YAML in comment headers:
+\begin{lstlisting}
+18
+Water cluster | Generated by formation-engine v0.1.0
+---
+atoms:
+  - id: a1
+    element: O
+    charge: -0.8
+    mass: 15.999
+  - id: a2
+    element: H
+    charge: 0.4
+    mass: 1.008
+  ...
+bonds:
+  - atoms: [a1, a2]
+    order: 1
+    type: covalent
+  - atoms: [a1, a3]
+    order: 1
+    type: covalent
+  ...
+---
+O    0.0000   0.0000   0.0000
+H    0.9572   0.0000   0.0000
+...
+\end{lstlisting}
+
+The YAML block (delimited by \texttt{---}) contains:
+\begin{itemize}
+\item Atom IDs (deterministic: \texttt{a1}, \texttt{a2}, \ldots)
+\item Partial charges (from QEq or user specification)
+\item Bond table (inferred from distances)
+\end{itemize}
+
+Bonds are inferred via distance thresholding:
+\begin{equation}
+\text{bonded}(i,j) \iff |\mathbf{r}_i - \mathbf{r}_j| < f \cdot \bigl(r_{\text{cov},i}^{(k)} + r_{\text{cov},j}^{(k)}\bigr)
+\end{equation}
+
+where $f = 1.2$ is a tolerance factor, $r_{\text{cov}}^{(k)}$ is the covalent radius for bond order $k \in \{1,2,3\}$, and $k$ is selected to minimize the error $||r_{ij} - (r_i + r_j)|$.
+
+This heuristic works well for typical organic and inorganic molecules but can fail for:
+\begin{itemize}
+\item Strained rings (distance criteria give false negatives)
+\item Metallic clusters (distance criteria give false positives)
+\item Radical species (unpaired electrons not captured)
+\end{itemize}
+
+The framework flags ambiguous cases (e.g., $|r_{ij} - (r_i + r_j)| > 0.3$\,\AA) in the event log.
+
+\subsection{Level 2: xyzC — Constructed}
+
+Adds construction provenance: a complete record of operations applied to produce this structure.
+
+A construction recipe is a sequence:
+\begin{equation}
+\text{recipe} = [\text{step}_1, \text{step}_2, \ldots, \text{step}_n]
+\end{equation}
+
+where each step is a named operation with parameters:
+\begin{lstlisting}
+construction:
+  source: unit_cell.xyz
+  source_hash: a7f3c21b89d4e...
+  steps:
+    - op: supercell
+      params: {a: 2, b: 2, c: 2}
+      hash: 3c8f9d12a...
+    - op: relax
+      params: {method: FIRE, max_iter: 1000, ftol: 1e-6}
+      hash: 9e4b2a1c7...
+\end{lstlisting}
+
+Each step carries a SHA-256 hash:
+\begin{equation}
+h_k = \text{SHA256}\bigl(\text{hash}_{k-1} \;\|\; \text{op}_k \;\|\; \text{params}_k\bigr)
+\end{equation}
+
+The chain is append-only. If the source changes, \texttt{source\_hash} changes, and all derived hashes are invalidated. This enables automatic rebuild detection: if the source file is modified, all derived files are marked stale.
+
+\paragraph{Reserved Slots for Bulk Properties}
+
+The xyzC format includes placeholders for properties that require ensemble statistics:
+\begin{lstlisting}
+bulk_properties:
+  density: null
+  elastic_modulus: null
+  rdf_reference: null
+
+coarse_grained:
+  bead_count: null
+  bead_types: null
+  pmf_reference: null
+\end{lstlisting}
+
+These are initialized to \texttt{null}. They must never contain default or placeholder values (e.g., \texttt{density: 1.0}) that could be mistaken for computed data. A \texttt{null} value is explicit: ``this property has not been computed.''
+
+When a property is computed (e.g., by running NPT dynamics and averaging the density), the field is updated:
+\begin{lstlisting}
+bulk_properties:
+  density: 0.997  # g/cm^3 (300 K, 1 atm)
+  source: npt_run_12345
+  uncertainty: 0.003
+\end{lstlisting}
+
+The \texttt{source} field records where the value came from. The \texttt{uncertainty} field records statistical error.
+
+\subsection{Level 3: xyzF — Force Annotated}
+
+Adds computed force vectors:
+\begin{lstlisting}
+forces:
+  model: LJ12-6 + Coulomb
+  cutoff: 10.0
+  timestamp: 2024-01-15T14:30:00Z
+  hash: 7d9f3e2a1...
+
+  atoms:
+    - id: a1
+      net_force: [0.1234, -0.0567, 0.0892]  # kcal/(mol·Å)
+      primary_interaction:
+        partner: a2
+        lj_component: [0.0800, -0.0400, 0.0600]
+        coulomb_component: [0.0434, -0.0167, 0.0292]
+      max_force: 0.1537
+    - id: a2
+      ...
+
+  statistics:
+    max_force: 2.345
+    mean_force: 0.123
+    rms_force: 0.456
+\end{lstlisting}
+
+The primary interaction concept is key. For a 1000-atom system, displaying all $O(N^2)$ pairwise interactions is visual noise. Displaying only the dominant interaction per atom produces insight.
+
+For atom $i$, the primary interaction is:
+\begin{equation}
+j^* = \arg\max_{j \neq i} |\mathbf{f}_{ij}|
+\end{equation}
+
+where $\mathbf{f}_{ij}$ is the force on $i$ from $j$. The xyzF format records:
+\begin{itemize}
+\item Partner atom $j^*$
+\item Lennard-Jones component $\mathbf{f}_{ij}^{\text{LJ}}$
+\item Coulomb component $\mathbf{f}_{ij}^{\text{Coulomb}}$
+\end{itemize}
+
+This answers: ``What is the single strongest thing happening to this atom?''
+
+For visualization, this is rendered as an arrow from atom $i$ to atom $j^*$, color-coded by interaction type (red for repulsion, blue for attraction). This produces interpretable force diagrams even for large systems.
+
+\section{Hash Lineage and Provenance}
+
+Every derived state carries a cryptographic hash that serves as both identity and provenance key.
+
+\subsection{Hash Computation}
+
+The hash is computed as:
+\begin{equation}
+h = \text{SHA256}\bigl(\text{canonical}(\text{source}) \;\|\; \text{canonical}(\text{recipe})\bigr)
+\end{equation}
+
+where $\text{canonical}(\cdot)$ produces a deterministic byte string:
+\begin{itemize}
+\item Floating-point values: 12 decimal places (e.g., \texttt{1.234567890123})
+\item Dictionary keys: sorted alphabetically
+\item Whitespace: normalized to single spaces
+\item Line endings: Unix-style (\texttt{$\backslash$n})
+\end{itemize}
+
+This ensures that the same physical operation produces the same hash regardless of:
+\begin{itemize}
+\item Platform (Windows, Linux, macOS)
+\item Locale (decimal separator)
+\item Timestamp (computation date irrelevant)
+\end{itemize}
+
+The hash is \textit{stable under mathematically equivalent transformations}. For example:
+\begin{align*}
+\text{canonical}(\{a: 1.0, b: 2.0\}) &= \text{canonical}(\{b: 2.0, a: 1.0\}) \\
+\text{canonical}(1.0) &= \text{canonical}(1.000000000000)
+\end{align*}
+
+But \textit{unstable under physically distinct changes}:
+\begin{align*}
+\text{canonical}(1.0) &\neq \text{canonical}(1.0000000001)
+\end{align*}
+
+The 12-decimal-place precision is chosen to match typical floating-point error in energy minimization ($\sim 10^{-10}$\,kcal/mol per atom).
+
+\subsection{Lineage Tracking}
+
+Hash lineage is append-only. Each construction step appends to the recipe and produces a new hash:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Step & Operation & Hash (first 8 chars) \\
+\midrule
+0 & Load unit cell & \texttt{a7f3c21b} \\
+1 & Supercell (2×2×2) & \texttt{3c8f9d12} \\
+2 & FIRE relax & \texttt{9e4b2a1c} \\
+3 & MD equilibration & \texttt{1d5e7f3a} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Given the final hash \texttt{1d5e7f3a...}, one can:
+\begin{enumerate}
+\item Look up the recipe in the metadata
+\item Trace back to the source \texttt{a7f3c21b...}
+\item Verify that re-running the recipe produces the same hash
+\end{enumerate}
+
+This provides three guarantees:
+
+\paragraph{Rebuild Detection}
+
+If the source file changes, its hash changes. All derived files become stale. The build system detects this and triggers rebuilds.
+
+\paragraph{Regression Identity}
+
+The regression detector (Section~11.4) uses hashes to match configurations across parameter changes. If hash \texttt{9e4b2a1c} produces energy $E = -52.0$\,kcal/mol with parameters $\Theta_1$ and energy $E = -51.8$\,kcal/mol with parameters $\Theta_2$, the difference $\Delta E = 0.2$\,kcal/mol is a regression signal.
+
+\paragraph{Provenance Auditing}
+
+Any formation can be traced to its exact inputs. For a published dataset, the hash allows independent verification:
+\begin{enumerate}
+\item Download the source file
+\item Run the recipe
+\item Compare the output hash
+\end{enumerate}
+
+If hashes match, the structure is reproduced. If not, either:
+\begin{itemize}
+\item The recipe is incomplete (missing parameters)
+\item The code has changed (different version)
+\item The source is wrong (different initial structure)
+\end{itemize}
+
+The hash makes non-reproducibility \textit{detectable}.
+
+\section{Worked Example: State Evolution Through Operations}
+
+To make the abstract definitions concrete, consider a specific system: a 6-water-molecule cluster.
+
+\subsection{Initial State: Bare XYZ}
+
+Input file \texttt{water\_cluster.xyz}:
+\begin{lstlisting}
+18
+Water cluster
+O    0.0000   0.0000   0.0000
+H    0.9572   0.0000   0.0000
+H   -0.2400   0.9272   0.0000
+O    3.0000   0.0000   0.0000
+H    3.9572   0.0000   0.0000
+H    2.7600   0.9272   0.0000
+O    0.0000   3.0000   0.0000
+H    0.9572   3.0000   0.0000
+H   -0.2400   3.9272   0.0000
+O    3.0000   3.0000   0.0000
+H    3.9572   3.0000   0.0000
+H    2.7600   3.9272   0.0000
+O    1.5000   1.5000   2.5000
+H    2.4572   1.5000   2.5000
+H    1.2600   2.4272   2.5000
+O    1.5000   1.5000  -2.5000
+H    2.4572   1.5000  -2.5000
+H    1.2600   2.4272  -2.5000
+\end{lstlisting}
+
+This is level 0 (xyzZ). The State at this point contains only:
+\begin{itemize}
+\item $N = 18$
+\item $\boldsymbol{\tau} = [\text{O, H, H, O, H, H, \ldots}]$
+\item $\mathbf{X} = [(0, 0, 0), (0.9572, 0, 0), \ldots]$
+\end{itemize}
+
+Masses are inferred: $M_1 = 15.999$ (oxygen), $M_2 = 1.008$ (hydrogen), etc. Velocities, charges, bonds, forces, energies are undefined.
+
+\subsection{Operation 1: Annotate (xyzZ → xyzA)}
+
+Command: \texttt{annotate-xyz water\_cluster.xyz}
+
+This operation:
+\begin{enumerate}
+\item Assigns atom IDs: \texttt{a1}, \texttt{a2}, \ldots, \texttt{a18}
+\item Infers bonds from distances:
+    \begin{itemize}
+    \item O–H bonds: $r_{ij} \approx 0.96$\,\AA $< 1.2 \times (0.66 + 0.31) = 1.16$\,\AA
+    \item H$\cdots$O hydrogen bonds: $r_{ij} \approx 1.9$\,\AA (not bonded, but noted in metadata)
+    \end{itemize}
+\item Assigns partial charges via simple electronegativity:
+    \begin{align*}
+    q_{\text{O}} &= -0.8\,e \\
+    q_{\text{H}} &= +0.4\,e
+    \end{align*}
+\end{enumerate}
+
+Output: \texttt{water\_cluster.xyzA}
+
+The State now includes:
+\begin{itemize}
+\item $\mathbf{B} = \{(1,2), (1,3), (4,5), (4,6), \ldots\}$ (12 O–H bonds)
+\item $\mathbf{Q} = [-0.8, 0.4, 0.4, -0.8, \ldots]$
+\end{itemize}
+
+File size: 2.3\,KB (was 0.5\,KB for xyzZ; metadata adds 1.8\,KB).
+
+\subsection{Operation 2: Evaluate Forces (xyzA → xyzF)}
+
+Command: \texttt{compute-forces --model LJ+Coulomb --cutoff 10.0 water\_cluster.xyzA}
+
+This operation:
+\begin{enumerate}
+\item Zeros $\mathbf{F} \gets \mathbf{0}$, $\mathcal{E} \gets \mathbf{0}$
+\item Evaluates Lennard-Jones forces on all pairs:
+    \begin{equation}
+    \mathbf{F}_i \gets \mathbf{F}_i + \sum_{j \neq i} \mathbf{f}_{ij}^{\text{LJ}}
+    \end{equation}
+\item Evaluates Coulomb forces on all pairs:
+    \begin{equation}
+    \mathbf{F}_i \gets \mathbf{F}_i + \sum_{j \neq i} \mathbf{f}_{ij}^{\text{Coulomb}}
+    \end{equation}
+\item Records primary interaction for each atom
+\item Computes statistics: $F_{\max} = 2.34$\,kcal/(mol·\AA), $F_{\text{rms}} = 0.45$\,kcal/(mol·\AA)
+\end{enumerate}
+
+Output: \texttt{water\_cluster.xyzF}
+
+The State now includes:
+\begin{itemize}
+\item $\mathbf{F} = [(0.12, -0.06, 0.09), (-0.05, 0.02, -0.03), \ldots]$
+\item $\mathcal{E} = (0, 0, 0, -12.3, -8.7, 0)$ (vdW and Coulomb only; no bonded terms because this is a non-bonded model)
+\end{itemize}
+
+File size: 5.8\,KB (forces add 3.5\,KB).
+
+\subsection{Operation 3: Minimize (xyzF → xyzC)}
+
+Command: \texttt{relax --method FIRE --max\_iter 1000 water\_cluster.xyzF}
+
+This operation:
+\begin{enumerate}
+\item Initializes FIRE minimizer
+\item Iteratively:
+    \begin{itemize}
+    \item Evaluate $\mathbf{F}$ from current $\mathbf{X}$
+    \item Update velocities: $\mathbf{V} \gets (1-\alpha)\mathbf{V} + \alpha |\mathbf{V}| \hat{\mathbf{F}}$
+    \item Update positions: $\mathbf{X} \gets \mathbf{X} + \Delta t \, \mathbf{V}$
+    \item Check convergence: $F_{\text{rms}} < 10^{-6}$?
+    \end{itemize}
+\item Converges after 342 iterations
+\item Records construction recipe:
+    \begin{lstlisting}
+    construction:
+      source: water_cluster.xyzA
+      source_hash: d3e9f1a2...
+      steps:
+        - op: relax
+          method: FIRE
+          params: {max_iter: 1000, ftol: 1e-6, dt_init: 0.001}
+          converged: true
+          final_iter: 342
+          final_energy: -21.045  # kcal/mol
+          hash: 7c8a2d1f...
+    \end{lstlisting}
+\end{enumerate}
+
+Output: \texttt{water\_cluster.xyzC}
+
+The State now includes:
+\begin{itemize}
+\item $\mathbf{X}$ (updated positions — molecules moved closer)
+\item Recipe with hash \texttt{7c8a2d1f...}
+\end{itemize}
+
+Final energy: $U_{\text{total}} = -21.0$\,kcal/mol (stronger binding than initial configuration, which was $\sim -5$\,kcal/mol).
+
+File size: 4.2\,KB (construction metadata adds provenance but positions are similar).
+
+\subsection{Operation 4: MD Trajectory (xyzC → ensemble)}
+
+Command: \texttt{md-run --ensemble NVT --temp 300 --steps 10000 water\_cluster.xyzC}
+
+This operation:
+\begin{enumerate}
+\item Initializes velocities from Maxwell-Boltzmann at 300\,K
+\item Runs velocity Verlet integration with Berendsen thermostat
+\item Saves snapshots every 100 steps (100 frames total)
+\item Each snapshot is a State with updated $\mathbf{X}(t)$, $\mathbf{V}(t)$
+\end{enumerate}
+
+Output: \texttt{water\_cluster\_traj.dcd} (binary trajectory file)
+
+Analyzing the trajectory:
+\begin{itemize}
+\item Average temperature: $\langle T \rangle = 302.3 \pm 15.7$\,K
+\item Average energy: $\langle U \rangle = -20.1 \pm 2.3$\,kcal/mol (thermal fluctuations)
+\item Hydrogen bond count: $5.2 \pm 0.8$ (bonds form and break dynamically)
+\end{itemize}
+
+The trajectory ensemble is a collection of States $\{\mathcal{S}(t_1), \mathcal{S}(t_2), \ldots, \mathcal{S}(t_{100})\}$, each with different $\mathbf{X}$ and $\mathbf{V}$ but the same $N$, $\mathbf{M}$, $\boldsymbol{\tau}$.
+
+\section{State Invariants and Validation}
+
+The State structure enforces several physical invariants that can be checked programmatically.
+
+\subsection{Invariant 1: Mass Conservation}
+
+\begin{equation}
+M_{\text{total}} = \sum_{i=1}^{N} m_i = \text{const}
+\end{equation}
+
+This must hold at every time step. If $M_{\text{total}}(t) \neq M_{\text{total}}(0)$, the integrator has a bug.
+
+\subsection{Invariant 2: Charge Neutrality (For Neutral Systems)}
+
+\begin{equation}
+Q_{\text{total}} = \sum_{i=1}^{N} q_i = 0 \quad (\text{or specified total charge})
+\end{equation}
+
+For neutral molecules, $|Q_{\text{total}}| < 10^{-6}\,e$ (floating-point tolerance). Deviation indicates either:
+\begin{itemize}
+\item Incorrect charge assignment
+\item Numerical drift in a charge-equilibration scheme
+\end{itemize}
+
+\subsection{Invariant 3: Momentum Conservation (NVE Only)}
+
+\begin{equation}
+\mathbf{P}(t) = \sum_{i=1}^{N} m_i \mathbf{v}_i(t) = \mathbf{0} \quad (\text{if COM motion removed})
+\end{equation}
+
+In NVE dynamics with no external forces, $\mathbf{P}$ is conserved. Drift indicates violation of Newton's third law in the force evaluation.
+
+Tolerance: $|\mathbf{P}(t) - \mathbf{P}(0)| < 10^{-10}$ (machine precision).
+
+\subsection{Invariant 4: Energy Ledger Self-Consistency}
+
+\begin{equation}
+U_{\text{total}} = \sum_{k=1}^{6} \mathcal{E}_k
+\end{equation}
+
+The sum of ledger entries must equal the total potential energy computed independently. If not, either:
+\begin{itemize}
+\item A force model failed to report its contribution
+\item A force model reported to the wrong ledger entry
+\end{itemize}
+
+Tolerance: $|U_{\text{computed}} - U_{\text{ledger}}| / N < 10^{-10}$\,kcal/mol per atom.
+
+\subsection{Invariant 5: Force-Energy Consistency (Finite Differences)}
+
+For any atom $i$ and displacement $\delta \mathbf{x}$:
+\begin{equation}
+F_{i,\alpha} \approx -\frac{U(\mathbf{X} + \delta \mathbf{x} \mathbf{e}_\alpha) - U(\mathbf{X})}{\delta x}
+\end{equation}
+
+where $\mathbf{e}_\alpha$ is the unit vector in direction $\alpha \in \{x,y,z\}$.
+
+This is tested by finite differences with $\delta x = 10^{-5}$\,\AA. If the analytic force disagrees with the numerical gradient, the force derivation is wrong.
+
+Tolerance: $|F_{\text{analytic}} - F_{\text{numeric}}| < 10^{-4}$\,kcal/(mol·\AA) (limited by numerical differentiation error).
+
+\section{State Transitions: The Physics Pipeline}
+
+Every physical operation is a State transformation:
+\begin{equation}
+\mathcal{S}(t+\Delta t) = \Phi_{\Delta t}\bigl[\mathcal{S}(t)\bigr]
+\end{equation}
+
+where $\Phi_{\Delta t}$ is the time-evolution operator (integrator).
+
+\subsection{Integration as State Map}
+
+Velocity Verlet:
+\begin{align}
+\Phi_{\Delta t}[\mathcal{S}] &= \mathcal{S}' \quad \text{where:} \\
+\mathbf{V}' &\gets \mathbf{V} + \frac{\Delta t}{2\mathbf{M}} \mathbf{F}(\mathbf{X}) \\
+\mathbf{X}' &\gets \mathbf{X} + \Delta t \, \mathbf{V}' \\
+\mathbf{F}' &\gets -\nabla_{\mathbf{X}'} U(\mathbf{X}', \mathbf{Q}, \mathbf{B}) \\
+\mathbf{V}' &\gets \mathbf{V}' + \frac{\Delta t}{2\mathbf{M}} \mathbf{F}'
+\end{align}
+
+The integrator reads $(\mathbf{X}, \mathbf{V})$ from $\mathcal{S}$, computes $(\mathbf{X}', \mathbf{V}')$, and writes back to $\mathcal{S}'$. The identity fields $(N, \mathbf{M}, \boldsymbol{\tau})$ are copied unchanged.
+
+\subsection{Minimization as State Map}
+
+FIRE minimization:
+\begin{align}
+\Phi_{\text{FIRE}}[\mathcal{S}] &= \mathcal{S}^* \quad \text{where:} \\
+\mathbf{X}^* &= \arg\min_{\mathbf{X}} U(\mathbf{X}, \mathbf{Q}, \mathbf{B}) \\
+\mathbf{V}^* &= \mathbf{0}
+\end{align}
+
+The minimizer finds the local minimum $\mathbf{X}^*$ and zeros the velocities (since we're looking for a stationary point).
+
+\subsection{Composition of Operations}
+
+Operations compose naturally:
+\begin{equation}
+\mathcal{S}_{\text{final}} = \Phi_{\text{FIRE}} \circ \Phi_{\Delta t}^{n} \circ \Phi_{\text{init}}[\mathcal{S}_0]
+\end{equation}
+
+This reads: ``Initialize state, run $n$ MD steps, minimize.''
+
+Each operation is independently testable:
+\begin{itemize}
+\item Test $\Phi_{\text{init}}$: Does it produce correct Maxwell-Boltzmann velocities?
+\item Test $\Phi_{\Delta t}$: Does it conserve energy in NVE?
+\item Test $\Phi_{\text{FIRE}}$: Does it find local minima?
+\end{itemize}
+
+The composition inherits correctness from the components.
+
+\section{Memory Layout and Performance Considerations}
+
+The State structure is designed for cache efficiency.
+
+\subsection{Structure-of-Arrays (SoA) Layout}
+
+Positions are stored as three contiguous arrays:
+\begin{align}
+\mathbf{X} &= [\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_N] \\
+&= [x_1, y_1, z_1, x_2, y_2, z_2, \ldots]
+\end{align}
+
+This is \textit{array-of-structures} (AoS). Modern CPUs prefer \textit{structure-of-arrays}:
+\begin{align}
+\mathbf{X}_x &= [x_1, x_2, \ldots, x_N] \\
+\mathbf{X}_y &= [y_1, y_2, \ldots, y_N] \\
+\mathbf{X}_z &= [z_1, z_2, \ldots, z_N]
+\end{align}
+
+This enables vectorization: SIMD instructions (SSE, AVX) can process 4-8 coordinates in parallel.
+
+The framework supports both layouts via compile-time flag. Default is AoS (for compatibility with standard tools), but SoA is available for performance-critical inner loops.
+
+\subsection{Memory Footprint}
+
+For $N = 1000$ atoms:
+\begin{itemize}
+\item Positions: $3 \times 1000 \times 8 = 24$\,KB (double precision)
+\item Velocities: $24$\,KB
+\item Forces: $24$\,KB
+\item Masses: $1000 \times 8 = 8$\,KB
+\item Charges: $8$\,KB
+\item Type IDs: $1000 \times 4 = 4$\,KB (int)
+\end{itemize}
+
+Total: $\sim 92$\,KB per State.
+
+For trajectory storage, only positions (and optionally velocities) are saved. This reduces file size by $\sim 70\%$.
+
+\section{Conclusion: The State as Contract}
+
+The State structure is the contract between all components of the formation engine. It defines:
+
+\begin{itemize}
+\item \textbf{What must be conserved}: Identity fields never change
+\item \textbf{What must be computed}: Scratch fields regenerated on demand
+\item \textbf{What must be consistent}: Phase fields evolve under physical laws
+\end{itemize}
+
+This contract enables:
+
+\begin{itemize}
+\item \textbf{Modularity}: Force models and integrators are plug-and-play
+\item \textbf{Testability}: Each operation has clear inputs/outputs
+\item \textbf{Reproducibility}: States can be saved/restored exactly
+\item \textbf{Provenance}: Hash lineage tracks every operation
+\end{itemize}
+
+The result is a simulation framework where:
+
+\begin{quote}
+\textit{The State is the simulation. Everything else is just transformation.}
+\end{quote}
+
+This philosophical stance---that the data structure \textit{is} the physics---permeates every design decision in the formation engine. It is why the State is defined formally at the beginning of the methodology document, rather than buried in implementation details. The State is not an engineering artifact. It is the formalization of phase space itself.
+
+\paragraph{Transition to \S3:} With the State ontology established (the data structures that define a simulation), Section~3 documents \textit{how} those States evolve: the physical interaction model that converts positions into forces and energies.
+
+\end{document}

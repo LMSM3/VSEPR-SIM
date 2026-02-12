@@ -1,0 +1,281 @@
+#!/usr/bin/env bash
+# vseprw - VSEPR-Sim Wrapper
+# "One command to build/run cleanly, every time"
+# 
+# Usage: ./vseprw <SPEC> <ACTION> [OPTIONS]
+# Example: ./vseprw H2O relax --watch
+#          ./vseprw water.xyz sim --temp 300 --steps 1000
+
+set -euo pipefail
+
+# ============================================================================
+# Configuration
+# ============================================================================
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="${BUILD_DIR:-$REPO_ROOT/build}"
+GENERATOR="${CMAKE_GENERATOR:-Ninja}"  # or "Unix Makefiles"
+BUILD_TYPE="${BUILD_TYPE:-Release}"
+
+# Tool mapping: DEPRECATED - vseprw now calls single 'vsepr' binary
+# The vsepr binary handles all actions internally via grammar:
+#   vsepr <SPEC> <ACTION> [OPTIONS]
+#
+# Old approach (removed):
+# declare -A TOOL_MAP=(
+#     ["relax"]="meso-relax"
+#     ["sim"]="meso-sim"
+#     ...
+# )
+#
+# New approach:
+VSEPR_BINARY="vsepr"
+
+# Color output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+log_info() {
+    echo -e "${BLUE}[vseprw]${NC} $1"
+}
+
+log_success() {
+    echo -e "${GREEN}[vseprw]${NC} $1"
+}
+
+log_warn() {
+    echo -e "${YELLOW}[vseprw]${NC} $1"
+}
+
+log_error() {
+    echo -e "${RED}[vseprw ERROR]${NC} $1" >&2
+}
+
+check_toolchain() {
+    log_info "Checking toolchain..."
+    
+    if ! command -v cmake &> /dev/null; then
+        log_error "CMake not found. Install CMake 3.15+"
+        exit 1
+    fi
+    
+    local cmake_version=$(cmake --version | head -n1 | awk '{print $3}')
+    log_info "CMake: $cmake_version"
+    
+    if [[ "$GENERATOR" == "Ninja" ]] && ! command -v ninja &> /dev/null; then
+        log_warn "Ninja not found, falling back to Make"
+        GENERATOR="Unix Makefiles"
+    fi
+    
+    if command -v g++ &> /dev/null; then
+        local gxx_version=$(g++ --version | head -n1)
+        log_info "Compiler: $gxx_version"
+    elif command -v clang++ &> /dev/null; then
+        local clang_version=$(clang++ --version | head -n1)
+        log_info "Compiler: $clang_version"
+    else
+        log_error "No C++ compiler found (g++ or clang++)"
+        exit 1
+    fi
+    
+    log_success "Toolchain ready"
+}
+
+configure_project() {
+    if [[ -f "$BUILD_DIR/CMakeCache.txt" ]]; then
+        log_info "Build directory exists: $BUILD_DIR"
+        return 0
+    fi
+    
+    log_info "Configuring project..."
+    mkdir -p "$BUILD_DIR"
+    
+    cd "$BUILD_DIR"
+    cmake -G "$GENERATOR" \
+          -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
+          -DBUILD_TESTS=ON \
+          -DBUILD_APPS=ON \
+          -DBUILD_VIS=ON \
+          "$REPO_ROOT"
+    
+    cd "$REPO_ROOT"
+    log_success "Configuration complete"
+}
+
+build_project() {
+    if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
+        log_error "Build directory not configured. Run configure first."
+        exit 1
+    fi
+    
+    log_info "Building project ($BUILD_TYPE)..."
+    
+    cd "$BUILD_DIR"
+    cmake --build . --config "$BUILD_TYPE" -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 4)
+    
+    cd "$REPO_ROOT"
+    log_success "Build complete"
+}
+
+check_build_freshness() {
+    # Simple heuristic: if any source file is newer than the binary, rebuild
+    local binary="$1"
+    
+    if [[ ! -f "$binary" ]]; then
+        return 1  # Needs build
+    fi
+    
+    # Check if any .cpp or .hpp in meso/ or apps/ is newer
+    local needs_rebuild=0
+    while IFS= read -r -d '' src_file; do
+        if [[ "$src_file" -nt "$binary" ]]; then
+            needs_rebuild=1
+            break
+        fi
+    done < <(find "$REPO_ROOT/meso" "$REPO_ROOT/apps" -name "*.cpp" -o -name "*.hpp" -print0 2>/dev/null)
+    
+    return $needs_rebuild
+}
+
+show_usage() {
+    cat << 'EOF'
+vseprw - VSEPR-Sim Wrapper
+===========================
+
+One command to build/run cleanly, every time.
+
+USAGE:
+    ./vseprw <SPEC> <ACTION> [OPTIONS]
+
+SPEC:
+    - Molecule formula (H2O, CH4, CO2)
+    - XYZ file path (water.xyz, crystal.xyz)
+    - System name (NaCl, diamond)
+
+ACTION:
+    relax       Energy minimization (FIRE algorithm)
+    sim         Molecular dynamics simulation
+    discover    Reaction discovery analysis
+    align       Kabsch alignment
+    build       Interactive molecule builder
+    crystal     Crystallographic viewer
+    qa          Run QA golden tests
+
+OPTIONS:
+    Passed directly to the underlying tool.
+    Use --help with each action for details.
+
+EXAMPLES:
+    ./vseprw H2O relax
+    ./vseprw water.xyz sim --temp 300 --steps 1000
+    ./vseprw ethanol.xyz discover --threshold 2.5
+    ./vseprw NaCl crystal --pbc
+
+ENVIRONMENT:
+    BUILD_DIR         Build directory (default: ./build)
+    CMAKE_GENERATOR   CMake generator (default: Ninja)
+    BUILD_TYPE        Build type (default: Release)
+
+MODES:
+    --configure-only   Configure CMake without building
+    --build-only       Build project without running tool
+    --clean            Clean build directory
+    --help             Show this message
+
+EOF
+}
+
+# ============================================================================
+# Main Logic
+# ============================================================================
+
+main() {
+    # Handle special modes
+    if [[ $# -eq 0 ]] || [[ "${1:-}" == "--help" ]] || [[ "${1:-}" == "-h" ]]; then
+        show_usage
+        exit 0
+    fi
+    
+    if [[ "${1:-}" == "--configure-only" ]]; then
+        check_toolchain
+        configure_project
+        exit 0
+    fi
+    
+    if [[ "${1:-}" == "--build-only" ]]; then
+        check_toolchain
+        configure_project
+        build_project
+        exit 0
+    fi
+    
+    if [[ "${1:-}" == "--clean" ]]; then
+        log_info "Cleaning build directory: $BUILD_DIR"
+        rm -rf "$BUILD_DIR"
+        log_success "Clean complete"
+        exit 0
+    fi
+    
+    # Parse SPEC and ACTION
+    if [[ $# -lt 2 ]]; then
+        log_error "Missing SPEC or ACTION"
+        echo ""
+        show_usage
+        exit 1
+    fi
+    
+    local spec="$1"
+    local action="$2"
+    shift 2
+    local options=("$@")
+
+    # All actions now go through single vsepr binary
+    local binary="$BUILD_DIR/$VSEPR_BINARY"
+
+    # Ensure toolchain
+    check_toolchain
+    
+    # Configure if needed
+    if [[ ! -f "$BUILD_DIR/CMakeCache.txt" ]]; then
+        log_info "First run: configuring project"
+        configure_project
+    fi
+    
+    # Build if needed
+    if ! check_build_freshness "$binary"; then
+        log_info "Binary stale or missing, rebuilding..."
+        build_project
+    else
+        log_info "Binary up-to-date"
+    fi
+
+    # Verify binary exists
+    if [[ ! -f "$binary" ]]; then
+        log_error "vsepr binary not found after build"
+        log_error "Expected: $binary"
+        exit 1
+    fi
+
+    # Show execution summary
+    log_info "╔═══════════════════════════════════════════════════════"
+    log_info "║ SPEC:      $spec"
+    log_info "║ ACTION:    $action"
+    log_info "║ BINARY:    $VSEPR_BINARY"
+    log_info "║ BUILD:     $BUILD_DIR"
+    log_info "║ TYPE:      $BUILD_TYPE"
+    log_info "╚═══════════════════════════════════════════════════════"
+    echo ""
+
+    # Execute: vsepr SPEC ACTION OPTIONS
+    cd "$REPO_ROOT"
+    "$binary" "$spec" "$action" "${options[@]}"
+}
+
+main "$@"

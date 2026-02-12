@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XeF4 - Xenon Tetrafluoride</title>
+    <meta charset="utf-8">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: Arial; background: #1a1a2e; color: #eee; }
+        #info { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 5px; }
+        #info h2 { margin: 0 0 10px 0; color: #4CAF50; }
+        #info p { margin: 5px 0; font-size: 14px; }
+        .label { color: #FFD700; font-weight: bold; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div id="info">
+        <h2>XeF₄ - Xenon Tetrafluoride</h2>
+        <p><span class="label">Formula:</span> XeF₄</p>
+        <p><span class="label">Geometry:</span> Square Planar</p>
+        <p><span class="label">Lone Pairs:</span> 2 (axial positions)</p>
+        <p><span class="label">Atoms:</span> 5 (1 Xe + 4 F)</p>
+        <p><span class="label">Point Group:</span> D₄ₕ</p>
+        <p style="margin-top: 10px; font-size: 12px; color: #888;">
+            Left click + drag: rotate<br>
+            Right click + drag: pan<br>
+            Scroll: zoom
+        </p>
+    </div>
+    <script>
+        // XeF4 coordinates from VSEPR-Sim
+        const atoms = [
+            {element: 'Xe', x: 0.012052, y: -0.003409, z: -0.003122, color: 0x4169E1, radius: 2.2},
+            {element: 'F', x: 1.268846, y: -0.083534, z: 1.485973, color: 0x90EE90, radius: 1.47},
+            {element: 'F', x: -1.626168, y: -0.929805, z: 0.507234, color: 0x90EE90, radius: 1.47},
+            {element: 'F', x: -0.253899, y: 1.859615, z: -0.513531, color: 0x90EE90, radius: 1.47},
+            {element: 'F', x: 0.838021, y: -0.960029, z: -1.488382, color: 0x90EE90, radius: 1.47}
+        ];
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a1a2e);
+        
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 8;
+        
+        const renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        
+        const pointLight1 = new THREE.PointLight(0xffffff, 0.8);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
+        
+        const pointLight2 = new THREE.PointLight(0xffffff, 0.4);
+        pointLight2.position.set(-10, -10, -10);
+        scene.add(pointLight2);
+        
+        // Draw atoms
+        atoms.forEach((atom, i) => {
+            const geometry = new THREE.SphereGeometry(atom.radius / 10, 32, 32);
+            const material = new THREE.MeshPhongMaterial({
+                color: atom.color,
+                shininess: 100,
+                specular: 0x444444
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(atom.x, atom.y, atom.z);
+            scene.add(sphere);
+            
+            // Draw bonds (Xe to F)
+            if (i > 0) {
+                const points = [];
+                points.push(new THREE.Vector3(atoms[0].x, atoms[0].y, atoms[0].z));
+                points.push(new THREE.Vector3(atom.x, atom.y, atom.z));
+                const bondGeometry = new THREE.BufferGeometry().setFromPoints(points);
+                const bondMaterial = new THREE.LineBasicMaterial({color: 0xcccccc, linewidth: 2});
+                const bond = new THREE.Line(bondGeometry, bondMaterial);
+                scene.add(bond);
+            }
+        });
+        
+        // Add coordinate axes
+        const axesHelper = new THREE.AxesHelper(3);
+        scene.add(axesHelper);
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        animate();
+    </script>
+</body>
+</html>

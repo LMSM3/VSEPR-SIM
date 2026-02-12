@@ -1,0 +1,154 @@
+# ============================================================================
+# Export Archive (preserved bloat, not distributed)
+# ============================================================================
+EXPORT/
+
+# ============================================================================
+# Build Artifacts
+# ============================================================================
+build/
+bin/
+lib/
+*.out
+
+# Build executables (except in distribution)
+*.exe
+!installer/output/*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Compiled Object files
+*.o
+*.obj
+*.lo
+*.slo
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.a
+*.la
+*.lib
+
+# Shared objects
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# ============================================================================
+# Output Directories (Generated Data)
+# ============================================================================
+output/batch/*.xyz
+output/batch/*.json
+output/batch/*.csv
+output/continuous/*.xyz
+output/continuous/*.checkpoint
+output/thermal/*.xyz
+output/thermal/*.gif
+output/thermal/*.mp4
+
+# Keep README files
+!output/README.md
+!output/*/README.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ImGui runtime config (generated)
+imgui.ini
+
+# Windows Zone Identifier (download metadata)
+*:Zone.Identifier
+
+# ============================================================================
+# Distribution Artifacts
+# ============================================================================
+# Moved to out/dist/ (see above unified output section)
+dist-*/
+*.zip
+!examples/*.zip
+*.msi
+*.dmg
+*.deb
+*.rpm
+
+# Checksums
+*.sha256
+*.md5
+
+# ============================================================================
+# Installer Build Outputs
+# ============================================================================
+installer/output/
+installer/*.wixobj
+
+# ============================================================================
+# Graveyard (Archive - Should be moved to separate branch)
+# ============================================================================
+_graveyard_DO_NOT_USE/
+installer/*.wixpdb
+
+# ============================================================================
+# Data Outputs (generated files)
+# ============================================================================
+*.pdb
+*.log
+output/
+logs/**
+!logs/.gitkeep
+artifacts/**
+!artifacts/.gitkeep
+
+# Outputs directory (all runtime outputs)
+outputs/**
+!outputs/.gitkeep
+
+# Data cache and archives
+data/cache/**
+!data/cache/.gitkeep
+data/archive/**
+!data/archive/.gitkeep
+
+# Keep reference geometries (curated, committed)
+!data/geometries/*.xyz
+!data/geometries/*.pdb
+!data/geometries/README.md
+
+# Archive/Graveyard - deprecated code not for use
+_graveyard_DO_NOT_USE/
+
+# Keep example XYZ files but ignore generated ones
+*.xyz
+!examples/**/*.xyz
+!data/geometries/*.xyz
+
+# ============================================================================
+# Resources (keep source, ignore generated)
+# ============================================================================
+# Keep .ico files that are manually created
+# Ignore auto-generated preview PNGs
+resources/*_preview.png
+resources/*_256.png

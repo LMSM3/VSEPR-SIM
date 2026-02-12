@@ -1,0 +1,24 @@
+# Noble Gas Compounds
+XeF2
+XeF4
+XeF6
+KrF2
+
+# Hypervalent Main Group
+SF6
+PF5
+ClF3
+IF5
+BrF5
+
+# Oxoacids
+H2SO4
+H3PO4
+HNO3
+HClO4
+
+# Complex Main Group
+PCl5
+AsF5
+SbCl5
+XeOF4

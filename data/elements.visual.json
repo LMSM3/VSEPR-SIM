@@ -1,0 +1,603 @@
+{
+  "schema_version": 1,
+  "description": "Element visual data for molecular rendering",
+  "source": "Generated from PeriodicTableJSON.json (CPK colors)",
+  "note": "Add covalent_radius/vdw_radius from external sources",
+  "elements": [
+    {
+      "Z": 1,
+      "symbol": "H",
+      "cpk": "ffffff"
+    },
+    {
+      "Z": 2,
+      "symbol": "He",
+      "cpk": "d9ffff"
+    },
+    {
+      "Z": 3,
+      "symbol": "Li",
+      "cpk": "cc80ff"
+    },
+    {
+      "Z": 4,
+      "symbol": "Be",
+      "cpk": "c2ff00"
+    },
+    {
+      "Z": 5,
+      "symbol": "B",
+      "cpk": "ffb5b5"
+    },
+    {
+      "Z": 6,
+      "symbol": "C",
+      "cpk": "909090"
+    },
+    {
+      "Z": 7,
+      "symbol": "N",
+      "cpk": "3050f8"
+    },
+    {
+      "Z": 8,
+      "symbol": "O",
+      "cpk": "ff0d0d"
+    },
+    {
+      "Z": 9,
+      "symbol": "F",
+      "cpk": "90e050"
+    },
+    {
+      "Z": 10,
+      "symbol": "Ne",
+      "cpk": "b3e3f5"
+    },
+    {
+      "Z": 11,
+      "symbol": "Na",
+      "cpk": "ab5cf2"
+    },
+    {
+      "Z": 12,
+      "symbol": "Mg",
+      "cpk": "8aff00"
+    },
+    {
+      "Z": 13,
+      "symbol": "Al",
+      "cpk": "bfa6a6"
+    },
+    {
+      "Z": 14,
+      "symbol": "Si",
+      "cpk": "f0c8a0"
+    },
+    {
+      "Z": 15,
+      "symbol": "P",
+      "cpk": "ff8000"
+    },
+    {
+      "Z": 16,
+      "symbol": "S",
+      "cpk": "ffff30"
+    },
+    {
+      "Z": 17,
+      "symbol": "Cl",
+      "cpk": "1ff01f"
+    },
+    {
+      "Z": 18,
+      "symbol": "Ar",
+      "cpk": "80d1e3"
+    },
+    {
+      "Z": 19,
+      "symbol": "K",
+      "cpk": "8f40d4"
+    },
+    {
+      "Z": 20,
+      "symbol": "Ca",
+      "cpk": "3dff00"
+    },
+    {
+      "Z": 21,
+      "symbol": "Sc",
+      "cpk": "e6e6e6"
+    },
+    {
+      "Z": 22,
+      "symbol": "Ti",
+      "cpk": "bfc2c7"
+    },
+    {
+      "Z": 23,
+      "symbol": "V",
+      "cpk": "a6a6ab"
+    },
+    {
+      "Z": 24,
+      "symbol": "Cr",
+      "cpk": "8a99c7"
+    },
+    {
+      "Z": 25,
+      "symbol": "Mn",
+      "cpk": "9c7ac7"
+    },
+    {
+      "Z": 26,
+      "symbol": "Fe",
+      "cpk": "e06633"
+    },
+    {
+      "Z": 27,
+      "symbol": "Co",
+      "cpk": "f090a0"
+    },
+    {
+      "Z": 28,
+      "symbol": "Ni",
+      "cpk": "50d050"
+    },
+    {
+      "Z": 29,
+      "symbol": "Cu",
+      "cpk": "c88033"
+    },
+    {
+      "Z": 30,
+      "symbol": "Zn",
+      "cpk": "7d80b0"
+    },
+    {
+      "Z": 31,
+      "symbol": "Ga",
+      "cpk": "c28f8f"
+    },
+    {
+      "Z": 32,
+      "symbol": "Ge",
+      "cpk": "668f8f"
+    },
+    {
+      "Z": 33,
+      "symbol": "As",
+      "cpk": "bd80e3"
+    },
+    {
+      "Z": 34,
+      "symbol": "Se",
+      "cpk": "ffa100"
+    },
+    {
+      "Z": 35,
+      "symbol": "Br",
+      "cpk": "a62929"
+    },
+    {
+      "Z": 36,
+      "symbol": "Kr",
+      "cpk": "5cb8d1"
+    },
+    {
+      "Z": 37,
+      "symbol": "Rb",
+      "cpk": "702eb0"
+    },
+    {
+      "Z": 38,
+      "symbol": "Sr",
+      "cpk": "00ff00"
+    },
+    {
+      "Z": 39,
+      "symbol": "Y",
+      "cpk": "94ffff"
+    },
+    {
+      "Z": 40,
+      "symbol": "Zr",
+      "cpk": "94e0e0"
+    },
+    {
+      "Z": 41,
+      "symbol": "Nb",
+      "cpk": "73c2c9"
+    },
+    {
+      "Z": 42,
+      "symbol": "Mo",
+      "cpk": "54b5b5"
+    },
+    {
+      "Z": 43,
+      "symbol": "Tc",
+      "cpk": "3b9e9e"
+    },
+    {
+      "Z": 44,
+      "symbol": "Ru",
+      "cpk": "248f8f"
+    },
+    {
+      "Z": 45,
+      "symbol": "Rh",
+      "cpk": "0a7d8c"
+    },
+    {
+      "Z": 46,
+      "symbol": "Pd",
+      "cpk": "006985"
+    },
+    {
+      "Z": 47,
+      "symbol": "Ag",
+      "cpk": "c0c0c0"
+    },
+    {
+      "Z": 48,
+      "symbol": "Cd",
+      "cpk": "ffd98f"
+    },
+    {
+      "Z": 49,
+      "symbol": "In",
+      "cpk": "a67573"
+    },
+    {
+      "Z": 50,
+      "symbol": "Sn",
+      "cpk": "668080"
+    },
+    {
+      "Z": 51,
+      "symbol": "Sb",
+      "cpk": "9e63b5"
+    },
+    {
+      "Z": 52,
+      "symbol": "Te",
+      "cpk": "d47a00"
+    },
+    {
+      "Z": 53,
+      "symbol": "I",
+      "cpk": "940094"
+    },
+    {
+      "Z": 54,
+      "symbol": "Xe",
+      "cpk": "429eb0"
+    },
+    {
+      "Z": 55,
+      "symbol": "Cs",
+      "cpk": "57178f"
+    },
+    {
+      "Z": 56,
+      "symbol": "Ba",
+      "cpk": "00c900"
+    },
+    {
+      "Z": 57,
+      "symbol": "La",
+      "cpk": "70d4ff"
+    },
+    {
+      "Z": 58,
+      "symbol": "Ce",
+      "cpk": "ffffc7"
+    },
+    {
+      "Z": 59,
+      "symbol": "Pr",
+      "cpk": "d9ffc7"
+    },
+    {
+      "Z": 60,
+      "symbol": "Nd",
+      "cpk": "c7ffc7"
+    },
+    {
+      "Z": 61,
+      "symbol": "Pm",
+      "cpk": "a3ffc7"
+    },
+    {
+      "Z": 62,
+      "symbol": "Sm",
+      "cpk": "8fffc7"
+    },
+    {
+      "Z": 63,
+      "symbol": "Eu",
+      "cpk": "61ffc7"
+    },
+    {
+      "Z": 64,
+      "symbol": "Gd",
+      "cpk": "45ffc7"
+    },
+    {
+      "Z": 65,
+      "symbol": "Tb",
+      "cpk": "30ffc7"
+    },
+    {
+      "Z": 66,
+      "symbol": "Dy",
+      "cpk": "1fffc7"
+    },
+    {
+      "Z": 67,
+      "symbol": "Ho",
+      "cpk": "00ff9c"
+    },
+    {
+      "Z": 68,
+      "symbol": "Er",
+      "cpk": "00e675"
+    },
+    {
+      "Z": 69,
+      "symbol": "Tm",
+      "cpk": "00d452"
+    },
+    {
+      "Z": 70,
+      "symbol": "Yb",
+      "cpk": "00bf38"
+    },
+    {
+      "Z": 71,
+      "symbol": "Lu",
+      "cpk": "00ab24"
+    },
+    {
+      "Z": 72,
+      "symbol": "Hf",
+      "cpk": "4dc2ff"
+    },
+    {
+      "Z": 73,
+      "symbol": "Ta",
+      "cpk": "4da6ff"
+    },
+    {
+      "Z": 74,
+      "symbol": "W",
+      "cpk": "2194d6"
+    },
+    {
+      "Z": 75,
+      "symbol": "Re",
+      "cpk": "267dab"
+    },
+    {
+      "Z": 76,
+      "symbol": "Os",
+      "cpk": "266696"
+    },
+    {
+      "Z": 77,
+      "symbol": "Ir",
+      "cpk": "175487"
+    },
+    {
+      "Z": 78,
+      "symbol": "Pt",
+      "cpk": "d0d0e0"
+    },
+    {
+      "Z": 79,
+      "symbol": "Au",
+      "cpk": "ffd123"
+    },
+    {
+      "Z": 80,
+      "symbol": "Hg",
+      "cpk": "b8b8d0"
+    },
+    {
+      "Z": 81,
+      "symbol": "Tl",
+      "cpk": "a6544d"
+    },
+    {
+      "Z": 82,
+      "symbol": "Pb",
+      "cpk": "575961"
+    },
+    {
+      "Z": 83,
+      "symbol": "Bi",
+      "cpk": "9e4fb5"
+    },
+    {
+      "Z": 84,
+      "symbol": "Po",
+      "cpk": "ab5c00"
+    },
+    {
+      "Z": 85,
+      "symbol": "At",
+      "cpk": "754f45"
+    },
+    {
+      "Z": 86,
+      "symbol": "Rn",
+      "cpk": "428296"
+    },
+    {
+      "Z": 87,
+      "symbol": "Fr",
+      "cpk": "420066"
+    },
+    {
+      "Z": 88,
+      "symbol": "Ra",
+      "cpk": "007d00"
+    },
+    {
+      "Z": 89,
+      "symbol": "Ac",
+      "cpk": "70abfa"
+    },
+    {
+      "Z": 90,
+      "symbol": "Th",
+      "cpk": "00baff"
+    },
+    {
+      "Z": 91,
+      "symbol": "Pa",
+      "cpk": "00a1ff"
+    },
+    {
+      "Z": 92,
+      "symbol": "U",
+      "cpk": "008fff"
+    },
+    {
+      "Z": 93,
+      "symbol": "Np",
+      "cpk": "0080ff"
+    },
+    {
+      "Z": 94,
+      "symbol": "Pu",
+      "cpk": "006bff"
+    },
+    {
+      "Z": 95,
+      "symbol": "Am",
+      "cpk": "545cf2"
+    },
+    {
+      "Z": 96,
+      "symbol": "Cm",
+      "cpk": "785ce3"
+    },
+    {
+      "Z": 97,
+      "symbol": "Bk",
+      "cpk": "8a4fe3"
+    },
+    {
+      "Z": 98,
+      "symbol": "Cf",
+      "cpk": "a136d4"
+    },
+    {
+      "Z": 99,
+      "symbol": "Es",
+      "cpk": "b31fd4"
+    },
+    {
+      "Z": 100,
+      "symbol": "Fm",
+      "cpk": "b31fba"
+    },
+    {
+      "Z": 101,
+      "symbol": "Md",
+      "cpk": "b30da6"
+    },
+    {
+      "Z": 102,
+      "symbol": "No",
+      "cpk": "bd0d87"
+    },
+    {
+      "Z": 103,
+      "symbol": "Lr",
+      "cpk": "c70066"
+    },
+    {
+      "Z": 104,
+      "symbol": "Rf",
+      "cpk": "cc0059"
+    },
+    {
+      "Z": 105,
+      "symbol": "Db",
+      "cpk": "d1004f"
+    },
+    {
+      "Z": 106,
+      "symbol": "Sg",
+      "cpk": "d90045"
+    },
+    {
+      "Z": 107,
+      "symbol": "Bh",
+      "cpk": "e00038"
+    },
+    {
+      "Z": 108,
+      "symbol": "Hs",
+      "cpk": "e6002e"
+    },
+    {
+      "Z": 109,
+      "symbol": "Mt",
+      "cpk": "eb0026"
+    },
+    {
+      "Z": 110,
+      "symbol": "Ds",
+      "cpk": null
+    },
+    {
+      "Z": 111,
+      "symbol": "Rg",
+      "cpk": null
+    },
+    {
+      "Z": 112,
+      "symbol": "Cn",
+      "cpk": null
+    },
+    {
+      "Z": 113,
+      "symbol": "Nh",
+      "cpk": null
+    },
+    {
+      "Z": 114,
+      "symbol": "Fl",
+      "cpk": null
+    },
+    {
+      "Z": 115,
+      "symbol": "Mc",
+      "cpk": null
+    },
+    {
+      "Z": 116,
+      "symbol": "Lv",
+      "cpk": null
+    },
+    {
+      "Z": 117,
+      "symbol": "Ts",
+      "cpk": null
+    },
+    {
+      "Z": 118,
+      "symbol": "Og",
+      "cpk": null
+    },
+    {
+      "Z": 119,
+      "symbol": "Uue",
+      "cpk": null
+    }
+  ]
+}

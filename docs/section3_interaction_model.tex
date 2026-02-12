@@ -1,0 +1,880 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Section 3 — Physical Interaction Model}
+\author{Formation Engine Development Team}
+\date{Version 0.1 — First Principles Draft}
+
+\begin{document}
+\maketitle
+
+\section{The Model Interface}
+
+The formation engine computes forces from positions through a strictly defined interface. All force models — whether nonbonded, bonded, or composite — implement the same contract:
+
+\begin{equation}
+\texttt{eval}: \mathcal{S} \times \Theta \;\longrightarrow\; (\mathbf{F}, \mathcal{E})
+\end{equation}
+
+where:
+\begin{itemize}
+\item $\mathcal{S}$ is the State (defined in Section~2)
+\item $\Theta$ is the parameter set (cutoff radius, Coulomb constant, force constants)
+\item $\mathbf{F} \in \mathbb{R}^{N \times 3}$ is the force vector (kcal/(mol·\AA))
+\item $\mathcal{E} \in \mathbb{R}^6$ is the energy ledger (kcal/mol)
+\end{itemize}
+
+This is a \textit{pure function}: given the same State and parameters, it always returns the same forces and energies. No hidden state. No history dependence. No side effects.
+
+\subsection{The Born-Oppenheimer Approximation}
+
+The interface embeds a fundamental physical approximation: \textbf{the Born-Oppenheimer separation of electronic and nuclear motion}.
+
+In quantum mechanics, the total wavefunction $\Psi$ depends on both nuclear positions $\mathbf{R}$ and electronic coordinates $\mathbf{r}$:
+\begin{equation}
+\Psi(\mathbf{R}, \mathbf{r})
+\end{equation}
+
+The Born-Oppenheimer approximation separates these:
+\begin{equation}
+\Psi(\mathbf{R}, \mathbf{r}) \approx \chi(\mathbf{R}) \cdot \psi(\mathbf{r}; \mathbf{R})
+\end{equation}
+
+where $\chi$ is the nuclear wavefunction and $\psi$ is the electronic wavefunction parameterized by nuclear positions.
+
+The key consequence: electrons adjust instantaneously to nuclear motion. The potential energy surface $U(\mathbf{R})$ is obtained by solving the electronic Schrödinger equation at fixed $\mathbf{R}$:
+\begin{equation}
+U(\mathbf{R}) = \langle \psi(\mathbf{r}; \mathbf{R}) | \hat{H}_{\text{elec}} | \psi(\mathbf{r}; \mathbf{R}) \rangle
+\end{equation}
+
+This is valid when:
+\begin{itemize}
+\item Electronic energy gaps are large compared to nuclear kinetic energy
+\item No non-adiabatic transitions (curve crossings)
+\item Temperature is below electronic excitation thresholds
+\end{itemize}
+
+For the formation engine, these conditions hold for ground-state molecules at $T < 1000$\,K. Excited states, photochemistry, and quantum tunneling are outside the scope.
+
+\subsection{Force as Gradient}
+
+Given $U(\mathbf{X})$, the force on atom $i$ is:
+\begin{equation}
+\mathbf{F}_i = -\nabla_{\mathbf{x}_i} U(\mathbf{X})
+\end{equation}
+
+This is Newton's second law in potential form. The force depends only on the current positions, not on how the system arrived at those positions.
+
+The framework evaluates $U$ and $\mathbf{F}$ \textit{together} for numerical consistency. The energy is not computed by integrating forces; the forces are not computed by finite-differencing energy. Both are derived analytically from the same potential function.
+
+\subsection{Nonbonded vs. Bonded Decomposition}
+
+The total potential decomposes into two families:
+
+\paragraph{Nonbonded interactions} operate between all atom pairs (or all pairs within a cutoff):
+\begin{equation}
+U_{\text{nonbonded}} = \sum_{i<j} U_{ij}^{\text{LJ}}(\mathbf{r}_{ij}) + U_{ij}^{\text{Coulomb}}(\mathbf{r}_{ij})
+\end{equation}
+
+These capture van der Waals dispersion, Pauli repulsion, and electrostatic interactions.
+
+\paragraph{Bonded interactions} operate along the bond graph $\mathbf{B}$:
+\begin{align}
+U_{\text{bonded}} &= \sum_{(i,j) \in \mathbf{B}} U_{\text{bond}}(r_{ij}) \\
+&\quad + \sum_{\text{angles}} U_{\text{angle}}(\theta_{ijk}) \\
+&\quad + \sum_{\text{dihedrals}} U_{\text{torsion}}(\phi_{ijkl}) \\
+&\quad + \sum_{\text{impropers}} U_{\text{improper}}(\psi_{ijkl})
+\end{align}
+
+These capture intramolecular deformations: bond stretching, angle bending, torsional rotation.
+
+The total potential is the sum:
+\begin{equation}
+U = U_{\text{nonbonded}} + U_{\text{bonded}}
+\end{equation}
+
+The forces are additive:
+\begin{equation}
+\mathbf{F}_i = \mathbf{F}_i^{\text{nonbonded}} + \mathbf{F}_i^{\text{bonded}}
+\end{equation}
+
+Each model contributes to the appropriate energy ledger entry (Section~2.2).
+
+\subsection{Why This Interface Matters}
+
+The separation of \texttt{eval} from time integration enables:
+
+\paragraph{Modularity} Force models can be swapped without changing integrators. A Lennard-Jones model and a Buckingham potential implement the same interface.
+
+\paragraph{Testability} Force correctness is verified by finite-difference tests (Section~7):
+\begin{equation}
+F_{i,\alpha} \stackrel{?}{\approx} -\frac{U(\mathbf{X} + \delta \mathbf{e}_\alpha) - U(\mathbf{X})}{\delta}
+\end{equation}
+
+If the analytic force disagrees with the numerical gradient, the force derivation has an error.
+
+\paragraph{Composability} Multiple models combine by summing their outputs:
+\begin{align}
+(\mathbf{F}_{\text{total}}, \mathcal{E}_{\text{total}}) &= \texttt{eval}_{\text{LJ}}(\mathcal{S}, \Theta_{\text{LJ}}) \\
+&\quad + \texttt{eval}_{\text{Coulomb}}(\mathcal{S}, \Theta_{\text{Coulomb}}) \\
+&\quad + \texttt{eval}_{\text{bonded}}(\mathcal{S}, \Theta_{\text{bonded}})
+\end{align}
+
+This compositional structure makes the physics transparent. Each term is independently verifiable.
+
+\section{Lennard-Jones 12-6 Potential}
+
+The dominant nonbonded interaction in the formation engine is the Lennard-Jones (LJ) potential. It is the workhorse of classical simulation for good reason: it captures the essential physics of neutral atom interactions in a computationally efficient form.
+
+\subsection{Physical Basis}
+
+The LJ potential models two distinct quantum-mechanical effects:
+
+\paragraph{Pauli repulsion} At short range, electron clouds overlap. The Pauli exclusion principle forbids electrons from occupying the same quantum state. This produces a steep repulsive wall as atoms approach contact.
+
+The exact form of Pauli repulsion is approximately exponential:
+\begin{equation}
+U_{\text{Pauli}}(r) \sim A e^{-\alpha r}
+\end{equation}
+
+However, exponentials are computationally expensive (transcendental functions).
+
+\paragraph{London dispersion} At long range, quantum fluctuations in the electron density of one atom induce a dipole moment in another. The resulting interaction is attractive and decays as $r^{-6}$.
+
+This is derived from second-order perturbation theory. For two isotropic atoms:
+\begin{equation}
+U_{\text{dispersion}}(r) = -\frac{C_6}{r^6}
+\end{equation}
+
+where $C_6$ is the dispersion coefficient, related to the polarizability $\alpha$ via:
+\begin{equation}
+C_6 \approx \frac{3}{2} \alpha^2 I
+\end{equation}
+
+with $I$ the ionization energy.
+
+\subsection{The 12-6 Form}
+
+The Lennard-Jones potential combines these effects:
+\begin{equation}
+U_{\text{LJ}}(r) = 4\varepsilon \left[\left(\frac{\sigma}{r}\right)^{12} - \left(\frac{\sigma}{r}\right)^6\right]
+\end{equation}
+
+The $r^{-12}$ term models Pauli repulsion. The exponent 12 is chosen not for physical accuracy but for computational efficiency:
+\begin{equation}
+\left(\frac{\sigma}{r}\right)^{12} = \left[\left(\frac{\sigma}{r}\right)^6\right]^2
+\end{equation}
+
+This allows the repulsive term to be computed from the square of the attractive term, saving one exponentiation per pair evaluation.
+
+The parameters have direct physical meaning:
+
+\paragraph{$\varepsilon$} is the depth of the potential well (energy scale). At the equilibrium separation, the interaction energy is $-\varepsilon$.
+
+\paragraph{$\sigma$} is the finite distance at which $U_{\text{LJ}}(r) = 0$ (length scale). It is approximately the van der Waals diameter.
+
+The equilibrium distance $r_{\min}$ (where $U$ is minimum) is:
+\begin{equation}
+r_{\min} = 2^{1/6} \sigma \approx 1.122\,\sigma
+\end{equation}
+
+At this distance, $U(r_{\min}) = -\varepsilon$.
+
+\subsection{Force Derivation}
+
+The radial force is the negative derivative:
+\begin{align}
+F_{\text{LJ}}(r) &= -\frac{dU_{\text{LJ}}}{dr} \\
+&= -4\varepsilon \left[-12\left(\frac{\sigma}{r}\right)^{12} \frac{1}{r} + 6\left(\frac{\sigma}{r}\right)^6 \frac{1}{r}\right] \\
+&= \frac{4\varepsilon}{r} \left[12\left(\frac{\sigma}{r}\right)^{12} - 6\left(\frac{\sigma}{r}\right)^6\right] \\
+&= \frac{24\varepsilon}{r} \left[2\left(\frac{\sigma}{r}\right)^{12} - \left(\frac{\sigma}{r}\right)^6\right]
+\end{align}
+
+The force changes sign at $r = r_{\min}$:
+\begin{itemize}
+\item For $r < r_{\min}$: $F > 0$ (repulsion — atoms push apart)
+\item For $r > r_{\min}$: $F < 0$ (attraction — atoms pull together)
+\end{itemize}
+
+The force magnitude peaks at:
+\begin{equation}
+r_{\text{peak}} = 2^{1/6} \sigma / 1.244 \approx 0.90\,\sigma
+\end{equation}
+
+At this distance, $F_{\text{peak}} \approx 48\varepsilon/\sigma$.
+
+\subsection{Vector Force}
+
+The scalar force $F(r)$ acts along the line connecting the two atoms. The vector force on atom $i$ from atom $j$ is:
+\begin{equation}
+\mathbf{f}_{ij} = F_{\text{LJ}}(r_{ij}) \cdot \hat{\mathbf{r}}_{ij}
+\end{equation}
+
+where:
+\begin{equation}
+\hat{\mathbf{r}}_{ij} = \frac{\mathbf{r}_i - \mathbf{r}_j}{r_{ij}}, \qquad r_{ij} = |\mathbf{r}_i - \mathbf{r}_j|
+\end{equation}
+
+Newton's third law is enforced explicitly:
+\begin{equation}
+\mathbf{f}_{ji} = -\mathbf{f}_{ij}
+\end{equation}
+
+The total force on atom $i$ from all neighbors is:
+\begin{equation}
+\mathbf{F}_i^{\text{LJ}} = \sum_{j \neq i} \mathbf{f}_{ij}
+\end{equation}
+
+\subsection{Numerical Example: Argon Dimer}
+
+Consider two argon atoms separated by $r = 3.4$\,\AA\ (near the equilibrium distance).
+
+UFF parameters for Ar: $\sigma = 3.400$\,\AA, $\varepsilon = 0.238$\,kcal/mol.
+
+The potential energy is:
+\begin{align}
+U_{\text{LJ}}(3.4) &= 4 \times 0.238 \left[\left(\frac{3.400}{3.4}\right)^{12} - \left(\frac{3.400}{3.4}\right)^6\right] \\
+&= 0.952 \times [1 - 1] \\
+&= 0\,\text{kcal/mol}
+\end{align}
+
+This makes sense: at $r = \sigma$, $U = 0$ by definition.
+
+At $r = r_{\min} = 2^{1/6} \times 3.400 = 3.817$\,\AA:
+\begin{align}
+U_{\text{LJ}}(3.817) &= 4 \times 0.238 \left[\left(\frac{3.400}{3.817}\right)^{12} - \left(\frac{3.400}{3.817}\right)^6\right] \\
+&= 0.952 \times [0.25 - 0.5] \\
+&= -0.238\,\text{kcal/mol}
+\end{align}
+
+This is $-\varepsilon$, as expected.
+
+The force at $r = 3.4$\,\AA\ is:
+\begin{align}
+F_{\text{LJ}}(3.4) &= \frac{24 \times 0.238}{3.4} \left[2(1)^{12} - (1)^6\right] \\
+&= 1.682 \times [2 - 1] \\
+&= 1.682\,\text{kcal/(mol·\AA)}
+\end{align}
+
+This is positive (repulsive). At the zero-crossing $r = \sigma$, the force is non-zero — the repulsive branch is steeper than the attractive branch.
+
+\subsection{Parameter Table}
+
+The framework stores Lennard-Jones parameters for 20 elements from the Universal Force Field (Rappé et al., 1992):
+
+\begin{center}
+\small
+\begin{tabular}{ccccc}
+\toprule
+$Z$ & Element & $\sigma$ (\AA) & $\varepsilon$ (kcal/mol) & Notes \\
+\midrule
+1 & H & 2.886 & 0.044 & \\
+6 & C & 3.851 & 0.105 & Fallback default \\
+7 & N & 3.660 & 0.069 & \\
+8 & O & 3.500 & 0.060 & \\
+9 & F & 3.364 & 0.050 & \\
+11 & Na & 3.328 & 0.030 & \\
+12 & Mg & 3.021 & 0.111 & \\
+13 & Al & 4.499 & 0.505 & Largest $\varepsilon$ \\
+14 & Si & 4.295 & 0.402 & \\
+15 & P & 4.147 & 0.305 & \\
+16 & S & 4.035 & 0.274 & \\
+17 & Cl & 3.947 & 0.227 & \\
+18 & Ar & 3.400 & 0.238 & Noble gas reference \\
+20 & Ca & 3.399 & 0.238 & \\
+26 & Fe & 2.912 & 0.013 & Metallic (poor LJ model) \\
+29 & Cu & 3.495 & 0.005 & Metallic (poor LJ model) \\
+30 & Zn & 2.763 & 0.124 & \\
+54 & Xe & 4.404 & 0.332 & \\
+55 & Cs & 4.517 & 0.045 & Largest $\sigma$ \\
+84 & Po & 4.195 & 0.325 & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note the very small $\varepsilon$ for Fe and Cu. Metallic bonding involves delocalized electrons and many-body interactions, which LJ does not capture. These elements are flagged as out-of-domain for formation predictions.
+
+\subsection{Combining Rules}
+
+For pairs of different elements, cross-interaction parameters are computed via the \textbf{Lorentz-Berthelot combining rules}:
+
+\paragraph{Lorentz rule (1881)} for $\sigma$:
+\begin{equation}
+\sigma_{ij} = \frac{\sigma_i + \sigma_j}{2}
+\end{equation}
+
+This is the arithmetic mean. Physical justification: the contact distance between two hard spheres of radii $\sigma_i/2$ and $\sigma_j/2$ is their sum, divided by 2.
+
+\paragraph{Berthelot rule (1898)} for $\varepsilon$:
+\begin{equation}
+\varepsilon_{ij} = \sqrt{\varepsilon_i \cdot \varepsilon_j}
+\end{equation}
+
+This is the geometric mean. Physical justification: the dispersion coefficient $C_6 \propto \alpha_i \alpha_j$, and polarizability scales as $\alpha \sim \varepsilon^{1/2}$, so:
+\begin{equation}
+C_6^{ij} \sim \sqrt{\varepsilon_i \varepsilon_j}
+\end{equation}
+
+These rules work well for similar atom types (e.g., C–N, O–S) but fail for highly asymmetric pairs (e.g., Na–Ar, where ionic and dispersion forces have different distance dependence).
+
+\section{Coulomb Electrostatics}
+
+For systems with nonzero partial charges, electrostatic interactions dominate the potential energy landscape. The formation engine evaluates Coulomb interactions via the bare $1/r$ potential, truncated at the cutoff radius.
+
+\subsection{The Coulomb Potential}
+
+For atoms $i$ and $j$ with partial charges $q_i$ and $q_j$ (in elementary charge units $e$), the electrostatic interaction is:
+\begin{equation}
+U_{\text{Coulomb}}(r) = \frac{k_e q_i q_j}{r}
+\end{equation}
+
+where $k_e$ is the Coulomb constant. The force is:
+\begin{equation}
+F_{\text{Coulomb}}(r) = \frac{k_e q_i q_j}{r^2}
+\end{equation}
+
+The vector force is:
+\begin{equation}
+\mathbf{f}_{ij}^{\text{Coulomb}} = \frac{k_e q_i q_j}{r_{ij}^2} \hat{\mathbf{r}}_{ij}
+\end{equation}
+
+Like charges ($q_i q_j > 0$) repel; opposite charges attract.
+
+\subsection{Unit Derivation for the Coulomb Constant}
+
+The Coulomb constant in SI units is:
+\begin{equation}
+k_e^{\text{SI}} = \frac{1}{4\pi\varepsilon_0} = 8.9875 \times 10^9\,\text{N·m}^2/\text{C}^2
+\end{equation}
+
+To convert to the formation engine's internal units (kcal/(mol·\AA) for energy, $e$ for charge), we proceed step-by-step:
+
+\paragraph{Step 1} Express $k_e$ in SI with elementary charge:
+\begin{equation}
+k_e^{\text{SI}} = \frac{e^2}{4\pi\varepsilon_0} \times \frac{1}{e^2} = \frac{(1.602 \times 10^{-19}\,\text{C})^2}{4\pi\varepsilon_0}
+\end{equation}
+
+Numerically:
+\begin{equation}
+\frac{e^2}{4\pi\varepsilon_0} = 2.307 \times 10^{-28}\,\text{J·m}
+\end{equation}
+
+\paragraph{Step 2} Convert J·m to kcal·\AA:
+\begin{align}
+1\,\text{J} &= \frac{1}{4184}\,\text{kcal} \\
+1\,\text{m} &= 10^{10}\,\text{\AA}
+\end{align}
+
+So:
+\begin{equation}
+2.307 \times 10^{-28}\,\text{J·m} \times \frac{1}{4184\,\text{J/kcal}} \times 10^{10}\,\text{\AA/m} = 5.514 \times 10^{-22}\,\text{kcal·\AA}
+\end{equation}
+
+\paragraph{Step 3} Multiply by Avogadro's number (to get per-mole units):
+\begin{equation}
+k_e = 5.514 \times 10^{-22} \times 6.022 \times 10^{23} = 332.06\,\text{kcal·\AA/(mol·e}^2\text{)}
+\end{equation}
+
+The framework uses:
+\begin{equation}
+\boxed{k_e = 332.0636\,\text{kcal·\AA/(mol·e}^2\text{)}}
+\end{equation}
+
+This is exact within numerical precision. It matches AMBER, LAMMPS, and GROMACS conventions.
+
+\subsection{Numerical Example: NaCl Ion Pair}
+
+Consider Na$^+$ and Cl$^-$ separated by $r = 2.8$\,\AA\ (near the equilibrium distance in the gas phase).
+
+Charges: $q_{\text{Na}} = +1\,e$, $q_{\text{Cl}} = -1\,e$.
+
+Coulomb energy:
+\begin{align}
+U_{\text{Coulomb}}(2.8) &= \frac{332.06 \times 1 \times (-1)}{2.8} \\
+&= -118.6\,\text{kcal/mol}
+\end{align}
+
+This is strongly attractive (negative energy).
+
+Coulomb force:
+\begin{align}
+F_{\text{Coulomb}}(2.8) &= \frac{332.06 \times 1 \times (-1)}{2.8^2} \\
+&= -42.4\,\text{kcal/(mol·\AA)}
+\end{align}
+
+The negative sign indicates attraction. In magnitude, this is $\sim 100\times$ larger than typical Lennard-Jones forces at the same distance ($\sim 0.5$\,kcal/(mol·\AA)).
+
+This enormous force magnitude is the root cause of the Coulomb coupling instability (Section~3.3).
+
+\subsection{The Coulomb Coupling Instability}
+
+\paragraph{Symptom} When Coulomb forces are enabled in the velocity Verlet MD integrator, ionic systems (NaCl, LiF, MgO) diverge to unphysical temperatures ($T \sim 10^{30}$\,K) within a few hundred timesteps.
+
+\paragraph{Root cause} The acceleration conversion factor:
+\begin{equation}
+a = \frac{F}{m} \times C_{\text{acc}}
+\end{equation}
+
+where $C_{\text{acc}} = 1/C_{\text{KE}} = 4.184 \times 10^{-4}$ converts force units (kcal/(mol·\AA)) to acceleration units (\AA/fs$^2$).
+
+This factor is derived from dimensional analysis and produces correct temperatures for pure LJ systems (Ar gas at 162\,K: measured $T = 162.3 \pm 0.8$\,K, 0.5\% error).
+
+However, when Coulomb forces are included, the velocity increments $\Delta v = a \Delta t$ become too large. The timestep $\Delta t = 1$\,fs is too coarse to resolve the oscillations induced by Coulomb interactions at ionic bond distances.
+
+The system enters a runaway: large forces $\to$ large velocities $\to$ large kinetic energy $\to$ explosively high temperature.
+
+\paragraph{Current workaround} Coulomb forces are \textit{zeroed in the MD integrator} but \textit{computed correctly for energy evaluation}. This means:
+\begin{itemize}
+\item Coulomb energies are reported accurately in the energy ledger
+\item FIRE minimization works correctly for ionic systems (because FIRE uses a different acceleration pathway)
+\item NVE/NVT dynamics fail for ionic systems
+\end{itemize}
+
+\paragraph{Proper fix} The unit conversion factor needs a Coulomb-specific gain correction:
+\begin{equation}
+a_{\text{Coulomb}} = \frac{F_{\text{Coulomb}}}{m} \times C_{\text{acc}} \times g
+\end{equation}
+
+where $g \approx 0.01$ is a gain factor determined empirically. This factor accounts for the fact that Coulomb forces have different frequency content than LJ forces.
+
+Alternatively, use a symplectic integrator specifically designed for stiff Coulomb interactions (e.g., velocity Verlet with multiple timesteps, or RESPA).
+
+\paragraph{Validation of the fix} Once corrected, NaCl gas-phase dynamics should:
+\begin{itemize}
+\item Conserve energy to $|\Delta E| / N < 10^{-3}$\,kcal/mol over $10^4$ steps (NVE)
+\item Maintain temperature $|\langle T \rangle - T_{\text{target}}| / T_{\text{target}} < 0.05$ (NVT)
+\item Produce bond vibrations with frequency $\nu \approx 360$\,cm$^{-1}$ (experimental value for NaCl)
+\end{itemize}
+
+\paragraph{Documentation note} This limitation is not a defect in the physics. The Coulomb formula is correct. The energy values are correct. The issue is a \textit{numerical coupling} between the force magnitude and the integrator timestep. This is fixable with engineering, not physics changes.
+
+\section{Cutoff Truncation and Switching}
+
+Pairwise potentials decay to zero as $r \to \infty$, but evaluating interactions to infinite distance is computationally intractable. The formation engine truncates nonbonded interactions at a finite cutoff radius $r_c$.
+
+\subsection{Why Truncation is Necessary}
+
+For an $N$-particle system, evaluating all pairwise interactions requires $N(N-1)/2 \approx N^2/2$ pair evaluations. For $N = 1000$, this is $\sim 500{,}000$ pairs.
+
+If interactions are computed to infinite range, every atom interacts with every other atom. The cost is $O(N^2)$.
+
+With a cutoff radius $r_c$, only pairs with $r_{ij} < r_c$ are evaluated. For a uniform density system in a periodic box, the number of pairs within the cutoff scales as:
+\begin{equation}
+N_{\text{pairs}} \sim N \times \rho \times \frac{4}{3}\pi r_c^3
+\end{equation}
+
+For fixed $r_c$, this is $O(N)$ (linear scaling). The cost per timestep becomes tractable for large systems.
+
+\subsection{Physical Justification}
+
+The Lennard-Jones potential decays as $r^{-6}$ at long range. The interaction energy at $r = 3\sigma$ is:
+\begin{equation}
+U_{\text{LJ}}(3\sigma) = 4\varepsilon \left[\left(\frac{1}{3}\right)^{12} - \left(\frac{1}{3}\right)^6\right] \approx -0.0027\,\varepsilon
+\end{equation}
+
+This is $\sim 0.3\%$ of the well depth $\varepsilon$. For Ar ($\varepsilon = 0.238$\,kcal/mol), this is $0.0006$\,kcal/mol — negligible compared to thermal energy $k_B T \approx 0.6$\,kcal/mol at 300\,K.
+
+Choosing $r_c = 3\sigma$ neglects only $\sim 0.3\%$ of the interaction energy. The framework uses $r_c = 10$\,\AA, which is $\sim 3\sigma$ for most elements.
+
+\subsection{The Hard Cutoff Problem}
+
+A naive cutoff sets:
+\begin{equation}
+U(r) = \begin{cases}
+U_{\text{LJ}}(r) & r < r_c \\
+0 & r \geq r_c
+\end{cases}
+\end{equation}
+
+This creates a discontinuity at $r = r_c$. The force has a step:
+\begin{equation}
+F(r) = \begin{cases}
+F_{\text{LJ}}(r) & r < r_c \\
+0 & r \geq r_c
+\end{cases}
+\end{equation}
+
+Every time an atom pair crosses $r = r_c$, the force changes discontinuously. This creates an unphysical impulse:
+\begin{equation}
+\Delta p = \int_{r_c^-}^{r_c^+} F\,dt \neq 0
+\end{equation}
+
+The result is spurious heating: kinetic energy increases without corresponding potential energy change. For a 1000-atom Ar system with hard cutoff at 10\,\AA, the temperature rises by $\sim 50$\,K over $10^4$ timesteps.
+
+\subsection{Smooth Switching via Quintic Polynomial}
+
+The framework applies a smooth switching function $S(r)$ between $r_{\text{on}}$ and $r_c$:
+\begin{equation}
+U^{\text{sw}}(r) = U(r) \cdot S(r)
+\end{equation}
+
+where:
+\begin{equation}
+S(r) = \begin{cases}
+1 & r < r_{\text{on}} \\
+1 - 10x^3 + 15x^4 - 6x^5 & r_{\text{on}} \leq r \leq r_c \\
+0 & r > r_c
+\end{cases}
+\end{equation}
+
+with $x = (r - r_{\text{on}}) / (r_c - r_{\text{on}})$.
+
+This quintic polynomial satisfies:
+\begin{align}
+S(0) &= 1, \quad S(1) = 0 \quad \text{(boundary values)} \\
+S'(0) &= 0, \quad S'(1) = 0 \quad \text{(continuous first derivative)} \\
+S''(0) &= 0, \quad S''(1) = 0 \quad \text{(continuous second derivative)}
+\end{align}
+
+The second-derivative continuity ensures that the force derivative is continuous, which improves numerical integrator stability.
+
+\subsection{Force Derivation for Switched Potential}
+
+The force is the negative gradient of the switched potential:
+\begin{equation}
+F^{\text{sw}}(r) = -\frac{d}{dr}\bigl[U(r) S(r)\bigr] = -U'(r) S(r) - U(r) S'(r)
+\end{equation}
+
+Rearranging:
+\begin{equation}
+\boxed{F^{\text{sw}}(r) = F(r) S(r) + U(r) S'(r)}
+\end{equation}
+
+The first term is the bare force scaled by the switch. The second term arises from the chain rule and is \textit{essential} for energy conservation.
+
+Many codes incorrectly apply only the first term:
+\begin{equation}
+F^{\text{wrong}}(r) = F(r) S(r) \quad \text{(WRONG)}
+\end{equation}
+
+This violates energy conservation: the force is not the derivative of the potential. The error accumulates over time and causes heating.
+
+\subsection{Switch Derivative}
+
+The derivative of the quintic switch is:
+\begin{align}
+S'(x) &= -30x^2 + 60x^3 - 30x^4 \\
+&= -30x^2(1 - 2x + x^2) \\
+&= -30x^2(1-x)^2
+\end{align}
+
+In terms of $r$:
+\begin{equation}
+S'(r) = \frac{-30x^2(1-x)^2}{r_c - r_{\text{on}}}
+\end{equation}
+
+This derivative is zero at $x = 0$ and $x = 1$ (the boundaries), ensuring smooth transitions.
+
+\subsection{Default Parameters}
+
+The framework uses:
+\begin{itemize}
+\item $r_c = 10.0$\,\AA
+\item $r_{\text{on}} = 0.9 \times r_c = 9.0$\,\AA
+\end{itemize}
+
+The switching region $[9.0, 10.0]$\,\AA\ is $10\%$ of the cutoff, a standard choice in molecular simulation.
+
+\subsection{Minimum Distance Guard}
+
+For $r < 0.1$\,\AA, the $r^{-12}$ term in the LJ potential produces numerical overflow. The framework applies a distance guard for $r < r_{\min} = 0.1$\,\AA.
+
+\textbf{During initialization (VSEPR placement):} Atoms may be randomly placed with accidental overlaps. The guard prevents NaN propagation and allows the FIRE minimizer to resolve overlaps within a few iterations.
+
+\textbf{During MD production:} Overlaps below $r_{\min}$ indicate catastrophic geometry failure. The step should be rejected and the geometry flagged for reinitialization (see \S12, Known Failure Modes). Silently skipping force evaluation is \textit{never} acceptable in production dynamics, as it allows atoms to ghost through each other.
+
+\section{Periodic Boundary Conditions}
+
+For bulk and crystalline systems, the simulation box is replicated infinitely in all three Cartesian directions. This eliminates surface effects and allows modeling of infinite systems with finite computational resources.
+
+\subsection{The Minimum Image Convention}
+
+Given a simulation box with dimensions $(L_x, L_y, L_z)$, the displacement between atoms $i$ and $j$ is wrapped into the nearest periodic image:
+\begin{equation}
+\Delta r_\alpha = r_{j,\alpha} - r_{i,\alpha} - L_\alpha \cdot \text{round}\left(\frac{r_{j,\alpha} - r_{i,\alpha}}{L_\alpha}\right)
+\end{equation}
+
+for $\alpha \in \{x, y, z\}$.
+
+This places $\Delta r_\alpha \in (-L_\alpha/2, L_\alpha/2]$, ensuring that the distance $r = |\Delta\mathbf{r}|$ is computed from the \textit{nearest} image, not the image in the primary cell.
+
+\subsection{The Half-Box Constraint}
+
+For the minimum image convention to work correctly, the cutoff radius must satisfy:
+\begin{equation}
+r_c < \frac{L_\alpha}{2} \quad \text{for all } \alpha
+\end{equation}
+
+If $r_c \geq L_\alpha/2$, an atom can interact with a periodic image of itself, which is unphysical.
+
+\subsection{Position Wrapping}
+
+Atom positions are wrapped into the primary cell $[0, L_\alpha)$ after each integration step:
+\begin{equation}
+r_\alpha \gets r_\alpha - L_\alpha \cdot \lfloor r_\alpha / L_\alpha \rfloor
+\end{equation}
+
+This keeps all coordinates in a bounded range and prevents floating-point overflow.
+
+\subsection{Numerical Example: NaCl Crystal}
+
+Consider an FCC NaCl crystal with lattice parameter $a = 5.64$\,\AA. The simulation box is $L_x = L_y = L_z = 5.64$\,\AA.
+
+For an Na atom at $(0.0, 0.0, 0.0)$ and a Cl atom at $(5.5, 0.0, 0.0)$, the raw displacement is:
+\begin{equation}
+\Delta x = 5.5 - 0.0 = 5.5\,\text{\AA}
+\end{equation}
+
+Wrapped:
+\begin{equation}
+\Delta x = 5.5 - 5.64 \cdot \text{round}(5.5/5.64) = 5.5 - 5.64 = -0.14\,\text{\AA}
+\end{equation}
+
+The distance is $r = 0.14$\,\AA, which is the distance to the nearest periodic image (the Cl atom in the neighboring cell at $(-0.14, 0, 0)$ relative to Na at origin).
+
+Without wrapping, $r = 5.5$\,\AA\ would be erroneously large.
+
+\section{VSEPR Mode vs. MD Mode}
+
+The formation engine operates in two distinct nonbonded interaction regimes, reflecting fundamentally different use cases.
+
+\subsection{VSEPR Mode: Geometry Optimization}
+
+In VSEPR (Valence Shell Electron Pair Repulsion) mode, the goal is to predict molecular geometry based on bonded connectivity. The nonbonded interactions serve only to prevent atom overlap.
+
+The interaction is the \textbf{Weeks-Chandler-Andersen (WCA) potential} — the purely repulsive portion of Lennard-Jones:
+\begin{equation}
+U_{\text{WCA}}(r) = \begin{cases}
+4\varepsilon\left[\left(\frac{\sigma}{r}\right)^{12} - \left(\frac{\sigma}{r}\right)^6\right] + \varepsilon & r < 2^{1/6}\sigma \\
+0 & r \geq 2^{1/6}\sigma
+\end{cases}
+\end{equation}
+
+The $+\varepsilon$ shift ensures $U(r_{\min}) = 0$. The potential is purely repulsive — no attractive well.
+
+The well depth is chosen very small: $\varepsilon = 0.001$–$0.01$\,kcal/mol. This provides steric repulsion without competing with bonded interactions.
+
+In this mode:
+\begin{itemize}
+\item Molecular shape is determined by bond lengths and angles
+\item Nonbonded LJ prevents unphysical overlaps
+\item Coulomb interactions are disabled
+\item The result is a pure VSEPR geometry
+\end{itemize}
+
+\subsection{MD Mode: Thermodynamic Sampling}
+
+In MD mode, the goal is to sample the canonical ensemble at a specified temperature and produce physically meaningful formation energies.
+
+The interaction is the \textbf{full Lennard-Jones 12-6 potential} with UFF-calibrated parameters:
+\begin{equation}
+U_{\text{LJ}}(r) = 4\varepsilon\left[\left(\frac{\sigma}{r}\right)^{12} - \left(\frac{\sigma}{r}\right)^6\right]
+\end{equation}
+
+with $\varepsilon$ values ranging from $0.005$\,kcal/mol (Cu) to $0.505$\,kcal/mol (Al).
+
+Coulomb interactions are \textit{computed} (energy ledger populated) but currently \textit{zeroed} in the force channel (Section~3.3).
+
+In this mode:
+\begin{itemize}
+\item Energy values are thermodynamically meaningful
+\item Van der Waals interactions stabilize clusters
+\item Electrostatic contributions are evaluated
+\item The result is a formation with physical binding energy
+\end{itemize}
+
+\subsection{Why Two Modes?}
+
+The distinction reflects a fundamental trade-off:
+
+\paragraph{VSEPR mode} answers: \textit{What shape does this molecule have?}
+
+The answer depends on bond topology, not on thermodynamics. Nonbonded interactions are geometric constraints, not physical forces.
+
+\paragraph{MD mode} answers: \textit{What is the equilibrium structure and binding energy?}
+
+The answer depends on thermodynamics. Nonbonded interactions are physical forces that compete with bonded terms.
+
+Using the full LJ potential in VSEPR mode would distort bond angles (attractive dispersion forces pulling atoms together). Using WCA in MD mode would produce incorrect binding energies (no attraction between nonbonded atoms).
+
+The two modes share the same State, the same integrators, the same file formats. They differ only in which \texttt{IModel} instance is passed to \texttt{eval}.
+
+\section{Implementation Validation}
+
+The force field implementation is validated through numerical tests that verify physical consistency.
+
+\subsection{Finite-Difference Force Test}
+
+For any force model, the analytic force must match the numerical gradient of the energy:
+\begin{equation}
+F_{i,\alpha} \stackrel{?}{\approx} -\frac{U(\mathbf{X} + \delta \mathbf{e}_\alpha) - U(\mathbf{X})}{\delta}
+\end{equation}
+
+where $\mathbf{e}_\alpha$ is the unit vector in direction $\alpha \in \{x,y,z\}$ and $\delta = 10^{-5}$\,\AA\ is the displacement step.
+
+Test procedure:
+\begin{enumerate}
+\item Load a test structure (e.g., water dimer)
+\item Compute forces $\mathbf{F}$ analytically
+\item For each atom $i$ and direction $\alpha$:
+    \begin{enumerate}
+    \item Displace: $x_{i,\alpha} \gets x_{i,\alpha} + \delta$
+    \item Compute energy: $U_+$
+    \item Restore: $x_{i,\alpha} \gets x_{i,\alpha} - \delta$
+    \item Displace: $x_{i,\alpha} \gets x_{i,\alpha} - \delta$
+    \item Compute energy: $U_-$
+    \item Restore: $x_{i,\alpha} \gets x_{i,\alpha} + \delta$
+    \item Numerical force: $F_{\text{num}} = -(U_+ - U_-) / (2\delta)$
+    \end{enumerate}
+\item Compare: $|F_{i,\alpha} - F_{\text{num}}| < \epsilon$
+\end{enumerate}
+
+Tolerance: $\epsilon = 10^{-4}$\,kcal/(mol·\AA) (limited by finite-difference truncation error).
+
+If this test fails, the force derivation has an error (sign error, missing factor of 2, incorrect chain rule application).
+
+\subsection{Energy Conservation (NVE)}
+
+For microcanonical (constant $N$, $V$, $E$) dynamics, the total energy must be conserved:
+\begin{equation}
+E(t) = K(t) + U(t) = \text{const}
+\end{equation}
+
+Test procedure:
+\begin{enumerate}
+\item Initialize an Ar gas system (100 atoms, 300\,K)
+\item Run velocity Verlet for $10^4$ steps with $\Delta t = 1$\,fs
+\item Record $E(t)$ every 10 steps
+\item Compute drift: $\Delta E = |E(t_{\text{final}}) - E(t_{\text{initial}})|$
+\end{enumerate}
+
+Criterion: $\Delta E / N < 10^{-3}$\,kcal/mol per atom.
+
+If this test fails, the integrator has an error (non-symplectic scheme, incorrect force-to-acceleration conversion, force-energy inconsistency).
+
+\subsection{Newton's Third Law}
+
+For any pair of atoms $i$ and $j$:
+\begin{equation}
+\mathbf{f}_{ij} + \mathbf{f}_{ji} = \mathbf{0}
+\end{equation}
+
+This is tested by computing:
+\begin{equation}
+\delta = \frac{|\mathbf{f}_{ij} + \mathbf{f}_{ji}|}{|\mathbf{f}_{ij}|}
+\end{equation}
+
+Criterion: $\delta < 10^{-12}$ (machine precision).
+
+If this test fails, the force evaluation violates momentum conservation. This produces spurious COM drift.
+
+\section{Known Limitations and Domain of Validity}
+
+The force field does not attempt to be general. It attempts to be \textbf{explicit, auditable, and reproducible} within its domain. The following limitations are documented and flagged by the self-audit system.
+
+\subsection{Long-Range Electrostatics}
+
+The framework uses bare Coulomb with cutoff. For systems where long-range electrostatics matter (ionic crystals, charged interfaces), this is inadequate. Proper treatment requires:
+\begin{itemize}
+\item Ewald summation
+\item Particle-mesh Ewald (PME)
+\item Reaction field corrections
+\end{itemize}
+
+These are not currently implemented. Systems flagged: salts, zwitterions, charged clusters.
+
+\subsection{Metallic Bonding}
+
+Metals (Fe, Cu, Ni) have delocalized electrons and many-body interactions. Pairwise LJ potentials cannot capture this. The UFF parameters for metals have very small $\varepsilon$ (0.005–0.013\,kcal/mol), effectively disabling LJ attraction.
+
+Result: metal clusters do not form realistic structures. Systems flagged: pure metals, alloys.
+
+\subsection{Many-Body Dispersion}
+
+The LJ potential is pairwise additive:
+\begin{equation}
+U = \sum_{i<j} U_{ij}
+\end{equation}
+
+True dispersion includes 3-body (Axilrod-Teller) and higher-order terms:
+\begin{equation}
+U_{\text{3-body}} = \sum_{i<j<k} U_{ijk}
+\end{equation}
+
+For rare gas clusters, 3-body contributions are $\sim 10\%$ of the binding energy. For organic molecules, they are $\sim 5\%$.
+
+The framework neglects these. Systems flagged: large van der Waals clusters.
+
+\subsection{Polarization}
+
+Charges $\mathbf{Q}$ are fixed. Real molecules have induced dipoles that respond to electric fields. Polarizable force fields (Drude oscillators, fluctuating charges) capture this.
+
+The framework does not. Systems flagged: molecules in strong external fields, ion solvation.
+
+\subsection{Covalent Bond Dissociation}
+
+Harmonic bonds $U = k(r - r_0)^2$ diverge as $r \to \infty$. Real bonds dissociate. Morse potentials:
+\begin{equation}
+U_{\text{Morse}} = D_e\bigl[1 - e^{-\alpha(r - r_e)}\bigr]^2
+\end{equation}
+
+would be more physical but require parameterization.
+
+The framework uses harmonic bonds and does not support bond breaking during dynamics. Systems flagged: reactive systems.
+
+\section{Conclusion: The Force Field as Contract}
+
+The physical interaction model defines what the formation engine \textit{is allowed to know} about interatomic forces. It encodes:
+
+\begin{itemize}
+\item Pauli repulsion and London dispersion (via Lennard-Jones)
+\item Electrostatic interactions (via Coulomb)
+\item Intramolecular deformations (via harmonic bonds/angles/torsions)
+\end{itemize}
+
+What it does not encode:
+
+\begin{itemize}
+\item Quantum exchange-correlation
+\item Metallic many-body effects
+\item Polarization
+\item Bond dissociation
+\end{itemize}
+
+This is the contract. Within the contract, the force field is:
+
+\begin{itemize}
+\item \textbf{Explicit}: every parameter is documented
+\item \textbf{Reproducible}: same inputs → same forces
+\item \textbf{Auditable}: finite-difference tests verify correctness
+\item \textbf{Testable}: energy conservation, momentum conservation, force-energy consistency
+\end{itemize}
+
+Outside the contract, the force field does not apply. The self-audit system (Section~11) flags out-of-domain compositions and warns when results may be unreliable.
+
+The formation engine is an \textit{instrument}, not a universal solver. Like any instrument, it has a calibrated range. The force field defines that range.
+
+\paragraph{Transition to \S4:} The force field produces forces and energies in specific units (kcal/mol, \AA, fs). Section~4 establishes the complete thermodynamic framework: the unit system, temperature definitions, pressure computation, and the statistical-mechanical observables that give physical meaning to the numbers.
+
+\end{document}

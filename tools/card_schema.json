@@ -1,0 +1,193 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Run Card Schema",
+  "description": "Immutable card for a single simulation run",
+  "type": "object",
+  "required": ["run_id", "title", "domain", "size", "model", "health", "timestamp"],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "Unique identifier (UUID or timestamp-based)",
+      "example": "run_20260108_153045_a3f2"
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable title: formula@domain",
+      "example": "Na2CO3@bulk"
+    },
+    "formula": {
+      "type": "string",
+      "description": "Molecular formula",
+      "example": "Na2CO3"
+    },
+    "domain": {
+      "type": "string",
+      "enum": ["@molecule", "@gas", "@bulk", "@crystal", "@surface", "@cluster"],
+      "description": "Simulation domain"
+    },
+    "size": {
+      "type": "integer",
+      "description": "Number of atoms",
+      "minimum": 1,
+      "example": 42
+    },
+    "model": {
+      "type": "string",
+      "enum": ["LJ", "LJ+Coulomb", "UFF", "Custom"],
+      "description": "Force field model"
+    },
+    "score": {
+      "type": "number",
+      "description": "Priority score (weighted by convergence, stability, novelty)",
+      "minimum": 0.0,
+      "maximum": 100.0,
+      "example": 87.5
+    },
+    "score_breakdown": {
+      "type": "object",
+      "description": "Transparent score breakdown (multi-factor weighting)",
+      "properties": {
+        "wN": {
+          "type": "number",
+          "description": "Size preference (dual Gaussian, peaks at N=8 and N=56)"
+        },
+        "wQ": {
+          "type": "number",
+          "description": "Charge neutrality (exp(-k·|ΣqᵢI))"
+        },
+        "wM": {
+          "type": "number",
+          "description": "Metal richness (1 + α·N_metal/N)"
+        },
+        "wD": {
+          "type": "number",
+          "description": "Element diversity (1 + β·#unique/log(1+N))"
+        },
+        "wS": {
+          "type": "number",
+          "description": "Stability gate (1.0=converged, 0.3=bounded, 0.05=exploded)"
+        },
+        "wC": {
+          "type": "number",
+          "description": "Classification bonus (1.0=none, +0.5 to +1.0 per class)"
+        },
+        "cost": {
+          "type": "number",
+          "description": "Computational cost (normalized)"
+        },
+        "value": {
+          "type": "number",
+          "description": "Scientific value (V = wN·wQ·wM·wD·wS·wC)"
+        },
+        "classifications": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Applied molecular classifications",
+          "example": ["organometallic", "perfluorinated"]
+        }
+      },
+      "example": {
+        "wN": 0.92,
+        "wQ": 0.88,
+        "wM": 1.14,
+        "wD": 1.06,
+        "wS": 1.0,
+        "cost": 0.31,
+        "value": 0.73
+      }
+    },
+    "health": {
+      "type": "string",
+      "enum": ["converged", "bounded", "exploded", "invalid"],
+      "description": "Run health status"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp",
+      "example": "2026-01-08T15:30:45Z"
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Key simulation metrics",
+      "properties": {
+        "energy_per_atom": {
+          "type": "number",
+          "description": "Final energy per atom (eV or kcal/mol)"
+        },
+        "max_force": {
+          "type": "number",
+          "description": "Maximum force magnitude (eV/Å or kcal/mol/Å)"
+        },
+        "temperature_drift": {
+          "type": "number",
+          "description": "Temperature standard deviation (K)"
+        },
+        "charge_neutrality_error": {
+          "type": "number",
+          "description": "Total charge deviation from zero"
+        },
+        "cell_volume": {
+          "type": "number",
+          "description": "Unit cell volume (Ų) for PBC"
+        },
+        "iterations": {
+          "type": "integer",
+          "description": "Number of minimization/MD steps"
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "description": "Chemical database validation",
+      "properties": {
+        "is_known": {
+          "type": "boolean",
+          "description": "Found in PubChem?"
+        },
+        "is_novel": {
+          "type": "boolean",
+          "description": "Potentially novel discovery?"
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "database_matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "cid": {"type": "integer"},
+              "similarity": {"type": "number"}
+            }
+          }
+        }
+      }
+    },
+    "paths": {
+      "type": "object",
+      "description": "File paths (relative to catalog root)",
+      "properties": {
+        "structure_xyz": {"type": "string", "example": "structure.xyz"},
+        "summary_json": {"type": "string", "example": "summary.json"},
+        "metrics_json": {"type": "string", "example": "metrics.json"},
+        "preview_png": {"type": "string", "example": "preview.png"},
+        "log_txt": {"type": "string", "example": "log.txt"}
+      }
+    },
+    "tags": {
+      "type": "array",
+      "description": "Custom tags for filtering",
+      "items": {"type": "string"},
+      "example": ["stable", "novel", "high_priority"]
+    },
+    "generation_method": {
+      "type": "string",
+      "enum": ["random", "discovery", "targeted", "user_input"],
+      "description": "How molecule was generated"
+    }
+  }
+}

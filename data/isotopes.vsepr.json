@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "description": "Isotope database for nuclear decay simulation. Minimal viable dataset.",
+  "source": "IAEA NUBASE2020 + NIST atomic masses (curated)",
+  "isotopes": [
+    {
+      "Z": 1,
+      "A": 1,
+      "atomic_mass": 1.00782503223,
+      "stable": true,
+      "abundance": 0.999885
+    },
+    {
+      "Z": 1,
+      "A": 2,
+      "atomic_mass": 2.01410177812,
+      "stable": true,
+      "abundance": 0.000115
+    },
+    {
+      "Z": 1,
+      "A": 3,
+      "atomic_mass": 3.0160492779,
+      "stable": false,
+      "half_life_s": 3.888e8,
+      "decay": [
+        {"type": "beta_minus", "branch": 1.0, "q_mev": 0.01859}
+      ]
+    },
+    {
+      "Z": 6,
+      "A": 12,
+      "atomic_mass": 12.0,
+      "stable": true,
+      "abundance": 0.9893
+    },
+    {
+      "Z": 6,
+      "A": 13,
+      "atomic_mass": 13.00335483507,
+      "stable": true,
+      "abundance": 0.0107
+    },
+    {
+      "Z": 6,
+      "A": 14,
+      "atomic_mass": 14.0032419884,
+      "stable": false,
+      "half_life_s": 1.8e11,
+      "decay": [
+        {"type": "beta_minus", "branch": 1.0, "q_mev": 0.15648}
+      ]
+    },
+    {
+      "Z": 7,
+      "A": 14,
+      "atomic_mass": 14.00307400443,
+      "stable": true,
+      "abundance": 0.99636
+    },
+    {
+      "Z": 7,
+      "A": 15,
+      "atomic_mass": 15.00010889888,
+      "stable": true,
+      "abundance": 0.00364
+    },
+    {
+      "Z": 8,
+      "A": 16,
+      "atomic_mass": 15.99491461957,
+      "stable": true,
+      "abundance": 0.99757
+    },
+    {
+      "Z": 8,
+      "A": 17,
+      "atomic_mass": 16.99913175650,
+      "stable": true,
+      "abundance": 0.00038
+    },
+    {
+      "Z": 8,
+      "A": 18,
+      "atomic_mass": 17.99915961286,
+      "stable": true,
+      "abundance": 0.00205
+    },
+    {
+      "Z": 8,
+      "A": 15,
+      "atomic_mass": 15.0030656,
+      "stable": false,
+      "half_life_s": 122.24,
+      "decay": [
+        {"type": "beta_plus", "branch": 1.0, "q_mev": 2.754}
+      ]
+    },
+    {
+      "Z": 9,
+      "A": 19,
+      "atomic_mass": 18.99840316273,
+      "stable": true,
+      "abundance": 1.0
+    },
+    {
+      "Z": 15,
+      "A": 31,
+      "atomic_mass": 30.97376199842,
+      "stable": true,
+      "abundance": 1.0
+    },
+    {
+      "Z": 16,
+      "A": 32,
+      "atomic_mass": 31.9720718,
+      "stable": true,
+      "abundance": 0.9499
+    },
+    {
+      "Z": 16,
+      "A": 33,
+      "atomic_mass": 32.9714589,
+      "stable": true,
+      "abundance": 0.0075
+    },
+    {
+      "Z": 16,
+      "A": 34,
+      "atomic_mass": 33.96786701,
+      "stable": true,
+      "abundance": 0.0425
+    },
+    {
+      "Z": 16,
+      "A": 36,
+      "atomic_mass": 35.96708071,
+      "stable": true,
+      "abundance": 0.0001
+    },
+    {
+      "Z": 17,
+      "A": 35,
+      "atomic_mass": 34.96885268,
+      "stable": true,
+      "abundance": 0.7576
+    },
+    {
+      "Z": 17,
+      "A": 37,
+      "atomic_mass": 36.96590262,
+      "stable": true,
+      "abundance": 0.2424
+    },
+    {
+      "Z": 35,
+      "A": 79,
+      "atomic_mass": 78.9183376,
+      "stable": true,
+      "abundance": 0.5069
+    },
+    {
+      "Z": 35,
+      "A": 81,
+      "atomic_mass": 80.9162897,
+      "stable": true,
+      "abundance": 0.4931
+    },
+    {
+      "Z": 53,
+      "A": 127,
+      "atomic_mass": 126.9044719,
+      "stable": true,
+      "abundance": 1.0
+    },
+    {
+      "Z": 53,
+      "A": 131,
+      "atomic_mass": 130.9061246,
+      "stable": false,
+      "half_life_s": 6.93e5,
+      "decay": [
+        {"type": "beta_minus", "branch": 1.0, "q_mev": 0.971}
+      ]
+    }
+  ]
+}

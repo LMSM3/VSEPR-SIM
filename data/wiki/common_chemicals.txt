@@ -1,0 +1,57 @@
+# Common Chemical Formulas to Wikipedia Mapping
+# Format: FORMULA|COMMON_NAME|WIKIPEDIA_URL
+
+# Simple Molecules
+H2O|Water|https://en.wikipedia.org/wiki/Water
+NH3|Ammonia|https://en.wikipedia.org/wiki/Ammonia
+CH4|Methane|https://en.wikipedia.org/wiki/Methane
+CO2|Carbon dioxide|https://en.wikipedia.org/wiki/Carbon_dioxide
+O2|Oxygen|https://en.wikipedia.org/wiki/Oxygen
+N2|Nitrogen|https://en.wikipedia.org/wiki/Nitrogen
+H2|Hydrogen|https://en.wikipedia.org/wiki/Hydrogen
+
+# Acids and Bases
+H2SO4|Sulfuric acid|https://en.wikipedia.org/wiki/Sulfuric_acid
+HCl|Hydrochloric acid|https://en.wikipedia.org/wiki/Hydrochloric_acid
+HNO3|Nitric acid|https://en.wikipedia.org/wiki/Nitric_acid
+H3PO4|Phosphoric acid|https://en.wikipedia.org/wiki/Phosphoric_acid
+NaOH|Sodium hydroxide|https://en.wikipedia.org/wiki/Sodium_hydroxide
+KOH|Potassium hydroxide|https://en.wikipedia.org/wiki/Potassium_hydroxide
+
+# Halogen Compounds
+SF6|Sulfur hexafluoride|https://en.wikipedia.org/wiki/Sulfur_hexafluoride
+PCl5|Phosphorus pentachloride|https://en.wikipedia.org/wiki/Phosphorus_pentachloride
+PF5|Phosphorus pentafluoride|https://en.wikipedia.org/wiki/Phosphorus_pentafluoride
+ClF3|Chlorine trifluoride|https://en.wikipedia.org/wiki/Chlorine_trifluoride
+BrF5|Bromine pentafluoride|https://en.wikipedia.org/wiki/Bromine_pentafluoride
+IF7|Iodine heptafluoride|https://en.wikipedia.org/wiki/Iodine_heptafluoride
+XeF2|Xenon difluoride|https://en.wikipedia.org/wiki/Xenon_difluoride
+XeF4|Xenon tetrafluoride|https://en.wikipedia.org/wiki/Xenon_tetrafluoride
+XeF6|Xenon hexafluoride|https://en.wikipedia.org/wiki/Xenon_hexafluoride
+
+# Organic Compounds
+C2H6|Ethane|https://en.wikipedia.org/wiki/Ethane
+C3H8|Propane|https://en.wikipedia.org/wiki/Propane
+C4H10|Butane|https://en.wikipedia.org/wiki/Butane
+C6H6|Benzene|https://en.wikipedia.org/wiki/Benzene
+C2H5OH|Ethanol|https://en.wikipedia.org/wiki/Ethanol
+CH3COOH|Acetic acid|https://en.wikipedia.org/wiki/Acetic_acid
+
+# Salts and Minerals
+NaCl|Sodium chloride|https://en.wikipedia.org/wiki/Sodium_chloride
+CaCO3|Calcium carbonate|https://en.wikipedia.org/wiki/Calcium_carbonate
+MgSO4|Magnesium sulfate|https://en.wikipedia.org/wiki/Magnesium_sulfate
+KNO3|Potassium nitrate|https://en.wikipedia.org/wiki/Potassium_nitrate
+
+# Noble Gas Compounds
+KrF2|Krypton difluoride|https://en.wikipedia.org/wiki/Krypton_difluoride
+XeO4|Xenon tetroxide|https://en.wikipedia.org/wiki/Xenon_tetroxide
+XeOF4|Xenon oxytetrafluoride|https://en.wikipedia.org/wiki/Xenon_oxytetrafluoride
+
+# Other Common Molecules
+H2S|Hydrogen sulfide|https://en.wikipedia.org/wiki/Hydrogen_sulfide
+SO2|Sulfur dioxide|https://en.wikipedia.org/wiki/Sulfur_dioxide
+NO2|Nitrogen dioxide|https://en.wikipedia.org/wiki/Nitrogen_dioxide
+N2O|Nitrous oxide|https://en.wikipedia.org/wiki/Nitrous_oxide
+O3|Ozone|https://en.wikipedia.org/wiki/Ozone
+H2O2|Hydrogen peroxide|https://en.wikipedia.org/wiki/Hydrogen_peroxide

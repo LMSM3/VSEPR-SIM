@@ -1,0 +1,1 @@
+target_include_directories(YourProjectName PUBLIC path/to/imgui path/to/imgui/backends)
