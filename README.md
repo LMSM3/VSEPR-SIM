@@ -1,5 +1,5 @@
 <!-- =========================================================
-     VSEPR-Sim README (GitHub-Ready, Professional Formatting)
+     VSEPR-Sim README 
      ========================================================= -->
 
 <div align="center">
@@ -228,3 +228,4 @@ Visualization backend (OpenGL, Three.js, etc.)
 Contact
 
 Current Itteration started: Early January 2026
+
