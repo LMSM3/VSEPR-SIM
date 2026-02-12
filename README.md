@@ -160,25 +160,6 @@ vsepr-sim/
 └── third_party/      ImGui (vendored)
 ```
 
----
-
-## Validation & Certification
-
-### Test Hierarchy (35 tests, 5 levels)
-
-| Level | Category | Tests | Pass | Status |
-|-------|----------|-------|------|--------|
-| **0** | Unit system | 12 | 12/12 | ✅ 100% |
-| **1** | Force evaluation | 8 | 8/8 | ✅ 100% |
-| **2** | Integration stability | 5 | 5/5 | ✅ 100% |
-| **3** | Thermodynamics | 8 | 7/8 | ⚠️ 87% |
-| **4** | Reproducibility | 3 | 3/3 | ✅ 100% |
-| | **Total** | **36** | **35/36** | **⚠️ 97%** |
-
-**Grade: B+ (80%)**
-
-### Production Certification
-
 **✅ Approved for:**
 - Noble gas systems (Ar, Xe, Kr)
 - Hydrocarbon molecules (CH₄, benzene, alkanes)
@@ -210,23 +191,6 @@ vsepr-sim/
 - **Graphics (optional):** OpenGL 3.3+, GLFW, GLEW
 - **GPU (optional):** CUDA toolkit (graceful CPU fallback)
 - **OS:** Linux, Windows (WSL recommended), macOS
-
----
-
-## Citation
-
-```bibtex
-@techreport{formation_engine_methodology_v01,
-  title       = {Formation Engine Canonical Simulation Methodology},
-  author      = {Formation Engine Development Team},
-  institution = {VSEPR-Sim Project},
-  year        = {2025},
-  month       = {January},
-  version     = {0.1},
-  note        = {13 sections, 35 validation tests, LaTeX source included},
-  url         = {https://github.com/LMSM3/VSEPR-SIM}
-}
-```
 
 ---
 
