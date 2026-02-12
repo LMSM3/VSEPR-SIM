@@ -19,10 +19,10 @@
 
 ## Overview
 
-VSEPR-Sim is a **production-ready atomistic simulation instrument** for generating molecular and crystalline structures through physically motivated dynamics. It targets the intermediate scale (100--10,000 atoms) where quantum methods are too expensive and continuum models assume structure rather than generating it.
+Long-term development targets reaction modeling and structured multiscale coupling while preserving reproducibility and auditability. Long-term development targets expanding reaction modeling, and creating multiscale coupling while preserving reproducibility and auditability.
 
-**What makes this different:**
-- **Complete formal methodology**: 13 LaTeX sections (186 pages) documenting every equation, parameter, and design decision
+**Included in this release:**
+- **Formal methodology**: 13 LaTeX sections (186 pages) documenting every equation, parameter, and design decision
 - **Validation-first**: 35 hierarchical tests across 5 levels (80% pass rate)
 - **Production certified**: Approved for noble gases, hydrocarbons, and small organic molecules
 - **Deterministic by design**: Same inputs → bit-identical output across platforms
