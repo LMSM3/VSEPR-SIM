@@ -1,0 +1,201 @@
+\documentclass[10pt, a4paper, twocolumn]{article}
+\usepackage[top=0.7in, bottom=0.7in, left=0.6in, right=0.6in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\setlist{nosep, leftmargin=1.2em}
+\titleformat{\section}{\large\bfseries}{}{0em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+\titlespacing{\section}{0pt}{8pt}{4pt}
+\titlespacing{\subsection}{0pt}{6pt}{2pt}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Formation Engine --- Methodology Summary}\\[3pt]
+{\small Version 0.1 \quad|\quad 13 Sections \quad|\quad 35 Validation Tests}
+\end{center}
+\vspace{-0.5em}\hrule\vspace{0.5em}
+
+\section{Problem \& Scope (\S1)}
+
+The Formation Engine is a classical atomistic simulation instrument
+that generates molecular and crystalline structures from elemental
+identity and thermodynamic boundary conditions.  It targets the
+intermediate regime (100--10,000 atoms) where quantum methods are too
+expensive and continuum models assume structure rather than
+generating it.
+
+\textbf{Design axioms:}
+explicit units everywhere ({\AA}, fs, kcal/mol, amu);
+no hidden normalization;
+no silent model switching;
+deterministic core with stochastic exploration controlled by seed.
+
+\textbf{Sole data source:} the periodic table (Z=1--102).
+LJ parameters from the Universal Force Field (UFF).
+No molecular databases.
+
+\textbf{Domain:} atoms with $Z \ge 6$, temperatures $T > 50$\,K,
+system sizes $N = 2$--$10{,}000$.
+Excludes excited states, quantum tunnelling, and reaction kinetics.
+
+\section{State Ontology (\S0, \S2)}
+
+The canonical state is:
+\[
+\mathcal{S} = (N,\,\mathbf{M},\,\boldsymbol{\tau},\,\mathbf{X},\,
+\mathbf{V},\,\mathbf{Q},\,\mathbf{B},\,\mathbf{F},\,\mathcal{E},\,
+\mathcal{L},\,\mathcal{B})
+\]
+partitioned into \textbf{Identity} ($N, \mathbf{M}, \boldsymbol{\tau}$
+--- immutable), \textbf{Phase} ($\mathbf{X}, \mathbf{V}, \mathbf{Q},
+\mathbf{B}$ --- evolve), and \textbf{Scratch} ($\mathbf{F},
+\mathcal{E}, \mathcal{L}, \mathcal{B}$ --- recomputed).
+
+Per-particle identity vector (\S0):
+$\mathbf{I}_i = (Z_i, A_i, Q_i, \Sigma_i, \Lambda_i, \Theta_i)$.
+
+Energy ledger: $\mathcal{E} = (U_\text{bond}, U_\text{angle},
+U_\text{torsion}, U_\text{vdW}, U_\text{Coul}, U_\text{ext})$.
+
+File hierarchy: \texttt{.xyz} (geometry) $\to$ \texttt{.xyza}
+(trajectory) $\to$ \texttt{.xyzc} (checkpoint with velocities +
+thermodynamic state + SHA-256 provenance hash).
+
+\section{Interaction Model (\S3)}
+
+\textbf{Nonbonded:} Lennard-Jones 12-6
+$U_\text{LJ} = 4\varepsilon[(\sigma/r)^{12} - (\sigma/r)^6]$
+with Lorentz-Berthelot combining rules and quintic switching
+$r_\text{on}{=}9$, $r_\text{cut}{=}10$\,{\AA}.
+Coulomb $U_\text{C} = k_e q_i q_j / r$ with
+$k_e = 332.0636$\,kcal$\cdot${\AA}/(mol$\cdot$e$^2$).
+
+\textbf{Bonded:} Harmonic bonds $k_b(r{-}r_0)^2$, harmonic angles
+$k_\theta(\theta{-}\theta_0)^2$, periodic torsions
+$V_n[1{+}\cos(n\phi{-}\gamma)]$, improper torsions.
+Parameters from UFF.
+
+All forces computed as $\mathbf{F}_i = -\nabla_{\mathbf{x}_i} U$
+through a pure-function interface: same state always yields same
+forces.
+
+\section{Thermodynamics \& Units (\S4)}
+
+Unit system: {\AA}, fs, kcal/mol, amu, K, $e$.
+
+\begin{tabular}{@{}ll@{}}
+$k_B$ & $= 0.001987204$ kcal/(mol$\cdot$K)\\
+$C_\text{KE}$ & $= 2390.057$ (amu$\cdot${\AA}$^2$/fs$^2 \to$ kcal/mol)\\
+$k_e$ & $= 332.0636$ kcal$\cdot${\AA}/(mol$\cdot$e$^2$)
+\end{tabular}
+
+Temperature from equipartition:
+$T = 2K / (N_\text{df}\, k_B)$, \;
+$N_\text{df} = 3N - 3$.
+
+\section{Integration (\S5)}
+
+\textbf{Velocity Verlet (NVE):} Symplectic, 2nd-order,
+$\Delta t = 1$\,fs default.  Energy drift
+$< 3 \times 10^{-5}$\,kcal/mol/atom over $10^4$ steps.
+
+\textbf{Langevin (NVT):} Euler--Maruyama discretisation with friction
+$\gamma$ and random force
+$\sqrt{2\gamma m_i k_B T}\;\xi_i$.
+Temperature error $< 0.6\%$.
+
+\textbf{FIRE minimisation:} Damped MD with adaptive $\Delta t$.
+Convergence criterion $F_\text{max} < 0.01$\,kcal/(mol$\cdot${\AA}).
+
+\section{Formation Physics (\S6)}
+
+A \textbf{formation} is a local PES minimum found via:
+(1) VSEPR geometry prediction,
+(2) MD exploration at elevated $T$,
+(3) periodic FIRE quenching,
+(4) scoring and classification.
+
+Bond inference uses covalent radii with tolerance factor $f=1.2$.
+Bonds are mutable caches, never serialised as truth.
+
+\section{Statistics \& Scoring (\S7)}
+
+Welford's algorithm for numerically stable online mean/variance.
+Stationarity gate: 10 consecutive passes of coefficient-of-variation
+$< \epsilon$ triggers convergence.
+Kabsch alignment (SVD) for RMSD comparison.
+Multiplicative 6-factor scoring function for ranking formations.
+
+\section{Reaction \& Electronic (\S8--9)}
+
+QEq charge equilibration: minimise
+$E = \sum_i(\chi_i q_i + \eta_i q_i^2) + \sum_{i<j} k_e q_i q_j / r_{ij}$
+subject to $\sum q_i = Q_\text{total}$.
+Fukui functions, HSAB matching, Bell--Evans--Polanyi barrier
+estimates.  Interface defined; full MD integration pending.
+
+\section{Multiscale (\S10)}
+
+Four regimes: molecular (2--50), cluster (50--500), bulk
+(500--10k, PBC + supercell), mesoscale (10k+, CG placeholder).
+Supercell: $\mathbf{r}_{i,pqr} = \mathbf{r}_i + p\mathbf{a} +
+q\mathbf{b} + r\mathbf{c}$; bonds re-inferred post-replication.
+
+\section{Self-Audit (\S11)}
+
+\textbf{Determinism contract:} same (formula, seed, params) $\Rightarrow$
+bit-identical output.  Enforced via seeded RNG, index-ordered force
+evaluation, IEEE~754 compliance, no fast-math.
+
+Three Python tools:
+\textbf{Failure Classifier} (6 categories: NUMERICAL, PHYSICS, OOD,
+CONVERGENCE, TIMEOUT, UNKNOWN);
+\textbf{Gap Targeter} ($6{\times}10{\times}10$ grid, 95\% coverage
+target);
+\textbf{Regression Detector} (4 invariants, binary pass/fail).
+
+\section{Validation (\S12)}
+
+35 hierarchical tests across 5 levels:
+
+\begin{center}\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Level & Tests & Status \\
+\midrule
+0 --- Unit system & 12 & 100\% \\
+1 --- Force evaluation & 8 & 100\% \\
+2 --- Integration & 5 & 100\% \\
+3 --- Thermodynamics & 8 & 87\% \\
+4 --- Reproducibility & 3 & 100\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Production certified for LJ-dominated systems (noble gases,
+hydrocarbons, small organics).
+Known limitation: Coulomb--integrator coupling instability for
+ionic MD.
+
+\section{Future Work (\S13)}
+
+Priority: neighbour lists ($50\times$ speedup) $\to$ NPT barostat
+$\to$ reactive bond orders $\to$ quantum corrections (delta-learning)
+$\to$ ML potentials (SchNet/MACE).
+
+\vspace{0.5em}\hrule\vspace{0.3em}
+{\footnotesize Full methodology: 11 LaTeX source files in
+\texttt{docs/}.  Compile with \texttt{pdflatex}.  MIT License.}
+
+\end{document}

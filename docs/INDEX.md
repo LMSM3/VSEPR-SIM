@@ -8,6 +8,15 @@
 The core scientific contribution lives in these TeX source files.
 Each is self-contained and PDF-compilable.
 
+### Condensed Versions
+
+| File | Pages | Content |
+|------|-------|---------|
+| `METHODOLOGY_2PAGE.tex` | **2** | Two-column summary of all 13 sections |
+| `METHODOLOGY_12PAGE.tex` | **12** | Condensed reference with equations, tables, and algorithms |
+
+### Full Sections (~186 pages total)
+
 | File | Sections | Content |
 |------|----------|---------|
 | `section0_identity_state_decomposition.tex` | **SS0** | Particle identity vectors, cell/world containers, formal ontology |

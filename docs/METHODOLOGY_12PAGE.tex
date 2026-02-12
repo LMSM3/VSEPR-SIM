@@ -1,0 +1,499 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=black,urlcolor=blue]{hyperref}
+
+\setlist{nosep, leftmargin=1.5em}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Formation Engine Methodology}}
+\fancyhead[R]{\small\textit{Condensed Reference (v0.1)}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\boldI}{\mathbf{I}}
+\newcommand{\boldG}{\mathbf{G}}
+\newcommand{\boldK}{\mathbf{K}}
+\DeclareMathOperator{\Var}{Var}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Formation Engine}\\[0.3em]
+{\LARGE\bfseries Canonical Simulation Methodology}\\[0.8em]
+{\large Condensed Reference (12 pages)}\\[0.5em]
+{\normalsize Version 0.1 --- January 2025}\\[0.3em]
+{\small Covers \S0--\S13 of the full 186-page methodology}
+\end{center}
+
+\vspace{0.5em}\hrule\vspace{1em}
+
+\tableofcontents
+\vspace{1em}\hrule\vspace{1em}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Foundational Thesis and Scope (\S1)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{The Problem}
+
+Modern computational materials science has a gap at intermediate scales (100--10,000 atoms).  Quantum methods are too expensive; continuum models assume structure rather than generating it.  The Formation Engine fills this gap: a reproducible instrument for generating physically admissible structures under explicit assumptions.
+
+It is positioned as an \emph{instrument}, not a prediction claim---analogous to a microscope that enables observation rather than asserting theory.
+
+\subsection{Four Axioms}
+
+\begin{enumerate}
+\item \textbf{Explicit units everywhere.}  Positions in \AA, energies in kcal/mol, temperatures in K.  No reduced units, no hidden normalization.
+
+\item \textbf{No silent domain switching.}  The force field, integrator, and boundary conditions are declared upfront and do not change mid-simulation.
+
+\item \textbf{Deterministic core.}  Given identical state, the trajectory is identical.  All randomness is controlled by the seed.
+
+\item \textbf{Periodic table as sole authority.}  No molecular databases, no empirical crystal structures.  Parameters derived from $Z$, atomic weight, covalent/VDW radii, electronegativity, ionization energy, and electron affinity via UFF.
+\end{enumerate}
+
+\subsection{Physical Admissibility}
+
+A configuration is \emph{physically admissible} if it satisfies:
+(1) bounded energy evolution,
+(2) continuous forces below $10^3$\,kcal/(mol$\cdot$\AA),
+(3) consistent boundary behaviour,
+(4) charge conservation $|Q_\text{total}| < 10^{-6}\,e$, and
+(5) qualitative stability under timestep halving.
+
+Admissibility does \emph{not} imply thermodynamic equilibrium, synthetic feasibility, or experimental observability.
+
+\subsection{Explicit Scope Boundaries}
+
+Excluded by design: full electronic structure, excited states, reaction kinetics prediction, quantum coherence.  Domain of validity: $Z \ge 6$, $T > 50$\,K, $N \le 10{,}000$.  Extension points (quantum corrections, reactive potentials, ML surrogates) are architecturally reserved but not implemented in v0.1.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Identity--State Decomposition (\S0, \S2)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{Particle Identity Vector (\S0)}
+
+Each particle carries a time-invariant identity:
+\begin{equation}
+\boldI_i = (Z_i,\; A_i,\; Q_i,\; \Sigma_i,\; \Lambda_i,\; \Theta_i) \in \R^6
+\end{equation}
+
+\begin{itemize}
+\item $Z_i \in \N^+$: atomic number (immutable identity anchor)
+\item $A_i \in \R^+$: mass (isotopic or averaged)
+\item $Q_i \in \R$: effective charge participation coefficient
+\item $\Sigma_i \in \{0,1,2,3,4\}$: structural role (inert/ionic/covalent/metallic/mixed)
+\item $\Lambda_i \in \{0,1,2,3\}$: stability class (transient/metastable/stable/bulk)
+\item $\Theta_i \in \mathbb{B}^n$: provenance hash (transformation lineage)
+\end{itemize}
+
+The Canonical Particle Container Postulate extends this to $\mathcal{C}_i = (\boldI_i, \boldG_i, \mathbf{C}_i^\text{comp})$, where $\boldG_i$ is a quantum descriptor bundle (spin, colour, flavour---reserved for future use in the classical framework) and $\mathbf{C}_i^\text{comp}$ carries computational annotations (complexity class, kernel selector, solver priority).
+
+\subsection{The State Tuple (\S2)}
+
+\begin{equation}
+\mathcal{S}(t) = (N,\; \mathbf{M},\; \boldsymbol{\tau},\; \mathbf{X},\; \mathbf{V},\; \mathbf{Q},\; \mathbf{B},\; \mathbf{F},\; \mathcal{E},\; \mathcal{L},\; \mathcal{B})
+\end{equation}
+
+\textbf{Tripartite classification:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Category & Fields & Mutability \\
+\midrule
+Identity & $N, \mathbf{M}, \boldsymbol{\tau}$ & Immutable after construction \\
+Phase & $\mathbf{X}, \mathbf{V}, \mathbf{Q}, \mathbf{B}$ & Evolve under equations of motion \\
+Scratch & $\mathbf{F}, \mathcal{E}, \mathcal{L}, \mathcal{B}$ & Recomputed from phase; never persisted independently \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This decomposition enforces consistency: forces are zeroed before every evaluation, masses are locked to the periodic table via $\boldsymbol{\tau}$, and topology is inferred from geometry rather than stored as input.
+
+\subsection{Energy Ledger}
+
+The potential energy decomposes into physically distinct terms:
+\begin{equation}
+\mathcal{E} = (U_\text{bond},\; U_\text{angle},\; U_\text{torsion},\; U_\text{vdW},\; U_\text{Coulomb},\; U_\text{external})
+\end{equation}
+
+Every force model reports its contribution to each term separately.  This reveals \emph{why} a structure formed---whether it is bond-dominated ($U_\text{bond} \gg U_\text{vdW}$) or dispersion-dominated ($U_\text{vdW} \gg U_\text{bond}$).
+
+\subsection{File Format Hierarchy}
+
+\begin{center}
+\begin{tabular}{llp{7cm}}
+\toprule
+Format & Extension & Content \\
+\midrule
+XYZ & \texttt{.xyz} & Static geometry: $N$ + comment + element/position lines \\
+XYZA & \texttt{.xyza} & Animated trajectory: sequential XYZ frames with timestamps \\
+XYZC & \texttt{.xyzc} & Checkpoint: positions + velocities + $(T, P, E_\text{pot}, E_\text{kin})$ + SHA-256 provenance hash \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each level adds information; each is self-contained.  The XYZC format enables exact trajectory continuation.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Physical Interaction Model (\S3)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{Interface}
+
+All force models implement a pure function:
+\begin{equation}
+\texttt{eval}: \mathcal{S} \times \Theta \to (\mathbf{F},\, \mathcal{E})
+\end{equation}
+
+No hidden state.  No history dependence.  Same inputs always yield same outputs.
+
+\subsection{Nonbonded Potentials}
+
+\textbf{Lennard-Jones 12-6:}
+\begin{equation}
+U_\text{LJ}(r) = 4\varepsilon\left[\left(\frac{\sigma}{r}\right)^{12} - \left(\frac{\sigma}{r}\right)^6\right]
+\end{equation}
+
+Combining rules (Lorentz--Berthelot):
+$\sigma_{ij} = (\sigma_i + \sigma_j)/2$, \;
+$\varepsilon_{ij} = \sqrt{\varepsilon_i \varepsilon_j}$.
+Parameters from UFF: $\sigma = 2^{5/6} r_\text{vdW}$, $\varepsilon$ from UFF well depths.
+
+\textbf{Quintic switching function} between $r_\text{on} = 9$\,\AA\ and $r_\text{cut} = 10$\,\AA\ ensures $C^2$ continuity at the cutoff.
+
+\textbf{Coulomb electrostatics:}
+\begin{equation}
+U_\text{Coul}(r) = \frac{k_e\, q_i\, q_j}{r}, \qquad k_e = 332.0636\;\text{kcal}\cdot\text{\AA}/(\text{mol}\cdot e^2)
+\end{equation}
+
+Same switching function applied.  \textbf{Known limitation:} Coulomb--integrator coupling produces energy drift in MD for ionic systems; use FIRE minimization only for charged systems in v0.1.
+
+\subsection{Bonded Potentials}
+
+\begin{align}
+U_\text{bond} &= k_b(r - r_0)^2 && k_b \in [200, 600]\;\text{kcal/(mol}\cdot\text{\AA}^2) \\
+U_\text{angle} &= k_\theta(\theta - \theta_0)^2 && k_\theta \in [40, 120]\;\text{kcal/(mol}\cdot\text{rad}^2) \\
+U_\text{torsion} &= V_n[1 + \cos(n\phi - \gamma)] && V_n \in [0.5, 5]\;\text{kcal/mol} \\
+U_\text{improper} &= k_\text{imp}(\psi - \psi_0)^2
+\end{align}
+
+Bond inference: atoms $i,j$ are bonded if $r_{ij} < f \cdot (R_i^\text{cov} + R_j^\text{cov})$ with tolerance $f = 1.2$.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Thermodynamic Framework (\S4)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{Unit System}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Quantity & Unit & SI Relation \\
+\midrule
+Distance & \AA & $10^{-10}$\,m \\
+Mass & amu & $1.66054 \times 10^{-27}$\,kg \\
+Time & fs & $10^{-15}$\,s \\
+Energy & kcal/mol & $4184/N_A$\,J per particle \\
+Temperature & K & --- \\
+Charge & $e$ & $1.602 \times 10^{-19}$\,C \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Conversion Constants (As Implemented)}
+
+\begin{align}
+k_B &= 0.0019872041\;\text{kcal/(mol}\cdot\text{K)} \\
+C_\text{KE} &= 2390.057361 \quad \text{(amu}\cdot\text{\AA}^2/\text{fs}^2 \to \text{kcal/mol)} \\
+\text{ACC\_CONV} &= C_\text{KE}^{-1} \quad \text{(kcal/(mol}\cdot\text{\AA)} \to \text{amu}\cdot\text{\AA/fs}^2)
+\end{align}
+
+\subsection{Observables}
+
+Temperature from equipartition:
+\begin{equation}
+T = \frac{2K}{N_\text{df}\, k_B}, \qquad N_\text{df} = 3N - 3
+\end{equation}
+
+Kinetic energy:
+\begin{equation}
+K = C_\text{KE} \sum_{i=1}^{N} \frac{1}{2} m_i |\mathbf{v}_i|^2
+\end{equation}
+
+Maxwell--Boltzmann initialization:
+$v_{i,\alpha} \sim \mathcal{N}(0,\, \sqrt{k_B T / m_i})$
+followed by centre-of-mass velocity subtraction.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Time Integration (\S5)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{Velocity Verlet (NVE)}
+
+The default integrator.  Four-step algorithm at each timestep $\Delta t$:
+\begin{align}
+\mathbf{v}_i(t{+}\tfrac{\Delta t}{2}) &= \mathbf{v}_i(t) + \frac{\mathbf{F}_i(t)}{m_i}\,\text{ACC\_CONV}\,\frac{\Delta t}{2} \\
+\mathbf{x}_i(t{+}\Delta t) &= \mathbf{x}_i(t) + \mathbf{v}_i(t{+}\tfrac{\Delta t}{2})\,\Delta t \\
+\mathbf{F}_i(t{+}\Delta t) &= -\nabla_{\mathbf{x}_i} U(\mathbf{X}(t{+}\Delta t)) \\
+\mathbf{v}_i(t{+}\Delta t) &= \mathbf{v}_i(t{+}\tfrac{\Delta t}{2}) + \frac{\mathbf{F}_i(t{+}\Delta t)}{m_i}\,\text{ACC\_CONV}\,\frac{\Delta t}{2}
+\end{align}
+
+Symplectic (preserves phase-space volume), time-reversible, 2nd-order.  Default $\Delta t = 1$\,fs.
+
+\textbf{Validation:} Energy drift $< 3 \times 10^{-5}$\,kcal/mol/atom over $10^4$ steps (33$\times$ safety margin).  Reversibility RMSD $= 2.3 \times 10^{-9}$\,\AA.
+
+\subsection{Langevin Dynamics (NVT)}
+
+Euler--Maruyama discretisation of the Langevin equation:
+\begin{equation}
+m_i \dot{\mathbf{v}}_i = \mathbf{F}_i - \gamma m_i \mathbf{v}_i + \sqrt{2\gamma m_i k_B T}\;\boldsymbol{\xi}_i(t)
+\end{equation}
+
+The friction coefficient $\gamma$ (ps$^{-1}$) couples the system to an implicit heat bath.  Random forces $\boldsymbol{\xi}_i$ are drawn from seeded \texttt{std::mt19937}.
+
+\textbf{Validation:} Temperature error $< 0.6\%$ at $T = 300$\,K for Ar$_{100}$.
+
+\subsection{FIRE Minimisation}
+
+Fast Inertial Relaxation Engine: modified MD where velocity is projected onto the force direction and $\Delta t$ adapts.
+
+\begin{enumerate}
+\item Compute $P = \mathbf{F} \cdot \mathbf{v}$
+\item If $P > 0$: mix velocity toward force direction, increase $\Delta t$
+\item If $P \le 0$: zero velocity, decrease $\Delta t$, reset mixing
+\end{enumerate}
+
+Convergence: $\max|\mathbf{F}_i| < \varepsilon_F$ (default $0.01$\,kcal/(mol$\cdot$\AA)).
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Formation Physics (\S6)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+A \textbf{formation} is a local minimum of the potential energy surface reached through a physically motivated search:
+
+\begin{enumerate}
+\item \textbf{Initialise:} VSEPR geometry prediction from valence electron count and lone-pair repulsion model
+\item \textbf{Explore:} Short MD runs at elevated temperature cross energy barriers
+\item \textbf{Quench:} FIRE minimisation projects away thermal noise, revealing local minima
+\item \textbf{Score:} Multiplicative 6-factor model ranks formations
+\end{enumerate}
+
+\textbf{VSEPR energy:}
+\begin{equation}
+U_\text{VSEPR} = k_\text{VSEPR} \sum_{a<b} \frac{w_{ab}}{[\varepsilon + (1 - \cos\theta_{ab})]^p}
+\end{equation}
+
+Domain weights: LP--LP = 2.0, LP--BP = 1.5, BP--BP = 1.0 (encodes empirical repulsion ordering).
+
+\textbf{Bond inference:} Mutable cache, re-inferred on demand via covalent radii, never serialised as truth.  Stored as \texttt{inferred\_bonds} with \texttt{bonds\_computed} flag.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Statistical Interpretation (\S7)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{Online Statistics}
+
+Welford's one-pass algorithm avoids catastrophic cancellation in variance computation:
+\begin{align}
+\bar{x}_n &= \bar{x}_{n-1} + \frac{x_n - \bar{x}_{n-1}}{n} \\
+M_{2,n} &= M_{2,n-1} + (x_n - \bar{x}_{n-1})(x_n - \bar{x}_n)
+\end{align}
+Variance: $\Var(x) = M_2 / (n-1)$.
+
+\subsection{Stationarity Gate}
+
+Convergence criterion: coefficient of variation $\text{CV} = \sigma / |\mu|$ drops below threshold $\epsilon$ for 10 consecutive windows.  Prevents premature termination from transient plateaux.
+
+\subsection{Kabsch Alignment}
+
+Optimal rigid-body superposition via SVD:
+\begin{equation}
+\mathbf{R}^* = \arg\min_{\mathbf{R} \in SO(3)} \sum_{i=1}^{N} |\mathbf{R}\,\mathbf{x}_i^\text{ref} - \mathbf{x}_i|^2
+\end{equation}
+
+Compute $\mathbf{H} = \mathbf{X}^\text{ref,T} \mathbf{X}$, SVD $\mathbf{H} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^T$, then $\mathbf{R} = \mathbf{V}\,\text{diag}(1,1,\det(\mathbf{V}\mathbf{U}^T))\,\mathbf{U}^T$.
+
+RMSD after alignment quantifies structural similarity.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Reaction \& Electronic Properties (\S8--9)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{QEq Charge Equilibration (\S9)}
+
+Minimise the energy functional:
+\begin{equation}
+E(\{q_i\}) = \sum_{i=1}^{N}(\chi_i q_i + \eta_i q_i^2) + \sum_{i<j} \frac{k_e q_i q_j}{r_{ij}}
+\end{equation}
+subject to $\sum_i q_i = Q_\text{total}$, where $\chi_i = (\text{IE}_1 + \text{EA})/2$ (Mulliken electronegativity) and $\eta_i = (\text{IE}_1 - \text{EA})/2$ (chemical hardness).
+
+This yields a linear system $(2\boldsymbol{\eta} + \mathbf{J})\mathbf{q} = \boldsymbol{\chi} + \lambda\mathbf{1}$ solved for equilibrium charges.
+
+\subsection{Reactivity Indices (\S9)}
+
+Fukui functions (finite-difference approximation):
+\begin{align}
+f_i^+ &= q_i(N) - q_i(N+1) \quad \text{(electrophilic attack)} \\
+f_i^- &= q_i(N-1) - q_i(N) \quad \text{(nucleophilic attack)}
+\end{align}
+
+\subsection{Reaction Prediction (\S8)}
+
+HSAB (Hard-Soft Acid-Base) matching identifies compatible reactive sites.  Activation barriers estimated via Bell--Evans--Polanyi:
+\begin{equation}
+E_a = E_a^0 + \alpha\,\Delta H
+\end{equation}
+
+Reaction templates (S$_\text{N}$2, addition, elimination) encode topology changes.  Status: interface defined, full MD integration pending.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Multiscale (\S10)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\begin{center}
+\begin{tabular}{lcl}
+\toprule
+Scale & $N$ & Method \\
+\midrule
+Molecular & 2--50 & Full MM + FIRE \\
+Cluster & 50--500 & MD + quench \\
+Bulk & 500--10k & PBC + supercell replication \\
+Mesoscale & 10k+ & CG placeholder \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Supercell construction:
+$\mathbf{r}_{i,pqr} = \mathbf{r}_i + p\,\mathbf{a} + q\,\mathbf{b} + r\,\mathbf{c}$
+for $p \in [0, n_a)$, etc.  Bond graph re-inferred from supercell geometry (not replicated from unit cell) as a validation sanity check.
+
+Provenance chain: \texttt{unit\_cell.xyz $\to$ supercell(2,2,2) $\to$ relax(FIRE) $\to$ final.xyzC}.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Self-Audit Infrastructure (\S11)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{Determinism Contract}
+
+Given $(\text{formula},\, \text{seed},\, \text{parameters})$, the engine must produce \textbf{bit-identical output}.  Enforced by:
+\begin{itemize}
+\item Seeded RNG (\texttt{std::mt19937})
+\item Index-ordered force evaluation (no thread-dependent accumulation)
+\item IEEE 754 compliance (no \texttt{-ffast-math})
+\item No mutable global state
+\end{itemize}
+
+\subsection{Three Audit Tools}
+
+\textbf{Failure Classifier} (\texttt{tools/failure\_classifier.py}, 250 lines):
+\begin{itemize}
+\item 6 categories: NUMERICAL, PHYSICS, OUT-OF-DOMAIN, CONVERGENCE, TIMEOUT, UNKNOWN
+\item UNKNOWN budget $< 5\%$
+\item Each failure tagged with minimal reproduction command
+\end{itemize}
+
+\textbf{Gap Targeter} (\texttt{tools/gap\_targeter.py}, 200 lines):
+\begin{itemize}
+\item $6 \times 10 \times 10 = 600$ cells over (element group, temperature, density)
+\item Identifies sparse coverage and high-mismatch regions
+\item Target: 95\% cell coverage
+\end{itemize}
+
+\textbf{Regression Detector} (\texttt{tools/regression\_detector.py}, 200 lines):
+\begin{itemize}
+\item 4 invariants: energy monotonicity, bond stability, score boundedness, classification consistency
+\item Binary verdict: pass / review required
+\end{itemize}
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Validation Doctrine (\S12)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+35 hierarchical tests across 5 levels.  Each test has an explicit pass/fail criterion defined \emph{before} execution.
+
+\begin{center}
+\begin{tabular}{llccl}
+\toprule
+Level & Category & Tests & Pass & Key Criterion \\
+\midrule
+0 & Unit system & 12 & 12/12 & Constants match literature to $10^{-6}$ \\
+1 & Force evaluation & 8 & 8/8 & Analytic vs.\ numerical gradient $< 10^{-5}$ \\
+2 & Integration & 5 & 5/5 & Energy drift $< 10^{-3}$ kcal/mol/atom \\
+3 & Thermodynamics & 8 & 7/8 & $|\langle T \rangle - T_\text{target}|/T_\text{target} < 5\%$ \\
+4 & Reproducibility & 3 & 3/3 & Bit-identical across seeds \\
+\midrule
+& \textbf{Total} & \textbf{36} & \textbf{35/36} & \textbf{97\%} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Known failure:} Level 3 Langevin temperature target for small systems (finite-size thermostat coupling).
+
+\textbf{Production certified for:} Noble gases (Ar, Xe, Kr), hydrocarbons (CH$_4$, benzene, alkanes), small organics (H$_2$O, NH$_3$, CH$_3$OH), molecular clusters.
+
+\textbf{Requires fix before production:} Ionic MD (NaCl, MgO) --- use FIRE only until Coulomb coupling resolved.
+
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Future Work (\S13)}
+% ═══════════════════════════════════════════════════════════════════════════
+
+Ordered by impact-to-effort ratio:
+
+\begin{enumerate}
+\item \textbf{Neighbour lists} --- Cell-linked or Verlet lists for $O(N)$ force evaluation ($50\times$ speedup for $N > 1000$)
+\item \textbf{NPT barostat} --- Pressure control via Parrinello--Rahman for crystal structure relaxation
+\item \textbf{Reactive bond orders} --- ReaxFF-style continuous bond order for dynamic bond breaking/formation
+\item \textbf{Quantum corrections} --- Delta-learning: $U = U_\text{classical} + \Delta U_\text{QM}$ from single-point DFT
+\item \textbf{ML potentials} --- SchNet/MACE surrogates trained on formation engine ensembles
+\item \textbf{Grand canonical} --- $\mu VT$ ensemble for variable-composition systems
+\item \textbf{Explicit solvent} --- TIP3P/SPC/E water models
+\end{enumerate}
+
+All extensions preserve the core contract: determinism, explicit units, provenance tracking, validation tests.
+
+\vspace{1em}\hrule\vspace{0.5em}
+
+\begin{center}
+\small
+Full methodology: 11 \LaTeX\ source files in \texttt{docs/}.\\
+Repository: \url{https://github.com/LMSM3/VSEPR-SIM}\\
+License: MIT \quad|\quad 821 source files \quad|\quad 35 validation tests
+\end{center}
+
+\end{document}
