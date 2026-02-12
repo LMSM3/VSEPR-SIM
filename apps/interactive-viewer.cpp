@@ -125,7 +125,7 @@ struct SimpleCamera {
     float far_plane = 100.0f;
     
     // Simplified view/projection matrices (4x4 identity for now)
-    // In production, use proper GLM or meso::linalg matrices
+    // In production, use proper GLM or vsepr::linalg matrices
     std::array<float, 16> get_view_matrix() const {
         // Simple lookAt approximation (forward = -Z)
         return {

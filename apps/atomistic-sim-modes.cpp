@@ -1,9 +1,9 @@
 /**
- * meso-sim: Additional simulation modes (MD, adaptive, prediction)
+ * atomistic-sim: Additional simulation modes (MD, adaptive, prediction)
  * Part 2 of main implementation
  */
 
-#include "meso-sim-config.hpp"
+#include "atomistic-sim-config.hpp"
 #include "io/xyz_format.hpp"
 #include "atomistic/core/state.hpp"
 #include "atomistic/parsers/xyz_parser.hpp"
@@ -338,7 +338,7 @@ void mode_reaction(const SimConfig& config) {
     
     if (config.merge_files.size() < 2) {
         std::cerr << "Error: Need at least 2 files (reactant and product)\n";
-        std::cerr << "Usage: meso-sim reaction reactant.xyz product.xyz\n";
+        std::cerr << "Usage: atomistic-sim reaction reactant.xyz product.xyz\n";
         return;
     }
     

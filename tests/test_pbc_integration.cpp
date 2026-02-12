@@ -4,8 +4,8 @@
  * Quick smoke test to verify PBC integration works
  */
 
-#include "meso/core/state.hpp"
-#include "meso/models/model.hpp"
+#include "atomistic/core/state.hpp"
+#include "atomistic/models/model.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -17,11 +17,11 @@ int main() {
     {
         std::cout << "\n[Test 1] BoxPBC MIC calculation" << std::endl;
         
-        meso::BoxPBC box(10, 10, 10);
-        meso::Vec3 ri = {0, 0, 0};
-        meso::Vec3 rj = {9, 0, 0};  // Near edge
+        vsepr::BoxPBC box(10, 10, 10);
+        vsepr::Vec3 ri = {0, 0, 0};
+        vsepr::Vec3 rj = {9, 0, 0};  // Near edge
         
-        meso::Vec3 dr = box.delta(ri, rj);
+        vsepr::Vec3 dr = box.delta(ri, rj);
         
         std::cout << "  Box: 10 x 10 x 10" << std::endl;
         std::cout << "  ri = (0, 0, 0)" << std::endl;
@@ -45,7 +45,7 @@ int main() {
     {
         std::cout << "\n[Test 2] Force field without PBC" << std::endl;
         
-        meso::State state;
+        vsepr::State state;
         state.N = 2;
         state.X = {{0, 0, 0}, {3, 0, 0}};  // Two atoms 3 Å apart
         state.V.resize(2, {0, 0, 0});
@@ -59,8 +59,8 @@ int main() {
         std::cout << "  Distance: 3 Å" << std::endl;
         
         // Create model and evaluate
-        auto model = meso::create_lj_coulomb_model();
-        meso::ModelParams params;
+        auto model = vsepr::create_lj_coulomb_model();
+        vsepr::ModelParams params;
         params.rc = 10.0;
         
         model->eval(state, params);
@@ -81,7 +81,7 @@ int main() {
     {
         std::cout << "\n[Test 3] Force field with PBC" << std::endl;
         
-        meso::State state;
+        vsepr::State state;
         state.N = 2;
         state.X = {{0, 0, 0}, {9, 0, 0}};  // Two atoms 9 Å apart (raw)
         state.V.resize(2, {0, 0, 0});
@@ -91,7 +91,7 @@ int main() {
         state.F.resize(2, {0, 0, 0});
         
         // Enable PBC with 10 Å box
-        state.box = meso::BoxPBC(10, 10, 10);
+        state.box = vsepr::BoxPBC(10, 10, 10);
         
         std::cout << "  PBC enabled: " << (state.box.enabled ? "yes" : "no") << std::endl;
         std::cout << "  Box: 10 x 10 x 10" << std::endl;
@@ -99,8 +99,8 @@ int main() {
         std::cout << "  MIC distance: 1 Å (nearest image)" << std::endl;
         
         // Create model and evaluate
-        auto model = meso::create_lj_coulomb_model();
-        meso::ModelParams params;
+        auto model = vsepr::create_lj_coulomb_model();
+        vsepr::ModelParams params;
         params.rc = 10.0;
         
         model->eval(state, params);
@@ -123,7 +123,7 @@ int main() {
         std::cout << "\n[Test 4] PBC vs non-PBC force comparison" << std::endl;
         
         // Setup two identical states
-        meso::State state_no_pbc, state_with_pbc;
+        vsepr::State state_no_pbc, state_with_pbc;
         
         for (auto* s : {&state_no_pbc, &state_with_pbc}) {
             s->N = 2;
@@ -136,11 +136,11 @@ int main() {
         }
         
         // Enable PBC only on second state
-        state_with_pbc.box = meso::BoxPBC(10, 10, 10);
+        state_with_pbc.box = vsepr::BoxPBC(10, 10, 10);
         
         // Evaluate both
-        auto model = meso::create_lj_coulomb_model();
-        meso::ModelParams params;
+        auto model = vsepr::create_lj_coulomb_model();
+        vsepr::ModelParams params;
         params.rc = 10.0;
         
         model->eval(state_no_pbc, params);

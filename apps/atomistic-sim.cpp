@@ -1,5 +1,5 @@
 /**
- * meso-sim: Unified Molecular Simulation & Prediction Tool
+ * atomistic-sim: Unified Molecular Simulation & Prediction Tool
  * 
  * Replaces old batch system with integrated workflow:
  * - Multiple simulation modes (optimization, MD, conformers, etc.)
@@ -8,7 +8,7 @@
  * - Reaction energy/barrier prediction
  * 
  * Usage:
- *   meso-sim <mode> [options] input.xyz
+ *   atomistic-sim <mode> [options] input.xyz
  * 
  * Modes:
  *   energy      - Single-point energy calculation
@@ -22,7 +22,7 @@
  *   merge       - Merge multiple simulation outputs
  */
 
-#include "meso-sim-config.hpp"
+#include "atomistic-sim-config.hpp"
 #include "atomistic/core/state.hpp"
 #include "atomistic/parsers/xyz_parser.hpp"
 #include "atomistic/compilers/xyz_compiler.hpp"
@@ -57,14 +57,14 @@ namespace fs = std::filesystem;
 void print_header() {
     std::cout << "\n";
     std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║         MESO-SIM: Molecular Simulation & Prediction         ║\n";
+    std::cout << "║         atomistic-sim: Molecular Simulation & Prediction         ║\n";
     std::cout << "║              Integrated VSEPR + Force Field Engine           ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
 }
 
 void print_usage() {
-    std::cout << "Usage: meso-sim <mode> [options] input.xyz\n\n";
+    std::cout << "Usage: atomistic-sim <mode> [options] input.xyz\n\n";
     std::cout << "Modes:\n";
     std::cout << "  energy       Single-point energy evaluation\n";
     std::cout << "  optimize     Geometry optimization (FIRE minimizer)\n";
@@ -76,18 +76,18 @@ void print_usage() {
     std::cout << "  reaction     Estimate reaction energy & barrier\n";
     std::cout << "  merge        Merge & analyze multiple outputs\n\n";
     std::cout << "Options:\n";
-    std::cout << "  --output DIR         Output directory (default: meso_output)\n";
+    std::cout << "  --output DIR         Output directory (default: atomistic_output)\n";
     std::cout << "  --cutoff VAL         Nonbonded cutoff in Å (default: 10.0)\n";
     std::cout << "  --temp VAL           Temperature in K (default: 300)\n";
     std::cout << "  --steps N            Number of steps (default: mode-dependent)\n";
     std::cout << "  --no-bonded          Disable bonded interactions\n";
     std::cout << "  --no-nonbonded       Disable nonbonded interactions\n";
     std::cout << "\nExamples:\n";
-    std::cout << "  meso-sim optimize water.xyz\n";
-    std::cout << "  meso-sim md-nvt --temp 350 --steps 50000 protein.xyz\n";
-    std::cout << "  meso-sim conformers --output ethane_confs ethane.xyz\n";
-    std::cout << "  meso-sim predict molecule.xyz\n";
-    std::cout << "  meso-sim merge output1/ output2/ output3/\n";
+    std::cout << "  atomistic-sim optimize water.xyz\n";
+    std::cout << "  atomistic-sim md-nvt --temp 350 --steps 50000 protein.xyz\n";
+    std::cout << "  atomistic-sim conformers --output ethane_confs ethane.xyz\n";
+    std::cout << "  atomistic-sim predict molecule.xyz\n";
+    std::cout << "  atomistic-sim merge output1/ output2/ output3/\n";
 }
 
 SimConfig parse_args(int argc, char** argv) {

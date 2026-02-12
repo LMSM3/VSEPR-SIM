@@ -98,29 +98,29 @@ cd docs && for f in section*.tex; do pdflatex "$f"; done
 ```bash
 chmod +x vseprw
 ./vseprw H2O relax                    # First run: configure + build + minimize
-./vseprw water.xyz sim --temp 300     # MD simulation at 300 K
-./vseprw cisplatin.xyz view           # 3D visualization
+./vseprw molecule.xyz sim --temp 300  # MD simulation at 300 K
+./vseprw molecule.xyz view            # 3D visualization
 ```
 
 ### Manual Build
 ```bash
 cmake -B build && cmake --build build -j8
 
-# Interactive molecular builder
-./build/apps/cli
-⚛ build water
-⚛ info
-⚛ save water.xyz
-⚛ exit
+# Interactive molecular builder (formula pipeline)
+./build/atomistic-build
+>> build H2O
+>> info
+>> save H2O.xyz
+>> exit
 
 # Energy minimization
-./build/apps/relax water.xyz
+./build/atomistic-relax H2O.xyz
 
 # Molecular dynamics
-./build/apps/simulate water.xyz --temp 300 --steps 10000
+./build/atomistic-sim simulate H2O.xyz --temp 300 --steps 10000
 
 # 3D viewer
-./build/apps/viewer water.xyz
+./build/interactive-viewer H2O.xyz
 ```
 
 ---

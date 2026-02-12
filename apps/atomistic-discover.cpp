@@ -1,5 +1,5 @@
 /**
- * meso-discover: Deterministic Reaction Discovery System
+ * atomistic-discover: Deterministic Reaction Discovery System
  * 
  * Systematically explores chemical reaction space using:
  *   - Rule-based reaction generation (not random)
@@ -8,10 +8,10 @@
  *   - Pattern mining and template learning
  * 
  * Usage:
- *   meso-discover discover                    # Run discovery loop
- *   meso-discover test molA.xyz molB.xyz      # Test specific pair
- *   meso-discover analyze reactions.csv       # Mine patterns from data
- *   meso-discover generate N                  # Generate N random molecules
+ *   atomistic-discover discover                    # Run discovery loop
+ *   atomistic-discover test molA.xyz molB.xyz      # Test specific pair
+ *   atomistic-discover analyze reactions.csv       # Mine patterns from data
+ *   atomistic-discover generate N                  # Generate N random molecules
  */
 
 #include "atomistic/reaction/engine.hpp"
@@ -61,10 +61,10 @@ struct DiscoverOptions {
 
 void print_usage() {
     std::cout << R"(
-meso-discover: Deterministic Reaction Discovery System
+atomistic-discover: Deterministic Reaction Discovery System
 
 USAGE:
-    meso-discover <mode> [options]
+    atomistic-discover <mode> [options]
 
 MODES:
     discover             Run systematic reaction discovery loop
@@ -83,13 +83,13 @@ DISCOVERY MODE OPTIONS:
     --verbose            Print detailed progress
 
 TEST MODE:
-    meso-discover test reactant_A.xyz reactant_B.xyz [--output DIR]
+    atomistic-discover test reactant_A.xyz reactant_B.xyz [--output DIR]
 
     Tests all reaction templates on the given pair of molecules.
     Outputs all feasible reactions ranked by score.
 
 ANALYZE MODE:
-    meso-discover analyze reactions.csv [--min-support X]
+    atomistic-discover analyze reactions.csv [--min-support X]
 
     Mines patterns from an existing reaction database.
     Extracts motifs, clusters reactions, generates new templates.
@@ -97,26 +97,26 @@ ANALYZE MODE:
     --min-support X      Minimum pattern support (default: 0.1)
 
 GENERATE MODE:
-    meso-discover generate <N> [--output DIR]
+    atomistic-discover generate <N> [--output DIR]
 
     Generates N random chemically-reasonable molecules.
     Saves as XYZ files in output directory.
 
 EXAMPLES:
     # Run discovery with default settings
-    meso-discover discover
+    atomistic-discover discover
 
     # Custom discovery with more molecules
-    meso-discover discover --molecules 200 --batches 20 --verbose
+    atomistic-discover discover --molecules 200 --batches 20 --verbose
 
     # Test specific reactants
-    meso-discover test ethylene.xyz bromine.xyz
+    atomistic-discover test ethylene.xyz bromine.xyz
 
     # Analyze existing data
-    meso-discover analyze old_reactions.csv --min-support 0.15
+    atomistic-discover analyze old_reactions.csv --min-support 0.15
 
     # Generate test molecules
-    meso-discover generate 50 --output test_mols
+    atomistic-discover generate 50 --output test_mols
 
 DISCOVERY METHODOLOGY:
     1. Generate batch of random molecules (valence-constrained)
@@ -160,7 +160,7 @@ bool parse_args(int argc, char** argv, DiscoverOptions& opts) {
     if (opts.mode == "test") {
         if (argc < 4) {
             std::cerr << "Error: test mode requires two input files\n";
-            std::cerr << "Usage: meso-discover test <molA.xyz> <molB.xyz>\n";
+            std::cerr << "Usage: atomistic-discover test <molA.xyz> <molB.xyz>\n";
             return false;
         }
         opts.input_A = argv[2];
@@ -175,7 +175,7 @@ bool parse_args(int argc, char** argv, DiscoverOptions& opts) {
     } else if (opts.mode == "analyze") {
         if (argc < 3) {
             std::cerr << "Error: analyze mode requires database file\n";
-            std::cerr << "Usage: meso-discover analyze <reactions.csv>\n";
+            std::cerr << "Usage: atomistic-discover analyze <reactions.csv>\n";
             return false;
         }
         opts.database_file = argv[2];
@@ -189,7 +189,7 @@ bool parse_args(int argc, char** argv, DiscoverOptions& opts) {
     } else if (opts.mode == "generate") {
         if (argc < 3) {
             std::cerr << "Error: generate mode requires number of molecules\n";
-            std::cerr << "Usage: meso-discover generate <N>\n";
+            std::cerr << "Usage: atomistic-discover generate <N>\n";
             return false;
         }
         opts.num_molecules = std::stoi(argv[2]);

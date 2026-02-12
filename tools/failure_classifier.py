@@ -121,7 +121,7 @@ class FailureClassifier:
         """Generate minimal reproduction command."""
         
         cmd_parts = [
-            f"./build/meso-sim",
+            f"./build/atomistic-sim",
             f"--formula {formula}",
             f"--seed {seed}",
         ]
@@ -181,7 +181,7 @@ class FailureClassifier:
             
             # Run
             cmd = [
-                "./build/meso-sim",
+                "./build/atomistic-sim",
                 "--formula", formula,
                 "--seed", str(seed),
                 "--steps", str(int(params.get('steps', 1000))),

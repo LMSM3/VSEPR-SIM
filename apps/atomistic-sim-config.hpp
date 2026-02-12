@@ -6,7 +6,7 @@
 struct SimConfig {
     std::string mode;
     std::string input_file;
-    std::string output_dir = "meso_output";
+    std::string output_dir = "atomistic_output";
     
     // Model parameters
     bool use_bonded = true;

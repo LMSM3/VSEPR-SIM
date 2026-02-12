@@ -9,7 +9,7 @@ Purpose: Soft repulsion for VSEPR geometry optimization
 
 Related Files:
 - src/pot/uff_params.hpp: Shared parameter database (can be used here too)
-- meso/models/lj_coulomb.cpp: MD mode (full LJ + Coulomb)
+- atomistic/models/lj_coulomb.cpp: MD mode (full LJ + Coulomb)
 
 Key Differences from MD Mode:
 - WCA (repulsion-only) vs full LJ

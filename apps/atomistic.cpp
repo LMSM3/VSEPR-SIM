@@ -1,4 +1,4 @@
-// meso.cpp - Unified CLI Entry Point
+// atomistic.cpp - Unified CLI Entry Point
 // Principle #1: One brain, not twenty scripts
 
 #include <iostream>
@@ -12,7 +12,7 @@ constexpr const char* MESO_VERSION = "2.5.0-dev";
 constexpr const char* BUILD_DATE = __DATE__;
 
 struct GlobalConfig {
-    std::string config_file = "meso.yaml";
+    std::string config_file = "atomistic.yaml";
     int seed = -1;
     bool verbose = false;
     bool quiet = false;
@@ -33,14 +33,14 @@ void log_error(const std::string& msg) {
 }
 
 void show_version() {
-    std::cout << "MESO v" << MESO_VERSION << " (built " << BUILD_DATE << ")\n";
+    std::cout << "atomistic v" << MESO_VERSION << " (built " << BUILD_DATE << ")\n";
     std::cout << "Unified CLI for molecular simulation\n";
 }
 
 void show_help() {
-    std::cout << "Usage: meso [FLAGS] SUBCOMMAND [OPTIONS]\n\n";
+    std::cout << "Usage: atomistic [FLAGS] SUBCOMMAND [OPTIONS]\n\n";
     std::cout << "Global Flags:\n";
-    std::cout << "  --config FILE    Load configuration file (default: meso.yaml)\n";
+    std::cout << "  --config FILE    Load configuration file (default: atomistic.yaml)\n";
     std::cout << "  --seed N         Global random seed\n";
     std::cout << "  --verbose        Enable verbose output\n";
     std::cout << "  --quiet          Suppress informational messages\n";
@@ -56,63 +56,63 @@ void show_help() {
     std::cout << "  inspect    Inspection tools (stats, energy, forces, histogram)\n";
     std::cout << "  config     Configuration management (init, show, validate)\n\n";
     std::cout << "Examples:\n";
-    std::cout << "  meso build --template cisplatin -o cisplatin.xyz\n";
-    std::cout << "  meso sim minimize input.xyz -o output.xyza --steps 1000\n";
-    std::cout << "  meso align baseline.xyz new.xyz --rmsd\n";
-    std::cout << "  meso view trajectory.xyza\n\n";
-    std::cout << "For subcommand help: meso SUBCOMMAND --help\n";
+    std::cout << "  atomistic build --template cisplatin -o cisplatin.xyz\n";
+    std::cout << "  atomistic sim minimize input.xyz -o output.xyza --steps 1000\n";
+    std::cout << "  atomistic align baseline.xyz new.xyz --rmsd\n";
+    std::cout << "  atomistic view trajectory.xyza\n\n";
+    std::cout << "For subcommand help: atomistic SUBCOMMAND --help\n";
 }
 
 int cmd_build(int argc, char** argv) {
-    log_info("Calling meso-build implementation");
-    std::cout << "Usage: meso build [--template NAME | --formula FORMULA] -o FILE\n";
+    log_info("Calling atomistic-build implementation");
+    std::cout << "Usage: atomistic build [--template NAME | --formula FORMULA] -o FILE\n";
     std::cout << "Available templates: water, methane, ethane, butane, benzene, cisplatin, etc.\n";
     return 0;
 }
 
 int cmd_sim(int argc, char** argv) {
-    log_info("Calling meso-sim implementation");
-    std::cout << "Usage: meso sim MODE input.xyz [OPTIONS]\n";
+    log_info("Calling atomistic-sim implementation");
+    std::cout << "Usage: atomistic sim MODE input.xyz [OPTIONS]\n";
     std::cout << "Modes: minimize, md, energy, torsion, conformers\n";
     return 0;
 }
 
 int cmd_align(int argc, char** argv) {
-    log_info("Calling meso-align implementation");
-    std::cout << "Usage: meso align REFERENCE TARGET [OPTIONS]\n";
+    log_info("Calling atomistic-align implementation");
+    std::cout << "Usage: atomistic align REFERENCE TARGET [OPTIONS]\n";
     std::cout << "Options: --rmsd, --rmsd-threshold FLOAT, --max-iter INT\n";
     return 0;
 }
 
 int cmd_discover(int argc, char** argv) {
-    log_info("Calling meso-discover implementation");
-    std::cout << "Usage: meso discover input.xyz [OPTIONS]\n";
+    log_info("Calling atomistic-discover implementation");
+    std::cout << "Usage: atomistic discover input.xyz [OPTIONS]\n";
     return 0;
 }
 
 int cmd_view(int argc, char** argv) {
     log_info("Calling interactive-viewer implementation");
-    std::cout << "Usage: meso view FILE.xyz|FILE.xyza [OPTIONS]\n";
+    std::cout << "Usage: atomistic view FILE.xyz|FILE.xyza [OPTIONS]\n";
     return 0;
 }
 
 int cmd_validate(int argc, char** argv) {
     log_info("NEW: File format validation tool");
-    std::cout << "Usage: meso validate FILE.xyz|FILE.xyza|FILE.xyzc [OPTIONS]\n";
+    std::cout << "Usage: atomistic validate FILE.xyz|FILE.xyza|FILE.xyzc [OPTIONS]\n";
     std::cout << "Validates XYZ/XYZA/XYZC file format compliance\n";
     return 0;
 }
 
 int cmd_inspect(int argc, char** argv) {
     log_info("NEW: Inspection utilities");
-    std::cout << "Usage: meso inspect SUBCOMMAND FILE [OPTIONS]\n";
+    std::cout << "Usage: atomistic inspect SUBCOMMAND FILE [OPTIONS]\n";
     std::cout << "Subcommands: stats, energy, forces, sample, histogram\n";
     return 0;
 }
 
 int cmd_config(int argc, char** argv) {
     log_info("NEW: Configuration management");
-    std::cout << "Usage: meso config SUBCOMMAND [OPTIONS]\n";
+    std::cout << "Usage: atomistic config SUBCOMMAND [OPTIONS]\n";
     std::cout << "Subcommands: init, show, validate, get, set\n";
     return 0;
 }
@@ -190,7 +190,7 @@ int main(int argc, char** argv) {
     
     if (it == g_subcommands.end()) {
         log_error("Unknown subcommand: " + subcommand);
-        std::cout << "Run 'meso --help' for available subcommands\n";
+        std::cout << "Run 'atomistic --help' for available subcommands\n";
         return 1;
     }
     

@@ -426,30 +426,30 @@ if(BUILD_APPS)
         target_link_libraries(xyz_suite_test psapi)
     endif()
     
-    # Meso Relax - Mesoscale FIRE minimization demo
-    add_executable(meso-relax apps/meso-relax.cpp)
-    target_link_libraries(meso-relax atomistic vsepr_io vsepr_core)
-    target_include_directories(meso-relax PRIVATE ${PROJECT_SOURCE_DIR})
+    # Atomistic Relax - FIRE minimization
+    add_executable(atomistic-relax apps/atomistic-relax.cpp)
+    target_link_libraries(atomistic-relax atomistic vsepr_io vsepr_core)
+    target_include_directories(atomistic-relax PRIVATE ${PROJECT_SOURCE_DIR})
 
-    # Atomistic-Sim - Unified simulation & prediction tool (REPLACES vsepr_batch)
-    add_executable(meso-sim apps/meso-sim.cpp apps/meso-sim-modes.cpp)
-    target_link_libraries(meso-sim atomistic vsepr_io vsepr_core vsepr_pot)
-    target_include_directories(meso-sim PRIVATE ${PROJECT_SOURCE_DIR})
+    # Atomistic-Sim - Unified simulation & prediction tool
+    add_executable(atomistic-sim apps/atomistic-sim.cpp apps/atomistic-sim-modes.cpp)
+    target_link_libraries(atomistic-sim atomistic vsepr_io vsepr_core vsepr_pot)
+    target_include_directories(atomistic-sim PRIVATE ${PROJECT_SOURCE_DIR})
 
     # Atomistic-Discover - Deterministic reaction discovery system
-    add_executable(meso-discover apps/meso-discover.cpp)
-    target_link_libraries(meso-discover atomistic vsepr_io vsepr_core vsepr_pot)
-    target_include_directories(meso-discover PRIVATE ${PROJECT_SOURCE_DIR})
+    add_executable(atomistic-discover apps/atomistic-discover.cpp)
+    target_link_libraries(atomistic-discover atomistic vsepr_io vsepr_core vsepr_pot)
+    target_include_directories(atomistic-discover PRIVATE ${PROJECT_SOURCE_DIR})
 
     # Atomistic-Align - Kabsch alignment with camera tracking
-    add_executable(meso-align apps/meso-align.cpp)
-    target_link_libraries(meso-align atomistic vsepr_io vsepr_core)
-    target_include_directories(meso-align PRIVATE ${PROJECT_SOURCE_DIR})
+    add_executable(atomistic-align apps/atomistic-align.cpp)
+    target_link_libraries(atomistic-align atomistic vsepr_io vsepr_core)
+    target_include_directories(atomistic-align PRIVATE ${PROJECT_SOURCE_DIR})
 
-    # Atomistic-Build - Interactive molecular builder CLI
-    add_executable(meso-build apps/meso-build.cpp)
-    target_link_libraries(meso-build atomistic vsepr_io vsepr_core)
-    target_include_directories(meso-build PRIVATE ${PROJECT_SOURCE_DIR})
+    # Atomistic-Build - Interactive molecular builder CLI (formula pipeline)
+    add_executable(atomistic-build apps/atomistic-build.cpp)
+    target_link_libraries(atomistic-build atomistic vsepr_io vsepr_core)
+    target_include_directories(atomistic-build PRIVATE ${PROJECT_SOURCE_DIR})
 
     # Demo Launcher - Cross-platform terminal spawner (like xclock)
     add_executable(demo apps/demo.cpp)
@@ -724,7 +724,7 @@ if(BUILD_TESTS)
     # Ensemble Consistency & Perturbation Invariance Test
     # TODO: Fix ensemble_consistency_test (needs CoreState from qa_golden_tests.cpp)
     # add_executable(ensemble_consistency_test tests/ensemble_consistency_test.cpp)
-    # target_link_libraries(ensemble_consistency_test meso vsepr_core vsepr_io)
+    # target_link_libraries(ensemble_consistency_test atomistic vsepr_core vsepr_io)
     # target_include_directories(ensemble_consistency_test PRIVATE ${PROJECT_SOURCE_DIR})
     # add_test(NAME EnsembleConsistencyTest COMMAND ensemble_consistency_test)
 endif()

@@ -187,7 +187,7 @@ class GapTargeter:
             print(f"  Run {i+1}/{len(schedule)}: scale={config['scale']}, T={config['temp']:.1f}K, ρ={config['density']:.4f}")
             
             cmd = [
-                "./build/meso-sim",
+                "./build/atomistic-sim",
                 "--formula", config["formula"],
                 "--seed", str(config["seed"]),
                 "--temp", str(config["temp"]),

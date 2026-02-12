@@ -86,7 +86,7 @@ class RegressionDetector:
             
             # Build command with config overrides
             cmd = [
-                "./build/meso-sim",
+                "./build/atomistic-sim",
                 "--formula", formula,
                 "--seed", str(seed),
                 "--steps", "1000",

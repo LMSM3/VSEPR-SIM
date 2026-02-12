@@ -50,7 +50,7 @@ namespace fs = std::filesystem;
  * 
  * For now, using simple ionic charges for salts, neutral for everything else.
  * 
- * NOTE: LJ parameters (sigma, epsilon) are now in meso/models/lj_coulomb.cpp
+ * NOTE: LJ parameters (sigma, epsilon) are now in atomistic/models/lj_coulomb.cpp
  */
 static const std::map<int, double> CHARGE_BY_Z_DEFAULT = {
     {1,  0.0},     // H (set per-molecule)
@@ -195,10 +195,10 @@ inline void sync_from_atomistic(CoreState& core, const atomistic::State& s) {
 // ============================================================================
 
 /**
- * Simple wrapper around meso's factory-based LJ+Coulomb model
+ * Simple wrapper around atomistic factory-based LJ+Coulomb model
  * 
  * Why this exists:
- * - meso provides create_lj_coulomb_model() factory (returns std::unique_ptr<IModel>)
+ * - atomistic provides create_lj_coulomb_model() factory (returns std::unique_ptr<IModel>)
  * - QA tests want direct class usage (LJCoulombModel model;)
  * - This wrapper provides the expected interface
  */
