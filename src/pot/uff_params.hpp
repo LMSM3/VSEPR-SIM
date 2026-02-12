@@ -9,7 +9,7 @@
  *         J. Am. Chem. Soc. 114(25), 10024-10035
  * 
  * Used by:
- * - meso/models/lj_coulomb.cpp (MD mode: full LJ + Coulomb)
+ * - atomistic/models/lj_coulomb.cpp (MD mode: full LJ + Coulomb)
  * - src/pot/energy_nonbonded.hpp (VSEPR mode: WCA repulsion-only)
  * 
  * Note: Name is "UFF" for historical reasons, but this is a generic parameter DB.

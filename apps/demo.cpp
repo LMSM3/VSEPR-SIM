@@ -13,13 +13,13 @@ void print_usage(const char* program_name) {
     std::cout << "Usage:\n";
     std::cout << "  " << program_name << " [options]\n\n";
     std::cout << "Options:\n";
-    std::cout << "  (no args)          Launch interactive meso-build\n";
-    std::cout << "  --vsepr            Launch meso-build with demo molecule\n";
-    std::cout << "  --build            Launch interactive meso-build\n";
-    std::cout << "  --sim              Launch meso-sim for quick simulation\n";
-    std::cout << "  --align            Launch meso-align for structure alignment\n";
-    std::cout << "  --discover         Launch meso-discover for reaction discovery\n";
-    std::cout << "  --relax            Launch meso-relax for FIRE minimization\n";
+    std::cout << "  (no args)          Launch interactive atomistic-build\n";
+    std::cout << "  --vsepr            Launch atomistic-build with demo molecule\n";
+    std::cout << "  --build            Launch interactive atomistic-build\n";
+    std::cout << "  --sim              Launch atomistic-sim for quick simulation\n";
+    std::cout << "  --align            Launch atomistic-align for structure alignment\n";
+    std::cout << "  --discover         Launch atomistic-discover for reaction discovery\n";
+    std::cout << "  --relax            Launch atomistic-relax for FIRE minimization\n";
     std::cout << "  --terminal         Open terminal in current directory\n";
     std::cout << "  --help, -h         Show this help message\n\n";
     std::cout << "Platform: " << PlatformTerminal::platform_name(PlatformTerminal::detect_platform()) << "\n\n";
@@ -78,23 +78,23 @@ int main(int argc, char* argv[]) {
         return 0;
     } else if (mode == "build") {
         title = "VSEPR-Sim: Interactive Builder";
-        command = "meso-build";
+        command = "atomistic-build";
     } else if (mode == "vsepr") {
         title = "VSEPR-Sim: Demo Molecule";
-        // Launch meso-build with ethane demo
-        command = "echo 'Building ethane (C2H6) demo...' && meso-build";
+        // Launch atomistic-build with ethane demo
+        command = "echo 'Building ethane (C2H6) demo...' && atomistic-build";
     } else if (mode == "sim") {
         title = "VSEPR-Sim: MD Simulation";
-        command = "meso-sim --help && echo 'Ready for simulation...'";
+        command = "atomistic-sim --help && echo 'Ready for simulation...'";
     } else if (mode == "align") {
         title = "VSEPR-Sim: Structure Alignment";
-        command = "meso-align --help && echo 'Ready for alignment...'";
+        command = "atomistic-align --help && echo 'Ready for alignment...'";
     } else if (mode == "discover") {
         title = "VSEPR-Sim: Reaction Discovery";
-        command = "meso-discover --help && echo 'Ready for discovery...'";
+        command = "atomistic-discover --help && echo 'Ready for discovery...'";
     } else if (mode == "relax") {
         title = "VSEPR-Sim: FIRE Minimization";
-        command = "meso-relax --help && echo 'Ready for minimization...'";
+        command = "atomistic-relax --help && echo 'Ready for minimization...'";
     }
     
     // Launch command in new terminal

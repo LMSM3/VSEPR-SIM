@@ -41,7 +41,7 @@ int main() {
     state.F.resize(state.N, {0, 0, 0});
     
     // **ENABLE PBC** (cubic box)
-    state.box = meso::BoxPBC(a, a, a);
+    state.box = vsepr::BoxPBC(a, a, a);
     
     std::cout << "Initial setup:\n";
     std::cout << "  Atoms: " << state.N << " (4 Na + 4 Cl)\n";
@@ -49,9 +49,9 @@ int main() {
     std::cout << "  Box size: " << a << " x " << a << " x " << a << " Å\n\n";
     
     // Create force field model
-    auto model = meso::create_lj_coulomb_model();
+    auto model = vsepr::create_lj_coulomb_model();
     
-    meso::ModelParams params;
+    vsepr::ModelParams params;
     params.rc = 10.0;        // Cutoff 10 Å
     params.k_coul = 138.935; // Coulomb constant
     
@@ -75,7 +75,7 @@ int main() {
     double min_dist = 1e10;
     for (uint32_t i = 0; i < state.N; ++i) {
         for (uint32_t j = i + 1; j < state.N; ++j) {
-            meso::Vec3 rij = state.box.delta(state.X[i], state.X[j]);
+            vsepr::Vec3 rij = state.box.delta(state.X[i], state.X[j]);
             double r = std::sqrt(dot(rij, rij));
             if (r < min_dist) min_dist = r;
         }
@@ -87,11 +87,11 @@ int main() {
     // Run FIRE minimization
     std::cout << "Running FIRE minimization...\n";
 
-    meso::FIREParams fire_params;
+    vsepr::FIREParams fire_params;
     fire_params.max_steps = 100;
     fire_params.epsF = 1e-4;
 
-    meso::FIRE fire(*model, params);
+    vsepr::FIRE fire(*model, params);
     auto result = fire.minimize(state, fire_params);
 
     std::cout << "\nFIRE result:\n";
@@ -105,7 +105,7 @@ int main() {
     min_dist = 1e10;
     for (uint32_t i = 0; i < state.N; ++i) {
         for (uint32_t j = i + 1; j < state.N; ++j) {
-            meso::Vec3 rij = state.box.delta(state.X[i], state.X[j]);
+            vsepr::Vec3 rij = state.box.delta(state.X[i], state.X[j]);
             double r = std::sqrt(dot(rij, rij));
             if (r < min_dist) min_dist = r;
         }

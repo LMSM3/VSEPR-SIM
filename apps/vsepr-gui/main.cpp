@@ -397,7 +397,7 @@ private:
     }
     
     void generate_supercell(int a, int b, int c) {
-        // TODO: Call meso-sim or construct directly
+        // TODO: Call atomistic-sim or construct directly
         log("Generating supercell " + std::to_string(a) + "×" + std::to_string(b) + "×" + std::to_string(c));
     }
     

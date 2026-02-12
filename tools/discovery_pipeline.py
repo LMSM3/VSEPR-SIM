@@ -135,7 +135,7 @@ class DiscoveryPipeline:
         """
         Parse simulation output to extract energy, forces, convergence
         
-        Expected format (from meso-sim or qa_golden_tests):
+        Expected format (from atomistic-sim or qa_golden_tests):
           Final energy: -123.45 kcal/mol
           Max force: 0.0012 kcal/(mol·Å)
           Converged: yes

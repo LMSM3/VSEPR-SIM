@@ -1,5 +1,5 @@
 /**
- * meso-align: Molecular Structure Alignment Viewer
+ * atomistic-align: Molecular Structure Alignment Viewer
  * 
  * Demonstrates Kabsch alignment with camera tracking visualization
  * 
@@ -11,7 +11,7 @@
  * - Side-by-side comparison before/after
  * 
  * Usage:
- *   meso-align reference.xyz target.xyz [--steps N]
+ *   atomistic-align reference.xyz target.xyz [--steps N]
  * 
  * Physics:
  * - Kabsch algorithm: Optimal rotation minimizing RMSD
@@ -236,7 +236,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Print banner
-    print_header("MESO-ALIGN: Molecular Structure Alignment");
+    print_header("atomistic-align: Molecular Structure Alignment");
     std::cout << "Kabsch algorithm with camera tracking\n\n";
     
     // Load structures
@@ -309,8 +309,8 @@ int main(int argc, char* argv[]) {
     
     std::cout << "\n✓ Alignment complete!\n";
     std::cout << "\nNext steps:\n";
-    std::cout << "  - Visualize with: meso-view aligned.xyz\n";
-    std::cout << "  - Compare structures: meso-compare ref.xyz target.xyz\n";
+    std::cout << "  - Visualize with: atomistic-view aligned.xyz\n";
+    std::cout << "  - Compare structures: atomistic-compare ref.xyz target.xyz\n";
     std::cout << "  - Export aligned: (TODO: implement save function)\n";
     
     return 0;

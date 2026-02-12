@@ -21,12 +21,12 @@
  * 5. Detect overfitting vs physical robustness
  */
 
-#include "../meso/core/linalg.hpp"
-#include "../meso/models/model.hpp"
-#include "meso/models/model.hpp"
+#include "../atomistic/core/linalg.hpp"
+#include "../atomistic/models/model.hpp"
+#include "atomistic/models/model.hpp"
 // Note: lj_coulomb implementation is in model.cpp, accessed via create_lj_coulomb_model()
-#include "../meso/parsers/xyz_parser.hpp"
-#include "../meso/core/thermodynamics.hpp"
+#include "../atomistic/parsers/xyz_parser.hpp"
+#include "../atomistic/core/thermodynamics.hpp"
 #include "../src/io/xyz_format.cpp"
 #include <iostream>
 #include <random>
@@ -37,7 +37,7 @@
 #include <algorithm>
 #include <numeric>
 
-using namespace meso;
+using namespace vsepr;
 
 // ============================================================================
 // Statistical Utilities
@@ -209,7 +209,7 @@ private:
     
     // Simple FIRE minimization (stub - replace with actual implementation)
     CoreState relax_fire(const CoreState& state, int max_steps) {
-        // TODO: Integrate with actual FIRE implementation from meso library
+        // TODO: Integrate with actual FIRE implementation from atomistic library
         // For now, return state as-is (placeholder)
         return state;
     }

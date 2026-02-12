@@ -32,11 +32,11 @@ $BUILD_TYPE = if ($env:BUILD_TYPE) { $env:BUILD_TYPE } else { "Release" }
 
 # Tool mapping: ACTION → executable name
 $TOOL_MAP = @{
-    "relax"    = "meso-relax.exe"
-    "sim"      = "meso-sim.exe"
-    "discover" = "meso-discover.exe"
-    "align"    = "meso-align.exe"
-    "build"    = "meso-build.exe"
+    "relax"    = "atomistic-relax.exe"
+    "sim"      = "atomistic-sim.exe"
+    "discover" = "atomistic-discover.exe"
+    "align"    = "atomistic-align.exe"
+    "build"    = "atomistic-build.exe"
     "crystal"  = "crystal-viewer.exe"
     "qa"       = "qa_golden_tests.exe"
 }
@@ -159,7 +159,7 @@ function Test-BuildFreshness {
     $binaryTime = (Get-Item $BinaryPath).LastWriteTime
     
     # Check if any source files are newer
-    $sourceFiles = Get-ChildItem -Path (Join-Path $REPO_ROOT "meso"), (Join-Path $REPO_ROOT "apps") `
+    $sourceFiles = Get-ChildItem -Path (Join-Path $REPO_ROOT "src"), (Join-Path $REPO_ROOT "apps") `
                                   -Include *.cpp,*.hpp -Recurse -ErrorAction SilentlyContinue
     
     foreach ($file in $sourceFiles) {
