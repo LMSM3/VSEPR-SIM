@@ -161,6 +161,8 @@ add_library(atomistic STATIC
     predict/properties.cpp
     reaction/engine.hpp
     reaction/engine.cpp
+    reaction/heat_gate.hpp
+    reaction/heat_gate.cpp
     reaction/discovery.hpp
     reaction/discovery.cpp
     reaction/causal.hpp
@@ -172,15 +174,7 @@ add_library(atomistic STATIC
 )
 
 message(STATUS "")
-message(STATUS "  ✓ 8 modules compiled")
-message(STATUS "╔════════════════════════════════════════════════════════════════════════════════╗")
-message(STATUS "║  ATOMISTIC LIBRARY COMPILED                                                    ║")
-message(STATUS "╠════════════════════════════════════════════════════════════════════════════════╣")
-message(STATUS "║  Modules:         ${ATOMISTIC_MODULE_COUNT}/8                                               ║")
-message(STATUS "║  Dependencies:    vsepr_core, vsepr_io, vsepr_pot                              ║")
-message(STATUS "║  Target:          libatomistic.a (static)                                      ║")
-message(STATUS "╚════════════════════════════════════════════════════════════════════════════════╝")
-message(STATUS "")
+message(STATUS "  Modules:         ${ATOMISTIC_MODULE_COUNT}/8   ✓ ")
 
 target_include_directories(atomistic PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/..

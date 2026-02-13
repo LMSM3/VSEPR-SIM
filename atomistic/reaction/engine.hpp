@@ -1,6 +1,7 @@
 #pragma once
 #include "../core/state.hpp"
 #include "../predict/properties.hpp"
+#include "heat_gate.hpp"
 #include <vector>
 #include <map>
 #include <string>
@@ -224,9 +225,36 @@ public:
      * Get all loaded templates
      */
     const std::vector<ReactionTemplate>& get_templates() const { return templates_; }
-    
+
+    // ========================================================================
+    // Heat-Gated Template Control (SS8b)
+    // ========================================================================
+
+    /**
+     * Set the heat parameter controlling bio-template availability.
+     * @param heat  3-digit heat value [0..999]
+     */
+    void set_heat(uint16_t heat);
+
+    /**
+     * Get the current heat-gate controller (read-only).
+     */
+    const HeatGateController& heat_gate() const { return heat_gate_; }
+
+    /**
+     * Load bio-template reaction rules gated by current heat.
+     * Only templates with wk(h) > epsilon are added.
+     */
+    void load_heat_gated_templates(double epsilon = 1e-3);
+
+    /**
+     * Get active bio-template IDs at the current heat setting.
+     */
+    std::vector<BioTemplateId> active_bio_templates(double epsilon = 1e-3) const;
+
 private:
     std::vector<ReactionTemplate> templates_;
+    HeatGateController heat_gate_;
     
     // Helper: compute HSAB matching score
     double compute_hsab_score(double hardness_A, double hardness_B);
@@ -303,6 +331,33 @@ ReactionTemplate diels_alder_template();
  *   - Favorable ΔG
  */
 ReactionTemplate proton_transfer_template();
+
+// ============================================================================
+// HEAT-GATED BIO TEMPLATES (SS8b)
+// ============================================================================
+
+/** Peptide bond: -C(=O)-NH- */
+ReactionTemplate peptide_bond_template();
+
+/** General amide: -C(=O)-NR2 */
+ReactionTemplate general_amide_template();
+
+/** Ester: -C(=O)-O- */
+ReactionTemplate ester_template();
+
+/** Thioester: -C(=O)-S- */
+ReactionTemplate thioester_template();
+
+/** Disulfide: -S-S- */
+ReactionTemplate disulfide_template();
+
+/** Imide/urea variants */
+ReactionTemplate imide_urea_template();
+
+/**
+ * Return the bio-template corresponding to a BioTemplateId.
+ */
+ReactionTemplate bio_template_by_id(BioTemplateId id);
 
 } // namespace reaction
 } // namespace atomistic
