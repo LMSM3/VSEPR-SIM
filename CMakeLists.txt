@@ -448,8 +448,8 @@ if(BUILD_APPS)
 
     # Atomistic-Build - Interactive molecular builder CLI (formula pipeline)
     add_executable(atomistic-build apps/atomistic-build.cpp)
-    target_link_libraries(atomistic-build atomistic vsepr_io vsepr_core)
-    target_include_directories(atomistic-build PRIVATE ${PROJECT_SOURCE_DIR})
+    target_link_libraries(atomistic-build atomistic vsepr_io vsepr_core vsepr_pot)
+    target_include_directories(atomistic-build PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src)
 
     # Demo Launcher - Cross-platform terminal spawner (like xclock)
     add_executable(demo apps/demo.cpp)
@@ -727,6 +727,12 @@ if(BUILD_TESTS)
     # target_link_libraries(ensemble_consistency_test atomistic vsepr_core vsepr_io)
     # target_include_directories(ensemble_consistency_test PRIVATE ${PROJECT_SOURCE_DIR})
     # add_test(NAME EnsembleConsistencyTest COMMAND ensemble_consistency_test)
+
+    # Heat-Gated Reaction Control Tests (SS8b)
+    add_executable(test_heat_gate tests/test_heat_gate.cpp)
+    target_link_libraries(test_heat_gate atomistic vsepr_core)
+    target_include_directories(test_heat_gate PRIVATE ${PROJECT_SOURCE_DIR})
+    add_test(NAME HeatGateTest COMMAND test_heat_gate)
 endif()
 
 # ============================================================================

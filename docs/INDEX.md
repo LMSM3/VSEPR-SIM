@@ -15,7 +15,7 @@ Each is self-contained and PDF-compilable.
 | `METHODOLOGY_2PAGE.tex` | **2** | Two-column summary of all 13 sections |
 | `METHODOLOGY_12PAGE.tex` | **12** | Condensed reference with equations, tables, and algorithms |
 
-### Full Sections (~186 pages total)
+### Full Sections (~200 pages total)
 
 | File | Sections | Content |
 |------|----------|---------|
@@ -28,6 +28,7 @@ Each is self-contained and PDF-compilable.
 | `section6_formation_physics.tex` | **SS6** | Bonded terms, formation pipeline, basin mapping |
 | `section7_statistical_interpretation.tex` | **SS7** | Welford's algorithm, stationarity, Kabsch alignment, scoring |
 | `section8_9_reaction_electronic.tex` | **SS8-9** | QEq charges, Fukui functions, HSAB, reaction templates |
+| `section8b_heat_gated_reaction_control.tex` | **SS8b** | Heat-gated reaction control, amino acid reference, 500-sim validation |
 | `section10_12_13_closing.tex` | **SS10,12,13** | Multiscale projection, validation doctrine (35 tests), future work |
 | `section11_self_audit.tex` | **SS11** | Failure classification, gap targeting, regression detection |
 
@@ -68,8 +69,10 @@ for f in section*.tex; do pdflatex "$f"; done
 1. SS1 (Foundational Thesis) -- the problem definition
 2. SS2 (State Ontology) -- data structures
 3. SS3-7 -- physics, integration, statistics
-4. SS12 (Validation) -- what has been tested
-5. SS11 (Self-Audit) -- how failures are classified
+4. SS8-9 (Reaction/Electronic) -- reaction prediction, electronic properties
+5. SS8b (Heat-Gated Control) -- heat parameter, amino acid reference, 500-sim validation
+6. SS12 (Validation) -- what has been tested
+7. SS11 (Self-Audit) -- how failures are classified
 
 **For using the code:**
 1. `FILE_FORMATS.md` -- I/O specification
