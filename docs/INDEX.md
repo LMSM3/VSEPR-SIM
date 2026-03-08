@@ -69,6 +69,7 @@ for f in section*.tex; do pdflatex "$f"; done
 
 | File | Content |
 |------|---------|
+| **`USAGE.md`** | **Complete usage reference** — all CLI executables, desktop console commands, keyboard shortcuts, file formats, exit codes |
 | `FILE_FORMATS.md` | XYZ / XYZA / XYZC / XYZF file format specification |
 | `VALIDATION_REPORT.md` | 35-test validation campaign with results |
 | `VALIDATION_CAMPAIGN_SUMMARY.md` | Executive summary and production certification |
@@ -97,10 +98,11 @@ Raw run artifacts: `verification/deep/milestone_A_run.txt`
 7. SS11 (Self-Audit) -- how failures are classified
 
 **For using the code:**
-1. `FILE_FORMATS.md` -- I/O specification
-2. `section_bridge_architecture.tex` -- three-layer engine/bridge/desktop design
-3. SS5 (Integration) -- algorithm details
-4. `VALIDATION_REPORT.md` -- known limits
+1. **`USAGE.md`** — CLI and desktop command reference (start here)
+2. `FILE_FORMATS.md` — I/O specification
+3. `section_bridge_architecture.tex` — three-layer engine/bridge/desktop design
+4. SS5 (Integration) — algorithm details
+5. `VALIDATION_REPORT.md` — known limits
 
 ---
 
