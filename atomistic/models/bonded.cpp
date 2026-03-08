@@ -147,12 +147,20 @@ double BondedModel::eval_angles(State& s) const {
         // U = kθ(θ - θ0)²
         U += ang.ktheta * dtheta * dtheta;
         
-        // Force: F = -∂U/∂r = -2kθ(θ-θ0) ∂θ/∂r
-        // ∂θ/∂ri = (1/sinθ)[rkj/(rij·rkj) - rij cosθ/(rij²)]
+        // Force: F_i = -dU/dr_i = -(dU/dθ)(dθ/dr_i)
+        // dU/dθ = 2kθ(θ-θ0)
+        // dθ/dr_i = (-1/sinθ) * d(cosθ)/dr_i
+        // d(cosθ)/dr_i = rkj/(|rij||rkj|) - cosθ·rij/|rij|²
+        //
+        // Combining: F_i = 2kθ(θ-θ0)/sinθ · [rkj/(|rij||rkj|) - cosθ·rij/|rij|²]
+        //
+        // Sign derivation:
+        //   dU/dr_i = 2kθ(θ-θ0) · (-1/sinθ) · d(cosθ)/dr_i
+        //   F_i = -dU/dr_i = +2kθ(θ-θ0)/sinθ · d(cosθ)/dr_i
         double sin_theta = std::sin(theta);
         if (std::abs(sin_theta) < 1e-6) continue;  // Linear angle, skip
-        
-        double k = -2.0 * ang.ktheta * dtheta / sin_theta;
+
+        double k = 2.0 * ang.ktheta * dtheta / sin_theta;
         
         Vec3 fi = (rkj * (1.0/(rij_len*rkj_len)) - rij * (cos_theta/(rij_len*rij_len))) * k;
         Vec3 fk = (rij * (1.0/(rij_len*rkj_len)) - rkj * (cos_theta/(rkj_len*rkj_len))) * k;
@@ -306,16 +314,48 @@ for (auto& bond : bonds) {
 
 std::unique_ptr<IModel> create_generic_bonded_model(const State& s) {
     BondedTopology topo;
-    
-    // Convert Edge list to BondParams
+
+    // Convert Edge list to BondParams with geometry-derived r0.
+    // r0 = current bond length so that the bonded model is at equilibrium
+    // at the input geometry.  kb from UFF bond-stretch scale (~300-600).
+    //
+    // Element-aware force constants (Rappe et al. 1992, Table I):
+    //   kb ~ 664.12 * Z_ij / r0^2  (harmonic approx of Morse)
+    //   Z_ij = effective charge product (simplified to sqrt(Zi*Zj)/6)
     for (const auto& edge : s.B) {
-        topo.bonds.emplace_back(edge.i, edge.j, 310.0, 1.54);
+        Vec3 d = s.X[edge.i] - s.X[edge.j];
+        double r = std::sqrt(d.x*d.x + d.y*d.y + d.z*d.z);
+        if (r < 0.1) r = 1.0;
+
+        // Element-type-aware kb: heavier atoms get stiffer springs
+        uint32_t Zi = (edge.i < s.type.size()) ? s.type[edge.i] : 6;
+        uint32_t Zj = (edge.j < s.type.size()) ? s.type[edge.j] : 6;
+        double Z_eff = std::sqrt((double)Zi * (double)Zj) / 6.0;
+        double kb = 664.12 * Z_eff / (r * r);
+        kb = std::max(200.0, std::min(kb, 800.0));  // clamp to reasonable range
+
+        topo.bonds.emplace_back(edge.i, edge.j, kb, r);
     }
-    
-    // Auto-generate angles and dihedrals
+
+    // Auto-generate angles from bond graph
     topo.generate_angles_from_bonds();
+
+    // Set angle equilibrium to current geometry
+    for (auto& ang : topo.angles) {
+        Vec3 rij = s.X[ang.i] - s.X[ang.j];
+        Vec3 rkj = s.X[ang.k] - s.X[ang.j];
+        double rij_len = std::sqrt(dot(rij, rij));
+        double rkj_len = std::sqrt(dot(rkj, rkj));
+        if (rij_len > 1e-10 && rkj_len > 1e-10) {
+            double ct = dot(rij, rkj) / (rij_len * rkj_len);
+            ct = std::max(-1.0, std::min(1.0, ct));
+            ang.theta0 = std::acos(ct);
+        }
+    }
+
+    // Auto-generate dihedrals
     topo.generate_dihedrals_from_bonds();
-    
+
     return std::make_unique<BondedModel>(topo);
 }
 

@@ -149,10 +149,7 @@ VelocityVerletStats VelocityVerlet::integrate(
         // Apply PBC wrapping if enabled
         if (state.box.enabled) {
             for (uint32_t i = 0; i < state.N; ++i) {
-                // Wrap into [0, L)
-                state.X[i].x = std::fmod(state.X[i].x + 10.0 * state.box.L.x, state.box.L.x);
-                state.X[i].y = std::fmod(state.X[i].y + 10.0 * state.box.L.y, state.box.L.y);
-                state.X[i].z = std::fmod(state.X[i].z + 10.0 * state.box.L.z, state.box.L.z);
+                state.X[i] = state.box.wrap(state.X[i]);
             }
         }
         

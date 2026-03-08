@@ -1,18 +1,21 @@
 #pragma once
 #include "../core/state.hpp"
+#include "../core/environment.hpp"
 #include <memory>
 
 namespace atomistic {
 
 struct ModelParams {
     double rc = 10.0;        // cutoff radius (Å)
-    double k_coul = 332.0636; // Coulomb constant (kcal·Å/(mol·e²)) - AMBER standard
-                              // Old value 138.935 was wrong (SI-based or dielectric scaled)
+    double k_coul = 332.0636; // Coulomb constant (kcal·Å/(mol·e²)) — AMBER standard
+
+    // Physical context — controls dielectric screening, solvation, etc.
+    // Defaults to NearVacuum (no screening, eps_r=1).
+    EnvironmentContext env;
 
     // DEPRECATED: Global LJ parameters (per-type params used instead)
-    // These are kept for backward compatibility but should be 0.0 to disable
-    double eps = 0.0;        // LJ epsilon (DEPRECATED - use per-type)
-    double sigma = 0.0;      // LJ sigma (DEPRECATED - use per-type)
+    double eps   = 0.0;
+    double sigma = 0.0;
 };
 
 struct IModel {

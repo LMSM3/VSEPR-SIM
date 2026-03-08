@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include "heat_gate.hpp"
 #include "../predict/properties.hpp"
 #include "pot/periodic_db.hpp"
 #include <cmath>
@@ -465,27 +466,230 @@ ReactionTemplate proton_transfer_template() {
     tmpl.mechanism = MechanismType::ACID_BASE;
     tmpl.name = "Proton Transfer";
     tmpl.description = "HA + B⁻ → A⁻ + HB";
-    
+
     tmpl.min_fukui_electrophile = 0.35; // Strong base (high f⁺)
     tmpl.min_fukui_nucleophile = 0.35;  // Acidic proton (high f⁻)
     tmpl.min_fukui_radical = 0.0;
-    
+
     tmpl.require_hardness_match = false;
     tmpl.hardness_tolerance = 15.0;
-    
+
     tmpl.min_distance = 1.2;  // H-bond distance
     tmpl.max_distance = 2.5;
     tmpl.min_angle = 140.0;   // Linear proton transfer
     tmpl.max_angle = 180.0;
-    
+
     tmpl.max_barrier = 15.0;  // Fast reaction
     tmpl.min_exotherm = -3.0; // ΔpKa driven
-    
+
     tmpl.conserve_valence = true;
     tmpl.allow_radicals = false;
     tmpl.require_octet = true;
-    
+
     return tmpl;
+}
+
+// ============================================================================
+// HEAT-GATED METHODS
+// ============================================================================
+
+void ReactionEngine::set_heat(uint16_t heat) {
+    heat_gate_.set_heat(heat);
+}
+
+void ReactionEngine::load_heat_gated_templates(double epsilon) {
+    auto active = heat_gate_.active_bio_templates(epsilon);
+    for (auto id : active) {
+        templates_.push_back(bio_template_by_id(id));
+    }
+}
+
+std::vector<BioTemplateId> ReactionEngine::active_bio_templates(double epsilon) const {
+    return heat_gate_.active_bio_templates(epsilon);
+}
+
+// ============================================================================
+// BIO-TEMPLATE FACTORIES (SS8b)
+// ============================================================================
+
+ReactionTemplate peptide_bond_template() {
+    ReactionTemplate tmpl;
+    tmpl.mechanism = MechanismType::ADDITION;
+    tmpl.name = "Peptide Bond Formation";
+    tmpl.description = "R1-C(=O)-OH + H2N-R2 → R1-C(=O)-NH-R2 + H2O";
+
+    tmpl.min_fukui_electrophile = 0.20;  // Amine nucleophile
+    tmpl.min_fukui_nucleophile = 0.25;   // Carboxyl carbon electrophile
+    tmpl.min_fukui_radical = 0.0;
+
+    tmpl.require_hardness_match = false;
+    tmpl.hardness_tolerance = 8.0;
+
+    tmpl.min_distance = 1.3;  // C-N bond ~1.33 Å
+    tmpl.max_distance = 3.5;
+    tmpl.min_angle = 90.0;
+    tmpl.max_angle = 180.0;
+
+    tmpl.max_barrier = 25.0;  // Condensation barrier
+    tmpl.min_exotherm = -5.0;
+
+    tmpl.conserve_valence = true;
+    tmpl.allow_radicals = false;
+    tmpl.require_octet = true;
+
+    return tmpl;
+}
+
+ReactionTemplate general_amide_template() {
+    ReactionTemplate tmpl;
+    tmpl.mechanism = MechanismType::ADDITION;
+    tmpl.name = "General Amide Formation";
+    tmpl.description = "R-C(=O)-OH + HNR'R'' → R-C(=O)-NR'R'' + H2O";
+
+    tmpl.min_fukui_electrophile = 0.18;
+    tmpl.min_fukui_nucleophile = 0.22;
+    tmpl.min_fukui_radical = 0.0;
+
+    tmpl.require_hardness_match = false;
+    tmpl.hardness_tolerance = 8.0;
+
+    tmpl.min_distance = 1.3;
+    tmpl.max_distance = 3.5;
+    tmpl.min_angle = 90.0;
+    tmpl.max_angle = 180.0;
+
+    tmpl.max_barrier = 28.0;
+    tmpl.min_exotherm = -4.0;
+
+    tmpl.conserve_valence = true;
+    tmpl.allow_radicals = false;
+    tmpl.require_octet = true;
+
+    return tmpl;
+}
+
+ReactionTemplate ester_template() {
+    ReactionTemplate tmpl;
+    tmpl.mechanism = MechanismType::ADDITION;
+    tmpl.name = "Ester Formation";
+    tmpl.description = "R-C(=O)-OH + HO-R' → R-C(=O)-O-R' + H2O";
+
+    tmpl.min_fukui_electrophile = 0.15;
+    tmpl.min_fukui_nucleophile = 0.20;
+    tmpl.min_fukui_radical = 0.0;
+
+    tmpl.require_hardness_match = false;
+    tmpl.hardness_tolerance = 10.0;
+
+    tmpl.min_distance = 1.2;
+    tmpl.max_distance = 3.5;
+    tmpl.min_angle = 90.0;
+    tmpl.max_angle = 180.0;
+
+    tmpl.max_barrier = 25.0;
+    tmpl.min_exotherm = -3.0;
+
+    tmpl.conserve_valence = true;
+    tmpl.allow_radicals = false;
+    tmpl.require_octet = true;
+
+    return tmpl;
+}
+
+ReactionTemplate thioester_template() {
+    ReactionTemplate tmpl;
+    tmpl.mechanism = MechanismType::ADDITION;
+    tmpl.name = "Thioester Formation";
+    tmpl.description = "R-C(=O)-OH + HS-R' → R-C(=O)-S-R' + H2O";
+
+    tmpl.min_fukui_electrophile = 0.15;
+    tmpl.min_fukui_nucleophile = 0.20;
+    tmpl.min_fukui_radical = 0.0;
+
+    tmpl.require_hardness_match = true;  // Soft S prefers soft electrophile
+    tmpl.hardness_tolerance = 6.0;
+
+    tmpl.min_distance = 1.5;
+    tmpl.max_distance = 3.8;
+    tmpl.min_angle = 90.0;
+    tmpl.max_angle = 180.0;
+
+    tmpl.max_barrier = 28.0;
+    tmpl.min_exotherm = -2.0;
+
+    tmpl.conserve_valence = true;
+    tmpl.allow_radicals = false;
+    tmpl.require_octet = true;
+
+    return tmpl;
+}
+
+ReactionTemplate disulfide_template() {
+    ReactionTemplate tmpl;
+    tmpl.mechanism = MechanismType::REDOX;
+    tmpl.name = "Disulfide Bond Formation";
+    tmpl.description = "R-SH + HS-R' → R-S-S-R' + H2";
+
+    tmpl.min_fukui_electrophile = 0.10;
+    tmpl.min_fukui_nucleophile = 0.10;
+    tmpl.min_fukui_radical = 0.15;  // Radical character common
+
+    tmpl.require_hardness_match = true;  // Soft-soft S-S
+    tmpl.hardness_tolerance = 4.0;
+
+    tmpl.min_distance = 1.8;  // S-S bond ~2.04 Å
+    tmpl.max_distance = 4.0;
+    tmpl.min_angle = 80.0;
+    tmpl.max_angle = 180.0;
+
+    tmpl.max_barrier = 20.0;
+    tmpl.min_exotherm = -5.0;
+
+    tmpl.conserve_valence = true;
+    tmpl.allow_radicals = true;
+    tmpl.require_octet = false;
+
+    return tmpl;
+}
+
+ReactionTemplate imide_urea_template() {
+    ReactionTemplate tmpl;
+    tmpl.mechanism = MechanismType::ADDITION;
+    tmpl.name = "Imide/Urea Formation";
+    tmpl.description = "Amide variant: double N-C(=O) linkage";
+
+    tmpl.min_fukui_electrophile = 0.15;
+    tmpl.min_fukui_nucleophile = 0.18;
+    tmpl.min_fukui_radical = 0.0;
+
+    tmpl.require_hardness_match = false;
+    tmpl.hardness_tolerance = 10.0;
+
+    tmpl.min_distance = 1.3;
+    tmpl.max_distance = 3.5;
+    tmpl.min_angle = 90.0;
+    tmpl.max_angle = 180.0;
+
+    tmpl.max_barrier = 30.0;
+    tmpl.min_exotherm = -2.0;
+
+    tmpl.conserve_valence = true;
+    tmpl.allow_radicals = false;
+    tmpl.require_octet = true;
+
+    return tmpl;
+}
+
+ReactionTemplate bio_template_by_id(BioTemplateId id) {
+    switch (id) {
+        case BioTemplateId::PEPTIDE_BOND:   return peptide_bond_template();
+        case BioTemplateId::GENERAL_AMIDE:  return general_amide_template();
+        case BioTemplateId::ESTER:          return ester_template();
+        case BioTemplateId::THIOESTER:      return thioester_template();
+        case BioTemplateId::DISULFIDE:      return disulfide_template();
+        case BioTemplateId::IMIDE_UREA:     return imide_urea_template();
+        default:                            return peptide_bond_template();
+    }
 }
 
 } // namespace reaction

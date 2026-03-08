@@ -4,7 +4,8 @@
 #include <stdexcept>
 #include <cmath>
 #include <memory>
-#include <iostream>  // For debug output
+#include <iostream>
+#include <unordered_set>
 
 namespace atomistic {
 
@@ -122,15 +123,29 @@ struct LJCoulomb : IModel {
     void eval(State& s, const ModelParams& p) const override {
         std::fill(s.F.begin(), s.F.end(), Vec3{0, 0, 0});
         s.E = {};
-        
+
         double rc2 = p.rc * p.rc;
-        
+
         // Switch function parameters (smooth cutoff from 0.9·rc to rc)
         double r_on = 0.9 * p.rc;
         double r_on2 = r_on * r_on;
-        
+
+        // Build 1-2 exclusion set from bond topology.
+        // Bonded pairs must not be evaluated by the nonbonded model:
+        // at covalent distances r ≪ σ the LJ repulsive wall dominates
+        // and produces unphysical megajoule energies.
+        std::unordered_set<uint64_t> excluded;
+        for (const auto& e : s.B) {
+            uint32_t a = std::min(e.i, e.j), b = std::max(e.i, e.j);
+            excluded.insert((uint64_t)a << 32 | b);
+        }
+
         for (uint32_t i = 0; i < s.N; i++) {
             for (uint32_t j = i + 1; j < s.N; j++) {
+                // Skip bonded (1-2) pairs
+                uint64_t key = (uint64_t)i << 32 | j;
+                if (excluded.count(key)) continue;
+
                 // Apply minimum image convention if PBC enabled
                 Vec3 rij = s.box.enabled ? s.box.delta(s.X[i], s.X[j]) : (s.X[i] - s.X[j]);
                 double r2 = dot(rij, rij);
@@ -167,17 +182,15 @@ struct LJCoulomb : IModel {
                 double U_lj = 4.0 * eps_ij * (sr12 - sr6);
                 double F_lj_r = 24.0 * eps_ij * (2.0*sr12 - sr6) / r;  // F = -dU/dr
                 
-                // Coulomb potential: U = k_e q_i q_j / r
-                // TODO(CRITICAL): Coulomb forces cause systematic instability in MD
-                // After 7+ hours debugging: integrator works (Ar: T=162K), but NaCl explodes (T~10³²K)
-                // Root cause: Unknown integrator-Coulomb coupling issue
-                // See: IONIC_MD_BLOCKED.md for full analysis
+                // Coulomb potential: U = (k_e / eps_r) * q_i * q_j / r
+                // Dielectric screening from EnvironmentContext (Phase 10):
+                //   eps_r = p.env.dielectric  (1.0 in vacuum, 78.4 in water)
                 double qi = (i < s.Q.size()) ? s.Q[i] : 0.0;
                 double qj = (j < s.Q.size()) ? s.Q[j] : 0.0;
 
-                // DISABLED: Coulomb forces until integrator-Coulomb coupling fixed
-                double U_coul = 0.0;  // p.k_coul * qi * qj / r;
-                double F_coul_r = 0.0;  // p.k_coul * qi * qj / r;
+                double k_eff = p.k_coul * p.env.coulomb_scale();
+                double U_coul = k_eff * qi * qj / r;
+                double F_coul_r = k_eff * qi * qj / r2;  // |F| = k q_i q_j / r²
 
 
 
