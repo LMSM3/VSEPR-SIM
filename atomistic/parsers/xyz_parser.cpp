@@ -42,22 +42,21 @@ State from_xyz(const vsepr::io::XYZMolecule& mol) {
     s.F.resize(s.N);
 
     // Build type map (element symbol → type ID)
+    // type must be the atomic number Z so that the LJ model
+    // indexes into its per-element parameter table correctly.
     std::map<std::string, uint32_t> type_map;
-    uint32_t next_type = 0;
 
     for (const auto& atom : mol.atoms) {
         auto pos = atom.position;
         s.X.push_back({pos[0], pos[1], pos[2]});
         s.V.push_back({0, 0, 0}); // No velocity in plain XYZ
         s.Q.push_back(0.0);       // No charge in plain XYZ
-        
+
         double mass = get_atomic_mass(atom.element);
         s.M.push_back(mass);
 
-        if (type_map.find(atom.element) == type_map.end()) {
-            type_map[atom.element] = next_type++;
-        }
-        s.type.push_back(type_map[atom.element]);
+        uint32_t Z = get_atomic_number(atom.element);
+        s.type.push_back(Z);
     }
 
     // Convert bonds

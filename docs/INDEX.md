@@ -3,6 +3,16 @@
 
 ---
 
+## Deep Verification Paper
+
+| File | Pages | Content |
+|------|-------|---------|
+| **`deep_verification_paper.tex`** | **18** | Complete system paper: architecture, energy model, numerical methods, 256-check verification suite, demonstration cases, FIRE convergence tables, NVE drift, empirical cross-checks, UFF parameter appendix |
+
+Compile: `cd docs && pdflatex deep_verification_paper.tex` (run twice for ToC)
+
+---
+
 ## LaTeX Methodology (Primary Documents)
 
 The core scientific contribution lives in these TeX source files.
@@ -31,6 +41,8 @@ Each is self-contained and PDF-compilable.
 | `section8b_heat_gated_reaction_control.tex` | **SS8b** | Heat-gated reaction control, amino acid reference, 500-sim validation |
 | `section10_12_13_closing.tex` | **SS10,12,13** | Multiscale projection, validation doctrine (35 tests), future work |
 | `section11_self_audit.tex` | **SS11** | Failure classification, gap targeting, regression detection |
+| `section_bridge_architecture.tex` | **SBA** | Canonical structural bridge: three-layer architecture, EngineAdapter, conversion pipeline |
+| `section_phase_reports.tex` | **PHR** | Live phased revalidation reports (Phase 1+), pass/fail audit results |
 
 **Compiled PDF included:** `section0_identity_state_decomposition.pdf`
 
@@ -63,6 +75,16 @@ for f in section*.tex; do pdflatex "$f"; done
 
 ---
 
+## Verification Records (`docs/verification/`)
+
+| File | Content |
+|------|---------|
+| `verification/milestone_A.md` | **Milestone A** — Deterministic Baseline Kernel Validation. 256/256 pass. Covers LJ, Coulomb, FIRE, NVE, dielectric, crystal geometry, restoring-force scans, empirical refs. |
+
+Raw run artifacts: `verification/deep/milestone_A_run.txt`
+
+---
+
 ## Reading Order
 
 **For understanding the methodology:**
@@ -76,8 +98,9 @@ for f in section*.tex; do pdflatex "$f"; done
 
 **For using the code:**
 1. `FILE_FORMATS.md` -- I/O specification
-2. SS5 (Integration) -- algorithm details
-3. `VALIDATION_REPORT.md` -- known limits
+2. `section_bridge_architecture.tex` -- three-layer engine/bridge/desktop design
+3. SS5 (Integration) -- algorithm details
+4. `VALIDATION_REPORT.md` -- known limits
 
 ---
 

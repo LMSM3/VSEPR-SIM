@@ -164,6 +164,8 @@ add_library(atomistic STATIC
     models/lj_coulomb.cpp
     models/bonded.hpp
     models/bonded.cpp
+    models/composite.hpp
+    models/composite.cpp
     models/atomic_descriptors.hpp
     models/alpha_model.hpp
     models/nuclear_stability.hpp
