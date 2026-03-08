@@ -808,11 +808,7 @@ if(BUILD_TESTS)
     add_executable(phase2_complex_molecules tests/phase2_complex_molecules.cpp)
     target_link_libraries(phase2_complex_molecules vsepr_core)
     add_test(NAME Phase2ComplexMolecules COMMAND phase2_complex_molecules)
-    
-    # PBC example/demo
-    add_executable(pbc_example docs/pbc_example.cpp)
-    target_link_libraries(pbc_example vsepr_core vsepr_box)
-    
+
     # Phase 1: Batch Processing
     add_executable(test_batch_processing tests/test_batch_processing.cpp)
     target_link_libraries(test_batch_processing vsepr_dynamic vsepr_gui_utils vsepr_io vsepr_core vsepr_sim vsepr_gui)
@@ -968,6 +964,7 @@ if(BUILD_DESKTOP)
         target_link_libraries(vsepr-desktop PRIVATE
             Qt6::Widgets
             Qt6::OpenGLWidgets
+            atomistic
             vsepr_sim
             vsepr_io
             vsepr_core

@@ -29,6 +29,7 @@
 #include <QMenuBar>
 #include <QToolBar>
 #include <QAction>
+#include <QActionGroup>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QSettings>
@@ -40,6 +41,10 @@
 #include <QLineEdit>
 #include <QComboBox>
 #include <QPushButton>
+#include <QSlider>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QSpinBox>
 
 #include "ViewportWidget.h"
 #include "ObjectTree.h"
@@ -71,7 +76,19 @@ private slots:
 
     // View
     void onResetCamera();
+    void onFitCamera();
     void onToggleWireframe();
+    void onRenderModeChanged();
+    void onShowLabels(bool on);
+    void onShowBox(bool on);
+    void onShowAxes(bool on);
+    void onCrystalPreset();
+    void onAtomSelected(int atomIdx);
+    void onFrameIndexChanged(int idx, int total);
+    void onFrameSliderMoved(int val);
+    void onPlayPause();
+    void onStepBack();
+    void onStepForward();
 
     // Console
     void onCommand(const QString& cmd);
@@ -116,5 +133,34 @@ private:
     QAction* singlePointAct_;
 
     QAction* resetCameraAct_;
+    QAction* fitCameraAct_;
     QAction* wireframeAct_;
+
+    // Render mode (exclusive action group)
+    QActionGroup* renderModeGroup_;
+    QAction* renderBallStickAct_;
+    QAction* renderSpaceFillAct_;
+    QAction* renderSticksAct_;
+    QAction* renderWireframeAct_;
+
+    // Overlay toggles
+    QAction* showLabelsAct_;
+    QAction* showBoxAct_;
+    QAction* showAxesAct_;
+
+    // Crystal preset
+    QAction* crystalPresetAct_;
+
+    // Trajectory toolbar widgets
+    QToolBar*  trajectoryBar_;
+    QSlider*   frameSlider_;
+    QLabel*    frameLabel_;
+    QAction*   playAct_;
+    QAction*   stepBackAct_;
+    QAction*   stepFwdAct_;
+
+    // Status bar labels
+    QLabel* statusAtoms_;
+    QLabel* statusEnergy_;
+    QLabel* statusFrame_;
 };
