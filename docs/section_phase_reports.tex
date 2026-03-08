@@ -1,0 +1,940 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Phase 1 --- Core Kernel Revalidation Report}
+\author{Formation Engine Development Team}
+\date{Version 0.1 --- Live Document (Updates With Each Phase)}
+
+\begin{document}
+\maketitle
+
+\section{Purpose}
+
+This document records the results of deterministic revalidation of the core
+atomistic kernel, following the phased development plan.  It is a live
+document: new sections are appended as each phase completes and its
+verification program confirms pass/fail status.
+
+Each phase produces a self-testing C++ executable that prints pass/fail for
+every check.  No external test frameworks, scripts, or JSON configurations
+are involved.
+
+\section{Phase 1 --- Core Kernel Audit}
+
+\textbf{Executable:} \texttt{apps/phase1\_kernel\_audit.cpp}
+
+\textbf{Date:} As built from current codebase.
+
+\subsection{Scope}
+
+Phase~1 revalidates the lowest layer of the system: single-point energy
+evaluation and force computation on the simplest possible system (an Ar
+dimer).  The three audit objectives are:
+
+\begin{enumerate}
+\item \textbf{Step~1.1:} Verify that the energy ledger is self-consistent.
+\item \textbf{Step~1.2:} Verify that evaluation is bitwise deterministic.
+\item \textbf{Step~1.3:} Verify that forces are finite, physically directional,
+      and consistent with the energy surface.
+\end{enumerate}
+
+\subsection{Active Energy Model}
+
+The current kernel evaluates the Lennard-Jones 12--6 potential with UFF
+parameters and Lorentz--Berthelot combining rules:
+\begin{equation}
+U_{\mathrm{LJ}}(r) = 4\varepsilon_{ij}
+    \left[\left(\frac{\sigma_{ij}}{r}\right)^{12}
+    - \left(\frac{\sigma_{ij}}{r}\right)^{6}\right]
+    \cdot S(r;\, r_{\mathrm{on}},\, r_c)
+\end{equation}
+where $S$ is a quintic switching function active between $0.9\,r_c$ and
+$r_c$.  Implementation: \texttt{atomistic/models/lj\_coulomb.cpp}.
+
+\subsubsection{Declared Limitation: Coulomb Disabled}
+
+The Coulomb term is implemented but currently zeroed out in the kernel
+(\texttt{U\_coul = 0.0}, \texttt{F\_coul\_r = 0.0}).  This was disabled
+after a systematic instability was observed during NaCl MD integration.
+The root cause was identified as an integrator--Coulomb coupling issue
+that has not yet been resolved.
+
+\textbf{Consequence:} All ionic and polar systems are currently evaluated
+using van~der~Waals interactions only.  Phase~1 records this as a known
+limitation.  Re-enabling Coulomb is deferred until a dedicated
+Coulomb-stability audit is performed (planned for Phase~2 extension).
+
+The Coulomb interface and charge arrays (\texttt{State::Q}) remain intact
+so that re-enabling requires only uncommenting two lines in
+\texttt{lj\_coulomb.cpp} and passing the stability audit.
+
+\subsection{Results}
+
+All 11 checks passed.
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Step & Check & Metric & Status \\
+\midrule
+1.1 & \texttt{total() == sum of components}
+    & $|\Delta| < 10^{-15}$ & PASS \\
+1.1 & All energy terms finite
+    & \texttt{isfinite()} & PASS \\
+1.1 & Coulomb is zero (declared limitation)
+    & $U_{\mathrm{Coul}} = 0$ & PASS \\
+\midrule
+1.2 & Identical inputs $\to$ identical energy
+    & bitwise & PASS \\
+1.2 & Identical inputs $\to$ identical forces
+    & bitwise & PASS \\
+\midrule
+1.3a & Forces and energies finite $\forall\, r \in [2.5, 10.0]$\,\AA
+    & sweep, $\Delta r = 0.1$ & PASS \\
+1.3b & $U(r_{\min}) < 0$ (bound state)
+    & $U = -0.238$\,kcal/mol & PASS \\
+1.3b & $|F(r_{\min})| < 0.01$
+    & $4.4 \times 10^{-4}$ & PASS \\
+1.3b & Repulsive at $r < r_{\min}$
+    & $F_x < 0$ & PASS \\
+1.3b & Attractive at $r > r_{\min}$
+    & $F_x > 0$ & PASS \\
+1.3c & $F_x = -\partial U/\partial x_0$ (finite diff.)
+    & $|\mathrm{err}| = 9.5 \times 10^{-12}$ & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Measured Constants}
+
+From the Ar dimer scan:
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Quantity & Value & Source \\
+\midrule
+$r_{\min}$ & 3.816\,\AA & grid search, $\Delta r = 0.001$\,\AA \\
+$U(r_{\min})$ & $-0.238$\,kcal/mol & single-point at $r_{\min}$ \\
+$|F(r_{\min})|$ & $4.4 \times 10^{-4}$\,kcal/mol/\AA & analytic \\
+Force--energy error & $9.5 \times 10^{-12}$\,kcal/mol/\AA & central diff.\ $\delta = 10^{-5}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These are consistent with UFF Ar parameters ($\varepsilon = 0.238$\,kcal/mol,
+$\sigma = 3.40$\,\AA, $r_{\min} = 2^{1/6}\sigma = 3.816$\,\AA).
+
+\subsection{Conclusion}
+
+The LJ nonbonded kernel is self-consistent, deterministic, and
+force--energy coherent.  The Coulomb term is disabled and declared as a
+known limitation.  The energy ledger bookkeeping is correct.
+
+\textbf{Phase~1 status: PASS.}
+
+%% ====================================================================
+\section{Phase 2 --- Structural Energy Physics}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase2\_structural\_energy.cpp}
+
+\subsection{Scope}
+
+Phase~2 evaluates the kernel on chemically meaningful reference systems by
+routing them through the \emph{full end-user pipeline}: element symbols and
+Cartesian coordinates are packed into \texttt{vsepr::io::XYZMolecule},
+parsed by \texttt{atomistic::parsers::from\_xyz()}, then evaluated by the
+LJ model.  This is the same path a user's \texttt{.xyz} file would take.
+
+\subsection{Bug Fixed During Phase 2}
+
+\textbf{Parser type-map bug.}
+The XYZ parser (\texttt{atomistic/parsers/xyz\_parser.cpp}) was assigning
+\texttt{State::type[i]} as a sequential index (0, 1, 2, \ldots) rather
+than the atomic number~$Z$.  Consequence: for H$_2$O, hydrogen was mapped
+to type~0 (undefined) and oxygen to type~1 (hydrogen's LJ parameters).
+Every multi-element molecule was using wrong LJ parameters.
+
+\textbf{Fix:} Replaced the sequential type map with a direct call to
+\texttt{get\_atomic\_number()} so that \texttt{type[i] = Z_i}.  Verified:
+O~$\to$~8, H~$\to$~1, C~$\to$~6, Ar~$\to$~18.
+
+\subsection{Declared Finding: Bonded-Pair Exclusions Not Yet Applied}
+
+The LJ model evaluates \emph{all} atom pairs including covalently bonded
+ones.  At bond-length separations ($r \approx 0.7$--$1.1$\,\AA), atoms are
+deep inside the LJ repulsive wall ($r \ll \sigma$), producing energies of
+$10^5$--$10^6$\,kcal/mol for small molecules.  This is mathematically
+correct but physically nonsensical for bonded pairs.
+
+\textbf{Consequence:} Molecular energies from the nonbonded model alone
+are dominated by bonded-pair LJ repulsion.  Meaningful molecular energetics
+require either bonded-pair exclusion lists in the nonbonded model, or a
+composite model that subtracts bonded-pair LJ contributions.
+
+This is recorded as a declared next step for Phase~3 (relaxation with
+bonded terms).
+
+\subsection{Results}
+
+All 15 checks passed.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Step & Check & Status \\
+\midrule
+2.1 & H$_2$, H$_2$O, CH$_4$, Ar$_2$: all finite & PASS \\
+2.1 & H$_2$O parser: O $\to$ type=8, H $\to$ type=1 & PASS \\
+2.1 & CH$_4$ parser: C $\to$ type=6, H $\to$ type=1 & PASS \\
+\midrule
+2.2 & H$_2$O: energy bitwise identical across runs & PASS \\
+2.2 & H$_2$O: forces bitwise identical across runs & PASS \\
+\midrule
+2.3 & H$_2$: compressed energy $>$ equilibrium energy & PASS \\
+2.3 & H$_2$O: stretching one O--H changes total energy & PASS \\
+\midrule
+2.4 & Ar$_2$ sweep finite $\forall\, r \in [3,8]$\,\AA & PASS \\
+2.4 & Ar$_2$ max $|\Delta U|$ per 0.01\,\AA\ step $< 1$\,kcal/mol & PASS \\
+\midrule
+2.5 & H$_2$O: 9 force components match $-\partial U/\partial x_i$ (rel tol $10^{-6}$) & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Reference Energies (nonbonded LJ only, no exclusions)}
+
+\begin{center}
+\begin{tabular}{lrrl}
+\toprule
+System & $N$ & $U_{\mathrm{vdW}}$\,(kcal/mol) & Note \\
+\midrule
+H$_2$   & 2 & $2.18 \times 10^{6}$ & deep in LJ wall ($r = 0.74$\,\AA, $\sigma_\mathrm{H} \approx 2.9$\,\AA) \\
+H$_2$O  & 3 & $7.68 \times 10^{5}$ & bonded pairs dominate \\
+CH$_4$  & 5 & $8.25 \times 10^{5}$ & bonded pairs dominate \\
+Ar$_2$  & 2 & $-0.224$             & physical: near LJ minimum \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Conclusion}
+
+The end-user pipeline (XYZ parse $\to$ State $\to$ eval) is deterministic,
+force--energy coherent, and produces correct atomic-number type assignments
+after the parser fix.  Ar$_2$ energies are physically meaningful.  Molecular
+energies are dominated by bonded-pair LJ repulsion, confirming the need for
+bonded-pair exclusions (Phase~3).
+
+\textbf{Phase~2 status: PASS.}
+
+%% ====================================================================
+\section{Phase 3 --- Relaxation and Minimization}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase3\_relaxation.cpp}
+
+\subsection{Scope}
+
+Phase~3 tests the FIRE energy minimizer on distorted structures routed
+through the full end-user pipeline including bond detection.  This is the
+first phase to exercise the 1--2 bonded-pair exclusion code added to the
+nonbonded model during this phase.
+
+\subsection{Code Changes}
+
+\subsubsection{1--2 Bonded-Pair Exclusion in LJ Model}
+
+The \texttt{LJCoulomb::eval()} method now builds an exclusion set from
+\texttt{State::B} at the start of each evaluation.  Atom pairs connected by
+a bond edge are skipped during the nonbonded loop.  This eliminates the
+unphysical $10^5$--$10^6$\,kcal/mol repulsion that Phase~2 identified for
+bonded atoms at covalent distances.
+
+\textbf{Implementation:} A \texttt{std::unordered\_set<uint64\_t>} hashes
+$(i,j)$ pairs from \texttt{State::B} using the key
+$(\min(i,j) \ll 32) \,|\, \max(i,j)$.  Each pair in the inner loop is
+checked against this set before evaluation.
+
+\subsubsection{Verification}
+
+H$_2$ at $r = 0.74$\,\AA:
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Configuration & $U_{\mathrm{vdW}}$\,(kcal/mol) & Behaviour \\
+\midrule
+Without bond & $2.18 \times 10^{6}$ & deep LJ repulsion \\
+With bond    & $0.000$ & pair excluded \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Declared Finding: Bonded Model Not Yet Composed}
+
+With 1--2 exclusions active, bonded atoms have \emph{no interaction}:
+neither LJ (excluded) nor harmonic spring (\texttt{BondedModel} not yet
+composed with \texttt{LJCoulomb}).  Molecules relax under nonbonded
+interactions between 1--3+ pairs only.
+
+\textbf{Consequence:} The Ar$_3$ nonbonded cluster converges to tight
+tolerance.  H$_2$O and CH$_4$ show energy decrease and bond retention but
+cannot reach tight force convergence without bonded terms.  Full molecular
+relaxation requires composing \texttt{BondedModel} with \texttt{LJCoulomb}
+(deferred to Phase~4).
+
+\subsection{Results}
+
+All 17 checks passed.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Step & Check & Status \\
+\midrule
+3.6 & H$_2$ no bonds: $U > 10^5$ (LJ repulsion) & PASS \\
+3.6 & H$_2$ with bonds: $U = 0$ (pair excluded) & PASS \\
+\midrule
+3.1 & Ar$_3$: energy decreased ($-0.43 \to -0.71$) & PASS \\
+3.2 & Ar$_3$: $F_{\mathrm{rms}} = 7.9 \times 10^{-5}$ (converged) & PASS \\
+3.4 & Ar$_3$: equilateral, $d = 3.816$\,\AA\ (LJ minimum) & PASS \\
+\midrule
+3.1 & H$_2$O: energy decreased ($72.6 \to 0.83$) & PASS \\
+3.3 & H$_2$O: bond count preserved (2) & PASS \\
+3.1 & CH$_4$: energy decreased ($99.2 \to 8.1$) & PASS \\
+3.3 & CH$_4$: bond count preserved (4) & PASS \\
+\midrule
+3.5 & Ar$_3$: relaxed energy bitwise deterministic & PASS \\
+3.5 & Ar$_3$: relaxed positions bitwise deterministic & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Measured Constants}
+
+Ar$_3$ cluster after FIRE relaxation:
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Quantity & Value & Note \\
+\midrule
+All pair distances & 3.816\,\AA & exact LJ $r_{\min}$ \\
+$U_{\mathrm{total}}$ & $-0.714$\,kcal/mol & $= 3 \times (-0.238)$ (3 pairs) \\
+$F_{\mathrm{rms}}$ & $7.9 \times 10^{-5}$ & after 6878 FIRE steps \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The Ar$_3$ total energy is exactly three times the Ar$_2$ dimer energy,
+confirming additive pairwise LJ and correct exclusion logic (no bonds in
+the Ar system, so nothing is excluded).
+
+\textbf{Phase~3 status: PASS.}
+
+%% ====================================================================
+\section{Phase 4 --- Formation Priors}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase4\_formation\_priors.cpp}
+
+\subsection{Scope}
+
+Phase~4 verifies that the crystal preset library and formation-prior
+infrastructure are correctly separated from the physical kernel.  The
+test exercises the crystal end-user pipeline:
+\[
+\texttt{presets::X()} \;\to\; \texttt{UnitCell}
+    \;\to\; \texttt{to\_state()} \;\to\; \texttt{model->eval()} \;\to\; E
+\]
+
+Eight crystal presets are verified across three checks: geometric
+correctness (atom count, lattice constant, space group number),
+\texttt{State} well-formedness (PBC enabled, all arrays sized),
+and single-point energy finiteness and determinism.
+
+\subsection{Crystal Preset Library}
+
+The atomistic kernel ships a comprehensive crystal preset library
+(\texttt{atomistic/crystal/unit\_cell.hpp}) with the following categories:
+
+\begin{center}
+\begin{tabular}{llrl}
+\toprule
+Preset & Structure & $N_{\mathrm{basis}}$ & $a$\,(\AA) \\
+\midrule
+FCC Al  & Fm$\overline{3}$m (225) & 4 & 4.05 \\
+BCC Fe  & Im$\overline{3}$m (229) & 2 & 2.87 \\
+NaCl    & Fm$\overline{3}$m (225) & 8 & 5.64 \\
+Diamond Si & Fd$\overline{3}$m (227) & 8 & 5.43 \\
+FCC Cu  & Fm$\overline{3}$m (225) & 4 & 3.61 \\
+FCC Au  & Fm$\overline{3}$m (225) & 4 & 4.08 \\
+CsCl    & Pm$\overline{3}$m (221) & 2 & 4.12 \\
+MgO     & Fm$\overline{3}$m (225) & 8 & 4.21 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Plus $\sim$25 additional presets (fluorites, spinels, perovskites,
+garnets, pyrochlores, actinide oxides) for future Phase~5 validation.
+
+\subsection{Supercell Construction}
+
+The 2$\times$2$\times$2 Al FCC supercell produces 32~atoms with
+$L_x = 8.10$\,\AA\ $= 2a$ and PBC enabled.  Per-atom energy differs
+significantly from the unit cell because the cell dimension
+($8.1$\,\AA) is smaller than $2 r_c$ ($20$\,\AA), so minimum-image
+convention undersamples the periodic LJ sum.  This is a known
+finite-size effect, not a construction bug.
+
+\subsection{Results}
+
+All 52 checks passed (8 presets $\times$ 3 geometry checks $+$ 8 State
+checks $+$ 16 energy checks $+$ 4 supercell checks).
+
+\textbf{Phase~4 status: PASS.}
+
+%% ====================================================================
+\section{Phase 5 --- Crystal Structure Validation}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase5\_crystal\_validation.cpp}
+
+\subsection{Scope}
+
+Phase~5 emits crystal supercells from the preset library, measures
+nearest-neighbor distances and coordination numbers under PBC, relaxes
+with FIRE, and verifies structural preservation.
+
+\subsection{Geometric Verification}
+
+\begin{center}
+\begin{tabular}{lrrlrrl}
+\toprule
+Crystal & $N$ & $d_{\mathrm{nn}}$\,(\AA) & Expected & CN & Expected & Status \\
+\midrule
+FCC Al  & 108 & 2.864 & $a/\!\sqrt{2}=2.864$ & 12 & 12 & PASS \\
+BCC Fe  & 128 & 2.485 & $a\sqrt{3}/2=2.485$  &  8 &  8 & PASS \\
+NaCl    &  64 & 2.820 & $a/2=2.820$          &  6 &  6 & PASS \\
+Diamond Si & 64 & 2.351 & $a\sqrt{3}/4=2.351$ & 4 & 4 & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All nearest-neighbor distances and coordination numbers match
+crystallographic expectations exactly.
+
+\subsection{Relaxation Preservation}
+
+BCC Fe 4$\times$4$\times$4 (128 atoms, $L = 11.48$\,\AA):
+the structure is already at a local minimum under the LJ model.  FIRE
+converges in 2~steps with $F_{\mathrm{rms}} = 5.8 \times 10^{-3}$.
+Nearest-neighbor distance is preserved to better than $10^{-4}$\,\AA.
+
+\subsection{Energy Convergence}
+
+FCC Cu per-atom energy: 3$\times$3$\times$3 ($N=108$) vs
+4$\times$4$\times$4 ($N=256$) differ by $0.016$\,kcal/mol/atom (0.36\%),
+confirming convergence once the cell exceeds $2 r_c$.
+
+\textbf{Phase~5 status: PASS.}
+
+%% ====================================================================
+\section{Phases 6/7 --- Deterministic Verification Session Ladder}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase6\_7\_verification\_sessions.cpp}
+
+\subsection{Scope}
+
+Phases~6 and~7 build and run the full verification session ladder.  Each
+named session:
+\begin{itemize}
+\item runs a reproducible computation with explicit per-check thresholds
+\item writes \texttt{report.txt} (metrics, energy tables, geometry) and
+      \texttt{status.txt} (\texttt{PASS}/\texttt{FAIL}) to
+      \texttt{verification/<group>/<id>/}
+\item passes mock end-user inputs through the full pipeline:
+      \texttt{XYZMolecule} $\to$ \texttt{detect\_bonds} $\to$
+      \texttt{parsers::from\_xyz} $\to$ \texttt{model->eval} $\to$ FIRE
+\end{itemize}
+
+\subsection{Session Ladder}
+
+\subsubsection{Block A --- Structural Energy}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Session & Description & Status \\
+\midrule
+\texttt{se\_001} & H$_2$ LJ distance sweep, r = 3--8\,\AA\ (nonbonded) & PASS \\
+\texttt{se\_002} & H$_2$O O--H stretch, r = 0.8--3.0\,\AA\ + determinism & PASS \\
+\texttt{se\_003} & CH$_4$ C--H stretch, d = 0.8--2.0\,\AA\ + compression test & PASS \\
+\texttt{se\_004} & Ar$_2$ pair sweep, r = 3--10\,\AA\ + force direction & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Block B --- Relaxation}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Session & Description & Status \\
+\midrule
+\texttt{rx\_001} & Ar$_3$ equilateral cluster FIRE from 4.5\,\AA\ & PASS \\
+\texttt{rx\_002} & H$_2$O distorted (130°) FIRE, bond retention & PASS \\
+\texttt{rx\_003} & BCC Fe $3\!\times\!3\!\times\!3$ FIRE under PBC & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Block C --- Crystal}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Session & Preset & Geometry checks & Status \\
+\midrule
+\texttt{xtal\_001} & FCC Al  & nn, CN, relax, energy & PASS \\
+\texttt{xtal\_002} & BCC Fe  & nn, CN, relax, energy & PASS \\
+\texttt{xtal\_003} & NaCl    & nn, CN, relax, energy & PASS \\
+\texttt{xtal\_004} & Diamond Si & nn, CN, energy      & PASS \\
+                   &            & \textit{relax skipped: nn $\ll$ $\sigma_{\mathrm{LJ}}$} & \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Findings}
+
+\textbf{Bond detection discontinuity.}  The se\_001 H$_2$ sweep originally
+ran from 0.5\,\AA\ with bond detection enabled.  At the covalent detection
+threshold (${\sim}0.74$\,\AA) the H--H pair transitions from ``bonded
+(excluded, $U=0$)'' to ``nonbonded (deep LJ repulsion)'', creating a step
+discontinuity of ${\sim}10^6$\,kcal/mol.  This is physically correct
+behaviour but not useful as a smoothness benchmark.  The sweep was
+re-scoped to r\,=\,3--8\,\AA\ (nonbonded, no bond detection), which is the
+physically relevant LJ region.
+
+\textbf{Covalent crystals.}  Diamond Si (nn\,=\,2.35\,\AA,
+$\sigma_{\mathrm{Si}}$\,=\,3.83\,\AA) and any crystal with
+nn\,$<$\,2.5\,\AA\ are flagged at runtime and their FIRE relaxation steps
+are skipped with a logged note.  This avoids FIRE divergence under forces
+of ${\sim}10^3$\,kcal/mol/\AA\ and documents the requirement for bonded
+terms in covalent systems.
+
+\subsection{Artifact Structure}
+
+\begin{verbatim}
+verification/
+  status.txt                  (master: Sessions/Passed/Failed/Result)
+  structural_energy/
+    se_001_h2_distance_sweep/ (report.txt, status.txt)
+    se_002_h2o_oh_stretch/
+    se_003_ch4_bond_stretch/
+    se_004_ar2_pair_sweep/
+  relaxation/
+    rx_001_ar3_fire/
+    rx_002_h2o_fire/
+    rx_003_bcc_fe_crystal/
+  crystals/
+    xtal_001_fcc_al/
+    xtal_002_bcc_fe/
+    xtal_003_nacl/
+    xtal_004_diamond_si/
+\end{verbatim}
+
+\textbf{Phases~6/7 status: PASS.}  43 checks, 0 failures.  All 11 session
+\texttt{status.txt} files read \texttt{PASS}.
+
+%% ====================================================================
+\section{Phases 8/9/10 --- Deferred Physics, Architecture, Environment}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase8\_9\_10\_environment.cpp}
+
+\subsection{Phase 8: Cleanly Defer Missing Physics}
+
+The \texttt{atomistic/core/physics\_status.hpp} header is the
+authoritative record of which physics terms are active, incomplete, or
+deferred.  The full registry:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Term & State \\
+\midrule
+LJ 12-6 nonbonded          & ACTIVE \\
+Harmonic bonds              & PARTIAL (not composed) \\
+Harmonic angles             & PARTIAL (not composed) \\
+Periodic torsions           & PARTIAL (not composed) \\
+Coulomb electrostatics      & DEFERRED \\
+Dipole--dipole interactions & DEFERRED \\
+Induced dipoles / SCF       & PARTIAL \\
+Environment screening       & ABSENT \\
+PBC / MIC                   & ACTIVE \\
+FIRE minimisation           & ACTIVE \\
+Velocity Verlet NVE         & ACTIVE \\
+Langevin NVT                & ACTIVE \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Coulomb and dipole interactions are deferred with interfaces preserved,
+not deleted.  The polarization SCF solver exists and passes internal
+consistency checks but is excluded from the default eval chain until
+Coulomb is stabilised.
+
+\subsection{Phase 9: Layered Architecture}
+
+The \texttt{atomistic/core/layer\_manifest.hpp} header documents five
+engine layers:
+
+\begin{enumerate}
+\item \textbf{Formation Priors} --- VSEPR seeds, crystal presets, bond detection (partial)
+\item \textbf{Deterministic Kernel} --- LJ+PBC, bonded model, integrators (partial)
+\item \textbf{Verification} --- Phases 1--7, session artifacts (complete)
+\item \textbf{Analysis \& Ranking} --- Crystal metrics (partial)
+\item \textbf{Bridge \& Artifact} --- EngineAdapter, SceneDocument (partial)
+\end{enumerate}
+
+\subsection{Phase 10: Environmental Context}
+
+\texttt{atomistic/core/environment.hpp} introduces the
+\texttt{EnvironmentContext} struct with three medium classes:
+
+\begin{itemize}
+\item \textbf{NearVacuum} --- $\varepsilon_r = 1$, no screening
+\item \textbf{DryCondensed} --- $\varepsilon_r \approx 2$--$5$, bulk solid/film
+\item \textbf{Solution} --- $\varepsilon_r \gg 1$ (water: 78.4),
+      ionic strength, Debye screening
+\end{itemize}
+
+\texttt{EnvironmentContext} is wired into \texttt{ModelParams::env}
+(kernel side) and \texttt{KernelRequest::env} (bridge side).
+
+Verified: \texttt{coulomb\_scale()} = $1/\varepsilon_r$,
+Debye length $\lambda_D = 9.61$\,\AA\ at $I = 0.1$\,mol/L in water.
+LJ energy on a neutral Ar dimer is unaffected by environment (correct:
+Coulomb is deferred, charges are zero).
+
+\textbf{Bridge wiring:} \texttt{EmitCrystal} KernelOp now implemented
+in \texttt{EngineAdapter.cpp}.  The desktop can emit any of the 8+
+crystal presets with configurable supercell dimensions.  The environment
+context from \texttt{KernelRequest} is automatically propagated to
+\texttt{ModelParams::env} on every kernel call.
+
+\subsection{Results}
+
+All 29 checks passed.
+
+\textbf{Phases~8/9/10 status: PASS.}
+
+%% ====================================================================
+\section{Phases 11/12/13 --- Composite Model, Bridge, Final Regression}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase11\_12\_13\_final.cpp}
+
+\subsection{Phase 11: Compose BondedModel + LJCoulomb}
+
+A new \texttt{CompositeModel} class (\texttt{atomistic/models/composite.hpp})
+evaluates multiple \texttt{IModel} instances and sums forces and energy.
+The factory \texttt{create\_composite\_model(s)} composes:
+\begin{enumerate}
+\item \texttt{BondedModel} (harmonic bonds, angles, torsions from \texttt{State::B})
+\item \texttt{LJCoulomb} (with 1--2 exclusions)
+\end{enumerate}
+
+Verified: H$_2$O and CH$_4$ composite evaluations produce nonzero
+$U_{\mathrm{bond}}$ and $U_{\mathrm{angle}}$ alongside $U_{\mathrm{vdW}}$.
+Energy decreases under FIRE. Ar dimer through composite infrastructure passes
+force--energy consistency at $10^{-6}$.
+
+\textbf{Declared limitation:} The generic bonded parameters set
+$r_0 = $ current bond length and $\theta_0 = $ current angle.  These do not
+account for nonbonded equilibria, so bonded and LJ forces compete rather
+than cooperate.  Tight force convergence on molecules requires matched
+force-field parameters (AMBER, CHARMM, etc.) --- a future milestone.
+The angle gradient in \texttt{BondedModel} also shows $\sim$7\% discrepancy
+versus numeric derivatives, declared for future investigation.
+
+\subsection{Phase 12: Bridge Integration}
+
+\begin{itemize}
+\item \texttt{EmitCrystal} KernelOp: implemented in \texttt{EngineAdapter.cpp},
+      maps 8 preset names to crystal presets with configurable supercell.
+\item \texttt{EnvironmentContext} propagates from \texttt{KernelRequest::env}
+      to \texttt{ModelParams::env} on every kernel call.
+\item \texttt{SinglePoint} returns full energy decomposition
+      ($U_{\mathrm{bond}}, U_{\mathrm{angle}}, U_{\mathrm{vdW}}, \ldots$).
+\item Load $\to$ Relax round-trip: energy decreases, bonds preserved.
+\end{itemize}
+
+\subsection{Phase 13: Full Regression Sweep}
+
+All prior phase executables re-executed from within Phase~13:
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Phase & Checks & Exit code \\
+\midrule
+1 (kernel)     & 11 & 0 \\
+2 (structural) & 15 & 0 \\
+3 (relaxation) & 17 & 0 \\
+4 (presets)    & 52 & 0 \\
+5 (crystals)   & 13 & 0 \\
+6/7 (sessions) & 43 & 0 \\
+8--10 (env)    & 29 & 0 \\
+11--13 (this)  & 26 & 0 \\
+\midrule
+\textbf{Total} & \textbf{206} & \textbf{all 0} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Phases~11/12/13 status: PASS.  Zero regressions across all phases.}
+
+%% ====================================================================
+\section{Phase 14 --- Five-Milestone Implementation}
+%% ====================================================================
+
+\textbf{Executable:} \texttt{apps/phase14\_milestones.cpp}
+
+\subsection{M1: Coulomb Re-enablement}
+
+Coulomb interactions re-enabled in \texttt{lj\_coulomb.cpp} with dielectric
+screening from \texttt{EnvironmentContext}:
+\[
+    U_{\mathrm{Coul}}(r) = \frac{k_e}{\varepsilon_r}\,\frac{q_i\,q_j}{r}
+    \qquad
+    F(r) = \frac{k_e}{\varepsilon_r}\,\frac{q_i\,q_j}{r^2}\,\hat{r}_{ij}
+\]
+where $k_e = 332.0636\;\mathrm{kcal\!\cdot\!\AA/(mol\!\cdot\!e^2)}$ (AMBER).
+
+Verified: NaCl pair at $r = 2.82\;\mathrm{\AA}$ yields
+$U_{\mathrm{Coul}} = -117.75\;\mathrm{kcal/mol}$ (exact: $-k_e/r = -117.75$).
+Force--energy consistency $2.8 \times 10^{-10}$ error.
+Neutral Ar dimer: $U_{\mathrm{Coul}} = 0$ exactly.
+
+\subsection{M2: UFF-Matched Bonded Parameters}
+
+\texttt{create\_generic\_bonded\_model} now sets:
+\begin{itemize}
+\item $r_0 = $ current bond length (geometry-matched)
+\item $\theta_0 = $ current angle (geometry-matched)
+\item $k_b = 664.12\,Z_{\mathrm{eff}}/r_0^2$ (UFF-inspired, element-aware)
+\end{itemize}
+
+At the input geometry, $U_{\mathrm{bond}} = U_{\mathrm{angle}} = 0$ exactly.
+Distorted H$_2$O relaxes back toward $r_0$ with energy decrease and bond
+contraction.
+
+\subsection{M3: Angle Gradient Sign Fix}
+
+The harmonic angle force had a sign error:
+\begin{align*}
+    \text{Bug:} \quad k &= -2k_\theta(\theta-\theta_0)/\sin\theta \quad\text{(wrong)} \\
+    \text{Fix:} \quad k &= +2k_\theta(\theta-\theta_0)/\sin\theta \quad\text{(correct)}
+\end{align*}
+Derivation: $F_i = -\partial U/\partial\mathbf{r}_i$, where
+$\partial\theta/\partial\mathbf{r}_i = (-1/\sin\theta)\,\partial(\cos\theta)/\partial\mathbf{r}_i$,
+yields $F_i = +2k_\theta(\theta-\theta_0)/\sin\theta \cdot [\hat{r}_{kj}/(|\mathbf{r}_{ij}||\mathbf{r}_{kj}|) - \cos\theta\,\hat{r}_{ij}/|\mathbf{r}_{ij}|^2]$.
+
+After fix: H$_2$O composite force--energy consistency $5.7\times 10^{-9}$
+relative error (was $\sim$7\% before).
+
+\subsection{M4: Crystal/Cluster Relaxation}
+
+Ar$_5$ cluster relaxes through composite model (no bonds $\to$ pure LJ
+passthrough). BCC Fe 3$\times$3$\times$3 energy finite at LJ equilibrium.
+
+\textbf{Declared limitation:} covalent crystals (Si diamond) require
+1--3 exclusions or reactive potentials (Tersoff/REBO). Second-nearest
+Si--Si at 3.84\,\AA\ $<$ $\sigma_{\mathrm{Si}} = 4.30$\,\AA\ causes
+unphysical LJ repulsion even with 1--2 exclusions.
+
+\subsection{M5: Dielectric Screening}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Test & Expected & Result \\
+\midrule
+$U_{\mathrm{Coul}}^{\mathrm{vac}} / U_{\mathrm{Coul}}^{\mathrm{water}}$ & 78.40 & 78.40 \\
+$U_{\mathrm{Coul}}^{\mathrm{vac}} / U_{\mathrm{Coul}}^{\mathrm{dry}(4)}$ & 4.00 & 4.00 \\
+$U_{\mathrm{Coul}}(3\;\mathrm{\AA}) / U_{\mathrm{Coul}}(6\;\mathrm{\AA})$ & 2.00 & 2.00 \\
+Neutral Ar: $U_{\mathrm{vdW}}^{\mathrm{vac}} = U_{\mathrm{vdW}}^{\mathrm{sol}}$ & exact & exact \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Phase~14 status: PASS.}  24 checks, 0 failures.
+
+%% ====================================================================
+
+\section{Cumulative Audit Summary}
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+Phase & Checks & Status \\
+\midrule
+1 (kernel)     & 11 & PASS \\
+2 (structural) & 15 & PASS \\
+3 (relaxation) & 17 & PASS \\
+4 (presets)    & 52 & PASS \\
+5 (crystals)   & 13 & PASS \\
+6/7 (sessions) & 43 & PASS \\
+8--10 (env)    & 28 & PASS \\
+11--13 (comp)  & 26 & PASS \\
+14 (milestones)& 24 & PASS \\
+\midrule
+\textbf{Total} & \textbf{229} & \textbf{ALL PASS} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ===========================================================================
+\newpage
+\section{Verification Milestone A --- Deterministic Baseline Kernel Validation}
+% ===========================================================================
+
+\subsection{Status}
+
+\begin{center}
+\large\bfseries 256 / 256 \quad PASS \quad 0 FAIL \quad 0 SKIP
+\end{center}
+
+\noindent\textbf{Executable:} \texttt{apps/deep\_verification.cpp}\\
+\textbf{Platform:} GNU/Linux x86\_64 (WSL2 6.6 / Debian), g++ 14.2, CMake 3.31\\
+\textbf{Branch:} \texttt{2.5.2.X}
+
+\subsection{Milestone Statement}
+
+The deep verification framework now demonstrates full pass status for the
+currently implemented deterministic baseline across Lennard-Jones interactions,
+Coulomb electrostatics, dielectric screening, small-molecule bond detection,
+reference crystal geometry, composite force-energy consistency, noble-gas
+cluster relaxation descent, randomised supercell replication, and NVE energy
+conservation. Randomised seeded runs further confirm reproducibility and local
+consistency of force-energy behaviour. External empirical-reference suites pass
+when downloaded reference data are provisioned, and otherwise skip cleanly
+without indicating model failure.
+
+\medskip\noindent\textit{This result marks completion of baseline deterministic
+kernel revalidation for the present physics scope, shifting the next development
+stage from foundational correctness recovery toward convergence tightening,
+expanded physical coverage, and formation-oriented workflow integration.}
+
+\subsection{Suite Summary}
+
+\begin{center}
+\begin{tabular}{clrr}
+\toprule
+Suite & Description & Checks & Result \\
+\midrule
+A & LJ parameter audit (42 UFF elements, Rapp\'{e} 1992) & 42 & PASS \\
+B & Homonuclear dimer sweeps & 20 & PASS \\
+C & Ion-pair Coulomb + force consistency & 15 & PASS \\
+D & Crystal geometry vs Wyckoff (30 structures) & 90 & PASS \\
+E & Molecule bond detection (9 molecules) & 9 & PASS \\
+F & Composite force-energy (H\textsubscript{2}O, NH\textsubscript{3}, CH\textsubscript{4}, Ar\textsubscript{2}) & 4 & PASS \\
+G & Noble-gas cluster FIRE, two-layer (Ar\textsubscript{2}--Ar\textsubscript{7}) & 30 & PASS \\
+H & Dielectric sweep (19 CRC 104 solvents) & 19 & PASS \\
+N & Restoring-force scan: He\textsubscript{2}--Xe\textsubscript{2} & 10 & PASS \\
+Q & Crystal builder fidelity, 4 presets $2\times2\times2$ & 8 & PASS \\
+I & Randomised LJ force-energy ($N=500$, seeded) & 1 & PASS \\
+J & Randomised Coulomb $1/r$ ($N=500$, seeded) & 2 & PASS \\
+K & Randomised dielectric ratio ($N=500$, seeded) & 1 & PASS \\
+L & Randomised supercell atom count & 6 & PASS \\
+M & NVE energy conservation (Ar\textsubscript{3}--Ar\textsubscript{5}) & 6 & PASS \\
+P & Downloaded empirical refs (PubChem + NIST) & 53 & PASS \\
+\midrule
+\textbf{Total} & & \textbf{256} & \textbf{ALL PASS} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Canonical seed: \texttt{1772952709}\quad
+Reproduce: \texttt{./deep\_verification --seed 1772952709 --rand-iters 500}
+
+\subsection{Selected Metrics}
+
+\subsubsection*{Suite G --- FIRE Convergence}
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Cluster & $U_0$ (kcal/mol) & $U_f$ & $F_\mathrm{rms}$ (kcal/mol/\AA) & Steps \\
+\midrule
+Ar\textsubscript{2} & $-0.026$ & $-0.238$ & $9.98\times10^{-6}$ & 603 \\
+Ar\textsubscript{3} & $-0.696$ & $-0.714$ & $5.35\times10^{-6}$ & 308 \\
+Ar\textsubscript{4} & $-1.219$ & $-1.428$ & $4.78\times10^{-6}$ & 919 \\
+Ar\textsubscript{5} & $-1.675$ & $-2.167$ & $8.72\times10^{-6}$ & 1269 \\
+Ar\textsubscript{6} & $-2.077$ & $-3.025$ & $4.97\times10^{-6}$ & 2075 \\
+Ar\textsubscript{7} & $-2.462$ & $-3.928$ & $8.55\times10^{-6}$ & 2491 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection*{Suite M --- NVE Energy Drift}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+System & $E_0$ (kcal/mol) & Max drift \\
+\midrule
+Ar\textsubscript{3} & 1.167 & $2.91\times10^{-12}$ \\
+Ar\textsubscript{4} & 1.817 & $5.27\times10^{-12}$ \\
+Ar\textsubscript{5} & 0.314 & $2.26\times10^{-11}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{FIRE Implementation Correction}
+
+A deadlock in the Euler-FIRE integrator was identified and corrected.
+After a $P < 0$ velocity reset in the pure-Euler formulation
+($\mathbf{X} \leftarrow \mathbf{X} + \mathbf{V}\,\Delta t$, no acceleration
+term), setting $\mathbf{V} = \mathbf{0}$ caused $\Delta U = 0$ on the next
+evaluation, falsely triggering the $\varepsilon_U$ stop criterion.
+The correction: after $P < 0$ reset, velocities are kicked along the
+normalised force direction with magnitude $\Delta t$, and the $\varepsilon_U$
+check is conditioned on $\varepsilon_U > 0$.
+
+\subsection{Known Limitations}
+
+\begin{itemize}
+\item UFF LJ $r_\mathrm{min}$ exceeds actual bond lengths for Cu, Fe, Si;
+  FIRE relaxation of metallic/covalent crystals is not applicable.
+  Suite Q tests crystal builder geometry only.
+\item Suite G tests descent from a single Fibonacci-sphere start; global-minimum
+  search for LJ clusters is a future planned suite.
+\item Bonded harmonic terms (stretch, angle) present in the codebase are not
+  yet covered by \texttt{deep\_verification}.
+\item PBC is not exercised in Suites G, N, or Q; PBC stability is a next target.
+\end{itemize}
+
+\end{document}

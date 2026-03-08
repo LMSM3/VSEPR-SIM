@@ -45,7 +45,7 @@ find_package(GLEW REQUIRED)
 
 option(BUILD_TESTS "Build test suite" ON)
 option(BUILD_APPS "Build applications" ON)
-option(BUILD_VIS "Build visualization tools" ON)
+option(BUILD_VIS "Build visualization tools (vsepr-view, vsepr_vis)" ON)
 option(BUILD_DEMOS "Build demo targets" OFF)
 
 # ============================================================================
@@ -403,6 +403,60 @@ if(BUILD_APPS)
     target_include_directories(test_experiment_match PRIVATE ${PROJECT_SOURCE_DIR})
 
     # ========================================================================
+
+    # Phase 1 Kernel Audit — deterministic revalidation of core energy/forces
+    add_executable(phase1_kernel_audit apps/phase1_kernel_audit.cpp)
+    target_link_libraries(phase1_kernel_audit atomistic)
+    target_include_directories(phase1_kernel_audit PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Phase 2 Structural Energy — reference molecules through end-user pipeline
+    add_executable(phase2_structural_energy apps/phase2_structural_energy.cpp)
+    target_link_libraries(phase2_structural_energy atomistic vsepr_io vsepr_core)
+    target_include_directories(phase2_structural_energy PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+
+    # Phase 3 Relaxation — FIRE minimization on distorted molecules
+    add_executable(phase3_relaxation apps/phase3_relaxation.cpp)
+    target_link_libraries(phase3_relaxation atomistic vsepr_io vsepr_core)
+    target_include_directories(phase3_relaxation PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+
+    # Phase 4 Formation Priors — crystal presets and supercell verification
+    add_executable(phase4_formation_priors apps/phase4_formation_priors.cpp)
+    target_link_libraries(phase4_formation_priors atomistic)
+    target_include_directories(phase4_formation_priors PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Phase 5 Crystal Validation — nn distances, coordination, relaxation under PBC
+    add_executable(phase5_crystal_validation apps/phase5_crystal_validation.cpp)
+    target_link_libraries(phase5_crystal_validation atomistic)
+    target_include_directories(phase5_crystal_validation PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # Phase 6/7 Verification Sessions — named session ladder with artifact output
+    add_executable(phase6_7_verification_sessions apps/phase6_7_verification_sessions.cpp)
+    target_link_libraries(phase6_7_verification_sessions atomistic vsepr_io vsepr_core)
+    target_include_directories(phase6_7_verification_sessions PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+
+    # Phase 8/9/10 Environment — physics registry, layer manifest, EnvironmentContext
+    add_executable(phase8_9_10_environment apps/phase8_9_10_environment.cpp)
+    target_link_libraries(phase8_9_10_environment atomistic vsepr_io vsepr_core)
+    target_include_directories(phase8_9_10_environment PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+
+    # Phase 11/12/13 Final — composite model, bridge integration, regression
+    add_executable(phase11_12_13_final apps/phase11_12_13_final.cpp)
+    target_link_libraries(phase11_12_13_final atomistic vsepr_io vsepr_core)
+    target_include_directories(phase11_12_13_final PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+
+    # Phase 14 Milestones — Coulomb, matched FF, angle fix, covalent crystal, screening
+    add_executable(phase14_milestones apps/phase14_milestones.cpp)
+    target_link_libraries(phase14_milestones atomistic vsepr_io vsepr_core)
+    target_include_directories(phase14_milestones PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+
+    # Deep Verification — automated empirical sweep
+    add_executable(deep_verification apps/deep_verification.cpp)
+    target_link_libraries(deep_verification atomistic vsepr_io vsepr_core)
+    target_include_directories(deep_verification PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/verification)
 
     # Simple MB test
     add_executable(test_mb_simple apps/test_mb_simple.cpp)
@@ -888,6 +942,50 @@ if(BUILD_GUI AND BUILD_VIS)
     message(STATUS "  - vsepr_gui_live (live VSEPR engine integration)")
 elseif(BUILD_GUI)
     message(WARNING "BUILD_GUI=ON but BUILD_VIS=OFF. GUI requires visualization support.")
+endif()
+
+# ============================================================================
+# Qt Desktop Application (primary workstation UI)
+# ============================================================================
+
+option(BUILD_DESKTOP "Build Qt-based desktop application" ON)
+
+if(BUILD_DESKTOP)
+    find_package(Qt6 COMPONENTS Widgets OpenGLWidgets QUIET)
+    if(Qt6_FOUND)
+        set(CMAKE_AUTOMOC ON)
+
+        add_executable(vsepr-desktop
+            apps/desktop/main.cpp
+            apps/desktop/MainWindow.cpp
+            apps/desktop/ViewportWidget.cpp
+            apps/desktop/ObjectTree.cpp
+            apps/desktop/PropertiesPanel.cpp
+            apps/desktop/ConsolePanel.cpp
+            apps/desktop/bridge/EngineAdapter.cpp
+        )
+
+        target_link_libraries(vsepr-desktop PRIVATE
+            Qt6::Widgets
+            Qt6::OpenGLWidgets
+            vsepr_sim
+            vsepr_io
+            vsepr_core
+        )
+
+        target_include_directories(vsepr-desktop PRIVATE
+            ${PROJECT_SOURCE_DIR}/apps/desktop
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR}
+        )
+
+        install(TARGETS vsepr-desktop DESTINATION bin)
+
+        message(STATUS "Qt Desktop: vsepr-desktop (Qt ${Qt6_VERSION})")
+    else()
+        message(STATUS "Qt Desktop: SKIPPED (Qt6 not found — install qt6-base-dev)")
+    endif()
 endif()
 
 # ============================================================================

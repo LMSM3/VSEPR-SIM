@@ -39,7 +39,7 @@ FIREStats FIRE::minimize(State& s, const FIREParams& fp) const {
         if (t > 1) {
             double dU = std::abs(U - Uprev);
             double dU_per_atom = dU / (double)s.N;
-            if (Frms < fp.epsF || dU_per_atom < fp.epsU) {
+            if (Frms < fp.epsF || (fp.epsU > 0.0 && dU_per_atom < fp.epsU)) {
                 return {t, U, dU_per_atom, Frms, alpha, dt};
             }
         }
@@ -76,7 +76,14 @@ FIREStats FIRE::minimize(State& s, const FIREParams& fp) const {
             npos = 0;
             dt *= fp.fdec;
             alpha = fp.alpha;
-            for (auto& v : s.V) v = {0, 0, 0};
+            // Kick velocities along the force direction so Euler integration
+            // can escape: pure V=0 stalls X += V*dt = X (no movement, P stays 0).
+            if (fnorm > 0.0) {
+                for (uint32_t i = 0; i < s.N; i++)
+                    s.V[i] = s.F[i] * (dt / fnorm);
+            } else {
+                for (auto& v : s.V) v = {0, 0, 0};
+            }
         }
 
         // X <- X + dt V (explicit Euler)

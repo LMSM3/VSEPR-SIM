@@ -1,0 +1,791 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{enumitem}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\op}[1]{\texttt{#1}}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Canonical Structural Bridge Architecture}
+\author{Formation Engine Development Team}
+\date{Version 0.1 --- As Implemented in Codebase}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Introduction}
+% =============================================================================
+
+The formation engine is organised around a strict three-layer architecture.
+Computational chemistry algorithms, canonical structural data, and
+visualization or analysis tools are kept separate and communicate only through
+a shared structural representation.
+
+\[
+  \underbrace{\text{Computational Chemistry}}_{\text{atomistic kernel}}
+  \;\longleftrightarrow\;
+  \underbrace{\text{Canonical Structure / State Data}}_{\text{bridge layer}}
+  \;\longleftrightarrow\;
+  \underbrace{\text{Visual / Desktop Output}}_{\text{Qt workstation}}
+\]
+
+This constraint is not merely stylistic.  It is an invariant of the system:
+no component outside the computational kernel may operate on
+algorithm-specific internal data structures.  Every inter-layer communication
+must pass through the canonical structural representation.
+
+The present section documents the architecture as it exists in the codebase,
+covering the three layers, the bridge implementation, the conversion pipeline,
+and the design rules that enforce separation.
+
+% =============================================================================
+\section{Layer One — Computational Chemistry}
+% =============================================================================
+
+\subsection{The Canonical Simulation State}
+
+The computational layer operates on a single data structure defined in
+\file{atomistic/core/state.hpp}.  This structure represents the complete
+instantaneous configuration of an $N$-particle system:
+
+\begin{lstlisting}
+// atomistic/core/state.hpp
+struct State {
+    uint32_t N{};
+    std::vector<Vec3>   X;      // positions      (N x 3, Angstrom)
+    std::vector<Vec3>   V;      // velocities      (N x 3, Ang/fs)
+    std::vector<double> T;      // per-particle temperature proxy
+    std::vector<double> Q;      // charges         (N, elementary charge e)
+    std::vector<double> M;      // masses          (N, amu)
+    std::vector<uint32_t> type; // species id      (N)
+
+    std::vector<Edge>   B;      // bond topology   (graph edges)
+    std::vector<Event>  L;      // event log
+
+    std::vector<Vec3>   F;      // forces          (N x 3, kcal/mol/Ang)
+    EnergyTerms         E{};    // energy ledger
+
+    BoxPBC              box;    // periodic boundary conditions
+};
+\end{lstlisting}
+
+Formally, the state at time $t$ is the tuple
+\begin{equation}
+  \mathcal{S}(t) = \bigl(N,\; \mathbf{M},\; \boldsymbol{\tau},\;
+                         \mathbf{X}(t),\; \mathbf{V}(t),\; \mathbf{Q}(t),\;
+                         \mathbf{B}(t),\; \mathbf{F}(t),\; \mathcal{E}(t),\;
+                         \mathcal{L},\; \mathcal{B}\bigr)
+\end{equation}
+
+where $\mathcal{B}$ encodes the periodic simulation cell via its three edge
+lengths $(L_x, L_y, L_z)$ and the minimum-image displacement rule:
+\begin{equation}
+  \Delta\mathbf{r}_{ij}^{\text{MIC}}
+    = \Delta\mathbf{r}_{ij}
+    - \mathbf{L} \cdot \operatorname{round}\!\left(
+        \frac{\Delta\mathbf{r}_{ij}}{\mathbf{L}}\right)
+  \quad (\text{component-wise})
+\end{equation}
+
+The energy ledger decomposes the total potential energy into additive terms:
+\begin{equation}
+  U_{\mathrm{total}} = U_{\mathrm{bond}}
+                      + U_{\mathrm{angle}}
+                      + U_{\mathrm{tors}}
+                      + U_{\mathrm{vdW}}
+                      + U_{\mathrm{Coul}}
+                      + U_{\mathrm{ext}}
+                      + U_{\mathrm{pol}}
+\end{equation}
+
+This decomposition is recorded in the \type{EnergyTerms} struct and carried
+through to the canonical bridge layer, where it is stored as named scalar
+properties on the output frame.
+
+\subsection{Sanity Invariant}
+
+A helper function \op{sane()} enforces a minimal consistency check on any
+\type{State} before it is passed to a kernel operation:
+\begin{lstlisting}
+inline bool sane(const State& s) {
+    if (s.N == 0) return false;
+    if (s.X.size()    != s.N) return false;
+    if (s.V.size()    != s.N) return false;
+    if (s.Q.size()    != s.N) return false;
+    if (s.M.size()    != s.N) return false;
+    if (s.type.size() != s.N) return false;
+    return true;
+}
+\end{lstlisting}
+
+All vectors must be of length $N$. A state with $N = 0$ or mismatched array
+lengths is treated as invalid and rejected before any kernel operation executes.
+
+\subsection{Kernel Operations}
+
+The computational layer exposes the following algorithms.  Each operates
+on a \type{State} in place (modifying \field{X}, \field{V}, \field{F},
+\field{E} as appropriate) and returns a statistics struct:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Algorithm & Implementation file & Output statistics \\
+\midrule
+Force evaluation (single-point) & \file{atomistic/models/}$*$ & \type{EnergyTerms} \\
+FIRE energy minimisation & \file{atomistic/integrators/fire.cpp} & \type{FIREStats} \\
+Velocity Verlet (NVE) & \file{atomistic/integrators/velocity\_verlet.cpp} & \type{VelocityVerletStats} \\
+Langevin dynamics (NVT) & \file{atomistic/integrators/velocity\_verlet.cpp} & \type{LangevinStats} \\
+Maxwell--Boltzmann init & \file{atomistic/core/maxwell\_boltzmann.cpp} & --- \\
+Bond inference & \file{include/io/xyz\_format.hpp} & bond list \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The force model interface is:
+\begin{lstlisting}
+// atomistic/models/model.hpp
+struct IModel {
+    virtual ~IModel() = default;
+    virtual void eval(State& s, const ModelParams& p) const = 0;
+};
+
+std::unique_ptr<IModel> create_lj_coulomb_model();
+\end{lstlisting}
+
+Calling \op{eval()} fills \field{s.F} and \field{s.E} for the current
+positions \field{s.X}, charges \field{s.Q}, and parameters $r_c$,
+$k_\mathrm{Coul}$.  The model does not know about frames, documents, files,
+or any visualization concept.
+
+\subsection{Structural Parsers and Compilers}
+
+Because the computational layer predates the canonical bridge, conversion
+functions are provided in two sub-namespaces:
+
+\begin{lstlisting}
+// atomistic/parsers/xyz_parser.hpp
+namespace atomistic::parsers {
+    State from_xyz (const vsepr::io::XYZMolecule& mol);
+    State from_xyza(const vsepr::io::XYZMolecule& mol);
+}
+
+// atomistic/compilers/xyz_compiler.hpp
+namespace atomistic::compilers {
+    vsepr::io::XYZMolecule to_xyz(
+        const State& s,
+        const std::vector<std::string>& element_names);
+
+    bool save_xyza(
+        const std::string& filename,
+        const State& s,
+        const std::vector<std::string>& element_names);
+}
+\end{lstlisting}
+
+These functions handle atomic mass lookups via a lazy-loaded
+\type{vsepr::PeriodicTable} singleton (\file{src/pot/periodic\_db.hpp}),
+type-map construction, bond edge conversion, and optional
+velocity/charge extraction.  They form the bottom half of the conversion
+pipeline described in Section~\ref{sec:pipeline}.
+
+% =============================================================================
+\section{Layer Two — Canonical Structure and State Data}
+% =============================================================================
+
+\subsection{Design Principle}
+
+The canonical data layer provides a representation that is shared between
+all components of the platform.  It serves three purposes:
+
+\begin{enumerate}
+  \item Decouple simulation algorithms from visualization and user interfaces.
+  \item Provide a persistent representation for simulation artifacts.
+  \item Enable multiple front-end tools to interpret the same structural data
+        without requiring algorithm-specific logic.
+\end{enumerate}
+
+The implementation of this layer is the \type{scene::SceneDocument} type,
+defined in \file{apps/desktop/scene/SceneDocument.h}.  The desktop never
+touches \type{atomistic::State} directly.
+
+\subsection{SceneDocument}
+
+\begin{lstlisting}
+// apps/desktop/scene/SceneDocument.h
+struct SceneDocument {
+    std::vector<FrameData>                       frames;
+    std::map<std::string, PropertyValue>         properties;
+    Provenance                                   provenance;
+
+    bool       empty()         const { return frames.empty(); }
+    int        frame_count()   const { return (int)frames.size(); }
+    bool       is_trajectory() const { return frames.size() > 1; }
+
+    const FrameData& current_frame() const { return frames.back(); }
+    FrameData&       current_frame()       { return frames.back(); }
+};
+\end{lstlisting}
+
+A document holds an ordered sequence of \type{FrameData} snapshots.  A
+single-element sequence represents a static structure.  A multi-element
+sequence is a trajectory.  This distinction is exposed through
+\op{is\_trajectory()}.
+
+\subsection{FrameData}
+
+Each frame is a self-contained snapshot:
+
+\begin{lstlisting}
+struct FrameData {
+    // Required fields
+    std::vector<AtomRecord>        atoms;
+    std::vector<BondRecord>        bonds;
+
+    // Optional per-atom fields (size == N when present)
+    std::vector<Vec3d>             velocities;  // Ang/fs
+    std::vector<Vec3d>             forces;      // kcal/(mol*Ang)
+    std::vector<double>            charges;     // elementary charge e
+
+    // Optional periodic cell
+    BoxInfo                        box;
+
+    // Frame-level scalar properties (open key-value map)
+    std::map<std::string, double>  properties;
+
+    // Provenance
+    int         step{-1};
+    double      time{-1.0};       // fs, or -1 if not time-resolved
+    std::string source_mode;      // "fire", "md_nvt", "import", ...
+};
+\end{lstlisting}
+
+The \field{properties} map is intentionally open-ended.  The engine adapter
+(Section~\ref{sec:adapter}) writes named scalars such as
+\texttt{"energy\_total"}, \texttt{"energy\_vdw"}, \texttt{"energy\_coul"},
+\texttt{"energy\_bond"}, \texttt{"force\_rms"}, and
+\texttt{"temperature"} into this map.  The \type{PropertiesPanel} widget
+reads them by name.
+
+\subsection{AtomRecord and BondRecord}
+
+\begin{lstlisting}
+struct AtomRecord {
+    int         Z;       // atomic number (identity for rendering)
+    Vec3d       pos;     // Cartesian position (Ang)
+    std::string symbol;  // element symbol cache ("H", "C", "O", ...)
+};
+
+struct BondRecord {
+    int    i, j;         // atom indices (0-based)
+    double order{1.0};   // 1 = single, 1.5 = aromatic, 2 = double, ...
+};
+\end{lstlisting}
+
+Atomic number \field{Z} drives the CPK colour and van-der-Waals radius
+lookup in \type{ViewportWidget} (Table~\ref{tab:cpk}).  The element symbol
+string is the round-trip carrier across file formats.
+
+\subsection{Provenance}
+
+\begin{lstlisting}
+struct Provenance {
+    std::string mode;         // "fire", "md_nvt", "emit", "import", ...
+    std::string source_file;  // file path if loaded from disk
+    std::string formula;      // chemical formula if known
+    std::string hash;         // SHA-256 if available
+    std::map<std::string, std::string> parameters;
+};
+\end{lstlisting}
+
+Every document carries provenance describing how it was produced.  The
+\type{ObjectTree} widget uses \field{source\_file} (falling back to
+\field{mode}) as the display name in the scene hierarchy.  The
+\type{PropertiesPanel} reads \field{formula} for the identity section.
+
+\subsection{File Format Representation}
+
+Because the canonical layer is the persistent form of structural data, it
+is serialized using the following formats:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Extension & Content & Reader / Writer \\
+\midrule
+\texttt{.xyz}  & Static atomic geometry & \type{XYZReader} / \type{XYZWriter} \\
+\texttt{.xyza} & Trajectory + energy metadata & \type{XYZAReader} / \op{save\_xyza()} \\
+\texttt{.xyzc} & Checkpoint with extended system data & \file{src/thermal/xyzc\_format.cpp} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All three formats are plain-text and human-readable.  The standard
+\texttt{.xyz} format stores $N$ atom lines of the form
+\texttt{<element> <x> <y> <z>}, with coordinates in \AA.  The
+\texttt{.xyza} extended format appends an energy-annotated comment line and
+optional per-atom velocity and charge columns.  The
+\texttt{.xyzc} checkpoint format adds velocity, charge, and simulation cell
+information sufficient to restart an MD run.
+
+Bond topology is not natively encoded in any of the XYZ family.  It is
+either inferred post-load via \op{XYZReader::detect\_bonds()} (covalent
+radius test with a 1.2$\times$ scale factor) or stored separately in
+structured manifests.
+
+% =============================================================================
+\section{Layer Three — Visualization and Desktop}
+% =============================================================================
+
+\subsection{Overview}
+
+The visualization layer consists of a Qt~6 desktop workstation defined in
+\file{apps/desktop/}.  It consumes \type{scene::SceneDocument} exclusively
+and has no knowledge of \type{atomistic::State}, force models, integrators,
+or any other kernel type.
+
+The workstation layout follows the SolidWorks / FreeCAD grammar:
+
+\begin{verbatim}
++-------+-----------------------------+-----------+
+| Obj   |                             | Properties|
+| Tree  |  GL Viewport (central)      | Inspector |
+| dock  |                             | dock      |
++-------+----+------------------------+-----------+
+| Console / Log  (bottom dock)                    |
++-------------------------------------------------+
+| Status bar                                      |
++-------------------------------------------------+
+\end{verbatim}
+
+\subsection{ViewportWidget}
+
+\file{apps/desktop/ViewportWidget.h} hosts an OpenGL~3.3 Core Profile
+renderer.  It receives a document via \op{setDocument()} and calls
+\op{currentFrame()} on each paint cycle.
+
+\begin{lstlisting}
+// ViewportWidget.h
+void setFrame   (const scene::FrameData& frame);
+void setDocument(std::shared_ptr<scene::SceneDocument> doc);
+const scene::FrameData* currentFrame() const;
+\end{lstlisting}
+
+Rendering proceeds entirely from \type{FrameData}: atoms are drawn as
+sphere imposters whose colour and radius are indexed by \field{Z} against
+an inline CPK table (Table~\ref{tab:cpk}); bonds are drawn as cylinder
+pairs.  The viewport does not perform any force evaluation, bond inference,
+or element identification: all of that has already been resolved in the
+canonical layer.
+
+\begin{table}[ht]
+\centering
+\caption{Selected CPK colour and covalent radius entries from the inline
+table in \file{apps/desktop/ViewportWidget.cpp} (indices $= Z - 1$)}
+\label{tab:cpk}
+\begin{tabular}{cllll}
+\toprule
+$Z$ & Symbol & R & G & B \\
+\midrule
+1  & H  & 0.90 & 0.90 & 0.90 \\
+6  & C  & 0.20 & 0.20 & 0.20 \\
+7  & N  & 0.19 & 0.31 & 0.97 \\
+8  & O  & 0.90 & 0.05 & 0.05 \\
+16 & S  & 1.00 & 1.00 & 0.19 \\
+17 & Cl & 0.12 & 0.94 & 0.12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{ObjectTree}
+
+\file{apps/desktop/ObjectTree.h} is a \type{QTreeWidget} with three
+fixed root nodes: \emph{Molecules}, \emph{Crystals}, and \emph{Results}.
+Items are added by \type{MainWindow::syncPanels()} after every kernel
+operation:
+
+\begin{lstlisting}
+// From MainWindow::syncPanels()
+objectTree_->clear();
+QString name = QString::fromStdString(
+    doc_->provenance.source_file.empty()
+        ? doc_->provenance.mode
+        : doc_->provenance.source_file);
+objectTree_->addMolecule(name, f.atom_count(), f.bond_count());
+\end{lstlisting}
+
+The tree therefore reflects \emph{provenance}, not internal engine state.
+A document loaded from \texttt{water.xyz} will appear as ``water.xyz'';
+one produced by FIRE relaxation will appear as ``fire''.
+
+\subsection{PropertiesPanel}
+
+\file{apps/desktop/PropertiesPanel.h} is a \type{QScrollArea} containing
+two \type{QGroupBox} sections:
+
+\begin{itemize}
+  \item \textbf{Identity} — formula (from \field{provenance.formula}) and
+        atom count.
+  \item \textbf{Energy} — total energy in kcal/mol (from
+        \field{properties["energy\_total"]}) and RMS force (from
+        \field{properties["force\_rms"]}).
+\end{itemize}
+
+All values are read from the canonical \type{FrameData} by name.  The
+panel has no knowledge of which kernel produced them.
+
+\subsection{ConsolePanel}
+
+\file{apps/desktop/ConsolePanel.h} provides a timestamped log output and a
+command-entry line.  The \op{commandSubmitted()} signal connects to
+\op{MainWindow::onCommand()}, which dispatches text commands (\texttt{relax},
+\texttt{md}, \texttt{sp}, \texttt{reset}) through the \type{EngineAdapter}
+using the same request--result pathway as the toolbar actions.
+
+% =============================================================================
+\section{The Bridge — EngineAdapter}
+\label{sec:adapter}
+% =============================================================================
+
+\subsection{Role}
+
+\type{bridge::EngineAdapter} (\file{apps/desktop/bridge/EngineAdapter.h}) is
+the only class in the desktop that instantiates and calls into the
+atomistic kernel.  It translates between the two representations:
+
+\[
+  \text{scene::SceneDocument}
+  \;\xrightarrow{\text{doc\_to\_state}}\;
+  \text{atomistic::State}
+  \;\xrightarrow{\text{kernel op}}\;
+  \text{atomistic::State}
+  \;\xrightarrow{\text{state\_to\_frame}}\;
+  \text{scene::SceneDocument}
+\]
+
+The desktop calls only two public methods:
+
+\begin{lstlisting}
+// Synchronous (blocks calling thread)
+KernelResult run(const KernelRequest& req,
+                 ProgressFn progress = nullptr);
+
+// Asynchronous (returns immediately; result via std::future)
+std::future<KernelResult> runAsync(const KernelRequest& req,
+                                   ProgressFn progress = nullptr);
+\end{lstlisting}
+
+\subsection{KernelOp Enumeration}
+
+All operations that the desktop can request are listed in a single
+enumeration.  New chemistry is added here and nowhere else in the UI:
+
+\begin{lstlisting}
+enum class KernelOp {
+    LoadXYZ,     // parse file -> SceneDocument
+    SaveXYZ,     // write current frame to file
+    Relax,       // FIRE energy minimisation
+    MD_NVE,      // velocity Verlet (constant energy)
+    MD_NVT,      // Langevin thermostat (constant temperature)
+    SinglePoint, // evaluate energy & forces, no motion
+    InferBonds,  // re-detect bonds from covalent radii
+    EmitCrystal, // build crystal from preset + supercell
+};
+\end{lstlisting}
+
+This enumeration is the authoritative contract between the UI and the
+kernel.  Because the UI only constructs \type{KernelRequest} values and
+reads \type{KernelResult} values, the internal implementation of each
+operation is completely hidden.
+
+\subsection{KernelRequest and KernelResult}
+
+\begin{lstlisting}
+struct KernelRequest {
+    KernelOp op;
+
+    // Parameters (not all used by every op)
+    std::string file_path;              // LoadXYZ, SaveXYZ
+    int         max_steps    = 1000;    // Relax, MD_*
+    double      dt           = 1.0;     // MD_* timestep (fs)
+    double      temperature  = 300.0;   // MD_NVT target T (K)
+    double      force_tol    = 1e-4;    // Relax convergence
+    std::string preset;                 // EmitCrystal name
+    int         supercell[3] = {1,1,1}; // EmitCrystal replication
+
+    std::shared_ptr<scene::SceneDocument> input; // existing data (modify ops)
+};
+
+struct KernelResult {
+    bool        success{false};
+    std::string message;
+    std::shared_ptr<scene::SceneDocument> output;
+};
+\end{lstlisting}
+
+Both structs are value types containing only standard-library types and a
+\type{shared\_ptr} to a document.  They carry no kernel-internal pointers,
+no raw state references, and no handles to FIRE or Langevin objects.
+
+\subsection{Internal Implementation — EngineCore}
+
+The adapter uses a pimpl idiom.  The real kernel objects are hidden in a
+private \type{detail::EngineCore} struct that is fully defined only inside
+\file{apps/desktop/bridge/EngineAdapter.cpp}:
+
+\begin{lstlisting}
+namespace detail {
+struct EngineCore {
+    std::unique_ptr<atomistic::IModel> model;
+    atomistic::ModelParams             mp;
+    std::mt19937                       rng;
+
+    EngineCore() : rng(std::random_device{}()) {
+        model = atomistic::create_lj_coulomb_model();
+        mp.rc = 10.0;  // 10 Ang nonbonded cutoff
+    }
+};
+} // namespace detail
+\end{lstlisting}
+
+The \type{EngineAdapter} header forward-declares this struct but never
+exposes it to the rest of the desktop.
+
+% =============================================================================
+\section{Conversion Pipeline}
+\label{sec:pipeline}
+% =============================================================================
+
+\subsection{SceneDocument $\rightarrow$ atomistic::State}
+
+Before any modify operation (Relax, MD\_NVE, MD\_NVT, SinglePoint), the
+adapter converts the current \type{SceneDocument} frame into a
+\type{State}.  The procedure:
+
+\begin{enumerate}
+  \item Construct a temporary \type{vsepr::io::XYZMolecule} from
+        \field{FrameData::atoms} (using \field{symbol} and \field{pos}).
+  \item Copy bond records into \field{XYZMolecule::bonds}.
+  \item Call \op{atomistic::parsers::from\_xyz(mol)} — this populates
+        masses via the \type{vsepr::PeriodicTable} singleton, builds the
+        type map, and zero-initialises velocities.
+  \item If \field{FrameData::velocities} is non-empty, overwrite
+        \field{State::V} with the stored velocity vectors.
+\end{enumerate}
+
+This route routes through the canonical parser rather than duplicating its
+mass-lookup and type-map logic.
+
+\subsection{atomistic::State $\rightarrow$ scene::FrameData}
+
+After any modify operation, the resulting state is packed back into a
+\type{FrameData}:
+
+\begin{enumerate}
+  \item Copy positions, velocities, and forces component-wise into
+        \field{AtomRecord::pos}, \field{FrameData::velocities}, and
+        \field{FrameData::forces}.
+  \item Look up \field{AtomRecord::Z} from the element symbol.
+  \item Write energy decomposition into the properties map:
+        \texttt{energy\_total}, \texttt{energy\_bond},
+        \texttt{energy\_vdw}, \texttt{energy\_coul}.
+  \item Compute and write \texttt{force\_rms} as
+        $\sqrt{\frac{1}{N}\sum_i |\mathbf{F}_i|^2}$.
+  \item Set \field{source\_mode} to the operation name
+        (\texttt{"fire"}, \texttt{"md\_nvt"}, \texttt{"single\_point"},
+        etc.).
+\end{enumerate}
+
+The resulting \type{FrameData} is appended to a copy of the input document
+(\field{SceneDocument::frames}).  This preserves the original frame as
+frame~0, making every successful operation extend the trajectory rather
+than overwriting it.
+
+\subsection{File Load Pathway}
+
+For \op{KernelOp::LoadXYZ} the conversion does not pass through
+\type{SceneDocument} on the way in:
+
+\[
+  \texttt{.xyz} \;\xrightarrow{\text{XYZReader}}\;
+  \texttt{XYZMolecule} \;\xrightarrow{\text{detect\_bonds}}\;
+  \texttt{XYZMolecule} \;\xrightarrow{\text{from\_xyz}}\;
+  \texttt{State} \;\xrightarrow{\text{state\_to\_frame}}\;
+  \texttt{SceneDocument}
+\]
+
+Bond detection uses \op{XYZReader::detect\_bonds()} with a covalent radius
+scale factor of $1.2$.  The resulting bond list is stored in
+\field{FrameData::bonds} and appears immediately in the viewport and object
+tree.
+
+\subsection{File Save Pathway}
+
+For \op{KernelOp::SaveXYZ}:
+
+\[
+  \texttt{SceneDocument} \;\xrightarrow{\text{doc\_to\_state}}\;
+  \texttt{State} \;\xrightarrow{\text{compilers::to\_xyz}}\;
+  \texttt{XYZMolecule} \;\xrightarrow{\text{XYZWriter}}\;
+  \texttt{.xyz}
+\]
+
+The element symbol list is extracted from
+\field{FrameData::atoms[i].symbol} and passed to \op{to\_xyz()} as the
+\field{element\_names} argument.
+
+% =============================================================================
+\section{Bidirectional Data Flow}
+% =============================================================================
+
+Although the architecture is presented as a forward pipeline, the data
+bridge is bidirectional.
+
+\begin{itemize}
+  \item \textbf{Forward (kernel $\rightarrow$ desktop):} Every kernel
+        operation returns a \type{KernelResult} whose \field{output}
+        document is passed to \op{ViewportWidget::setDocument()} and
+        \op{MainWindow::syncPanels()}.  The viewport redraws; the object
+        tree and properties panel update atomically.
+
+  \item \textbf{Reverse (desktop $\rightarrow$ kernel):} Every
+        modify-type \type{KernelRequest} carries an \field{input} field
+        containing the current \type{SceneDocument}.  The adapter converts
+        this back into a \type{State}, runs the requested algorithm, and
+        returns a new document.  From the kernel's perspective the
+        \type{SceneDocument} is both the input carrier and the output
+        carrier.
+\end{itemize}
+
+The console command dispatcher illustrates the full round-trip.  The
+\op{onCommand()} slot in \type{MainWindow} converts a text string into a
+\type{KernelRequest}, calls \op{engine\_.run()}, checks
+\type{KernelResult::success}, and forwards the result to
+\op{syncPanels()}.  No kernel type is visible at any point in the UI code.
+
+% =============================================================================
+\section{Architectural Invariants}
+% =============================================================================
+
+The canonical bridge architecture enforces three invariants by construction:
+
+\paragraph{Invariant A — Kernel opacity.}
+No class in \file{apps/desktop/} (except \file{bridge/EngineAdapter.cpp})
+may include any header from \file{atomistic/}.  The \type{atomistic::State},
+\type{atomistic::IModel}, \type{FIREParams}, \type{LangevinParams}, and all
+related types are invisible to the Qt layer.
+
+\paragraph{Invariant B — Document as sole inter-layer currency.}
+\type{KernelRequest::input} and \type{KernelResult::output} are both
+\type{shared\_ptr<scene::SceneDocument>}.  Raw pointers to simulation
+arrays, force model references, and integrator handles are never passed
+across the boundary.
+
+\paragraph{Invariant C — Automatic compatibility of new models.}
+Any new \type{KernelOp} that produces a valid \type{scene::SceneDocument}
+becomes immediately compatible with the viewport, object tree, properties
+panel, console, and file-save pipeline without any modification to those
+components.  Adding a new simulation mode requires only:
+\begin{enumerate}
+  \item Adding an entry to the \type{KernelOp} enum.
+  \item Adding a case to the \op{run()} dispatch switch in
+        \file{EngineAdapter.cpp}.
+  \item Optionally adding a UI action in \file{MainWindow.cpp}.
+\end{enumerate}
+The visualization system requires no changes.
+
+% =============================================================================
+\section{Advantages of the Bridge Architecture}
+% =============================================================================
+
+\paragraph{Decoupling of Components.}
+Simulation algorithms, visualization tools, and analysis modules remain
+independent.  Each communicates only through the canonical structural
+representation.  A complete replacement of the Qt desktop with a different
+front-end would require only a new consumer of \type{scene::SceneDocument},
+not a rewrite of any physics code.
+
+\paragraph{Reproducibility.}
+Simulation outputs are recorded as explicit structural artifacts.  A saved
+\texttt{.xyz} or \texttt{.xyza} file can be reloaded, visualized, and
+re-simulated independently of the original runtime environment.
+\type{Provenance} metadata records the operation mode and original source
+file, making the history of a structure traceable.
+
+\paragraph{Multiple Front-End Interfaces.}
+Because the visualization layer consumes canonical structural data rather
+than internal engine state, multiple front-ends can coexist.  The current
+codebase already has a lightweight ImGui viewer (\file{apps/simple-viewer.cpp})
+and the Qt desktop workstation (\file{apps/desktop/}), both consuming
+\type{scene::SceneDocument}-equivalent representations through separate
+rendering pipelines.
+
+\paragraph{Testability.}
+The bridge layer is independently testable.  A unit test can construct a
+synthetic \type{SceneDocument}, submit it as a \type{KernelRequest},
+and assert properties of the returned \type{KernelResult} without
+starting a Qt application or opening a file.
+
+\paragraph{Thread Safety.}
+\op{EngineAdapter::runAsync()} launches kernel operations on a worker
+thread via \op{std::async}.  The \type{KernelRequest} and
+\type{KernelResult} are value types copied into and out of the worker,
+so no shared mutable state crosses the thread boundary.  The
+\type{shared\_ptr<scene::SceneDocument>} output is immutable from the
+kernel's point of view once returned.
+
+% =============================================================================
+\section{Summary}
+% =============================================================================
+
+The canonical structural bridge architecture organises the formation engine
+into three independent layers connected by a single shared data
+representation.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Layer & Primary type & Location \\
+\midrule
+Computational kernel & \type{atomistic::State} & \file{atomistic/} \\
+Canonical bridge     & \type{scene::SceneDocument} & \file{apps/desktop/scene/} \\
+Bridge adapter       & \type{bridge::EngineAdapter} & \file{apps/desktop/bridge/} \\
+Visualization        & \type{ViewportWidget}, docks & \file{apps/desktop/} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The design rule is absolute: no component outside the computational kernel
+may rely on algorithm-specific internal data structures.  All communication
+must pass through \type{scene::SceneDocument}.  This constraint prevents
+coupling between simulation physics and user-interface implementation, and
+ensures the system remains extensible as new physical modelling methods are
+introduced.
+
+\end{document}
