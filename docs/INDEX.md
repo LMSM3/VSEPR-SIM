@@ -3,11 +3,19 @@
 
 ---
 
-## Deep Verification Paper
+## Formation Engine Paper (Primary)
 
 | File | Pages | Content |
 |------|-------|---------|
-| **`deep_verification_paper.tex`** | **18** | Complete system paper: architecture, energy model, numerical methods, 256-check verification suite, demonstration cases, FIRE convergence tables, NVE drift, empirical cross-checks, UFF parameter appendix |
+| **`formation_engine_paper.tex`** | **56** | Full academic paper: scientific motivation, formation kernel as computational infrastructure, historical development, system architecture (formation kernel boundary, 6-layer pipeline, State, IModel, CompositeModel, EnvironmentContext, physics registry, 3-layer desktop bridge), energy model (LJ, Coulomb, bonded, torsion, switching, 1-2 exclusions, dielectric), structural systems (bond detection, crystal emitters, supercells), numerical methods (FIRE, velocity Verlet, Langevin, Maxwell–Boltzmann, scaling analysis), verification framework, deep verification suite (16 suites, 256 checks), verification results (485/485 PASS), **kernel-generated molecular structures** (H₂O, NH₃, CH₄, SF₆, XeF₄, PF₅, H₂SO₄, hexane, ikaite — TikZ 3D ball-and-stick figures from verbatim XYZ output), **crystal structure sessions** (FCC Al 108, BCC Fe 128, NaCl 216, Si 512 atoms — verbatim reports + TikZ unit cells), **raw numerical output** (H₂ sweep, H₂O stretch, Suite A/D/G/M verbatim), bugs, limitations (capability envelope table), **downstream workflows enabled**, future work, conclusion (scientific implications), references, 5 appendices. 20+ TikZ/pgfplots figures. |
+
+Compile: `cd docs && pdflatex formation_engine_paper.tex` (run 3× for ToC + cross-refs)
+
+## Deep Verification Paper (Technical Reference)
+
+| File | Pages | Content |
+|------|-------|---------|
+| **`deep_verification_paper.tex`** | **18** | Compact verification-focused paper: architecture, energy model, numerical methods, 256-check verification suite, demonstration cases, FIRE convergence tables, NVE drift, empirical cross-checks, UFF parameter appendix |
 
 Compile: `cd docs && pdflatex deep_verification_paper.tex` (run twice for ToC)
 
