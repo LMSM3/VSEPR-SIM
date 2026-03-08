@@ -94,7 +94,23 @@ cd docs && for f in section*.tex; do pdflatex "$f"; done
 
 ## Quick Start
 
-### WSL / Linux (Recommended)
+### Automated Build & Test (Recommended)
+
+**Linux/macOS/WSL:**
+```bash
+./build_automated.sh                  # Build + run all tests
+./build_automated.sh --clean          # Clean build + tests
+./build_automated.sh --heat-only      # Test heat-gated reactions only (Item #7)
+```
+
+**Windows:**
+```cmd
+build_automated.bat                   # Build + run all tests
+build_automated.bat --clean           # Clean build + tests
+build_automated.bat --heat-only       # Test heat-gated reactions only (Item #7)
+```
+
+### WSL / Linux (Interactive CLI)
 ```bash
 chmod +x vseprw
 ./vseprw H2O relax                    # First run: configure + build + minimize

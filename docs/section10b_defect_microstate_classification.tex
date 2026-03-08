@@ -1,0 +1,678 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Section 10b — Defect Microstate Classification:\\
+Third Regime for Occupancy and Disorder}
+\author{Formation Engine Development Team}
+\date{Version 0.1 — Unified Clustering Architecture}
+
+\begin{document}
+\maketitle
+
+\section{Introduction: Beyond Perfect Crystals}
+\label{sec:defect-intro}
+
+Sections~10--13 established crystal structure generation, supercell construction,
+and perfect lattice relaxation. Real materials, however, rarely occupy a single
+ideal configuration. Experimental specimens exhibit:
+\begin{itemize}
+  \item \textbf{Vacancies and interstitials} (point defects)
+  \item \textbf{Substitutional disorder} (dopants, solid solutions)
+  \item \textbf{Antisite defects} (wrong atom on wrong sublattice)
+  \item \textbf{Charge compensation patterns} (oxygen vacancies $\leftrightarrow$
+        cation oxidation states)
+  \item \textbf{Supercell-scale ordering motifs} (short-range order, clustering)
+\end{itemize}
+
+These features define a \textbf{continuum of microstates} within a parent phase,
+not discrete polymorphs. This section introduces the \textbf{defect (microstate)
+regime}---a third classification paradigm complementing polymorphs
+(\S10: same chemistry, different structure) and isomorphs (\S10: same structure,
+different chemistry) with a unified deterministic pipeline.
+
+\section{Regime Definition and Invariants}
+
+\subsection{Mathematical Formulation}
+
+A structure instance is represented as:
+\begin{equation}
+\label{eq:struct-rep}
+\mathcal{S} = (\mathbf{L}, \{\mathbf{r}_i\}, \{s_i\})
+\end{equation}
+where:
+\begin{itemize}
+  \item $\mathbf{L}$ is the lattice matrix ($3 \times 3$, columns are
+        $\{\mathbf{a}, \mathbf{b}, \mathbf{c}\}$)
+  \item $\mathbf{r}_i$ are fractional coordinates of atom $i$
+  \item $s_i$ is the species label (atomic number or type identifier)
+\end{itemize}
+
+\begin{definition}[Defect Microstate Regime]
+\label{def:defect-regime}
+The defect microstate regime classifies structures by:
+\begin{align}
+\textbf{Invariant:} \quad & \text{parent prototype } \Pi \text{ (topology/space group)} \\
+\textbf{Variable:} \quad & \text{occupancy configuration } \Omega \text{ (site decoration + vacancies)} \nonumber \\
+& \text{local distortion field } \Delta \text{ (geometry perturbations)} \nonumber
+\end{align}
+
+Formally, let $\Pi(\mathcal{S})$ denote the prototype assignment (via
+topology fingerprint). The defect class of $\mathcal{S}$ is:
+\begin{equation}
+\mathrm{DefectClass}(\mathcal{S}) = \mathrm{Cluster}_{\epsilon}
+\big(\mathrm{FP}_{\mathrm{def}}(\mathcal{S}) \;\big|\; \Pi(\mathcal{S}) = \Pi_0\big)
+\end{equation}
+where clustering is performed \emph{within} a fixed parent prototype $\Pi_0$.
+\end{definition}
+
+\subsection{Regime Comparison}
+
+Table~\ref{tab:regime-comparison} contrasts the three classification regimes:
+
+\begin{table}[h]
+\centering
+\caption{Unified Classification Regimes}
+\label{tab:regime-comparison}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Regime} & \textbf{Invariant} & \textbf{Variable} & \textbf{Output} \\
+\midrule
+Polymorph & Composition & Structure & $\alpha, \beta, \gamma$ phases \\
+Isomorph & Prototype & Chemistry & Decoration variants \\
+Defect Microstate & Parent phase & Occupancy + disorder & $\omega_1, \omega_2, \ldots$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Key insight:} All three regimes use the \emph{same clustering engine}
+with different fingerprints. This unification enables:
+\begin{itemize}
+  \item One canonicalization routine
+  \item One neighbor-building algorithm
+  \item One deterministic clustering implementation
+  \item Two fingerprint constructors: $\mathrm{FP}_{\mathrm{proto}}$ (structure)
+        and $\mathrm{FP}_{\mathrm{deco}}$ (chemistry/defects)
+\end{itemize}
+
+\section{Deterministic Pipeline}
+
+\subsection{Core Algorithm}
+
+The defect classification pipeline (Algorithm~\ref{alg:defect-pipeline}) extends
+the crystal supercell workflow (\S10) with microstate-aware fingerprints:
+
+\begin{algorithm}[H]
+\caption{Defect Microstate Classification}
+\label{alg:defect-pipeline}
+\begin{algorithmic}[1]
+\Require Set of relaxed structures $\{\mathcal{S}_1, \ldots, \mathcal{S}_N\}$
+\Ensure Defect class assignments $\{\omega_1, \ldots, \omega_N\}$
+\State \textbf{Phase 1: Parent Prototype Assignment}
+\For{each $\mathcal{S}_i$}
+  \State $\mathcal{S}_i \gets \mathrm{canonicalize}(\mathcal{S}_i)$
+        \Comment{Wrap coords, order atoms}
+  \State $\mathbf{G}_i \gets \mathrm{build\_neighbors}(\mathcal{S}_i)$
+        \Comment{Fixed cutoff rule}
+  \State $\mathrm{FP}_{\mathrm{proto}}^{(i)} \gets
+         \mathrm{proto\_fingerprint}(\mathbf{G}_i, \mathcal{S}_i)$
+        \Comment{Topology hash + CN}
+\EndFor
+\State $\{\Pi_1, \ldots, \Pi_M\} \gets
+       \mathrm{cluster}(\{\mathrm{FP}_{\mathrm{proto}}^{(i)}\}, \epsilon_{\mathrm{proto}})$
+       \Comment{Prototype IDs}
+
+\State
+\State \textbf{Phase 2: Defect Microstate Clustering (within each $\Pi_k$)}
+\For{each prototype $\Pi_k$}
+  \State $\mathcal{I}_k \gets \{i : \Pi(\mathcal{S}_i) = \Pi_k\}$
+        \Comment{Structures in parent $\Pi_k$}
+  \For{each $i \in \mathcal{I}_k$}
+    \State $\mathrm{FP}_{\mathrm{def}}^{(i)} \gets
+           \mathrm{defect\_fingerprint}(\mathcal{S}_i, \Pi_k)$
+           \Comment{Eq.~\eqref{eq:defect-fp}}
+  \EndFor
+  \State $\{\omega_{k,1}, \omega_{k,2}, \ldots\} \gets
+         \mathrm{cluster}(\{\mathrm{FP}_{\mathrm{def}}^{(i)}\}_{i \in \mathcal{I}_k},
+         \epsilon_{\mathrm{def}})$
+\EndFor
+\State \Return $\{(\Pi(\mathcal{S}_i), \omega(\mathcal{S}_i)) : i = 1, \ldots, N\}$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Fingerprint Construction}
+
+\subsubsection{Prototype Fingerprint (Chemistry-Agnostic)}
+
+The prototype fingerprint captures \emph{topology} and \emph{geometry} independent
+of specific species:
+
+\begin{equation}
+\label{eq:proto-fp}
+\mathrm{FP}_{\mathrm{proto}}(\mathcal{S}) =
+\Big(
+\mathrm{WL\_hash}(\mathbf{G}),\;
+\mathbf{h}_{\mathrm{CN}},\;
+\mathbf{h}_{\mathrm{RDF}}
+\Big)
+\end{equation}
+where:
+\begin{itemize}
+  \item $\mathrm{WL\_hash}(\mathbf{G})$ is the Weisfeiler-Lehman graph hash
+        (canonical topology signature)
+  \item $\mathbf{h}_{\mathrm{CN}}$ is the coordination number histogram
+        (per site class, if known)
+  \item $\mathbf{h}_{\mathrm{RDF}}$ is a normalized radial distribution function
+        (optional, for geometric refinement)
+\end{itemize}
+
+All components are computed deterministically from $\mathbf{G}$ (the neighbor
+graph at fixed cutoff) and canonicalized coordinates.
+
+\subsubsection{Defect Fingerprint (Chemistry + Occupancy)}
+
+The defect fingerprint captures \emph{local disorder} within a fixed parent:
+
+\begin{equation}
+\label{eq:defect-fp}
+\mathrm{FP}_{\mathrm{def}}(\mathcal{S}) =
+\Big(
+\mathbf{o},\;
+\mathbf{v},\;
+\mathbf{m},\;
+\mathbf{d}
+\Big)
+\end{equation}
+where:
+\begin{align}
+\mathbf{o} &= \text{site-class occupancy vector}
+  && \text{(counts or fractions per Wyckoff position)} \nonumber \\
+\mathbf{v} &= \text{vacancy/interstitial vector}
+  && \text{(deviation from ideal site count)} \nonumber \\
+\mathbf{m} &= \text{substitution/antisite signature}
+  && \text{(sublattice decoration pattern)} \nonumber \\
+\mathbf{d} &= \text{local distortion signature}
+  && \text{(CN deviation + bond-length residual histograms)} \nonumber
+\end{align}
+
+\paragraph{Component definitions:}
+\begin{enumerate}
+  \item \textbf{Occupancy vector $\mathbf{o}$:}
+    For each site class $\alpha \in \{\alpha_1, \ldots, \alpha_K\}$ (determined
+    from parent prototype via symmetry or neighbor topology):
+    \begin{equation}
+    o_\alpha = \frac{N_\alpha}{\langle N_\alpha \rangle_{\text{ideal}}}
+    \end{equation}
+    where $N_\alpha$ is the actual count and $\langle N_\alpha \rangle_{\text{ideal}}$
+    is the expected count from the parent prototype.
+
+  \item \textbf{Vacancy vector $\mathbf{v}$:}
+    \begin{equation}
+    v_\alpha = 1 - o_\alpha
+    \qquad \text{(negative indicates interstitial region)}
+    \end{equation}
+
+  \item \textbf{Substitution signature $\mathbf{m}$:}
+    Species composition per site class, expressed as a histogram over atomic
+    numbers (or type IDs). For site class $\alpha$:
+    \begin{equation}
+    m_{\alpha,Z} = \frac{\#\{\text{atoms of species } Z \text{ on sites of class } \alpha\}}
+                        {N_\alpha}
+    \end{equation}
+    Antisite defects (A on B sublattice) manifest as nonzero $m_{\beta,A}$ where
+    $\beta$ is expected to host species B.
+
+  \item \textbf{Distortion signature $\mathbf{d}$:}
+    For each atom $i$, compute:
+    \begin{align}
+    \mathrm{CN}_i &= \text{coordination number from neighbor graph} \\
+    \langle r_i \rangle &= \text{mean nearest-neighbor distance}
+    \end{align}
+    Then build histograms:
+    \begin{equation}
+    \mathbf{d} = \big(\mathbf{h}_{\mathrm{CN}\text{-dev}}, \mathbf{h}_{r\text{-dev}}\big)
+    \end{equation}
+    where:
+    \begin{align}
+    \mathbf{h}_{\mathrm{CN}\text{-dev}} &: \text{histogram of }
+      (\mathrm{CN}_i - \langle \mathrm{CN} \rangle_{\text{ideal}}) \\
+    \mathbf{h}_{r\text{-dev}} &: \text{histogram of }
+      (\langle r_i \rangle - \langle r \rangle_{\text{ideal}})
+    \end{align}
+\end{enumerate}
+
+\subsection{Distance Metric and Clustering}
+
+Define a weighted Euclidean distance over defect fingerprints:
+\begin{equation}
+\label{eq:defect-dist}
+D_{\mathrm{def}}(\mathcal{S}_a, \mathcal{S}_b) =
+w_o \|\mathbf{o}_a - \mathbf{o}_b\| +
+w_v \|\mathbf{v}_a - \mathbf{v}_b\| +
+w_m \,\delta(\mathbf{m}_a, \mathbf{m}_b) +
+w_d \,\mathrm{dist}(\mathbf{d}_a, \mathbf{d}_b)
+\end{equation}
+where:
+\begin{itemize}
+  \item $\|\cdot\|$ is the $\ell^2$ norm for continuous vectors
+  \item $\delta(\mathbf{m}_a, \mathbf{m}_b)$ is a discrete substitution distance
+        (e.g., sum of absolute differences of histograms)
+  \item $\mathrm{dist}(\mathbf{d}_a, \mathbf{d}_b)$ is the Wasserstein distance
+        or $\chi^2$ statistic between histograms
+  \item $(w_o, w_v, w_m, w_d)$ are fixed weights (default: uniform)
+\end{itemize}
+
+Clustering proceeds deterministically via threshold assignment:
+\begin{equation}
+\mathrm{Cluster}_{\epsilon}(\{\mathrm{FP}_1, \ldots, \mathrm{FP}_N\}) =
+\{\omega_1, \ldots, \omega_N\}
+\end{equation}
+where:
+\begin{enumerate}
+  \item Process structures in canonical order (stable hash of $\mathrm{FP}_{\mathrm{proto}}$)
+  \item For each structure $i$:
+    \begin{itemize}
+      \item Compute $D_{\mathrm{def}}(\mathrm{FP}_i, \mathrm{centroid}_k)$ for
+            all existing clusters $k$
+      \item If $\min_k D_{\mathrm{def}}(\mathrm{FP}_i, \mathrm{centroid}_k) < \epsilon$,
+            assign to that cluster
+      \item Otherwise, create new cluster with ID $\mathrm{hash}(\mathrm{FP}_i)$
+    \end{itemize}
+  \item Update centroids as running means
+\end{enumerate}
+
+This avoids stochasticity from seeding or iteration order. The cluster ID is a
+deterministic hash, not a sequential integer.
+
+\section{Labeling and Statistics}
+
+\subsection{Symbolic Labels (Optional)}
+
+Defect class labels are \emph{derived properties}, not inputs. If symbolic labels
+(e.g., $\omega_1, \omega_2, \omega_3$) are desired, they are assigned
+deterministically by:
+\begin{equation}
+\text{Rank clusters by:} \quad
+\begin{cases}
+\text{Mean energy per formula unit (if available)} \\
+\text{Population (number of structures in cluster)} \\
+\text{Lexicographic hash of centroid fingerprint}
+\end{cases}
+\end{equation}
+
+Labels are then assigned $\omega_1, \omega_2, \ldots$ in rank order. This ensures
+reproducibility: the same dataset always yields the same labels.
+
+\subsection{Per-Class Statistics}
+
+For each defect class $\omega_k$ within parent $\Pi$, compute:
+\begin{align}
+\langle E \rangle_{\omega_k} &= \frac{1}{N_k} \sum_{i \in \omega_k} E_i
+  && \text{(mean energy per formula unit)} \\
+\sigma_E^2(\omega_k) &= \frac{1}{N_k} \sum_{i \in \omega_k} (E_i - \langle E \rangle)^2
+  && \text{(energy variance)} \\
+f_{\omega_k} &= \frac{N_k}{N_{\text{total}}}
+  && \text{(population fraction within } \Pi \text{)} \\
+\langle \mathbf{o} \rangle_{\omega_k} &= \frac{1}{N_k} \sum_{i \in \omega_k} \mathbf{o}_i
+  && \text{(mean occupancy vector)} \\
+\langle \mathbf{v} \rangle_{\omega_k} &= \frac{1}{N_k} \sum_{i \in \omega_k} \mathbf{v}_i
+  && \text{(mean vacancy fraction)}
+\end{align}
+
+These statistics enable:
+\begin{itemize}
+  \item \textbf{Thermodynamic interpretation:} Classes with lower $\langle E \rangle$
+        and higher $f$ are thermodynamically favored under the simulation conditions
+  \item \textbf{Defect concentration analysis:} $\langle \mathbf{v} \rangle$ quantifies
+        typical vacancy/interstitial densities
+  \item \textbf{Stability screening:} Classes with low $\sigma_E^2$ are
+        structurally consistent; high $\sigma_E^2$ suggests heterogeneous microstates
+\end{itemize}
+
+\section{Unified Implementation}
+
+\subsection{Shared Core Functions}
+
+All three regimes (polymorphs, isomorphs, defects) share a common implementation:
+
+\begin{lstlisting}[caption={Unified Clustering Core (C++20)}, label=lst:unified-core]
+namespace atomistic {
+namespace classify {
+
+// Canonicalize structure: wrap coords to [0,1), order atoms
+Structure canonicalize(const Structure& s);
+
+// Build neighbor graph from fixed cutoff rule
+NeighborGraph build_neighbors(const Structure& s, double cutoff);
+
+// Fingerprints
+struct ProtoFingerprint {
+    uint64_t topology_hash;   // Weisfeiler-Lehman hash
+    std::vector<int> CN_hist; // Coordination number histogram
+    std::vector<double> RDF;  // Radial distribution function
+};
+
+struct DefectFingerprint {
+    std::vector<double> occupancy;       // o vector
+    std::vector<double> vacancy;         // v vector
+    std::map<int, std::vector<double>> substitution;  // m (Z -> histogram)
+    std::vector<double> CN_deviation;    // d: CN histogram
+    std::vector<double> bond_deviation;  // d: bond length histogram
+};
+
+ProtoFingerprint compute_proto_fp(const NeighborGraph& g, const Structure& s);
+DefectFingerprint compute_defect_fp(const Structure& s, const Prototype& parent);
+
+// Distance functions
+double distance(const ProtoFingerprint& a, const ProtoFingerprint& b);
+double distance(const DefectFingerprint& a, const DefectFingerprint& b,
+                const std::array<double, 4>& weights = {1,1,1,1});
+
+// Clustering (deterministic threshold assignment)
+template<typename FP>
+std::vector<uint64_t> cluster(const std::vector<FP>& fingerprints,
+                               double epsilon);
+
+} // namespace classify
+} // namespace atomistic
+\end{lstlisting}
+
+\subsection{Module A: Polymorph Detection}
+
+\begin{lstlisting}[caption={Polymorph Classifier (Same Chemistry $\to$ Structure Phases)}]
+std::map<std::string, std::vector<uint64_t>>
+classify_polymorphs(const std::vector<Structure>& structures) {
+    // Group by reduced formula
+    auto grouped = group_by_formula(structures);
+    
+    std::map<std::string, std::vector<uint64_t>> results;
+    
+    for (auto& [formula, structs] : grouped) {
+        std::vector<ProtoFingerprint> fps;
+        for (auto& s : structs) {
+            auto canon = canonicalize(s);
+            auto graph = build_neighbors(canon, FIXED_CUTOFF);
+            fps.push_back(compute_proto_fp(graph, canon));
+        }
+        
+        // Cluster on prototype fingerprint (ignore chemistry)
+        auto clusters = cluster(fps, PROTO_EPSILON);
+        
+        // Rank by energy → assign α, β, γ labels
+        auto labels = assign_greek_labels(clusters, structs);
+        
+        results[formula] = labels;
+    }
+    
+    return results;
+}
+\end{lstlisting}
+
+\subsection{Module B: Isomorph Detection}
+
+\begin{lstlisting}[caption={Isomorph Classifier (Same Structure $\to$ Chemistry Variants)}]
+std::map<uint64_t, std::vector<uint64_t>>
+classify_isomorphs(const std::vector<Structure>& structures) {
+    std::map<uint64_t, std::vector<uint64_t>> results;
+    
+    // Phase 1: Assign prototype IDs
+    std::vector<ProtoFingerprint> proto_fps;
+    for (auto& s : structures) {
+        auto canon = canonicalize(s);
+        auto graph = build_neighbors(canon, FIXED_CUTOFF);
+        proto_fps.push_back(compute_proto_fp(graph, canon));
+    }
+    
+    auto proto_clusters = cluster(proto_fps, PROTO_EPSILON);
+    
+    // Phase 2: Within each prototype, cluster by chemistry (decoration)
+    for (uint64_t proto_id : unique(proto_clusters)) {
+        auto indices = where(proto_clusters, proto_id);
+        
+        std::vector<DefectFingerprint> deco_fps;
+        for (size_t i : indices) {
+            deco_fps.push_back(compute_defect_fp(structures[i], proto_id));
+        }
+        
+        auto variant_clusters = cluster(deco_fps, DECO_EPSILON);
+        results[proto_id] = variant_clusters;
+    }
+    
+    return results;
+}
+\end{lstlisting}
+
+\subsection{Module C: Defect Microstate Detection}
+
+\begin{lstlisting}[caption={Defect Classifier (Same Parent $\to$ Occupancy/Disorder Classes)}]
+std::map<uint64_t, std::vector<uint64_t>>
+classify_defects(const std::vector<Structure>& structures) {
+    // Phase 1: Assign parent prototype IDs (same as isomorph Phase 1)
+    auto proto_clusters = assign_prototypes(structures, PROTO_EPSILON);
+    
+    std::map<uint64_t, std::vector<uint64_t>> results;
+    
+    // Phase 2: Within each parent, cluster by defect fingerprint
+    for (uint64_t parent_id : unique(proto_clusters)) {
+        auto indices = where(proto_clusters, parent_id);
+        
+        std::vector<DefectFingerprint> defect_fps;
+        for (size_t i : indices) {
+            defect_fps.push_back(compute_defect_fp(structures[i], parent_id));
+        }
+        
+        // Weights: emphasize vacancy + substitution over pure distortion
+        std::array<double, 4> weights = {1.0, 1.5, 2.0, 0.5};  // o, v, m, d
+        
+        auto defect_clusters = cluster(defect_fps, DEFECT_EPSILON, weights);
+        
+        // Rank by population or mean energy → assign ω₁, ω₂, ω₃ labels
+        auto labels = assign_omega_labels(defect_clusters, structures[indices]);
+        
+        results[parent_id] = labels;
+    }
+    
+    return results;
+}
+\end{lstlisting}
+
+\section{Example: MgO with Vacancy Disorder}
+
+\subsection{System Setup}
+
+Consider a simulation generating 500 relaxed MgO structures at 1200~K with:
+\begin{itemize}
+  \item 90\% stoichiometric MgO (rocksalt structure, $Fm\overline{3}m$)
+  \item 8\% structures with $\sim$1\% Mg vacancies
+  \item 2\% structures with O vacancies (charge-compensated by Mg$^+$)
+\end{itemize}
+
+\subsection{Classification Pipeline}
+
+\paragraph{Step 1: Prototype Assignment.}
+All 500 structures cluster to \textbf{one prototype ID} (rocksalt FCC sublattice
+topology with octahedral/tetrahedral voids).
+
+\paragraph{Step 2: Defect Fingerprinting.}
+For each structure, compute $\mathrm{FP}_{\mathrm{def}}$:
+\begin{itemize}
+  \item $\mathbf{o} = (o_{\mathrm{Mg}}, o_{\mathrm{O}})$ where $o_{\mathrm{Mg}} \approx 0.99$
+        for vacancy-containing structures
+  \item $\mathbf{v} = (1 - o_{\mathrm{Mg}}, 1 - o_{\mathrm{O}})$ captures vacancy fractions
+  \item $\mathbf{m}$ captures whether Mg or O sites host vacancies (antisite-like)
+  \item $\mathbf{d}$ shows distortion histograms (CN deviations near vacancies)
+\end{itemize}
+
+\paragraph{Step 3: Clustering.}
+With $\epsilon_{\mathrm{def}} = 0.05$, clustering yields:
+\begin{itemize}
+  \item $\omega_1$: 450 structures (stoichiometric, CN=6 everywhere)
+  \item $\omega_2$: 40 structures (Mg vacancies, $\langle v_{\mathrm{Mg}} \rangle \approx 0.01$)
+  \item $\omega_3$: 10 structures (O vacancies, $\langle v_{\mathrm{O}} \rangle \approx 0.01$)
+\end{itemize}
+
+\paragraph{Step 4: Statistics.}
+\begin{align}
+\langle E \rangle_{\omega_1} &= -10.3 \;\text{eV/fu} && \text{(baseline stoichiometric)} \\
+\langle E \rangle_{\omega_2} &= -10.1 \;\text{eV/fu} && \text{(+0.2~eV penalty for Mg vacancy)} \\
+\langle E \rangle_{\omega_3} &= -9.8 \;\text{eV/fu} && \text{(+0.5~eV penalty for O vacancy)}
+\end{align}
+
+Population fractions:
+\begin{equation}
+f_{\omega_1} = 0.90, \quad f_{\omega_2} = 0.08, \quad f_{\omega_3} = 0.02
+\end{equation}
+
+This automatically recovers the defect chemistry from simulation output, with no
+manual classification or pre-specified labels.
+
+\section{Validation and Robustness}
+
+\subsection{Reproducibility}
+
+\paragraph{Determinism:}
+All fingerprints, distances, and cluster assignments are deterministic. Running
+the pipeline twice on the same dataset produces identical $\omega$ labels, even
+if structure order changes (because canonicalization sorts atoms and cluster IDs
+are hashes).
+
+\paragraph{Threshold sensitivity:}
+Vary $\epsilon_{\mathrm{def}}$ from $0.01$ to $0.10$ and verify:
+\begin{itemize}
+  \item $\epsilon$ too small $\to$ over-clustering (every structure is its own class)
+  \item $\epsilon$ too large $\to$ under-clustering (all structures merge to one class)
+  \item Optimal $\epsilon$ yields stable cluster count across small perturbations
+\end{itemize}
+
+Use the elbow method or silhouette score to auto-tune $\epsilon$ (while maintaining
+determinism by fixing random seeds to zero or using grid search with fixed order).
+
+\subsection{Physical Consistency}
+
+\paragraph{Energy ordering:}
+For a correct force field and sufficient sampling:
+\begin{equation}
+\langle E \rangle_{\omega_1} < \langle E \rangle_{\omega_2} < \langle E \rangle_{\omega_3}
+\quad \Leftrightarrow \quad
+f_{\omega_1} > f_{\omega_2} > f_{\omega_3}
+\end{equation}
+This is a \textbf{necessary condition} for thermodynamic validity: lower-energy
+defect classes should appear more frequently in equilibrium sampling.
+
+\paragraph{Vacancy concentration bounds:}
+For point-defect-dominated regimes:
+\begin{equation}
+\langle v_\alpha \rangle_{\omega_k} < 0.10
+\quad \text{(typically)}
+\end{equation}
+Classes with $\langle v \rangle > 0.20$ likely represent amorphous regions or
+phase transitions, not simple defect microstates.
+
+\subsection{Comparison to Manual Classification}
+
+Run the pipeline on a known dataset with expert-assigned labels (e.g., from DFT
+calculations with annotated defect types). Compute:
+\begin{equation}
+\mathrm{Purity} = \frac{1}{K} \sum_{k=1}^K \frac{\max_{\ell} |\omega_k \cap L_\ell|}{|\omega_k|}
+\end{equation}
+where $L_\ell$ are the expert labels. Purity $> 0.90$ indicates strong agreement.
+
+\section{Limitations and Honest Assessment}
+
+\paragraph{Site-class determination.}
+The pipeline assumes site classes (Wyckoff positions or sublattices) are either:
+\begin{enumerate}
+  \item Known from the parent prototype (via space group)
+  \item Inferred from neighbor topology (via graph partitioning)
+\end{enumerate}
+For highly disordered or amorphous regions, site-class assignment may be ambiguous.
+In such cases, fall back to global composition histograms (no per-site resolution).
+
+\paragraph{Large supercells.}
+For supercells with $N > 1000$ atoms, fingerprint computation scales as
+$\mathcal{O}(N^2)$ for neighbor graphs. Optimization strategies:
+\begin{itemize}
+  \item Use cell lists or Verlet lists for $\mathcal{O}(N)$ neighbor building
+  \item Subsample atoms for defect fingerprints (e.g., every 10th atom for $\mathbf{d}$)
+  \item Cache topology hashes to avoid recomputation
+\end{itemize}
+
+\paragraph{Force field dependence.}
+Energy-based ranking ($\langle E \rangle_{\omega_k}$) depends on force field accuracy.
+For classical potentials (LJ, Buckingham), expect qualitative correctness
+(relative energy ordering) but not quantitative precision (absolute formation energies).
+
+\paragraph{Non-equilibrium sampling.}
+If structures are quenched from high temperature or kinetically trapped, population
+fractions $f_{\omega_k}$ do \emph{not} reflect equilibrium thermodynamics. The
+classification is still valid (microstates are correctly grouped), but
+energy-vs-population correlations require equilibration.
+
+\section{Implementation Status}
+
+\begin{itemize}
+  \item \textbf{Core fingerprints:} Implemented in \texttt{atomistic/classify}
+        (prototype + defect fingerprints)
+  \item \textbf{Clustering:} Deterministic threshold assignment in
+        \texttt{atomistic/classify/cluster.cpp}
+  \item \textbf{Polymorph module:} Tested on 50-structure H$_2$O dataset
+        (reproduces known ice phases)
+  \item \textbf{Isomorph module:} Prototype, awaiting multi-chemistry validation
+  \item \textbf{Defect module:} Interface designed, awaiting integration with
+        \texttt{atomistic/crystal} supercell builder
+\end{itemize}
+
+\section{Conclusion: One Clustering Engine, Three Front-Ends}
+
+This section extends the crystal classification framework (\S10) to handle
+realistic disorder. The key contributions are:
+
+\begin{enumerate}
+  \item \textbf{Unified clustering architecture:} Three regimes (polymorphs,
+        isomorphs, defects) share the same deterministic pipeline with different
+        fingerprints
+  \item \textbf{Defect fingerprint:} Four-component vector
+        $(o, v, m, d)$ capturing occupancy, vacancies, substitutions, and
+        distortion
+  \item \textbf{Parent-aware clustering:} Defect classification is performed
+        \emph{within} a fixed prototype, avoiding conflation of different
+        structural basins
+  \item \textbf{Deterministic labeling:} Symbolic labels ($\omega_1, \omega_2, \ldots$)
+        are derived from energy/population ranking, not manual annotation
+  \item \textbf{Validation protocol:} Reproducibility, energy ordering, and
+        expert-label purity metrics ensure physical consistency
+\end{enumerate}
+
+\paragraph{Transition to production:}
+With polymorphs, isomorphs, and defects unified under one clustering engine,
+the next step is \textbf{automated phase diagram construction} (\S12):
+given a composition range and temperature/pressure grid, iteratively generate
+structures, classify them, and map the resulting phase space.
+
+\end{document}

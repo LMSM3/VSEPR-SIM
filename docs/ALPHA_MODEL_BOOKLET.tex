@@ -1,0 +1,1134 @@
+\documentclass[11pt,letterpaper]{report}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{xcolor}
+\usepackage{bm}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{enumitem}
+
+% ── Macros ─────────────────────────────────────────────────────────────────
+\newcommand{\rcov}{r_{\mathrm{cov}}}
+\newcommand{\nval}{n_{\mathrm{val}}}
+\newcommand{\nmax}{n_{\mathrm{max}}}
+\newcommand{\Zeff}{Z_{\mathrm{eff}}}
+\newcommand{\kp}{k_p}
+\newcommand{\cb}{c_b}
+\newcommand{\asoft}{a_{\mathrm{soft}}}
+\newcommand{\bchi}{b_\chi}
+\newcommand{\Ang}{\text{\AA}}
+
+% ── Code listing style ──────────────────────────────────────────────────────
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em
+}
+
+% ── Header / footer ─────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Alpha Model Development Booklet}}
+\fancyhead[R]{\small\textit{Formation Engine / Atomistic Simulation Library}}
+\fancyfoot[L]{\small\texttt{atomistic/models/alpha\_model.hpp}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Part title formatting ────────────────────────────────────────────────────
+\titleformat{\part}[display]
+  {\normalfont\huge\bfseries\centering}
+  {\partname~\thepart}{20pt}{\Huge}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\title{%
+  \textbf{Atomic Static Dipole Polarizability}\\[6pt]
+  \textbf{Generative Model}\\[10pt]
+  \large Development Booklet: Parts A--D\\[4pt]
+  \normalsize Descriptor Design $\cdot$ Fitting Methodology $\cdot$
+              Validation $\cdot$ Plateau Investigation
+}
+\author{Formation Engine --- Atomistic Simulation Library}
+\date{January 2025}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter*{Purpose}
+\addcontentsline{toc}{chapter}{Purpose}
+
+This booklet is the single authoritative record for the atomic static
+dipole polarizability generative model (the \emph{alpha model}) built
+into the Formation Engine atomistic simulation library.  The model
+predicts the scalar isotropic static dipole polarizability~$\alpha(Z)$
+for neutral atoms $Z = 1$--$120$ using only the atomic number as input;
+no external data files are read at runtime.  The predicted values feed
+directly into the Thole-damped SCF induced-dipole solver that computes
+polarization energies and forces during molecular dynamics.
+
+The document is organised in two parts reflecting the chronological
+development record:
+
+\begin{description}[leftmargin=2.5cm, labelwidth=2cm]
+  \item[Part~I] \textbf{Model Design and Validation (Parts A and B).}
+    Derivation of the model equation, physical motivation for each
+    term, descriptor definitions, fitting methodology, the v2.6.0--v2.6.2
+    parameter progression, validation results, integration with the SCF
+    solver, nuclear stability integration, and the software architecture.
+    This constitutes the primary scientific contribution.
+
+  \item[Part~II] \textbf{Plateau Investigation (Part C).}
+    Two incremental parameter additions---v2.6.3 and v2.7.0---were
+    attempted to push the global RMS below 15\%.  Both failed to break
+    the 17\% floor.  This part documents the experiments, a four-cause
+    root-cause analysis of why the floor exists, and a decision log that
+    reverts the active codebase to v2.6.2.  The anti-pattern log records
+    every approach that has been tried and failed so that future
+    development targets root causes rather than symptoms.
+\end{description}
+
+\noindent
+The active production code is \textbf{v2.6.2} (15~parameters, global
+RMS~17.5\%).  Its failure modes are fully characterised and should be
+read before any further model development is attempted.
+
+% ═══════════════════════════════════════════════════════════════════════════
+\part{Model Design and Validation}
+\label{part:ab}
+\begin{center}
+  \textit{Parts A and B\,---\,v2.6.0 through v2.6.2}
+\end{center}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Model Equation}
+\label{ch:model}
+
+\section*{Abstract}
+A 16-parameter generative model for the scalar isotropic static
+dipole polarizability~$\alpha(Z)$ of neutral atoms covering $Z=1$--$118$
+with an experimental extension to $Z=120$.  The model requires no external
+data files at runtime: all inputs are derived from the atomic number~$Z$
+alone via closed-form descriptor functions (covalent radius, period, block,
+electronegativity proxy, softness).  Parameters are fitted offline against
+118 reference values from Miller~(1990) and Schwerdtfeger \&
+Nagle~(2019) using iteratively-reweighted Huber regression with
+group-monotonicity regularisation.  The overall RMS error is 19.1\% across
+all 118 elements and $<$16\% for the commonly-simulated $Z=1$--$54$ subset.
+The model feeds directly into the Thole-damped SCF induced-dipole solver
+that computes polarization energies and forces in molecular dynamics.
+
+\section{Equation}
+\label{sec:model}
+
+The polarizability of element~$Z$ is predicted by
+\begin{equation}
+\boxed{\;
+\alpha(Z) \;=\; \underbrace{\cb(Z)\;\kp(Z)\;\rcov(Z)^{3}\;
+\frac{1 + \asoft\,s(Z)}{\chi(Z)^{\bchi}}}_{\alpha_{\text{base}}}
+\;\cdot\; \underbrace{g_{\text{shell}}(Z)}_{\text{closure gate}}
+\;\cdot\; \underbrace{g_{\text{rel}}(Z)}_{\text{relativ.\ stiffening}}
+\;}
+\label{eq:alpha}
+\end{equation}
+where the terms are:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Source} \\
+\midrule
+$\rcov(Z)$  & Covalent radius (\AA) & Pyykk\"o \& Atsumi (2009) \\
+$s(Z)$      & Softness descriptor (dimensionless) & Eq.~\eqref{eq:soft} \\
+$\chi(Z)$   & Electronegativity proxy & Eq.~\eqref{eq:chi} \\
+$\kp(Z)$    & Period scaling factor ($p = 1 \ldots 7$) & Fitted \\
+$\cb(Z)$    & Block correction ($b \in \{s,p,d,f\}$) & Fitted \\
+$\asoft$    & Softness coupling coefficient & Fitted \\
+$\bchi$     & Electronegativity suppression exponent & Fitted \\
+$g_{\text{shell}}(Z)$ & Shell-closure suppression (Eq.~\ref{eq:gshell}) & Fitted \\
+$g_{\text{rel}}(Z)$   & Relativistic stiffening (Eq.~\ref{eq:grel}) & Fitted \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The model has \textbf{15 free parameters}: 7~period coefficients
+$\kp^{(1)} \ldots \kp^{(7)}$, 4~block corrections
+$\cb^{(s)},\cb^{(p)},\cb^{(d)},\cb^{(f)}$, 2~global exponents
+$\asoft, \bchi$, and 2~gate amplitudes $c_{\text{shell}}, a_{\text{rel}}$.
+
+\section{Physical Motivation}
+
+The leading-order physics is the \emph{volume scaling law}: polarizability
+grows as the cube of the electron-cloud radius.  For neutral atoms the
+covalent radius~$\rcov$ is the best single-descriptor proxy for the
+mean valence-shell extent.  The remaining terms correct for effects that
+$\rcov^3$ alone cannot capture:
+
+\begin{enumerate}
+\item \textbf{Period scaling ($\kp$):}  Outer-shell electrons in higher
+  periods are more diffuse per unit radius due to additional radial nodes.
+  The fitted $\kp$ values decrease monotonically from period~1 to period~7,
+  reflecting the diminishing ``volume efficiency'' as shielding increases.
+
+\item \textbf{Electronegativity suppression ($\chi^{\bchi}$):}
+  Electronegative atoms hold their electron cloud tighter, reducing
+  deformability below what $\rcov^3$ predicts.  The denominator
+  $\chi^{\bchi}$ implements this as a power-law suppression.
+
+\item \textbf{Softness coupling ($1 + \asoft\,s$):}  The softness
+  descriptor~$s$ measures how loosely-held the valence electrons are
+  (high for alkali metals, low for noble gases).  The fitted
+  $\asoft < 0$ \emph{reduces} $\alpha$ for soft atoms---a counter-intuitive
+  result that compensates for the period scaling already being fit to
+  alkali metals.
+
+\item \textbf{Block correction ($\cb$):}  Transition metals ($d$-block)
+  and lanthanides/actinides ($f$-block) have polarisable sub-valence
+  electrons ($3d$, $4f$) whose spatial extent is not captured by $\rcov$.
+  The block multiplier absorbs this orbital-type bias.
+\end{enumerate}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Shell-Closure Gate}
+\label{ch:shell}
+
+\section{Why Noble Gases Blow Up (and How to Fix Without Hacks)}
+
+Noble gases are closed-shell atoms: their electron clouds are stiff
+and compact.  Polarizability is comparatively low and follows a
+\emph{different curvature} than smooth volume scaling---shell closure
+breaks the monotonic ``bigger radius $\Rightarrow$ more polarisable''
+intuition that the base model assumes.
+
+Before v2.6.2, the noble-gas RMS was $36.7\%$, with Ne at $+85\%$.
+The existing $\chi$-based denominator in $\alpha_{\text{base}}$ partially
+corrected for this (by assigning noble gases a high effective
+electronegativity), but was insufficient because $\rcov^3$ still
+dominates.
+
+\section{The Shell-Closure Gate}
+
+Noble gases should not be ``smoothed'' into the same curve as their
+neighbours.  They must be \emph{gated}: a multiplicative penalty that
+activates at or near shell closure.
+
+We define a \emph{shell-closure proximity} descriptor:
+\begin{equation}
+\phi(Z) = \exp\!\left(-\frac{(18 - g(Z))^2}{2\sigma_{\text{shell}}^2}\right)
+\label{eq:phi}
+\end{equation}
+where $g(Z)$ is the IUPAC group number ($g = 18$ for noble gases) and
+$\sigma_{\text{shell}} = 1.8$.  This Gaussian is centred on group~18:
+\begin{itemize}
+  \item Noble gases ($g = 18$): $\phi = 1.0$ (full closure)
+  \item Halogens ($g = 17$): $\phi \approx 0.86$ (near-closure)
+  \item Chalcogens ($g = 16$): $\phi \approx 0.55$ (moderate)
+  \item $g \leq 14$: $\phi < 0.15$ (negligible)
+  \item $f$-block ($g = 0$): $\phi = 0$ by convention
+\end{itemize}
+
+The gate is then:
+\begin{equation}
+g_{\text{shell}}(Z) = 1 - c_{\text{shell}} \cdot \phi(Z)
+\label{eq:gshell}
+\end{equation}
+where $c_{\text{shell}}$ is a single fitted amplitude.  The fitted
+value $c_{\text{shell}} = 0.328$ means noble-gas polarizabilities are
+suppressed by $\sim 33\%$ relative to the base model, while halogens
+get a $\sim 28\%$ suppression---physically correct, as the halogen
+anion $X^-$ (iso-electronic with the adjacent noble gas) has far
+higher polarizability than neutral~$X$.
+
+\paragraph{Design principle: gate, don't smooth.}
+Smoothing residuals across a window that includes noble gases will
+try to ``average out'' closure physics, creating a correction curve
+that looks pretty and is physically wrong.  Noble gases are a
+\emph{regime boundary}: the model must acknowledge the discontinuity
+in electronic structure at shell closure, not paper over it.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Relativistic Stiffening}
+\label{ch:rel}
+
+\section{Why Mercury Spikes (and What Fixes It)}
+
+Mercury ($Z = 80$) is the poster child for relativistic orbital
+contraction: its $6s$ orbital contracts and stabilises, reducing
+participation in polarizability and making Hg unusually ``inert''
+compared to naive trend expectations.  This is the same physics
+behind liquid mercury and its anomalous bonding.
+
+Before v2.6.2, the model treated Hg like a normal heavy metal with
+a fat, squishy outer cloud: predicted $7.79\;\text{\AA}^3$ vs.\ reference
+$5.70\;\text{\AA}^3$ ($+37\%$).
+
+\section{The Relativistic Stiffening Factor}
+
+Relativistic contraction is \emph{not} monotonic with $Z$---it peaks
+at specific electronic configurations.  We identify two hotspots:
+
+\begin{enumerate}
+\item \textbf{$6s$ inert-pair region} ($Z \approx 80$):
+  Au($79$), Hg($80$), Tl($81$) all have anomalously compact $6s$
+  orbitals due to strong nuclear shielding.
+
+\item \textbf{$7p_{1/2}$ spin--orbit region} ($Z \approx 115$):
+  The superheavy $p$-block (Nh--Og) experiences extreme $j$-dependent
+  orbital splitting.  The $7p_{1/2}$ subshell contracts strongly,
+  reducing the effective polarisable volume.
+\end{enumerate}
+
+We model these as a sum of two Gaussians:
+\begin{equation}
+f_{\text{rel}}(Z) = \exp\!\left(-\frac{(Z - 80)^2}{200}\right)
+\;+\; \frac{1}{2}\,\exp\!\left(-\frac{(Z - 115)^2}{50}\right)
+\label{eq:frel}
+\end{equation}
+and the gate is:
+\begin{equation}
+g_{\text{rel}}(Z) = 1 - a_{\text{rel}} \cdot f_{\text{rel}}(Z)
+\label{eq:grel}
+\end{equation}
+
+The first Gaussian ($\sigma = 10$) yields $f_{\text{rel}} \approx 1.0$
+at Hg, $\approx 0.7$ at Au/Tl, and decays to $< 0.1$ by Gd($64$)
+and Po($84$).  The second Gaussian ($\sigma \approx 5$) peaks at
+$0.5$ for Mc($115$) and covers Nh($113$)--Og($118$).
+
+The fitted amplitude $a_{\text{rel}} = 0.054$ is physically small,
+consistent with the expectation that relativistic effects are a
+\emph{perturbative correction} to the volume-scaling base model, not
+a dominant term.  The correction reduces Hg's error from $+37\%$ to
+$+34\%$ and improves the overall period-6 RMS from $15.4\%$ to
+$14.1\%$.
+
+\paragraph{Why not a sigmoid?}
+An earlier version used a sigmoid $\sigma(Z) = 1/(1 + e^{-(Z-76)/8})$.
+This failed ($a_{\text{rel}} = 0$ in all fits) because it applies
+uniform dampening to \emph{all} heavy atoms: Os, Ir, and Pt---which
+fit well without correction---were degraded more than Hg was improved.
+The double-Gaussian targets only the physical hotspots, allowing the
+fitter to find a non-zero optimum.
+
+\paragraph{Hg as a calibration anchor.}
+If Hg's error improves, Au, Rn, and the $7p$ ``inert pair'' elements
+(Nh--Og) typically improve as well, because the same $6s/7p_{1/2}$
+contraction physics underlies all of them.  Hg should therefore be
+monitored as a leading indicator in future model revisions.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Descriptor Definitions}
+\label{ch:descriptors}
+
+All descriptors are pure functions of $Z$.  No external database is
+loaded at runtime.
+
+\section{Covalent Radius $\rcov(Z)$}
+
+Tabulated for $Z=1$--$118$ from Pyykk\"o \& Atsumi, \emph{Chem.\ Eur.\
+J.}\ \textbf{15}, 186 (2009).  Stored as a compile-time constant array.
+Units: \AA.
+
+\section{Period and Block}
+
+Standard IUPAC periodic table assignment:
+\[
+p(Z) \in \{1,2,3,4,5,6,7\}, \qquad
+b(Z) \in \{s,\,p,\,d,\,f\}
+\]
+Lanthanides ($Z=57$--$71$) and actinides ($Z=89$--$103$) are assigned
+$b = f$.  Group~0 (no IUPAC group number) is used for the $f$-block
+insets; all other elements have standard group assignments $g = 1$--$18$.
+
+\section{Active Valence Electron Count $\nval(Z)$}
+\label{sec:nval}
+
+\begin{equation}
+\nval(Z) = \begin{cases}
+  g           & g \in \{1,2\} \quad \text{($s$-block)} \\
+  g - 10      & g \in \{13,\ldots,18\} \quad \text{($p$-block)} \\
+  g           & g \in \{3,\ldots,12\} \quad \text{($d$-block)} \\
+  3           & Z \in [57,71] \cup [89,103] \quad \text{($f$-block)}
+\end{cases}
+\label{eq:nval}
+\end{equation}
+
+\paragraph{$f$-block design decision.}
+Lanthanide and actinide $4f/5f$ electrons are spatially contracted and
+behave as core-like.  Setting $\nval = 3$ for all 30~elements prevents an
+artificial monotonic gradient in $s(Z)$ across each series.  The actual
+variation in polarizability within the lanthanide contraction is absorbed
+by $\cb^{(f)}$ and $\rcov(Z)^3$.  This invariant is enforced by test~T1.
+
+\section{Maximum Period Valence $\nmax(p)$}
+
+\begin{equation}
+\nmax(p) = \begin{cases}
+  2  & p = 1 \\
+  8  & p \in \{2,3\} \\
+  18 & p \in \{4,5\} \\
+  32 & p \in \{6,7\}
+\end{cases}
+\end{equation}
+
+\section{Electronegativity Proxy $\chi(Z)$}
+\label{sec:chi}
+
+An Allred--Rochow-style estimate:
+\begin{equation}
+\chi(Z) = \frac{\nval^{\,\ast}(Z)}{\rcov(Z)^2} \times 0.359
+\label{eq:chi}
+\end{equation}
+where the effective valence count $\nval^{\,\ast}$ equals $\nval(Z)$
+for all elements except noble gases ($g=18$), which use
+$\nval^{\,\ast} = \nmax(p)$ (full shell).  The normalisation constant
+$0.359$ is chosen so that carbon ($\nval = 4$, $\rcov = 0.75\;\Ang$)
+gives $\chi_{\mathrm{C}} \approx 2.55$ on the Pauling scale.
+
+\paragraph{Noble gas electronegativity.}
+Setting $\nval^{\,\ast} = \nmax$ for group~18 produces artificially high
+$\chi$, which drives $\alpha$ down through the denominator of
+Eq.~\eqref{eq:alpha}.  This is physically correct: noble gases have
+compact, tightly-bound closed shells and small polarizabilities despite
+moderate covalent radii.
+
+\section{Softness $s(Z)$}
+\label{sec:soft}
+
+\begin{equation}
+s(Z) = \frac{\nval(Z)\;/\;\nmax\bigl(p(Z)\bigr)}{\chi(Z)}
+\label{eq:soft}
+\end{equation}
+
+Softness is high for diffuse, easily-deformable electron clouds (alkali
+metals: $s_{\mathrm{K}} \approx 5.5$) and low for tight shells (fluorine:
+$s_{\mathrm{F}} \approx 0.3$; neon: $s_{\mathrm{Ne}} \approx 0.03$).
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Fitting Methodology}
+\label{ch:fitting}
+
+\section{Reference Data}
+
+118 reference polarizabilities from two sources:
+\begin{itemize}
+\item \textbf{Miller (1990):} gas-phase experimental values for
+  $Z=1$--$54$ (JACS~112, 8533).
+\item \textbf{Schwerdtfeger \& Nagle (2019):} relativistic
+  DHF/CCSD(T) values for $Z=21$--$118$ (Mol.\ Phys.~117, 1200).
+\end{itemize}
+Each entry carries a fitting weight $w_i \in [0.1, 2.0]$ encoding
+reliability: $w = 2.0$ for high-priority simulation elements (H, C, N, O,
+S), $w = 0.3$ for radioactive elements with theory-only values.
+
+\section{Loss Function}
+
+The objective is a weighted Huber loss in log-space plus a smoothness
+penalty:
+\begin{equation}
+\mathcal{L}(\bm\theta) = \sum_{i=1}^{N} w_i \;\mathcal{H}_\delta\!\left(
+  \ln\hat\alpha_i - \ln\alpha_i^{\mathrm{ref}}\right)
+\;+\; \eta \sum_{(a,b)\in\mathcal{P}} \mathcal{H}_\delta\!\left(
+  \Delta_{ab}^{\mathrm{pred}} - \Delta_{ab}^{\mathrm{ref}}\right)
+\label{eq:loss}
+\end{equation}
+where $\mathcal{H}_\delta(x) = \tfrac{1}{2}x^2$ for $|x| \le \delta$
+and $\delta(|x| - \tfrac{1}{2}\delta)$ otherwise, with $\delta = 0.3$.
+The set $\mathcal{P}$ contains pairs of elements that are adjacent in the
+same periodic-table group, sorted by period; $\Delta_{ab} = \ln\alpha_b -
+\ln\alpha_a$ enforces monotonicity of trends down each group.
+
+\paragraph{Why log-space.}  Polarizabilities span three orders of magnitude
+($\alpha_{\mathrm{He}} = 0.205\;\Ang^3$ to
+$\alpha_{\mathrm{Cs}} = 59.4\;\Ang^3$).  Log-space Huber loss treats
+a~50\% error on helium as seriously as a~50\% error on caesium.
+
+\section{Optimisation: Iterative Reweighted Coordinate Descent}
+
+The 15~parameters are fitted by a two-loop scheme:
+
+\begin{enumerate}
+\item \textbf{Outer loop} (up to 30 rounds): after each inner
+  convergence, update element weights $w_i$ based on residuals:
+  \[
+    w_i \leftarrow \min\!\left(w_{\max},\;
+    w_i\bigl(1 + \alpha_{\mathrm{rw}} \cdot
+    \max(0,\;|\epsilon_i|/\tau - 1)\bigr)\right)
+  \]
+  where $\epsilon_i = \ln\hat\alpha_i - \ln\alpha_i^{\mathrm{ref}}$,
+  $\tau = 0.20$ is the tolerance target, $\alpha_{\mathrm{rw}} = 0.3$,
+  and $w_{\max} = 10$.
+
+\item \textbf{Inner loop} (up to 80 sweeps): coordinate descent over
+  all 15~parameters.  Each parameter is optimised by a multi-pass grid
+  search (4~passes $\times$ 100~grid points, geometrically refining the
+  search window).
+\end{enumerate}
+
+\paragraph{Best-checkpoint selection.}
+The weighted loss $\mathcal{L}$ monotonically increases across outer
+iterations (because weights grow), but the \emph{unweighted} RMS error
+may degrade after the optimal reweighting round.  The fitter tracks
+the unweighted RMS at every outer iteration and returns the parameters
+from the checkpoint with the lowest unweighted RMS, not the final
+iterate.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Fitted Parameters (v2.6.2)}
+\label{ch:params}
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Parameter} & \textbf{Value} & \textbf{Physical role} \\
+\midrule
+$\kp^{(1)}$ & 20.820 & Period 1 (H, He) \\
+$\kp^{(2)}$ &  5.381 & Period 2 (Li--Ne) \\
+$\kp^{(3)}$ &  5.117 & Period 3 (Na--Ar) \\
+$\kp^{(4)}$ &  3.956 & Period 4 (K--Kr) \\
+$\kp^{(5)}$ &  3.728 & Period 5 (Rb--Xe) \\
+$\kp^{(6)}$ &  2.919 & Period 6 (Cs--Rn) \\
+$\kp^{(7)}$ &  2.665 & Period 7 (Fr--Og) \\[4pt]
+$\asoft$     & $-0.680$ & Softness coupling \\
+$\bchi$      &  0.225 & Electronegativity exponent \\[4pt]
+$\cb^{(s)}$  &  1.464 & $s$-block multiplier \\
+$\cb^{(p)}$  &  0.973 & $p$-block multiplier \\
+$\cb^{(d)}$  &  1.605 & $d$-block multiplier \\
+$\cb^{(f)}$  &  1.745 & $f$-block multiplier \\[4pt]
+$c_{\text{shell}}$ & 0.328 & Shell-closure suppression amplitude \\
+$a_{\text{rel}}$   & 0.054 & Relativistic stiffening amplitude \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The monotonic decrease $\kp^{(1)} > \kp^{(2)} > \cdots >
+\kp^{(7)}$ reflects increasing nuclear shielding: each additional shell
+of core electrons makes the volume-to-polarizability conversion less
+efficient.  The $d$-block multiplier $\cb^{(d)} \approx 1.6$ confirms
+that partially-filled $d$ shells contribute significant polarisable
+density beyond what $\rcov^3$ alone predicts.  The shell-closure
+amplitude $c_{\text{shell}} \approx 0.33$ suppresses noble-gas
+predictions by a third, while the relativistic amplitude
+$a_{\text{rel}} \approx 0.05$ provides a targeted $\sim 5\%$ correction
+at the Hg hotspot.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Validation Results}
+\label{ch:validation}
+
+\section{Global Accuracy}
+
+\begin{center}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Metric} & \textbf{Z = 1--118} & \textbf{Z = 1--54} \\
+\midrule
+RMS error              & 17.5\% & 14.8\% \\
+Max error              & 64.5\% (Lv) & 57.4\% (Ne) \\
+Monotonicity breaks    & 10/70 pairs & 5/35 pairs \\
+Elements $>$20\% error & 23/118 & 8/54 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Per-Block RMS}
+
+\begin{center}
+\begin{tabular}{lrl}
+\toprule
+\textbf{Block} & \textbf{RMS} & \textbf{Physical note} \\
+\midrule
+$s$-block & 19.0\% & Alkali/alkaline-earth: large $\alpha$, well constrained \\
+$p$-block & 19.9\% & Noble-gas suppression now active ($g_{\text{shell}}$) \\
+$d$-block & 15.5\% & Transition metals: $\cb^{(d)}$ absorbs $d$-shell effect \\
+$f$-block & 16.0\% & Lanthanides/actinides: fixed $\nval=3$ works well \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Improvement from v2.6.0 to v2.6.2}
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Regime} & \textbf{v2.6.0} & \textbf{v2.6.2} & \textbf{Improvement} \\
+\midrule
+Overall RMS           & 19.1\% & 17.5\% & $-8.4\%$ \\
+Noble gases RMS       & 36.7\% & 27.3\% & $-25.6\%$ \\
+Halogens RMS          & 24.1\% & 14.2\% & $-41.1\%$ \\
+Period 6 RMS          & 15.4\% & 14.1\% & $-8.4\%$ \\
+Hg error              & $+36.6\%$ & $+34.0\%$ & $-7.1\%$ \\
+Ne error              & $+85.0\%$ & $+57.4\%$ & $-32.5\%$ \\
+Max error             & 85.0\% & 64.5\% & $-24.1\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Known Failure Modes}
+
+\begin{enumerate}
+\item \textbf{Neon} ($\alpha_{\mathrm{ref}} = 0.396\;\Ang^3$, error
+  $+57\%$): Ne has an anomalously small polarizability relative to its
+  covalent radius.  The model's $\chi$-based suppression is insufficient
+  because $\rcov(\mathrm{Ne}) = 0.67\;\Ang$ overestimates the true
+  electron-cloud extent for this closed-shell atom.
+
+\item \textbf{Nobelium} ($\alpha_{\mathrm{ref}} = 17.5\;\Ang^3$, error
+  $+48\%$): No has strong relativistic contraction of the $7s$ orbital
+  that reduces $\alpha$ below the $\rcov^3$ expectation.  Our
+  non-relativistic descriptors cannot capture this.
+
+\item \textbf{Superheavy $p$-block} (Lv, Ts: errors $>$40\%):
+  Extreme spin--orbit coupling in the $7p_{1/2}$ / $7p_{3/2}$ manifold
+  changes the effective orbital extent.  Relativistic CCSD(T) reference
+  values carry significant uncertainty themselves.
+\end{enumerate}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Integration with the SCF Polarization Solver}
+\label{ch:scf}
+
+The alpha model provides the atomic polarizabilities
+$\alpha_i = \alpha(Z_i)$ that enter the Applequist--Thole SCF equations:
+\begin{align}
+\bm\mu_i &= \alpha_i \, \mathbf{E}_i^{\mathrm{loc}} \label{eq:scf1} \\
+\mathbf{E}_i^{\mathrm{loc}} &= \mathbf{E}_i^{\mathrm{perm}}
+  + \sum_{\substack{j \ne i \\ r_{ij} > r_{\mathrm{excl}}}}
+  f(u_{ij})\,\mathbf{T}_{ij}\,\bm\mu_j \label{eq:scf2}
+\end{align}
+where $\mathbf{T}_{ij}$ is the dipole--dipole interaction tensor and
+$f(u)$ is the Thole exponential damping function:
+\begin{equation}
+f(u) = 1 - \left(1 + \tfrac{a\,u}{2}\right)e^{-au}, \qquad
+u_{ij} = \frac{r_{ij}}{(\alpha_i\,\alpha_j)^{1/6}}, \qquad
+a = 2.6
+\label{eq:thole}
+\end{equation}
+
+\paragraph{Unit convention.}
+All electric fields ($\mathbf{E}^{\mathrm{perm}}$ from charges,
+$\mathbf{T}_{ij}\bm\mu_j$ from dipoles) are computed in Gaussian units
+($e/\Ang^2$) without the Coulomb constant $k_e$.  The constant
+$k_e = 332.0636\;\mathrm{kcal\cdot\Ang/(mol\cdot e^2)}$ appears only in
+the energy formula:
+\begin{equation}
+U_{\mathrm{pol}} = -\frac{1}{2}\,k_e \sum_{i=1}^{N}
+  \bm\mu_i \cdot \mathbf{E}_i^{\mathrm{perm}}
+\label{eq:upol}
+\end{equation}
+
+\paragraph{Exclusion radius.}
+Pairs with $r_{ij} < r_{\mathrm{excl}} = 1.6\;\Ang$ are excluded from
+both the permanent-charge driving field and the dipole--dipole tensor.
+This is equivalent to standard 1-2/1-3 exclusions in AMOEBA without
+requiring bond topology.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Nuclear Stability Integration}
+\label{ch:nuclear}
+
+The polarizability model is tied into a nuclear stability module
+(\texttt{nuclear\_stability.hpp}) that silently annotates each prediction
+with a confidence score derived entirely from atomic structure.
+
+\section{Ab-Initio Stability from $Z$}
+
+Every call to \texttt{alpha\_predict\_checked(Z)} runs a silent stability
+check using three physics engines---no external decay data:
+
+\begin{enumerate}
+\item \textbf{Semi-empirical mass formula} (Bethe--Weizs\"acker, 5
+  parameters + shell correction):  Predicts binding energy $B(Z,A)$,
+  most stable mass number $A^*$, and the fissility parameter $Z^2/A$.
+
+\item \textbf{Nuclear shell model} (magic numbers 2, 8, 20, 28, 50, 82,
+  126):  Gaussian shell correction to $B$ enhances stability at closed
+  proton/neutron shells.
+
+\item \textbf{Geiger--Nuttall law} (Viola--Seaborg parameterisation):
+  Estimates $\alpha$-decay half-life from the $Q$-value
+  $Q_\alpha = B(Z{-}2,A{-}4) + B(2,4) - B(Z,A)$.
+\end{enumerate}
+
+\section{Stability Classes and Confidence}
+
+\begin{center}
+\begin{tabular}{llrl}
+\toprule
+\textbf{Class} & \textbf{Criterion} & \textbf{Conf.} & \textbf{Example} \\
+\midrule
+Stable          & $\exists$ stable isotope & 1.00  & C, Fe, Pb \\
+PrimordialLong  & $t_{1/2} > 4.5$\,Gy      & 0.85  & Th, U, Bi \\
+Radioactive     & $t_{1/2} > 1$\,s          & 0.47--0.90 & Tc, Pm, Cf \\
+VeryShortLived  & $t_{1/2} \in [1\,\mu$s, 1\,s) & 0.10--0.30 & --- \\
+Superheavy      & $t_{1/2} < 1$\,ms or $Z \geq 104$ & 0.02--0.25 & Cn, Lv, Og \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The confidence score gates the AlphaCalibrator's acceptance
+threshold: stable elements use the strict $1\%$ gate; superheavy elements
+widen to $20\%$ (acknowledging that their polarizabilities are purely
+theoretical).
+
+\section{Known Limits}
+
+\begin{itemize}
+\item \textbf{He-4}: Doubly magic ($Z{=}2$, $N{=}2$).  Hardcoded $A^* = 4$
+  because the SEMF liquid-drop model cannot resolve this light nucleus.
+
+\item \textbf{Tc, Pm}: Correctly identified as having no stable isotopes
+  despite $Z < 83$; classified as Radioactive ($\beta^-$ decay).
+
+\item \textbf{Z=104--118}: Classified Superheavy with confidence
+  $\leq 0.25$.  Half-lives are clamped at $\leq 10^5$\,s to prevent
+  SEMF over-prediction of stability for transactinides.
+\end{itemize}
+
+% ───────────────────────────────────────────────────────────────────────────
+\begin{thebibliography}{9}
+
+\bibitem{miller1990}
+K.~J.~Miller,
+``Additivity methods in molecular polarizability,''
+\emph{J.\ Am.\ Chem.\ Soc.}\ \textbf{112}, 8533 (1990).
+
+\bibitem{schwerdtfeger2019}
+P.~Schwerdtfeger and J.~K.~Nagle,
+``2018 Table of static dipole polarizabilities of the neutral elements
+in the periodic table,''
+\emph{Mol.\ Phys.}\ \textbf{117}, 1200 (2019).
+
+\bibitem{pyykkoe2009}
+P.~Pyykk\"o and M.~Atsumi,
+``Molecular single-bond covalent radii for elements 1--118,''
+\emph{Chem.\ Eur.\ J.}\ \textbf{15}, 186 (2009).
+
+\bibitem{applequist1972}
+J.~Applequist, J.~R.~Carl, and K.-K.~Fung,
+``An atom dipole interaction model for molecular polarizability,''
+\emph{J.\ Am.\ Chem.\ Soc.}\ \textbf{94}, 2952 (1972).
+
+\bibitem{thole1981}
+B.~T.~Thole,
+``Molecular polarizabilities calculated with a modified dipole
+interaction,''
+\emph{Chem.\ Phys.}\ \textbf{59}, 341 (1981).
+
+\end{thebibliography}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\part{Plateau Investigation}
+\label{part:c}
+\begin{center}
+  \textit{Part C\,---\,v2.6.3 and v2.7.0 Experiments, Root-Cause Analysis,
+          and Reversion to v2.6.2}
+\end{center}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Background and Baseline}
+\label{ch:baseline}
+
+Parts A and B (Part~I of this booklet) established the v2.6.2 model with
+\textbf{15 parameters}:
+
+\begin{lstlisting}
+alpha(Z) = c_block(Z) * k_period(Z) * r(Z)^3
+           * (1 + a_soft * s(Z)) / chi(Z)^b_chi
+           * g_shell(Z)
+           * g_rel(Z)
+
+g_shell(Z) = 1 - c_shell * shell_closure(Z)   [shell-closure gate]
+g_rel(Z)   = 1 - a_rel   * f_rel(Z)           [relativistic stiffening]
+\end{lstlisting}
+
+The v2.6.2 baseline performance was:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+RMS error (Z=1--118)  & 17.5\% \\
+RMS error (Z=1--54)   & 14.8\% \\
+Noble gas RMS         & 27.3\% \\
+Max error             & 64.5\% (Lv) \\
+Monotonicity breaks   & 10/70 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The goal entering the v2.6.3 / v2.7.0 cycle was to push the global RMS
+below \textbf{15\%}, with particular focus on eliminating the known failure
+regimes: noble gases, the Li/Ne volume degeneracy, and $f$-block scatter.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Experiment 1 --- v2.6.3: Period-Modulated Shell Closure}
+\label{ch:v263}
+
+\section{Motivation}
+
+The v2.6.2 shell-closure gate applies a \textbf{uniform suppression} to
+noble gases regardless of period.  The physical expectation is that heavier
+noble gases (Kr, Xe, Rn) should be \emph{less} suppressed than light ones
+(He, Ne) because their outer electrons are farther from the nucleus and more
+deformable.  The suppression appropriate for He (period~1) over-penalises
+Rn (period~6).
+
+\section{Implementation}
+
+Added one parameter \texttt{c\_shell\_decay} (16 parameters total).
+For noble gases, the shell-closure proximity $\phi_{\mathrm{eff}}$ was
+period-modulated:
+
+\begin{lstlisting}
+phi_eff(Z) = exp(-c_shell_decay * (period(Z) - 1))   [noble gases only]
+phi_eff(Z) = shell_closure(Z)                         [all other elements]
+\end{lstlisting}
+
+This decouples the suppression amplitude for He/Ne from that for Kr/Xe/Rn.
+
+\section{Result}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Metric} & \textbf{v2.6.2} & \textbf{v2.6.3} & \textbf{$\Delta$} \\
+\midrule
+RMS (Z=1--118) & 17.5\% & $\approx$17.3\% & $-0.2\%$ \\
+Noble gas RMS  & 27.3\% & $\approx$24.1\% & $-3.2\%$ \\
+Overall        & ---    & ---             & marginal \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The noble-gas sub-regime improved modestly.  However, the global RMS barely
+moved.  The \texttt{c\_shell\_decay} parameter coupled strongly with
+\texttt{k\_period[1]} (period~1, H and He): lowering the suppression on
+heavier noble gases forced \texttt{k\_period[1]} and \texttt{c\_shell} to
+re-compensate for He and Ne, erasing most of the gain elsewhere.  The
+parameter was not independently informative enough to justify the added
+complexity.  \textbf{Experiment discarded.}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Experiment 2 --- v2.7.0: Fill-Fraction Volume Correction}
+\label{ch:v270}
+
+\section{Motivation}
+
+A known structural deficiency of the v2.6.x base model is that
+$\rcov(Z)^3$ cannot simultaneously account for:
+\begin{itemize}
+  \item \textbf{Alkali metals (Li, Na, K\,\ldots)}: one electron in a
+    partially-filled shell, diffuse cloud, \emph{underestimated} by
+    the model ($-25$ to $-33\%$).
+  \item \textbf{Noble gases (He, Ne)}: full shells, compact cloud,
+    \emph{overestimated} even after $g_{\text{shell}}$ suppression
+    ($+30$ to $+57\%$).
+\end{itemize}
+
+Both errors arise from the same cause: $\rcov$ measures a bonding
+half-distance, not the actual valence-shell radius.  The fill fraction
+$f = n_{\mathrm{val}} / n_{\mathrm{max}}$ is a proxy for how
+``expanded'' or ``contracted'' the outer shell is relative to $\rcov$.
+This idea was formalised as:
+
+\begin{lstlisting}
+g_fill  = 1 + c_orb * (0.5 - fill_fraction(Z))
+r_eff^3 = rcov^3 * max(g_fill, 0.1)
+\end{lstlisting}
+
+\begin{itemize}
+  \item Sparse shells (Li: $f = 0.125$): $g_{\mathrm{fill}} > 1 \;\Rightarrow$ larger effective volume
+  \item Full shells (Ne: $f = 1.0$): $g_{\mathrm{fill}} < 1 \;\Rightarrow$ smaller effective volume
+  \item Mid-shell anchor (C, Si: $f = 0.5$): $g_{\mathrm{fill}} = 1 \;\Rightarrow$ unchanged
+\end{itemize}
+
+\section{Implementation}
+
+Added \texttt{c\_orb} (17 parameters total).  The \texttt{fill\_fraction(Z)}
+descriptor was already present in \texttt{atomic\_descriptors.hpp}.  The
+model was re-fitted with the full 17-parameter coordinate descent.
+
+\section{Result}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Metric} & \textbf{v2.6.3} & \textbf{v2.7.0} & \textbf{$\Delta$} \\
+\midrule
+RMS (Z=1--118) & $\approx$17.3\% & $17.02 \pm 0.04\%$ & $-0.3\%$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{The model plateaued at $\approx$17.02\% and did not improve further
+across outer iterations.}  This is the plateau event that motivated Part~C.
+\textbf{Experiment discarded.}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Root-Cause Analysis of the 17\% Plateau}
+\label{ch:rootcause}
+
+Four independent causes stack to produce the observed floor.
+
+\section{Cause 1 --- $f$-block Descriptor Degeneracy (primary, $\sim$6--8\% irreducible)}
+
+The design decision in \texttt{atomic\_descriptors.hpp} (Section~\ref{sec:nval})
+fixes \texttt{active\_valence = 3} for \textbf{all} lanthanides (Z=57--71)
+and actinides (Z=89--103).  This was intentional: it prevents an artificial
+monotonic gradient in softness across each series.
+
+The consequence is that \texttt{fill\_fraction(Z)}, \texttt{softness(Z)},
+and \texttt{chi(Z)} are \textbf{nearly constant across the entire lanthanide
+series}.  The only intra-series variation is from $\rcov(Z)$, which spans
+only $\approx$11\% (1.62--1.80\,\AA) across La--Lu, giving a $\rcov^3$
+range of $\approx$37\%.
+
+The reference data spans \textbf{$\approx$60\%}
+(La=$31.1$\,\AA$^3 \to$ Tm/Yb=$19.5$\,\AA$^3$) and is
+\textbf{non-monotonic}:
+
+\begin{center}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Element} & \textbf{Z} & \textbf{$\alpha_{\mathrm{ref}}$ (\AA$^3$)} & \textbf{Anomaly} \\
+\midrule
+La  & 57 & 31.1 & --- \\
+Ce  & 58 & 29.6 & --- \\
+Pr  & 59 & 28.2 & --- \\
+Nd  & 60 & 31.4 & $\leftarrow$ bump above La (4$f$ anomaly) \\
+Sm  & 62 & 23.8 & --- \\
+Eu  & 63 & 27.7 & $\leftarrow$ half-filled 4$f$ shell bump \\
+Yb  & 70 & 19.5 & $\leftarrow$ filled 4$f$ shell contraction \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+These anomalies are real $4f$ physics that no smooth $\rcov^3 \cdot
+c_{\mathrm{block}}^{(f)}$ trend can represent.
+
+\paragraph{Conclusion.} The $\approx$17\% floor is largely set by the
+$f$-block and cannot be broken without either relaxing the
+\texttt{active\_valence = 3} constraint or adding an explicit 4$f$-anomaly
+correction term.
+
+\section{Cause 2 --- Objective/Metric Mismatch}
+
+The fitter minimises a \textbf{log-space Huber loss}:
+\begin{lstlisting}
+L(theta) = sum w_i * Huber(log(alpha_pred) - log(alpha_ref))
+\end{lstlisting}
+
+But the reported performance metric is a \textbf{linear-space RMS\,\%
+error}:
+\begin{lstlisting}
+pct_i = 100 * (alpha_pred - alpha_ref) / alpha_ref
+RMS   = sqrt( sum(pct_i^2) / N )
+\end{lstlisting}
+
+These are different norms.  A 5\% log-space error on Cs ($\alpha =
+59.4\;\Ang^3$) is ``small'' to the optimiser but contributes a large
+absolute residual to the linear RMS\%.  The practical consequence:
+\textbf{the optimiser can legitimately converge in log-space while the
+linear RMS\% plateau is driven by moderate-log-error, high-$\alpha$
+elements} (K, Rb, Cs, Ba).  Adding more parameters cannot resolve this
+without also changing what the optimiser minimises.
+
+\section{Cause 3 --- Coordinate Descent Saddle in a Collinear Parameter Space}
+
+The parameters \texttt{k\_period[p]}, \texttt{c\_block[b]}, and
+\texttt{c\_orb} all multiply the same $r_{\mathrm{eff}}^3$ term:
+\begin{lstlisting}
+alpha  proportional to  c_block[b] * k_period[p] * r_eff^3
+\end{lstlisting}
+
+These are \textbf{collinear in their effect on the objective}: increasing
+\texttt{k\_period[2]} by 10\% has the same effect as increasing
+\texttt{c\_block[s]} by 10\% for any period-3 $s$-block element.
+Coordinate descent cannot make progress along a collinear direction.
+Gradient-based methods (L-BFGS, Adam) would use curvature information to
+escape; the current grid-scan CD has no such mechanism.
+
+\section{Cause 4 --- Smoothness Penalty vs.\ Real Non-Monotonic Physics}
+
+The group-pair smoothness penalty (\texttt{eta\_smooth = 0.15}) penalises
+cases where the model's group trend disagrees with the reference:
+\begin{lstlisting}
+L_smooth = eta * sum_{(a,b) in group pairs} Huber(Delta_pred - Delta_ref)
+\end{lstlisting}
+
+This was designed to prevent erratic per-element fits that break periodic
+trends.  However, the \textbf{lanthanide series contains genuine
+non-monotonic bumps} (Nd, Eu) that look like noise to the penalty but are
+real $4f$ physics.  The penalty actively pushes the optimiser \emph{away}
+from fitting these elements correctly.  Since $\cb^{(f)}$ is a single
+multiplier for all 15 $f$-block elements, the only solution available to
+the model is a smooth $\rcov^3$ curve that necessarily misses Nd and Eu.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Quantitative Decomposition of the 17\% Floor}
+\label{ch:decomp}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Source} & \textbf{Est.\ RMS contribution} & \textbf{Breakable with current arch.?} \\
+\midrule
+$f$-block descriptor degeneracy       & 6--8\%  & Only with architectural change \\
+High-$\alpha$ alkali metric mismatch  & 2--4\%  & Partly (change reported metric) \\
+Correlated parameter saddle (CD)      & 2--4\%  & Yes (gradient-based optimiser) \\
+Smoothness penalty vs.\ $f$-anomalies & 2--3\%  & Partly (exclude $f$-block from penalty) \\
+\texttt{c\_orb} insufficient dynamic range & 1--2\% & Yes (wider range, separate $s$/$p$ terms) \\
+\midrule
+\textbf{Reducible floor (current descriptors)} & \textbf{$\approx$12--13\%} & --- \\
+\textbf{Irreducible floor ($f$-block physics)} & \textbf{$\approx$10--12\%} & --- \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Decision: Revert to v2.6.2}
+\label{ch:decision}
+
+Given the analysis above:
+
+\begin{itemize}
+  \item \textbf{v2.6.3} (\texttt{c\_shell\_decay}): marginal improvement
+    ($-0.2\%$ global RMS), adds parameter coupling complexity.
+    \textbf{Discarded.}
+  \item \textbf{v2.7.0} (\texttt{c\_orb}): marginal improvement
+    ($-0.5\%$ global RMS across both experiments), does not address the
+    dominant failure mechanism.
+    \textbf{Discarded.}
+\end{itemize}
+
+The code has been reverted to \textbf{v2.6.2} (15~parameters, RMS\,=\,17.5\%):
+\begin{itemize}
+  \item \texttt{alpha\_model.hpp}: \texttt{AlphaModelParams} restored to
+    v2.6.2 values; \texttt{alpha\_predict} simplified back to direct
+    \texttt{shell\_closure(Z)} gate.
+  \item \texttt{fit\_alpha\_model.cpp}: \texttt{cd\_sweep} and JSON
+    writer stripped of \texttt{c\_orb} and \texttt{c\_shell\_decay}.
+\end{itemize}
+
+\textbf{v2.6.2 is the current stable baseline.}  It is well-characterised,
+reproducible, and its failure modes are fully documented.  No further
+incremental parameter additions should be attempted without first
+addressing at least one of the four root causes in
+Chapter~\ref{ch:rootcause}.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Anti-Pattern Log}
+\label{ch:antipattern}
+
+The following approaches have been tried and failed to break the plateau.
+They should \textbf{not} be retried without addressing the underlying cause
+first.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Approach} & \textbf{Version} & \textbf{Why it failed} \\
+\midrule
+Period-decay of noble-gas suppression & v2.6.3 & Coupled to \texttt{k\_period[1]};
+  He/Ne compensation erased gain \\
+Fill-fraction volume correction & v2.7.0 & $f$-block fill fraction is constant;
+  collinear with \texttt{k\_period}/\texttt{c\_block} \\
+More outer reweighting iterations (30$\to$50) & v2.7.0 & Weight saturation
+  plateau; best checkpoint still $\approx$17\% \\
+Wider coordinate descent grid & ongoing & Does not escape correlated-parameter
+  saddles \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Conclusion}
+\label{ch:conclusion}
+
+The v2.6.3 and v2.7.0 experiments were a failure in the narrow sense that
+neither broke the 17\% RMS floor.  They were a success in the broader sense
+that they conclusively characterised \emph{why} the floor exists and
+established that it cannot be broken by adding parameters to the current
+descriptor architecture.  The four-cause analysis in
+Chapter~\ref{ch:rootcause} and the anti-pattern log in
+Chapter~\ref{ch:antipattern} are the durable outputs of this work: they
+prevent the same dead ends from being explored a second time.
+
+The generative model was always a pragmatic compromise---a way to obtain
+a reasonable $\alpha(Z)$ for any element using only atomic number, with no
+external data at runtime.  That constraint made it impossible to represent
+the genuine non-monotonic $4f$ physics in the lanthanide series, the
+anomalous compactness of Ne relative to its covalent radius, or the
+explicit relativistic contractions of the superheavy block.
+
+\paragraph{Going forward: empirical values.}
+For production use, $\alpha(Z)$ will be set from the empirical reference
+table directly---the same 118-entry dataset (Miller 1990,
+Schwerdtfeger \& Nagle 2019) that was used to fit the generative model.
+This eliminates all model error for the 118 tabulated elements and removes
+any motivation for further parameter tuning.  The generative model
+(\texttt{alpha\_model.hpp}) is retained as a fallback for elements outside
+the table (Z\,=\,119--120) and as a documented record of what a
+closed-form predictor can and cannot achieve.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Part D --- Empirical Lookup Table}
+\label{ch:partd}
+
+\textbf{Direction:} Replace the generative model prediction with a direct
+lookup into the 118-entry empirical reference table for $Z = 1$--$118$.
+The generative model is kept as the fallback path for $Z > 118$.
+
+\textbf{Mechanism:} At runtime, \texttt{alpha\_predict(Z)} checks whether
+$Z \leq 118$.  If so, it returns the tabulated value from a compile-time
+constant array (same source data as \texttt{polarizability\_ref.csv}).
+If $Z > 118$, it falls through to the existing generative equation with
+$\kp^{(7)}$ as the period-7 floor.
+
+\textbf{Expected outcome:} RMS error for $Z = 1$--$118$ drops to 0\% by
+construction.  The nuclear-stability confidence scores remain active and
+continue to annotate each returned value.  The offline fitter
+(\texttt{fit\_alpha\_model.cpp}) becomes a diagnostic tool rather than a
+production dependency.
+
+\textbf{T1 invariant impact:} None.  The \texttt{active\_valence = 3}
+invariant in \texttt{atomic\_descriptors.hpp} is a descriptor-layer
+constraint and is unaffected by switching the prediction path.
+
+% ───────────────────────────────────────────────────────────────────────────
+\chapter{Document Index}
+\label{ch:index}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Document} & \textbf{Content} \\
+\midrule
+\texttt{docs/section\_alpha\_model.tex}      & Parts A/B source (model derivation, v2.6.0--v2.6.2) \\
+\texttt{docs/ALPHA\_MODEL\_REPORT\_PARTC.md} & Part C source (plateau investigation) \\
+\texttt{docs/ALPHA\_MODEL\_BOOKLET.tex}      & \textbf{This file} (compiled booklet, Parts A--C) \\
+\texttt{docs/ALPHA\_MODEL\_REPORT\_PARTD.md} & Part D: empirical lookup table (this chapter) \\
+\texttt{atomistic/models/alpha\_model.hpp}         & Active model code (v2.6.2) \\
+\texttt{atomistic/models/atomic\_descriptors.hpp}  & Descriptor layer (unchanged) \\
+\texttt{tools/fit\_alpha\_model.cpp}         & Offline fitter (reverted to v2.6.2) \\
+\texttt{config/alpha\_model\_params.json}    & Saved parameter checkpoint \\
+\texttt{tests/test\_alpha\_model.cpp}        & T1--T4 invariant tests \\
+\texttt{tests/test\_alpha\_calibrator.cpp}   & AlphaCalibrator tests \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

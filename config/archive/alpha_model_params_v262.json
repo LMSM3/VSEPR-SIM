@@ -1,0 +1,22 @@
+{
+  "description": "Fitted polarizability model parameters",
+  "model": "alpha = c_block * k_period * r_cov^3 * (1 + a_soft * s) / chi^b_chi",
+  "source": "tools/fit_alpha_model.cpp (iterative reweighting + Huber)",
+  "k_period": [
+    25.860964,  // period 1
+    5.732278,  // period 2
+    4.816294,  // period 3
+    3.501532,  // period 4
+    3.216003,  // period 5
+    2.521268,  // period 6
+    2.271765  // period 7
+  ],
+  "a_soft": -0.733333,
+  "b_chi":  0.347203,
+  "c_block": [
+    1.363706,  // s-block
+    0.914318,  // p-block
+    2.015441,  // d-block
+    1.800362  // f-block
+  ]
+}

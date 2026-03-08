@@ -60,6 +60,7 @@ struct ActionParams {
     int cloud_size = 0;
     double density = 0.0;
     std::string preset;
+    std::vector<int> supercell;    // Replication factors [na, nb, nc] for crystal supercells
 
     // relax
     int steps = 1000;
