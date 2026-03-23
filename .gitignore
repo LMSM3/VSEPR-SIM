@@ -155,6 +155,8 @@ resources/*_256.png
 
 # Build directories (WSL / local variants)
 build-wsl/
+build_wsl/
+build_wsl_vis/
 build-v26/
 build-v27/
 wsl-build/
