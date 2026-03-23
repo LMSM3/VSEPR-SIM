@@ -366,8 +366,9 @@ if(BUILD_APPS)
     target_include_directories(test_equipartition PRIVATE ${PROJECT_SOURCE_DIR})
 
     # ========================================================================
-    # Atomistic test executables (tests/ sources) → now in tests/CMakeLists.txt
-    # Kept here: tools only (fit_alpha_model, auto_fit_alpha)
+    # Atomistic test targets are now in tests/CMakeLists.txt
+    # (problem1, problem2, scf_polarization, alpha_model, polarization_phases,
+    #  nuclear_chemical, alpha_calibrator, nuclear_stability, experiment_match)
     # ========================================================================
 
     # Polarizability model fitter (offline tool, reads data/polarizability_ref.csv)
@@ -382,7 +383,7 @@ if(BUILD_APPS)
 
     # ========================================================================
 
-    # Phase 1 Kernel Audit — deterministic revalidation of core energy/forces
+    # Phase 1 Kernel Audit
     add_executable(phase1_kernel_audit apps/phase1_kernel_audit.cpp)
     target_link_libraries(phase1_kernel_audit atomistic)
     target_include_directories(phase1_kernel_audit PRIVATE ${PROJECT_SOURCE_DIR})
@@ -599,12 +600,9 @@ if(BUILD_APPS)
     target_include_directories(compute_forces PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
     install(TARGETS compute_forces DESTINATION bin)
 
-    # CG Mapping Test — Coarse-grained mapping pipeline validation
-    add_executable(test_cg_mapping tests/test_cg_mapping.cpp)
-    target_link_libraries(test_cg_mapping coarse_grain atomistic vsepr_core)
-    target_include_directories(test_cg_mapping PRIVATE ${PROJECT_SOURCE_DIR})
+    # CG Mapping Test — now in tests/CMakeLists.txt (test_cg_mapping_suite)
 
-    # CG Split-Screen Viewer — Atomistic ↔ Coarse-Grained inspection tool
+    # CG Split-Screen Viewer
     if(BUILD_VIS)
         add_executable(cg-viewer apps/cg-viewer.cpp)
         target_link_libraries(cg-viewer coarse_grain atomistic vsepr_vis vsepr_core OpenGL::GL glfw GLEW::GLEW)
@@ -630,7 +628,6 @@ if(BUILD_APPS)
 endif()
 
 # ============================================================================
-
 
 # Tests (modular — see tests/CMakeLists.txt)
 # ============================================================================
