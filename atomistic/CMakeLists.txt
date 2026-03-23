@@ -137,6 +137,7 @@ message(STATUS "  [${ATOMISTIC_MODULE_COUNT}] Core: State, LinearAlgebra, Alignm
 
 add_library(atomistic STATIC
     core/state.hpp
+    core/fragment_view.hpp
     core/linalg.hpp
     core/linalg.cpp
     core/alignment.hpp

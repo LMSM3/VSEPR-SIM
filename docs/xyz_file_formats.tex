@@ -1,0 +1,271 @@
+\documentclass[10pt, a4paper, twocolumn]{article}
+\usepackage[top=0.75in, bottom=0.75in, left=0.65in, right=0.65in]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+  {8pt plus2pt minus2pt}{3pt}{\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {5pt plus1pt minus1pt}{2pt}{\normalsize\bfseries}}
+\makeatother
+
+\lstdefinestyle{xyz}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{gray!8},
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{gray!40},
+  xleftmargin=4pt,
+  xrightmargin=4pt,
+  breaklines=true,
+  numbers=none
+}
+
+\setlist{nosep, leftmargin=1.2em}
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+\pagestyle{empty}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries XYZ File Formats}\\[3pt]
+{\small VSEPR-Sim Atomistic Engine \quad|\quad
+ Formats: \texttt{.xyz} \texttt{.xyza} \texttt{.xyzc} \texttt{.xyzf}}
+\end{center}
+\vspace{-0.5em}\hrule\vspace{0.5em}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Overview}
+
+All VSEPR-Sim molecular I/O uses plain-text, line-oriented files.
+Four formats share a common structural grammar; each adds fields to
+the preceding one.
+
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Ext.} & \textbf{Name} & \textbf{Use case}\\
+\midrule
+\texttt{.xyz}  & Standard XYZ       & Static geometry snapshot \\
+\texttt{.xyza} & Extended XYZ       & Charges, velocities, forces \\
+\texttt{.xyzc} & Checkpoint XYZ     & Restartable MD state \\
+\texttt{.xyzf} & Formation XYZ      & Multi-frame trajectory \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Units (all formats):}
+coordinates in \AA{} ($10^{-10}$\,m);
+energies in kcal/mol;
+velocities in \AA/fs;
+forces in kcal/(mol\,\AA);
+charges in elementary charge $e$.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Standard XYZ (\texttt{.xyz})}
+
+\subsection{Grammar}
+
+\begin{lstlisting}[style=xyz]
+<N>
+<comment>
+<sym>  <x>  <y>  <z>
+...   (N lines)
+\end{lstlisting}
+
+\begin{itemize}
+  \item \textbf{Line 1}: atom count $N$ (integer $\ge 1$)
+  \item \textbf{Line 2}: free-text comment (may be empty)
+  \item \textbf{Lines 3--}: element symbol + three Cartesian coordinates,
+        whitespace-separated
+\end{itemize}
+
+\subsection{Coordinate system}
+Right-handed Cartesian $(x, y, z)$ in \AA.
+Origin is arbitrary; conventional choice is near the centre of mass.
+Precision: 6 decimal places $\Rightarrow$ resolution $\approx 0.1$\,pm.
+
+\subsection{Example: water}
+
+\begin{lstlisting}[style=xyz]
+3
+H2O | E = -6.245 kcal/mol
+O   0.000000  0.000000  0.119262
+H   0.000000  0.763239 -0.477049
+H   0.000000 -0.763239 -0.477049
+\end{lstlisting}
+
+\subsection{Comment line convention}
+\begin{lstlisting}[style=xyz]
+<name> | E = <val> kcal/mol | <notes>
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Extended XYZ (\texttt{.xyza})}
+
+Adds per-atom scalar and vector properties after the $(x,y,z)$ fields.
+
+\subsection{Grammar}
+
+\begin{lstlisting}[style=xyz]
+<N>
+<comment> properties="<list>"
+<sym> <x> <y> <z> [<q> <vx> <vy> <vz> <fx> <fy> <fz> <e>]
+\end{lstlisting}
+
+The \texttt{properties} key in the comment line declares which optional
+columns are present (order is fixed):
+
+\begin{center}
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{Key} & \textbf{Symbol} & \textbf{Unit} & \textbf{Cols}\\
+\midrule
+\texttt{charge}   & $q_i$                    & $e$              & 1 \\
+\texttt{velocity} & $\mathbf{v}_i$           & \AA/fs           & 3 \\
+\texttt{force}    & $\mathbf{F}_i$           & kcal/(mol\,\AA)  & 3 \\
+\texttt{energy}   & $\varepsilon_i$          & kcal/mol         & 1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Example: H$_2$O with charges and velocities}
+
+\begin{lstlisting}[style=xyz]
+3
+Water MD frame 1 properties="charge:velocity"
+O  0.00  0.00  0.12 -0.834  0.00  0.00  0.00
+H  0.00  0.76 -0.48  0.417  0.12  0.08 -0.03
+H  0.00 -0.76 -0.48  0.417 -0.12  0.08 -0.03
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Checkpoint XYZ (\texttt{.xyzc})}
+
+Extends \texttt{.xyza} with a simulation-state header block required to
+restart an interrupted MD run without loss of trajectory continuity.
+
+\subsection{Header block (before atom data)}
+
+\begin{lstlisting}[style=xyz]
+CHECKPOINT
+step    <integer>
+time    <float> fs
+dt      <float> fs
+T_target <float> K
+seed    <integer>
+box     <ax> <ay> <az>  (Angstrom, optional PBC)
+END_CHECKPOINT
+<N>
+<comment>
+<atom lines with charge+velocity+force>
+\end{lstlisting}
+
+\begin{itemize}
+  \item \texttt{step}: MD step number at checkpoint
+  \item \texttt{time}: accumulated simulation time (fs)
+  \item \texttt{dt}: integrator timestep (fs)
+  \item \texttt{T\_target}: thermostat set-point (K); 0 = NVE
+  \item \texttt{seed}: RNG seed for reproducible continuation
+  \item \texttt{box}: simulation box vectors; omit for open boundary
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Formation XYZ (\texttt{.xyzf})}
+
+A multi-frame format: one or more standard \texttt{.xyz} or \texttt{.xyza}
+blocks concatenated in a single file, separated only by the next atom-count
+line.  Used for minimisation traces, NVT trajectories, and reaction paths.
+
+\begin{lstlisting}[style=xyz]
+<N>          <- frame 1
+<comment>
+<atom lines>
+<N>          <- frame 2
+<comment>
+<atom lines>
+...
+\end{lstlisting}
+
+Each frame is self-contained and independently parseable.
+The comment line of frame $k$ typically records the step index and
+instantaneous energy:
+
+\begin{lstlisting}[style=xyz]
+Step 0 | E = -12.30 kcal/mol | FIRE iter
+Step 1 | E = -13.11 kcal/mol | FIRE iter
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Bounding Box \& PBC}
+
+When periodic boundary conditions are active, the box geometry is
+stored either in the \texttt{.xyzc} header or as a special comment-line
+key in any format:
+
+\begin{lstlisting}[style=xyz]
+Lattice="ax 0 0  0 ay 0  0 0 az" pbc="T T T"
+\end{lstlisting}
+
+Box vectors are in \AA.  \texttt{pbc} flags indicate which axes are
+periodic (T) or open (F).  The format is compatible with the ASE
+\textit{Extended XYZ} convention.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Implementation}
+
+\begin{center}
+\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{ll}
+\toprule
+\textbf{File} & \textbf{Role}\\
+\midrule
+\texttt{include/io/xyz\_format.hpp}  & Struct definitions, API  \\
+\texttt{src/io/xyz\_format.cpp}      & Reader / writer impl.    \\
+\texttt{include/thermal/xyzc\_format.hpp} & Checkpoint reader \\
+\texttt{src/thermal/xyzc\_format.cpp}     & Checkpoint writer \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Key reader types: \texttt{XYZReader}, \texttt{XYZAReader}, and
+\texttt{XYZWriter} / \texttt{XYZAWriter} in \texttt{namespace vsepr::io}.
+Bond auto-detection (\texttt{detect\_bonds}) uses per-element covalent radii
+with a configurable scale factor (default 1.2).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Typical Energy Ranges}
+
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Observable} & \textbf{Typical range} & \textbf{Unit} \\
+\midrule
+Total bonded energy   & $-10^2$\,--\,$-10^5$ & kcal/mol \\
+Relative conformer    & $0.1$\,--\,$10$       & kcal/mol \\
+Activation barrier    & $5$\,--\,$50$         & kcal/mol \\
+Force (unrelaxed)     & $1$\,--\,$100$        & kcal/(mol\,\AA) \\
+Force convergence     & $< 0.01$              & kcal/(mol\,\AA) \\
+Velocity (300\,K, C)  & $\sim 0.02$           & \AA/fs \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.5em}
+\hrule
+\vspace{0.3em}
+{\small\textit{See also:} \texttt{docs/FILE\_FORMATS.md} for prose description,
+\texttt{section5\_integration.tex} for MD timestep conventions.}
+
+\end{document}

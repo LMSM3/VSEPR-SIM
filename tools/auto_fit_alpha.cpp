@@ -266,27 +266,30 @@ static double cd_sweep(std::vector<RefEntry>& data,
     // Base model
     for (int p = 0; p < 7; ++p)
         best_loss = scan(best.k_period[p], 0.1, 60.0);
-    best_loss = scan(best.a_soft, -3.0, 5.0);
-    best_loss = scan(best.b_chi,   0.0, 5.0);
     for (int b = 0; b < 4; ++b)
         best_loss = scan(best.c_block[b], 0.05, 10.0);
 
-    // v2.7.0: Fill-fraction volume correction — scan FIRST to set the
-    // volume baseline before gates refine it.
-    best_loss = scan(best.c_orb, -1.0, 3.0);
-
-    // Gates + c_orb — interleaved re-tuning (4 rounds)
+    // Binding stiffness + relativistic + f-shielding — interleaved re-tuning (4 rounds)
     for (int r = 0; r < 4; ++r) {
-        best_loss = scan(best.c_orb,         -1.0, 3.0);
-        best_loss = scan(best.c_shell,       0.0, 0.99);
-        best_loss = scan(best.c_shell_decay, 0.0, 2.00);
-        best_loss = scan(best.a_rel,         0.0, 0.60);
+        best_loss = scan(best.b_bind,  0.0,   1.0);
+        best_loss = scan(best.c_rel,  -1e-4,  1e-4);
+        best_loss = scan(best.beta_f,  0.0,   0.5);
         for (int p = 0; p < 7; ++p)
             best_loss = scan(best.k_period[p], 0.1, 60.0);
         for (int b = 0; b < 4; ++b)
             best_loss = scan(best.c_block[b], 0.05, 10.0);
-        best_loss = scan(best.b_chi,  0.0, 5.0);
-        best_loss = scan(best.a_soft, -3.0, 5.0);
+    }
+
+    // F-block correction (4 rounds)
+    for (int r = 0; r < 4; ++r) {
+        best_loss = scan(best.a_f1,       -2.0,  2.0);
+        best_loss = scan(best.a_f2,       -2.0,  4.0);
+        best_loss = scan(best.a_f3,       -4.0,  2.0);
+        best_loss = scan(best.blob_f_lin, -2.0,  2.0);
+        best_loss = scan(best.beta_f,      0.0,  0.5);
+        best_loss = scan(best.c_block[3],  0.05, 10.0);
+        best_loss = scan(best.k_period[5], 0.1,  60.0);
+        best_loss = scan(best.k_period[6], 0.1,  60.0);
     }
     return best_loss;
 }
@@ -357,14 +360,15 @@ static AlphaModelParams perturb(const AlphaModelParams& base,
     AlphaModelParams p = base;
     for (int i = 0; i < 7; ++i)
         p.k_period[i] = jitter(p.k_period[i], 0.1, 60.0);
-    p.a_soft       = jitter(p.a_soft, -3.0, 5.0);
-    p.b_chi        = jitter(p.b_chi,   0.0, 5.0);
+    p.b_bind       = jitter(p.b_bind,    0.0,  1.0);
+    p.c_rel        = jitter(p.c_rel,    -1e-4, 1e-4);
+    p.beta_f       = jitter(p.beta_f,    0.0,  0.5);
     for (int i = 0; i < 4; ++i)
         p.c_block[i] = jitter(p.c_block[i], 0.05, 10.0);
-    p.c_shell       = jitter(p.c_shell,       0.0, 0.99);
-    p.c_shell_decay = jitter(p.c_shell_decay, 0.0, 2.0);
-    p.a_rel         = jitter(p.a_rel,         0.0, 0.6);
-    p.c_orb         = jitter(p.c_orb,        -1.0, 3.0);
+    p.a_f1         = jitter(p.a_f1,     -2.0,  2.0);
+    p.a_f2         = jitter(p.a_f2,     -2.0,  4.0);
+    p.a_f3         = jitter(p.a_f3,     -4.0,  2.0);
+    p.blob_f_lin   = jitter(p.blob_f_lin,-2.0,  2.0);
     return p;
 }
 
@@ -373,14 +377,15 @@ static AlphaModelParams random_init(std::mt19937& rng) {
     AlphaModelParams p;
     for (int i = 0; i < 7; ++i)
         p.k_period[i] = 1.0 + u(rng) * 30.0;
-    p.a_soft       = -2.0 + u(rng) * 4.0;
-    p.b_chi        = u(rng) * 2.0;
+    p.b_bind       = u(rng) * 0.8;
+    p.c_rel        = -1e-4 + u(rng) * 2e-4;
+    p.beta_f       = u(rng) * 0.4;
     for (int i = 0; i < 4; ++i)
         p.c_block[i] = 0.3 + u(rng) * 3.0;
-    p.c_shell       = u(rng) * 0.8;
-    p.c_shell_decay = u(rng) * 1.0;
-    p.a_rel         = u(rng) * 0.4;
-    p.c_orb         = -0.5 + u(rng) * 2.5;  // range [-0.5, 2.0]
+    p.a_f1         = -1.0 + u(rng) * 2.0;
+    p.a_f2         = -1.0 + u(rng) * 4.0;
+    p.a_f3         = -2.0 + u(rng) * 4.0;
+    p.blob_f_lin   = -1.0 + u(rng) * 2.0;
     return p;
 }
 
@@ -395,7 +400,7 @@ static void write_json(const char* path, const AlphaModelParams& p,
     f << "{\n"
       << "  \"description\": \"Auto-fitted polarizability model (gen " << gen << ")\",\n"
       << "  \"rms_pct\": " << rms << ",\n"
-      << "  \"model\": \"alpha = c_block*k_period*r^3*(1+a_soft*s)/chi^b_chi * g_shell * g_rel\",\n"
+      << "  \"model\": \"Alpha Method D: k_period*c_block*r_eff^3 * g_bind * g_f + blob\",\n"
       << "  \"k_period\": [";
     for (int i = 0; i < 7; ++i) {
         char b[64]; std::snprintf(b, sizeof(b), "%.8f", p.k_period[i]);
@@ -403,18 +408,19 @@ static void write_json(const char* path, const AlphaModelParams& p,
     }
     f << "],\n";
     char b[128];
-    std::snprintf(b, sizeof(b), "  \"a_soft\": %.8f,\n", p.a_soft); f << b;
-    std::snprintf(b, sizeof(b), "  \"b_chi\": %.8f,\n",  p.b_chi);  f << b;
+    std::snprintf(b, sizeof(b), "  \"b_bind\": %.8f,\n",  p.b_bind);  f << b;
+    std::snprintf(b, sizeof(b), "  \"c_rel\": %.9f,\n",   p.c_rel);   f << b;
+    std::snprintf(b, sizeof(b), "  \"beta_f\": %.8f,\n",  p.beta_f);  f << b;
     f << "  \"c_block\": [";
     for (int i = 0; i < 4; ++i) {
         std::snprintf(b, sizeof(b), "%.8f", p.c_block[i]);
         f << b; if (i < 3) f << ", ";
     }
     f << "],\n";
-    std::snprintf(b, sizeof(b), "  \"c_shell\": %.8f,\n",       p.c_shell);       f << b;
-    std::snprintf(b, sizeof(b), "  \"c_shell_decay\": %.8f,\n", p.c_shell_decay); f << b;
-    std::snprintf(b, sizeof(b), "  \"a_rel\": %.8f,\n",         p.a_rel);         f << b;
-    std::snprintf(b, sizeof(b), "  \"c_orb\": %.8f\n",          p.c_orb);         f << b;
+    std::snprintf(b, sizeof(b), "  \"a_f1\": %.8f,\n",      p.a_f1);      f << b;
+    std::snprintf(b, sizeof(b), "  \"a_f2\": %.8f,\n",      p.a_f2);      f << b;
+    std::snprintf(b, sizeof(b), "  \"a_f3\": %.8f,\n",      p.a_f3);      f << b;
+    std::snprintf(b, sizeof(b), "  \"blob_f_lin\": %.8f\n", p.blob_f_lin); f << b;
     f << "}\n";
 }
 
@@ -432,8 +438,9 @@ static void write_hpp(const char* path, const AlphaModelParams& p,
         f << b; if (i < 6) f << ","; f << "   // period " << (i+1) << "\n";
     }
     f << "    };\n\n";
-    std::snprintf(b, sizeof(b), "    double a_soft = %.8f;\n", p.a_soft); f << b;
-    std::snprintf(b, sizeof(b), "    double b_chi  = %.8f;\n", p.b_chi);  f << b;
+    std::snprintf(b, sizeof(b), "    double b_bind     = %.8f;\n", p.b_bind);     f << b;
+    std::snprintf(b, sizeof(b), "    double c_rel      = %.9f;\n", p.c_rel);      f << b;
+    std::snprintf(b, sizeof(b), "    double beta_f     = %.8f;\n", p.beta_f);     f << b;
     f << "\n    double c_block[4] = {\n";
     const char* bn[] = {"s","p","d","f"};
     for (int i = 0; i < 4; ++i) {
@@ -441,10 +448,10 @@ static void write_hpp(const char* path, const AlphaModelParams& p,
         f << b; if (i < 3) f << ","; f << "   // " << bn[i] << "-block\n";
     }
     f << "    };\n\n";
-    std::snprintf(b, sizeof(b), "    double c_shell       = %.8f;\n", p.c_shell);       f << b;
-    std::snprintf(b, sizeof(b), "    double c_shell_decay = %.8f;\n", p.c_shell_decay); f << b;
-    std::snprintf(b, sizeof(b), "    double a_rel         = %.8f;\n", p.a_rel);         f << b;
-    std::snprintf(b, sizeof(b), "    double c_orb         = %.8f;\n", p.c_orb);         f << b;
+    std::snprintf(b, sizeof(b), "    double a_f1       = %.8f;\n", p.a_f1);      f << b;
+    std::snprintf(b, sizeof(b), "    double a_f2       = %.8f;\n", p.a_f2);      f << b;
+    std::snprintf(b, sizeof(b), "    double a_f3       = %.8f;\n", p.a_f3);      f << b;
+    std::snprintf(b, sizeof(b), "    double blob_f_lin = %.8f;\n", p.blob_f_lin); f << b;
 }
 
 static void append_log(const char* path, int gen, const char* strategy,
@@ -543,15 +550,15 @@ int main(int argc, char** argv) {
                 init.c_block[i] *= (0.9 + 0.2 * std::uniform_real_distribution<>()(rng));
             outer_iters = 15;
             break;
-        case 3: // Shell — perturb only gate params
+        case 3: // Shell — perturb only relativistic/f-shielding params
             init = global_best;
-            init.c_shell       *= (0.7 + 0.6 * std::uniform_real_distribution<>()(rng));
-            init.c_shell_decay *= (0.5 + 1.0 * std::uniform_real_distribution<>()(rng));
-            init.a_rel         *= (0.5 + 1.0 * std::uniform_real_distribution<>()(rng));
-            init.c_shell = std::min(init.c_shell, 0.99);
-            init.c_shell_decay = std::min(init.c_shell_decay, 2.0);
-            init.a_rel = std::min(init.a_rel, 0.6);
-            outer_iters = 20;
+            init.beta_f *= (0.5 + 1.0 * std::uniform_real_distribution<>()(rng));
+            init.c_rel  *= (0.5 + 1.0 * std::uniform_real_distribution<>()(rng));
+            init.a_f1   *= (0.7 + 0.6 * std::uniform_real_distribution<>()(rng));
+            init.a_f2   *= (0.7 + 0.6 * std::uniform_real_distribution<>()(rng));
+            init.beta_f  = std::min(init.beta_f, 0.5);
+            init.c_rel   = std::max(-1e-4, std::min(init.c_rel, 1e-4));
+            outer_iters  = 20;
             break;
         case 4: // Weighted — crank up noble gas + Hg weights
             init = perturb(global_best, rng, 0.05);
@@ -620,16 +627,17 @@ int main(int argc, char** argv) {
     std::printf("\nFinal best parameters:\n");
     for (int i = 0; i < 7; ++i)
         std::printf("  k_period[%d] = %.8f\n", i+1, p.k_period[i]);
-    std::printf("  a_soft       = %.8f\n", p.a_soft);
-    std::printf("  b_chi        = %.8f\n", p.b_chi);
+    std::printf("  b_bind       = %.8f\n", p.b_bind);
+    std::printf("  c_rel        = %.9f\n", p.c_rel);
+    std::printf("  beta_f       = %.8f\n", p.beta_f);
     for (int i = 0; i < 4; ++i) {
         const char* bn[] = {"s","p","d","f"};
         std::printf("  c_block[%s]  = %.8f\n", bn[i], p.c_block[i]);
     }
-    std::printf("  c_shell      = %.8f\n", p.c_shell);
-    std::printf("  c_shell_decay= %.8f\n", p.c_shell_decay);
-    std::printf("  a_rel        = %.8f\n", p.a_rel);
-    std::printf("  c_orb        = %.8f\n", p.c_orb);
+    std::printf("  a_f1         = %.8f\n", p.a_f1);
+    std::printf("  a_f2         = %.8f\n", p.a_f2);
+    std::printf("  a_f3         = %.8f\n", p.a_f3);
+    std::printf("  blob_f_lin   = %.8f\n", p.blob_f_lin);
 
     return 0;
 }

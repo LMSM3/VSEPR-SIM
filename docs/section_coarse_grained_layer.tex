@@ -1,0 +1,2317 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{array}
+\usepackage{enumitem}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\op}[1]{\texttt{#1}}
+\newcommand{\ns}[1]{\texttt{#1}}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Coarse-Grained and Multi-Scale Layer \\[6pt]
+\normalsize Technical Architecture Document}
+\author{Formation Engine Development Team}
+\date{Version 0.9 --- Phases 1--8 Complete}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Executive Summary}
+% =============================================================================
+
+This document specifies the architecture and integration plan for the
+\textbf{coarse-grained (CG) and multi-scale layer} of the formation engine.
+
+The atomistic layer (documented in Sections~1--9 of the existing methodology)
+provides a validated, deterministic simulation kernel operating on systems of
+2--10,000 atoms with explicit positions, velocities, and forces.  It produces
+coordinates, energies, forces, and basic validation on discrete systems.
+
+The coarse-grained layer extends this foundation to larger length and time
+scales by introducing:
+
+\begin{enumerate}
+  \item A mapping framework that converts atomistic outputs into reduced
+        bead representations
+  \item Statistical mechanics wrappers that produce ensemble-averaged
+        observables rather than single configurations
+  \item Emergent-behavior analysis that extracts collective structural
+        properties from sampled trajectories
+  \item Multi-scale bridges that propagate information consistently between
+        atomistic, coarse-grained, and continuum-like descriptions
+  \item Validation and benchmarking infrastructure that co-evolves with
+        every new capability
+\end{enumerate}
+
+The atomistic layer is no longer merely a simulator.  It becomes a
+\textbf{teacher model} for the coarse-grained layer.
+
+\subsection{Terminology Note}
+
+Per project terminology rules, this document uses ``atomistic'' for all
+particle-resolved descriptions and ``coarse-grained'' (CG) for reduced
+representations.  The term ``multi-scale'' refers to the coupling between
+resolution levels.  The scale regime beyond $10{,}000$ atoms that was
+previously labeled in \S10 is referred to here as the
+\textbf{coarse-grained regime}.
+
+% =============================================================================
+\section{Atomistic Foundation: Current Capabilities}
+% =============================================================================
+
+The existing atomistic kernel provides the reference data that all
+coarse-grained methods consume.  This section summarizes what is operational
+and where the scaling limits occur.
+
+\subsection{Operational Capabilities}
+
+The formation engine currently supports:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Capability} & \textbf{Implementation} & \textbf{Status} \\
+\midrule
+State representation & \file{atomistic/core/state.hpp} & Complete \\
+LJ 12-6 + Coulomb forces & \file{atomistic/models/lj\_coulomb.cpp} & Complete \\
+Bonded interactions & \file{atomistic/models/bonded.cpp} & Complete \\
+Composite model & \file{atomistic/models/composite.cpp} & Complete \\
+FIRE minimization & \file{atomistic/integrators/fire.cpp} & Complete \\
+Velocity Verlet (NVE) & \file{atomistic/integrators/velocity\_verlet.cpp} & Complete \\
+Langevin dynamics (NVT) & \file{atomistic/integrators/velocity\_verlet.cpp} & Complete \\
+Maxwell--Boltzmann init & \file{atomistic/core/maxwell\_boltzmann.cpp} & Complete \\
+PBC (orthogonal box) & \file{atomistic/core/state.hpp} & Complete \\
+Supercell construction & \file{atomistic/crystal/supercell.cpp} & Complete \\
+Crystal metrics & \file{atomistic/crystal/crystal\_metrics.cpp} & Complete \\
+PMF extraction & \file{atomistic/analysis/pmf.cpp} & Complete \\
+Structure classification & \file{atomistic/classify/cluster.cpp} & Complete \\
+Welford online statistics & \file{atomistic/core/statistics.hpp} & Complete \\
+Stationarity gating & \file{atomistic/core/statistics.hpp} & Complete \\
+Kabsch alignment / RMSD & \file{atomistic/core/alignment.cpp} & Complete \\
+XYZ parsing / compilation & \file{atomistic/parsers/}, \file{compilers/} & Complete \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Validated Outputs}
+
+The atomistic kernel produces the following validated outputs that serve as
+inputs to the coarse-grained layer:
+
+\begin{itemize}
+  \item \textbf{Equilibrated structures}: Local energy minima found via
+        MD exploration + FIRE quenching (\S6)
+  \item \textbf{Trajectories}: Time-ordered sequences of states from NVE or
+        NVT dynamics (\S5)
+  \item \textbf{Energy decomposition}: Per-term energy ledger
+        $\mathcal{E} = (U_\text{bond}, U_\text{angle}, U_\text{tors},
+        U_\text{vdW}, U_\text{Coul}, U_\text{ext}, U_\text{pol})$ (\S3)
+  \item \textbf{Forces}: Per-atom force vectors $\mathbf{F}_i$ (\S3)
+  \item \textbf{Radial distribution functions}: $g(r)$ from trajectory
+        analysis (\file{analysis/pmf.cpp})
+  \item \textbf{Potentials of mean force}: $W(r) = -k_B T \ln g(r)$ from
+        PMF calculator (\file{analysis/pmf.hpp})
+  \item \textbf{Structural fingerprints}: Topology and geometry hashes for
+        classification (\file{classify/fingerprints.cpp})
+\end{itemize}
+
+\subsection{Scaling Limits and Atomistic Breakdown}
+
+The atomistic kernel encounters practical limits at system sizes that
+motivate the coarse-grained extension:
+
+\begin{center}
+\begin{tabular}{lcl}
+\toprule
+\textbf{Constraint} & \textbf{Threshold} & \textbf{Consequence} \\
+\midrule
+All-pairs force eval & $N \sim 10{,}000$ & $O(N^2)$ becomes prohibitive \\
+Cell-list overhead & $N \sim 100{,}000$ & List management dominates \\
+Timestep (H--X bonds) & $\Delta t \leq 0.5$ fs & Limits accessible timescale \\
+Equilibration time & $\sim 10^4$ steps & May miss slow relaxation \\
+Conformational sampling & $N > 500$ & Barrier-crossing rate drops \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Beyond these limits, either periodic replication (supercells) or
+coarse-graining becomes necessary.  The transition is defined by where
+dominant error sources shift, not by arbitrary atom counts (\S10).
+
+\paragraph{Formalized breakdown criterion.}
+The atomistic description is no longer efficient when:
+\begin{equation}
+  \frac{\text{degrees of freedom relevant to target observable}}
+       {\text{total atomistic degrees of freedom}} \ll 1
+\end{equation}
+
+For bulk diffusion, only center-of-mass motion matters --- individual
+bond vibrations are noise.  For phase morphology, only bead-level density
+fluctuations matter.  The CG layer systematically eliminates the
+irrelevant degrees of freedom.
+
+% =============================================================================
+\section{Coarse-Grained Model Construction}
+\label{sec:cg_model}
+% =============================================================================
+
+This section defines the first real expansion beyond the atomistic layer.
+Everything that follows depends on whether this mapping is done with
+discipline.
+
+\subsection{Goal}
+
+Convert atomistic outputs into a reduced representation that preserves the
+physics relevant to the target observable, while discarding sub-bead
+fluctuations.
+
+\subsection{Integration with the Atomistic Layer}
+
+The existing atomistic system becomes the \textbf{reference generator}.
+The data flow is:
+
+\begin{enumerate}
+  \item Atomistic module generates equilibrated structures / trajectories
+  \item Mapping module converts those to bead coordinates
+  \item Coarse-graining module estimates reduced interactions
+  \item Reduced system is stored in a new but compatible model format
+\end{enumerate}
+
+\subsection{Architectural Modules}
+
+Three new module directories are introduced under \file{atomistic/}:
+
+\subsubsection{Module: \texttt{mapping/}}
+
+Responsible for converting atomistic indices to bead indices.
+
+\begin{lstlisting}
+// atomistic/mapping/bead_map.hpp
+namespace atomistic::mapping {
+
+struct BeadDefinition {
+    uint32_t bead_id;
+    std::vector<uint32_t> atom_indices;  // atoms in this bead
+    std::vector<double> weights;          // mapping weights (mass or uniform)
+    std::string label;                    // e.g., "backbone", "sidechain"
+};
+
+struct BeadMap {
+    std::vector<BeadDefinition> beads;
+    uint32_t n_atoms;       // total atomistic atoms
+    uint32_t n_beads;       // total CG beads
+
+    // Validate: every atom appears in exactly one bead
+    bool is_complete() const;
+    bool is_disjoint() const;
+};
+
+// Construct bead map from atom-to-bead assignment vector
+BeadMap create_bead_map(const State& atomistic_state,
+                        const std::vector<uint32_t>& assignments);
+
+} // namespace atomistic::mapping
+\end{lstlisting}
+
+\paragraph{Mass-weighted centroid logic.}
+
+The CG bead position $\mathbf{R}_I$ is computed from the atomistic
+coordinates via a mapping operator:
+\begin{equation}
+  \mathbf{R}_I = \sum_{i \in \mathcal{G}_I} w_i \, \mathbf{r}_i
+  \label{eq:cg_mapping}
+\end{equation}
+
+where $\mathcal{G}_I$ is the set of atoms assigned to bead $I$ and the
+weights satisfy $\sum_{i \in \mathcal{G}_I} w_i = 1$.
+
+Two weight schemes are supported:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Scheme} & \textbf{Weights} \\
+\midrule
+Uniform & $w_i = 1/|\mathcal{G}_I|$ \\
+Mass-weighted & $w_i = m_i / \sum_{j \in \mathcal{G}_I} m_j$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Mass-weighted centroids are preferred because they produce bead positions
+that coincide with the center of mass of the mapped fragment, preserving
+translational dynamics.
+
+\paragraph{Topology compression.}
+
+The atomistic bond graph $\mathbf{B}$ is compressed into a CG connectivity
+graph $\mathbf{B}_\text{CG}$:
+\begin{equation}
+  (I, J) \in \mathbf{B}_\text{CG} \iff \exists\, (i, j) \in \mathbf{B}
+  \text{ with } i \in \mathcal{G}_I,\; j \in \mathcal{G}_J,\; I \neq J
+\end{equation}
+
+A CG bond exists between beads $I$ and $J$ if any atom in bead $I$ is
+bonded to any atom in bead $J$.
+
+\subsubsection{Module: \texttt{cg\_model/}}
+
+Defines the coarse-grained state container and effective interaction terms.
+
+\begin{lstlisting}
+// atomistic/cg_model/cg_state.hpp
+namespace atomistic::cg_model {
+
+struct CGState {
+    uint32_t N_beads;
+    std::vector<Vec3> R;         // bead positions (Angstrom)
+    std::vector<Vec3> V;         // bead velocities (Ang/fs)
+    std::vector<double> M;       // bead masses (amu)
+    std::vector<uint32_t> type;  // bead type id
+
+    std::vector<Edge> B_cg;      // CG bond graph
+    std::vector<Vec3> F;         // forces on beads
+    EnergyTerms E{};             // energy ledger
+
+    BoxPBC box;                  // same PBC as atomistic
+};
+
+} // namespace atomistic::cg_model
+\end{lstlisting}
+
+\paragraph{Effective pair potentials.}
+
+CG beads interact through effective potentials derived from atomistic
+reference data.  The CG pair potential between bead types $A$ and $B$ is:
+\begin{equation}
+  U_\text{CG}^{AB}(R) = -k_B T \ln g_\text{CG}^{AB}(R) + C
+  \label{eq:cg_pair}
+\end{equation}
+
+where $g_\text{CG}^{AB}(R)$ is the radial distribution function of
+CG beads computed from mapped atomistic trajectories, and $C$ is a
+constant chosen so that $U_\text{CG} \to 0$ as $R \to \infty$.
+
+This is the \textbf{potential of mean force} (PMF) --- already implemented
+in \file{atomistic/analysis/pmf.hpp} for atomistic pairs and now extended
+to CG bead pairs.
+
+\paragraph{Effective bonded terms.}
+
+For bonded CG beads, harmonic approximations are fitted from the
+distributions of mapped distances, angles, and dihedrals:
+\begin{align}
+  U_\text{bond}^\text{CG}(R) &= \tfrac{1}{2} k_R (R - R_0)^2 \\
+  U_\text{angle}^\text{CG}(\theta) &= \tfrac{1}{2} k_\theta (\theta - \theta_0)^2
+\end{align}
+
+where $R_0$, $\theta_0$ are the equilibrium values and $k_R$, $k_\theta$
+are force constants, both extracted from Boltzmann inversion:
+\begin{equation}
+  k_R = \frac{k_B T}{\langle (R - R_0)^2 \rangle}
+  \label{eq:boltzmann_inversion}
+\end{equation}
+
+\subsubsection{Module: \texttt{cg\_fit/}}
+
+Provides parameter fitting routines that calibrate CG interactions against
+atomistic reference data.
+
+\paragraph{Force matching.}
+
+Given atomistic forces $\mathbf{f}_i$ and the mapping operator, the
+instantaneous CG force on bead $I$ is:
+\begin{equation}
+  \mathbf{F}_I^\text{ref} = \sum_{i \in \mathcal{G}_I} \mathbf{f}_i
+  \label{eq:force_matching}
+\end{equation}
+
+The CG model parameters $\boldsymbol{\theta}$ are optimized by minimizing:
+\begin{equation}
+  \chi^2(\boldsymbol{\theta}) =
+    \frac{1}{N_\text{frames}} \sum_{t} \sum_{I}
+    \left| \mathbf{F}_I^\text{CG}(\boldsymbol{\theta}; \mathbf{R}(t))
+         - \mathbf{F}_I^\text{ref}(t) \right|^2
+  \label{eq:force_matching_chi2}
+\end{equation}
+
+\paragraph{Relative entropy minimization.}
+
+An alternative to force matching.  Minimize the Kullback-Leibler divergence
+between the atomistic and CG configuration-space distributions:
+\begin{equation}
+  S_\text{rel}[\boldsymbol{\theta}]
+    = \left\langle \ln \frac{P_\text{AA}(\mathbf{R})}
+                             {P_\text{CG}(\mathbf{R}; \boldsymbol{\theta})}
+      \right\rangle_\text{AA}
+  \label{eq:relative_entropy}
+\end{equation}
+
+This is computationally more expensive than force matching but produces
+CG models that better reproduce structural distributions.
+
+\paragraph{PMF extraction.}
+
+Already supported via \file{atomistic/analysis/pmf.hpp}.  For CG fitting,
+the PMF calculator is applied to mapped bead-pair distances rather than
+atomistic pair distances.
+
+\subsection{CG State Compatibility with Engine Conventions}
+
+The \type{CGState} structure mirrors the atomistic \type{State}:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Atomistic} & \textbf{CG Equivalent} & \textbf{Relation} \\
+\midrule
+\field{State::N} & \field{CGState::N\_beads} & $N_\text{beads} \ll N_\text{atoms}$ \\
+\field{State::X} & \field{CGState::R} & Mapped via Eq.~\ref{eq:cg_mapping} \\
+\field{State::V} & \field{CGState::V} & Mass-weighted average \\
+\field{State::M} & \field{CGState::M} & $M_I = \sum_{i \in \mathcal{G}_I} m_i$ \\
+\field{State::type} & \field{CGState::type} & CG bead type ID \\
+\field{State::B} & \field{CGState::B\_cg} & Compressed topology \\
+\field{State::F} & \field{CGState::F} & CG forces \\
+\field{State::E} & \field{CGState::E} & CG energy ledger \\
+\field{State::box} & \field{CGState::box} & Same PBC \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This structural parallel ensures that existing integrators (FIRE, Verlet,
+Langevin) can operate on CG systems by adapting the \type{IModel} interface
+to CG force evaluation.
+
+\subsection{First Implementation Milestone}
+
+Do not begin with arbitrary chemistry.  Begin with one mapping family:
+
+\begin{enumerate}
+  \item Rigid fragment $\to$ one bead (e.g., benzene ring $\to$ one CG bead)
+  \item Ligand group $\to$ one bead (e.g., methyl group $\to$ one CH$_3$ bead)
+  \item Short repeat unit $\to$ one bead (e.g., ethylene monomer $\to$ one PE bead)
+\end{enumerate}
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:cg_model} is integrated when:
+\begin{enumerate}
+  \item One atomistic system can be mapped to a bead system
+  \item The bead system reproduces at least one structural observable
+        (e.g., RDF peak position) to within 10\% of atomistic reference
+  \item The CG data structure can be simulated using the same high-level
+        engine conventions (\type{IModel::eval}, integrators) as atomistic
+\end{enumerate}
+
+% =============================================================================
+\section{Statistical Mechanics Layer}
+\label{sec:stat_mech}
+% =============================================================================
+
+This section defines where the project stops returning single ``answers''
+and starts returning \textbf{distributions}.
+
+\subsection{Goal}
+
+Wrap both atomistic and CG systems in ensemble-aware execution so that
+observables are reported as statistical averages with uncertainties, not
+single-point values.
+
+\subsection{Integration with the Current System}
+
+The current engine execution model is:
+\begin{enumerate}
+  \item Input molecule
+  \item Generate candidate
+  \item Optimize (FIRE)
+  \item Report result
+\end{enumerate}
+
+This must expand to:
+\begin{enumerate}
+  \item Initialize state
+  \item Evolve state (MD or MC)
+  \item Discard equilibration region
+  \item Accumulate observables over production window
+  \item Report averages, fluctuations, and distributions
+\end{enumerate}
+
+\paragraph{Dual execution modes.}
+The existing mode (structure prediction / local minimization) is retained.
+A new mode (statistical sampling / time evolution) is added alongside it.
+Both modes are selectable through the same high-level run interface.
+
+\subsection{Architectural Modules}
+
+\subsubsection{Module: \texttt{ensembles/}}
+
+Defines ensemble configuration objects.
+
+\begin{lstlisting}
+// atomistic/ensembles/ensemble.hpp
+namespace atomistic::ensembles {
+
+enum class EnsembleType { NVE, NVT, NPT };
+
+struct EnsembleConfig {
+    EnsembleType type = EnsembleType::NVT;
+    double temperature = 300.0;    // K (NVT, NPT)
+    double pressure = 1.0;         // atm (NPT only)
+    uint64_t seed = 42;            // RNG seed for reproducibility
+};
+
+} // namespace atomistic::ensembles
+\end{lstlisting}
+
+\paragraph{NVE} (microcanonical): Already implemented via velocity Verlet.
+Conserves total energy $E = K + U$.
+
+\paragraph{NVT} (canonical): Already implemented via Langevin dynamics.
+Maintains target temperature $T$ through friction and stochastic forces.
+
+\paragraph{NPT} (isothermal--isobaric): Not yet implemented.  Requires
+a barostat (Berendsen or Parrinello--Rahman) and the pressure conversion
+constant $1\,\text{kcal/(mol\,\AA}^3) = 68{,}568.4\,\text{atm}$ (\S4).
+
+\subsubsection{Module: \texttt{samplers/}}
+
+Provides trajectory sampling modes.
+
+\begin{lstlisting}
+// atomistic/samplers/md_sampler.hpp
+namespace atomistic::samplers {
+
+struct SamplerConfig {
+    int n_equilibration = 5000;   // burn-in steps
+    int n_production = 50000;     // production steps
+    int sample_interval = 100;    // frames between samples
+    int checkpoint_interval = 10000;
+};
+
+struct SampleResult {
+    std::vector<State> frames;         // sampled states
+    std::vector<double> energies;      // total energy per frame
+    std::vector<double> temperatures;  // instantaneous T per frame
+    int n_samples;
+    bool equilibrated;                 // stationarity gate passed
+};
+
+// MD-based sampler (wraps existing integrators)
+SampleResult run_md_sampling(
+    State& initial,
+    const IModel& model,
+    const ModelParams& params,
+    const EnsembleConfig& ensemble,
+    const SamplerConfig& config
+);
+
+} // namespace atomistic::samplers
+\end{lstlisting}
+
+A Monte Carlo sampler (\texttt{mc\_sampler.hpp}) is deferred to a later
+milestone.
+
+\subsubsection{Module: \texttt{observables/}}
+
+Accumulates running statistics over production trajectories.
+
+\begin{lstlisting}
+// atomistic/observables/accumulator.hpp
+namespace atomistic::observables {
+
+struct ObservableSet {
+    OnlineStats energy_total;
+    OnlineStats energy_kinetic;
+    OnlineStats temperature;
+    OnlineStats pressure;              // when implemented
+    OnlineVec3Stats center_of_mass;
+
+    // Derived quantities
+    double heat_capacity_Cv() const;   // from energy fluctuations
+    double compressibility() const;    // from volume fluctuations (NPT)
+};
+
+// Histogram accumulator for distribution observables
+class Histogram {
+public:
+    Histogram(double lo, double hi, int n_bins);
+    void add_sample(double x);
+    std::vector<double> get_normalized() const;
+    double get_mean() const;
+    double get_variance() const;
+private:
+    std::vector<int> counts;
+    double lo, hi, bin_width;
+    int total;
+};
+
+} // namespace atomistic::observables
+\end{lstlisting}
+
+\paragraph{Heat capacity from fluctuations.}
+In the canonical ensemble:
+\begin{equation}
+  C_V = \frac{\langle E^2 \rangle - \langle E \rangle^2}{k_B T^2}
+  = \frac{\text{Var}(E)}{k_B T^2}
+  \label{eq:Cv_fluctuation}
+\end{equation}
+
+This requires Welford's algorithm (already in \file{core/statistics.hpp})
+to compute $\text{Var}(E)$ in a numerically stable manner.
+
+\subsubsection{Module: \texttt{run\_control/}}
+
+Manages equilibration vs.\ production, checkpointing, and seeded
+reproducibility.
+
+\begin{lstlisting}
+// atomistic/run_control/run_manager.hpp
+namespace atomistic::run_control {
+
+struct RunConfig {
+    EnsembleConfig ensemble;
+    SamplerConfig sampler;
+    ModelParams model_params;
+
+    // Convergence
+    int stationarity_window = 10;      // consecutive passes
+    double cv_threshold = 0.01;        // coefficient of variation
+
+    // Checkpointing
+    std::string checkpoint_dir;
+    bool resume_from_checkpoint = false;
+};
+
+struct RunResult {
+    ObservableSet observables;
+    SampleResult samples;
+    bool converged;
+    int total_steps;
+    double wall_time_seconds;
+};
+
+RunResult execute(State& initial,
+                  const IModel& model,
+                  const RunConfig& config);
+
+} // namespace atomistic::run_control
+\end{lstlisting}
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:stat_mech} is integrated when:
+\begin{enumerate}
+  \item The same system can be run as a statistical ensemble rather than
+        a one-shot geometry task
+  \item Observables are accumulated over many states with stable mean and
+        variance
+  \item Both atomistic and CG systems plug into the same sampling framework
+\end{enumerate}
+
+% =============================================================================
+\section{Emergent Behavior Analysis}
+\label{sec:emergent}
+% =============================================================================
+
+This section sits \textbf{after} the statistical mechanics layer, not
+beside it.  Its input is not ``a molecule'' but a \textbf{sample history}
+or \textbf{ensemble dataset}.
+
+\subsection{Goal}
+
+Extract physically meaningful collective behavior from ensemble output:
+bulk structure, not individual coordinates.
+
+\subsection{Data Flow}
+
+\begin{enumerate}
+  \item Section~\ref{sec:stat_mech} produces trajectories / sampled states
+  \item This section reads those states
+  \item Computes collective observables
+  \item Report layer exports \textit{trends}, not just snapshots
+\end{enumerate}
+
+\subsection{Architectural Modules}
+
+\subsubsection{Module: \texttt{trajectory/}}
+
+Frame storage, state readers, and decimation.
+
+\begin{lstlisting}
+// atomistic/trajectory/trajectory.hpp
+namespace atomistic::trajectory {
+
+class Trajectory {
+public:
+    void add_frame(const State& s, double time);
+    const State& frame(int i) const;
+    int n_frames() const;
+
+    // Decimation: keep every k-th frame
+    Trajectory decimate(int k) const;
+
+    // Time window: frames between t_start and t_end
+    Trajectory window(double t_start, double t_end) const;
+
+private:
+    std::vector<State> frames_;
+    std::vector<double> times_;
+};
+
+} // namespace atomistic::trajectory
+\end{lstlisting}
+
+\subsubsection{Module: \texttt{analysis/structure/}}
+
+Structural collective observables.
+
+\paragraph{Radial distribution function $g(r)$.}
+Already partially implemented in \file{analysis/pmf.cpp} for PMF
+extraction.  The standalone RDF calculation is:
+\begin{equation}
+  g(r) = \frac{V}{N^2} \left\langle \sum_{i \neq j}
+         \delta(r - r_{ij}) \right\rangle \bigg/ (4\pi r^2 \Delta r)
+  \label{eq:rdf}
+\end{equation}
+
+\paragraph{Nearest-neighbor statistics.}
+Distribution of coordination numbers $n_i = |\{j : r_{ij} < r_\text{cut}\}|$
+for each atom type.
+
+\paragraph{Clustering.}
+Already implemented in \file{classify/cluster.cpp}.  For trajectory analysis,
+cluster size distributions are computed per frame and averaged:
+\begin{equation}
+  \langle n_s \rangle = \frac{1}{N_\text{frames}}
+  \sum_{t=1}^{N_\text{frames}} n_s(t)
+  \label{eq:cluster_avg}
+\end{equation}
+
+where $n_s(t)$ is the number of clusters of size $s$ at frame $t$.
+
+\subsubsection{Module: \texttt{analysis/order/}}
+
+Order parameters and density fluctuations.
+
+\paragraph{Bond-orientational order parameter $Q_l$.}
+For characterizing local crystalline order:
+\begin{equation}
+  Q_l(i) = \left( \frac{4\pi}{2l+1}
+            \sum_{m=-l}^{l} |q_{lm}(i)|^2 \right)^{1/2}
+  \label{eq:ql}
+\end{equation}
+
+where $q_{lm}(i) = \frac{1}{n_i} \sum_{j=1}^{n_i} Y_{lm}(\hat{\mathbf{r}}_{ij})$
+and $Y_{lm}$ are spherical harmonics.  $Q_6$ distinguishes FCC, BCC, HCP,
+and liquid phases.
+
+\paragraph{Density fluctuations.}
+Local number density in subvolumes $\Omega_k$:
+\begin{equation}
+  \rho_k = \frac{N_k}{|\Omega_k|}
+\end{equation}
+
+The variance $\text{Var}(\rho)$ over subvolumes measures structural
+heterogeneity.
+
+\subsubsection{Module: \texttt{analysis/free\_energy/}}
+
+Histogram projections and PMF over reaction coordinates.
+
+\begin{equation}
+  F(\xi) = -k_B T \ln P(\xi) + C
+  \label{eq:free_energy_1d}
+\end{equation}
+
+where $\xi$ is a collective variable (e.g., cluster size, density, distance)
+and $P(\xi)$ is its probability distribution accumulated over the production
+trajectory.
+
+\subsection{First Implementation Milestone}
+
+Implement only:
+\begin{enumerate}
+  \item RDF $g(r)$ for arbitrary pair types
+  \item Cluster size distribution
+  \item One order parameter ($Q_6$)
+\end{enumerate}
+
+This alone gives real bulk-property language.
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:emergent} is integrated when:
+\begin{enumerate}
+  \item The system can produce ensemble trajectories
+  \item Those trajectories can be reduced into structural observables
+  \item Those observables change meaningfully with temperature, density,
+        or interaction strength
+\end{enumerate}
+
+% =============================================================================
+\section{Multi-Scale Coupling}
+\label{sec:multiscale}
+% =============================================================================
+
+This section formalizes how information passes consistently between
+atomistic, coarse-grained, and continuum-like descriptions.
+
+\subsection{Goal}
+
+Allow verified, repeatable inter-scale information transfer.  This means
+explicit operators --- not vague claims of ``multi-scale capability.''
+
+\subsection{Sequential Coupling (First Target)}
+
+\begin{enumerate}
+  \item Atomistic run produces local physics (energies, forces, $g(r)$)
+  \item Fit / infer CG properties (PMF, effective potentials)
+  \item Run CG simulation at extended scale
+  \item Extract effective bulk coefficients (density, diffusion, elastic moduli)
+  \item Pass to continuum description (if applicable)
+\end{enumerate}
+
+\textbf{Concurrent coupling} (atomistic subregion embedded in CG or
+continuum, adaptive handoff during runtime) is deferred.  It is a
+qualitatively harder problem requiring force interpolation at boundaries,
+energy conservation across scales, and a thermostat that maintains correct
+temperature in both regions.
+
+\subsection{Architectural Modules}
+
+\subsubsection{Module: \texttt{multiscale/bridges/}}
+
+\paragraph{Atomistic $\to$ CG bridge.}
+
+\begin{lstlisting}
+// atomistic/multiscale/bridges/aa_to_cg.hpp
+namespace atomistic::multiscale {
+
+struct CGBridgeResult {
+    cg_model::CGState cg_state;
+    mapping::BeadMap bead_map;
+    std::vector<double> effective_pair_potential;
+    std::vector<double> effective_bond_potential;
+};
+
+// Map a single atomistic state to CG
+CGBridgeResult map_to_cg(
+    const State& atomistic_state,
+    const mapping::BeadMap& map
+);
+
+// Fit CG potentials from atomistic trajectory
+CGBridgeResult fit_cg_model(
+    const trajectory::Trajectory& aa_trajectory,
+    const mapping::BeadMap& map,
+    double temperature
+);
+
+} // namespace atomistic::multiscale
+\end{lstlisting}
+
+\paragraph{CG $\to$ continuum bridge.}
+
+Extracts effective scalar and tensor properties from CG simulation:
+
+\begin{itemize}
+  \item Average density $\bar{\rho} = N M_\text{bead} / V$
+  \item Diffusion coefficient $D$ from mean-squared displacement:
+        $D = \lim_{t \to \infty} \frac{\langle |\mathbf{R}(t) - \mathbf{R}(0)|^2 \rangle}{6t}$
+  \item Elastic moduli from stress fluctuations (Born--Huang method)
+\end{itemize}
+
+\paragraph{Backmapping (optional, deferred).}
+
+Reconstruct atomistic detail from CG configuration for local refinement.
+This requires fragment libraries and constrained energy minimization.
+
+\subsubsection{Module: \texttt{homogenization/}}
+
+\begin{lstlisting}
+// atomistic/homogenization/bulk_properties.hpp
+namespace atomistic::homogenization {
+
+struct BulkProperties {
+    double density;                    // g/cm^3
+    double diffusion_coefficient;      // cm^2/s
+    double bulk_modulus;               // GPa (from volume fluctuations)
+    double shear_modulus;              // GPa (from stress tensor)
+    double thermal_conductivity;       // W/(m*K) (from Green-Kubo)
+};
+
+BulkProperties extract_from_trajectory(
+    const trajectory::Trajectory& traj,
+    double temperature,
+    double volume
+);
+
+} // namespace atomistic::homogenization
+\end{lstlisting}
+
+\subsubsection{Module: \texttt{field\_export/}}
+
+Projects particle data onto continuum-compatible grid representations.
+
+\begin{itemize}
+  \item Local density maps on regular grids
+  \item Coarse field tensors (stress, velocity gradient)
+  \item Suitable for coupling with finite element or finite difference solvers
+\end{itemize}
+
+\subsection{First Implementation Milestone}
+
+Implement only:
+\begin{enumerate}
+  \item Atomistic $\to$ CG mapping and potential fitting
+  \item CG $\to$ effective scalar observables (density, diffusion)
+\end{enumerate}
+
+No runtime hybrid coupling.
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:multiscale} is integrated when:
+\begin{enumerate}
+  \item Properties inferred from smaller-scale models can parameterize
+        larger-scale runs
+  \item The data pathway is explicit and repeatable
+  \item One property can be shown propagating correctly across scales
+\end{enumerate}
+
+% =============================================================================
+\section{Validation and Benchmarks}
+\label{sec:validation}
+% =============================================================================
+
+This section co-evolves with Sections~\ref{sec:cg_model} through
+\ref{sec:multiscale}.  It is not an afterthought.
+
+\subsection{Goal}
+
+Continuously verify that each added scale still reproduces relevant physics.
+
+\subsection{Benchmark Suite}
+
+\begin{center}
+\begin{tabular}{lcl}
+\toprule
+\textbf{Benchmark} & \textbf{Source Section} & \textbf{Observable} \\
+\midrule
+LJ Argon (atomistic) & \S3 & Energy, $g(r)$, $T$ \\
+LJ Argon (mapped CG) & \ref{sec:cg_model} & CG $g(r)$ vs.\ atomistic \\
+NVT equilibration & \ref{sec:stat_mech} & $\langle T \rangle$, $\text{Var}(E)$ \\
+RDF convergence & \ref{sec:emergent} & $g(r)$ peak position vs.\ $N_\text{frames}$ \\
+Scale-transfer fidelity & \ref{sec:multiscale} & CG density vs.\ atomistic \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Metrics}
+
+\begin{itemize}
+  \item \textbf{RMSE}: Root mean square error between CG and atomistic $g(r)$
+  \item \textbf{Relative error}: $|x_\text{CG} - x_\text{AA}| / |x_\text{AA}|$
+        for scalar observables
+  \item \textbf{Structural similarity}: Overlap integral of RDFs
+  \item \textbf{Diffusion coefficient error}: Relative error in $D$ between
+        CG and atomistic
+  \item \textbf{Finite-size deviation}: Observable shift with system size
+\end{itemize}
+
+\subsection{Regression Testing}
+
+Seeded standard runs produce deterministic outputs.  A regression test
+compares current output against stored reference:
+
+\begin{lstlisting}
+// tests/cg_regression_test.cpp
+TEST(CGRegression, ArgonCG_RDF) {
+    auto aa_traj = load_reference_trajectory("argon_108_nvt.xyzf");
+    auto bead_map = create_single_atom_map(aa_traj.frame(0));
+    auto cg_result = fit_cg_model(aa_traj, bead_map, 85.0);
+
+    auto rdf = compute_rdf(cg_result.cg_state, 0.1, 10.0);
+    auto ref = load_reference_rdf("argon_cg_rdf_ref.csv");
+
+    double rmse = compute_rmse(rdf, ref);
+    EXPECT_LT(rmse, 0.05);  // 5% tolerance
+}
+\end{lstlisting}
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:validation} is integrated when:
+\begin{enumerate}
+  \item Every phase from \ref{sec:cg_model} onward has at least one benchmark
+  \item Changes in code can be checked automatically against expected
+        physical outputs
+  \item Loss of fidelity can be quantified rather than hand-waved
+\end{enumerate}
+
+% =============================================================================
+\section{Scale Transition: Beyond $10^{-9}$\,m}
+\label{sec:scale_transition}
+% =============================================================================
+
+This section formalizes when the representation itself must change.
+
+\subsection{Goal}
+
+Define operational thresholds for leaving atomistic detail behind.
+
+\subsection{Scale-Aware Control Logic}
+
+\begin{lstlisting}
+// atomistic/scale_manager/regime_selector.hpp
+namespace atomistic::scale_manager {
+
+enum class Regime {
+    Atomistic,          // Full atomistic detail
+    CoarseGrained,      // Reduced CG representation
+    MultiscaleSeq,      // Sequential atomistic -> CG -> properties
+    ContinuumExport     // Export effective properties only
+};
+
+struct ProblemSpec {
+    int n_atoms;
+    double domain_length;       // Angstrom
+    double target_timescale;    // fs
+    std::string target_observable;
+};
+
+Regime recommend_regime(const ProblemSpec& spec);
+
+} // namespace atomistic::scale_manager
+\end{lstlisting}
+
+\paragraph{Rules-based selector (first implementation).}
+
+\begin{center}
+\begin{tabular}{lcl}
+\toprule
+\textbf{Condition} & \textbf{Recommended Regime} \\
+\midrule
+Discrete compact molecule, $N < 500$ & Atomistic \\
+Many repeated units, $500 < N < 10{,}000$ & CG \\
+$N > 10{,}000$ or domain $> 100$\,\AA & MultiscaleSeq \\
+Domain $> 1{,}000$\,\AA & ContinuumExport \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:scale_transition} is integrated when:
+\begin{enumerate}
+  \item Given a physical problem, the code can recommend an appropriate
+        representation
+  \item Scale transition rules are explicit and tied to cost and physics
+  \item The thesis can defend why different regimes use different models
+\end{enumerate}
+
+% =============================================================================
+\section{Thermostats and Stochastic Dynamics}
+\label{sec:thermostats}
+% =============================================================================
+
+This section upgrades the integrator interface so that force evaluation is
+no longer the only contributor to state evolution.
+
+\subsection{Goal}
+
+Introduce realistic environmental exchange and fluctuation physics.
+
+\subsection{Current State}
+
+Langevin dynamics is already implemented in
+\file{atomistic/integrators/velocity\_verlet.cpp} with:
+\begin{itemize}
+  \item Friction coefficient $\gamma$
+  \item Random force $\sqrt{2\gamma m_i k_B T}\;\xi_i$ where $\xi_i \sim \mathcal{N}(0,1)$
+  \item Temperature error $< 0.6\%$ validated
+\end{itemize}
+
+\subsection{Enhancements}
+
+\subsubsection{Thermostat abstraction layer}
+
+\begin{lstlisting}
+// atomistic/thermostats/thermostat.hpp
+namespace atomistic::thermostats {
+
+struct IThermostat {
+    virtual ~IThermostat() = default;
+    virtual void apply(State& s, double dt) = 0;
+    virtual double target_temperature() const = 0;
+};
+
+// Velocity rescale (simple, for testing only)
+class VelocityRescale : public IThermostat { ... };
+
+// Langevin (primary, already implemented)
+class Langevin : public IThermostat { ... };
+
+// Nose-Hoover (extended Lagrangian, deferred)
+class NoseHoover : public IThermostat { ... };
+
+} // namespace atomistic::thermostats
+\end{lstlisting}
+
+\subsubsection{Noise generation}
+
+\begin{lstlisting}
+// atomistic/noise/gaussian_rng.hpp
+namespace atomistic::noise {
+
+class GaussianRNG {
+public:
+    explicit GaussianRNG(uint64_t seed);
+    double sample();                    // N(0,1)
+    Vec3 sample_vec3();                 // 3 independent N(0,1)
+    void validate_covariance(int n);    // statistical self-test
+private:
+    std::mt19937_64 gen_;
+    std::normal_distribution<double> dist_;
+};
+
+} // namespace atomistic::noise
+\end{lstlisting}
+
+\subsection{Timestep Logic}
+
+The enhanced integrator timestep becomes:
+\begin{enumerate}
+  \item Deterministic forces: $\mathbf{F}_i = -\nabla_i U$
+  \item Thermostat correction: friction $-\gamma m_i \mathbf{v}_i$
+  \item Stochastic term: $\sqrt{2\gamma m_i k_B T / \Delta t}\;\boldsymbol{\xi}_i$
+  \item State update: position and velocity advance
+\end{enumerate}
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:thermostats} is integrated when:
+\begin{enumerate}
+  \item Target temperature is maintained statistically ($< 1\%$ error)
+  \item Fluctuations are physically consistent (equipartition satisfied)
+  \item Deterministic and stochastic runs can be selected through the
+        same high-level run interface
+\end{enumerate}
+
+% =============================================================================
+\section{Free Energy and Phase Behavior}
+\label{sec:free_energy}
+% =============================================================================
+
+This is the top analytical layer.  It consumes the work of
+Sections~\ref{sec:stat_mech}, \ref{sec:emergent}, and \ref{sec:thermostats}.
+
+\subsection{Goal}
+
+Move from ``what structure appeared'' to ``what states are thermodynamically
+preferred.''
+
+\subsection{Collective Variables}
+
+\begin{lstlisting}
+// atomistic/collective_variables/cv.hpp
+namespace atomistic::collective_variables {
+
+struct ICollectiveVariable {
+    virtual ~ICollectiveVariable() = default;
+    virtual double compute(const State& s) const = 0;
+    virtual std::string name() const = 0;
+};
+
+// Concrete CVs
+class NumberDensity : public ICollectiveVariable { ... };
+class ClusterFraction : public ICollectiveVariable { ... };
+class CoordinationNumber : public ICollectiveVariable { ... };
+class CompositionFraction : public ICollectiveVariable { ... };
+
+} // namespace atomistic::collective_variables
+\end{lstlisting}
+
+\subsection{Free Energy Reconstruction}
+
+\paragraph{Histogram method.}
+
+Accumulate $P(\xi)$ over the production trajectory:
+\begin{equation}
+  F(\xi) = -k_B T \ln P(\xi) + C
+\end{equation}
+
+This gives the free energy as a function of collective variable $\xi$.
+The constant $C$ is chosen so that $\min_\xi F(\xi) = 0$.
+
+\paragraph{PMF reconstruction.}
+
+For pairwise collective variables (e.g., bead--bead distance), the existing
+PMF calculator (\file{analysis/pmf.hpp}) is reused directly.
+
+\paragraph{Reweighting (deferred).}
+
+Weighted histogram analysis method (WHAM) for combining data from
+simulations at different thermodynamic conditions.
+
+\subsection{Phase Analysis}
+
+\begin{lstlisting}
+// atomistic/phase_analysis/phase.hpp
+namespace atomistic::phase_analysis {
+
+struct PhaseResult {
+    std::vector<double> cv_values;
+    std::vector<double> free_energy;
+    std::vector<int> phase_labels;      // per-frame phase assignment
+    int n_phases_detected;
+    double transition_temperature;       // if applicable
+};
+
+// Detect phase transitions from free energy landscape
+PhaseResult analyze_phases(
+    const trajectory::Trajectory& traj,
+    const ICollectiveVariable& cv,
+    double temperature,
+    int n_bins = 100
+);
+
+} // namespace atomistic::phase_analysis
+\end{lstlisting}
+
+\subsection{First Implementation Milestone}
+
+Do not begin with full phase diagrams.  Begin with:
+\begin{enumerate}
+  \item One order parameter (e.g., $Q_6$)
+  \item One histogram accumulation
+  \item One PMF or free-energy projection
+  \item Two temperatures or densities for comparison
+\end{enumerate}
+
+\subsection{Exit Condition}
+
+Section~\ref{sec:free_energy} is integrated when:
+\begin{enumerate}
+  \item Sampled state populations can be converted into free-energy-like
+        surfaces
+  \item Changes in thermodynamic conditions visibly shift state preference
+  \item Phase-like transitions can be described from simulation outputs
+        rather than intuition
+\end{enumerate}
+
+% =============================================================================
+\section{Summary: Dependency Graph and Implementation Order}
+% =============================================================================
+
+The sections form a strict dependency chain:
+
+\begin{center}
+\begin{tabular}{clcl}
+\toprule
+\textbf{Order} & \textbf{Section} & \textbf{Depends On} & \textbf{Key Deliverable} \\
+\midrule
+1 & \ref{sec:cg_model} CG Model & Atomistic (existing) & Bead mapping + PMF fitting \\
+2 & \ref{sec:stat_mech} Stat.\ Mech. & Atomistic + CG & Ensemble sampling framework \\
+3 & \ref{sec:emergent} Emergent & \ref{sec:stat_mech} & $g(r)$, clusters, $Q_6$ \\
+4 & \ref{sec:multiscale} Multi-Scale & \ref{sec:cg_model} + \ref{sec:emergent} & AA$\to$CG$\to$bulk bridge \\
+5 & \ref{sec:validation} Validation & All above & Benchmark suite \\
+6 & \ref{sec:scale_transition} Scale Trans. & \ref{sec:multiscale} & Regime recommender \\
+7 & \ref{sec:thermostats} Thermostats & \ref{sec:stat_mech} & Thermostat abstraction \\
+8 & \ref{sec:free_energy} Free Energy & \ref{sec:emergent} + \ref{sec:thermostats} & Phase analysis \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Critical path.}
+Sections \ref{sec:cg_model} $\to$ \ref{sec:stat_mech} $\to$
+\ref{sec:emergent} form the critical path.  Everything else can proceed in
+parallel once Section~\ref{sec:stat_mech} is operational.
+
+\paragraph{Validation is continuous.}
+Section~\ref{sec:validation} is not a final step.  Every module added must
+include at least one benchmark test.  The validation suite grows with the
+codebase.
+
+% =============================================================================
+\section{Namespace and Directory Plan}
+% =============================================================================
+
+All new code resides under the existing \file{atomistic/} directory to
+maintain the single-library build model.  New subdirectories:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Directory} & \textbf{Purpose} \\
+\midrule
+\file{atomistic/mapping/} & Atom-to-bead maps, centroid logic, topology compression \\
+\file{atomistic/cg\_model/} & Bead types, masses, connectivity, effective potentials \\
+\file{atomistic/cg\_fit/} & Force matching, relative entropy, PMF extraction \\
+\file{atomistic/ensembles/} & NVE, NVT, NPT configuration objects \\
+\file{atomistic/samplers/} & MD runner, MC runner (future) \\
+\file{atomistic/observables/} & Accumulators, histograms, correlation functions \\
+\file{atomistic/run\_control/} & Burn-in, production, checkpointing \\
+\file{atomistic/trajectory/} & Frame storage, decimation, windowing \\
+\file{atomistic/analysis/structure/} & $g(r)$, nearest-neighbor, clustering \\
+\file{atomistic/analysis/order/} & Order parameters, density fluctuations \\
+\file{atomistic/analysis/free\_energy/} & Histogram, PMF, reweighting \\
+\file{atomistic/multiscale/bridges/} & AA$\to$CG, CG$\to$continuum, backmapping \\
+\file{atomistic/homogenization/} & Density, diffusion, elastic moduli \\
+\file{atomistic/field\_export/} & Grid projection, density maps, field tensors \\
+\file{atomistic/thermostats/} & Velocity rescale, Langevin, Nos\'{e}--Hoover \\
+\file{atomistic/noise/} & Gaussian RNG, covariance validation \\
+\file{atomistic/collective\_variables/} & Density, cluster fraction, coordination \\
+\file{atomistic/phase\_analysis/} & Coexistence, transitions, free-energy surfaces \\
+\file{atomistic/scale\_manager/} & Problem classification, regime selection \\
+\file{atomistic/benchmarks/} & Reference systems, known observables, comparators \\
+\file{atomistic/metrics/} & RMSE, relative error, structural similarity \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All modules link against the existing \type{atomistic} static library
+target.  New source files are added to \file{atomistic/CMakeLists.txt}.
+
+% =============================================================================
+\section{Compatibility Contract}
+% =============================================================================
+
+\subsection{With Existing Atomistic Layer}
+
+\begin{enumerate}
+  \item The \type{State} struct is not modified.  CG representations use
+        \type{CGState}, a parallel structure.
+  \item The \type{IModel} interface is not modified.  CG force models
+        implement a \type{ICGModel} interface with the same
+        \op{eval(CGState\&, ...)} signature pattern.
+  \item Existing integrators (FIRE, Verlet, Langevin) are not modified.
+        Template or adapter wrappers allow them to operate on \type{CGState}.
+  \item File formats are extended, not replaced.  CG states use
+        \texttt{.xyz\_cg} or the reserved CG slots in \texttt{.xyzc}.
+  \item The bridge architecture (\S SBA) is preserved.  CG outputs pass
+        through the same canonical structural bridge to the desktop layer.
+\end{enumerate}
+
+\subsection{With Build System}
+
+\begin{enumerate}
+  \item All CG code compiles as part of the \type{atomistic} static library
+  \item No new external dependencies
+  \item C++20 standard maintained
+  \item No fast-math flags (determinism contract, \S11)
+\end{enumerate}
+
+\subsection{With Validation Framework}
+
+\begin{enumerate}
+  \item Every new module includes at least one unit test
+  \item Every CG observable has a regression test against atomistic reference
+  \item Seeded runs produce deterministic outputs (same seed $\Rightarrow$
+        bit-identical result)
+\end{enumerate}
+
+% =============================================================================
+\section{Emergent Effective Medium Mapping}
+\label{sec:ensemble_proxy}
+% =============================================================================
+
+This section documents the \textbf{Ensemble-Level Macroscopic Response Proxy}
+layer (\file{coarse\_grain/analysis/ensemble\_proxy.hpp}).  It is the bridge
+between per-bead environment state and interpretable bulk characterisation.
+
+Architecture position:
+\begin{center}
+\begin{tabular}{c}
+Environment-state evaluation \\
+$\downarrow$ \\
+Ensemble statistics / spatial field summaries \\
+$\downarrow$ \\
+Macroscopic response proxies \\
+$\downarrow$ \\
+Later constitutive or transport models
+\end{tabular}
+\end{center}
+
+\subsection{Anti-Black-Box Commitment}
+
+Every proxy is an explicit, inspectable function of bead-state distributions.
+No hidden weights.  No learned parameters.  All intermediate statistics are
+exposed in \type{EnsembleProxySummary}.  This section records the design
+decisions that make the layer traceable.
+
+\subsection{Model Parameters}
+
+Three model-level constants are declared at namespace scope:
+
+\begin{description}
+  \item[\texttt{PROXY\_MIN\_BEADS = 8}]
+    Minimum ensemble size before proxies are considered reliable.
+    Below this, all proxy fields are still computed but the
+    \type{EnsembleProxySummary::valid} flag is set to \texttt{false}.
+    \textit{Rationale}: variance and autocorrelation estimates are unreliable
+    for $N < 8$; bulk/edge classification degenerates at small~$N$.
+
+  \item[\texttt{PROXY\_CONVERGENCE\_THRESH = 1e-4}]
+    Threshold for the \fn{compute\_proxy\_delta} convergence flag.
+    The system is declared converged when
+    $|\Delta\bar\eta| < \epsilon$ \textbf{and}
+    $|\Delta\overline{|\eta - f|}| < \epsilon$.
+
+  \item[\texttt{PROXY\_VARIANCE\_FLOOR = 1e-12}]
+    Lower bound applied in proxy denominators to prevent division-by-zero
+    on degenerate (all-identical) inputs.  Does not affect the stored
+    \texttt{var\_*} fields.
+\end{description}
+
+These are explicit model parameters, not magic numbers buried in formulas.
+
+\subsection{Proxy Formulas}
+\label{sec:proxy_formulas}
+
+All five proxies produce values in $[0, 1]$.  Their explicit definitions are:
+
+\subsubsection{Cohesion proxy}
+\begin{equation}
+  \text{cohesion} = \frac{\bar\rho_{\hat{}} + \bar\eta
+    + (1 - \overline{|\eta - f|})}{3}
+  \label{eq:cohesion_proxy}
+\end{equation}
+
+Combines density response $\bar\rho_{\hat{}}$, internal stabilisation
+$\bar\eta$, and convergence quality $(1 - \text{mean mismatch})$.
+Higher $\Rightarrow$ more cohesive (denser, more adapted, more converged).
+\textit{Does not} measure cohesive energy.
+
+\subsubsection{Uniformity proxy}
+\begin{equation}
+  \text{uniformity} = 1 - \frac{1}{2}\left(
+    \min(2\sigma_\eta,\, 1) + \min(2\sigma_{\rho_{\hat{}}},\, 1)\right)
+  \label{eq:uniformity_proxy}
+\end{equation}
+
+where $\sigma = \sqrt{\text{var}}$.  For $[0,1]$-bounded variables the
+maximum standard deviation is $\approx 0.5$; multiplying by~2 maps
+$[0, 0.5] \to [0, 1]$.  Higher $\Rightarrow$ more homogeneous packing.
+
+\subsubsection{Texture proxy}
+\begin{equation}
+  \text{texture} = \bar{P}_{2,\hat{}}
+  \label{eq:texture_proxy}
+\end{equation}
+
+Orientational organisation as measured by the mean normalised second
+Legendre polynomial.  Range: $0$ (perpendicular / no alignment),
+$\approx 0.33$ (isotropic random), $1$ (perfectly aligned).
+
+\subsubsection{Stabilisation proxy}
+\begin{equation}
+  \text{stabilisation} = \bar\eta \cdot (1 - \overline{|\eta - f|})
+  \label{eq:stabilization_proxy}
+\end{equation}
+
+Adaptation quality.  High only when $\bar\eta$ is high \textit{and}
+the mean mismatch is low.  High mismatch can indicate either ``still
+converging'' or ``actively diverging'' --- distinguishable only via the
+time-delta fields (Section~\ref{sec:proxy_time_history}).
+
+\subsubsection{Surface sensitivity proxy}
+\begin{equation}
+  \text{surface\_sens} = \frac{1}{3}\left(
+    \frac{|\Delta_\rho|}{\bar\rho + \varepsilon} +
+    \frac{|\Delta_C|}{\bar{C} + \varepsilon} +
+    \frac{|\Delta_\eta|}{\bar\eta + \varepsilon} \right)
+  \label{eq:surface_sensitivity_proxy}
+\end{equation}
+
+where $\Delta_x = x_\text{bulk} - x_\text{edge}$ are the bulk-minus-edge
+gaps from the classifier (Section~\ref{sec:bulk_edge_classifier}).
+Higher $\Rightarrow$ more surface-dominated structure.
+
+\textit{Guard}: when the gap fields are NaN (no-bulk or no-edge case),
+surface sensitivity is set to~$0$.
+
+\subsection{Bulk/Edge Classifier}
+\label{sec:bulk_edge_classifier}
+
+The function \fn{classify\_bulk\_edge()} applies two criteria.  \textbf{OR
+logic}: failing either criterion marks a bead as edge (surface).
+
+\paragraph{Criterion 1 — Coordination (always active).}
+A bead with $C_i < C_\text{thresh}$ is edge.
+$C_\text{thresh}$ is a \textbf{model parameter}:
+\begin{itemize}
+  \item Default (\texttt{coord\_threshold < 0}): auto-median of the
+        ensemble $C$ distribution.
+  \item Explicit value: the caller pins $C_\text{thresh}$ directly.
+        Required for comparative studies.
+  \item Traceability: the resolved value is written to
+        \texttt{EnsembleProxySummary::c\_thresh\_used}.
+\end{itemize}
+
+\paragraph{Criterion 2 — Geometric depth (optional).}
+When \texttt{surface\_depth > 0}, any bead within that distance of the
+radial boundary of the ensemble centroid is additionally classified as edge,
+regardless of coordination.
+\textit{Precedence}: OR logic is conservative --- more beads are classified
+as surface, not fewer.  This prevents false bulk classification near
+boundaries.
+
+\paragraph{Gap field guards.}
+When $n_\text{bulk} = 0$ or $n_\text{edge} = 0$ the gap fields
+($\Delta_\rho$, $\Delta_C$, $\Delta_{P_2}$, $\Delta_\eta$) are set to
+\texttt{NaN}, not zero.  Zero would incorrectly imply ``no gap''; NaN
+correctly signals ``undefined''.
+
+\subsection{Spatial Correlation Length}
+\label{sec:xi_extraction}
+
+\fn{spatial\_correlation\_length()} estimates $\xi$ by fitting the
+empirical pair correlation $C(r)$ to an exponential decay
+$C(r) \propto \exp(-r/\xi)$ via log-linear regression.
+
+\paragraph{Method.}
+\begin{enumerate}
+  \item Bin all pairs by separation $r$ into bins of width $\Delta r = 1$\,\AA.
+  \item For each bin with $\geq 3$ pairs, compute
+        $C(r_k) = \langle (x_i - \bar x)(x_j - \bar x) \rangle / \sigma^2$.
+  \item For bins where $C(r_k) > 0$, fit $\ln C(r)$ against $r$ by
+        ordinary linear regression (slope $b = -1/\xi$).
+  \item Return $\xi = -1/b$.
+\end{enumerate}
+
+\paragraph{Failure modes (returns NaN).}
+\begin{itemize}
+  \item $\sigma^2 < 10^{-30}$: field is uniform; $\xi$ undefined.
+  \item Fewer than 2 bins have enough pairs.
+  \item All $C(r_k) \leq 0$: correlation does not decay log-linearly.
+  \item Regression slope $b \geq 0$: field is not decaying.
+\end{itemize}
+
+\paragraph{Edge participation.}
+All beads participate regardless of bulk/edge class.  Excluding edge beads
+changes $\xi$ systematically; selective exclusion is the caller's
+responsibility via subsetting.
+
+\subsection{Time History and Convergence}
+\label{sec:proxy_time_history}
+
+\fn{compute\_proxy\_delta(curr, prev)} fills the delta fields of a
+current snapshot given a previous one:
+\begin{align}
+  \Delta\bar\eta &= \bar\eta^\text{curr} - \bar\eta^\text{prev} \\
+  \Delta\overline{|\eta-f|} &= \overline{|\eta-f|}^\text{curr}
+    - \overline{|\eta-f|}^\text{prev}
+\end{align}
+
+The \texttt{converged} flag is set when both deltas fall below
+\texttt{PROXY\_CONVERGENCE\_THRESH}.
+
+\textit{Why this matters}: a high mismatch in a single snapshot could mean
+``still converging'' ($\Delta > 0$, improving) or ``actively diverging''
+($\Delta < 0$, worsening) --- opposite physical situations requiring
+opposite responses.  Without $\Delta$ fields, the proxy is uninterpretable.
+
+\subsection{Reference Distributions and Normalisation}
+
+Three reference configurations should be run before any production analysis:
+\begin{enumerate}
+  \item \textbf{Ideal lattice} at target $N$ and density: structural upper
+        bound for uniformity and cohesion.
+  \item \textbf{Randomised positions}, same $N$ and density: lower bound.
+  \item \textbf{Structured positions, random orientations}: lower bound for
+        texture.
+\end{enumerate}
+
+Stored in \type{EnsembleProxyReference\{ideal, random, disordered\}}.
+
+The function \fn{apply\_reference(s, lo, hi)} fills the \texttt{rel\_*}
+fields of a target summary:
+\begin{equation}
+  \text{rel} = \clamp\!\left(
+    \frac{v - v_\text{lo}}{v_\text{hi} - v_\text{lo}},\; 0,\; 1\right)
+\end{equation}
+
+If $v_\text{hi} \approx v_\text{lo}$ (degenerate reference), \texttt{rel}
+is set to $0.5$ (indeterminate).
+
+\paragraph{Why this is necessary.}
+A raw proxy value of $0.73$ is meaningless without a baseline.
+Reference-normalised values place the system on an anchored $[0, 1]$
+scale where $0$ = random reference and $1$ = ideal lattice reference.
+
+\subsection{Numeric Guards}
+
+The following guards are applied:
+\begin{description}
+  \item[Validity flag]
+    \texttt{EnsembleProxySummary::valid = false} for $N < \texttt{PROXY\_MIN\_BEADS}$.
+    Proxy fields are still computed so that callers can inspect them,
+    but the valid flag signals that quantitative interpretation is unreliable.
+
+  \item[Variance floor]
+    Proxy denominators apply \texttt{PROXY\_VARIANCE\_FLOOR} to prevent
+    division by zero on all-identical inputs.
+    Stored \texttt{var\_*} fields are exact (unmodified).
+
+  \item[Gap field NaN]
+    When no bulk beads or no edge beads exist, all four gap fields
+    are set to \texttt{NaN}.  The surface sensitivity proxy treats NaN
+    gaps as zero sensitivity (the only physically defensible default
+    when the classification is degenerate).
+\end{description}
+
+\subsection{Directed Proxy Validation (Suite 5F)}
+
+Each proxy has a mandatory directed test that specifies the perturbation,
+the expected direction of change, and a strict pass criterion.
+If any test fails, the proxy formula is wrong and must be fixed before
+use in any result.
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Proxy} & \textbf{Perturbation} & \textbf{Pass criterion} \\
+\hline
+Cohesion & Degrade edge bead $\rho_\hat{}, \eta$ to zero & cohesion decreases \\
+Texture & Set all $\hat{P}_2 = 1/3$ & texture\_proxy $= 1/3$ exactly \\
+Uniformity & Set all states to ensemble mean & uniformity $> 0.99$ \\
+Stabilisation & Freeze $\eta$ at random, target\_f$=0.9$ & stabilisation decreases \\
+Surface sens. & All beads identical & surface sensitivity $< 0.02$ \\
+\end{tabular}
+\end{center}
+
+All five tests pass as of Suite \#5 (131/131).
+
+% =============================================================================
+\section{Macro Property Precursor Layer}
+\label{sec:macro_precursor}
+% =============================================================================
+
+This section documents the \textbf{Macro Property Precursor Channel}
+layer (\file{coarse\_grain/analysis/macro\_precursor.hpp}).
+It converts ensemble-level macroscopic response proxies into property
+precursor bundles: intermediate latent descriptors grouped by
+material-behaviour hypothesis.
+
+\subsection{Why a Precursor Layer Is Needed}
+
+Coarse-grained ensemble statistics do not directly produce physical
+engineering properties.  The gap between ``high cohesion'' and
+``tensile strength = 430~MPa'' is enormous.  This layer does
+\textbf{not} close that gap.  Instead it:
+
+\begin{enumerate}
+  \item Scrapes precursor signals from the proxy layer
+  \item Assembles them into candidate property channels
+  \item Tests directional correctness (monotone response)
+  \item Preserves provenance (contributing proxies, weights, validity)
+  \item Prepares later calibration against real data
+\end{enumerate}
+
+The pipeline is:
+\begin{center}
+\begin{tabular}{c}
+Environment-state evaluation \\
+$\downarrow$ \\
+Ensemble statistics / spatial field summaries \\
+$\downarrow$ \\
+Macroscopic response proxies \\
+$\downarrow$ \\
+Macro precursor channels \quad $\leftarrow$ \textit{this layer} \\
+$\downarrow$ \\
+Later calibrated property estimator
+\end{tabular}
+\end{center}
+
+\subsection{Naming Convention}
+
+All channel names carry the suffix \texttt{-like} to indicate that they
+are \textbf{evidence variables}, not physical properties:
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Channel} & \textbf{Physical hypothesis} \\
+\hline
+\texttt{rigidity\_like}           & stiff, well-connected bulk \\
+\texttt{ductility\_like}          & deformable without fracture \\
+\texttt{brittleness\_like}        & rigid but fragile at interfaces \\
+\texttt{cohesion\_integrity\_like} & structural wholeness \\
+\texttt{thermal\_transport\_like}  & heat conduction pathway quality \\
+\texttt{electrical\_transport\_like} & charge/electron pathway quality \\
+\texttt{surface\_reactivity\_like} & surface-dominated chemistry \\
+\texttt{fracture\_susceptibility\_like} & failure at weak interfaces \\
+\end{tabular}
+\end{center}
+
+Do not call them \texttt{youngs\_modulus}, \texttt{hardness}, or
+\texttt{conductivity}.  That would be lying in structs.
+
+\subsection{Model Parameters}
+
+\begin{description}
+  \item[\texttt{PRECURSOR\_XI\_REF = 20.0}~\AA]
+    Reference correlation length for normalisation:
+    $\tilde\xi = \clamp(\xi / \xi_\text{ref},\, 0,\, 1)$.
+    Represents a characteristic domain size.
+  \item[\texttt{PRECURSOR\_MIN\_CONFIDENCE = 0.1}]
+    Confidence floor below which a channel is marked invalid.
+\end{description}
+
+\subsection{Intermediate Helper Terms}
+
+Three intermediate terms are computed and exposed for traceability before
+any precursor channel is evaluated.
+
+\paragraph{Interface penalty.}
+\begin{equation}
+  P_\text{interface}
+    = \alpha\,|\Delta\eta| + \beta\,|\Delta\rho|
+    + \gamma\,\Sigma_\text{surface}
+  \label{eq:interface_penalty}
+\end{equation}
+where $\Delta$ are normalised bulk-edge gaps and
+$\alpha{=}0.40$, $\beta{=}0.35$, $\gamma{=}0.25$.
+Returns~0 when gap fields are NaN (degenerate classifier).
+Clamped to $[0,1]$.
+
+\paragraph{Normalised correlation length.}
+\begin{equation}
+  \tilde\xi = \clamp\!\left(\frac{\xi}{\xi_\text{ref}},\; 0,\; 1\right)
+\end{equation}
+Returns~0 if $\xi$ is NaN (uniform field or fit failure).
+
+\paragraph{Adaptation capacity.}
+When the system is converged (via \fn{compute\_proxy\_delta}),
+$A_\text{adapt} = S$ (stabilisation proxy).
+Otherwise, $A_\text{adapt} = \bar\eta \cdot (1 - \overline{|\eta-f|})$.
+Clamped to $[0,1]$.
+
+\paragraph{Texture lock.}
+\begin{equation}
+  T_\text{lock} = \bar{P}_{2,\hat{}} \cdot (1 - \min(2\sigma_{P_2},\; 1))
+\end{equation}
+Orientationally locked structure: high mean alignment with low variance.
+Inhibits ductile deformation modes.
+
+\paragraph{Anisotropy index.}
+\begin{equation}
+  A = \frac{\bar{P}_{2,\hat{}} - 1/3}{1 - 1/3}
+      \cdot (0.5 + 0.5\,\tilde\xi)
+\end{equation}
+Excess texture above the isotropic baseline scaled by correlation
+persistence.  Currently isotropic-only; architecture placeholder for
+directional $\xi_x, \xi_y, \xi_z$ when available.
+
+\subsection{Precursor Channel Formulas}
+\label{sec:precursor_formulas}
+
+All channel values are clamped to $[0, 1]$.
+Weights are named constants in \texttt{namespace weights}.
+
+\subsubsection{Rigidity-like}
+\begin{equation}
+  R^* = w_1\,C + w_2\,U + w_3\,S + w_4\,\tilde\xi
+      - w_5\,\Sigma_\text{surface} - w_6\,P_\text{interface}
+\end{equation}
+where $C$ = cohesion, $U$ = uniformity, $S$ = stabilisation,
+$\Sigma$ = surface sensitivity.
+Weights: $w_1{=}0.25$, $w_2{=}0.20$, $w_3{=}0.20$, $w_4{=}0.15$,
+$w_5{=}0.10$, $w_6{=}0.10$.
+
+\subsubsection{Brittleness-like}
+\begin{equation}
+  B^* = a_1\,R^* + a_2\,P_\text{interface}
+      + a_3\,\Sigma_\text{surface} - a_4\,A_\text{adapt}
+\end{equation}
+Weights: $a_1{=}0.30$, $a_2{=}0.25$, $a_3{=}0.20$, $a_4{=}0.25$.
+
+\subsubsection{Ductility-like}
+\begin{equation}
+  D^* = b_1\,U + b_2\,A_\text{adapt} + b_3\,(1 - B^*) - b_4\,T_\text{lock}
+\end{equation}
+Weights: $b_1{=}0.30$, $b_2{=}0.25$, $b_3{=}0.25$, $b_4{=}0.20$.
+
+\subsubsection{Cohesion integrity-like}
+\begin{equation}
+  CI^* = f_1\,C + f_2\,S + f_3\,U
+\end{equation}
+Weights: $f_1{=}0.40$, $f_2{=}0.30$, $f_3{=}0.30$.
+
+\subsubsection{Thermal transport-like}
+\begin{equation}
+  K^*_\text{th} = c_1\,\tilde\xi + c_2\,T + c_3\,C - c_4\,P_\text{interface}
+\end{equation}
+Weights: $c_1{=}0.30$, $c_2{=}0.25$, $c_3{=}0.25$, $c_4{=}0.20$.
+
+\subsubsection{Electrical transport-like}
+Same form as thermal but heavier weighting on alignment continuity
+($c_2{=}0.35$, $c_1{=}0.25$) and equal penalty for interface
+discontinuity.
+
+\subsubsection{Surface reactivity-like}
+\begin{equation}
+  S_r^* = d_1\,\Sigma_\text{surface} + d_2\,P_\text{interface}
+        + d_3\,(1 - S) + d_4\,(1 - \tilde\xi)
+\end{equation}
+Weights: $d_1{=}0.30$, $d_2{=}0.25$, $d_3{=}0.25$, $d_4{=}0.20$.
+
+\subsubsection{Fracture susceptibility-like}
+\begin{equation}
+  F^* = e_1\,B^* + e_2\,\Sigma_\text{surface}
+      + e_3\,P_\text{interface} - e_4\,D^*
+\end{equation}
+Weights: $e_1{=}0.30$, $e_2{=}0.25$, $e_3{=}0.25$, $e_4{=}0.20$.
+
+\subsection{Confidence Model}
+
+Base confidence starts at~1.0 and is degraded by:
+\begin{itemize}
+  \item $N < 2 \times \texttt{PROXY\_MIN\_BEADS}$: $-0.3$
+  \item Non-finite upstream proxies: $-0.3$
+  \item Both $\xi_\eta$ and $\xi_\rho$ NaN: $-0.2$
+  \item Actively diverging state ($\Delta\overline{|\eta-f|} > 0.01$): $-0.15$
+  \item Degenerate bulk/edge classifier (NaN gaps): $-0.1$
+  \item Invalid upstream proxy: confidence $= 0$
+\end{itemize}
+
+Individual channels further degrade their confidence:
+\begin{itemize}
+  \item Transport channels: $\times 0.7$ when no $\xi$ available
+  \item Electrical transport: $\times 0.8$ when texture $< 0.01$
+  \item Surface reactivity: $\times 0.6$ when no edge beads
+  \item Brittleness, ductility, fracture: $\times 0.85$ when no
+        delta information (single snapshot)
+\end{itemize}
+
+A channel is marked \texttt{valid = false} when its confidence falls
+below \texttt{PRECURSOR\_MIN\_CONFIDENCE}.
+
+\subsection{Provenance and Traceability}
+
+Every \type{MacroPrecursorState} records:
+\begin{itemize}
+  \item \texttt{source\_bead\_count}: $N$ from the upstream proxy
+  \item \texttt{source\_valid}: upstream validity flag
+  \item \texttt{source\_converged}: upstream convergence flag
+  \item \texttt{xi\_norm}, \texttt{interface\_penalty},
+        \texttt{adapt\_capacity}, \texttt{texture\_lock}: all
+        intermediate terms exposed for inspection
+  \item \texttt{anisotropy\_index}: global orientational measure
+  \item Per-channel \texttt{confidence} and \texttt{valid}: individual
+        trustworthiness
+\end{itemize}
+
+Weights are named \texttt{constexpr} constants in
+\texttt{namespace weights}, not buried in formulas.
+
+\subsection{Future Calibration Path}
+
+Later versions will fit these channels against:
+\begin{enumerate}
+  \item Experimental property tables (Young's modulus, hardness,
+        conductivity from material databases)
+  \item Atomistic simulation benchmarks (MD-computed elastic
+        constants, thermal conductivities)
+  \item Material family reference sets (metals, polymers, ceramics
+        with known property ranges)
+\end{enumerate}
+
+The current formulas are explicit heuristic combinations designed for
+\textbf{monotone directional correctness}: each perturbation test
+verifies the right direction of change, not the absolute magnitude.
+
+\subsection{Directed Precursor Validation (Suite 6B)}
+
+One monotonic perturbation test per precursor channel:
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Channel} & \textbf{Perturbation} & \textbf{Pass criterion} \\
+\hline
+Rigidity & Dense vs sparse lattice & dense $>$ sparse \\
+Fracture susc. & Degrade edge beads & degraded $>$ base \\
+Surface react. & Sparse cloud vs dense lattice & surface $>$ bulk \\
+Transport & Aligned vs random beads & aligned $>$ random \\
+Brittleness & Converged vs fresh & converged $\leq$ fresh $+ 0.05$ \\
+Ductility & Lattice vs random cloud & lattice $\geq$ cloud $- 0.1$ \\
+Cohesion integ. & Spacing sweep & monotone decrease \\
+\end{tabular}
+\end{center}
+
+All 85 tests in Suite~\#6 pass (Phases 6A--6E).
+
+% =============================================================================
+\section{Property Learning Pipeline}
+\label{sec:property_pipeline}
+% =============================================================================
+
+This section documents the \textbf{Property Learning Pipeline}
+(\file{coarse\_grain/analysis/property\_pipeline.hpp}).  It is the
+supervised learning system that maps proxy distributions and precursor
+channels to property-scale outputs, with explicit uncertainty
+quantification and full provenance.
+
+Architecture position:
+\begin{center}
+\begin{tabular}{c}
+Environment-state evaluation \\
+$\downarrow$ \\
+Ensemble statistics / spatial field summaries \\
+$\downarrow$ \\
+Macroscopic response proxies $\to$ precursors \\
+$\downarrow$ \\
+Property learning pipeline \quad $\leftarrow$ \textit{this layer} \\
+$\downarrow$ \\
+Calibrated property predictions
+\end{tabular}
+\end{center}
+
+\subsection{Three-Layer Separation}
+
+The pipeline enforces a strict three-layer architecture.  Formula fusion
+is prohibited.
+
+\begin{description}
+  \item[Descriptor layer] Computes proxy summaries and precursor channels
+    from bead-resolved simulation data.  Contains \textbf{no learned
+    parameters}.  Tested in Suites~5--6.
+  \item[Calibration layer] Fits model parameters from the exported
+    dataset.  Contains \textbf{no simulation logic}.
+  \item[Inference layer] Applies the fitted model to new precursor states
+    at prediction time.  Contains \textbf{no fitting and no simulation}.
+\end{description}
+
+These layers communicate through defined data structures only.  A system
+in which physics and learning are fused into a single formula cannot be
+audited, cannot be incrementally improved, and cannot be trusted.
+
+\subsection{Model Parameters}
+
+\begin{description}
+  \item[\texttt{PIPELINE\_DEFAULT\_REGULARIZATION = 0.01}]
+    Default L2 penalty $\lambda$ for Tier~1 ridge regression.
+    Prevents overfitting on small datasets.
+  \item[\texttt{PIPELINE\_CONFIDENCE\_THRESHOLD = 0.2}]
+    Below this, predictions are withheld rather than returned with
+    low quality.
+  \item[\texttt{PIPELINE\_SINGULAR\_THRESHOLD = 1e-14}]
+    Pivot threshold for Gaussian elimination in the linear solver.
+  \item[\texttt{PIPELINE\_MAX\_FEATURES = 256}]
+    Upper bound on feature vector dimensionality.
+  \item[\texttt{ORDINAL\_LOW\_THRESHOLD = 0.33}]
+    Boundary for ordinal label assignment: $< 0.33 \to$ Low.
+  \item[\texttt{ORDINAL\_HIGH\_THRESHOLD = 0.67}]
+    Boundary for ordinal label assignment: $\geq 0.67 \to$ High.
+\end{description}
+
+\subsection{Phase 7A: Dataset Construction}
+
+The fundamental unit is \type{PropertyDatasetRow}: a self-contained
+record encoding a single simulated material state with five contiguous
+blocks:
+
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+\textbf{Block} & \textbf{Content} & \textbf{Struct} \\
+\midrule
+A & Identity and provenance & \type{DatasetProvenance} \\
+B & Full \type{EnsembleProxySummary} & (inline) \\
+C & Evaluated \type{MacroPrecursorState} & (inline) \\
+D & Property targets (named, typed) & \type{PropertyTarget} \\
+E & Training metadata & \type{TrainingMetadata} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Target type system.}
+Each target carries a \type{PropertySourceType} classification:
+\texttt{Experimental}, \texttt{Atomistic}, \texttt{Synthetic}, or
+\texttt{Ordinal}.  Missing targets are represented with
+\texttt{available = false} and are \textbf{never} silently substituted
+with zero.
+
+\paragraph{Row validity.}
+A row is valid when: (1)~\texttt{system\_id} is non-empty,
+(2)~at least one target is available, and
+(3)~\texttt{source\_bead\_count} $> 0$.
+
+\subsection{Phase 7B: Feature Vectorization}
+
+\type{ModelFeatureConfig} specifies which feature blocks to include.
+\fn{vectorize()} converts a dataset row to a fixed-length
+\type{FeatureVector} with deterministic column ordering.
+
+\begin{center}
+\begin{tabular}{clc}
+\toprule
+\textbf{Block} & \textbf{Content} & \textbf{Count} \\
+\midrule
+1 & Proxy scalars + reference-normalised forms & 10 \\
+2 & Structural modifiers (penalty, gaps, $\tilde\xi$) & 7 \\
+3 & Precursor channel values & 8 \\
+4 & Confidence and support terms & 6 \\
+5 & Categorical context (deferred) & --- \\
+\midrule
+  & Total (default config) & 31 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Missing value policy.}
+Three policies: \texttt{Zero} (replace with 0, counted as imputed),
+\texttt{NaN} (pass through, not imputed), \texttt{Mean} (fallback to 0
+when no mean vector available).
+
+\paragraph{Ablation.}
+Each block can be independently disabled via \type{ModelFeatureConfig}
+boolean flags, enabling systematic ablation studies.
+
+\subsection{Phase 7C: Model Architecture}
+
+\subsubsection{Tier 1: Transparent Linear Baseline}
+
+Regularized ridge regression solves:
+\begin{equation}
+  \mathbf{w} = (\mathbf{X}^\top \mathbf{X} + \lambda \mathbf{I})^{-1}
+               \mathbf{X}^\top \mathbf{y}
+  \label{eq:ridge}
+\end{equation}
+
+The linear solver uses Gaussian elimination with partial pivoting.
+Coefficients are stored in \type{LinearModelCoefficients} with named
+feature lookup and explicit residual standard deviation.
+
+\paragraph{Prediction output.}
+Every prediction is returned as \type{PropertyPrediction}:
+\begin{itemize}
+  \item \texttt{value}: predicted scalar
+  \item \texttt{uncertainty}: residual standard deviation from training
+  \item \texttt{confidence}: derived from input validity, imputation count,
+        and upstream convergence quality
+  \item \texttt{top\_features}: ranked contributing features via
+        $|w_i \cdot x_i|$
+  \item \texttt{withheld}: \texttt{true} when confidence $<$ threshold
+\end{itemize}
+
+\paragraph{Abstention.}
+The system does not produce confident predictions from poorly constrained
+inputs.  When confidence falls below
+\texttt{PIPELINE\_CONFIDENCE\_THRESHOLD}, the prediction is withheld.
+
+\subsubsection{Tier 2 and Tier 3}
+
+Tier~2 (gradient boosted trees, shallow MLP) and Tier~3
+(family-conditioned model heads) are specified in the architecture but
+deferred to later implementation.  They share the same feature interface
+and prediction output structure.
+
+\subsection{Phase 7D: Evaluation and Split Discipline}
+
+\subsubsection{Metrics}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Task Type} & \textbf{Primary Metrics} \\
+\midrule
+Regression & RMSE, MAE, Spearman $\rho$ \\
+Ranking & Pairwise accuracy, Kendall $\tau$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Spearman rank correlation uses rank-transformed Pearson correlation.
+Kendall $\tau$ counts concordant vs.\ discordant pairs.
+
+\subsubsection{Grouped splits}
+
+Rows are partitioned by \texttt{split\_group}, ensuring all perturbed
+variants of a single base structure remain in the same partition.
+\fn{verify\_split\_discipline()} confirms no group crosses partition
+boundaries.  This prevents the model from learning family fingerprints
+rather than generalizable descriptor-to-property mappings.
+
+\subsection{Phase 7E: Synthetic Supervision}
+
+\subsubsection{Training stages}
+
+\begin{enumerate}
+  \item \textbf{Stage~1 (synthetic)}: Controlled perturbation sweeps
+    whose ground-truth orderings are known by construction.
+    \fn{build\_synthetic\_sweep()} generates dataset rows by
+    monotonically varying one proxy field while holding others fixed.
+    \fn{verify\_monotone()} validates the predicted ordering.
+  \item \textbf{Stage~2 (ordinal)}: Weak labels from domain rules.
+    \fn{assign\_ordinal\_label()} maps channel values to
+    \{Low, Medium, High\} at thresholds $0.33$ and $0.67$.
+  \item \textbf{Stage~3 (external)}: Reference values from measured
+    property databases or atomistic simulation outputs.  Deferred
+    pending availability of reference datasets.
+\end{enumerate}
+
+\subsubsection{Deployment order}
+
+Ranking $\to$ ordinal classification $\to$ regression.  This ordering
+reflects the practical difficulty of obtaining reliable numeric property
+labels.
+
+\subsection{Directed Pipeline Validation (Suite 7)}
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Phase} & \textbf{Focus} & \textbf{Tests} \\
+\hline
+7A & Dataset row validity, targets, provenance & 15 \\
+7B & Vectorization determinism, ablation, missing policy & 15 \\
+7C & Linear fit, coefficients, prediction, abstention, attribution & 15 \\
+7D & RMSE/MAE, Spearman, Kendall, grouped splits & 15 \\
+7E & Ordinal labels, monotone sweeps, end-to-end pipeline & 49 \\
+\hline
+   & Total & 109 \\
+\end{tabular}
+\end{center}
+
+All 109 tests in Suite~\#7 pass (Phases 7A--7E).
+
+% =============================================================================
+\section{Property Calibration and Target Legitimacy}
+\label{sec:property-calibration}
+% =============================================================================
+
+\subsection{Overview}
+
+The \textbf{Property Calibration and Target Legitimacy} layer
+(\file{property\_calibration.hpp}) provides a disciplined framework for
+mapping precursor channels to a compact, defensible set of property-scale
+outputs with explicit calibration logic, confidence decomposition,
+rejection behaviour, and a formal promotion policy governing when a proxy
+quantity may be named as a material property.
+
+This module operates in namespace \ns{coarse\_grain::calibration} and
+depends on the property pipeline (\ns{coarse\_grain::pipeline}), the macro
+precursor layer, and the ensemble proxy layer.  It introduces no simulation
+logic and contains no learned parameters that bypass the three-layer
+separation.
+
+\subsection{Architecture Position}
+
+\begin{verbatim}
+Environment-state evaluation
+    |
+Ensemble statistics / spatial field summaries  (ensemble_proxy.hpp)
+    |
+Macroscopic response proxies -> precursors      (macro_precursor.hpp)
+    |
+Property learning pipeline                      (property_pipeline.hpp)
+    |
+Property calibration and target legitimacy   <- this module
+\end{verbatim}
+
+\subsection{Phase 8A: Property Family Selection}
+
+Five first-wave property targets are selected:
+\begin{enumerate}
+  \item \textbf{rigidity\_like} --- structural resistance to deformation
+  \item \textbf{ductility\_like} --- capacity for adaptive, non-fracturing deformation
+  \item \textbf{brittleness\_like} --- susceptibility to abrupt failure
+  \item \textbf{thermal\_transport\_like} --- heat conduction capacity
+  \item \textbf{electrical\_transport\_like} --- electrical conduction capacity
+\end{enumerate}
+
+The \texttt{-like} suffix is retained throughout proxy-only and
+calibrated-relative states.  It may only be dropped when a target reaches
+externally-anchored legitimacy under Phase~8H.
+
+\subsection{Phase 8B: Target-Definition Contracts}
+
+Each property target has a formal \type{TargetContract} specifying:
+\begin{itemize}
+  \item \textbf{Sign expectations}: which precursor channels increase
+        (positive) or decrease (negative) the target
+  \item \textbf{Domain constraints}: admissible material classes,
+        excluded regimes, scale assumptions
+  \item \textbf{Output range}: valid $[\min, \max]$ for predictions
+  \item \textbf{Confidence requirements}: minimum precursor confidence,
+        minimum bead count, maximum imputed features
+  \item \textbf{Dominant features}: for OOD detection and attribution checks
+\end{itemize}
+
+The contract is the standard against which both analytic formulae and
+trained models are evaluated.  A model that violates the sign expectations
+of the contract has failed a scientific test.
+
+\subsection{Phase 8C: Calibration Profiles}
+
+Each property target carries a \type{CalibrationProfile} providing a
+calibrated interpretation layer without modifying the descriptor or
+precursor computation code:
+
+\begin{lstlisting}
+struct CalibrationProfile {
+    std::string property_name;
+    double scale, offset;
+    double min_confidence_threshold;
+    double abstention_threshold;
+    bool   monotone_expected;
+    std::vector<std::string> dominant_features;
+    double apply(double raw) const;
+};
+\end{lstlisting}
+
+Ductility is marked as non-monotone (has an optimum); all other first-wave
+targets are marked monotone.
+
+\subsection{Phase 8D: Supervision Regime Taxonomy}
+
+Three supervision regimes are defined:
+
+\begin{enumerate}
+  \item \textbf{Contract-supervised}: no external data; sign and monotonicity
+        enforced by contracts.  Outputs are physics-informed ranks.
+  \item \textbf{Synthetic-calibrated}: controlled perturbation sweeps provide
+        relative target labels.  Outputs are synthetic training artifacts.
+  \item \textbf{Externally calibrated}: measured or atomistically validated
+        reference values anchor outputs.  Only this regime supports promotion
+        to named properties.
+\end{enumerate}
+
+The regime under which any prediction was produced is recorded in
+\type{CalibratedPrediction::regime} and reported alongside the output.
+
+\subsection{Phase 8E: Confidence-Gated Prediction}
+
+Confidence is decomposed into five named components:
+
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Component} & \textbf{Source} \\
+\hline
+\field{input\_confidence}       & Feature validity flags and imputation count \\
+\field{precursor\_confidence}   & Convergence quality and precursor validity \\
+\field{coverage\_confidence}    & OOD envelope check (Phase 8F) \\
+\field{attribution\_stability}  & Top contributing features stable \\
+\field{calibration\_confidence} & Prediction within valid calibration range \\
+\end{tabular}
+\end{center}
+
+Total confidence is the product of all five components.  Individual
+component floors are enforced independently: a prediction may pass the
+total threshold while failing on a single dimension.
+
+Three prediction states are defined:
+\begin{itemize}
+  \item \textbf{Accepted}: total and all components above thresholds
+  \item \textbf{LowConfidence}: total above abstention but at least one
+        component marginal
+  \item \textbf{Withheld}: total below abstention or hard constraint violated
+\end{itemize}
+
+\subsection{Phase 8F: Out-of-Distribution Detection}
+
+A \type{FeatureEnvelope} stores per-feature mean and standard deviation
+from the training partition.  For each dominant feature, a $z$-score is
+computed against the envelope; features exceeding the configured threshold
+(default $z > 3$) are flagged as extrapolating.
+
+Extrapolation sets \field{coverage\_confidence} to zero, which forces the
+total confidence below any abstention threshold, producing a Withheld
+status.  The extrapolation tag is recorded in prediction provenance.
+
+Only dominant features (as specified by the target contract) trigger
+extrapolation tagging.
+
+\subsection{Phase 8G: Property-Specific Synthetic Curricula}
+
+Per-property sweeps are constructed in which relevant precursor channels
+are varied monotonically while others are held fixed:
+
+\begin{itemize}
+  \item \textbf{Rigidity}: sweep cohesion $0 \to 1$; expect monotone increase
+  \item \textbf{Transport}: sweep texture $0 \to 1$; expect monotone increase
+  \item \textbf{Brittleness}: sweep surface sensitivity $0 \to 1$ with
+        decreasing stabilisation; expect monotone increase
+\end{itemize}
+
+All curriculum rows are tagged with \field{SyntheticCalibrated} regime.
+A model that fails to recover expected responses on controlled sweeps has
+not learned the physics it is intended to represent.
+
+\subsection{Phase 8H: Target Promotion and Legitimacy}
+
+Three legitimacy states are defined:
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{State} & \textbf{Suffix} & \textbf{Requirements} \\
+\hline
+ProxyOnly            & \texttt{-like} retained & No additional evidence \\
+CalibratedRelative   & \texttt{-like} retained & Monotonicity, signs, domain documented \\
+ExternallyAnchored   & suffix dropped           & External data, bounded error, validated rejection \\
+\end{tabular}
+\end{center}
+
+Promotion from ProxyOnly to CalibratedRelative requires preserved
+monotonicity, consistent sign behaviour, and a documented domain statement.
+Promotion from CalibratedRelative to ExternallyAnchored additionally
+requires external data coverage, bounded residual error, and validated
+rejection behaviour on out-of-domain inputs.
+
+Neither promotion is permanent.  If calibration drift is detected, if
+contract violations appear, if coverage confidence degrades, or if
+attribution patterns become inconsistent, the target is demoted and the
+demotion is recorded in model provenance.
+
+Multi-dimensional grouped splits are provided via
+\op{multi\_grouped\_split()}, which groups rows jointly on material family,
+generator name, split group, and fragment family to prevent leakage.
+
+\subsection{Testing Summary}
+
+Suite~\#8 validates all eight phases:
+
+\begin{center}
+\begin{tabular}{lll}
+\textbf{Phase} & \textbf{Focus} & \textbf{Tests} \\
+\hline
+8A & Property family selection, naming, indexing & 16 \\
+8B & Target contracts, sign expectations, domain & 17 \\
+8C & Calibration profiles, transform, clamping & 12 \\
+8D & Supervision regime taxonomy & 4 \\
+8E & Confidence decomposition, status, attribution & 23 \\
+8F & OOD detection, envelope, extrapolation & 14 \\
+8G & Synthetic curricula, monotonicity, regime tagging & 14 \\
+8H & Legitimacy states, promotion, demotion, splits & 93 \\
+\hline
+   & Total & 193 \\
+\end{tabular}
+\end{center}
+
+All 193 tests in Suite~\#8 pass (Phases 8A--8H).
+
+\end{document}

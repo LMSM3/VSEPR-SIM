@@ -31,8 +31,12 @@
 #include <map>
 #include <optional>
 #include <array>
+#include <cmath>
+
+#ifdef VSEPR_HAS_GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#endif
 
 namespace vsepr {
 namespace io {
@@ -71,36 +75,38 @@ struct XYZAtom {
     XYZAtom(const std::string& elem, double x, double y, double z)
         : element(elem), position{x, y, z} {}
     
-    // GLM conversion helpers
+    #ifdef VSEPR_HAS_GLM
+    // GLM conversion helpers (only available when GLM is present)
     glm::vec3 get_position_glm() const {
         return glm::vec3(position[0], position[1], position[2]);
     }
-    
+
     void set_position_glm(const glm::vec3& pos) {
         position[0] = pos.x;
         position[1] = pos.y;
         position[2] = pos.z;
     }
-    
+
     glm::vec3 get_velocity_glm() const {
         return glm::vec3(velocity[0], velocity[1], velocity[2]);
     }
-    
+
     void set_velocity_glm(const glm::vec3& vel) {
         velocity[0] = vel.x;
         velocity[1] = vel.y;
         velocity[2] = vel.z;
     }
-    
+
     glm::vec3 get_force_glm() const {
         return glm::vec3(force[0], force[1], force[2]);
     }
-    
+
     void set_force_glm(const glm::vec3& f) {
         force[0] = f.x;
         force[1] = f.y;
         force[2] = f.z;
     }
+#endif // VSEPR_HAS_GLM
 };
 
 /**
@@ -146,18 +152,19 @@ struct XYZMolecule {
     
     // Translate all atoms
     void translate(double dx, double dy, double dz);
-    void translate(const glm::vec3& delta);
-    
-    // Rotate all atoms (axis-angle, radians)
+
+    // Rotate all atoms (axis-angle, radians) — Rodrigues, no GLM needed
     void rotate(const std::array<double, 3>& axis, double angle);
-    void rotate(const glm::vec3& axis, double angle);
-    void rotate(const glm::mat4& rotation_matrix);
-    
+
     // Scale coordinates
     void scale(double factor);
-    
-    // Transform all atoms by matrix
+
+#ifdef VSEPR_HAS_GLM
+    void translate(const glm::vec3& delta);
+    void rotate(const glm::vec3& axis, double angle);
+    void rotate(const glm::mat4& rotation_matrix);
     void transform(const glm::mat4& matrix);
+#endif
 };
 
 // ============================================================================

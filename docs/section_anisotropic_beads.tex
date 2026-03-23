@@ -1,0 +1,1524 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, graphicx, geometry}
+\geometry{margin=1in}
+
+\title{Anisotropic Surface-Mapped Coarse-Grained Beads for Molecular Systems}
+\author{VSEPR-SIM Project}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Traditional coarse-grained (CG) models frequently reduce molecular fragments to isotropic point particles, preserving total mass and charge while discarding directional structure. This work proposes an intermediate representation: anisotropic surface-mapped beads, in which grouped atoms are projected to a single center while retaining directional interaction information via a surface descriptor. Using benzene as a canonical example, we demonstrate how this approach preserves planar symmetry and directional response while maintaining computational efficiency. The method provides a bridge between atomistic fidelity and reduced-order modeling suitable for multi-scale simulation.
+\end{abstract}
+
+\section{Introduction}
+
+Coarse-grained modeling aims to reduce computational complexity by grouping atoms into larger interaction sites. Standard approaches represent each group as an isotropic particle with effective interaction potentials:
+
+\begin{equation}
+U_{ij} = U(r_{ij})
+\end{equation}
+
+While efficient, this approximation discards directional information inherent to many molecular structures. For planar or anisotropic systems such as benzene, this leads to loss of physically relevant behavior.
+
+This work introduces a surface-mapped bead representation, preserving directional characteristics while retaining a single-site description.
+
+\section{Atomistic to Coarse-Grained Mapping}
+
+Let a bead $B$ be formed from atoms $i \in S_B$.
+
+The center of mass is defined as:
+
+\begin{equation}
+\mathbf{R}_B = \frac{1}{M_B} \sum_{i \in S_B} m_i \mathbf{r}_i
+\end{equation}
+
+with total mass:
+
+\begin{equation}
+M_B = \sum_{i \in S_B} m_i
+\end{equation}
+
+and total charge:
+
+\begin{equation}
+Q_B = \sum_{i \in S_B} q_i
+\end{equation}
+
+A local coordinate frame is constructed using the inertia tensor of the atom group.
+
+\section{Surface Descriptor Representation}
+
+Instead of representing the bead as isotropic, we define a directional surface descriptor on a spherical shell:
+
+\begin{equation}
+S_B(\theta, \phi)
+\end{equation}
+
+where $(\theta, \phi)$ are angular coordinates in the bead's local frame.
+
+This function encodes anisotropic properties such as:
+\begin{itemize}
+    \item effective density
+    \item interaction strength
+    \item electrostatic response
+\end{itemize}
+
+A practical formulation is obtained by sampling interaction with a probe particle:
+
+\begin{equation}
+U_B(r, \theta, \phi) = \sum_{i \in S_B} U_{i,p}(|\mathbf{x} - \mathbf{r}_i|)
+\end{equation}
+
+where $\mathbf{x} = \mathbf{R}_B + r \hat{n}(\theta, \phi)$.
+
+\section{Compressed Representation}
+
+To reduce storage cost, the surface descriptor may be expanded in spherical harmonics:
+
+\begin{equation}
+S_B(\theta, \phi) = \sum_{\ell,m} c_{\ell m} Y_{\ell m}(\theta, \phi)
+\end{equation}
+
+Low-order expansions are sufficient for many rigid molecular fragments.
+
+\section{Application to Benzene}
+
+Benzene is a planar molecule with strong anisotropy:
+
+\begin{itemize}
+    \item circular in-plane symmetry
+    \item distinct out-of-plane behavior
+    \item non-uniform interaction profile
+\end{itemize}
+
+A surface-mapped bead preserves:
+\begin{itemize}
+    \item planar geometry
+    \item orientation-dependent interactions
+    \item effective size and shape
+\end{itemize}
+
+while reducing the system from 12 atoms to a single interaction site.
+
+\section{Interaction Model}
+
+Interactions between beads are defined using directional dependence:
+
+\begin{equation}
+U = U(r, \Omega_B, \Omega_C)
+\end{equation}
+
+or via surface coupling:
+
+\begin{equation}
+U \approx \int S_B(\theta, \phi) S_C(\theta', \phi') K(r) \, d\Omega
+\end{equation}
+
+where $K(r)$ is a radial kernel.
+
+\section{Dynamic Consistency and Updates}
+
+The surface descriptor remains valid under small deformations. However, recomputation is required when:
+
+\begin{itemize}
+    \item bonds are broken or formed
+    \item large conformational changes occur
+    \item charge distribution changes significantly
+\end{itemize}
+
+\section{Advantages and Limitations}
+
+\subsection{Advantages}
+\begin{itemize}
+    \item retains directional physics
+    \item reduces atom count significantly
+    \item enables efficient reuse of precomputed structure
+\end{itemize}
+
+\subsection{Limitations}
+\begin{itemize}
+    \item state dependence of effective interactions
+    \item additional preprocessing cost
+    \item need for descriptor compression
+\end{itemize}
+
+\section{Orientation-Coupled Interaction Framework}
+
+The surface descriptor $S_B(\theta,\phi)$ encodes the intrinsic directional structure of an individual coarse-grained bead. However, this representation alone is insufficient to define interactions between beads, since intermolecular behavior depends not only on internal anisotropy but also on the \emph{relative orientation} between interacting units.
+
+To construct a physically meaningful coarse-grained model, the interaction framework must therefore couple radial separation with orientational degrees of freedom, enabling the emergence of direction-dependent energetics such as stacking, alignment, and angular selectivity.
+
+\subsection{Bead Orientation Representation}
+
+Each bead $B$, formed from an underlying atomic subset, is endowed with a local orthonormal frame $Q_B = \{\hat{e}_1, \hat{e}_2, \hat{e}_3\}$ derived from the principal axes of its inertia tensor. This construction ensures that the orientation is both physically grounded and invariant under rigid-body transformations of the atomistic configuration.
+
+For planar or near-planar structures, such as benzene, the orientation can be reduced to a primary unit vector $\hat{n}_B$, defined as the normal to the molecular plane. This provides a minimal yet sufficient representation of anisotropy for systems dominated by planar symmetry.
+
+Given two interacting beads $A$ and $B$, define the relative displacement vector:
+
+\begin{equation}
+\mathbf{r} = \mathbf{R}_B - \mathbf{R}_A, \quad
+r = |\mathbf{r}|, \quad
+\hat{r} = \frac{\mathbf{r}}{r}
+\end{equation}
+
+The orientational relationship between the beads is captured through the scalar invariants:
+
+\begin{equation}
+\cos\theta_A = \hat{n}_A \cdot \hat{r}, \quad
+\cos\theta_B = \hat{n}_B \cdot \hat{r}, \quad
+\cos\phi = \hat{n}_A \cdot \hat{n}_B
+\end{equation}
+
+These quantities form a reduced set of rotationally invariant descriptors that fully characterize the relative alignment between two axisymmetric anisotropic beads.
+
+\subsection{Reduced Interaction Model}
+
+A tractable first-order anisotropic interaction potential may be constructed by augmenting a baseline radial interaction with orientation-dependent corrections:
+
+\begin{equation}
+U_{\text{eff}}(r,\theta_A,\theta_B,\phi)
+=
+U_0(r)
++
+\lambda_1 f_1(r)\cos\phi
++
+\lambda_2 f_2(r)\cos^2\theta_A
++
+\lambda_3 f_3(r)\cos^2\theta_B
+\end{equation}
+
+Here, $U_0(r)$ represents an isotropic reference potential (e.g., Lennard-Jones or Morse), while the functions $f_i(r)$ modulate the strength of angular contributions as a function of separation. The coefficients $\lambda_i$ control the relative importance of different orientational modes.
+
+This formulation introduces anisotropic sensitivity while preserving a low-dimensional parameter space, enabling efficient evaluation in large-scale simulations. Importantly, the chosen angular terms correspond to physically interpretable alignment tendencies, such as parallel orientation ($\cos\phi$) and alignment with the intermolecular axis ($\cos\theta$ terms).
+
+\subsection{Surface Descriptor Coupling}
+
+While the reduced model provides computational efficiency, higher-fidelity interactions may be derived directly from the surface descriptors themselves. In this formulation, the interaction energy arises from a convolution-like coupling between directional surface fields:
+
+\begin{equation}
+U \approx \int S_A(\theta,\phi)\, S_B(\theta',\phi')\, K(r)\, d\Omega
+\end{equation}
+
+where $K(r)$ is a radial kernel governing distance dependence, and the angular coordinates $(\theta',\phi')$ are obtained by transforming bead $B$'s local frame into that of bead $A$.
+
+This representation effectively treats each bead as a distributed interaction surface rather than a point object, allowing fine angular structure---including multipolar features and localized interaction regions---to contribute directly to the interaction energy.
+
+In practice, this integral may be evaluated using truncated spherical harmonic expansions, reducing the interaction to a finite set of mode couplings.
+
+\subsection{Torque and Rotational Dynamics}
+
+Because the interaction potential depends explicitly on orientation, translational forces alone do not fully describe system dynamics. Rotational degrees of freedom must be incorporated to ensure physical consistency.
+
+The torque acting on bead $B$ is given by:
+
+\begin{equation}
+\boldsymbol{\tau}_B = -\frac{\partial U}{\partial \Omega_B}
+\end{equation}
+
+where $\Omega_B$ denotes the rotational configuration of the bead, parameterized for example by Euler angles or quaternions.
+
+This torque induces rotational motion according to rigid-body dynamics, enabling phenomena such as alignment, libration, and orientational relaxation to emerge naturally from the interaction model.
+
+\subsection{Application to Benzene Dimer Configurations}
+
+The orientation-dependent framework is particularly relevant for systems such as benzene dimers, where interaction energy is strongly modulated by relative alignment.
+
+The model captures several well-known configurations:
+
+\begin{itemize}
+    \item \textbf{Face-to-face stacking:} $\cos\phi \approx 1$, $\theta_A \approx \theta_B \approx 0$
+    \item \textbf{Edge-to-face (T-shaped):} $\theta_A \approx \pi/2$, $\theta_B \approx 0$
+    \item \textbf{Offset stacking:} intermediate angular values with lateral displacement
+\end{itemize}
+
+These configurations correspond to distinct energetic minima arising from $\pi$-$\pi$ interactions and electrostatic anisotropy. Such behavior cannot be reproduced within isotropic coarse-grained models, highlighting the necessity of orientation-aware formulations.
+
+\subsection{Model Hierarchy}
+
+The proposed framework supports a systematic hierarchy of interaction models with increasing fidelity:
+
+\begin{itemize}
+    \item \textbf{Isotropic:} $U(r)$
+    \item \textbf{Axisymmetric anisotropic:} $U(r,\theta_A,\theta_B,\phi)$
+    \item \textbf{Descriptor-resolved:} $U(r,\Omega_A,\Omega_B,S_A,S_B)$
+\end{itemize}
+
+This hierarchy enables adaptive resolution strategies, where simpler models are used for large-scale exploration and more detailed representations are invoked when directional effects become dominant.
+
+In this sense, the orientation-coupled interaction framework serves as a bridge between classical coarse-grained potentials and fully resolved anisotropic interaction fields.
+
+\subsection{Descriptor Enrichment for Complex Anisotropic Structures}
+
+The spherical harmonic representation
+
+\begin{equation}
+S_B(\theta,\phi) = \sum_{\ell,m} c_{\ell m} Y_{\ell m}(\theta,\phi)
+\end{equation}
+
+provides a compact and efficient description of moderately anisotropic systems. However, for highly structured and sterically complex entities---such as coordination clusters with bulky ligands---low-order expansions are insufficient. In these cases, the angular variation of interaction properties is sharp, non-uniform, and often dominated by localized features.
+
+\subsubsection{Higher-Order Angular Resolution}
+
+To accurately capture directional structure, the spherical harmonic expansion must be extended to higher orders:
+
+\begin{equation}
+S_B(\theta,\phi) = \sum_{\ell=0}^{\ell_{\max}} \sum_{m=-\ell}^{\ell} c_{\ell m} Y_{\ell m}(\theta,\phi)
+\end{equation}
+
+where $\ell_{\max}$ is chosen based on the angular complexity of the system. Larger values of $\ell_{\max}$ allow representation of sharp steric occlusion and narrow interaction channels, at the cost of increased computational overhead.
+
+\subsubsection{Multi-Channel Surface Representation}
+
+A single scalar descriptor is generally insufficient to encode the diverse physical interactions present in complex systems. Instead, the surface descriptor is extended to a vector-valued representation:
+
+\begin{equation}
+S_B(\theta,\phi) \rightarrow
+\left\{
+S_B^{(\text{steric})}(\theta,\phi),\,
+S_B^{(\text{elec})}(\theta,\phi),\,
+S_B^{(\text{disp})}(\theta,\phi)
+\right\}
+\end{equation}
+
+Each channel captures a distinct physical contribution:
+
+\begin{itemize}
+    \item $S^{(\text{steric})}$: geometric accessibility and excluded volume
+    \item $S^{(\text{elec})}$: electrostatic potential or charge distribution
+    \item $S^{(\text{disp})}$: dispersion and non-bonded interaction strength
+\end{itemize}
+
+This decomposition enables independent modeling and weighting of interaction mechanisms, improving both interpretability and accuracy.
+
+\subsubsection{Full Orientation Representation}
+
+For systems with three-dimensional anisotropy, a single orientation vector is insufficient. Instead, each bead is associated with a full orthonormal frame:
+
+\begin{equation}
+Q_B = \{\hat{e}_1, \hat{e}_2, \hat{e}_3\}
+\end{equation}
+
+derived from the principal axes of the inertia tensor. This allows the surface descriptor to be consistently defined in the bead's local coordinate system and properly transformed during interaction evaluation.
+
+\subsubsection{Implications for Interaction Modeling}
+
+The enriched descriptor directly affects the interaction formulation. The effective interaction between two beads becomes:
+
+\begin{equation}
+U \approx \int
+\sum_k S_A^{(k)}(\theta,\phi)\, S_B^{(k)}(\theta',\phi')\, K_k(r)\, d\Omega
+\end{equation}
+
+where $k$ indexes interaction channels and $K_k(r)$ are channel-specific radial kernels.
+
+This formulation enables:
+\begin{itemize}
+    \item directional steric screening
+    \item anisotropic electrostatic interactions
+    \item orientation-dependent dispersion
+\end{itemize}
+
+\subsubsection{Modeling Considerations}
+
+The introduction of higher-order and multi-channel descriptors increases both representational power and computational cost. Practical implementations must therefore balance:
+
+\begin{itemize}
+    \item angular resolution ($\ell_{\max}$)
+    \item number of descriptor channels
+    \item evaluation efficiency
+\end{itemize}
+
+Adaptive schemes, in which descriptor complexity is increased only for highly anisotropic systems, may provide an effective compromise.
+
+\subsubsection{Physical Interpretation}
+
+At this level of representation, the bead is no longer a point particle with an effective potential, but rather a compressed representation of a three-dimensional interaction field. The modeling objective is therefore not simply reduction, but controlled preservation of physically relevant directional structure.
+
+\section{Model Selection Guidelines}
+
+To balance computational efficiency and physical fidelity, the interaction model is applied using a two-tier hierarchical strategy based on structural regime rather than a fixed atom-count threshold.
+
+\subsection{Tier 1: Reduced Anisotropic Model}
+
+The reduced orientation-coupled model is used for systems with low angular complexity. This includes structures that are:
+
+\begin{itemize}
+    \item rigid and compact
+    \item smoothly anisotropic
+    \item well-described by a single dominant axis or simple frame
+    \item not dominated by localized interaction sites
+\end{itemize}
+
+Typical examples include aromatic ring systems such as benzene, naphthalene, pyridine, and phenol.
+
+The interaction is represented using a low-dimensional orientation-dependent potential:
+
+\begin{equation}
+U_{\text{eff}}(r,\theta_A,\theta_B,\phi)
+\end{equation}
+
+This model is appropriate when:
+\begin{itemize}
+    \item low-order spherical harmonic expansion is sufficient
+    \item a small number of angular invariants captures the interaction behavior
+    \item computational efficiency is prioritized
+\end{itemize}
+
+\subsection{Tier 2: Enriched Descriptor Model}
+
+The enriched descriptor-based model is used for systems with high angular complexity and heterogeneous interaction surfaces. This includes structures that are:
+
+\begin{itemize}
+    \item strongly three-dimensional
+    \item sterically shielded or directionally gated
+    \item chemically heterogeneous
+    \item metal-centered or coordination-driven
+    \item characterized by non-uniform surface accessibility
+\end{itemize}
+
+Typical examples include organometallic clusters, coordination complexes, and bulky substituted systems.
+
+The bead is represented using a multi-channel surface descriptor:
+
+\begin{equation}
+S_B(\theta,\phi) \rightarrow
+\left\{
+S^{(\text{steric})},\,
+S^{(\text{elec})},\,
+S^{(\text{disp})}
+\right\}
+\end{equation}
+
+with a full orientation frame:
+
+\begin{equation}
+Q_B = \{\hat{e}_1, \hat{e}_2, \hat{e}_3\}
+\end{equation}
+
+This model is required when:
+\begin{itemize}
+    \item interaction depends on angular accessibility
+    \item low-order angular representations produce large error
+    \item multiple physical interaction modes must be resolved
+\end{itemize}
+
+\subsection{Selection Heuristic}
+
+As a practical guideline, the enriched model is typically activated for systems with:
+\begin{itemize}
+    \item atom count $N \gtrsim 18$
+    \item presence of a metal center
+\end{itemize}
+
+However, the definitive criterion is the angular complexity of the surface descriptor. Systems that are poorly approximated by low-order angular representations must be promoted to the enriched model regardless of size or composition.
+
+\subsection{Summary}
+
+The reduced model provides efficiency for structurally simple systems, while the enriched model preserves directional physics in complex environments. This hierarchical approach enables adaptive resolution across a wide range of molecular and materials systems.
+
+\section{Unified Descriptor Strategy}
+
+The preceding model selection guidelines introduced a two-tier hierarchical strategy, distinguishing between a reduced orientation-coupled model and an enriched multi-channel descriptor model. While conceptually useful, this formulation relies on a discrete architectural switch---triggered by atom count, metal center presence, or angular complexity---that introduces a discontinuous boundary between model regimes.
+
+This section presents a refinement: rather than maintaining two separate data models with distinct interaction machinery, all systems are represented within a \emph{single descriptor-based framework}. Model complexity is adjusted through controlled truncation rather than by changing the underlying formalism. The result is a continuous, unified architecture in which the previous ``tiers'' emerge as natural truncation levels of one model family.
+
+\subsection{Motivation}
+
+Hard switching between separate coarse-grained interaction models introduces several undesirable properties:
+
+\begin{itemize}
+    \item \textbf{Discontinuity:} The energy surface is non-smooth at the model boundary, complicating optimization and dynamics.
+    \item \textbf{Non-transferability:} Parameters calibrated in one model regime do not apply in the other.
+    \item \textbf{Error opacity:} It is difficult to compare model quality across regimes when the representations differ.
+    \item \textbf{Arbitrary thresholds:} Heuristic cutoffs (e.g., $N \geq 18$, metal center present) do not correspond to a smooth physical variation.
+\end{itemize}
+
+A unified formalism avoids these issues by ensuring that model enrichment occurs within a single continuous framework.
+
+\subsection{Unified Formalism}
+
+All beads, regardless of structural complexity, are represented using the same multi-channel spherical harmonic descriptor:
+
+\begin{equation}
+S_B^{(k)}(\theta,\phi) = \sum_{\ell=0}^{\ell_{\max}} \sum_{m=-\ell}^{\ell} c_{\ell m}^{(k)} Y_{\ell m}(\theta,\phi)
+\end{equation}
+
+where $k$ indexes the interaction channel (steric, electrostatic, dispersion) and $\ell_{\max}$ controls angular resolution.
+
+Each bead carries a full orientation frame $Q_B = \{\hat{e}_1, \hat{e}_2, \hat{e}_3\}$ and a set of descriptor coefficients $\{c_{\ell m}^{(k)}\}$ for each active channel.
+
+The interaction energy between two beads is defined by a single universal form:
+
+\begin{equation}
+U = F\!\left(r,\, Q_A,\, Q_B,\, \{c_{\ell m}^{(k)}\}\right)
+\end{equation}
+
+which evaluates as:
+
+\begin{equation}
+U = U_0(r) + \sum_k \lambda_k \left(\sum_{\ell,m} c_{\ell m}^{(k)}(A)\, c_{\ell m}^{(k)}(B)\right) K_k(r)
+\end{equation}
+
+where $U_0(r)$ is the isotropic baseline, $K_k(r)$ are channel-specific radial kernels, and $\lambda_k$ are coupling weights.
+
+This formulation subsumes both the reduced and enriched models as special cases:
+
+\begin{itemize}
+    \item \textbf{Reduced regime:} small $\ell_{\max}$, single active channel, few nonzero coefficients
+    \item \textbf{Enriched regime:} larger $\ell_{\max}$, multiple active channels, richer coefficient structure
+\end{itemize}
+
+The transition between these regimes is not a model switch, but a change in the number of active coefficients within the same mathematical object.
+
+\subsection{Adaptive Truncation}
+
+Rather than selecting a model tier via fixed heuristic thresholds, the unified framework determines the appropriate resolution level through \emph{descriptor residual analysis}.
+
+Given a bead's atomistic structure, the procedure is:
+
+\begin{enumerate}
+    \item Fit a low-order descriptor ($\ell_{\max} = \ell_0$)
+    \item Compute the reconstruction residual $\varepsilon(\ell_0)$
+    \item If $\varepsilon > \varepsilon_{\text{tol}}$, increase $\ell_{\max}$ and activate additional channels
+    \item Repeat until residual is below tolerance or maximum resolution is reached
+\end{enumerate}
+
+The reconstruction residual is defined as:
+
+\begin{equation}
+\varepsilon(\ell_{\max}) = \frac{\sum_{i} \left| S_{\text{ref}}(\hat{n}_i) - S_{\ell_{\max}}(\hat{n}_i) \right|^2}{\sum_{i} \left| S_{\text{ref}}(\hat{n}_i) \right|^2}
+\end{equation}
+
+where $S_{\text{ref}}$ is the probe-sampled reference surface and $S_{\ell_{\max}}$ is the truncated spherical harmonic reconstruction.
+
+This approach ensures that complexity is added continuously in response to representational need, rather than through fixed structural cutoffs.
+
+\subsection{Resolution Levels}
+
+The unified descriptor supports a continuous hierarchy of resolution levels, which replaces the discrete tier concept:
+
+\begin{itemize}
+    \item \textbf{Level 0 (Isotropic):} Only $c_{00}$ retained; equivalent to a point particle with effective radius
+    \item \textbf{Level 1 (Axial):} $\ell_{\max} \leq 2$, single channel; captures dominant planar or axial anisotropy
+    \item \textbf{Level 2 (Moderate):} $\ell_{\max} \leq 4$, one or two channels; sufficient for rigid aromatic systems
+    \item \textbf{Level 3 (Enriched):} $\ell_{\max} \leq 8$, all channels active; required for sterically complex or metal-centered systems
+\end{itemize}
+
+This hierarchy is not a set of discrete models but a continuum of truncation depths within one mathematical framework.
+
+\subsection{Advantages over Discrete Tier Selection}
+
+The unified descriptor strategy provides several advantages:
+
+\begin{itemize}
+    \item \textbf{Smooth energy surface:} No discontinuities at model boundaries
+    \item \textbf{Single optimization space:} Parameters, coefficients, and errors are all defined in the same representation
+    \item \textbf{Measurable error:} Reconstruction residual provides a quantitative basis for resolution selection
+    \item \textbf{Hierarchical refinement:} Start coarse, refine only where needed
+    \item \textbf{Transferability:} The same descriptor object and energy machinery apply across all chemical systems
+\end{itemize}
+
+\subsection{Relationship to Previous Tier Concept}
+
+The two-tier model selection guidelines presented in the preceding section remain valid as a practical engineering heuristic. However, they are now understood as approximate indicators of where a system falls within the continuous resolution hierarchy, rather than as triggers for architectural switching.
+
+In implementation, the ``reduced'' regime corresponds to a low-order truncation of the unified descriptor, and the ``enriched'' regime corresponds to a higher-order truncation with additional active channels. The underlying data model and energy machinery are identical in both cases.
+
+\section{Atomistic Preparation Layer}
+
+The unified descriptor strategy establishes a mathematically coherent coarse-grained formalism. However, the quality of any coarse-grained representation is bounded by the quality of the atomistic input from which it is derived. If the atomistic preparation is unreliable---with incomplete topology, missing charges, or ill-defined local frames---the descriptor machinery inherits this uncertainty and the resulting coarse-grained model is untrustworthy regardless of its mathematical sophistication.
+
+This section formalizes the atomistic preparation layer as a necessary prerequisite for reliable descriptor generation.
+
+\subsection{Purpose}
+
+The atomistic namespace exists to answer a fundamentally different question than the coarse-grained namespace:
+
+\begin{itemize}
+    \item \textbf{Atomistic:} ``What is this structure, exactly?''
+    \item \textbf{Coarse-grained:} ``How do I compress this structure into a transferable reduced object?''
+\end{itemize}
+
+The atomistic layer is the source-of-truth layer that owns:
+
+\begin{itemize}
+    \item atoms, bonds, and formal charges
+    \item local geometry and coordination environment
+    \item ring detection and aromaticity flags
+    \item molecular graph and canonical fragment decomposition
+    \item local frames derived from real structure
+\end{itemize}
+
+Its outputs are consumed by the coarse-grained layer, but the reverse dependency must never exist. The atomistic layer must not depend on or import any coarse-grained types.
+
+\subsection{Scale Boundary: The Fragment View}
+
+Rather than allowing the coarse-grained layer to rummage through raw atom lists, a clean bridge object is defined at the scale boundary. This object---the \emph{fragment view}---packages all atomistic information needed for descriptor construction into a single, validated interface.
+
+The fragment view contains:
+
+\begin{itemize}
+    \item atom records: position, atomic number, charge, flags
+    \item bond records: atom indices and bond order
+    \item aggregate properties: total mass, total charge
+    \item a local coordinate frame derived from the inertia tensor
+    \item structural classification flags: aromatic, cyclic, organometallic
+\end{itemize}
+
+The coarse-grained layer receives a fragment view and constructs a bead and its unified descriptor from it. This enforces a one-directional data flow:
+
+\begin{equation}
+\text{atomistic structure} \;\xrightarrow{\text{fragment view}}\; \text{unified descriptor} \;\rightarrow\; \text{bead interactions}
+\end{equation}
+
+\subsection{Validation and Status Codes}
+
+The atomistic preparation layer must produce either a valid fragment view or an explicit failure with a reason code. Silent propagation of invalid inputs is prohibited.
+
+Failure modes include:
+
+\begin{itemize}
+    \item invalid geometry (degenerate or collapsed atom positions)
+    \item missing charges (incomplete charge assignment)
+    \item ill-defined frame (insufficient atom count or degeneracy)
+    \item unsupported topology (unrecognized bonding pattern)
+\end{itemize}
+
+Each failure mode produces a specific status code, making debugging tractable and preventing the coarse-grained layer from inheriting garbage.
+
+\subsection{Architectural Implications}
+
+The introduction of a formal scale boundary has several consequences:
+
+\begin{itemize}
+    \item \textbf{Dependency asymmetry:} The atomistic namespace never imports from \texttt{coarse\_grain}. The coarse-grained namespace depends on atomistic bridge types.
+    \item \textbf{Testability:} The fragment view can be independently validated before descriptor construction.
+    \item \textbf{Reusability:} The atomistic preparation layer supports additional consumers beyond coarse-graining: reference calculations, backmapping, validation against exact structure, fragment classification, and hybrid atomistic/CG regions.
+    \item \textbf{Error traceability:} If a descriptor is incorrect, the fragment view provides the exact atomistic input that produced it.
+\end{itemize}
+
+\subsection{Relationship to Descriptor Generation}
+
+The unified descriptor is constructed from a fragment view through the following chain:
+
+\begin{enumerate}
+    \item Atomistic layer produces a validated \texttt{FragmentView}
+    \item The fragment view provides positions, charges, and frame to the mapping layer
+    \item The mapping layer generates probe-based surface fields
+    \item Surface fields are projected onto spherical harmonics to produce descriptor coefficients
+    \item The reconstruction residual determines whether the current truncation is sufficient
+\end{enumerate}
+
+This chain ensures that every descriptor coefficient is traceable back through the fragment view to specific atoms in the original structure. The anti-black-box contract is maintained across the scale boundary.
+
+\section{Anisotropic Bead Model --- Implementation Specification}
+
+This section formalises the unified coarse-grained descriptor framework with
+adaptive spherical harmonic resolution.  All bead instances conform to a single,
+rigidly defined state structure; no dual-model branching is permitted.
+
+\subsection{Core Data Structure}
+
+A bead $B$ is defined by the canonical tuple
+\begin{equation}
+    B = \bigl\{ \mathbf{R}_B,\; \mathbf{Q}_B,\; \{c_{\ell m}^{(k)}\},\; M_B,\; Q_B^{\mathrm{tot}} \bigr\}
+\end{equation}
+where $\mathbf{R}_B$ is the centre of mass, $\mathbf{Q}_B$ is an orthonormal
+$3\times3$ orientation frame, $\{c_{\ell m}^{(k)}\}$ are per-channel real
+spherical harmonic coefficients, $M_B$ is the total mass, and
+$Q_B^{\mathrm{tot}}$ is the total charge.
+
+Three physical channels are defined:
+\begin{center}
+\begin{tabular}{cl}
+    $k=0$ & Steric (excluded-volume / atomic density) \\
+    $k=1$ & Electrostatic (Coulomb potential at surface) \\
+    $k=2$ & Dispersion (Lennard-Jones field at surface) \\
+\end{tabular}
+\end{center}
+
+\noindent
+Invariants:
+\begin{itemize}
+    \item $\mathbf{Q}_B$ must remain orthonormal; enforce via Gram--Schmidt at every mutation site.
+    \item $\ell_{\max}$ must be consistent per channel within a given bead.
+    \item Memory layout must be contiguous to enable SIMD vectorisation in downstream kernels.
+\end{itemize}
+
+\subsection{Descriptor Generation Pipeline}
+
+The pipeline maps a fully specified atomistic fragment to a fully populated
+bead.  All steps are deterministic; stochastic initialisation is not permitted.
+
+\begin{enumerate}
+    \item \textbf{Centre computation:} $\mathbf{R}_B = M_B^{-1} \sum_{i \in S_B} m_i \mathbf{r}_i$
+    \item \textbf{Local frame:} $\mathbf{Q}_B$ via inertia tensor diagonalisation (Jacobi)
+    \item \textbf{Channel projection:} For each channel $k$, sample the surface field and project onto real spherical harmonics: $c_{\ell m}^{(k)} = \int S^{(k)}(\hat{n})\, Y_{\ell m}(\hat{n})\, d\Omega$
+    \item \textbf{Scalar aggregation:} $M_B = \sum m_i$, \; $Q_B^{\mathrm{tot}} = \sum q_i$
+\end{enumerate}
+
+\subsection{Channel Sampling Definitions}
+
+\begin{center}
+\begin{tabular}{ll}
+    \textbf{Channel} & \textbf{Physical Definition} \\
+    \hline
+    Steric        & Excluded-volume / atomic density projected onto bead surface \\
+    Electrostatic & Coulomb potential evaluated at surface points from partial charges \\
+    Dispersion    & Lennard-Jones field contribution at bead surface \\
+\end{tabular}
+\end{center}
+
+\subsection{Interaction Engine}
+
+The pairwise interaction energy between beads $A$ and $B$ is evaluated in
+harmonic space.  Runtime surface integration is not employed.
+
+\begin{equation}
+    U_{AB}(r, \mathbf{Q}_A, \mathbf{Q}_B) = \sum_k I_{AB}^{(k)}(r, \mathbf{Q}_A, \mathbf{Q}_B)
+\end{equation}
+
+The per-channel interaction requires rotating the coefficients of $B$ into
+the local frame of $A$ via Wigner-$D$ matrices for real spherical harmonics,
+then summing:
+
+\begin{equation}
+    I_{AB}^{(k)} = \sum_{\ell=0}^{\ell_{\max}} \sum_{m=-\ell}^{\ell}
+        c_{\ell m}^{(k),A}\; \tilde{c}_{\ell m}^{(k),B}\; K_k(\ell, r)
+\end{equation}
+
+where $\tilde{c}_{\ell m}^{(k),B}$ denotes the rotated coefficients and
+$K_k(\ell, r)$ is the per-channel, per-$\ell$ radial kernel:
+
+\begin{equation}
+    K_{\mathrm{steric}}(\ell, r) = \frac{e^{-\alpha_s r}}{1 + \ell}
+\end{equation}
+\begin{equation}
+    K_{\mathrm{electrostatic}}(\ell, r) = \frac{1}{r^{\ell+1}}
+\end{equation}
+\begin{equation}
+    K_{\mathrm{dispersion}}(\ell, r) = \frac{-C_6}{r^{6+\ell}}
+\end{equation}
+
+\subsection{Adaptive Complexity}
+
+Resolution is adjusted per-bead per-channel by measuring reconstruction
+fidelity and incrementing $\ell_{\max}$ when the error metric exceeds a
+threshold.  This eliminates dual-model architectures; a single model instance
+spans the full complexity range.
+
+\begin{equation}
+    \varepsilon_B^{(k)} = \frac{\sum_i \bigl| S_{\mathrm{ref}}^{(k)}(\hat{n}_i) - \tilde{S}^{(k)}(\hat{n}_i) \bigr|^2}
+                               {\sum_i \bigl| S_{\mathrm{ref}}^{(k)}(\hat{n}_i) \bigr|^2}
+\end{equation}
+
+If $\varepsilon_B^{(k)} > \varepsilon_{\mathrm{tol}}$, then $\ell_{\max}^{(k)} \leftarrow \ell_{\max}^{(k)} + \Delta\ell$ and the channel is reprojected.
+
+Expected behaviour:
+\begin{itemize}
+    \item Small or symmetric molecules converge at low $\ell_{\max}$.
+    \item Large or anisotropic structures self-select higher harmonic resolution.
+    \item No branching into separate model classes---only resolution scaling.
+\end{itemize}
+
+\subsection{System-Level Integration}
+
+The components specified above constitute a self-consistent physical model.
+Compatible integration targets include:
+\begin{itemize}
+    \item MD integrators (velocity Verlet, Langevin)
+    \item Monte Carlo sampling (Metropolis--Hastings)
+    \item Bulk system simulations at arbitrary $N$
+\end{itemize}
+
+Required next steps:
+\begin{enumerate}
+    \item Precompute Wigner-$D$ rotation operators; cache per angular momentum order
+    \item Implement neighbour lists to reduce interaction evaluation from $O(N^2)$ to $O(N)$
+    \item Validate against benzene $\pi$-stacking reference energies
+    \item Validate against naphthalene crystal packing geometry
+    \item Validate against organometallic coordination geometries
+\end{enumerate}
+
+\section{Formal Bead State Decomposition}
+
+The canonical bead state
+\begin{equation}
+    B = \bigl\{ \mathbf{R}_B,\; \mathbf{Q}_B,\; \{c_{\ell m}^{(k)}\},\; M_B,\; Q_B^{\mathrm{tot}} \bigr\}
+\end{equation}
+is not merely a tuple of numbers.  Each variable occupies a distinct physical
+role, obeys a distinct update rule, and serves a distinct architectural
+purpose.  This section decomposes the state into its constituent layers
+and establishes the ownership, mutability, and numerical responsibilities
+of every term.
+
+\subsection{$\mathbf{R}_B$: Translational Anchor}
+
+The centre-of-mass position $\mathbf{R}_B \in \mathbb{R}^3$ is the bead's
+spatial location in the global (lab) frame.  It is computed at mapping time as
+\begin{equation}
+    \mathbf{R}_B = \frac{1}{M_B} \sum_{i \in S_B} m_i \,\mathbf{r}_i
+\end{equation}
+and thereafter evolves under the equations of motion.
+
+\paragraph{Physical role.}
+$\mathbf{R}_B$ is the translational anchor from which every pairwise
+interaction begins.  It enters:
+\begin{itemize}
+    \item separation vectors: $\mathbf{r}_{AB} = \mathbf{R}_B - \mathbf{R}_A$,
+          $r = |\mathbf{r}_{AB}|$
+    \item neighbour-list construction and periodic image selection
+    \item translational kinetic energy:
+          $T_{\mathrm{trans}} = \tfrac{1}{2} M_B \dot{\mathbf{R}}_B^2$
+    \item the atomistic$\to$CG mapping as the image of the fragment centroid
+\end{itemize}
+
+\paragraph{Update frequency.}
+$\mathbf{R}_B$ is the most rapidly changing state variable.  It is updated
+\emph{every dynamics step} by the integrator.
+
+\paragraph{Ownership.}
+$\mathbf{R}_B$ belongs to the \emph{kinematic shell} of the bead---the
+layer concerned with motion through space, not with intrinsic identity.
+
+\subsection{$\mathbf{Q}_B$: Orientation Frame}
+
+The orientation $\mathbf{Q}_B \in \mathrm{SO}(3)$ is a $3\times 3$
+orthonormal matrix whose columns are the bead's principal axes, ordered by
+ascending eigenvalue of the inertia tensor.  It satisfies the invariant
+\begin{equation}
+    \mathbf{Q}_B^T \mathbf{Q}_B = \mathbf{I}
+\end{equation}
+which must be enforced (e.g.\ via Gram--Schmidt or quaternion
+renormalisation) at every mutation site.
+
+\paragraph{Physical role.}
+$\mathbf{Q}_B$ is the \emph{pose operator} for the descriptor.
+The coefficients $\{c_{\ell m}^{(k)}\}$ are defined in the bead's local
+frame; $\mathbf{Q}_B$ tells the interaction engine how to rotate those
+coefficients into the frame of an interaction partner.  Without
+$\mathbf{Q}_B$, the descriptor has no spatial meaning.
+
+Concretely, $\mathbf{Q}_B$ enters:
+\begin{itemize}
+    \item the relative rotation $R = \mathbf{Q}_A^T \mathbf{Q}_B$ used to
+          transform $B$'s coefficients into $A$'s local frame
+    \item torque evaluation:
+          $\boldsymbol{\tau}_B = -\partial U / \partial \Omega_B$
+    \item rotational equations of motion (Euler or quaternion propagation)
+    \item the canonical orientation established during atomistic$\to$CG mapping
+\end{itemize}
+
+\paragraph{Update frequency.}
+$\mathbf{Q}_B$ is updated \emph{every dynamics step}, in parallel with
+$\mathbf{R}_B$.  After coarse-graining, the bead is an independent rigid
+anisotropic object; its orientation evolves dynamically and must not be
+recomputed from atomistic positions during a running simulation.
+
+\paragraph{Ownership.}
+$\mathbf{Q}_B$ belongs to the \emph{kinematic shell}, alongside
+$\mathbf{R}_B$.  Together they define the bead's pose---where it is and how
+it is oriented.
+
+\paragraph{Degeneracy considerations.}
+For highly symmetric or near-linear fragments the inertia tensor may have
+degenerate eigenvalues, making the principal-axis assignment ambiguous.
+The implementation must detect this case (eigenvalue ratio
+$\lambda_i / \lambda_j < \epsilon_{\mathrm{degen}}$) and fall back to a
+convention-based axis assignment to ensure reproducibility.
+
+\subsection{$\{c_{\ell m}^{(k)}\}$: Descriptor Coefficients}
+
+The spherical harmonic coefficients are the bead's \emph{intrinsic
+identity}.  Everything else in the state is either motion or bookkeeping;
+the coefficients encode what the bead actually is.
+
+\paragraph{Physical role.}
+For each channel $k \in \{\text{steric},\, \text{electrostatic},\,
+\text{dispersion}\}$ the surface field is expanded as
+\begin{equation}
+    S_B^{(k)}(\theta,\phi) = \sum_{\ell=0}^{\ell_{\max}}
+        \sum_{m=-\ell}^{\ell} c_{\ell m}^{(k)}\, Y_{\ell m}(\theta,\phi)
+\end{equation}
+The coefficients carry physically distinct information:
+\begin{itemize}
+    \item \textbf{Steric:} geometric accessibility and excluded-volume pattern
+    \item \textbf{Electrostatic:} anisotropic charge-field structure
+    \item \textbf{Dispersion:} anisotropic attractive strength distribution
+\end{itemize}
+
+\paragraph{Internal structure.}
+The coefficient set is not a flat list.  It has a channel-indexed,
+band-structured hierarchy:
+\begin{equation}
+    \{c_{\ell m}^{(k)}\} \;\Longrightarrow\;
+    \underbrace{k}_{\text{channel}}
+    \;\to\;
+    \underbrace{\ell}_{\text{angular order}}
+    \;\to\;
+    \underbrace{m}_{\text{azimuthal mode}}
+\end{equation}
+This nesting is not cosmetic.  Adaptive truncation, channel activation, and
+per-$\ell$ kernel evaluation all operate naturally on this structure.
+
+\paragraph{Update frequency.}
+For rigid fragments the coefficients are \emph{generated once} during
+atomistic$\to$CG mapping and remain fixed thereafter.  They change only when:
+\begin{itemize}
+    \item the adaptive truncation loop promotes $\ell_{\max}$
+    \item the underlying fragment changes (bond breaking, conformational rearrangement)
+    \item the system is remapped
+\end{itemize}
+In a standard rigid-bead simulation, the coefficients are \emph{static
+intrinsic data}, reused many times per dynamics step during pairwise
+interaction evaluation.
+
+\paragraph{Ownership.}
+$\{c_{\ell m}^{(k)}\}$ belongs to the \emph{identity layer}---the layer
+that defines what the bead intrinsically is, independent of where it is or
+how it is currently oriented.
+
+\subsection{$M_B$: Total Mass}
+
+\begin{equation}
+    M_B = \sum_{i \in S_B} m_i
+\end{equation}
+
+\paragraph{Physical role.}
+$M_B$ is the translational inertia scale.  It enters:
+\begin{itemize}
+    \item Newton's second law: $M_B \ddot{\mathbf{R}}_B = \mathbf{F}_B$
+    \item translational kinetic energy:
+          $T_{\mathrm{trans}} = \tfrac{1}{2} M_B \dot{\mathbf{R}}_B^2$
+    \item momentum conservation: $\mathbf{p}_B = M_B \dot{\mathbf{R}}_B$
+    \item thermostat coupling (Langevin friction, Nos\'e--Hoover mass ratios)
+\end{itemize}
+
+\paragraph{Update frequency.}
+$M_B$ is a \emph{conserved scalar} that changes only if the fragment
+definition changes.  It must never drift during dynamics.
+
+\paragraph{Ownership.}
+$M_B$ belongs to the \emph{identity layer}, alongside the coefficients.
+It is not part of the descriptor machinery---it describes how the bead
+responds to force, not how it interacts anisotropically.
+
+\paragraph{Separation principle.}
+Descriptor coefficients tell you \emph{how the bead interacts
+anisotropically}.  Mass tells you \emph{how the bead responds dynamically
+to force}.  These are distinct responsibilities and must not be conflated.
+
+\subsection{$Q_B^{\mathrm{tot}}$: Total Charge}
+
+\begin{equation}
+    Q_B^{\mathrm{tot}} = \sum_{i \in S_B} q_i
+\end{equation}
+
+\paragraph{Physical role.}
+$Q_B^{\mathrm{tot}}$ is the net scalar charge of the bead.  It enters:
+\begin{itemize}
+    \item global charge-balance verification
+    \item monopole contributions to long-range electrostatic treatments
+          (Ewald summation, reaction-field corrections)
+    \item system-level diagnostics and conservation checks
+\end{itemize}
+
+\paragraph{Relationship to the electrostatic channel.}
+$Q_B^{\mathrm{tot}}$ and the electrostatic descriptor coefficients
+$\{c_{\ell m}^{(\mathrm{elec})}\}$ are related but not identical:
+\begin{itemize}
+    \item $Q_B^{\mathrm{tot}}$ is the \emph{net charge}---a single scalar
+    \item $c_{00}^{(\mathrm{elec})}$ is proportional to the monopole moment
+          of the electrostatic surface field
+    \item higher-order coefficients $c_{\ell m}^{(\mathrm{elec})}$ with
+          $\ell \geq 1$ encode the \emph{angular structure} of the
+          electrostatic field
+\end{itemize}
+Both must be retained as explicit state variables.  The scalar charge serves
+conservation and long-range bookkeeping; the coefficients serve anisotropic
+short-range interaction evaluation.  The channel coefficients must not
+``replace'' the total charge as an explicit bead property.
+
+\paragraph{Update frequency.}
+$Q_B^{\mathrm{tot}}$ is a \emph{conserved scalar} that changes only if
+the fragment is remapped.
+
+\paragraph{Ownership.}
+$Q_B^{\mathrm{tot}}$ belongs to the \emph{identity layer}.
+
+\subsection{State Layer Architecture}
+
+The preceding analysis reveals a natural four-layer decomposition of the
+bead state.
+
+\subsubsection{Layer A: Identity}
+
+The intrinsic properties of the bead, generated at mapping time and
+thereafter fixed unless remapping occurs:
+\begin{equation}
+    \mathcal{I}_B = \bigl\{ \{c_{\ell m}^{(k)}\},\; M_B,\; Q_B^{\mathrm{tot}} \bigr\}
+\end{equation}
+
+\subsubsection{Layer B: Pose}
+
+The current spatial configuration of the bead, evolving under the equations
+of motion at every dynamics step:
+\begin{equation}
+    \mathcal{P}_B = \bigl\{ \mathbf{R}_B,\; \mathbf{Q}_B \bigr\}
+\end{equation}
+
+\subsubsection{Layer C: Resolution}
+
+Metadata governing the trustworthiness and complexity of the descriptor.
+Not part of the mathematical state tuple, but logically attached to the
+coefficient block:
+\begin{itemize}
+    \item active channel set: which of the three channels carry nonzero
+          coefficients
+    \item current $\ell_{\max}$ per channel
+    \item reconstruction residual $\varepsilon_B^{(k)}$ per channel
+    \item frame construction method and well-definedness flag
+\end{itemize}
+These determine whether the bead's descriptor is trustworthy at its current
+resolution level.
+
+\subsubsection{Layer D: Provenance}
+
+Debugging and traceability metadata, also not part of the mathematical
+state, but essential for an anti-black-box architecture:
+\begin{itemize}
+    \item source fragment identifier (which atomistic fragment generated
+          this bead)
+    \item frame method used (inertia, bond-based, fallback)
+    \item whether the frame was well-defined or degenerate
+    \item the residual achieved at the time of descriptor generation
+    \item original atom count and bond count
+\end{itemize}
+Provenance does not change the physics, but it determines whether the
+architecture is debuggable.
+
+\subsubsection{Layer summary}
+
+\begin{center}
+\begin{tabular}{llll}
+    \textbf{Layer} & \textbf{Contents} & \textbf{Update frequency} & \textbf{Role} \\
+    \hline
+    A (Identity)    & $\{c_{\ell m}^{(k)}\}$, $M_B$, $Q_B^{\mathrm{tot}}$
+                    & Fixed unless remapped & What the bead is \\
+    B (Pose)        & $\mathbf{R}_B$, $\mathbf{Q}_B$
+                    & Every dynamics step & Where and how it is oriented \\
+    C (Resolution)  & $\ell_{\max}$, active channels, residuals
+                    & At adaptation events & Whether the descriptor is sufficient \\
+    D (Provenance)  & Fragment ID, frame method, diagnostics
+                    & At mapping time only & Traceability and debugging \\
+\end{tabular}
+\end{center}
+
+\subsection{Update Frequency Classification}
+
+The four-layer decomposition induces a strict update-frequency hierarchy
+that prevents unnecessary recomputation.
+
+\paragraph{Frequently updated (every step).}
+\begin{equation}
+    \mathbf{R}_B,\; \mathbf{Q}_B
+\end{equation}
+These are the evolving kinematic variables.  They change under force and
+torque at every integration step.
+
+\paragraph{Infrequently updated (at adaptation events).}
+\begin{equation}
+    \{c_{\ell m}^{(k)}\},\; \ell_{\max},\; \varepsilon_B^{(k)}
+\end{equation}
+For rigid fragments the coefficients remain fixed during normal dynamics.
+They change only when the adaptive truncation loop promotes $\ell_{\max}$
+or the underlying fragment is modified.
+
+\paragraph{Essentially fixed (conserved unless remapped).}
+\begin{equation}
+    M_B,\; Q_B^{\mathrm{tot}}
+\end{equation}
+These must not drift during dynamics.  A change in either implies that
+the underlying atomistic fragment has changed.
+
+This classification prevents the antipattern of recomputing every piece of
+bead state at every step---a design characteristic of systems built by
+implementations that are afraid of structure.
+
+\subsection{Interaction Engine View}
+
+When evaluating the pairwise energy $U_{AB}$, the interaction engine should
+receive a \emph{projected physical view} of each bead, not the entire bead
+object indiscriminately.  The engine consumes:
+\begin{itemize}
+    \item \textbf{Relative position} from $\mathbf{R}_A$, $\mathbf{R}_B$:
+          \begin{equation}
+              \mathbf{r}_{AB} = \mathbf{R}_B - \mathbf{R}_A, \quad
+              r = |\mathbf{r}_{AB}|
+          \end{equation}
+    \item \textbf{Orientation relation} from $\mathbf{Q}_A$, $\mathbf{Q}_B$:
+          \begin{equation}
+              R = \mathbf{Q}_A^T \mathbf{Q}_B
+          \end{equation}
+    \item \textbf{Descriptor content} from $\{c_{\ell m}^{(k)}\}_A$,
+          $\{c_{\ell m}^{(k)}\}_B$
+\end{itemize}
+
+The engine does \emph{not} need $M_B$ or $Q_B^{\mathrm{tot}}$ directly,
+except where a separate monopole term or long-range electrostatic treatment
+requires the scalar charge.
+
+This separation ensures that the interaction engine operates on the
+physically relevant projection of the bead state, not on an undifferentiated
+data dump.
+
+\subsection{Dynamics Engine View}
+
+The motion engine consumes a different projection of the bead state:
+\begin{itemize}
+    \item $\mathbf{R}_B$: position to be integrated
+    \item $\mathbf{Q}_B$: orientation to be integrated
+    \item $M_B$: translational inertia for force$\to$acceleration conversion
+    \item $\mathbf{I}_B$: rotational inertia for torque$\to$angular acceleration
+          conversion (see below)
+    \item $\mathbf{F}_B$, $\boldsymbol{\tau}_B$: force and torque from the
+          interaction engine
+\end{itemize}
+
+The dynamics engine does \emph{not} need to know about descriptor generation
+details, channel sampling procedures, or spherical harmonic projection
+methodology.  It needs the resulting force and torque, not a reconstruction
+of how the steric channel was projected onto harmonics.
+
+This separation is healthy: the interaction engine converts descriptor
+content into forces and torques; the dynamics engine converts forces and
+torques into motion.
+
+\subsection{Rotational Inertia Extension}
+
+The formal state as written is sufficient for descriptor representation and
+interaction evaluation.  However, for complete rigid-body rotational
+dynamics the bead requires one additional quantity: the \emph{rotational
+inertia tensor}.
+
+For a rigid bead composed of atoms $i \in S_B$ with positions
+$\boldsymbol{\delta}_i = \mathbf{r}_i - \mathbf{R}_B$ relative to the
+centre of mass:
+\begin{equation}
+    \mathbf{I}_B = \sum_{i \in S_B} m_i
+    \left( |\boldsymbol{\delta}_i|^2 \,\mathbf{I}_{3}
+           - \boldsymbol{\delta}_i \boldsymbol{\delta}_i^T \right)
+\end{equation}
+
+Diagonalisation in the principal-axis frame yields:
+\begin{equation}
+    \mathbf{I}_B = \mathbf{Q}_B \,
+    \mathrm{diag}(I_1, I_2, I_3) \,
+    \mathbf{Q}_B^T
+\end{equation}
+
+The principal moments $(I_1, I_2, I_3)$ are scalars that, like $M_B$,
+are generated at mapping time and remain fixed unless the fragment changes.
+
+With this extension, Euler's rotational equations of motion become:
+\begin{equation}
+    I_\alpha \dot{\omega}_\alpha
+    = \tau_\alpha^{\mathrm{body}}
+    - \epsilon_{\alpha\beta\gamma}\, \omega_\beta\, I_\gamma\, \omega_\gamma
+    \qquad (\alpha = 1,2,3)
+\end{equation}
+where $\omega_\alpha$ are the body-frame angular velocity components and
+$\tau_\alpha^{\mathrm{body}}$ are the body-frame torque components.
+
+The theoretically complete dynamic bead state is therefore:
+\begin{equation}
+\boxed{
+    B = \bigl\{
+        \mathbf{R}_B,\;
+        \mathbf{Q}_B,\;
+        \{c_{\ell m}^{(k)}\},\;
+        M_B,\;
+        Q_B^{\mathrm{tot}},\;
+        \mathbf{I}_B
+    \bigr\}
+}
+\end{equation}
+
+This is the state of a genuinely physical anisotropic bead---not merely a
+clever interaction shell, but an object with full translational and
+rotational dynamics grounded in the inertia of its underlying atomistic
+fragment.
+
+\subsection{Conceptual Summary}
+
+The bead state admits a clean three-way separation:
+\begin{equation}
+    \underbrace{\mathbf{R}_B,\; \mathbf{Q}_B}_{\text{where and how it is oriented}}
+    \quad\Big|\quad
+    \underbrace{\{c_{\ell m}^{(k)}\}}_{\text{what it intrinsically is}}
+    \quad\Big|\quad
+    \underbrace{M_B,\; Q_B^{\mathrm{tot}},\; \mathbf{I}_B}_{\text{how it responds to force and torque}}
+\end{equation}
+
+\noindent
+This separation must not be blurred:
+\begin{itemize}
+    \item The \textbf{pose} ($\mathbf{R}_B$, $\mathbf{Q}_B$) is dynamic---it
+          evolves every step.
+    \item The \textbf{descriptor} ($\{c_{\ell m}^{(k)}\}$) is intrinsic---it
+          encodes the bead's angular identity and changes only under
+          remapping or adaptation.
+    \item The \textbf{inertial properties} ($M_B$, $Q_B^{\mathrm{tot}}$,
+          $\mathbf{I}_B$) are conserved scalars inherited from the atomistic
+          fragment.
+\end{itemize}
+
+An effective implementation treats these three groups with distinct storage
+strategies, distinct access patterns, and distinct update schedules.  The
+interaction engine sees pose and descriptor.  The dynamics engine sees pose
+and inertia.  Neither needs to see the other's internal details.  That is
+the right architecture.
+
+\section{Multi-Layer Bead Visualization Model}
+
+The canonical bead state provides a complete mathematical description of the
+coarse-grained object: position, orientation, descriptor coefficients, mass,
+charge, and inertia.  However, for research-oriented inspection, debugging,
+and scientific reporting, the bead must also be \emph{visually decomposable}
+into distinct representational layers.  This section formalises the
+multi-layer bead visualisation model, in which each layer reveals a different
+aspect of the bead's inherited internal structure.
+
+\subsection{Layer Architecture Overview}
+
+The bead's visual representation is decomposed into three layers, each
+serving a distinct interpretive purpose:
+
+\begin{center}
+\begin{tabular}{clp{7cm}}
+    \textbf{Layer} & \textbf{Name} & \textbf{Purpose} \\
+    \hline
+    1 & Effective Shell & Outer boundary sphere encoding effective radius,
+        mapping confidence, and structural classification (aromatic, cyclic,
+        organometallic) \\
+    2 & Surface-State Field & Directional effective state inherited from the
+        decomposed molecular fragment, rendered as a spherical heatmap \\
+    3 & Internal Structural Reference & Original atomistic geometry preserved
+        inside the bead volume for interpretability and provenance \\
+\end{tabular}
+\end{center}
+
+\noindent
+Layers are independent and composable: any subset may be rendered
+simultaneously.  The default inspection sequence descends from Layer~1
+(overview) through Layer~2 (anisotropic identity) to Layer~3 (atomistic
+provenance).
+
+\subsection{Layer 1: Effective Shell (review)}
+
+Layer~1 is the bead's outer boundary, already defined in the preceding
+sections.  It represents the effective extent of the bead in space and
+encodes:
+\begin{itemize}
+    \item effective radius (from probe sampling or mass estimate)
+    \item structural classification (aromatic, cyclic, organometallic)
+    \item mapping confidence (opacity modulation)
+    \item frame validity (axes overlaid when the local frame is well-defined)
+\end{itemize}
+
+Layer~1 is the default scene-level representation.  It carries no
+directional field information.
+
+\subsection{Layer 2: Effective Surface-State Layer}
+
+Layer~2 is the bead's directional surface-state representation, defined on
+a spherical envelope centred at the bead reference point and oriented by the
+bead-local frame $\mathbf{Q}_B$.
+
+\subsubsection{Physical meaning}
+
+This layer does not represent literal atomic boundary geometry and does not
+primarily represent incoming external forces.  Instead, it is the
+\emph{effective spherical projection} of the underlying fragment's
+internally inherited structure, after decomposition into the bead state.
+
+It encodes the directional residue of the original molecular component,
+including effects inherited from:
+\begin{itemize}
+    \item mass distribution
+    \item bonded geometry
+    \item local charge arrangement
+    \item electron-density asymmetry
+    \item anisotropic stiffness, accessibility, or cohesive tendency
+    \item other channel-specific reduced descriptors
+\end{itemize}
+
+\subsubsection{Formal definition}
+
+Layer~2 is a scalar or multi-channel field over the sphere,
+\begin{equation}
+    S^{(k)}(\theta, \phi)
+\end{equation}
+where each channel $k$ represents one reduced internal state quantity
+(steric, electrostatic, dispersive, or a synthesised effective-force
+measure).  The field is evaluated from the spherical harmonic expansion:
+\begin{equation}
+    S^{(k)}(\theta, \phi)
+    = \sum_{\ell=0}^{\ell_{\max}}
+      \sum_{m=-\ell}^{\ell}
+      c_{\ell m}^{(k)}\, Y_{\ell m}(\theta, \phi)
+\end{equation}
+
+The purpose of Layer~2 is to make visible the statement:
+
+\begin{quote}
+``What internal directional structure survives after the molecular fragment
+has been compressed into a bead?''
+\end{quote}
+
+\subsubsection{Functional role}
+
+Layer~2 serves as the bead's primary visible anisotropic identity.  It is
+the intermediate object between:
+\begin{itemize}
+    \item the hidden source fragment (Layer~3)
+    \item the bead's later external interaction behaviour
+\end{itemize}
+
+The causal chain is:
+\begin{equation}
+    \text{underlying molecular fragment}
+    \;\xrightarrow{\text{reduction}}\;
+    \text{directional state}
+    \;\xrightarrow{\text{projection}}\;
+    \text{surface-state field}
+    \;\xrightarrow{\text{coupling}}\;
+    \text{effective bead interactions}
+\end{equation}
+
+\subsubsection{Visual form}
+
+In rendering, Layer~2 appears as:
+\begin{itemize}
+    \item a spherical shell centred at the bead origin
+    \item sampled over angular coordinates $(\theta, \phi)$ on a regular grid
+    \item coloured by field magnitude or signed value using a continuous
+          colourmap
+    \item optionally shown with transparency
+    \item optionally shown with radial exaggeration for emphasis, though
+          spherical geometry should remain the default
+\end{itemize}
+
+This shell is therefore a \emph{field visualisation}, not a hard-body
+surface.  The rendering uses quad-strip tessellation over the
+$(\theta, \phi)$ grid, with per-vertex colour interpolation derived from
+the active descriptor channel.
+
+\subsubsection{Channel selection}
+
+The user may select which channel to display:
+\begin{itemize}
+    \item $k = 0$: Steric (geometric accessibility, excluded volume)
+    \item $k = 1$: Electrostatic (charge-field structure)
+    \item $k = 2$: Dispersion (attractive strength distribution)
+    \item Synthesised: a weighted combination
+          $S_{\mathrm{eff}} = w_s S^{(0)} + w_e S^{(1)} + w_d S^{(2)}$
+\end{itemize}
+
+\subsection{Layer 3: Internal Structural Reference Layer}
+
+Layer~3 is the bead's internal structural reference representation.  It
+preserves a view of the original molecular component, or a simplified
+retained substructure, inside the bead volume.
+
+\subsubsection{Physical meaning}
+
+This layer is not the active coarse-grained state itself.  It is a
+\emph{reference and interpretability layer} used to show the structural
+source from which Layer~2 was derived.
+
+It may include:
+\begin{itemize}
+    \item atom positions (from the source \texttt{atomistic::State})
+    \item bond connectivity (from the \texttt{FragmentView} bond records)
+    \item ring or fragment geometry
+    \item local orientation markers
+    \item optional partial charge or element colouring
+\end{itemize}
+
+\subsubsection{Functional role}
+
+Layer~3 answers the question:
+\begin{quote}
+``What original internal structure gave rise to the surface pattern
+shown on Layer~2?''
+\end{quote}
+
+This layer provides traceability from the coarse-grained representation
+back to the atomistic source-of-truth, in accordance with the
+anti-black-box design philosophy.
+
+\subsubsection{Connection to the atomistic namespace}
+
+Layer~3 uses the project's native atomistic representation:
+\begin{itemize}
+    \item \texttt{atomistic::Vec3} for atom positions
+    \item \texttt{atomistic::AtomRecord} for element identity, charge, and
+          classification flags
+    \item \texttt{atomistic::BondRecord} for connectivity and bond order
+    \item \texttt{atomistic::LocalFrame} for the fragment's structural
+          orientation
+\end{itemize}
+
+The visual record stores a \texttt{SourceFragmentMiniature} that packages
+these data into a rendering-ready format without requiring the renderer to
+import or re-traverse raw atomistic state.
+
+\subsubsection{Visual form}
+
+In rendering, Layer~3 appears as:
+\begin{itemize}
+    \item small spheres at each atom position, coloured by element (CPK
+          convention)
+    \item stick bonds between bonded atoms, with line width modulated by
+          bond order
+    \item optional orientation markers (local frame axes of the fragment)
+    \item the entire miniature is positioned inside the Layer~1 shell at
+          the fragment's centre of mass
+\end{itemize}
+
+\subsection{Layer Composition}
+
+The three layers compose into a set of view modes:
+
+\begin{center}
+\begin{tabular}{lcccp{4.5cm}}
+    \textbf{View Mode} & \textbf{L1} & \textbf{L2} & \textbf{L3}
+    & \textbf{Description} \\
+    \hline
+    Shell           & \checkmark &            &            & Overview only \\
+    Scaffold        & ghost      &            &            & Shell + frame + solved
+                                                            directions \\
+    SurfaceState    & ghost      & \checkmark &            & Spherical heatmap of
+                                                            effective state \\
+    InternalRef     & ghost      &            & \checkmark & Atomistic fragment inside
+                                                            ghost shell \\
+    Skeleton        & ghost      &            & \checkmark & Alias for InternalRef \\
+    Cutaway         & clipped    & clipped    &            & Hemisphere section \\
+    Residual        & ghost      &            &            & Error bands and halos \\
+    Comparison      & ghost      & \checkmark & \checkmark & Layers 2 and 3
+                                                            overlaid \\
+\end{tabular}
+\end{center}
+
+\noindent
+``ghost'' denotes a semi-transparent shell.  ``clipped'' denotes a shell
+intersected by a user-controlled clipping plane.
+
+\subsection{Anti-Black-Box Properties}
+
+The multi-layer model satisfies the project's anti-black-box requirements:
+\begin{itemize}
+    \item Layer~1 makes the bead's spatial extent and classification
+          explicitly visible.
+    \item Layer~2 makes the bead's anisotropic identity inspectable at every
+          angular direction.
+    \item Layer~3 makes the atomistic provenance of every descriptor
+          coefficient traceable to specific atoms and bonds.
+    \item All three layers are independently toggleable, composable, and
+          deterministic: the same bead state always produces the same visual
+          output.
+\end{itemize}
+
+\section{Conclusion}
+
+This document has developed the anisotropic surface-mapped bead from initial
+concept to a formally specified, architecturally decomposed physical object.
+
+The progression is intentional and cumulative:
+\begin{enumerate}
+    \item \textbf{Atomistic-to-CG mapping} established the centre-of-mass,
+          local frame, and aggregate scalars that anchor every bead to its
+          underlying fragment.
+    \item \textbf{Surface descriptor representation} replaced isotropic
+          point particles with directional surface fields, expanded in
+          spherical harmonics for compact storage and efficient evaluation.
+    \item \textbf{Orientation-coupled interactions} introduced relative
+          alignment dependence, torque, and rotational dynamics---turning
+          the bead from a passive site into a dynamical object with angular
+          degrees of freedom.
+    \item \textbf{Multi-channel descriptor enrichment} decomposed the
+          surface field into steric, electrostatic, and dispersion channels,
+          enabling physically distinct interaction mechanisms to be resolved
+          independently.
+    \item \textbf{Unified descriptor strategy} eliminated discrete model
+          switching in favour of a single continuous formalism with
+          residual-driven adaptive truncation.
+    \item \textbf{Atomistic preparation layer} formalised the scale boundary
+          via the fragment view, ensuring that every descriptor coefficient
+          is traceable to specific atoms and that invalid inputs are rejected
+          with explicit status codes.
+    \item \textbf{Implementation specification} fixed the per-$\ell$
+          channel kernels, the Wigner-$D$ rotation pipeline, and the
+          adaptive refinement loop into a rigid, deterministic architecture.
+    \item \textbf{Formal bead state decomposition} analysed each variable in
+          the canonical tuple, established the four-layer architecture
+          (identity, pose, resolution, provenance), classified update
+          frequencies, defined the interaction and dynamics engine views,
+          and extended the state to include rotational inertia for complete
+          rigid-body dynamics.
+\end{enumerate}
+
+The result is a bead defined by the complete state
+\begin{equation}
+    B = \bigl\{
+        \mathbf{R}_B,\;
+        \mathbf{Q}_B,\;
+        \{c_{\ell m}^{(k)}\},\;
+        M_B,\;
+        Q_B^{\mathrm{tot}},\;
+        \mathbf{I}_B
+    \bigr\}
+\end{equation}
+with clear ownership, update rules, and numerical roles for every term.
+
+\subsection{Scope Boundary}
+
+This document deliberately stops at the \emph{isolated bead}---its internal
+structure, its descriptor, its interactions with other beads, and its
+rigid-body dynamics.  The bead as defined here is a self-contained physical
+object: it knows what it is, how it is oriented, how it interacts, and how
+it moves.
+
+What the bead does \emph{not} yet know is its environment.  It has no
+awareness of local density, coordination, orientational order, or collective
+state.  It cannot distinguish between being in a gas, a liquid, a crystal,
+or at an interface.  It cannot respond to crowding, stiffen under
+compression, or relax into alignment with its neighbours.
+
+These capabilities require a second layer of state---environment-responsive
+observables and slow internal variables---that couples the bead to its local
+surroundings.  This extension is the subject of a companion document:
+
+\begin{quote}
+    \emph{Environment-Responsive Coarse-Grained Bead Dynamics} \\
+    (VSEPR-SIM Project, \texttt{section\_environment\_responsive\_beads.tex})
+\end{quote}
+
+\noindent
+That document introduces the extended bead state
+$\mathbb{B}_B = \{B,\, X_B\}$, where $X_B$ contains environment
+observables (local density, coordination, orientational order) and a slow
+internal state variable $\eta_B$ with memory and relaxation dynamics.  The
+coupling of $X_B$ back into the interaction kernels enables
+density-dependent behaviour, spontaneous ordering, hysteresis, and
+metastability---the transition from ``the model works'' to ``the system
+behaves.''
+
+\end{document}

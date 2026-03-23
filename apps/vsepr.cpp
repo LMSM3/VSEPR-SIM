@@ -20,6 +20,11 @@
 #include "cli/parse.hpp"
 #include "cli/run_context.hpp"
 #include "cli/actions.hpp"
+#include "cli/cg_commands.hpp"
+#ifdef BUILD_VISUALIZATION
+#include "coarse_grain/vis/cg_viz_viewer.hpp"
+#include "cli/system_state.hpp"
+#endif
 #include <iostream>
 #include <exception>
 
@@ -31,6 +36,8 @@ VSEPR CLI - Domain-Aware Molecular Simulation
 
 USAGE:
     vsepr <SPEC> <ACTION> [DOMAIN_PARAMS] [GLOBAL_FLAGS]
+    vsepr cg <COMMAND> [OPTIONS]
+    vsepr --viz [OPTIONS]
 
 SPEC:
     <FORMULA>[@MODE]
@@ -103,6 +110,36 @@ EXAMPLES:
     # Test crystal structure
     vsepr Al@crystal test --preset fcc
 
+COARSE-GRAINED CONSOLE:
+    vsepr cg <command> [options]
+
+    Commands:
+        scene     Build or load a bead scene from presets
+        inspect   Inspect bead positions, environment, descriptors
+        env       Run environment update pipeline (eta relaxation)
+        interact  Evaluate pairwise interactions, energy decomposition
+        viz       Launch lightweight bead viewer
+
+    Examples:
+        vsepr cg scene --preset pair --spacing 4.0
+        vsepr cg env --preset stack --beads 8 --steps 200
+        vsepr cg interact --preset pair --spacing 4.0 --all
+        vsepr cg inspect --preset shell --beads 12 --env-steps 100
+        vsepr cg viz --preset shell --beads 12 --overlay rho
+
+    Run 'vsepr cg help' for full details.
+
+LIGHTWEIGHT VIEWER:
+    vsepr --viz [options]
+
+    Opens a minimal bead viewer directly from the command line.
+    Supports all scene presets and overlay modes.
+
+    Examples:
+        vsepr --viz --preset pair --spacing 4.0
+        vsepr --viz --preset shell --beads 12 --env-steps 200 --overlay eta
+        vsepr --viz --preset cloud --beads 20 --spacing 12.0
+
 SEE ALSO:
     Full documentation: docs/VSEPR_CLI_GUIDE.md
     Grammar reference: docs/VSEPR_CLI_GRAMMAR.md
@@ -117,7 +154,49 @@ int main(int argc, char** argv) {
             show_help();
             return 0;
         }
-        
+
+        // Route to coarse-grained console when argv[1] == "cg"
+        if (std::string(argv[1]) == "cg") {
+            return vsepr::cli::cg_dispatch(argc, argv);
+        }
+
+        // Route to lightweight visualization when argv[1] == "--viz"
+        if (std::string(argv[1]) == "--viz") {
+#ifdef BUILD_VISUALIZATION
+            // Parse optional arguments: --viz [--preset X] [--overlay Y] ...
+            // Reuse CG system state for scene construction
+            vsepr::cli::CGSystemState state;
+            coarse_grain::vis::VizConfig config;
+            std::string preset_str = "pair";
+            int n_beads = 5;
+            double spacing = 4.0;
+            uint32_t seed = 42;
+            int env_steps = 0;
+
+            for (int i = 2; i < argc; ++i) {
+                std::string arg = argv[i];
+                if (arg == "--preset" && i + 1 < argc) { preset_str = argv[++i]; }
+                else if (arg == "--beads" && i + 1 < argc) { n_beads = std::atoi(argv[++i]); }
+                else if (arg == "--spacing" && i + 1 < argc) { spacing = std::atof(argv[++i]); }
+                else if (arg == "--seed" && i + 1 < argc) { seed = static_cast<uint32_t>(std::atoi(argv[++i])); }
+                else if (arg == "--env-steps" && i + 1 < argc) { env_steps = std::atoi(argv[++i]); }
+                else if (arg == "--overlay" && i + 1 < argc) {
+                    config.overlay = coarse_grain::vis::parse_overlay_mode(argv[++i]);
+                }
+                else if (arg == "--no-axes") { config.show_axes = false; }
+            }
+
+            state.build_preset(vsepr::cli::parse_scene_preset(preset_str),
+                               n_beads, spacing, seed);
+            if (env_steps > 0) state.update_environment(env_steps);
+
+            return coarse_grain::vis::CGVizViewer::run(state, config);
+#else
+            std::cerr << "Visualization not available. Rebuild with -DBUILD_VIS=ON\n";
+            return 1;
+#endif
+        }
+
         // Parse command
         CommandParser parser;
         ParsedCommand cmd = parser.parse(argc, argv);

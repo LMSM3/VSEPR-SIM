@@ -1,0 +1,748 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, graphicx, geometry}
+\geometry{margin=1in}
+
+\title{Environment-Responsive Coarse-Grained Bead Dynamics}
+\author{VSEPR-SIM Project}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The anisotropic surface-mapped bead, as developed in the companion document,
+is a self-contained physical object: it carries a descriptor, an orientation,
+and inertial properties, and it interacts with other beads through
+orientation-dependent harmonic-space potentials.  However, its state is
+intrinsic---it has no awareness of its local environment.  This document
+introduces the \emph{environment-responsive} extension, in which each bead
+acquires a set of fast observables (local density, coordination number,
+orientational order) and a slow internal state variable with relaxation
+dynamics and memory.  The coupling of this extended state back into the
+interaction kernels enables density-dependent behaviour, spontaneous
+ordering, hysteresis, and metastability.  The result is a coarse-grained
+bead that does not merely exist in a simulation but \emph{participates} in
+collective material behaviour.
+\end{abstract}
+
+% ============================================================================
+\section{Introduction and Motivation}
+% ============================================================================
+
+The companion document \emph{Anisotropic Surface-Mapped Coarse-Grained
+Beads for Molecular Systems} establishes the canonical bead state:
+\begin{equation}
+    B = \bigl\{
+        \mathbf{R}_B,\;
+        \mathbf{Q}_B,\;
+        \{c_{\ell m}^{(k)}\},\;
+        M_B,\;
+        Q_B^{\mathrm{tot}},\;
+        \mathbf{I}_B
+    \bigr\}
+\end{equation}
+This state is sufficient for pairwise anisotropic interactions and
+rigid-body dynamics.  However, it is \emph{context-blind}: a bead in vacuum
+behaves identically to a bead in a dense crystal, because nothing in $B$
+encodes the local surroundings.
+
+Real molecular systems exhibit environment-dependent behaviour at every
+scale:
+\begin{itemize}
+    \item aromatic stacking stabilises in dense phases but not in dilute gas
+    \item electrostatic screening increases with local coordination
+    \item packing-induced rigidity modifies effective interaction strength
+    \item interfacial beads experience asymmetric environments
+    \item ordering transitions emerge from local alignment reinforcement
+\end{itemize}
+
+To capture these phenomena, the bead must acquire a second layer of state
+that responds to and encodes local structure.  This document defines that
+layer, establishes its design constraints, and specifies its coupling to the
+existing interaction machinery.
+
+% ============================================================================
+\section{Design Principles}
+% ============================================================================
+
+The environment-responsive extension is governed by four non-negotiable
+rules.  Violation of any one produces a model that is clever but useless.
+
+\subsection{Rule 1: $X_B$ Is Derived, Not Invented}
+
+Every component of the environment state must be computable from measurable
+local structure---positions, orientations, and distances of neighbouring
+beads.  Arbitrary labels, ad hoc classifications, and externally imposed
+phase tags are prohibited.  The bead must \emph{discover} its environment
+from its neighbours, not be \emph{told} what environment it is in.
+
+\subsection{Rule 2: Separate Fast Observables from Slow State}
+
+The extension contains two distinct temporal classes:
+\begin{itemize}
+    \item \textbf{Fast observables:} recomputed every dynamics step from
+          the current neighbour configuration.  These are instantaneous
+          measurements, not state variables.
+    \item \textbf{Slow state:} evolves via a relaxation equation with a
+          finite timescale.  This is the memory layer---it integrates
+          fast observations over time.
+\end{itemize}
+Conflating these two classes destroys the model's ability to exhibit
+hysteresis and metastability.
+
+\subsection{Rule 3: $X_B$ Does Not Replace the Descriptor}
+
+The environment state modifies \emph{behaviour}, not \emph{identity}.
+The descriptor coefficients $\{c_{\ell m}^{(k)}\}$ encode what the bead
+intrinsically is.  The environment state $X_B$ encodes what the bead is
+currently experiencing.  These are distinct concepts with distinct update
+schedules, and the architecture must keep them separate.
+
+\subsection{Rule 4: Keep It Low-Dimensional}
+
+If $X_B$ becomes a 20-variable state vector, the result is a worse
+atomistic model with extra steps.  The environment extension must remain
+minimal: enough variables to capture the essential physics, and no more.
+Every additional variable must justify its existence by producing observable
+behaviour that cannot be obtained without it.
+
+% ============================================================================
+\section{Extended Bead State}
+% ============================================================================
+
+The environment-responsive bead is defined by the augmented state:
+\begin{equation}
+\boxed{
+    \mathbb{B}_B = \bigl\{ B,\; X_B \bigr\}
+}
+\end{equation}
+where $B$ is the canonical intrinsic state from the companion document and
+\begin{equation}
+    X_B = \bigl\{ \rho_B,\; C_B,\; P_{2,B},\; \eta_B \bigr\}
+\end{equation}
+is the environment-responsive state.
+
+The first three components ($\rho_B$, $C_B$, $P_{2,B}$) are fast
+observables---instantaneous measurements recomputed every step.  The fourth
+component ($\eta_B$) is a slow internal state variable with relaxation
+dynamics and memory.
+
+\subsection{State Hierarchy}
+
+The full bead state now spans five layers:
+
+\begin{center}
+\begin{tabular}{llll}
+    \textbf{Layer} & \textbf{Contents} & \textbf{Update} & \textbf{Role} \\
+    \hline
+    A (Identity)      & $\{c_{\ell m}^{(k)}\}$, $M_B$, $Q_B^{\mathrm{tot}}$, $\mathbf{I}_B$
+                      & Fixed unless remapped & What the bead is \\
+    B (Pose)          & $\mathbf{R}_B$, $\mathbf{Q}_B$
+                      & Every step & Where and how it is oriented \\
+    C (Resolution)    & $\ell_{\max}$, channels, residuals
+                      & At adaptation & Whether the descriptor suffices \\
+    D (Provenance)    & Fragment ID, frame method
+                      & At mapping only & Traceability \\
+    \textbf{E (Environment)} & $\rho_B$, $C_B$, $P_{2,B}$, $\eta_B$
+                      & \textbf{Every step} & \textbf{What the bead experiences} \\
+\end{tabular}
+\end{center}
+
+Layer~E is the new contribution of this document.  It depends on Layer~B
+(the bead needs to know where its neighbours are) but does not depend on
+Layer~A (the environment state does not care about descriptor coefficients).
+
+% ============================================================================
+\section{Fast Observables}
+% ============================================================================
+
+Fast observables are instantaneous measurements of the bead's local
+environment, recomputed every dynamics step from neighbour positions and
+orientations.  They are not state variables---they carry no memory and
+respond immediately to configuration changes.
+
+\subsection{Local Density: $\rho_B$}
+
+\begin{equation}
+    \rho_B = \sum_{C \neq B} w(r_{BC})
+\end{equation}
+
+where $r_{BC} = |\mathbf{R}_C - \mathbf{R}_B|$ and $w(r)$ is a smooth,
+normalised weighting function with compact support.
+
+\paragraph{Physical meaning.}
+$\rho_B$ measures the degree of crowding around bead $B$.  It is large in
+dense packings and small in dilute environments.
+
+\paragraph{Weighting function.}
+A Gaussian with smooth cutoff provides a suitable default:
+\begin{equation}
+    w(r) = \begin{cases}
+        \exp\!\left(-\dfrac{r^2}{2\sigma_\rho^2}\right)
+        \cdot f_{\mathrm{sw}}(r;\, r_c,\, \delta)
+        & r < r_c \\[4pt]
+        0 & r \geq r_c
+    \end{cases}
+\end{equation}
+where $\sigma_\rho$ controls the spatial scale of the density measurement,
+$r_c$ is the cutoff radius, and $f_{\mathrm{sw}}$ is a switching function
+ensuring continuity at $r_c$.
+
+\paragraph{Gradient.}
+The gradient of $\rho_B$ with respect to $\mathbf{R}_B$ is:
+\begin{equation}
+    \nabla_{\mathbf{R}_B} \rho_B
+    = -\sum_{C \neq B} w'(r_{BC})\, \hat{r}_{BC}
+\end{equation}
+This is needed if $\rho_B$ couples into the potential energy, as the
+resulting force contribution must be included for energy conservation.
+
+\subsection{Coordination Number: $C_B$}
+
+\begin{equation}
+    C_B = \sum_{C \neq B} \mathbf{1}_{r_{BC} < r_c}
+\end{equation}
+
+\paragraph{Physical meaning.}
+$C_B$ is the integer (or near-integer) count of neighbours within a cutoff
+distance.  It provides a crude but extremely informative measure of
+neighbourhood topology.
+
+\paragraph{Smoothed variant.}
+For differentiability, a soft coordination number may be used:
+\begin{equation}
+    C_B^{\mathrm{soft}} = \sum_{C \neq B}
+    \frac{1 - (r_{BC}/r_c)^n}{1 - (r_{BC}/r_c)^m}
+\end{equation}
+with $m > n$ (e.g., $n = 6$, $m = 12$), following standard PLUMED-style
+switching functions.
+
+\subsection{Orientational Order Parameter: $P_{2,B}$}
+
+\begin{equation}
+    P_{2,B} = \frac{1}{N_B} \sum_{C \in \mathcal{N}_B}
+    \frac{1}{2}\left(
+        3\left(\hat{n}_B \cdot \hat{n}_C\right)^2 - 1
+    \right)
+\end{equation}
+
+where $\hat{n}_B$ is the primary orientation axis of bead $B$ (e.g., the
+normal to an aromatic plane), $\mathcal{N}_B$ is the set of neighbours
+within cutoff, and $N_B = |\mathcal{N}_B|$.
+
+\paragraph{Physical meaning.}
+$P_{2,B}$ is the local second-rank Legendre order parameter.  It detects
+the degree of orientational alignment between a bead and its neighbours:
+\begin{itemize}
+    \item $P_{2,B} \approx 1$: perfect parallel alignment (nematic order,
+          $\pi$-stacking)
+    \item $P_{2,B} \approx 0$: random orientational distribution (isotropic
+          liquid)
+    \item $P_{2,B} \approx -\tfrac{1}{2}$: perfect perpendicular alignment
+          (anti-nematic)
+\end{itemize}
+
+\paragraph{Gradient.}
+The gradient with respect to orientation $\mathbf{Q}_B$ generates a torque
+contribution when $P_{2,B}$ couples into the potential.  Explicit evaluation
+requires differentiation of $\hat{n}_B \cdot \hat{n}_C$ with respect to the
+orientation frame.
+
+\subsection{Observable Interpretation Table}
+
+\begin{center}
+\begin{tabular}{lccc}
+    \textbf{Regime} & $\rho_B$ & $C_B$ & $P_{2,B}$ \\
+    \hline
+    Gas / dilute       & low       & low       & $\approx 0$ \\
+    Isotropic liquid   & medium    & medium    & $\approx 0$ \\
+    Aligned / crystal  & high      & high      & large ($>0$) \\
+    Interface          & asymmetric & variable & unstable \\
+\end{tabular}
+\end{center}
+
+These three observables jointly provide \emph{phase awareness} without
+requiring explicit phase labels, external order parameters, or global
+thermodynamic state identification.  The bead discovers its regime from
+local structure alone.
+
+% ============================================================================
+\section{Slow Internal State Variable}
+% ============================================================================
+
+The fast observables respond instantaneously to configuration changes.
+To capture memory, hysteresis, and metastability, the bead requires a
+\emph{slow} state variable that integrates environmental information over
+time.
+
+\subsection{Definition}
+
+The slow internal state variable $\eta_B \in [0, 1]$ evolves according to
+a first-order relaxation equation:
+\begin{equation}
+\boxed{
+    \frac{d\eta_B}{dt}
+    = \frac{1}{\tau}\left(
+        f(\rho_B,\, C_B,\, P_{2,B}) - \eta_B
+    \right)
+}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $\tau > 0$ is the relaxation timescale (controls memory strength)
+    \item $f(\rho_B, C_B, P_{2,B}) \in [0, 1]$ is the target function
+          that maps instantaneous observables to a desired internal state
+    \item $\eta_B$ relaxes \emph{toward} $f$ but does not track it
+          instantaneously
+\end{itemize}
+
+\subsection{Physical Interpretation}
+
+$\eta_B$ represents a scalar measure of the bead's integrated local
+environment.  Depending on the system under study, it may be interpreted as:
+\begin{itemize}
+    \item \textbf{stacking participation:} $\eta \approx 1$ when the bead
+          has been in a well-ordered stacking environment for a sustained
+          period
+    \item \textbf{local ordering membership:} $\eta \approx 1$ in regions
+          of persistent orientational alignment
+    \item \textbf{crowding-induced rigidity:} $\eta$ increases with
+          sustained high density, reflecting local stiffening
+    \item \textbf{phase-like scalar:} $\eta \approx 0$ in disordered regions,
+          $\eta \approx 1$ in ordered regions
+\end{itemize}
+
+The interpretation is chosen \emph{once} for a given model and held
+consistently.  Attempting to encode multiple distinct physical phenomena into
+a single scalar produces confusion, not generality.
+
+\subsection{Relaxation Timescale}
+
+The parameter $\tau$ controls the temporal response:
+\begin{itemize}
+    \item \textbf{$\tau \to 0$:} $\eta_B \to f$ instantaneously;
+          no memory, no hysteresis
+    \item \textbf{$\tau$ moderate:} $\eta_B$ lags behind fast observables;
+          transient memory, damped oscillation
+    \item \textbf{$\tau \to \infty$:} $\eta_B$ barely responds;
+          strong memory, persistent metastability
+\end{itemize}
+
+The choice of $\tau$ is a physical modelling decision, not a numerical
+parameter.  It sets the timescale over which the bead ``remembers'' its
+recent environment.
+
+\subsection{Minimal Target Function}
+
+The simplest viable target function is a linear combination of the fast
+observables:
+\begin{equation}
+    f(\rho_B, C_B, P_{2,B})
+    = \alpha\, \hat{\rho}_B + \beta\, \hat{P}_{2,B}
+\end{equation}
+where $\hat{\rho}_B$ and $\hat{P}_{2,B}$ are normalised to $[0, 1]$ and
+$\alpha + \beta = 1$.
+
+With this choice, the evolution equation becomes:
+\begin{equation}
+    \frac{d\eta_B}{dt}
+    = \frac{1}{\tau}\left(
+        \alpha\, \hat{\rho}_B + \beta\, \hat{P}_{2,B} - \eta_B
+    \right)
+\end{equation}
+
+This is the \textbf{minimal viable specification}: two parameters ($\alpha$,
+$\beta$) control the relative importance of density and order, while $\tau$
+controls memory depth.  Three parameters total.  If this does not produce
+interesting behaviour, the problem is not that more variables are needed.
+
+\subsection{Steady-State Analysis}
+
+At steady state ($d\eta_B/dt = 0$):
+\begin{equation}
+    \eta_B^{\mathrm{ss}} = f(\rho_B, C_B, P_{2,B})
+\end{equation}
+
+The slow variable converges to the target function.  Out of steady state,
+$\eta_B$ lags behind $f$, creating:
+\begin{itemize}
+    \item \textbf{hysteresis:} $\eta_B$ retains high values after the
+          environment has become disordered, and vice versa
+    \item \textbf{metastability:} beads in a locally ordered region resist
+          disorder because their $\eta_B$ is still high, reinforcing the
+          interactions that maintain order
+    \item \textbf{nucleation asymmetry:} ordering is harder to initiate
+          (requires sustained $f > 0$) than to maintain (high $\eta$
+          stabilises itself)
+\end{itemize}
+
+\subsection{Numerical Integration}
+
+For small $\Delta t / \tau$, the evolution equation is integrated via
+forward Euler:
+\begin{equation}
+    \eta_B(t + \Delta t) = \eta_B(t) + \frac{\Delta t}{\tau}
+    \left( f_B(t) - \eta_B(t) \right)
+\end{equation}
+
+For stiff cases ($\Delta t / \tau \gtrsim 0.5$), the implicit (exact)
+solution is preferred:
+\begin{equation}
+    \eta_B(t + \Delta t) = f_B(t)
+    + \left(\eta_B(t) - f_B(t)\right) e^{-\Delta t / \tau}
+\end{equation}
+
+Both forms are unconditionally stable for $\tau > 0$.
+
+% ============================================================================
+\section{Coupling $X_B$ into the Interaction Machinery}
+% ============================================================================
+
+The environment state is physically meaningful only if it modifies the
+bead's interactions.  Three coupling strategies are defined, ordered by
+increasing aggressiveness.
+
+\subsection{Option A: Kernel Modulation (Recommended)}
+
+The per-$\ell$ radial kernels acquire dependence on the internal state
+variables of the interacting beads:
+\begin{equation}
+    K_k(\ell, r) \;\longrightarrow\;
+    K_k(\ell, r;\, \eta_A, \eta_B)
+\end{equation}
+
+The simplest modulation is multiplicative:
+\begin{equation}
+    K_k(\ell, r;\, \eta_A, \eta_B)
+    = K_k(\ell, r) \cdot g_k(\eta_A, \eta_B)
+\end{equation}
+
+\paragraph{Channel-specific modulations.}
+
+\begin{itemize}
+    \item \textbf{Dispersion enhancement under ordering:}
+    \begin{equation}
+        K_{\mathrm{disp}}(\ell, r;\, \eta_A, \eta_B)
+        = K_{\mathrm{disp}}(\ell, r)
+        \cdot \left(1 + \gamma_{\mathrm{disp}}\,
+        \bar{\eta}_{AB}\right)
+    \end{equation}
+    where $\bar{\eta}_{AB} = \tfrac{1}{2}(\eta_A + \eta_B)$.
+    This stabilises $\pi$-stacking when both beads are in an ordered
+    environment.
+
+    \item \textbf{Electrostatic screening under crowding:}
+    \begin{equation}
+        K_{\mathrm{elec}}(\ell, r;\, \eta_A, \eta_B)
+        = K_{\mathrm{elec}}(\ell, r)
+        \cdot \left(1 - \gamma_{\mathrm{elec}}\,
+        \bar{\eta}_{AB}\right)
+    \end{equation}
+    This damps electrostatic anisotropy in dense, disordered regions
+    where screening is expected.
+
+    \item \textbf{Steric hardening under compression:}
+    \begin{equation}
+        K_{\mathrm{steric}}(\ell, r;\, \eta_A, \eta_B)
+        = K_{\mathrm{steric}}(\ell, r)
+        \cdot \left(1 + \gamma_{\mathrm{steric}}\,
+        \bar{\eta}_{AB}\right)
+    \end{equation}
+    This increases effective excluded volume under sustained crowding.
+\end{itemize}
+
+\paragraph{Advantages.}
+Kernel modulation is the cleanest coupling because:
+\begin{itemize}
+    \item it preserves the structure of the harmonic-space interaction engine
+    \item it introduces no new interaction terms
+    \item all existing per-$\ell$ decompositions remain valid
+    \item gradients with respect to $\eta$ are straightforward
+\end{itemize}
+
+\subsection{Option B: Descriptor Scaling}
+
+The descriptor coefficients themselves become functions of the internal
+state:
+\begin{equation}
+    c_{\ell m}^{(k)} \;\longrightarrow\;
+    c_{\ell m}^{(k)}(\eta_B)
+    = c_{\ell m}^{(k)} \cdot h_k(\eta_B)
+\end{equation}
+
+Examples:
+\begin{itemize}
+    \item steric coefficients shrink under compression
+          ($h_{\mathrm{steric}} = 1 - \delta\, \eta_B$)
+    \item electrostatic anisotropy weakens in dense regions
+          ($h_{\mathrm{elec}} = 1 - \delta\, \eta_B$)
+\end{itemize}
+
+\paragraph{Caution.}
+Descriptor scaling is more aggressive than kernel modulation because it
+modifies the bead's \emph{apparent identity} based on environment.  This
+blurs the separation between identity (Layer~A) and environment (Layer~E).
+Use only when kernel modulation is insufficient.
+
+\subsection{Option C: Additive Environment Energy}
+
+A separate energy contribution is defined that depends directly on the
+environment observables:
+\begin{equation}
+    U_{\mathrm{env}} = \sum_B
+    \Psi(\rho_B,\, C_B,\, P_{2,B},\, \eta_B)
+\end{equation}
+
+This captures:
+\begin{itemize}
+    \item packing penalties (high $\rho_B$ increases energy)
+    \item ordering rewards (high $P_{2,B}$ decreases energy)
+    \item frustration (competing density and order terms)
+\end{itemize}
+
+\paragraph{Force contribution.}
+The additive environment energy contributes to forces via:
+\begin{equation}
+    \mathbf{F}_B^{\mathrm{env}} = -\nabla_{\mathbf{R}_B} U_{\mathrm{env}}
+    = -\sum_B \frac{\partial \Psi}{\partial \rho_B}
+    \nabla_{\mathbf{R}_B} \rho_B
+    - \frac{\partial \Psi}{\partial P_{2,B}}
+    \nabla_{\mathbf{R}_B} P_{2,B}
+    - \cdots
+\end{equation}
+
+This requires gradients of all fast observables with respect to bead
+positions and orientations.
+
+\subsection{Recommended Starting Configuration}
+
+The minimal viable coupling uses Option~A (kernel modulation) only, with a
+single modulation parameter per channel:
+\begin{equation}
+    K_k(\ell, r;\, \eta_A, \eta_B)
+    = K_k(\ell, r) \cdot \left(1 + \gamma_k\, \bar{\eta}_{AB}\right)
+\end{equation}
+
+Total new parameters: $\gamma_{\mathrm{steric}}$,
+$\gamma_{\mathrm{elec}}$, $\gamma_{\mathrm{disp}}$, $\alpha$, $\beta$,
+$\tau$---six parameters beyond the existing interaction model.  This is
+sufficient.  If it does not produce interesting behaviour, the problem is
+not that more variables are needed.
+
+% ============================================================================
+\section{Emergent Behaviour}
+% ============================================================================
+
+The coupling of environment state into the interaction kernels enables
+qualitatively new phenomena that are impossible in a context-blind model.
+
+\subsection{Spontaneous Ordering}
+
+When $\gamma_{\mathrm{disp}} > 0$, beads that are already in an ordered
+environment ($\eta \approx 1$) interact more strongly via the dispersion
+channel.  This reinforces the ordering that produced high $\eta$ in the
+first place, creating a positive feedback loop:
+
+\begin{equation}
+    \text{high } P_{2,B} \;\to\;
+    \text{high } f_B \;\to\;
+    \text{high } \eta_B \;\to\;
+    \text{stronger } K_{\mathrm{disp}} \;\to\;
+    \text{higher } P_{2,B}
+\end{equation}
+
+This is the mechanism for spontaneous stacking, liquid-crystal alignment,
+and local crystallisation.
+
+\subsection{Density-Dependent Behaviour}
+
+Kernel modulation via $\rho_B$ produces:
+\begin{itemize}
+    \item steric hardening under compression
+    \item electrostatic damping in dense environments (screening)
+    \item dispersion saturation at high packing
+\end{itemize}
+
+These are physically expected behaviours that isotropic CG models achieve
+only through tabulated state-dependent potentials.  Here they emerge from
+the local environment coupling.
+
+\subsection{Hysteresis and Metastability}
+
+Because $\eta_B$ relaxes on a timescale $\tau$, the system exhibits
+history-dependent behaviour:
+\begin{itemize}
+    \item a bead that was recently in an ordered region retains high $\eta$
+          even after the ordering dissolves, temporarily maintaining
+          stronger interactions
+    \item a bead in a disordered region requires sustained exposure to
+          order before $\eta$ rises enough to trigger reinforcement
+    \item this asymmetry between ordering and disordering produces
+          hysteresis in density-temperature phase behaviour
+\end{itemize}
+
+\subsection{Interface Sensitivity}
+
+Beads at interfaces between ordered and disordered regions experience
+asymmetric environments:
+\begin{itemize}
+    \item high $P_{2,B}$ on the ordered side, low on the disordered side
+    \item intermediate $\eta_B$ due to mixed $f_B$ values
+    \item the gradient in $\eta$ across the interface produces a natural
+          surface tension analogue without explicit interfacial terms
+\end{itemize}
+
+\subsection{Summary of Accessible Phenomena}
+
+\begin{center}
+\begin{tabular}{lll}
+    \textbf{Phenomenon} & \textbf{Mechanism} & \textbf{Key parameter} \\
+    \hline
+    Spontaneous stacking & $P_2 \to \eta \to K_{\mathrm{disp}}$ feedback
+        & $\gamma_{\mathrm{disp}}$, $\beta$ \\
+    Electrostatic screening & $\rho \to \eta \to K_{\mathrm{elec}}$ damping
+        & $\gamma_{\mathrm{elec}}$, $\alpha$ \\
+    Steric hardening & $\rho \to \eta \to K_{\mathrm{steric}}$ increase
+        & $\gamma_{\mathrm{steric}}$, $\alpha$ \\
+    Hysteresis & $\tau > 0$ delays $\eta$ response
+        & $\tau$ \\
+    Metastability & high $\eta$ reinforces ordering
+        & $\gamma_{\mathrm{disp}}$, $\tau$ \\
+    Nucleation asymmetry & ordering requires sustained $f > 0$
+        & $\tau$, $\beta$ \\
+    Interface sensitivity & $\nabla \eta$ across ordered/disordered boundary
+        & all \\
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Formal Specification Summary}
+% ============================================================================
+
+\subsection{Extended Bead State}
+
+\begin{equation}
+    \mathbb{B}_B = \bigl\{
+        \underbrace{
+            \mathbf{R}_B,\;
+            \mathbf{Q}_B,\;
+            \{c_{\ell m}^{(k)}\},\;
+            M_B,\;
+            Q_B^{\mathrm{tot}},\;
+            \mathbf{I}_B
+        }_{B\;\text{(intrinsic)}},\;
+        \underbrace{
+            \rho_B,\;
+            C_B,\;
+            P_{2,B},\;
+            \eta_B
+        }_{X_B\;\text{(environment)}}
+    \bigr\}
+\end{equation}
+
+\subsection{Fast Observable Definitions}
+
+\begin{align}
+    \rho_B &= \sum_{C \neq B} w(r_{BC}) \\[4pt]
+    C_B &= \sum_{C \neq B} \mathbf{1}_{r_{BC} < r_c} \\[4pt]
+    P_{2,B} &= \frac{1}{N_B} \sum_{C \in \mathcal{N}_B}
+        \frac{1}{2}\left(3(\hat{n}_B \cdot \hat{n}_C)^2 - 1\right)
+\end{align}
+
+\subsection{Slow State Evolution}
+
+\begin{equation}
+    \frac{d\eta_B}{dt}
+    = \frac{1}{\tau}\left(
+        \alpha\, \hat{\rho}_B + \beta\, \hat{P}_{2,B} - \eta_B
+    \right)
+\end{equation}
+
+\subsection{Kernel Modulation}
+
+\begin{equation}
+    K_k(\ell, r;\, \eta_A, \eta_B)
+    = K_k(\ell, r) \cdot \left(1 + \gamma_k\, \bar{\eta}_{AB}\right)
+\end{equation}
+
+\subsection{Parameter Set}
+
+\begin{center}
+\begin{tabular}{cll}
+    \textbf{Parameter} & \textbf{Role} & \textbf{Typical range} \\
+    \hline
+    $\alpha$ & density weight in target function & $[0, 1]$ \\
+    $\beta$ & orientational order weight & $[0, 1]$,\; $\alpha + \beta = 1$ \\
+    $\tau$ & relaxation timescale & $10$--$10^4$ fs \\
+    $\gamma_{\mathrm{steric}}$ & steric kernel modulation & $[0, 1]$ \\
+    $\gamma_{\mathrm{elec}}$ & electrostatic kernel modulation & $[-1, 0]$ \\
+    $\gamma_{\mathrm{disp}}$ & dispersion kernel modulation & $[0, 2]$ \\
+\end{tabular}
+\end{center}
+
+\subsection{Invariants}
+
+\begin{itemize}
+    \item $\eta_B \in [0, 1]$ at all times (clamp if target function
+          overshoots)
+    \item $|1 + \gamma_k \bar{\eta}| > 0$ for all channels (kernel must
+          not change sign)
+    \item Fast observables are recomputed before $\eta$ is updated
+    \item $\eta$ is updated before interaction evaluation
+    \item Energy conservation requires force contributions from
+          $\partial K / \partial \eta \cdot \partial \eta / \partial \mathbf{R}$
+          when $\eta$ is pose-dependent
+\end{itemize}
+
+% ============================================================================
+\section{Relationship to Companion Document}
+% ============================================================================
+
+This document extends the companion
+\emph{Anisotropic Surface-Mapped Coarse-Grained Beads for Molecular
+Systems} without modifying it.
+
+\begin{center}
+\begin{tabular}{ll}
+    \textbf{Companion document} & \textbf{This document} \\
+    \hline
+    Defines $B$ (intrinsic state) & Defines $X_B$ (environment state) \\
+    Pairwise interaction engine & Environment-modulated kernels \\
+    Static descriptor coefficients & Coefficients optionally scaled \\
+    No environment awareness & Phase awareness from local observables \\
+    Rigid-body dynamics only & Slow internal state with memory \\
+    Deterministic mapping & Deterministic observables + relaxation \\
+\end{tabular}
+\end{center}
+
+The interface is clean: this document adds Layer~E to the existing
+four-layer architecture and modulates the existing interaction kernels via
+multiplicative coupling.  No existing equations are changed; the extension
+is purely additive.
+
+% ============================================================================
+\section{Conclusion}
+% ============================================================================
+
+The environment-responsive extension transforms the anisotropic bead from a
+static descriptor carrier into a material participant.  By introducing three
+fast observables and one slow internal state variable, the bead acquires
+phase awareness, memory, and history-dependent interaction strength---all
+from six additional parameters.
+
+The distinction is between:
+\begin{itemize}
+    \item ``the model works'' --- beads interact anisotropically and move
+          under force and torque
+    \item ``the system behaves'' --- beads spontaneously order, resist
+          disordering, screen electrostatics in dense regions, and exhibit
+          hysteresis across phase boundaries
+\end{itemize}
+
+The first capability was established in the companion document.  The second
+is established here.
+
+\end{document}
