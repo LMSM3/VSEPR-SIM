@@ -58,24 +58,41 @@ void XYZMolecule::translate(double dx, double dy, double dz) {
     compute_bounds();
 }
 
+void XYZMolecule::rotate(const std::array<double, 3>& axis, double angle) {
+    // Rodrigues rotation — no GLM dependency
+    double ax = axis[0], ay = axis[1], az = axis[2];
+    double len = std::sqrt(ax*ax + ay*ay + az*az);
+    if (len < 1e-12) return;
+    ax /= len; ay /= len; az /= len;
+
+    double c = std::cos(angle);
+    double s = std::sin(angle);
+    double t = 1.0 - c;
+
+    for (auto& atom : atoms) {
+        double x = atom.position[0];
+        double y = atom.position[1];
+        double z = atom.position[2];
+        atom.position[0] = (t*ax*ax + c)*x    + (t*ax*ay - s*az)*y + (t*ax*az + s*ay)*z;
+        atom.position[1] = (t*ax*ay + s*az)*x + (t*ay*ay + c)*y    + (t*ay*az - s*ax)*z;
+        atom.position[2] = (t*ax*az - s*ay)*x + (t*ay*az + s*ax)*y + (t*az*az + c)*z;
+    }
+    compute_bounds();
+}
+
+#ifdef VSEPR_HAS_GLM
 void XYZMolecule::translate(const glm::vec3& delta) {
     translate(delta.x, delta.y, delta.z);
 }
 
-void XYZMolecule::rotate(const std::array<double, 3>& axis, double angle) {
-    glm::vec3 glm_axis(axis[0], axis[1], axis[2]);
-    rotate(glm_axis, angle);
-}
-
 void XYZMolecule::rotate(const glm::vec3& axis, double angle) {
-    glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), static_cast<float>(angle), 
-                                     glm::vec3(axis.x, axis.y, axis.z));
-    transform(rotation);
+    rotate(std::array<double,3>{axis.x, axis.y, axis.z}, angle);
 }
 
 void XYZMolecule::rotate(const glm::mat4& rotation_matrix) {
     transform(rotation_matrix);
 }
+#endif // VSEPR_HAS_GLM
 
 void XYZMolecule::scale(double factor) {
     for (auto& atom : atoms) {
@@ -86,17 +103,19 @@ void XYZMolecule::scale(double factor) {
     compute_bounds();
 }
 
+#ifdef VSEPR_HAS_GLM
 void XYZMolecule::transform(const glm::mat4& matrix) {
     for (auto& atom : atoms) {
         glm::vec4 pos(atom.position[0], atom.position[1], atom.position[2], 1.0);
         glm::vec4 transformed = matrix * pos;
-        
+
         atom.position[0] = transformed.x;
         atom.position[1] = transformed.y;
         atom.position[2] = transformed.z;
     }
     compute_bounds();
 }
+#endif // VSEPR_HAS_GLM
 
 // ============================================================================
 // XYZReader Implementation

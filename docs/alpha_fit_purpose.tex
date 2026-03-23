@@ -1,0 +1,139 @@
+\documentclass[11pt, a4paper]{article}
+\usepackage[top=1in, bottom=1in, left=1.1in, right=1.1in]{geometry}
+\usepackage{lmodern}
+\usepackage{amsmath, amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\makeatletter
+\renewcommand{\section}{\@startsection{section}{1}{\z@}%
+  {10pt plus2pt minus2pt}{4pt}{\large\bfseries}}
+\renewcommand{\subsection}{\@startsection{subsection}{2}{\z@}%
+  {7pt plus1pt minus1pt}{2pt}{\normalsize\bfseries}}
+\makeatother
+\setlength{\parskip}{4pt}
+\setlength{\parindent}{0pt}
+\setlist{nosep, leftmargin=1.4em}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Alpha Fit --- Purpose \& Transition Note}\\[4pt]
+{\small VSEPR-Sim Atomistic Engine \quad|\quad Polarizability Module}
+\end{center}
+\vspace{-0.4em}\hrule\vspace{0.6em}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{What Alpha Fitting Was}
+
+The \textit{alpha fitting} subsystem
+(\texttt{tools/fit\_alpha\_model.cpp}, \texttt{tools/auto\_fit\_alpha.cpp})
+was an offline coordinate-descent trainer for the scalar isotropic
+polarizability model, referred to internally as \textbf{Alpha Method D}.
+
+The model estimated atomic polarizability $\alpha(Z)$ in \AA$^3$ for
+elements $Z > 118$ (i.e.\ beyond the empirical table) using the formula:
+
+\[
+\alpha(Z) \;=\; k_p \cdot c_b \cdot r_\text{eff}^3 \cdot g_\text{bind}
+             \cdot g_f \;+\; \text{blob}
+\]
+
+\noindent where:
+
+\begin{itemize}
+  \item $k_p$ --- per-period scaling ($k_\text{period}[1\ldots7]$)
+  \item $c_b$ --- per-block correction ($c_\text{block}[s,p,d,f]$)
+  \item $r_\text{eff} = r_\text{cov}\,(1 + c_\text{rel}\,Z^2)\,
+        (1 - \beta_f\,n_f/14)$ --- effective covalent radius with
+        relativistic and lanthanide-contraction corrections
+  \item $g_\text{bind} = 1/(1 + b_\text{bind}\,I_1)$ --- ionization
+        stiffness gate ($I_1$ = first ionisation energy, eV)
+  \item $g_f$ --- f-block multiplicative correction using
+        $n_f$, half-shell bump ($a_{f2}$), and full-shell correction ($a_{f3}$)
+  \item $\text{blob}$ --- additive f-block anomaly:
+        $\text{blob} = b_\text{lin}\,n_f + b_\text{half}\,\delta_{n_f=7}
+         + b_\text{full}\,\delta_{n_f=14}$
+\end{itemize}
+
+The trainer minimised a weighted Huber loss in log-space over a reference CSV
+(\texttt{data/polarizability\_ref.csv}) covering Z\,=\,1--118, with
+chemistry-aware weights (noble gases $\times 4$, halogens $\times 2.5$,
+early actinides $\times 2$, relativistic Hg $\times 2.5$) and a
+group-wise monotonicity smoothness penalty.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Why It Is a Dead End}
+
+\begin{enumerate}
+  \item \textbf{Zero impact on Z\,=\,1--118.}\;
+        \texttt{alpha\_predict()} returns the empirical table directly for
+        all known elements; the fitted model is only invoked for $Z > 118$.
+        No physical system simulated by the engine today uses super-heavy elements.
+
+  \item \textbf{Circular validation.}\;
+        The reference data and the fitter are both internal; there is no
+        experimental observable in the production simulation loop that
+        depends on $\alpha(Z > 118)$.
+
+  \item \textbf{Parameter drift.}\;
+        Successive alpha model versions changed the field layout
+        (\texttt{c\_shell}, \texttt{a\_rel}, \texttt{c\_orb} $\to$
+        \texttt{beta\_f}, \texttt{c\_rel}, \texttt{b\_bind}, etc.),
+        causing repeated stale-reference build failures in consumer tools
+        without any improvement to production accuracy.
+
+  \item \textbf{Scope mismatch.}\;
+        The engine's validated domain is $Z = 1$--102 (periodic table
+        through Nobelium).  Fitting a model for $Z > 118$ is pre-emptive
+        infrastructure for physics that does not yet exist in the engine.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Transition Decision}
+
+The alpha fitting tools are \textbf{retained in the repository as
+reference} but are no longer on the critical build path.  The transition is:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{ll}
+\toprule
+\textbf{Old approach} & \textbf{New approach} \\
+\midrule
+Fitted generative model for $Z > 118$ & Return default value (1.76~\AA$^3$) \\
+Offline trainer binaries in build & Tools excluded from default targets \\
+Parameter struct fields as build API & Model struct treated as opaque \\
+Validation via training loss & Validation via production test suite \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The freed build budget and code-review attention are redirected to the
+formation pipeline (SS6), the heat-gated reaction control (SS8b), and
+the 35-test validation campaign (SS12).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{What Remains Valid}
+
+\begin{itemize}
+  \item \texttt{atomistic/models/alpha\_model.hpp} ---
+        the \texttt{AlphaModelParams} struct and \texttt{alpha\_predict()}
+        function remain unchanged.  Callers using Z\,=\,1--118 are
+        unaffected.
+  \item \texttt{data/polarizability\_ref.csv} ---
+        the reference dataset is kept as documentation of the empirical values.
+  \item The Thole damping model, SCF polarization loop, and QEq charge
+        equilibration (SS8) are independent of the fitter and continue
+        to be developed.
+\end{itemize}
+
+\vspace{1em}
+\hrule
+\vspace{0.4em}
+{\small\textit{Status: Transitioned. Tools retained for reference.
+Formation engine version 2.5.2.X and later.}}
+
+\end{document}

@@ -1,0 +1,1 @@
+$e=$null; [System.Management.Automation.Language.Parser]::ParseFile('C:\FlowerOS\VSEPR-SIm\scripts\build\build.ps1',[ref]$null,[ref]$e)|Out-Null; Write-Host "Errors: $($e.Count)"

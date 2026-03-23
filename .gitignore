@@ -181,3 +181,7 @@ verification/downloaded_refs.json
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+
+# Backup files
+*.bak
+*.backup

@@ -1,6 +1,8 @@
 #include "cli/emit_crystal.hpp"
 #include "cli/emit_output.hpp"
+#ifdef ENABLE_CRYSTAL_VIZ
 #include "cli/crystal_visualizer.hpp"  // NEW: Visualization bridge
+#endif
 #include "atomistic/crystal/unit_cell.hpp"
 #include "atomistic/crystal/supercell.hpp"
 #include "atomistic/crystal/crystal_metrics.hpp"
@@ -268,7 +270,11 @@ int emit_crystal(const ParsedCommand& cmd, RunContext& ctx) {
     // ========================================================================
 
     if (ctx.viz_enabled) {
+#ifdef ENABLE_CRYSTAL_VIZ
         return launch_crystal_visualizer(atoms, lattice, cmd.action_params.supercell, structure_name);
+#else
+        std::cerr << "Warning: Visualization not available (built without BUILD_VIS)\n";
+#endif
     }
 
     // ========================================================================

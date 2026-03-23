@@ -1,0 +1,1424 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, graphicx, geometry}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\geometry{margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\fn}[1]{\texttt{#1}}
+
+\title{Validation Infrastructure for Environment-Responsive\\
+Coarse-Grained Bead Dynamics}
+\author{VSEPR-SIM Project}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The companion documents establish the anisotropic surface-mapped bead
+(ASB) and the environment-responsive extension (ERB), introducing an
+extended bead state $\mathbb{B}_B = \{B,\, X_B\}$ with fast observables
+$(\rho_B, C_B, P_{2,B})$ and a slow internal state variable $\eta_B$.
+This document specifies the \emph{testing and validation infrastructure}
+developed to verify the environment-responsive layer and its downstream
+analysis pipeline: synthetic scene construction, trajectory-based time
+evolution, behavioural assertion frameworks, Monte Carlo robustness
+harnesses, structured formation studies at scale $N > 200$, ensemble
+proxy validation, macro property precursor channel testing, property
+learning pipeline verification, and property calibration and target
+legitimacy validation.  The infrastructure is not auxiliary to the
+model---it is a co-equal component of model development.  Key findings
+include: (i) the seven reported state variables reduce to four
+independent degrees of freedom, (ii)~large-$N$ runs ($N = 64, 125, 216$)
+are numerically stable and bounded, (iii)~edge versus bulk differentiation
+emerges naturally from the environment descriptors, (iv)~the causal
+chain geometry $\to$ observables $\to$ target $\to$ $\eta$ is now
+empirically confirmed, and (v)~the full pipeline from per-bead state
+through ensemble proxies, precursor channels, property learning, and
+calibrated prediction is validated across 1013 tests.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction and Position in the Document Series}
+% ============================================================================
+
+This is the fourth document in the coarse-grained methodology series:
+
+\begin{center}
+\begin{tabular}{cll}
+    \textbf{Code} & \textbf{Title} & \textbf{Establishes} \\
+    \midrule
+    CGL & Coarse-Grained and Multi-Scale Layer
+        & Architecture, scale transitions, ensembles,
+          ensemble proxies, precursors, pipeline, calibration \\
+    ASB & Anisotropic Surface-Mapped Beads
+        & Descriptor, orientation, interaction engine \\
+    ERB & Environment-Responsive Bead Dynamics
+        & $X_B$, fast observables, $\eta_B$, kernel modulation \\
+    \textbf{TIF} & \textbf{Testing Infrastructure (this document)}
+        & \textbf{Validation methodology, empirical findings} \\
+\end{tabular}
+\end{center}
+
+\subsection{Why a Separate Document?}
+
+Environment-responsive dynamics introduces a new category of model risk.
+The bead state now includes a dynamical variable ($\eta_B$) that evolves
+via a relaxation equation, couples back into the interaction kernels, and
+is expected to exhibit memory, hysteresis, and path dependence.  None of
+these properties can be verified by unit-testing individual functions in
+isolation.  They require:
+
+\begin{enumerate}
+    \item \textbf{Synthetic scene construction:} controlled spatial
+          configurations of beads with known geometry, spacing, and
+          orientation distributions
+    \item \textbf{Trajectory-based verification:} time-evolution of $\eta$
+          under static or controlled conditions, with full observable
+          recording
+    \item \textbf{Behavioural assertions:} monotonicity, boundedness,
+          convergence, and sensitivity checks that go beyond equality tests
+    \item \textbf{Statistical robustness:} thousands of randomised trials
+          verifying that the model does not blow up under stochastic input
+    \item \textbf{Large-$N$ stability:} structured runs with $N > 200$
+          beads demonstrating that collective behaviour is well-posed
+\end{enumerate}
+
+Each of these requires infrastructure that is itself a scientific
+contribution.  This document specifies that infrastructure, catalogues the
+results it has produced, and establishes the validation gates that must be
+passed before proceeding to higher-level studies.
+
+\subsection{Testing Philosophy}
+
+The testing infrastructure follows a \textbf{state-first, not
+chemistry-first} philosophy.  Rather than constructing atomistic molecular
+systems, mapping them to beads, and then testing the environment layer, the
+infrastructure manufactures bead scenes directly---bypassing atomistic
+chemistry entirely.
+
+This design choice is deliberate:
+
+\begin{itemize}
+    \item It isolates the environment-responsive layer from mapping errors
+    \item It enables deterministic, reproducible test configurations
+    \item It allows systematic exploration of neighbourhood geometries
+          that may not correspond to any real molecule
+    \item It makes tests fast (microseconds, not minutes)
+\end{itemize}
+
+The philosophy is not that atomistic tests are unimportant, but that
+\emph{model-level} validation must be independent of the pipeline that
+feeds it.
+
+% ============================================================================
+\section{Scene Construction Methodology}
+\label{sec:scenes}
+% ============================================================================
+
+A \emph{scene} is a collection of synthetic beads, each carrying a
+position $\mathbf{R}_B$, an orientation axis $\hat{n}_B$, and an initial
+internal state $\eta_B^{(0)}$.  Scenes are the fundamental test objects.
+
+\subsection{The \type{SceneBead} Representation}
+
+Each synthetic bead is a lightweight struct:
+\begin{equation}
+    \text{SceneBead} = \bigl\{
+        \mathbf{R},\;
+        \hat{n},\;
+        \texttt{has\_orientation},\;
+        \eta^{(0)}
+    \bigr\}
+\end{equation}
+
+This is intentionally minimal.  The bead carries no mass, no charge, no
+descriptor coefficients, and no channel decomposition.  It carries only
+what the environment-responsive layer needs to compute: positions,
+orientations, and initial state.
+
+\subsection{Deterministic Scene Builders}
+
+The following canonical scenes provide controlled geometric configurations
+with exact, reproducible coordinates:
+
+\begin{center}
+\begin{tabular}{lcp{6.5cm}}
+    \textbf{Scene} & \textbf{$N$} & \textbf{Geometry} \\
+    \midrule
+    Isolated       & 1   & Single bead at origin \\
+    Pair           & 2   & Two beads along $x$-axis at separation $d$ \\
+    Linear stack   & $n$ & $n$ beads along $z$-axis, uniform spacing \\
+    T-shape        & 3   & Center + aligned ($z$) + perpendicular ($x$) \\
+    Square         & 4   & Four beads at corners of square in $xy$-plane \\
+    Triangle       & 3   & Equilateral triangle in $xy$-plane \\
+    Tetrahedron    & 4   & Regular tetrahedron vertices \\
+    Ring           & $n$ & $n$ beads on circle in $xy$-plane \\
+    Dense shell    & $n{+}1$ & Fibonacci spiral on sphere + central bead \\
+    Cubic lattice  & $n^3$ & Perfect cubic grid \\
+    Line bundle    & $n$ & Centered $z$-column, all aligned \\
+    Layered slab   & $n^2 k$ & $k$ square planes stacked along $z$ \\
+\end{tabular}
+\end{center}
+
+Each builder is a pure function: given geometric parameters, it returns a
+deterministic scene.  No random state, no seed, no external dependency.
+
+\subsection{Randomised Scene Generators}
+
+For robustness testing, randomised generators produce controlled
+distributions of bead positions and orientations.  All use a single
+deterministic PRNG (\type{Xorshift32}) seeded explicitly, ensuring exact
+reproducibility.
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+    \textbf{Generator} & \textbf{Distribution} \\
+    \midrule
+    Random cluster    & $N$ beads uniformly in a box, random orientations \\
+    Random cloud      & Center at origin + $N{-}1$ scattered in box \\
+    Random shell      & Center at origin + $N$ on spherical shell \\
+    Separated cloud   & Rejection-sampled: minimum inter-bead distance guaranteed \\
+    Biased stack      & Column along $z$ with controlled jitter and alignment bias \\
+    Perturbed lattice & Perfect lattice + bounded random displacement \\
+    MC scene          & \type{MCSceneConfig}: $n \in [n_{\min}, n_{\max}]$
+                        neighbours in $[r_{\min}, r_{\max}]$ shell \\
+\end{tabular}
+\end{center}
+
+\subsection{Scene Transforms}
+
+Two rigid transforms are provided for testing invariance properties:
+
+\paragraph{Translation.}
+$\mathbf{R}_B \to \mathbf{R}_B + \Delta\mathbf{R}$ for all beads.
+Orientations are unaffected.  Environment observables must be
+translation-invariant, so the environment state of a translated scene must
+be identical to the original.
+
+\paragraph{Rotation.}
+Both positions and orientations are rotated via Rodrigues' formula about
+an axis $\hat{k}$ by angle $\theta$:
+\begin{equation}
+    \mathbf{v}' = \mathbf{v}\cos\theta
+    + (\hat{k} \times \mathbf{v})\sin\theta
+    + \hat{k}(\hat{k} \cdot \mathbf{v})(1 - \cos\theta)
+\end{equation}
+
+Applied to both $\mathbf{R}_B$ and $\hat{n}_B$.  This is a rigid rotation:
+inter-bead distances and relative orientations are preserved.  All
+environment observables must be rotation-invariant.
+
+\subsection{Scene Validation}
+
+Before running any test, a scene can be validated for structural sanity:
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+    \textbf{Check} & \textbf{What it catches} \\
+    \midrule
+    Minimum pair distance    & Catastrophic overlaps, degenerate geometry \\
+    Duplicate positions      & Copy errors, bad generation \\
+    Unit normal verification & Non-unit orientations after rotation or perturbation \\
+    Centroid                 & Drift, asymmetric generation \\
+    Bounding box             & Scale errors, unexpected extent \\
+\end{tabular}
+\end{center}
+
+These checks prevent debugging generated scenes by staring at coordinates.
+
+\subsection{Neighbour List Construction}
+
+The neighbour list builder returns \emph{all} other beads in the scene as
+neighbours for a given bead, regardless of distance.  The cutoff filtering
+is performed inside the environment state kernel
+(\fn{compute\_fast\_observables}), which applies distance-based Gaussian
+weighting controlled by $r_c$ and $\sigma_\rho$.
+
+This design ensures that scene construction is completely independent of
+kernel parameters.  The same scene can be evaluated under different cutoff
+regimes without regeneration.
+
+% ============================================================================
+\section{Variable Hierarchy}
+\label{sec:hierarchy}
+% ============================================================================
+
+The environment-responsive bead reports seven state variables.  A central
+finding of the testing infrastructure is that these seven variables are
+\emph{not} seven independent degrees of freedom.
+
+\subsection{The Seven Reported Variables}
+
+\begin{center}
+\begin{tabular}{llll}
+    \textbf{Variable} & \textbf{Symbol} & \textbf{Type} & \textbf{Range} \\
+    \midrule
+    Local density           & $\rho$        & Fast observable    & $[0, \infty)$ \\
+    Normalised density      & $\hat{\rho}$  & Derived            & $[0, 1]$ \\
+    Coordination number     & $C$           & Fast observable    & $[0, N{-}1]$ \\
+    Orientational order     & $P_2$         & Fast observable    & $[-\tfrac{1}{2}, 1]$ \\
+    Normalised order        & $\hat{P}_2$   & Derived            & $[0, 1]$ \\
+    Target function         & $f$           & Composite          & $[0, 1]$ \\
+    Internal state          & $\eta$        & Dynamical variable & $[0, 1]$ \\
+\end{tabular}
+\end{center}
+
+\subsection{Independence Structure}
+
+Systematic sweeps across canonical scenes (Suite~\#3, Phase~1) reveal:
+
+\begin{itemize}
+    \item $\hat{\rho}$ is a deterministic rescaling of $\rho$:
+          $\hat{\rho} = \rho / \rho_{\max}$
+    \item $\hat{P}_2$ is a deterministic rescaling of $P_2$:
+          $\hat{P}_2 = (P_2 + \tfrac{1}{2}) / \tfrac{3}{2}$
+    \item $f$ is a linear combination of normalised forms:
+          $f = \alpha\hat{\rho} + \beta\hat{P}_2$
+\end{itemize}
+
+Therefore the system has four independent variables:
+\begin{equation}
+\boxed{
+    \text{Independent:}\quad \rho,\; C,\; P_2,\; \eta
+    \qquad
+    \text{Derived:}\quad \hat{\rho} = g(\rho),\;
+    \hat{P}_2 = h(P_2),\;
+    f = \alpha\, g(\rho) + \beta\, h(P_2)
+}
+\end{equation}
+
+This is not a deficiency---it is a clarification.  The normalised forms
+and the target function are not independent scientific degrees of freedom.
+They are intermediate computational quantities.
+
+\subsection{Causal Chain}
+
+The empirically confirmed causal structure of the environment-responsive
+layer is:
+
+\begin{equation}
+    \underbrace{
+        \text{geometry, spacing, orientation}
+    }_{\text{scene configuration}}
+    \;\longrightarrow\;
+    \underbrace{
+        \rho,\; C,\; P_2
+    }_{\text{measured local state}}
+    \;\longrightarrow\;
+    \underbrace{
+        \hat{\rho},\; \hat{P}_2
+    }_{\text{normalised forms}}
+    \;\longrightarrow\;
+    \underbrace{
+        f
+    }_{\text{target}}
+    \;\longrightarrow\;
+    \underbrace{
+        \eta
+    }_{\text{memory}}
+\end{equation}
+
+This chain means that $\eta$ is not a primary descriptor of the scene.  It
+is a \emph{stateful memory variable} that integrates the scene's geometric
+properties through the intermediate observable layer.  If someone asks
+``what determines $\eta$?'', the answer is not ``the scene directly'' but
+``the scene determines descriptors, descriptors determine the target, the
+target drives $\eta$.''
+
+This causal interpretation should govern all subsequent test design,
+parameter fitting, and scientific reporting.
+
+% ============================================================================
+\section{Test Suite Architecture}
+\label{sec:suites}
+% ============================================================================
+
+The validation infrastructure is organised into five test suites, each
+targeting a different aspect of model behaviour.  All suites share a common
+assertion pattern and report format.
+
+\subsection{Suite Overview}
+
+\begin{center}
+\begin{tabular}{lrlp{5.5cm}}
+    \textbf{Suite} & \textbf{Tests} & \textbf{File} & \textbf{Focus} \\
+    \midrule
+    Suite \#1  & 60  & \file{test\_anisotropic\_model.cpp}
+        & Channel kernels, per-$\ell$ decomposition, SH rotation \\
+    Suite \#2  & 77  & \file{test\_environment\_suite2.cpp}
+        & Observable correctness, $\eta$ dynamics, constitutive
+          response, coupled pipeline, stress/pathology \\
+    Track 2    & 39  & \file{test\_track2\_robustness.cpp}
+        & Monte Carlo robustness across 4000+ random scenes \\
+    Suite \#3  & 52  & \file{test\_formation\_suite3.cpp}
+        & Structured $N > 10$ formation studies, atlas, large-$N$ \\
+    Suite \#4  & 113 & \file{test\_formation\_regimes\_suite4.cpp}
+        & Dynamic regimes, invariance, condition-to-structure \\
+    Suite \#5  & 131 & \file{test\_ensemble\_proxy\_suite5.cpp}
+        & Emergent effective medium mapping, ensemble response proxies,
+          directed proxy validation, delta/validity/reference \\
+    Suite \#6  & 85  & \file{test\_macro\_precursor\_suite6.cpp}
+        & Macro property precursor channels, directed perturbation,
+          confidence model, inter-channel consistency \\
+    Suite \#7  & 109 & \file{test\_property\_pipeline\_suite7.cpp}
+        & Property learning pipeline, dataset construction,
+          feature vectorization, regression, synthetic supervision \\
+    Suite \#8  & 193 & \file{test\_property\_calibration\_suite8.cpp}
+        & Property calibration, target legitimacy, confidence
+          decomposition, OOD detection, promotion/demotion \\
+    CLI Suite  & 72  & \file{test\_cg\_cli.cpp}
+        & Integration tests for all CG console commands \\
+    Bead Layers & 82 & \file{test\_bead\_layers.cpp}
+        & Visualization data model, bead layer rendering,
+          inspector overlay, detail view modes \\
+    \midrule
+    \textbf{Total} & \textbf{1013} & & \\
+\end{tabular}
+\end{center}
+
+All 1013 tests pass.  No test is skipped or expected to fail.
+
+\subsection{Suite \#2: Environment Observable Correctness}
+
+Suite~\#2 is the most structurally detailed, organised into five groups:
+
+\begin{description}
+    \item[Group A: Environment observable correctness.]
+        Neighbourhood sensing, translation invariance, rotation invariance,
+        distance sweeps, isolated bead special cases.
+
+    \item[Group B: Internal state dynamics.]
+        $\eta$ evolution under constant environment, $\tau$-dependence,
+        determinism under identical initial conditions, timestep
+        convergence.
+
+    \item[Group C: Constitutive response.]
+        Kernel modulation factors, backward compatibility (all $\gamma_k
+        = 0$ recovers unmodulated kernels), modifier boundedness.
+
+    \item[Group D: Coupled pipeline.]
+        Multi-step evolution, history-dependent behaviour, emergent
+        ordering under sustained alignment.
+
+    \item[Group E: Stress and pathology.]
+        Extreme values ($\eta < 0$, $\eta > 1$), NaN/Inf guards, empty
+        neighbour lists, very large distances, degenerate orientations.
+\end{description}
+
+\subsection{Track 2: Monte Carlo Robustness}
+
+Track~2 runs large ensembles of randomised local bead scenes and verifies
+statistical properties.  It is a property-based statistical validation,
+not a unit test.
+
+\begin{center}
+\begin{tabular}{rl}
+    \textbf{Ensemble} & \textbf{$N$ trials} \\
+    \midrule
+    Isotropic random    & 1000 \\
+    Aligned dense       & 1000 \\
+    Mixed distribution  & 2000 \\
+\end{tabular}
+\end{center}
+
+Properties verified across all 4000 trials:
+\begin{itemize}
+    \item $\eta \in [0, 1]$ at all timesteps
+    \item No NaN or Inf in any observable
+    \item Isotropic environments do not spuriously activate ordered state
+    \item Aligned dense environments correctly activate ordering
+    \item Kernel modulations remain finite and sign-correct
+    \item Higher alignment bias produces higher $P_2$ (monotonic trend)
+\end{itemize}
+
+\subsection{Suite \#3: Structured Formation Studies}
+
+Suite~\#3 consists of three phases:
+
+\paragraph{Phase 1: Single-variable response atlas.}
+For each of seven environment variables, sweep a controlling scene
+parameter (spacing, from 2.0 to 15.0) while holding all others fixed.
+Run across six canonical scenes.  Record output range, monotonicity, and
+perturbation sensitivity.
+
+\paragraph{Phase 2a: Pairwise coupling maps.}
+Sweep two variables simultaneously on coarse $5 \times 5$ grids.  Four
+coupling maps: $(\rho \times \eta)$, $(C \times P_2)$,
+$(P_2 \times \hat{P}_2)$, $(\rho \times f)$.  Detect nonlinear
+transitions, saturation, and divergence.
+
+\paragraph{Phase 2b: Large-$N$ runs.}
+$N = 64$, $125$, $216$ beads with controlled initial conditions across six
+scene types: perfect lattice, perturbed lattice, line bundle, layered slab,
+shell initialisation, random cloud.  All 18 runs stable and bounded.
+
+% ============================================================================
+\section{Behavioural Assertion Framework}
+\label{sec:assertions}
+% ============================================================================
+
+Traditional unit tests assert equality: \emph{expected output equals actual
+output}.  Environment-responsive testing requires \emph{behavioural}
+assertions that characterise qualitative properties of trajectories and
+distributions.
+
+\subsection{Trajectory Assertions}
+
+\begin{center}
+\begin{tabular}{lp{7cm}}
+    \textbf{Assertion} & \textbf{Meaning} \\
+    \midrule
+    \fn{is\_monotone\_increasing}
+        & Sequence is non-decreasing (within $10^{-15}$ tolerance) \\
+    \fn{is\_monotone\_decreasing}
+        & Sequence is non-increasing \\
+    \fn{is\_bounded}$(v, a, b)$
+        & All values in $[a, b]$ \\
+    \fn{approaches\_value}$(v, t, \epsilon)$
+        & Final value within $\epsilon$ of target $t$ \\
+    \fn{has\_variation}
+        & Not all values are identical (system responded) \\
+    \fn{is\_finite}
+        & No NaN or Inf anywhere in the sequence \\
+\end{tabular}
+\end{center}
+
+These are not ad hoc checks.  Each corresponds to a physical property of
+the relaxation equation:
+\begin{itemize}
+    \item Monotone increasing $\eta$ when $f > \eta$ (driving toward
+          target from below)
+    \item Bounded in $[0, 1]$ by construction of the clamped relaxation
+    \item Convergence to $f$ at steady state
+    \item Variation confirms the system is not degenerate
+    \item Finiteness guards against numerical pathology
+\end{itemize}
+
+\subsection{Statistical Assertions}
+
+For ensemble-level verification:
+
+\begin{center}
+\begin{tabular}{lp{7cm}}
+    \textbf{Tool} & \textbf{Purpose} \\
+    \midrule
+    \fn{compute\_stats}
+        & Mean, variance, percentiles (5th, 50th, 95th), NaN/Inf counts \\
+    \fn{mean\_increases\_with}$(x, y)$
+        & Binned monotonic trend: mean of $y$ increases with sorted $x$ \\
+    \fn{groups\_separated}$(A, B, \delta)$
+        & Mean of group $B$ exceeds mean of group $A$ by at least $\delta$ \\
+\end{tabular}
+\end{center}
+
+These tools enable the Track~2 robustness harness to make statistical
+claims across thousands of trials without hand-inspecting individual runs.
+
+\subsection{Sweep Harness}
+
+The direct sweep harness automates single-variable parameter studies:
+
+\begin{enumerate}
+    \item Accept a scene-generating function $S(v)$ parameterised by
+          sweep variable $v$
+    \item Linearly sample $v$ from $v_{\min}$ to $v_{\max}$
+    \item For each sample: build scene, evolve all beads for $n$ steps,
+          record bead~0 state
+    \item Return a vector of \type{ResponseRecord} with all seven
+          environment variables
+\end{enumerate}
+
+This enables systematic parameter studies with a single function call,
+replacing ad hoc loops in test files.
+
+% ============================================================================
+\section{Trajectory Runner}
+\label{sec:runner}
+% ============================================================================
+
+The trajectory runner is the central execution primitive.  It time-evolves
+a single bead within a static (frozen-position) scene and records the full
+history of all observables.
+
+\subsection{Single-Bead Trajectory}
+
+Given a scene, a bead index, and initial $\eta^{(0)}$:
+
+\begin{enumerate}
+    \item Build the neighbour list for the target bead (all other beads
+          in the scene, unfiltered)
+    \item For each timestep $t = 0, 1, \ldots, n{-}1$:
+    \begin{enumerate}
+        \item Compute fast observables $(\rho, C, P_2)$ from the current
+              neighbour configuration
+        \item Normalise: $\hat{\rho} = \rho / \rho_{\max}$,
+              $\hat{P}_2 = (P_2 + \tfrac{1}{2}) / \tfrac{3}{2}$
+        \item Compute target: $f = \alpha\hat{\rho} + \beta\hat{P}_2$
+        \item Integrate: $\eta(t{+}1) = f + (\eta(t) - f)\,
+              e^{-\Delta t / \tau}$
+        \item Record: $(\eta, f, \rho, P_2, C)$ appended to trajectory
+    \end{enumerate}
+    \item Return the complete \type{EtaTrajectory}
+\end{enumerate}
+
+Because positions are frozen, the fast observables are constant across
+timesteps.  Only $\eta$ evolves.  This makes the trajectory runner a test
+of the relaxation dynamics in isolation, cleanly separated from the
+question of whether positions would change under the modified forces.
+
+\subsection{Multi-Bead Pass}
+
+For large-$N$ studies, the multi-bead runner evolves all beads
+simultaneously.  At each timestep, every bead's environment state is
+updated from its own neighbour list.  The initial $\eta$ for each bead is
+read from the \type{SceneBead::eta} field, enabling non-uniform
+initialisation for hysteresis and memory tests.
+
+% ============================================================================
+\section{Key Empirical Findings}
+\label{sec:findings}
+% ============================================================================
+
+The testing infrastructure has produced several findings that inform
+subsequent model development.
+
+\subsection{Variable Redundancy}
+
+As documented in Section~\ref{sec:hierarchy}, the seven reported state
+variables contain only four independent degrees of freedom.  The
+normalised variables $\hat{\rho}$ and $\hat{P}_2$ are deterministic
+rescalings of $\rho$ and $P_2$ respectively, and the target function $f$
+is a linear combination of the normalised forms.
+
+This finding has two consequences:
+\begin{enumerate}
+    \item Subsequent analysis should treat $\rho$, $C$, $P_2$, and $\eta$
+          as the primary state, not all seven variables
+    \item If the target function is later generalised to a nonlinear form,
+          the redundancy structure will change and must be re-evaluated
+\end{enumerate}
+
+\subsection{Large-$N$ Stability Gate}
+
+Eighteen structured runs at $N = 64$, $125$, and $216$ across six scene
+types (perfect lattice, perturbed lattice, line bundle, layered slab,
+shell, random cloud) all produced:
+
+\begin{itemize}
+    \item $\eta \in [0, 1]$ for all beads at all timesteps
+    \item No NaN or Inf in any observable
+    \item Bounded, finite output across all configurations
+\end{itemize}
+
+This clears the large-$N$ stability gate.  The environment-responsive
+layer does not exhibit numerical instability under any tested structured
+initialisation at scale $N \leq 216$.
+
+\subsection{Edge vs.\ Bulk Differentiation}
+
+On the $6 \times 6 \times 6 = 216$ cubic lattice:
+
+\begin{center}
+\begin{tabular}{lcc}
+    \textbf{Property} & \textbf{Bulk} & \textbf{Edge} \\
+    \midrule
+    $\rho$  & high  & low \\
+    $\eta$  & high  & low \\
+    $C$     & high  & low \\
+\end{tabular}
+\end{center}
+
+This differentiation is physically expected: interior beads have more
+neighbours, higher density, and therefore higher $\eta$ at steady state.
+Edge beads have fewer neighbours and lower observables.
+
+The fact that this emerges naturally from the environment descriptors---
+without explicit surface detection or boundary tagging---validates that the
+observables carry physically meaningful topological information.
+
+\subsection{Coordination Histogram Structure}
+
+On a $5 \times 5 \times 5 = 125$ cubic lattice, the coordination number
+$C$ exhibits a structured distribution corresponding to geometric position:
+
+\begin{center}
+\begin{tabular}{ll}
+    \textbf{Position} & \textbf{Coordination} \\
+    \midrule
+    Corner beads    & lowest $C$ \\
+    Edge beads      & intermediate $C$ \\
+    Face beads      & higher $C$ \\
+    Interior beads  & highest $C$ \\
+\end{tabular}
+\end{center}
+
+The histogram shows at least two distinct coordination values, confirming
+that the environment descriptors resolve topological position within a
+structured formation.
+
+\subsection{Monte Carlo Robustness}
+
+Across 4000 randomised trials:
+\begin{itemize}
+    \item No numerical divergence in any trial
+    \item Isotropic random environments produce low $\eta$ (no spurious
+          activation)
+    \item Aligned dense environments correctly produce high $\eta$
+    \item Higher alignment bias monotonically increases $P_2$
+    \item Dense shells produce higher $C$ than sparse shells
+\end{itemize}
+
+These are not individual test results---they are statistical properties
+of the model verified across an ensemble.
+
+% ============================================================================
+\section{Infrastructure Architecture}
+\label{sec:arch}
+% ============================================================================
+
+\subsection{Header Organisation}
+
+The testing infrastructure is split into three headers:
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+    \textbf{Header} & \textbf{Contents} \\
+    \midrule
+    \file{scene\_builders.hpp}
+        & \type{SceneBead}, \type{Xorshift32}, all scene builders,
+          \fn{translate\_scene}, \fn{rotate\_scene}, scene validation
+          helpers, \fn{build\_neighbours}, \fn{set\_initial\_eta} \\
+    \file{test\_runners.hpp}
+        & \type{EtaTrajectory}, \fn{run\_trajectory},
+          \fn{run\_all\_beads}, behavioural assertions, \type{StatSummary},
+          \fn{compute\_stats}, \type{RunRecord},
+          \fn{run\_robustness\_trial}, \type{ResponseRecord},
+          \fn{run\_single\_variable\_sweep},
+          \type{CoordinationHistogram} \\
+    \file{scene\_factory.hpp}
+        & Backward-compatible aggregator: includes both of the above \\
+\end{tabular}
+\end{center}
+
+The split separates concerns:
+\begin{itemize}
+    \item \emph{What} to test (scene construction) is independent of
+          \emph{how} to test (trajectory execution, assertion checking)
+    \item New scene types can be added without touching the runner
+    \item New assertion helpers can be added without touching the builders
+    \item Existing consumers include \file{scene\_factory.hpp} and
+          automatically receive both
+\end{itemize}
+
+\subsection{PRNG Policy}
+
+All randomised generation uses a single PRNG implementation
+(\type{Xorshift32}) with explicit seeding.  This ensures:
+
+\begin{itemize}
+    \item Exact reproducibility: same seed $\Rightarrow$ same scene
+    \item Platform independence: no reliance on \texttt{std::mt19937}
+          distribution implementation
+    \item Debuggability: any failing trial can be reproduced by seed
+    \item Determinism: required by the project's anti-black-box philosophy
+\end{itemize}
+
+\subsection{Dependency Structure}
+
+\begin{center}
+\begin{tabular}{lcl}
+    \textbf{Header} & $\longrightarrow$ & \textbf{Depends on} \\
+    \midrule
+    \file{scene\_builders.hpp}
+        & $\longrightarrow$
+        & \file{environment\_state.hpp}, \file{state.hpp} (Vec3) \\
+    \file{test\_runners.hpp}
+        & $\longrightarrow$
+        & \file{scene\_builders.hpp}, \file{environment\_coupling.hpp} \\
+    \file{scene\_factory.hpp}
+        & $\longrightarrow$
+        & Both of the above \\
+\end{tabular}
+\end{center}
+
+The dependency on \file{environment\_state.hpp} is necessary because
+\fn{build\_neighbours} returns \type{NeighbourInfo} structs, and the
+runners call \fn{update\_environment\_state}.  The dependency on
+\file{environment\_coupling.hpp} is needed only by
+\fn{run\_robustness\_trial} for kernel modulation reports.
+
+% ============================================================================
+\section{Validation Gates}
+\label{sec:gates}
+% ============================================================================
+
+The testing infrastructure defines explicit gates that must be passed
+before proceeding to higher-level studies.
+
+\subsection{Gate 1: Observable Correctness (Suite \#2, Group A)}
+
+All fast observables must be:
+\begin{itemize}
+    \item Translation-invariant
+    \item Rotation-invariant (when both positions and orientations are
+          rotated)
+    \item Monotonic in expected directions (density increases with
+          neighbour count)
+    \item Zero for isolated beads ($\rho = 0$, $C = 0$, $P_2$
+          undefined/zero)
+    \item Finite for all non-degenerate inputs
+\end{itemize}
+
+\textbf{Status: Passed.} 77/77 tests in Suite~\#2.
+
+\subsection{Gate 2: Dynamical Stability (Suite \#2, Groups B--D)}
+
+The slow variable $\eta$ must:
+\begin{itemize}
+    \item Remain in $[0, 1]$ at all times
+    \item Converge to $f$ at steady state
+    \item Exhibit monotone approach when starting below/above target
+    \item Be deterministic under identical initial conditions
+    \item Be insensitive to timestep within reasonable range
+\end{itemize}
+
+\textbf{Status: Passed.} All dynamical tests in Suite~\#2 Groups B--D.
+
+\subsection{Gate 3: Robustness Under Stochastic Input (Track 2)}
+
+The model must not produce:
+\begin{itemize}
+    \item NaN or Inf for any random scene configuration
+    \item $\eta$ outside $[0, 1]$
+    \item Spurious ordering in isotropic environments
+    \item Failure to order in aligned dense environments
+\end{itemize}
+
+\textbf{Status: Passed.} 39/39 tests across 4000 random trials.
+
+\subsection{Gate 4: Large-$N$ Stability (Suite \#3, Phase 2b)}
+
+At $N = 64, 125, 216$:
+\begin{itemize}
+    \item All beads bounded
+    \item All observables finite
+    \item Edge/bulk differentiation present
+    \item Coordination histogram structured
+\end{itemize}
+
+\textbf{Status: Passed.} 18/18 large-$N$ runs stable.
+
+\subsection{Gate 5: Variable Structure (Suite \#3, Phase 1)}
+
+The response atlas must confirm:
+\begin{itemize}
+    \item Identified redundancy pattern ($\hat{\rho}$, $\hat{P}_2$, $f$
+          are derived)
+    \item Four independent degrees of freedom
+    \item Monotonic or bounded response across all scenes
+    \item Finite output across the full sweep range
+\end{itemize}
+
+\textbf{Status: Passed.} 52/52 tests in Suite~\#3.
+
+\subsection{Suite \#4: Dynamic Formation Regimes}
+
+Suite~\#4 (113 tests) implements the dynamic, invariance, and regime-mapping
+studies described below.  It is organised into four phases:
+
+\paragraph{Phase 4A: Dynamic validation (21 tests).}
+Hysteresis under spacing ramps (compress then decompress), alignment ramps
+(fully aligned vs.\ random orientation), high-$\eta$ vs.\ low-$\eta$
+initialisation comparison, relaxation time extraction, and $\tau$-variation
+effects.  Key findings:
+\begin{itemize}
+    \item Compressed and decompressed scenes remain bounded and finite
+    \item Low-$\eta$ and high-$\eta$ initialisations converge to the same
+          final mean $\eta$ (difference $< 0.05$), confirming the system is
+          a first-order relaxation without multistability
+    \item Relaxation timing $t_{10\%} \le t_{5\%} \le t_{1\%}$ with all
+          thresholds reached within the run window
+    \item Faster $\tau$ produces faster relaxation, as expected
+\end{itemize}
+
+\paragraph{Phase 4B: Invariance validation (18 tests).}
+Translation invariance, rigid rotation covariance (Rodrigues'),
+bead-order permutation invariance (Fisher--Yates shuffle), seeded
+reproducibility, and rotation composition.  All passed:
+\begin{itemize}
+    \item $\eta$, $\rho$, $C$, $P_2$ are exactly invariant under
+          translation
+    \item All observables and $\eta$ are invariant under rigid rotation
+          (tolerance $10^{-10}$)
+    \item Sorted per-bead observables are identical under permutation
+    \item Fixed seeds produce bit-identical scenes and trajectories;
+          different seeds produce different scenes
+    \item Two composed $90^\circ$ rotations match a single $180^\circ$
+          rotation
+\end{itemize}
+
+\paragraph{Phase 4C: Formation-regime atlas (29 tests).}
+Sweeps across six scene families (lattice, perturbed lattice, line bundle,
+layered slab, shell, separated cloud), five $\alpha/\beta$ weight settings,
+five $\tau$ values, and five alignment bias levels.  Bulk/edge
+classification via coordination threshold.  Results:
+\begin{itemize}
+    \item All spacing sweeps bounded, finite, and responsive
+    \item $\alpha/\beta$ weight variation affects $\eta$
+    \item All $\tau$ sweep runs stable
+    \item Alignment bias measurably changes $\eta$ and $P_2$
+    \item Non-degenerate geometries show clear bulk/edge differentiation
+          with bulk $C \ge$ edge $C$
+    \item Uniform-distance geometries (shell) correctly show degenerate
+          coordination
+\end{itemize}
+
+\paragraph{Phase 4D: Medium-to-large-$N$ scaling (45 tests).}
+$N = 64$, $125$, $216$ across four scene types (perfect lattice, perturbed
+lattice, shell, separated cloud).  Plus cross-$N$ scaling consistency and
+formation history convergence:
+\begin{itemize}
+    \item All 12 large-$N$ runs bounded and finite
+    \item Bulk interior $\eta$ consistent across $N$ (max difference $<
+          0.15$)
+    \item Late-stage $\eta$ variance $\le$ early-stage variance,
+          confirming convergence
+    \item Coordination histograms valid at all sizes
+\end{itemize}
+
+% ============================================================================
+\section{Completed Extensions (Stage 4)}
+\label{sec:extensions}
+% ============================================================================
+
+The following were planned extensions that have now been implemented and
+verified in Suite~\#4.
+
+\subsection{Formation-Under-Conditions Experiments}
+
+Systematic variation of:
+\begin{itemize}
+    \item Density and spacing (compression/expansion)
+    \item Alignment bias (ordered $\leftrightarrow$ disordered)
+    \item Shell count and local coordination
+    \item Target function weights ($\alpha$, $\beta$)
+    \item Relaxation timescale ($\tau$)
+    \item Initial $\eta$ distributions
+\end{itemize}
+
+\textbf{Status: Completed.} All sweeps bounded, finite, and responsive.
+
+\subsection{Hysteresis and Memory Tests}
+
+Tested path dependence:
+\begin{itemize}
+    \item Compress then decompress spacing
+    \item Aligned vs.\ random orientations
+    \item Initialise $\eta$ low vs.\ high under same scene
+\end{itemize}
+
+\textbf{Status: Completed.} The system converges to the same final state
+regardless of initial $\eta$ (no multistability detected), confirming
+pure first-order relaxation dynamics.
+
+\subsection{Time-to-Equilibrium Quantification}
+
+Measured:
+\begin{itemize}
+    \item Time to within 1\%, 5\%, 10\% of final value
+    \item Correct ordering: $t_{10\%} \le t_{5\%} \le t_{1\%}$
+    \item $\tau$-dependent relaxation speed
+    \item Convergence of late-stage variance (monotone relaxation)
+\end{itemize}
+
+\textbf{Status: Completed.} No oscillation, overshoot, or numerical fragility
+detected across all tested regimes.
+
+\subsection{Invariance Validation}
+
+Newly established invariance proofs:
+\begin{itemize}
+    \item Translation invariance (exact)
+    \item Rigid rotation covariance (tolerance $10^{-10}$)
+    \item Bead-order permutation invariance (sorted observables)
+    \item Seeded reproducibility (bit-identical)
+\end{itemize}
+
+\textbf{Status: Completed.} All invariances confirmed.
+
+% ============================================================================
+\section{Emergent Effective Medium Mapping (Stage 5)}
+\label{sec:eem}
+% ============================================================================
+
+The ensemble proxy layer bridges per-bead environment state to
+macroscopic response characterisation.  It does not claim to predict
+continuum-scale constitutive properties; it provides\emph{proxy fields}
+computed from the distributions and spatial organisation of bead-state
+variables.
+
+\subsection{Architectural Position}
+
+\begin{center}
+\begin{tabular}{l}
+    Environment-state evaluation (per-bead) \\
+    $\downarrow$ \\
+    Ensemble statistics / spatial field summaries \\
+    $\downarrow$ \\
+    Macroscopic response proxies \\
+    $\downarrow$ \\
+    Later constitutive or transport models \\
+\end{tabular}
+\end{center}
+
+The analysis module lives at \file{coarse\_grain/analysis/ensemble\_proxy.hpp}
+and produces an \texttt{EnsembleProxySummary} from a vector of
+\texttt{EnvironmentState} and bead positions.
+
+\subsection{Summary Sections}
+
+The \texttt{EnsembleProxySummary} struct contains seven sections:
+
+\begin{enumerate}[label=(\Alph*)]
+    \item \textbf{First moments:} mean $\rho$, $\hat{\rho}$, $C$,
+          $P_2$, $\hat{P}_2$, $\eta$, $f$, and mean $|\eta - f|$
+    \item \textbf{Second moments:} var($\rho$), var($C$), var($P_2$),
+          var($\eta$), var($f$)
+    \item \textbf{Edge/bulk contrasts:} bulk and edge bead counts,
+          gap in $\rho$, $C$, $P_2$, $\eta$
+    \item \textbf{Occupancy fractions:} fraction of beads above
+          coordination, $\eta$, and alignment thresholds
+    \item \textbf{Spatial autocorrelation:} neighbour-pair
+          autocorrelation of $\eta$, $\rho$, $P_2$
+    \item \textbf{Response proxies:} five scalar proxies bounded
+          in $[0, 1]$
+    \item \textbf{Diagnostics:} all-finite and all-bounded flags
+\end{enumerate}
+
+\subsection{Response Proxy Definitions}
+
+Five macroscopic response proxies are defined:
+
+\begin{description}
+    \item[Cohesion] $(\bar{\hat{\rho}} + \bar{\eta}
+        + (1 - \overline{|\eta - f|})) / 3$.
+        Higher for dense, stabilised, low-mismatch systems.
+    \item[Uniformity] $1 - (d_\eta + d_\rho) / 2$ where
+        $d = \mathrm{clamp}(2\sqrt{\mathrm{var}}, 0, 1)$.
+        Higher for homogeneous systems.
+    \item[Texture] $\overline{\hat{P}_2}$.
+        Higher for oriented, anisotropic organisation.
+    \item[Stabilization] $\bar{\eta}\,(1 - \overline{|\eta - f|})$.
+        Higher for converged, well-adapted states.
+    \item[Surface sensitivity] Mean fractional $|$bulk $-$ edge$|$
+        gaps in $\rho$, $C$, $\eta$.
+        Higher when bulk and edge environments are sharply distinct.
+\end{description}
+
+\subsection{Suite \#5: Validation (131 tests)}
+
+Suite~\#5 validates the ensemble proxy layer across seven phases:
+
+\begin{center}
+\begin{tabular}{llr}
+    \textbf{Phase} & \textbf{Focus} & \textbf{Tests} \\
+    \midrule
+    5A & Computation correctness (means, variances, bounds) & 30 \\
+    5B & Physical sense (ordering, response, coherence) & 14 \\
+    5C & Large-$N$ stability ($N = 64, 125, 216$) & 32 \\
+    5D & Invariance (translation, rotation, permutation, seed) & 16 \\
+    5E & Sensitivity (sweeps, families, parameter response) & 10 \\
+    5F & Directed proxy validation (one perturbation per proxy) & 10 \\
+    5G & Delta, validity, reference (convergence, thresholds, normalisation) & 19 \\
+    \midrule
+    \textbf{Total} & & \textbf{131} \\
+\end{tabular}
+\end{center}
+
+Key verified properties:
+\begin{itemize}
+    \item All five proxies remain in $[0, 1]$ across all tested scenes
+          and parameters
+    \item Dense lattices produce higher cohesion than sparse ones
+    \item Aligned stacks produce higher texture than random clouds
+    \item Converged systems have higher stabilisation than fresh ones
+    \item All proxies are translation, rotation, and permutation invariant
+    \item Results are seeded-reproducible (bit-identical)
+    \item Large-$N$ proxies remain finite, bounded, and consistent
+          across $N = 64 \to 216$
+\end{itemize}
+\label{sec:relation}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{ll}
+    \textbf{Companion document} & \textbf{This document} \\
+    \midrule
+    ERB defines $X_B = \{\rho, C, P_2, \eta\}$
+        & Verifies $X_B$ correctness, stability, invariance \\
+    ERB specifies relaxation dynamics
+        & Tests convergence, boundedness, monotonicity \\
+    ERB predicts emergent behaviour
+        & Observes edge/bulk differentiation, coordination structure \\
+    ERB introduces six new parameters
+        & Sweeps parameters, confirms no blow-up \\
+    ERB claims hysteresis and metastability
+        & Suite~\#4 confirms relaxation, no multistability \\
+    ERB + TIF establish variable hierarchy
+        & Suite~\#5 constructs ensemble proxies from those variables \\
+    CGL defines precursor channels
+        & Suite~\#6 validates directional correctness and confidence \\
+    CGL defines property pipeline
+        & Suite~\#7 validates regression, ranking, and split discipline \\
+    CGL defines calibration layer
+        & Suite~\#8 validates confidence decomposition and legitimacy \\
+\end{tabular}
+\end{center}
+
+The relationship is explicit: ERB and CGL make theoretical claims, TIF
+provides the machinery to test them, and the test results either
+confirm the claims or reveal where the theory requires amendment.
+
+% ============================================================================
+\section{Suite \#6: Macro Property Precursor Channels (Stage 6)}
+\label{sec:suite6}
+% ============================================================================
+
+Suite~\#6 validates the macro property precursor layer
+(\file{coarse\_grain/analysis/macro\_precursor.hpp}), which converts
+ensemble-level proxies into eight property-like precursor channels.
+
+\subsection{Precursor Channel Architecture}
+
+The eight channels---rigidity-like, ductility-like, brittleness-like,
+cohesion integrity-like, thermal transport-like, electrical transport-like,
+surface reactivity-like, and fracture susceptibility-like---are intermediate
+latent descriptors grouped by material-behaviour hypothesis.  All carry the
+\texttt{-like} suffix to indicate they are evidence variables, not physical
+properties.
+
+Intermediate helpers (interface penalty, normalised correlation length,
+adaptation capacity, texture lock, anisotropy index) are computed and
+exposed for traceability before any channel formula is evaluated.
+
+\subsection{Test Organisation}
+
+\begin{center}
+\begin{tabular}{llr}
+    \textbf{Phase} & \textbf{Focus} & \textbf{Tests} \\
+    \midrule
+    6A & Channel computation, bounds, empty input & 22 \\
+    6B & Directed perturbation (one test per channel) & 16 \\
+    6C & Inter-channel consistency and relationships & 12 \\
+    6D & Confidence model, degradation, provenance & 15 \\
+    6E & Large-$N$ stability and cross-$N$ consistency & 20 \\
+    \midrule
+    \textbf{Total} & & \textbf{85} \\
+\end{tabular}
+\end{center}
+
+All 85 tests pass.
+
+% ============================================================================
+\section{Suite \#7: Property Learning Pipeline (Stage 7)}
+\label{sec:suite7}
+% ============================================================================
+
+Suite~\#7 validates the property learning pipeline
+(\file{coarse\_grain/analysis/property\_pipeline.hpp}), which maps proxy
+distributions and precursor channels to property-scale outputs with
+explicit uncertainty quantification.
+
+\subsection{Three-Layer Separation}
+
+The pipeline enforces strict separation:
+\begin{description}
+    \item[Descriptor layer] Proxy summaries and precursor channels from
+        simulation data.  No learned parameters.
+    \item[Calibration layer] Model fitting from exported datasets.
+        No simulation logic.
+    \item[Inference layer] Prediction from fitted models.  No fitting
+        and no simulation.
+\end{description}
+
+Formula fusion is prohibited.
+
+\subsection{Test Organisation}
+
+\begin{center}
+\begin{tabular}{llr}
+    \textbf{Phase} & \textbf{Focus} & \textbf{Tests} \\
+    \midrule
+    7A & Dataset row validity, targets, provenance & 15 \\
+    7B & Vectorization determinism, ablation, missing policy & 15 \\
+    7C & Linear fit, coefficients, prediction, abstention, attribution & 15 \\
+    7D & RMSE/MAE, Spearman, Kendall, grouped splits & 15 \\
+    7E & Ordinal labels, monotone sweeps, end-to-end pipeline & 49 \\
+    \midrule
+    \textbf{Total} & & \textbf{109} \\
+\end{tabular}
+\end{center}
+
+All 109 tests pass.
+
+% ============================================================================
+\section{Suite \#8: Property Calibration and Target Legitimacy (Stage 8)}
+\label{sec:suite8}
+% ============================================================================
+
+Suite~\#8 validates the property calibration and target legitimacy layer
+(\file{coarse\_grain/analysis/property\_calibration.hpp}), which provides
+a disciplined framework for calibrated property prediction with explicit
+confidence decomposition and promotion/demotion policy.
+
+\subsection{Calibration Discipline}
+
+The layer introduces:
+\begin{itemize}
+    \item Five first-wave property families (rigidity, ductility,
+          brittleness, thermal transport, electrical transport)
+    \item Target-definition contracts with sign expectations and domain
+          constraints
+    \item Calibration profiles for interpretable output transformation
+    \item Three supervision regimes (contract-supervised,
+          synthetic-calibrated, externally calibrated)
+    \item Five-component confidence decomposition (input, precursor,
+          coverage, attribution, calibration)
+    \item Out-of-distribution detection via feature envelopes
+    \item Property-specific synthetic curricula
+    \item Formal promotion/demotion policy for the \texttt{-like} suffix
+\end{itemize}
+
+\subsection{Test Organisation}
+
+\begin{center}
+\begin{tabular}{llr}
+    \textbf{Phase} & \textbf{Focus} & \textbf{Tests} \\
+    \midrule
+    8A & Property family selection, naming, indexing & 16 \\
+    8B & Target contracts, sign expectations, domain & 17 \\
+    8C & Calibration profiles, transform, clamping & 12 \\
+    8D & Supervision regime taxonomy & 4 \\
+    8E & Confidence decomposition, status, attribution & 23 \\
+    8F & OOD detection, envelope, extrapolation & 14 \\
+    8G & Synthetic curricula, monotonicity, regime tagging & 14 \\
+    8H & Legitimacy states, promotion, demotion, splits & 93 \\
+    \midrule
+    \textbf{Total} & & \textbf{193} \\
+\end{tabular}
+\end{center}
+
+All 193 tests pass.
+
+% ============================================================================
+\section{Conclusion}
+% ============================================================================
+
+The testing infrastructure for environment-responsive coarse-grained bead
+dynamics is not a peripheral convenience---it is a co-equal scientific
+instrument.  It has:
+
+\begin{enumerate}
+    \item Established 1013 tests across eleven suites, all passing
+    \item Identified the variable hierarchy: four independent degrees of
+          freedom ($\rho$, $C$, $P_2$, $\eta$), three derived quantities
+          ($\hat{\rho}$, $\hat{P}_2$, $f$)
+    \item Confirmed the causal chain: geometry $\to$ observables $\to$
+          target $\to$ $\eta$
+    \item Cleared the large-$N$ stability gate at $N = 216$
+    \item Demonstrated edge/bulk differentiation and coordination
+          structure
+    \item Verified robustness across 4000+ randomised trials
+    \item Confirmed translation, rotation, and permutation invariance
+    \item Completed formation-under-conditions, hysteresis, relaxation
+          timing, and regime-atlas experiments (Suite~\#4)
+    \item Established that the system is a pure first-order relaxation
+          with no multistability or path-dependent memory
+    \item Constructed and validated five macroscopic response proxies
+          (cohesion, uniformity, texture, stabilization, surface
+          sensitivity) from bead-state ensemble statistics (Suite~\#5,
+          131 tests including directed validation and convergence diagnostics)
+    \item Validated eight macro property precursor channels with directed
+          perturbation tests and confidence modelling (Suite~\#6, 85 tests)
+    \item Built and validated a property learning pipeline with dataset
+          construction, 31-feature vectorization, ridge regression,
+          grouped splits, and synthetic supervision (Suite~\#7, 109 tests)
+    \item Established a property calibration and target legitimacy
+          framework with five-component confidence decomposition,
+          out-of-distribution detection, and formal promotion/demotion
+          policy governing the \texttt{-like} suffix (Suite~\#8, 193 tests)
+    \item Provided a complete, validated pipeline from per-bead environment
+          state through ensemble proxies, precursor channels, property
+          learning, and calibrated prediction
+\end{enumerate}
+
+The model is not merely defined.  It is tested, measured, and
+characterised.  The testing infrastructure ensures that subsequent
+development---including constitutive property determination, external
+calibration, and discovery workflows---is grounded in empirical evidence
+rather than theoretical assumption.
+
+% ====================================================================
+\section{Automated Visualization Infrastructure}
+\label{sec:automated-viz}
+% ====================================================================
+
+The visualization checkpoint system (\file{test\_viz.hpp}) was extended
+from a manual, blocking viewer into an automation-capable test
+visualization infrastructure.  The original system---in which
+\fn{CGVizViewer::run()} opens a GLFW/ImGui window and blocks until the
+user manually closes it---is now augmented with three capabilities:
+
+\begin{enumerate}
+    \item \textbf{Timed display.}
+          A configurable \fn{timeout\_seconds} field in \type{VizConfig}
+          causes the viewer window to auto-close after the specified
+          duration.  The render loop checks elapsed time each frame via
+          \fn{glfwGetTime()} and issues \fn{glfwSetWindowShouldClose()}
+          when the timeout expires.  Manual interaction (orbit, zoom,
+          overlay cycling) remains fully active during the timed
+          interval.
+
+    \item \textbf{Command queue.}
+          A sequence of \type{VizCommand} structs may be attached to the
+          \type{VizConfig}.  During each iteration of the render loop,
+          the viewer consumes commands from the front of the queue:
+          \begin{itemize}
+              \item Non-wait commands (\fn{SetOverlay}, \fn{SelectBead},
+                    \fn{OrbitCamera}, \fn{SetAxes}, etc.) execute
+                    immediately and are batched—multiple consecutive
+                    non-wait commands all apply within a single frame.
+              \item \fn{Wait} commands pause queue processing for the
+                    specified number of seconds.  The viewer continues
+                    rendering and accepting manual input during the
+                    wait.
+              \item \fn{Close} terminates the window programmatically.
+          \end{itemize}
+          After all commands are consumed, the viewer remains open until
+          timeout or manual close, enabling a ``script then inspect''
+          workflow.
+
+    \item \textbf{Fluent builder (\type{VizSequence}).}
+          A fluent builder class in \file{test\_viz.hpp} provides a
+          human-readable API for constructing command sequences:
+          \begin{lstlisting}
+test_viz::VizSequence seq;
+seq.overlay(test_viz::overlay::density)
+   .wait(2.0f)
+   .orbit(0.5f, 0.0f)
+   .overlay(test_viz::overlay::memory)
+   .select(3)
+   .detail(true)
+   .wait(1.5f)
+   .close();
+VIZ_AUTOMATED("Sweep test", state, seq);
+          \end{lstlisting}
+          The builder compiles to a no-op stub when
+          \texttt{BUILD\_VIS=OFF}, preserving API surface for headless
+          builds.
+\end{enumerate}
+
+\subsection{Supported Commands}
+
+Table~\ref{tab:viz-commands} lists the full set of
+\type{VizCommand} operations.
+
+\begin{table}[h]
+\centering
+\caption{Automation command types for the viewer command queue.}
+\label{tab:viz-commands}
+\begin{tabular}{@{}lp{7cm}@{}}
+\toprule
+\textbf{Command} & \textbf{Effect} \\
+\midrule
+\fn{SetOverlay}      & Switch scalar overlay (none, $\rho$, $C$, $P_2$, $\eta$, $f^*$) \\
+\fn{SetAxes}         & Toggle orientation axis rendering \\
+\fn{SetNeighbours}   & Toggle neighbour edge rendering \\
+\fn{SelectBead}      & Select bead by index ($-1$ to deselect) \\
+\fn{SetDetailMode}   & Enter/exit multi-layer detail inspection \\
+\fn{SetViewMode}     & Change detail view mode (Shell, Scaffold, Cutaway, \ldots) \\
+\fn{OrbitCamera}     & Rotate camera by $(\Delta\theta, \Delta\phi)$ \\
+\fn{ZoomCamera}      & Zoom camera by a multiplicative factor \\
+\fn{PanCamera}       & Pan camera target by $(\Delta x, \Delta y)$ \\
+\fn{ResetCamera}     & Re-center and auto-distance on bead centroid \\
+\fn{Wait}            & Pause command processing for $t$ seconds \\
+\fn{Close}           & Close the viewer window \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Macro Summary}
+
+The following macros are provided for test code:
+
+\begin{table}[h]
+\centering
+\caption{Test visualization macros (all are no-ops when
+  \texttt{VSEPR\_TEST\_VIZ} is not set).}
+\label{tab:viz-macros}
+\begin{tabular}{@{}lp{8cm}@{}}
+\toprule
+\textbf{Macro} & \textbf{Purpose} \\
+\midrule
+\fn{VIZ\_CHECKPOINT}          & Manual display of a \type{CGSystemState} \\
+\fn{VIZ\_CHECKPOINT\_OVERLAY} & Manual display with scalar overlay \\
+\fn{VIZ\_SCENE}               & Manual display of a \type{SceneBead} vector \\
+\fn{VIZ\_SCENE\_OVERLAY}      & Manual display of scene with overlay \\
+\fn{VIZ\_TIMED}               & Timed auto-close display \\
+\fn{VIZ\_TIMED\_OVERLAY}      & Timed display with overlay \\
+\fn{VIZ\_AUTOMATED}           & Scripted command sequence \\
+\fn{VIZ\_AUTOMATED\_TIMEOUT}  & Scripted sequence with safety timeout \\
+\fn{VIZ\_SCENE\_TIMED}        & Scene timed display \\
+\fn{VIZ\_SCENE\_AUTOMATED}    & Scene with scripted sequence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Architecture Position}
+
+The automation layer sits between test code and the GLFW render loop:
+
+\begin{center}
+\begin{tabular}{c}
+Test code \\
+$\downarrow$ \\
+\fn{VIZ\_AUTOMATED} / \fn{VIZ\_TIMED} macros \\
+$\downarrow$ \\
+\fn{test\_viz::show\_automated()} / \fn{show\_timed()} \\
+$\downarrow$ \\
+\fn{VizConfig} with \fn{commands} + \fn{timeout\_seconds} \\
+$\downarrow$ \\
+\fn{CGVizViewer::run()} (automation-aware main loop) \\
+$\downarrow$ \\
+GLFW/ImGui window with live rendering
+\end{tabular}
+\end{center}
+
+Manual input is never disabled.  Users can interact freely during
+automated sequences, and the automation status (remaining timeout,
+current command index, active wait progress) is displayed in the
+ImGui controls panel.
+
+\end{document}

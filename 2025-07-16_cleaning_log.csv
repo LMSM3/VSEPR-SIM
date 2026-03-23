@@ -1,0 +1,38 @@
+File,Destination,Action,Category,Date
+build_ps1_wsl.err,logs/build_ps1_wsl.err,moved,root-level build log → logs/,2025-07-16
+build_ps1_wsl.log,logs/build_ps1_wsl.log,moved,root-level build log → logs/,2025-07-16
+build_wsl.err.log,logs/build_wsl.err.log,moved,root-level build log → logs/,2025-07-16
+build_wsl.log,logs/build_wsl.log,moved,root-level build log → logs/,2025-07-16
+cmake_config.log,logs/cmake_config.log,moved,root-level build log → logs/,2025-07-16
+wsl_err.log,logs/wsl_err.log,moved,root-level build log → logs/,2025-07-16
+wsl_out.log,logs/wsl_out.log,moved,root-level build log → logs/,2025-07-16
+build_automated.bat,scripts/build/build_automated.bat,moved,root-level build script → scripts/build/,2025-07-16
+build_automated.sh,scripts/build/build_automated.sh,moved,root-level build script → scripts/build/,2025-07-16
+build.bat,scripts/build/build.bat,moved,root-level build script → scripts/build/,2025-07-16
+build.sh,scripts/build/build.sh,moved,root-level build script → scripts/build/,2025-07-16
+compile_pdf.sh,scripts/build/compile_pdf.sh,moved,root-level build script → scripts/build/,2025-07-16
+wsl_build_run.sh,scripts/build/wsl_build_run.sh,moved,root-level build script → scripts/build/,2025-07-16
+check_parse.ps1,scripts/check_parse.ps1,moved,root-level utility script → scripts/,2025-07-16
+cg_mapping_report.md,docs/cg_mapping_report.md,moved,root-level generated report → docs/,2025-07-16
+imgui.ini,,deleted,auto-generated ImGui config (already in .gitignore),2025-07-16
+docs/section_anisotropic_beads.aux,,deleted,LaTeX build artifact,2025-07-16
+docs/section_anisotropic_beads.log,,deleted,LaTeX build artifact,2025-07-16
+docs/section_environment_responsive_beads.aux,,deleted,LaTeX build artifact,2025-07-16
+docs/section_environment_responsive_beads.log,,deleted,LaTeX build artifact,2025-07-16
+docs/section_testing_infrastructure.aux,,deleted,LaTeX build artifact,2025-07-16
+docs/section_testing_infrastructure.log,,deleted,LaTeX build artifact,2025-07-16
+docs/section_testing_infrastructure.out,,deleted,LaTeX build artifact,2025-07-16
+docs/section_testing_infrastructure.toc,,deleted,LaTeX build artifact,2025-07-16
+docs/missfont.log,,deleted,LaTeX build artifact,2025-07-16
+docs/alpah_method.pdf,docs/alpha_method.pdf,renamed,fixed typo in filename (alpah → alpha),2025-07-16
+data/polarizability_ref.csv.bak,,deleted,backup file,2025-07-16
+src/gui/unified_launcher.cpp.backup,,deleted,backup file,2025-07-16
+src/vis/ARCHITECTURE_DIAGRAM.md,docs/vis/ARCHITECTURE_DIAGRAM.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/BALLSTICK_GUIDE.md,docs/vis/BALLSTICK_GUIDE.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/IMPLEMENTATION_COMPLETE.md,docs/vis/IMPLEMENTATION_COMPLETE.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/INTERACTIVE_FEATURES.md,docs/vis/INTERACTIVE_FEATURES.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/INTERACTIVE_SUMMARY.md,docs/vis/INTERACTIVE_SUMMARY.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/INTERACTIVE_UI_GUIDE.md,docs/vis/INTERACTIVE_UI_GUIDE.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/QUICK_REFERENCE.md,docs/vis/QUICK_REFERENCE.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+src/vis/RENDERER_FEATURES.md,docs/vis/RENDERER_FEATURES.md,moved,documentation out of source tree → docs/vis/,2025-07-16
+.gitignore,.gitignore,updated,added *.bak and *.backup patterns,2025-07-16
