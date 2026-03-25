@@ -1,5 +1,5 @@
                   cmake_minimum_required(VERSION 3.15)
-project(vsepr-sim VERSION 2.0.0 LANGUAGES CXX)
+project(vsepr-sim VERSION 2.8.0 LANGUAGES CXX)
 
 # Global include paths for project headers
 include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
@@ -616,6 +616,21 @@ if(BUILD_APPS)
         install(TARGETS cg-viewer DESTINATION bin)
     endif()
 
+    # Animated Ensemble Proxy Demo — scrapes test scene infrastructure
+    if(BUILD_VIS)
+        add_executable(cg-anim-demo apps/cg_anim_demo.cpp)
+        target_link_libraries(cg-anim-demo coarse_grain atomistic vsepr_vis vsepr_core OpenGL::GL glfw GLEW::GLEW)
+        target_include_directories(cg-anim-demo PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}
+            ${IMGUI_DIR}
+            ${IMGUI_DIR}/backends
+        )
+        target_compile_definitions(cg-anim-demo PRIVATE BUILD_VISUALIZATION)
+        install(TARGETS cg-anim-demo DESTINATION bin)
+    endif()
+
     # Professional GUI (requires BUILD_VIS=ON)
     if(BUILD_VIS)
         # Note: vsepr-gui/main.cpp is a prototype - needs implementation before building
@@ -745,6 +760,8 @@ if(BUILD_DESKTOP)
             apps/desktop/ObjectTree.cpp
             apps/desktop/PropertiesPanel.cpp
             apps/desktop/ConsolePanel.cpp
+            apps/desktop/BeadInspectorPanel.cpp
+            apps/desktop/SimulationOutputPanel.cpp
             apps/desktop/bridge/EngineAdapter.cpp
         )
 
@@ -754,6 +771,7 @@ if(BUILD_DESKTOP)
             vsepr_sim
             vsepr_io
             vsepr_core
+            coarse_grain
         )
 
         target_include_directories(vsepr-desktop PRIVATE
