@@ -1,0 +1,10 @@
+#pragma once
+/**
+ * version.hpp  (generated — do not edit)
+ * Generated from cmake/version.hpp.in by CMake configure_file.
+ */
+
+#define VSEPR_VERSION_MAJOR @vsepr-sim_VERSION_MAJOR@
+#define VSEPR_VERSION_MINOR @vsepr-sim_VERSION_MINOR@
+#define VSEPR_VERSION_PATCH @vsepr-sim_VERSION_PATCH@
+#define VSEPR_VERSION_STRING "@vsepr-sim_VERSION@"

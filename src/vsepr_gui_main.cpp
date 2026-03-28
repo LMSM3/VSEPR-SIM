@@ -15,7 +15,7 @@ using namespace vsepr::launcher;
 void print_banner() {
     std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
     std::cout << "║                                                                ║\n";
-    std::cout << "║  VSEPR-Sim v2.3.1 - Unified GUI Launcher                      ║\n";
+    std::cout << "║  VSEPR-Sim v3.0.0 - Unified GUI Launcher                      ║\n";
     std::cout << "║  Molecular Simulation & Discovery System                      ║\n";
     std::cout << "║                                                                ║\n";
     std::cout << "╚════════════════════════════════════════════════════════════════╝\n\n";
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     // Create window
     GLFWwindow* window = glfwCreateWindow(
         1920, 1080,
-        "VSEPR-Sim v2.3.1 - Unified Launcher",
+        "VSEPR-Sim v3.0.0 - Unified Launcher",
         nullptr, nullptr
     );
     

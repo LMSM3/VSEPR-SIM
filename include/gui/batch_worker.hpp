@@ -15,7 +15,7 @@
 //   - Multi-format export (XYZ, JSON, CSV)
 //   - Per-molecule timing and success tracking
 //
-// Version: 2.3.1
+// Version: 3.0.0
 // Author: VSEPR-Sim Development Team
 // ============================================================================
 

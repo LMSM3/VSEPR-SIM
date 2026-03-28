@@ -1,6 +1,6 @@
 /**
  * Batch Processing Worker Implementation
- * vsepr-sim v2.3.1
+ * vsepr-sim v3.0.0
  * 
  * Features:
  * - Background thread processing
@@ -50,7 +50,7 @@ namespace fs = std::filesystem;
 // - JSON: Structured data for web apps
 // - CSV: Tabular format for spreadsheets
 //
-// Version: 2.3.1
+// Version: 3.0.0
 // ============================================================================
 
 namespace vsepr {

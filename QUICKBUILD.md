@@ -1,6 +1,6 @@
 # VSEPR-Sim Quick Build Guide
 
-**Version:** 2.4.0 - Day 11 Release  
+**Version:** 3.0.0  
 **Last Updated:** January 30, 2026  
 
 ---

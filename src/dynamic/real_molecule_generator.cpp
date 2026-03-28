@@ -14,7 +14,7 @@
 //
 // Total: 50+ molecules with experimental formation energies
 //
-// Version: 2.3.1
+// Version: 3.0.0
 // ============================================================================
 
 #include "dynamic/real_molecule_generator.hpp"

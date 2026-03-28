@@ -17,7 +17,7 @@ namespace vsepr {
 namespace cli {
 
 int HelpCommand::Execute(const std::vector<std::string>& /*args*/) {
-    Display::Banner("VSEPR Molecular Simulation System", "Version 2.0.0");
+    Display::Banner("VSEPR Molecular Simulation System", "Version 3.0.0");
     Display::BlankLine();
     
     Display::Subheader("About");

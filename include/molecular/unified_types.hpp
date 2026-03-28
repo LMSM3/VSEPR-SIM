@@ -2,7 +2,7 @@
  * VSEPR-Sim Unified Molecular Data Types
  * Consolidates all molecular data structures across the codebase
  * Eliminates duplicates and provides single source of truth
- * Version: 2.0.0
+ * Version: 3.0.0
  */
 
 #pragma once

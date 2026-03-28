@@ -95,7 +95,7 @@ public:
     std::string run_id;              // Timestamp + hash
     std::string input_formula;       // Original input
     std::map<std::string, std::string> flags;  // Command-line flags
-    std::string model_version = "v2.0.0";  // Git hash or semver
+    std::string model_version = "v3.0.0";  // Git hash or semver
     
     // ========================================================================
     // Atomic Structure

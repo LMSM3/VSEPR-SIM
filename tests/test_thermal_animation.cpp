@@ -1,6 +1,6 @@
 /**
  * Phase 2: Thermal Animation Test Suite
- * vsepr-sim v2.3.1
+ * vsepr-sim v3.0.0
  * 
  * Tests:
  * 1. Thermal evolution of water molecule
@@ -47,7 +47,7 @@ void print_header() {
     std::cout << "\n";
     std::cout << "╔══════════════════════════════════════════════════════════╗\n";
     std::cout << "║     VSEPR-Sim Phase 2: Thermal Animation Tests          ║\n";
-    std::cout << "║     Version 2.3.1                                        ║\n";
+    std::cout << "║     Version 3.0.0                                        ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
 }

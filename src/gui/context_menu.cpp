@@ -1,6 +1,6 @@
 /**
  * VSEPR-Sim GUI Context Menu Implementation
- * Version: 2.3.1
+ * Version: 3.0.0
  */
 
 #include "gui/context_menu.hpp"

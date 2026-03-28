@@ -1,7 +1,7 @@
 /**
  * VSEPR-Sim Molecular Pokedex - GUI Integration
  * Interactive molecule browser with ImGui visualization
- * Version: 2.3.1
+ * Version: 3.0.0
  */
 
 #pragma once

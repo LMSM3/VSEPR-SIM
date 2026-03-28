@@ -17,7 +17,7 @@
 // Usage:
 //   ./test_batch_processing
 //
-// Version: 2.3.1
+// Version: 3.0.0
 // ============================================================================
 
 // Test Batch Processing System

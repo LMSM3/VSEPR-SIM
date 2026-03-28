@@ -1,7 +1,7 @@
 /**
  * VSEPR-Sim GUI - ImGui Integration Layer
  * Elevates abstract GUI system to real visual interface
- * Version: 2.3.1
+ * Version: 3.0.0
  */
 
 #pragma once

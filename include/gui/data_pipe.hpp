@@ -1,7 +1,7 @@
 /**
  * VSEPR-Sim GUI Data Piping System
  * Reactive data flow for UI components
- * Version: 2.3.1
+ * Version: 3.0.0
  */
 
 #pragma once

@@ -1,6 +1,6 @@
 # Molecular File Formats: XYZ, XYZA, XYZC
 
-**Version:** 2.5.0-dev  
+**Version:** 3.0.0  
 **Last Updated:** January 21, 2026  
 **Purpose:** Day #11 Nano-Scale Simulation File I/O
 

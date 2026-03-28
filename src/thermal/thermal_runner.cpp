@@ -1,6 +1,6 @@
 /**
  * Thermal Animation Runner Implementation
- * vsepr-sim v2.3.1
+ * vsepr-sim v3.0.0
  * 
  * Implements real-time thermal evolution simulation with background threading,
  * energy tracking, and frame sampling for animation.
@@ -12,6 +12,7 @@
 
 #include "thermal/thermal_runner.hpp"
 #include "io/xyz_format.hpp"
+#include "io/molecular_io.hpp"
 #include "core/element_data_integrated.hpp"
 #include "pot/periodic_db.hpp"
 #include <fstream>
@@ -344,43 +345,37 @@ void export_thermal_animation_xyz(
     const std::string& output_path,
     const std::string& comment_template)
 {
-    // Use the proper XYZ format library - never encode xyz by hand!
-    std::ofstream file(output_path);
-    if (!file.is_open()) {
+    vsepr::io::TrajectoryWriter writer(output_path);
+    if (!writer.is_open()) {
         throw std::runtime_error("Cannot open file for writing: " + output_path);
     }
-    
-    // Write multi-frame XYZ format
-    // Each frame is a complete XYZ block
-    
+
     for (size_t frame_idx = 0; frame_idx < frames.size(); ++frame_idx) {
         const Molecule& mol = frames[frame_idx];
-        
-        // Convert to XYZMolecule
+
         vsepr::io::XYZMolecule xyz_mol;
-        
-        // Generate comment with frame number
+
         std::string comment = comment_template;
         size_t pos = comment.find("{frame_num}");
         if (pos != std::string::npos) {
             comment.replace(pos, 11, std::to_string(frame_idx));
         }
         xyz_mol.comment = comment;
-        
-        // Copy atoms
+
         for (size_t i = 0; i < mol.num_atoms(); ++i) {
             double x, y, z;
             mol.get_position(i, x, y, z);
-            
             const char* symbol = element_symbol(mol.atoms[i].Z);
             xyz_mol.atoms.emplace_back(symbol, x, y, z);
         }
-        
-        // Write this frame using XYZWriter
-        vsepr::io::XYZWriter writer;
-        writer.set_precision(6);
-        writer.write_stream(file, xyz_mol);
+
+        const auto status = writer.append_frame(xyz_mol);
+        if (status.is_error()) {
+            throw std::runtime_error("Frame write failed: " + status.error().to_string());
+        }
     }
+
+    writer.finalize();
 }
 
 void export_energy_csv(

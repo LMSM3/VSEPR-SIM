@@ -1,6 +1,6 @@
 /**
  * Scalable Molecular Visualization Implementation
- * vsepr-sim v2.3.1
+ * vsepr-sim v3.0.0
  * 
  * Implements LOD, octree culling, and GPU instancing for massive scenes
  * 

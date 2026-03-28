@@ -1,6 +1,6 @@
 /**
  * Phase 3: Continuous Generation Test Suite
- * vsepr-sim v2.3.1
+ * vsepr-sim v3.0.0
  * 
  * CONSTRAINTS:
  * - NO HARDCODED ELEMENTS in user messages
@@ -53,7 +53,7 @@ void print_header() {
     std::cout << "\n";
     std::cout << "╔══════════════════════════════════════════════════════════╗\n";
     std::cout << "║   VSEPR-Sim Phase 3: Continuous Generation Tests        ║\n";
-    std::cout << "║   Version 2.3.1 - Real Physics, No Hardcoded Elements   ║\n";
+    std::cout << "║   Version 3.0.0 - Real Physics, No Hardcoded Elements   ║\n";
     std::cout << "╚══════════════════════════════════════════════════════════╝\n";
     std::cout << "\n";
 }

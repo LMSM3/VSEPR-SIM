@@ -16,7 +16,7 @@ int VersionCommand::Execute(const std::vector<std::string>& /*args*/) {
     Display::BlankLine();
     
     Display::KeyValue("Program", "VSEPR-Sim", 15);
-    Display::KeyValue("Version", "2.0.0", 15);
+    Display::KeyValue("Version", "3.0.0", 15);
     Display::KeyValue("Build Date", std::string(__DATE__) + " " + std::string(__TIME__), 15);
     Display::KeyValue("C++ Standard", "C++17", 15);
     Display::BlankLine();

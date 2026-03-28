@@ -1,7 +1,7 @@
 /**
  * VSEPR-Sim Unified GUI Launcher
  * Main entry point integrating all GUI features with batch/shell
- * Version: 2.3.1
+ * Version: 3.0.0
  */
 
 #pragma once

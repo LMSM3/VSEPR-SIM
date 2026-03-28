@@ -1,6 +1,6 @@
 /**
  * Continuous Molecule Generation Manager Implementation
- * vsepr-sim v2.3.1 - Phase 3
+ * vsepr-sim v3.0.0
  * 
  * NO HARDCODED ELEMENTS - All examples come from database dynamically
  * REAL PHYSICS ONLY - Uses actual thermodynamic data and chemical rules
@@ -12,6 +12,7 @@
 
 #include "gui/continuous_generation_manager.hpp"
 #include "io/xyz_format.hpp"
+#include "io/molecular_io.hpp"
 #include "core/element_data_integrated.hpp"
 #include "imgui.h"
 #include "pot/periodic_db.hpp"
@@ -164,33 +165,32 @@ void ContinuousGenerationManager::export_buffer_xyz(const std::string& path) con
         fs::create_directories(out_path.parent_path());
     }
     auto molecules = get_recent_molecules(50);
-    
-    // Use proper XYZ format library - never encode by hand!
-    std::ofstream file(out_path);
-    if (!file.is_open()) {
+
+    io::TrajectoryWriter writer(out_path.string());
+    if (!writer.is_open()) {
         throw std::runtime_error("Cannot open file for writing: " + path);
     }
-    
+
     for (size_t i = 0; i < molecules.size(); ++i) {
         const auto& mol = molecules[i];
-        
+
         io::XYZMolecule xyz_mol;
         xyz_mol.comment = "Continuous generation buffer entry " + std::to_string(i);
-        
-        // Copy atoms
+
         for (size_t j = 0; j < mol.num_atoms(); ++j) {
             double x, y, z;
             mol.get_position(j, x, y, z);
-            
             const char* symbol = element_symbol(mol.atoms[j].Z);
             xyz_mol.atoms.emplace_back(symbol, x, y, z);
         }
-        
-        // Write using proper library
-        io::XYZWriter writer;
-        writer.set_precision(6);
-        writer.write_stream(file, xyz_mol);
+
+        const auto status = writer.append_frame(xyz_mol);
+        if (status.is_error()) {
+            throw std::runtime_error("Frame write failed: " + status.error().to_string());
+        }
     }
+
+    writer.finalize();
 }
 
 void ContinuousGenerationManager::export_statistics_csv(const std::string& path) const {

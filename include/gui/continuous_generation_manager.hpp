@@ -1,6 +1,6 @@
 /**
  * Continuous Molecule Generation Tab Integration
- * vsepr-sim v2.3.1 - Phase 3
+ * vsepr-sim v3.0.0
  * 
  * Features:
  * - Real-time molecule generation with streaming visualization

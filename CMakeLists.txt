@@ -1,8 +1,10 @@
-                  cmake_minimum_required(VERSION 3.15)
-project(vsepr-sim VERSION 2.8.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.15)
+project(vsepr-sim VERSION 3.0.0 LANGUAGES CXX)
 
-# Global include paths for project headers
-include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
+# Generate version header from template
+configure_file(cmake/version.hpp.in ${CMAKE_BINARY_DIR}/include/version.hpp @ONLY)
+
+include_directories(${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/include)
 
 # ============================================================================
 # Optional CUDA Support (graceful fallback to CPU)
@@ -193,9 +195,10 @@ add_library(vsepr_thermal STATIC
 target_include_directories(vsepr_thermal PUBLIC include ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(vsepr_thermal PUBLIC vsepr_core vsepr_sim vsepr_io)
 
-# --- I/O Library (XYZ, XYZA formats) ---
+# --- I/O Library (XYZ, XYZA formats + unified molecular_io API) ---
 add_library(vsepr_io STATIC
     src/io/xyz_format.cpp
+    src/io/molecular_io.cpp
 )
 target_include_directories(vsepr_io PUBLIC include)
 target_link_libraries(vsepr_io PUBLIC vsepr_core)
@@ -630,6 +633,72 @@ if(BUILD_APPS)
         target_compile_definitions(cg-anim-demo PRIVATE BUILD_VISUALIZATION)
         install(TARGETS cg-anim-demo DESTINATION bin)
     endif()
+
+    # Seed & Bead Live Demo — 60fps 6+9 steady-state step function viewer
+    if(BUILD_VIS)
+        add_executable(seed-bead-demo apps/seed_bead_demo.cpp)
+        target_link_libraries(seed-bead-demo coarse_grain atomistic vsepr_vis vsepr_core OpenGL::GL glfw GLEW::GLEW)
+        target_include_directories(seed-bead-demo PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}
+            ${IMGUI_DIR}
+            ${IMGUI_DIR}/backends
+        )
+        target_compile_definitions(seed-bead-demo PRIVATE BUILD_VISUALIZATION)
+        install(TARGETS seed-bead-demo DESTINATION bin)
+    else()
+        # Headless mode: no GL, just run studies and generate reports
+        add_executable(seed-bead-demo apps/seed_bead_demo.cpp)
+        target_link_libraries(seed-bead-demo coarse_grain atomistic vsepr_core)
+        target_include_directories(seed-bead-demo PRIVATE
+            ${PROJECT_SOURCE_DIR}/src
+            ${PROJECT_SOURCE_DIR}/include
+            ${PROJECT_SOURCE_DIR}
+        )
+        install(TARGETS seed-bead-demo DESTINATION bin)
+    endif()
+
+    # Organic-Inorganic Synthesis Example — EtOH adsorption on Au (headless)
+    add_executable(organic-inorganic-synthesis examples/example_organic_inorganic_synthesis.cpp)
+    target_link_libraries(organic-inorganic-synthesis coarse_grain atomistic vsepr_core)
+    target_include_directories(organic-inorganic-synthesis PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}
+    )
+    install(TARGETS organic-inorganic-synthesis DESTINATION bin)
+
+    # Catalytic Dissociation Example — H₂ dissociation on Pt (headless)
+    add_executable(catalytic-dissociation examples/example_catalytic_dissociation.cpp)
+    target_link_libraries(catalytic-dissociation coarse_grain atomistic vsepr_core)
+    target_include_directories(catalytic-dissociation PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}
+    )
+    install(TARGETS catalytic-dissociation DESTINATION bin)
+
+    # Universal Chemical Reaction Engine — all 3 reactions (headless)
+    add_executable(universal-reaction-engine examples/example_universal_reaction_engine.cpp)
+    target_link_libraries(universal-reaction-engine coarse_grain atomistic vsepr_core)
+    target_include_directories(universal-reaction-engine PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}
+    )
+    install(TARGETS universal-reaction-engine DESTINATION bin)
+
+    # 32-Bit Identity Word + Hourglass + Lookglass smoke-test (headless)
+    add_executable(example-32bit-hourglass-lookglass
+        examples/example_32bit_hourglass_lookglass.cpp)
+    target_link_libraries(example-32bit-hourglass-lookglass coarse_grain atomistic vsepr_core)
+    target_include_directories(example-32bit-hourglass-lookglass PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}
+    )
+    install(TARGETS example-32bit-hourglass-lookglass DESTINATION bin)
 
     # Professional GUI (requires BUILD_VIS=ON)
     if(BUILD_VIS)

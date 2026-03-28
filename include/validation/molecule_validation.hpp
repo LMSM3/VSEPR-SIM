@@ -441,7 +441,7 @@ inline ValidationResult validate_no_bond_spaghetti(const Molecule& mol) {
 //=============================================================================
 
 struct BuildMetadata {
-    std::string build_version = "2.3.1";
+    std::string build_version = "3.0.0";
     uint64_t random_seed = 0;
     std::string constraint_version = "validation_v1";
     double floating_point_tolerance = 1e-10;
