@@ -475,6 +475,13 @@ if(BUILD_APPS)
     target_include_directories(test-hash-invariance PRIVATE
         ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR})
 
+    # Nuclear Core Runner — Z=94 Pu-239 autonomous report generation (LaTeX + Excel XML)
+    add_executable(nuclear-core-runner apps/nuclear_core_runner.cpp)
+    target_link_libraries(nuclear-core-runner vsepr_report vsepr_sim vsepr_core)
+    target_include_directories(nuclear-core-runner PRIVATE
+        ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR})
+    install(TARGETS nuclear-core-runner DESTINATION bin)
+
     # QA suites
     add_executable(qa_golden_tests apps/qa_golden_tests.cpp)
     target_link_libraries(qa_golden_tests atomistic vsepr_io vsepr_core)
