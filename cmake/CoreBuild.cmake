@@ -469,6 +469,12 @@ if(BUILD_APPS)
         ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR})
     install(TARGETS demo-version-lineage DESTINATION bin)
 
+    # Hash Invariance & 3-Tier Provenance Audit Test Suite
+    add_executable(test-hash-invariance tests/test_hash_invariance.cpp)
+    target_link_libraries(test-hash-invariance vsepr_sim vsepr_core)
+    target_include_directories(test-hash-invariance PRIVATE
+        ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR})
+
     # QA suites
     add_executable(qa_golden_tests apps/qa_golden_tests.cpp)
     target_link_libraries(qa_golden_tests atomistic vsepr_io vsepr_core)
