@@ -314,6 +314,37 @@ int main() {
     std::cout << "    candidates that conventional screening misses.\n\n";
 
     // ========================================================================
+    // Phase 6: Nuclear Core Registry — Z=94 active
+    // ========================================================================
+
+    using vsepr::multiscale::NUCLEAR_CORES;
+    using vsepr::multiscale::NUCLEAR_CORE_COUNT;
+
+    std::cout << ansi::BOLD << "  ═══ Phase 6: Nuclear Core Registry ═══\n" << ansi::RESET << "\n";
+
+    for (size_t i = 0; i < NUCLEAR_CORE_COUNT; ++i) {
+        const auto& c = NUCLEAR_CORES[i];
+        std::cout << "    "
+                  << (c.active ? ansi::GREEN : ansi::GRAY)
+                  << (c.active ? "▶ ACTIVE  " : "  inactive")
+                  << ansi::RESET << "  Z=" << std::setw(3) << static_cast<int>(c.Z)
+                  << "  " << std::setw(2) << c.symbol
+                  << "  " << std::setw(12) << std::left << c.isotope
+                  << "  Ed=" << std::setw(5) << c.Ed_eV << " eV"
+                  << "  fissility=" << std::fixed << std::setprecision(2) << c.fissility
+                  << "  [" << c.crystal_phase << "]\n";
+        std::cout << "              " << ansi::DIM << c.notes << ansi::RESET << "\n\n";
+    }
+
+    const auto* active = vsepr::multiscale::get_active_core();
+    if (active) {
+        std::cout << "  " << ansi::BOLD << ansi::GREEN
+                  << "core = " << static_cast<int>(active->Z)
+                  << " (" << active->isotope << ") — NUCLEAR DOMAIN ACTIVE THROUGH ALL SCALES"
+                  << ansi::RESET << "\n\n";
+    }
+
+    // ========================================================================
     // Summary
     // ========================================================================
 
@@ -326,6 +357,11 @@ int main() {
               << sizeof(domains) / sizeof(domains[0]) << " domains\n";
     std::cout << "   Nuclear targets:  displacement energy, Frenkel pairs,\n";
     std::cout << "                     radiation tolerance, fission gas diffusion\n";
+    if (active) {
+        std::cout << "   Active core:      Z=" << static_cast<int>(active->Z)
+                  << " (" << active->isotope << ", " << active->crystal_phase
+                  << ", Ed=" << active->Ed_eV << " eV)\n";
+    }
     std::cout << "  ════════════════════════════════════════════════════════════════\n";
     std::cout << ansi::RESET << "\n";
 
