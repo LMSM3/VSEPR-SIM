@@ -105,6 +105,7 @@ public:
 
     void register_default_transitions() {
         // Scale 1 → 2: Atomistic → Coarse-Grained
+        // Nuclear domain active: Z=94 (Pu) fissile core enabled at atomistic scale
         transitions_.push_back({
             SimulationScale::Atomistic,
             SimulationScale::CoarseGrained,
@@ -112,7 +113,8 @@ public:
             "Fragment mapping (Morgan canonical + inertia frame + SH descriptors)",
             0.85,
             {PropertyDomain::Structural, PropertyDomain::Mechanical,
-             PropertyDomain::Thermal, PropertyDomain::Stability}
+             PropertyDomain::Thermal, PropertyDomain::Stability,
+             PropertyDomain::Nuclear}
         });
 
         // Scale 2 → 3: CG → Grain
@@ -230,6 +232,59 @@ public:
 private:
     std::vector<ScaleTransition> transitions_;
 };
+
+// ============================================================================
+// Nuclear Core Registry — fissile species active in the property search
+// ============================================================================
+
+struct NuclearCore {
+    uint8_t     Z;              // Atomic number of fissile species
+    const char* symbol;         // Element symbol
+    const char* name;           // Element name
+    uint32_t    A_primary;      // Primary fissile isotope mass number
+    const char* isotope;        // Isotope label (e.g. "Pu-239")
+    double      Ed_eV;          // Displacement energy (eV)
+    double      fissility;      // Z²/A fissility parameter
+    bool        active;         // Whether this core is enabled
+    const char* crystal_phase;  // Equilibrium crystal structure
+    const char* notes;
+};
+
+// Active nuclear cores — indexed by Z
+// core = 94 → Pu-239 enabled
+inline constexpr NuclearCore NUCLEAR_CORES[] = {
+    {92,  "U",  "Uranium",   238, "U-238",
+     40.0, 35.56, false,
+     "orthorhombic-alpha",
+     "Fertile species; breed → Pu-239 via neutron capture"},
+
+    {94,  "Pu", "Plutonium", 239, "Pu-239",
+     35.0, 37.03, true,
+     "monoclinic-alpha",
+     "Primary fissile core (Z=94). Ed=35 eV. Fissility=37. Active."},
+
+    {90,  "Th", "Thorium",   232, "Th-232",
+     25.0, 31.81, false,
+     "fcc",
+     "Fertile species; Th-U cycle candidate"},
+};
+
+inline constexpr size_t NUCLEAR_CORE_COUNT =
+    sizeof(NUCLEAR_CORES) / sizeof(NuclearCore);
+
+inline const NuclearCore* get_active_core() noexcept {
+    for (size_t i = 0; i < NUCLEAR_CORE_COUNT; ++i) {
+        if (NUCLEAR_CORES[i].active) return &NUCLEAR_CORES[i];
+    }
+    return nullptr;
+}
+
+inline const NuclearCore* get_core(uint8_t Z) noexcept {
+    for (size_t i = 0; i < NUCLEAR_CORE_COUNT; ++i) {
+        if (NUCLEAR_CORES[i].Z == Z) return &NUCLEAR_CORES[i];
+    }
+    return nullptr;
+}
 
 } // namespace multiscale
 } // namespace vsepr
