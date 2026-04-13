@@ -128,7 +128,7 @@ inline constexpr KernelCheckpoint KERNEL_LINEAGE[] = {
      "",        "CMake version — multi-scale architecture, property search",     1013},
 
     {"v4.0-LB", KernelEra::MultiScale,
-     "",        "Legacy-beta: multi-scale property search, 3-5 scale bridge",   1013},
+     "",        "Legacy-beta: multi-scale property search, 3-5 scale bridge, Z=94 core active", 1013},
 };
 
 inline constexpr size_t LINEAGE_COUNT = sizeof(KERNEL_LINEAGE) / sizeof(KernelCheckpoint);
