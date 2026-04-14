@@ -1,7 +1,7 @@
-# ============================================================================
-# VSEPR-SIM Modular Test Infrastructure
-# ============================================================================
-#
+﻿# ============================================================================
+# VSEPR-SIM Modular Test Infrastructure - V3.0.X                             #
+# ============================================================================     
+# +-----------------------------------------------------------------------------+
 # Extracted from root CMakeLists.txt (archive/integrated-testing-1013).
 # All test targets are defined here and grouped by domain via CTest labels.
 #
@@ -15,6 +15,9 @@
 #
 # Or via the unified runner script:
 #   ./scripts/run_tests.sh [--all|--core|--atomistic|--cg|--suites|--quick]
+#
+# Expand user interaction tree here.
+#
 # ============================================================================
 
 # Helper: register a test with labels for filtered execution
@@ -28,7 +31,7 @@ endfunction()
 
 # Helper: VIZ support for CG test targets
 function(add_test_viz_support target)
-    if(BUILD_VIS)
+    if(VSEPR_VIS_READY)
         target_compile_definitions(${target} PRIVATE BUILD_VISUALIZATION)
         target_link_libraries(${target} vsepr_vis)
     endif()
@@ -37,6 +40,10 @@ endfunction()
 # ============================================================================
 # Group 1: Core / Geometry / VSEPR (foundational)
 # ============================================================================
+
+add_executable(test_molecular_io test_molecular_io.cpp)
+target_link_libraries(test_molecular_io vsepr_io vsepr_core)
+vsepr_add_test(NAME MolecularIOTest TARGET test_molecular_io LABELS core io quick)
 
 add_executable(geom_ops_tests geom_ops_tests.cpp)
 target_link_libraries(geom_ops_tests vsepr_core vsepr_sim)
@@ -61,6 +68,10 @@ vsepr_add_test(NAME VSEPRTest TARGET vsepr_tests LABELS core quick)
 add_executable(torsion_tests torsion_tests.cpp)
 target_link_libraries(torsion_tests vsepr_sim vsepr_pot)
 vsepr_add_test(NAME TorsionTest TARGET torsion_tests LABELS core)
+
+add_executable(test_torsion_analysis test_torsion_analysis.cpp)
+target_link_libraries(test_torsion_analysis vsepr_sim vsepr_pot)
+vsepr_add_test(NAME TorsionAnalysisTest TARGET test_torsion_analysis LABELS core)
 
 add_executable(torsion_validation_tests torsion_validation_tests.cpp)
 target_link_libraries(torsion_validation_tests vsepr_sim vsepr_pot)
@@ -133,9 +144,44 @@ add_executable(test_periodic_table_102 test_periodic_table_102.cpp)
 target_link_libraries(test_periodic_table_102 vsepr_periodic)
 vsepr_add_test(NAME PeriodicTable102Test TARGET test_periodic_table_102 LABELS core periodic quick)
 
-add_executable(test_decay_chains test_decay_chains.cpp)
-target_link_libraries(test_decay_chains vsepr_periodic)
-vsepr_add_test(NAME DecayChainsTest TARGET test_decay_chains LABELS core periodic)
+# DISABLED: unicode char literal errors under Clang/UCRT64
+# add_executable(test_decay_chains test_decay_chains.cpp)
+# target_link_libraries(test_decay_chains vsepr_periodic)
+# vsepr_add_test(NAME DecayChainsTest TARGET test_decay_chains LABELS core periodic)
+
+# --- Unified Species Code / Decay Event / Kinetic Record (particle_id + decay builders) ---
+add_executable(test_particle_id_decay test_particle_id_decay.cpp)
+target_include_directories(test_particle_id_decay PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(test_particle_id_decay vsepr_core)
+vsepr_add_test(NAME ParticleIDDecayTest TARGET test_particle_id_decay LABELS core nuclear physics quick)
+
+# --- Element Index Tracker + Random Picker ---
+add_executable(tracker_tests tracker_tests.cpp)
+target_link_libraries(tracker_tests vsepr_tracker vsepr_core)
+vsepr_add_test(NAME TrackerTests TARGET tracker_tests LABELS core tracker quick)
+
+# --- Code Trail Wind v0.1 (deterministic operation audit trail) ---
+add_executable(test_code_trail test_code_trail.cpp)
+target_link_libraries(test_code_trail vsepr_trail vsepr_core)
+vsepr_add_test(NAME CodeTrailTests TARGET test_code_trail LABELS core trail quick)
+
+# --- Energy Units + Reported Quantity ---
+add_executable(test_energy_units test_energy_units.cpp)
+target_link_libraries(test_energy_units vsepr_units vsepr_core)
+target_include_directories(test_energy_units PRIVATE ${PROJECT_SOURCE_DIR}/include)
+vsepr_add_test(NAME EnergyUnitsTests TARGET test_energy_units LABELS core units quick)
+
+# --- Molecule Alias Resolver ---
+add_executable(alias_tests alias_tests.cpp)
+target_link_libraries(alias_tests vsepr_tracker vsepr_core)
+target_include_directories(alias_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+vsepr_add_test(NAME AliasTests TARGET alias_tests LABELS core alias quick)
+
+# --- Report Engine (WO-TMS-CRG-001) ---
+add_executable(report_engine_tests report_engine_tests.cpp)
+target_link_libraries(report_engine_tests vsepr_report vsepr_core)
+target_include_directories(report_engine_tests PRIVATE ${PROJECT_SOURCE_DIR}/include)
+vsepr_add_test(NAME ReportEngineTests TARGET report_engine_tests LABELS core report)
 
 # ============================================================================
 # Group 4: Chemistry / Parsers
@@ -164,9 +210,10 @@ add_executable(test_element_db_phase1_simple test_element_db_phase1_simple.cpp)
 target_link_libraries(test_element_db_phase1_simple vsepr_core)
 vsepr_add_test(NAME ElementDBPhase1Simple TARGET test_element_db_phase1_simple LABELS core chemistry)
 
-add_executable(phase2_complex_molecules phase2_complex_molecules.cpp)
-target_link_libraries(phase2_complex_molecules vsepr_core)
-vsepr_add_test(NAME Phase2ComplexMolecules TARGET phase2_complex_molecules LABELS core chemistry)
+# DISABLED: unicode char literal errors under Clang/UCRT64
+# add_executable(phase2_complex_molecules phase2_complex_molecules.cpp)
+# target_link_libraries(phase2_complex_molecules vsepr_core)
+# vsepr_add_test(NAME Phase2ComplexMolecules TARGET phase2_complex_molecules LABELS core chemistry)
 
 # PBC example/demo
 if(EXISTS ${PROJECT_SOURCE_DIR}/docs/pbc_example.cpp)
@@ -178,21 +225,12 @@ endif()
 # Group 5: Thermal / Animation / Batch (some require BUILD_VIS)
 # ============================================================================
 
-if(BUILD_VIS)
-    add_executable(test_batch_processing test_batch_processing.cpp)
-    target_link_libraries(test_batch_processing vsepr_dynamic vsepr_gui_utils vsepr_io vsepr_core vsepr_sim vsepr_gui)
-    vsepr_add_test(NAME BatchProcessingTest TARGET test_batch_processing LABELS thermal vis)
-endif()
+# VIS-dependent tests (test_batch_processing, test_continuous_generation)
+# are now defined in cmake/VisBuild.cmake to ensure VIS targets exist.
 
 add_executable(test_thermal_animation test_thermal_animation.cpp)
 target_link_libraries(test_thermal_animation vsepr_thermal vsepr_io vsepr_core vsepr_sim vsepr_dynamic)
 vsepr_add_test(NAME ThermalAnimationTest TARGET test_thermal_animation LABELS thermal)
-
-if(BUILD_VIS)
-    add_executable(test_continuous_generation test_continuous_generation.cpp)
-    target_link_libraries(test_continuous_generation vsepr_gui_utils vsepr_dynamic vsepr_io vsepr_core vsepr_sim vsepr_gui)
-    vsepr_add_test(NAME ContinuousGenerationTest TARGET test_continuous_generation LABELS thermal vis)
-endif()
 
 # ============================================================================
 # Group 6: Atomistic Simulation
@@ -253,6 +291,21 @@ target_link_libraries(test_nuclear_stability atomistic)
 target_include_directories(test_nuclear_stability PRIVATE ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME NuclearStabilityTest TARGET test_nuclear_stability LABELS atomistic nuclear)
 
+add_executable(test_wind_tui test_wind_tui.cpp)
+target_link_libraries(test_wind_tui atomistic)
+target_include_directories(test_wind_tui PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME WindTUITest TARGET test_wind_tui LABELS atomistic tui)
+
+add_executable(test_flower_health test_flower_health.cpp)
+target_link_libraries(test_flower_health atomistic)
+target_include_directories(test_flower_health PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME FlowerHealthTest TARGET test_flower_health LABELS atomistic tui)
+
+add_executable(test_env_particle test_env_particle.cpp)
+target_link_libraries(test_env_particle atomistic)
+target_include_directories(test_env_particle PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME EnvParticleTest TARGET test_env_particle LABELS atomistic environment)
+
 add_executable(test_experiment_match test_experiment_match.cpp)
 target_link_libraries(test_experiment_match atomistic)
 target_include_directories(test_experiment_match PRIVATE ${PROJECT_SOURCE_DIR})
@@ -266,6 +319,11 @@ add_executable(test_cg_mapping_suite test_cg_mapping.cpp)
 target_link_libraries(test_cg_mapping_suite coarse_grain atomistic vsepr_core)
 target_include_directories(test_cg_mapping_suite PRIVATE ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME CGMappingTest TARGET test_cg_mapping_suite LABELS coarse_grain)
+
+add_executable(bead_fire_report_test bead_fire_report_test.cpp)
+target_link_libraries(bead_fire_report_test coarse_grain atomistic vsepr_core)
+target_include_directories(bead_fire_report_test PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME BeadFIREReportTest TARGET bead_fire_report_test LABELS coarse_grain reporting quick)
 
 add_executable(test_anisotropic_beads test_anisotropic_beads.cpp)
 target_link_libraries(test_anisotropic_beads coarse_grain atomistic vsepr_core)
@@ -388,9 +446,92 @@ add_test_viz_support(test_property_pipeline_suite7)
 add_test_viz_support(test_property_calibration_suite8)
 
 # ============================================================================
+# Group 9: Seed & Bead Stepper (6+9 Steady-State Step Function)
+# ============================================================================
+
+add_executable(test_seed_bead_stepper test_seed_bead_stepper.cpp)
+target_link_libraries(test_seed_bead_stepper coarse_grain atomistic vsepr_core)
+target_include_directories(test_seed_bead_stepper PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME SeedBeadStepperTest TARGET test_seed_bead_stepper LABELS coarse_grain reporting quick)
+
+# ============================================================================
+# Group 10: GPU vs CPU Benchmark
+# ============================================================================
+
+add_executable(bench_gpu_cpu bench_gpu_cpu.cpp)
+target_link_libraries(bench_gpu_cpu vsepr_gpu vsepr_core vsepr_sim vsepr_pot)
+target_include_directories(bench_gpu_cpu PRIVATE ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR}/src)
+vsepr_add_test(NAME BenchGpuCpu TARGET bench_gpu_cpu LABELS benchmark gpu)
+
+# ============================================================================
 # Disabled tests (API mismatch -- preserved for future re-enablement)
 # ============================================================================
 # formula_builder_tests, conformer_test, isomer_test,
 # phase3_isomer_validation, phase4_coordination_variants,
 # phase5_ionic_manifold, chemistry_universal_test,
 # ensemble_consistency_test
+
+# ============================================================================
+# Group 11: Electrohydrodynamic Multiphysics (EHD)
+# ============================================================================
+
+add_executable(test_ehd test_ehd.cpp)
+target_link_libraries(test_ehd vsepr_ehd vsepr_core)
+target_include_directories(test_ehd PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME EHDMultiphysicsTest TARGET test_ehd LABELS ehd multiphysics quick)
+
+# ============================================================================
+# Group 12: EHD Performance Benchmark
+# ============================================================================
+
+add_executable(bench_ehd bench_ehd.cpp)
+target_link_libraries(bench_ehd vsepr_ehd vsepr_core)
+target_include_directories(bench_ehd PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME EHDBenchmark TARGET bench_ehd LABELS ehd benchmark)
+
+# ============================================================================
+# Group 13: Dev Day ~42 Revised Notation (StateC)
+# ============================================================================
+
+add_executable(test_state_c test_state_c.cpp)
+target_link_libraries(test_state_c atomistic vsepr_core)
+target_include_directories(test_state_c PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME StateCRevisedNotationTest TARGET test_state_c LABELS atomistic core quick)
+
+# ============================================================================
+# Group 14: Emergence Dataset #1 â€” Anisotropy and Isomer-Fall Transitions
+# ============================================================================
+
+add_executable(test_emergence_dataset test_emergence_dataset.cpp)
+target_link_libraries(test_emergence_dataset atomistic vsepr_core)
+target_include_directories(test_emergence_dataset PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME EmergenceDatasetTest TARGET test_emergence_dataset LABELS atomistic datasets quick)
+
+# ============================================================================
+# Group 15: Â§15 Post-Formation Property Scraper
+# ============================================================================
+
+add_executable(test_property_scraper test_property_scraper.cpp)
+target_link_libraries(test_property_scraper atomistic vsepr_core)
+target_include_directories(test_property_scraper PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME PropertyScraperTest TARGET test_property_scraper LABELS atomistic analysis quick)
+
+
+# ============================================================================
+# Group 16: ISO 286 Tolerance & Fit (pure C)
+# ============================================================================
+
+add_executable(test_iso_fit test_iso_fit.c)
+target_link_libraries(test_iso_fit vsepr_iso_fit)
+target_include_directories(test_iso_fit PRIVATE ${PROJECT_SOURCE_DIR}/include)
+set_source_files_properties(test_iso_fit.c PROPERTIES LANGUAGE C)
+vsepr_add_test(NAME IsoFitTest TARGET test_iso_fit LABELS core engineering quick)
+
+# Group 17: Fatigue analysis
+# ============================================================================
+
+add_executable(test_fatigue test_fatigue.c)
+target_link_libraries(test_fatigue vsepr_fatigue)
+target_include_directories(test_fatigue PRIVATE ${PROJECT_SOURCE_DIR}/include)
+set_source_files_properties(test_fatigue.c PROPERTIES LANGUAGE C)
+vsepr_add_test(NAME FatigueTest TARGET test_fatigue LABELS core engineering quick)
