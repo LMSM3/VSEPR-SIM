@@ -157,6 +157,20 @@ if(NOT MSVC)
     target_link_libraries(vsepr_fatigue PUBLIC m)
 endif()
 
+# --- Legacy C API (species codes + decay event — portable C99) ---
+add_library(vsepr_legacy_c STATIC
+    legacy/c_api/particle_ids.c
+    legacy/c_api/decay_event.c
+)
+target_include_directories(vsepr_legacy_c PUBLIC
+    ${PROJECT_SOURCE_DIR}/legacy/c_api
+)
+set_source_files_properties(
+    legacy/c_api/particle_ids.c
+    legacy/c_api/decay_event.c
+    PROPERTIES LANGUAGE C
+)
+
 # --- Simulation Library ---
 file(GLOB SIM_SOURCES src/sim/*.cpp)
 list(FILTER SIM_SOURCES EXCLUDE REGEX ".*sim_thread\\.cpp$")
