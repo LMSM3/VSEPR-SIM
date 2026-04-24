@@ -1,0 +1,53 @@
+# =============================================================================
+# VSEPR-SIM .gitattributes
+# export-ignore: these paths are excluded from git archive output.
+# git archive is used to produce clean version snapshots per tag.
+# =============================================================================
+
+# ── Third-party vendored libraries ───────────────────────────────────────────
+# Heavy, re-fetchable via CMake FetchContent or package manager.
+third_party/         export-ignore
+
+# ── Compiled documentation (PDFs) ────────────────────────────────────────────
+# Source .tex files are kept. PDFs are build outputs.
+docs/*.pdf           export-ignore
+docs/out/            export-ignore
+
+# ── Build directories ─────────────────────────────────────────────────────────
+build/               export-ignore
+build_wsl/           export-ignore
+build_wsl_vis/       export-ignore
+build-v26/           export-ignore
+build-v27/           export-ignore
+
+# ── IDE and tooling caches ────────────────────────────────────────────────────
+.vs/                 export-ignore
+.venv/               export-ignore
+.vscode/             export-ignore
+__pycache__/         export-ignore
+
+# ── Runtime-generated CSVs and logs ──────────────────────────────────────────
+# Large phase logs, live run outputs.
+v4/core_run.log      export-ignore
+v5/phase_a_log.csv   export-ignore
+v5/phase_b_log.csv   export-ignore
+v5/phase_c_gamma_off.csv export-ignore
+v5/phase_c_gamma_on.csv  export-ignore
+
+# ── Compiled ELF / PE binaries in source tree ─────────────────────────────────
+v4/core_run          export-ignore
+v4/v4_scores_test    export-ignore
+v5/v5_demo           export-ignore
+v5/v5_demo.exe       export-ignore
+v5/v5_3d_demos       export-ignore
+
+# ── Large example / data files ────────────────────────────────────────────────
+examples/xyz_output/ export-ignore
+
+# ── Bridge beta build scaffolding ─────────────────────────────────────────────
+build/bridge_beta/   export-ignore
+
+# ── Line endings: keep LF everywhere (cross-platform source) ─────────────────
+* text=auto eol=lf
+*.ps1 text eol=crlf
+*.bat text eol=crlf
