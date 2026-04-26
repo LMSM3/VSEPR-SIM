@@ -19,8 +19,16 @@ At its highest level, the project exists to bridge:
 - visualization
 - computational reporting
 - future discovery workflows
+- full desktop research support and workflow
+- solidworks and xlsx file export and integration
 
-The system is not merely a visualization toy, a chemistry parser, or a static educational demo. It is being developed as a broader scientific software environment capable of supporting structured research and repeatable computational investigation.
+The system is not merely a visualization toy, a chemistry parser, or a static educational demo. It is being developed as a broader scientific software environment capable of supporting structured research and repeatable computational investigation. 
+
+Primary post stability application chemical and process engineering, materials science, and computational chemistry research. The project is not intended for casual use or as a marketing gimmick. It is meant to be a credible scientific tool that can contribute to real research workflows and outputs.
+
+Clone and develop with the understanding that this is a long-term research platform under active construction, not a finished product or a simple utility. The project should be developed with a focus on scientific coherence, deterministic behavior, and research utility rather than visual polish or feature sprawl.
+
+Final purpose --> Digital twin, predictive modeling, computational investigation, candidate evaluation, report generation, discovery-oriented workflows grounded in deterministic modeling and empirical comparison. Working in tandem with the theoretical foundation documents, the project should be developed in a way that reflects and supports the scientific principles and research goals outlined in those documents. The code should be organized around the core scientific concepts and workflows rather than arbitrary technical layers or marketing-style features. Along with a fabrication lab, where only the highest priority output targets are supported, and where the system is designed to produce research-usable outputs.
 
 ---
 
@@ -266,6 +274,16 @@ The development phases should follow this structure:
 3. Perform tests if finishing a development phase (create test file, add CMake target, verify compilation)
 
 New sections are appended to documents rather than replacing previous ones, showing model growth over time.
+
+---
+
+## 12. Planned Feature Additions
+
+### 12.1 Version ???+0.1 Roadmap
+- Add bead dynamics
+- Introduce organics comprised of peptide code + beads + actinides with decay system -1 through -37 (-1 through -14 primarily)
+
+This is a planned feature addition for the VSEPR-SIM stochastic generators.
 
 ---
 
