@@ -29,6 +29,10 @@
 // ---- project I/O --------------------------------------------------------
 #include "../../src/io/xyz_writer.hpp"    // write_xyz, write_xyza, write_xyzc, write_xyzf
 
+// ---- passive batch display ----------------------------------------------
+#include "../../src/vis/continuous_run_display.hpp"
+#include "../../src/vis/batch_window_bridge.hpp"
+
 // ---- stdlib -------------------------------------------------------------
 #include <iostream>
 #include <fstream>
@@ -38,6 +42,7 @@
 #include <filesystem>
 #include <iomanip>
 #include <chrono>
+#include <thread>
 
 namespace fs = std::filesystem;
 using namespace vsepr;
@@ -105,6 +110,19 @@ int main(int argc, char* argv[])
 
 	auto presets = default_presets();
 
+	// ---- passive batch display ------------------------------------------
+	vsepr::vis::ContinuousRunDisplay display;
+	display.configure("metal_gen  " + fs::absolute(out_dir).filename().string(), 5.0f);
+	display.open(960, 720);  // no-op / console fallback when no GL available
+
+	auto& bridge = display.bridge();
+	bridge.start();
+
+	// Run the generation loop on a worker thread so the display event loop
+	// can drive the window (or console bar) on the main thread below.
+	std::thread worker([&]{
+
+	// ---- writer config (inside worker lambda) ------------------------
 	XYZWriterConfig cfg;
 	cfg.coord_precision  = 6;
 	cfg.prop_precision   = 6;
@@ -131,6 +149,9 @@ int main(int argc, char* argv[])
 		// ----------------------------------------------------------------
 		// 1. Build supercell
 		// ----------------------------------------------------------------
+		bridge.push_progress(static_cast<int>(&mat - presets.data()),
+								 static_cast<int>(presets.size()),
+								 0, 5, "building supercell");
 		XYZFrame frame = build_supercell(mat, NX, NY, NZ, /*apply_cycle=*/true);
 
 		// Set a descriptive comment for the frame
@@ -145,6 +166,9 @@ int main(int argc, char* argv[])
 		}
 
 		std::cout << "  atoms: " << frame.N << '\n';
+
+		// Push the frame to the display
+		bridge.push_frame(frame, mat.tag);
 
 		auto p = [&](const std::string& ext) {
 			return (fs::path(out_dir) / (mat.tag + ext)).string();
@@ -216,6 +240,11 @@ int main(int argc, char* argv[])
 		}
 
 		manifest_entries.push_back(json_entry(mat, frame.N, out_dir));
+		bridge.push_progress(static_cast<int>(&mat - presets.data()) + 1,
+								 static_cast<int>(presets.size()),
+								 static_cast<int>(&mat - presets.data()) + 1,
+								 static_cast<int>(presets.size()),
+								 mat.tag + " done");
 	}
 
 	// ----------------------------------------------------------------
@@ -246,5 +275,12 @@ int main(int argc, char* argv[])
 	}
 
 	std::cout << "\n[metal_gen] Done.\n";
+	bridge.finish();
+	}); // end worker lambda
+
+	// Block main thread in the display event loop.
+	// Returns when bridge.finish() is called or the window is closed.
+	display.run_event_loop();
+	worker.join();
 	return 0;
 }

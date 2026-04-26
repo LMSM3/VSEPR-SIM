@@ -17,6 +17,11 @@
 namespace vsepr {
 namespace vis {
 
+// WindowDeleter body -- requires complete Window type, so defined here.
+void WindowDeleter::operator()(Window* p) const noexcept {
+    delete p;
+}
+
 // ---------------------------------------------------------------------------
 // ContinuousRunDisplay::open()
 // ---------------------------------------------------------------------------
