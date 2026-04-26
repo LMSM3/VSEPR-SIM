@@ -21,6 +21,9 @@
  *   User   3.0.1  Code audit checkpoint (frozen reference)
  *   Engine 4.0.1  Current CMake version
  *   Branch 4.0-LB Legacy-beta: multi-scale property search
+ *   beta-6        Eigen bridge, Kabsch, RMSD, stationarity backbone, analysis stack
+ *   v5.0.0        Environment-responsive bead transport (Phases A-H)
+ *   beta-7        Pipeline wiring: display arc closed; report pipeline open
  *
  * Scale Registry:
  *   Scale 1  Atomistic         (Å, fs, kcal/mol)     — kernel v0.1+
@@ -62,7 +65,7 @@ struct SemanticVersion {
 // Current Version
 // ============================================================================
 
-inline constexpr SemanticVersion CURRENT_VERSION = {4, 0, 0, "legacy-beta"};
+inline constexpr SemanticVersion CURRENT_VERSION = {5, 0, 0, "beta-7"};
 
 // ============================================================================
 // Kernel Lineage Checkpoint
@@ -76,7 +79,8 @@ enum class KernelEra {
     Verification,   // 2.7  — deep verification (194 checks, 7 phases)
     Integration,    // 2.9  — 1013 tests, CG layer, modular build
     Audit,          // 3.0  — code audit freeze, terminology purge
-    MultiScale,     // 4.0  — multi-scale property search (current)
+    MultiScale,     // 4.0  — multi-scale property search
+    Pipeline,       // 5.0  — passive display + report-generation pipeline (current)
 };
 
 struct KernelCheckpoint {
@@ -128,7 +132,16 @@ inline constexpr KernelCheckpoint KERNEL_LINEAGE[] = {
      "",        "CMake version — multi-scale architecture, property search",     1013},
 
     {"v4.0-LB", KernelEra::MultiScale,
-     "",        "Legacy-beta: multi-scale property search, 3-5 scale bridge, Z=94 core active", 1013},
+     "",        "Legacy-beta: multi-scale property search, 3-5 scale bridge, Z=94 core active, C++23 (N4950)", 1013},
+
+    {"v5.0.0-beta6", KernelEra::Pipeline,
+     "",        "beta-6 closed: Eigen bridge (eigen_bridge ns), Kabsch alignment, RMSD tracker, stationarity gate, crystal imperfection emergence, surface/diffusion/packing/transport/macro inference, report output, xyzFull audit", 1013},
+
+    {"v5.0.0",   KernelEra::Pipeline,
+     "29ff7ad",  "v5.0.0: environment-responsive bead transport (Phases A-H)", 1013},
+
+    {"v5.0.0-beta7-display", KernelEra::Pipeline,
+     "f1587c4",  "beta-7 display arc closed: VizMode::BATCH_PASSIVE, BatchWindowBridge, ContinuousRunDisplay, Window::run_batch(), xyz_to_snapshot, metal_gen integration, stress suite 12/12, API+usage docs", 1013},
 };
 
 inline constexpr size_t LINEAGE_COUNT = sizeof(KERNEL_LINEAGE) / sizeof(KernelCheckpoint);
