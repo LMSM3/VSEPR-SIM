@@ -641,3 +641,44 @@ target_include_directories(test_macro_inference PRIVATE
 target_link_libraries(test_macro_inference atomistic vsepr_core vsepr_eigen)
 vsepr_add_test(NAME MacroInferenceTest TARGET test_macro_inference
     LABELS atomistic diffusion packing macro inference transport porosity)
+
+# ============================================================================
+# Group 25: Lattice Type Classifier — Steinhardt Bond-Order Parameters
+# ============================================================================
+# Detects all common (SC, BCC, FCC, HCP, Diamond, ZincBlende, Wurtzite,
+# NaCl, CsCl) and uncommon (Icosahedral, Interstitial, Amorphous, Liquid)
+# lattice arrangements from atomic positions alone using Q4, Q6, W6.
+# Analysis-only — no lattice_type or Q6 stored in atomistic::State.
+
+add_executable(test_lattice_classifier test_lattice_classifier.cpp)
+target_include_directories(test_lattice_classifier PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_lattice_classifier vsepr_core)
+vsepr_add_test(NAME LatticeClassifierTest TARGET test_lattice_classifier
+    LABELS atomistic crystal lattice steinhardt classification quick)
+
+# ============================================================================
+# Group 26: beta-7 Research Pipeline Round-Trip (T1–T8)
+# ============================================================================
+# Validates the full FormationOutput → FingerprintRecord → ClusterRecord →
+# AnalysisRecord → ReportRecord → DashboardRecord pipeline using the 12-element
+# v4 reference dataset. Header-only; no link dependency on simulation kernel.
+#
+# Tests:
+#   T1  stage_fingerprint:   feature vector, topology hash, warnings
+#   T2  stage_cluster:       cluster assignment, registry growth
+#   T3  stage_analysis:      stability, packing, motif class, interpretation
+#   T4  stage_report:        CSV row, JSON fragment, summary line
+#   T5  stage_dashboard:     Markdown table, JSON array, run summary
+#   T6  run_pipeline:        full round-trip, complete flag
+#   T7  determinism:         identical cluster IDs across two runs
+#   T8  CSV consistency:     header col count == row col count
+
+add_executable(test_beta7_pipeline test_beta7_pipeline.cpp)
+target_include_directories(test_beta7_pipeline PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_beta7_pipeline vsepr_core)
+vsepr_add_test(NAME Beta7PipelineTest TARGET test_beta7_pipeline
+    LABELS pipeline beta7 formation fingerprint cluster analysis report dashboard)
