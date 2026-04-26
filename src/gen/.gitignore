@@ -1,0 +1,8 @@
+# metal_gen build artifacts — do not commit
+metal_gen_test
+metal_gen_test.exe
+metal_gen
+metal_gen.exe
+
+# Generated output directory (produced by running metal_gen)
+gen_out/
