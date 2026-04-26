@@ -535,3 +535,109 @@ target_link_libraries(test_fatigue vsepr_fatigue)
 target_include_directories(test_fatigue PRIVATE ${PROJECT_SOURCE_DIR}/include)
 set_source_files_properties(test_fatigue.c PROPERTIES LANGUAGE C)
 vsepr_add_test(NAME FatigueTest TARGET test_fatigue LABELS core engineering quick)
+
+# ============================================================================
+# Group 18: Scale Mission — V1 Particles / V2 Clouds / V3 Lattice / V4 Pipe Gas 3
+# ============================================================================
+
+add_executable(test_scale_mission test_scale_mission.cpp)
+target_include_directories(test_scale_mission PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_scale_mission vsepr_gas2 vsepr_gas3 vsepr_core)
+vsepr_add_test(NAME ScaleMissionTest TARGET test_scale_mission
+    LABELS mission scale particles clouds lattice pipe quick)
+
+# ============================================================================
+# Group 19: Day #56 — Vec3 Type Unification Audit
+# ============================================================================
+
+add_executable(vec3_type_audit vec3_type_audit.cpp)
+target_include_directories(vec3_type_audit PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(vec3_type_audit atomistic vsepr_core)
+vsepr_add_test(NAME Vec3TypeAudit TARGET vec3_type_audit LABELS core math audit quick)
+
+# ============================================================================
+# Group 20: WO-056 — Eigen Bridge + Kabsch/RMSD
+# ============================================================================
+
+add_executable(test_eigen_bridge test_eigen_bridge.cpp)
+target_include_directories(test_eigen_bridge PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_eigen_bridge vsepr_core vsepr_eigen)
+vsepr_add_test(NAME EigenBridgeTest TARGET test_eigen_bridge
+    LABELS core math eigen bridge kabsch rmsd quick)
+
+# ============================================================================
+# Group 21: Simulation Health Metrics Suite
+# ============================================================================
+
+add_executable(test_sim_metrics test_sim_metrics.cpp)
+target_include_directories(test_sim_metrics PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_sim_metrics vsepr_core vsepr_eigen)
+vsepr_add_test(NAME SimMetricsTest TARGET test_sim_metrics
+    LABELS core stats metrics drift rmsd displacement structural quick)
+
+# ============================================================================
+# Group 22: Emergence Microtests (Tasks 4–8)
+# ============================================================================
+# Three-atom cluster, four-atom shape classification, 3x3 parameter sweep,
+# reference-free emergence report, five-to-ten atom micro-nucleation.
+# Analysis labels are computed in vsepr::cluster::ClusterAnalysis only;
+# atomistic::State remains property-free.
+
+add_executable(test_emergence test_emergence.cpp)
+target_include_directories(test_emergence PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_emergence atomistic vsepr_core vsepr_eigen)
+vsepr_add_test(NAME EmergenceTest TARGET test_emergence
+    LABELS atomistic emergence cluster nucleation stats)
+
+# ============================================================================
+# Group 23: Crystal Imperfection and Surface Interaction Tests (Tasks 9–10)
+# ============================================================================
+# Task 9 — Full crystal imperfection emergence test.
+#   SC / FCC / BCC Ar 3x3x3 supercells with seven perturbation variants.
+#   Defect type inferred from trajectory via CrystalImperfectionAnalyzer.
+#   atomistic::State remains property-free (no vacancy_fraction, defect_type, etc.).
+#
+# Task 10 — Full surface interaction and damage test.
+#   Ar 3x3x5 slab with six incoming-velocity cases.
+#   Surface behavior inferred from trajectory via SurfaceAnalyzer.
+#   No erosion_rate, adsorption_probability, or surface_damage in state.
+
+add_executable(test_crystal_surface test_crystal_surface.cpp)
+target_include_directories(test_crystal_surface PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_crystal_surface atomistic vsepr_core vsepr_eigen)
+vsepr_add_test(NAME CrystalSurfaceTest TARGET test_crystal_surface
+    LABELS atomistic crystal surface imperfection emergence defect)
+
+# ============================================================================
+# Group 24: Macro Property Inference Layers (Tasks 12B + 13B)
+# ============================================================================
+# Task 12B — Diffusion-based macro transport inference.
+#   Consumes MSD/jump/residence/tortuosity records from DiffusionTracker.
+#   Outputs D_eff, axis diffusivities, anisotropy, mobility, transport class.
+#   D_eff is computed from MSD slope only — never stored in State.
+#
+# Task 13B — Packing-based macro property inference.
+#   Consumes contact/coordination/void/wall records from PackingTracker.
+#   Outputs bulk density, porosity, compressibility, permeability, sintering.
+#   No porosity, bulk_density, compressibility stored in xyzFull.
+
+add_executable(test_macro_inference test_macro_inference.cpp)
+target_include_directories(test_macro_inference PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_macro_inference atomistic vsepr_core vsepr_eigen)
+vsepr_add_test(NAME MacroInferenceTest TARGET test_macro_inference
+    LABELS atomistic diffusion packing macro inference transport porosity)
