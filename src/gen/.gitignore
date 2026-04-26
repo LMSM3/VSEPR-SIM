@@ -3,6 +3,9 @@ metal_gen_test
 metal_gen_test.exe
 metal_gen
 metal_gen.exe
+stress_test
+stress_test.exe
+*.py
 
 # Generated output directory (produced by running metal_gen)
 gen_out/

@@ -187,15 +187,19 @@ inline io::XYZFrame build_supercell(const MaterialPreset& mat,
 	// Bounding box (supercell diagonal, PBC on all axes)
 	io::XYZBox box;
 	if (mat.lattice == LatticeType::HCP) {
-		// HCP supercell: a-axis full length, b-axis = a*sqrt(3)*ny, c-axis
+		// HCP supercell lattice vectors (non-orthorhombic, hex):
+		//   v1 = (nx*a, 0, 0)              |v1| = nx*a
+		//   v2 = (ny*a/2, ny*a*√3/2, 0)   |v2| = ny*a  (|a2| = a for hexagonal)
+		//   v3 = (0, 0, nz*c)              |v3| = nz*c
+		// ax/ay/az store the norms of each lattice vector.
 		constexpr double sqrt3 = 1.7320508075688772;
 		box.ax = mat.a * nx;
-		box.ay = mat.a * sqrt3 * ny;
+		box.ay = mat.a * ny;          // length of a2 supercell vector
 		box.az = mat.c * nz;
 		box.lattice = {
-			box.ax, 0.0,   0.0,
-			0.0,    box.ay, 0.0,
-			0.0,    0.0,   box.az
+			(double)nx * mat.a,      0.0,                           0.0,
+			(double)ny * mat.a * 0.5, (double)ny * mat.a * sqrt3 * 0.5, 0.0,
+			0.0,                     0.0,                           (double)nz * mat.c
 		};
 	} else {
 		box.ax = mat.a * nx;
