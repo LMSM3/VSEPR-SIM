@@ -1,0 +1,19 @@
+{
+  "formula": "N2O",
+  "seed": 175,
+  "tier": "fast",
+  "num_atoms": 3,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 38.304231,
+  "energy_per_atom": 12.768077,
+  "rms_force": 163.004917,
+  "max_force": 163.004917,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.739500,
+  "timestamp": "2026-03-28T13:06:42",
+  "xyz_file": "benchmark_v2\fast\structures\N2O_s175.xyz"
+}

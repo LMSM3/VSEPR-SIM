@@ -1,0 +1,10 @@
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLFW-SUBBUILD\CMAKEFILES\24073AB86E04A279A6ABFD270AE2955C\GENERATE.STAMP.RULE
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM/build_vs/_deps/glfw-subbuild -BC:/R/VSPER-SIM/build_vs/_deps/glfw-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/R/VSPER-SIM/build_vs/_deps/glfw-subbuild/glfw-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

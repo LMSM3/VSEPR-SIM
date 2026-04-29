@@ -120,7 +120,7 @@ struct ChannelDescriptor {
 
     /** Isotropic component: c_{0,0} / √(4π). */
     double isotropic_component() const {
-        constexpr double inv_sqrt_4pi = 1.0 / std::sqrt(4.0 * 3.14159265358979323846);
+        constexpr double inv_sqrt_4pi = 0.28209479177387814;  // 1/√(4π)
         return coeffs.empty() ? 0.0 : coeffs[0] * inv_sqrt_4pi;
     }
 

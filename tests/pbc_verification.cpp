@@ -1,3 +1,12 @@
+// =============================================================================
+// tests/pbc_verification.cpp — Group 25: PBC Core
+// =============================================================================
+//
+// Phase 1 unit tests: wrap correctness, MIC delta antisymmetry/boundedness,
+// translation invariance. STOP CONDITION if any Phase 1 test fails.
+//
+// Day #57A  |  WO-56C
+// =============================================================================
 /**
  * pbc_verification.cpp - Phase 1 Unit Tests for PBC (Orthorhombic)
  * 

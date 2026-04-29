@@ -1,0 +1,16 @@
+{
+  "run_name": "demo_09_beta10_showcase",
+  "formula": "NaCl",
+  "scenario_class": "solid",
+  "generated": "2026-04-27T01:07:06Z",
+  "vsim_source": "scripts/demo_09_beta10_showcase.vsim",
+  "artifacts": [
+    {"path":"figures/demo_09/energy_trace.svg","type":"svg","description":"Energy trace per FIRE step"},
+    {"path":"figures/demo_09/rdf.svg","type":"svg","description":"Radial distribution function"},
+    {"path":"figures/demo_09/defect_map.svg","type":"svg","description":"Defect site map"},
+    {"path":"figures/demo_09/cluster_map.svg","type":"svg","description":"Cluster assignment scatter"},
+    {"path":"figures/demo_09/summary.svg","type":"svg","description":"Run summary figure (eta + coord)"},
+    {"path":"figures/demo_09/dashboard.html","type":"html","description":"Self-contained HTML dashboard"},
+    {"path":"figures/demo_09/report.html","type":"html","description":"Standalone HTML report"}
+  ]
+}

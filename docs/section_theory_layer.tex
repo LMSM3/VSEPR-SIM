@@ -1,0 +1,910 @@
+% ════════════════════════════════════════════════════════════════════════════
+%  Formation Engine — Theory Layer:
+%    §3.1 Full Energy Decomposition
+%    §3.3 Pairwise Mixed Interaction Structure
+%    §T.1 Interaction Graph G = (V, E)
+%    §T.2 Material Kernel Vector M_k
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ════════════════════════════════════════════════════════════════════════════
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code ───────────────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  language=C++
+}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Formation Engine Methodology}}
+\fancyhead[R]{\small\textit{Theory Layer — Energy, Graph, Material Kernel}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {§\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}
+  {\thesubsubsection}{1em}{}
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage[
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue
+]{hyperref}
+
+% ── Convenience macros ─────────────────────────────────────────────────────
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\Ang}{\text{\AA}}
+\newcommand{\eV}{\text{eV}}
+\newcommand{\kcal}{\text{kcal/mol}}
+\DeclareMathOperator{\tr}{tr}
+\DeclareMathOperator{\diag}{diag}
+\DeclareMathOperator{\sgn}{sgn}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\Var}{Var}
+
+% ════════════════════════════════════════════════════════════════════════════
+\title{\textbf{Formation Engine Methodology} \\[0.5em]
+\Large Theory Layer — Energy Decomposition, \\
+Pairwise Interaction Structure, \\
+Interaction Graph, and Material Kernel}
+\author{VSEPR-SIM Project}
+\date{Version 1.0 — \today}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+% ========================================================================
+\begin{abstract}
+This document establishes the formal theoretical infrastructure for the
+VSEPR-SIM coarse-grained simulation platform.  Four interconnected
+formalisms are developed:
+\begin{enumerate}
+  \item \textbf{Full Energy Decomposition} (§\ref{sec:energy}):
+        the nine-channel decomposition of the total potential energy
+        $U_{\mathrm{tot}}$ into physically interpretable, individually
+        inspectable terms.
+  \item \textbf{Pairwise Mixed Interaction Structure} (§\ref{sec:pairwise}):
+        the per-pair, per-species decomposition
+        $U_{ij}^{xy}$ for mixed bead types $x, y \in \{a, b\}$.
+  \item \textbf{Interaction Graph} (§\ref{sec:graph}):
+        the graph $G = (V, E)$ encoding the combinatorial backbone of
+        the bead system, with adjacency, degree, and Laplacian analysis.
+  \item \textbf{Material Kernel Vector} (§\ref{sec:kernel}):
+        the five-component per-bead state vector
+        $\mathbf{M}_k = [\phi_k,\, \psi_k,\, \chi_k,\, \omega_k,\, E_k]^\top$
+        that encodes the essential material identity of each bead or domain.
+\end{enumerate}
+These formalisms are deterministic, explicitly inspectable, and free of
+stochastic methods.  No density-functional theory (DFT) or Monte Carlo
+sampling is employed.  All quantities are computed analytically from the
+coarse-grained bead state, environment observables, and registry data.
+
+\medskip
+\noindent\textbf{Design principle:}
+Every mapping decision, every metric, every intermediate result must be
+explicitly inspectable, traceable, and deterministic.  No hidden state.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ========================================================================
+% §3.1  FULL ENERGY DECOMPOSITION
+% ========================================================================
+\section{Full Energy Decomposition}
+\label{sec:energy}
+
+\subsection{Total Energy of the System}
+
+The total potential energy of the coarse-grained bead system is written as
+the sum of nine physically distinct channels:
+
+\begin{equation}
+\boxed{
+U_{\mathrm{tot}}
+= U_{\mathrm{bond}}
++ U_{\mathrm{angle}}
++ U_{\mathrm{tors}}
++ U_{\mathrm{vdW}}
++ U_{\mathrm{Coul}}
++ U_{\mathrm{pol}}
++ U_{\mathrm{decay}}
++ U_{\mathrm{resp}}
++ U_{\mathrm{ext}}
+}
+\label{eq:Utot}
+\end{equation}
+
+Each term has a precise physical origin and a well-defined mapping to the
+implementation.
+
+\subsection{Channel Definitions}
+
+\subsubsection{Bonded Terms:
+  \texorpdfstring{$U_{\mathrm{bond}}$, $U_{\mathrm{angle}}$,
+  $U_{\mathrm{tors}}$}{U\_bond, U\_angle, U\_tors}}
+
+At the atomistic level, these terms capture covalent bond stretching,
+angle bending, and torsional rotation:
+
+\begin{align}
+U_{\mathrm{bond}}  &= \sum_{(i,j) \in \mathbf{B}} \tfrac{1}{2} k_b
+                       \bigl(r_{ij} - r_0\bigr)^2
+  \label{eq:Ubond} \\[6pt]
+U_{\mathrm{angle}} &= \sum_{\mathrm{angles}} \tfrac{1}{2} k_\theta
+                       \bigl(\theta_{ijk} - \theta_0\bigr)^2
+  \label{eq:Uangle} \\[6pt]
+U_{\mathrm{tors}}  &= \sum_{\mathrm{dihedrals}} V_n
+                       \bigl[1 + \cos(n\phi_{ijkl} - \gamma)\bigr]
+  \label{eq:Utors}
+\end{align}
+
+\noindent\textbf{CG absorption.}
+At the coarse-grained Level~2 resolution, direct bond, angle, and
+torsion terms are \emph{absorbed} into the spherical-harmonic (SH)
+orientation channels and the steric kernel.  The CG mapping
+$\texttt{map\_reaction\_to\_beads}()$ distributes intramolecular
+structure into the bead descriptor coefficients
+$\{c_{\ell m}^{(k)}\}$.  Consequently, $U_{\mathrm{bond}}$,
+$U_{\mathrm{angle}}$, and $U_{\mathrm{tors}}$ appear explicitly
+only at the atomistic level; their CG image is spread across the
+remaining six channels.
+
+\subsubsection{Van der Waals:
+  \texorpdfstring{$U_{\mathrm{vdW}}$}{U\_vdW}}
+
+The isotropic Lennard-Jones 12-6 potential plus the
+dispersion modulation channel~[B9]:
+
+\begin{equation}
+U_{\mathrm{vdW}} = \sum_{i < j}
+  4\varepsilon_{ij}\left[
+    \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{\!12}
+  - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{\!6}
+  \right]
+  \cdot g_d(\bar\eta_{ij})
+\label{eq:UvdW}
+\end{equation}
+
+where $g_d(\bar\eta) = 1 + \gamma_d \cdot \bar\eta$ is the dispersion
+modulation factor and $\bar\eta_{ij} = \tfrac{1}{2}(\eta_i + \eta_j)$
+is the mean slow state of the pair.
+
+\subsubsection{Electrostatic:
+  \texorpdfstring{$U_{\mathrm{Coul}}$}{U\_Coul}}
+
+The Coulombic interaction with environment-responsive screening~[B8]:
+
+\begin{equation}
+U_{\mathrm{Coul}} = \sum_{i < j}
+  k_e\,\frac{q_i\,q_j}{r_{ij}}
+  \cdot g_e(\bar\eta_{ij})
+\label{eq:UCoul}
+\end{equation}
+
+where $g_e(\bar\eta) = 1 + \gamma_e \cdot \bar\eta$ and
+$\gamma_e < 0$ implements electrostatic screening in dense
+environments.
+
+\subsubsection{Polarisation:
+  \texorpdfstring{$U_{\mathrm{pol}}$}{U\_pol}}
+
+The induced-dipole energy from the QM Level-0 polarisability proxy:
+
+\begin{equation}
+U_{\mathrm{pol}} = -\frac{1}{2}\sum_i \alpha_i\,|\mathbf{E}_i^{\mathrm{local}}|^2
+\label{eq:Upol}
+\end{equation}
+
+where $\alpha_i$ is the polarisability proxy (in~$\Ang^3$) from
+\type{QMDescriptor}, and $\mathbf{E}_i^{\mathrm{local}}$ is the
+local electric field at bead~$i$ from all neighbours.
+
+\subsubsection{Decay Dissipation:
+  \texorpdfstring{$U_{\mathrm{decay}}$}{U\_decay}}
+
+Energy stored in the slow-state relaxation dynamics that has not yet
+dissipated to steady state:
+
+\begin{equation}
+U_{\mathrm{decay}} = -\frac{1}{\tau}\sum_i
+  \bigl(f_i - \eta_i\bigr)^2
+\label{eq:Udecay}
+\end{equation}
+
+where $f_i$ is the target function $f(\hat\rho_i, \hat P_{2,i})$
+and $\eta_i$ is the current slow state.  This term vanishes at
+convergence ($f_i = \eta_i$ for all~$i$).
+
+An additional pairwise decay-coupled term captures interfacial
+dissipation from $\eta$-mismatch between neighbouring beads:
+
+\begin{equation}
+U_{\mathrm{decay}}^{\mathrm{coupled}}
+= -\gamma_d \sum_{i < j}
+  |\Delta\eta_{ij}|\cdot S_{\mathrm{sw}}(r_{ij};\, r_c, \delta)
+\label{eq:Udecay_coupled}
+\end{equation}
+
+where $S_{\mathrm{sw}}$ is the smooth switching function and
+$\Delta\eta_{ij} = \eta_i - \eta_j$.  Pairs with mismatched
+$\eta$ (one ordered, one disordered) experience a dissipative
+coupling that drives them toward compatible states — the CG
+equivalent of interfacial energy at domain boundaries.
+
+\subsubsection{Environment-Responsive Coupling:
+  \texorpdfstring{$U_{\mathrm{resp}}$}{U\_resp}}
+
+The excess energy arising from environment modulation — the difference
+between the modulated and unmodulated interaction:
+
+\begin{equation}
+U_{\mathrm{resp}} = \sum_{i < j}\sum_k
+  \bigl(g_k(\bar\eta_{ij}) - 1\bigr)\cdot U_{ij,k}^{\mathrm{bare}}
+= \sum_{i < j}\sum_k
+  \gamma_k\,\bar\eta_{ij}\cdot U_{ij,k}^{\mathrm{bare}}
+\label{eq:Uresp}
+\end{equation}
+
+where the sum over $k$ runs over channels
+$\{\mathrm{steric},\,\mathrm{elec},\,\mathrm{disp}\}$
+and $U_{ij,k}^{\mathrm{bare}}$ is the unmodulated base interaction.
+
+\subsubsection{External Field:
+  \texorpdfstring{$U_{\mathrm{ext}}$}{U\_ext}}
+
+Coupling to an externally imposed field (electric, magnetic, gravitational,
+or confinement potential):
+
+\begin{equation}
+U_{\mathrm{ext}} = \sum_i V_{\mathrm{ext}}(\mathbf{R}_i)
+\label{eq:Uext}
+\end{equation}
+
+This channel is a placeholder for future extensions.  Currently
+$U_{\mathrm{ext}} = 0$ in all simulations.
+
+\subsection{Energy Decomposition Diagnostic}
+
+The \type{EnergyDecomposition} struct provides per-channel access
+to all terms at every step.  The total is reconstructed additively:
+
+\begin{equation}
+U_{\mathrm{tot}} = \sum_{k=0}^{7} U_k
+\label{eq:Utot_sum}
+\end{equation}
+
+where each $U_k$ is tagged with an \type{EnergyChannel} enum.
+Implementation: \file{coarse\_grain/theory/energy\_decomposition.hpp}.
+
+\subsection{Mapping to Implementation}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{lllX}
+\toprule
+\textbf{Channel} & \textbf{Tag} & \textbf{6+9 Unit} & \textbf{Source} \\
+\midrule
+$U_{\mathrm{vdW}}$   & \type{VdW}      & S4, B9 & LJ 12-6 + $g_d$ \\
+$U_{\mathrm{Coul}}$  & \type{Coulomb}  & S4, B8 & Coulomb + $g_e$ \\
+$U_{\mathrm{steric}}$& \type{Steric}   & S4, B7 & SH steric kernel + $g_s$ \\
+$U_{\mathrm{orient}}$& \type{Orient}   & B4     & SH overlap integral \\
+$U_{\mathrm{pol}}$   & \type{Pol}      & QM L0  & $-\tfrac{1}{2}\alpha|\mathbf{E}|^2$ \\
+$U_{\mathrm{decay}}$ & \type{Decay}    & B6     & $\eta$-relaxation + coupled \\
+$U_{\mathrm{resp}}$  & \type{Resp}     & B7--B9 & $(g_k - 1)\cdot U^{\mathrm{bare}}$ \\
+$U_{\mathrm{ext}}$   & \type{External} & —      & Future placeholder \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+
+% ========================================================================
+% §3.3  PAIRWISE MIXED INTERACTION STRUCTURE
+% ========================================================================
+\section{Pairwise Mixed Interaction Structure}
+\label{sec:pairwise}
+
+\subsection{Per-Pair Decomposition}
+
+Each pairwise interaction between beads $i$ and $j$ of species
+$x, y \in \{a, b\}$ is decomposed into five terms:
+
+\begin{equation}
+\boxed{
+U_{ij}^{xy}
+= U_{ij,\mathrm{steric}}^{xy}
++ U_{ij,\mathrm{elec}}^{xy}
++ U_{ij,\mathrm{disp}}^{xy}
++ U_{ij,\mathrm{orient}}^{xy}
++ U_{ij,\mathrm{decay\text{-}coupled}}^{xy}
+}
+\qquad x, y \in \{a, b\}
+\label{eq:Uij_xy}
+\end{equation}
+
+\subsection{Channel Formulas}
+
+\subsubsection{Steric Channel}
+
+The steric interaction is the SH-expanded overlap with
+environment-modulated kernel:
+
+\begin{equation}
+U_{ij,\mathrm{steric}}^{xy}
+= \sum_{\ell=0}^{\ell_{\max}}
+  K_s(\ell, r_{ij})\cdot
+  g_s(\bar\eta_{ij})\cdot
+  \sum_{m=-\ell}^{\ell} c_{\ell m}^{(s,x,i)}\,\tilde{c}_{\ell m}^{(s,y,j)}
+\label{eq:Uij_steric}
+\end{equation}
+
+where $\tilde{c}$ denotes coefficients of bead~$j$ rotated into the
+frame of bead~$i$ via the Wigner D-matrix, and
+$g_s = 1 + \gamma_s\cdot\bar\eta_{ij}$ is the steric modulation factor.
+
+\subsubsection{Electrostatic Channel}
+
+\begin{equation}
+U_{ij,\mathrm{elec}}^{xy}
+= \sum_{\ell=0}^{\ell_{\max}}
+  K_e(\ell, r_{ij})\cdot
+  g_e(\bar\eta_{ij})\cdot
+  \sum_{m=-\ell}^{\ell} c_{\ell m}^{(e,x,i)}\,\tilde{c}_{\ell m}^{(e,y,j)}
+\label{eq:Uij_elec}
+\end{equation}
+
+The electrostatic kernel $K_e(\ell, r)$ decays as $r^{-(2\ell+1)}$
+for the multipole expansion and as $r^{-1}$ for the monopole.
+The modulation $g_e < 1$ in dense environments (screening).
+
+\subsubsection{Dispersion Channel}
+
+\begin{equation}
+U_{ij,\mathrm{disp}}^{xy}
+= \sum_{\ell=0}^{\ell_{\max}}
+  K_d(\ell, r_{ij})\cdot
+  g_d(\bar\eta_{ij})\cdot
+  \sum_{m=-\ell}^{\ell} c_{\ell m}^{(d,x,i)}\,\tilde{c}_{\ell m}^{(d,y,j)}
+\label{eq:Uij_disp}
+\end{equation}
+
+The dispersion kernel $K_d(\ell, r)$ has $r^{-6}$ leading order.
+Enhancement under ordering: $g_d > 1$ when $\bar\eta > 0$.
+
+\subsubsection{Orientational Channel}
+
+\begin{equation}
+U_{ij,\mathrm{orient}}^{xy}
+= \lambda_{\mathrm{orient}}\cdot
+  \sum_{k\in\{s,e,d\}}
+  \sum_{\ell,m} c_{\ell m}^{(k,x,i)}\,\tilde{c}_{\ell m}^{(k,y,j)}
+  \cdot w_\ell(r_{ij})
+\label{eq:Uij_orient}
+\end{equation}
+
+This is the pure orientational overlap contribution, summing the SH
+dot products across all channels with distance-dependent weights
+$w_\ell(r) = S_{\mathrm{sw}}(r;\, r_c, \delta)$.
+
+\subsubsection{Decay-Coupled Channel}
+
+\begin{equation}
+U_{ij,\mathrm{decay\text{-}coupled}}^{xy}
+= -\gamma_d\cdot |\eta_i - \eta_j|\cdot S_{\mathrm{sw}}(r_{ij};\, r_c, \delta)
+\label{eq:Uij_decay}
+\end{equation}
+
+This captures the dissipative penalty for $\eta$-mismatch across an
+interface, driving neighbouring beads toward coherent internal states.
+
+\subsection{Species Mixing Rules}
+
+For pairs of different species $x \neq y$, the interaction parameters
+follow the standard combining rules:
+
+\begin{align}
+\sigma_{xy} &= \tfrac{1}{2}(\sigma_x + \sigma_y)
+  &\text{(Lorentz rule)} \label{eq:lorentz} \\
+\varepsilon_{xy} &= \sqrt{\varepsilon_x \cdot \varepsilon_y}
+  &\text{(Berthelot rule)} \label{eq:berthelot}
+\end{align}
+
+For metallic systems, the alloy proxy uses Vegard's law:
+
+\begin{equation}
+X_{\mathrm{alloy}} = (1 - x_B)\,X_A + x_B\,X_B
+\label{eq:vegard}
+\end{equation}
+
+for properties $X \in \{a_0,\, M,\, E_{\mathrm{coh}},\, \mathrm{CN}_{\mathrm{bulk}}\}$.
+
+\subsection{Modulation Invariant}
+
+The modulation factor must preserve the sign of the base kernel:
+
+\begin{equation}
+|1 + \gamma_k \cdot \bar\eta| > 0
+\qquad \forall\; k \in \{s, e, d\},\;\; \bar\eta \in [0, 1]
+\label{eq:modulation_invariant}
+\end{equation}
+
+This is enforced numerically with a floor of $10^{-10}$.
+
+\subsection{Diagnostic Record}
+
+The \type{PairInteraction} struct carries all five energy terms,
+the three modulation factors $g_s, g_e, g_d$, the mean $\bar\eta$,
+the separation $r_{ij}$, and the species tags $x, y$.  Every pairwise
+interaction is individually inspectable.
+
+Implementation: \file{coarse\_grain/theory/energy\_decomposition.hpp}.
+
+
+% ========================================================================
+% §T.1  INTERACTION GRAPH
+% ========================================================================
+\section{Interaction Graph}
+\label{sec:graph}
+
+\subsection{Graph Definition}
+
+The bead system defines an undirected interaction graph:
+
+\begin{equation}
+\boxed{G = (V, E), \qquad |V| = N}
+\label{eq:graph}
+\end{equation}
+
+where $V = \{1, 2, \ldots, N\}$ is the vertex set (one vertex per bead)
+and $E \subseteq \binom{V}{2}$ is the edge set, determined by spatial
+proximity.
+
+\subsection{Adjacency}
+
+The adjacency matrix $\mathbf{A} \in \{0, 1\}^{N \times N}$ is defined by:
+
+\begin{equation}
+A_{ij} = \begin{cases}
+  1 & \text{if } (i, j) \in E \\[3pt]
+  0 & \text{if } (i, j) \notin E
+\end{cases}
+\label{eq:adjacency}
+\end{equation}
+
+An edge exists between beads $i$ and $j$ if and only if they are within
+the interaction cutoff:
+
+\begin{equation}
+(i, j) \in E \;\;\Longleftrightarrow\;\;
+  |\mathbf{R}_i - \mathbf{R}_j| < r_{\mathrm{cut}}
+\label{eq:edge_criterion}
+\end{equation}
+
+For weighted graphs, $A_{ij}$ is replaced by the switching function:
+
+\begin{equation}
+A_{ij}^{(w)} = S_{\mathrm{sw}}(r_{ij};\, r_c, \delta)
+\label{eq:weighted_adj}
+\end{equation}
+
+\subsection{Degree}
+
+The degree of vertex $i$ is the number of edges incident to it:
+
+\begin{equation}
+\deg(i) = \sum_{j=1}^{N} A_{ij}
+\label{eq:degree}
+\end{equation}
+
+This maps directly to the coordination number $C_i$ from the
+environment-responsive bead state:
+
+\begin{equation}
+C_i \equiv \deg(i)
+\label{eq:C_is_degree}
+\end{equation}
+
+\subsection{Degree Matrix and Graph Laplacian}
+
+The degree matrix is the diagonal matrix of degrees:
+
+\begin{equation}
+\mathbf{D} = \diag\bigl(\deg(1),\, \deg(2),\, \ldots,\, \deg(N)\bigr)
+\label{eq:degree_matrix}
+\end{equation}
+
+The combinatorial graph Laplacian is:
+
+\begin{equation}
+\boxed{\mathbf{L} = \mathbf{D} - \mathbf{A}}
+\label{eq:laplacian}
+\end{equation}
+
+with entries:
+
+\begin{equation}
+L_{ij} = \begin{cases}
+  \deg(i) & \text{if } i = j \\[3pt]
+  -A_{ij} & \text{if } i \neq j
+\end{cases}
+\label{eq:laplacian_entries}
+\end{equation}
+
+\subsection{Spectral Properties}
+
+The eigenvalues $\lambda_1 \leq \lambda_2 \leq \cdots \leq \lambda_N$
+of $\mathbf{L}$ characterise the connectivity of the graph:
+
+\begin{itemize}
+\item $\lambda_1 = 0$ always (eigenvector $\mathbf{1}$, the constant vector).
+\item The multiplicity of $\lambda = 0$ equals the number of connected
+      components.
+\item $\lambda_2 > 0$ if and only if $G$ is connected.
+      $\lambda_2$ is the \textbf{algebraic connectivity} (Fiedler value).
+\item $\tr(\mathbf{L}) = \sum_i \deg(i) = 2|E|$.
+\end{itemize}
+
+For the interaction graph, the Fiedler value measures how strongly the
+bead system is connected.  A small $\lambda_2$ indicates a system close
+to fragmentation (near-critical domain boundary).
+
+\subsection{Graph Diagnostics}
+
+The \type{GraphDiagnostics} struct provides:
+
+\begin{center}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Quantity} & \textbf{Formula} & \textbf{Physical meaning} \\
+\midrule
+$|V|$           & $N$                        & Bead count \\
+$|E|$           & edge count                 & Interaction pair count \\
+$\langle k\rangle$ & $2|E|/N$                & Mean coordination \\
+$\max(k)$       & $\max_i \deg(i)$           & Most connected bead \\
+$\Var(k)$       & sample variance of degrees & Structural heterogeneity \\
+$\langle r\rangle$ & mean $r_{ij}$ over $E$  & Mean interaction distance \\
+$r_{\min}$      & $\min r_{ij}$              & Closest pair \\
+$r_{\max}$      & $\max r_{ij}$              & Edge at cutoff boundary \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Implementation: \file{coarse\_grain/theory/graph\_topology.hpp}.
+
+
+% ========================================================================
+% §T.2  MATERIAL KERNEL VECTOR
+% ========================================================================
+\section{Material Kernel Vector}
+\label{sec:kernel}
+
+\subsection{Definition}
+
+The material kernel vector $\mathbf{M}_k$ is the five-component
+per-bead (or per-domain) representation that encodes the essential
+material identity:
+
+\begin{equation}
+\boxed{
+\mathbf{M}_k
+= \begin{pmatrix}
+  \phi_k \\[3pt]
+  \psi_k \\[3pt]
+  \chi_k \\[3pt]
+  \omega_k \\[3pt]
+  E_k
+\end{pmatrix}
+\in \mathbb{R}^5
+}
+\label{eq:Mk}
+\end{equation}
+
+\subsection{Component Definitions}
+
+\subsubsection{Electrostatic Potential \texorpdfstring{$\phi_k$}{φ\_k}}
+
+The electrostatic potential at the bead centre, from the Coulombic field
+of all neighbours modulated by the environment coupling:
+
+\begin{equation}
+\phi_k = \sum_{j \neq k}
+  k_e \, \frac{q_j \cdot g_e(\bar\eta_{kj})}{r_{kj}}
+\qquad [\kcal/e]
+\label{eq:phi}
+\end{equation}
+
+Source: \field{QMDescriptor::phi\_elec} or, in the metal-registry
+fallback, the work function $\varphi$ of the element.
+
+\subsubsection{Structural Coherence
+  \texorpdfstring{$\psi_k$}{ψ\_k}}
+
+The slow-state variable encoding the degree of structural order
+attained by the bead through relaxation dynamics:
+
+\begin{equation}
+\psi_k = \eta_k \in [0, 1]
+\label{eq:psi}
+\end{equation}
+
+where $\eta_k$ is governed by the first-order relaxation equation:
+
+\begin{equation}
+\frac{d\eta_k}{dt} = \frac{f_k - \eta_k}{\tau}
+\label{eq:eta_ode}
+\end{equation}
+
+At convergence, $\psi_k \to f_k = \alpha\hat\rho_k + \beta\hat P_{2,k}$.
+
+\subsubsection{Electronegativity
+  \texorpdfstring{$\chi_k$}{χ\_k}}
+
+The electronegativity of the bead on the Pauling scale, encoding
+chemical identity and electron-drawing power:
+
+\begin{equation}
+\chi_k = \bar\chi_{\mathrm{atoms}} = \frac{1}{N_{\mathrm{atoms}}}
+  \sum_{a \in \mathrm{bead}\;k} \chi_a^{\mathrm{Pauling}}
+\label{eq:chi}
+\end{equation}
+
+Source: \field{QMDescriptor::chi\_mean} or
+\field{MetalRecord::electronegativity\_pauling}.
+
+\subsubsection{Orbital Overlap
+  \texorpdfstring{$\omega_k$}{ω\_k}}
+
+The orbital overlap proxy, measuring the degree of covalent bonding
+character in the bead's local neighbourhood:
+
+\begin{equation}
+\omega_k = \frac{1}{N_{\mathrm{nbr}}}
+  \sum_{j \in \mathrm{nbr}(k)}
+  \exp\!\left(-\frac{r_{kj}}{r_{\mathrm{overlap}}}\right)
+  \cdot \frac{\chi_k \cdot \chi_j}{\chi_k + \chi_j}
+\qquad \in [0, 1]
+\label{eq:omega}
+\end{equation}
+
+where $r_{\mathrm{overlap}} = \frac{1}{2}(\sigma_k + \sigma_j)$ is the
+mean LJ radius.
+Source: \field{QMDescriptor::omega\_overlap}.
+
+\subsubsection{Local Energy Density
+  \texorpdfstring{$E_k$}{E\_k}}
+
+The per-bead share of the total potential energy:
+
+\begin{equation}
+E_k = \frac{U_{\mathrm{tot}}}{N}
+\qquad [\kcal]
+\label{eq:Ek}
+\end{equation}
+
+This is the mean-field approximation.  A pair-resolved variant assigns:
+
+\begin{equation}
+E_k^{\mathrm{pair}} = \frac{1}{2}\sum_{j \neq k}
+  U_{kj}^{\mathrm{tot}}
+\label{eq:Ek_pair}
+\end{equation}
+
+\subsection{Properties of \texorpdfstring{$\mathbf{M}_k$}{M\_k}}
+
+\begin{enumerate}
+\item \textbf{Deterministic}: computed entirely from CG state +
+      registry data.  No stochastic sampling.
+\item \textbf{Low-dimensional}: 5 real-valued components — tractable
+      for comparison, clustering, and visualisation.
+\item \textbf{Rotationally invariant}: all components are scalars;
+      $\mathbf{M}_k$ is independent of the global coordinate frame.
+\item \textbf{Basis for comparison}: the Euclidean distance
+      $\|\mathbf{M}_a - \mathbf{M}_b\|_2$ measures material
+      dissimilarity between two beads or domains.
+\item \textbf{Basis for classification}: clustering in
+      $\mathbb{R}^5$ identifies material families.
+\end{enumerate}
+
+\subsection{Distance and Similarity}
+
+The Euclidean distance between two kernels is:
+
+\begin{equation}
+d(\mathbf{M}_a, \mathbf{M}_b)
+= \left[
+  (\phi_a - \phi_b)^2
++ (\psi_a - \psi_b)^2
++ (\chi_a - \chi_b)^2
++ (\omega_a - \omega_b)^2
++ (E_a - E_b)^2
+\right]^{1/2}
+\label{eq:dist}
+\end{equation}
+
+The cosine similarity is:
+
+\begin{equation}
+\cos\theta = \frac{\mathbf{M}_a \cdot \mathbf{M}_b}
+  {\|\mathbf{M}_a\|\cdot\|\mathbf{M}_b\|}
+\label{eq:cosine}
+\end{equation}
+
+The \type{MaterialDistance} struct provides both measures plus
+per-component differences for diagnostic inspection.
+
+\subsection{Domain Aggregation}
+
+For a Level~3 domain containing $n$ member beads, the aggregate
+kernel is the arithmetic mean:
+
+\begin{equation}
+\mathbf{M}_{\mathrm{domain}} = \frac{1}{n}\sum_{k=1}^{n} \mathbf{M}_k
+\label{eq:Mdomain}
+\end{equation}
+
+This is the kernel vector that flows from L3 to the macro-DM layer.
+
+\subsection{Kernel Spectrum}
+
+The system-wide distribution of kernels is characterised by:
+
+\begin{align}
+\langle\mathbf{M}\rangle &= \frac{1}{N}\sum_{k=1}^{N} \mathbf{M}_k
+  &\text{(component-wise mean)} \label{eq:Mmean} \\
+\Var(\mathbf{M}) &= \frac{1}{N-1}\sum_{k=1}^{N}
+  (\mathbf{M}_k - \langle\mathbf{M}\rangle)
+  \odot
+  (\mathbf{M}_k - \langle\mathbf{M}\rangle)
+  &\text{(component-wise variance)} \label{eq:Mvar}
+\end{align}
+
+where $\odot$ denotes the Hadamard (element-wise) product.
+
+A low variance in all components indicates a homogeneous material;
+high variance in $\psi$ (structural coherence) indicates coexisting
+ordered and disordered domains.
+
+Implementation: \file{coarse\_grain/theory/material\_kernel.hpp}.
+
+
+% ========================================================================
+% §T.3  INTERCONNECTION MAP
+% ========================================================================
+\section{Interconnection of Formalisms}
+\label{sec:interconnection}
+
+The four formalisms developed in this document are not independent;
+they form a connected theoretical infrastructure:
+
+\begin{center}
+\begin{tabular}{lcl}
+\textbf{Formalism} & $\longrightarrow$ & \textbf{Consumer} \\
+\midrule
+$G = (V, E)$ & provides & edge iteration for $\sum_{i < j}$ in §\ref{sec:energy} \\
+$U_{ij}^{xy}$ & provides & per-pair energy for $E_k$ in $\mathbf{M}_k$ \\
+$\deg(i)$     & provides & coordination $C_i$ for environment state \\
+$\eta_i$      & provides & $\psi_k$ component of $\mathbf{M}_k$ \\
+$\mathbf{M}_k$ & provides & input to L3 domain aggregation \\
+$\mathbf{M}_{\mathrm{domain}}$ & provides & input to macro-DM \\
+\end{tabular}
+\end{center}
+
+\noindent The data flow is:
+
+\begin{equation}
+\text{Atomistic}
+\;\xrightarrow{\text{CG map}}\;
+G = (V,E)
+\;\xrightarrow{\text{§3.3 pairs}}\;
+U_{\mathrm{tot}}
+\;\xrightarrow{\text{§T.2}}\;
+\mathbf{M}_k
+\;\xrightarrow{\text{L3 agg}}\;
+\mathbf{M}_{\mathrm{domain}}
+\;\xrightarrow{\text{handoff}}\;
+\text{Macro-DM}
+\label{eq:dataflow}
+\end{equation}
+
+Every intermediate is explicitly inspectable.  No hidden state
+propagates through this pipeline.
+
+
+% ========================================================================
+% REFERENCES
+% ========================================================================
+\newpage
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=2em]
+\item Rappé, A.~K., Casewit, C.~J., Colwell, K.~S., Goddard, W.~A.,
+      Skiff, W.~M.,
+      ``UFF, a Full Periodic Table Force Field for Molecular Mechanics
+      and Molecular Dynamics Simulations,''
+      \textit{J.~Am.\ Chem.\ Soc.}\ \textbf{114}, 10024--10035 (1992).
+
+\item Kittel, C., \textit{Introduction to Solid State Physics},
+      8th~ed.\ (Wiley, 2005).
+
+\item CRC \textit{Handbook of Chemistry and Physics},
+      105th~ed.\ (CRC Press, 2024).
+
+\item Tyson, W.~R.\ \& Miller, W.~A.,
+      ``Surface Free Energies of Solid Metals,''
+      \textit{Surf.\ Sci.}\ \textbf{62}, 267--276 (1977).
+
+\item Baletto, F.\ \& Ferrando, R.,
+      ``Structural Properties of Nanoclusters,''
+      \textit{Rev.\ Mod.\ Phys.}\ \textbf{77}, 371--423 (2005).
+
+\item NIST XCOM Photon Cross Section Database,
+      \url{https://physics.nist.gov/PhysRefData/Xcom/html/xcom1.html}.
+
+\item Robinson, M.~T.\ \& Torrens, I.~M.,
+      ``Computer Simulation of Atomic-Displacement Cascades in Solids,''
+      \textit{Phys.\ Rev.\ B}\ \textbf{9}, 5008--5024 (1974).
+      (Kinchin--Pease / NRT displacement model.)
+
+\item Debye, P.,
+      ``Zerstreuung von Röntgenstrahlen,''
+      \textit{Ann.\ Phys.}\ \textbf{351}, 809--823 (1915).
+      (Debye scattering equation.)
+
+\item Fiedler, M.,
+      ``Algebraic Connectivity of Graphs,''
+      \textit{Czech.\ Math.\ J.}\ \textbf{23}, 298--305 (1973).
+\end{enumerate}
+
+
+\end{document}

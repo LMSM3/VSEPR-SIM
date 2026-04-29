@@ -1,0 +1,19 @@
+{
+  "formula": "C10H22",
+  "seed": 357,
+  "tier": "fast",
+  "num_atoms": 32,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 9984290.333181,
+  "energy_per_atom": 312009.072912,
+  "rms_force": 22582005.650319,
+  "max_force": 22582005.650319,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.816800,
+  "timestamp": "2026-03-28T13:07:19",
+  "xyz_file": "benchmark_v2\fast\structures\C10H22_s357.xyz"
+}

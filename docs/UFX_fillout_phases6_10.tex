@@ -1,0 +1,1281 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{tocloft}
+\usepackage{multicol}
+
+% Colors
+\definecolor{rulecolor}{RGB}{40,40,40}
+\definecolor{phasecolor}{RGB}{20,80,140}
+\definecolor{warncolor}{RGB}{160,40,40}
+\definecolor{codebackground}{RGB}{246,246,246}
+\definecolor{codekeyword}{RGB}{0,80,160}
+\definecolor{codestring}{RGB}{140,40,0}
+\definecolor{codecomment}{RGB}{80,110,80}
+\definecolor{tiercolor}{RGB}{60,120,60}
+\definecolor{fillcolor}{RGB}{100,60,140}
+
+\titleformat{\section}{\large\bfseries\color{phasecolor}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{phasecolor!70!black}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{}{0em}{}
+
+\lstset{
+  backgroundcolor=\color{codebackground},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekeyword}\bfseries,
+  stringstyle=\color{codestring},
+  commentstyle=\color{codecomment}\itshape,
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{rulecolor!30},
+  xleftmargin=8pt,
+  xrightmargin=8pt,
+  aboveskip=8pt,
+  belowskip=8pt,
+  showstringspaces=false,
+  language=C++
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\texttt{UFX\_AUTO\_2} --- Database Fillout Phases 6--10}
+\fancyhead[R]{\small VSEPR-SIM / v5 beta9}
+\fancyfoot[C]{\small\thepage}
+
+\newmdenv[
+  linecolor=warncolor,
+  linewidth=1pt,
+  leftmargin=0pt, rightmargin=0pt,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  backgroundcolor=warncolor!4
+]{rulebox}
+
+\newmdenv[
+  linecolor=phasecolor,
+  linewidth=1pt,
+  leftmargin=0pt, rightmargin=0pt,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  backgroundcolor=phasecolor!4
+]{phasebox}
+
+\newmdenv[
+  linecolor=tiercolor,
+  linewidth=1pt,
+  leftmargin=0pt, rightmargin=0pt,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  backgroundcolor=tiercolor!4
+]{tierbox}
+
+\newmdenv[
+  linecolor=fillcolor,
+  linewidth=1pt,
+  leftmargin=0pt, rightmargin=0pt,
+  innerleftmargin=10pt, innerrightmargin=10pt,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  backgroundcolor=fillcolor!4
+]{fillbox}
+
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\setlength{\cftbeforesecskip}{2pt}
+
+% Relax overfull box tolerance for long monospace lines in listings/tables.
+\sloppy
+\setlength{\emergencystretch}{3em}
+
+\begin{document}
+
+% =========================================================
+% TITLE
+% =========================================================
+\begin{center}
+  {\LARGE\bfseries UFX\_AUTO\_2}\\[4pt]
+  {\large\bfseries Database Fillout Work Order: Phases 6--10}\\[6pt]
+  {\normalsize VSEPR-SIM $\cdot$ v5 beta9 target}\\[3pt]
+  {\small\texttt{Prerequisite: tiny/medium continual run stable (Phases 2--5 complete)}}\\[3pt]
+  {\small\textit{Phase 2 fills the skeleton. Phases 6--10 give it something to say.}}
+\end{center}
+
+\vspace{4pt}
+\hrule height 0.8pt
+\vspace{10pt}
+
+\tableofcontents
+\newpage
+
+% =========================================================
+\section{Purpose and Context}
+% =========================================================
+
+Phase 2 generated the atomistic identity and force-field spine.  It proved the
+generation loop, the validation path, the web cache, and the continual harness.
+After Phase 2, the database holds approximately 100 unique \texttt{material\_key}
+records before the axis space saturates, because only five axes vary:
+\textit{element}, \textit{oxidation\_state}, \textit{coordination},
+\textit{geometry}, and \textit{phase}.
+
+\begin{rulebox}
+Phases 6--10 are not a rewrite.  They are additive.  Each phase extends the
+existing \texttt{UFXMaterialRecord}, expands the generation axis space, adds one
+or more generator classes, and wires one or more new CLI sub-commands into the
+existing \texttt{ufx auto2} dispatch chain.  The harness loop does not change.
+\end{rulebox}
+
+Every phase follows the same template as Phase 2:
+
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item Extend \texttt{AxisConfig} with new sampling axes
+  \item Implement a \texttt{*Generator} class that fills the corresponding record block
+  \item Extend \texttt{LocalSanityChecker} with tier-appropriate checks
+  \item Insert block data into \texttt{property\_values} with correct \texttt{block\_tier}/\texttt{block\_name}
+  \item Add a CLI sub-command: \texttt{ufx auto2 fill-<tier>}
+  \item Wire into the continual harness cycle after \texttt{randomfill}
+\end{enumerate}
+
+\subsection{Axis space growth by phase}
+
+\begin{center}
+\begin{tabular}{clrr}
+\toprule
+\textbf{Phase} & \textbf{Block} & \textbf{New axes} & \textbf{Approx.\ unique key growth} \\
+\midrule
+2  & Identity + Force-field          & 5   & $\sim$100 \\
+6  & Molecular descriptors           & +4  & $\times$10 \\
+7  & Thermo + EOS                    & +6  & $\times$20 \\
+8  & Crystal / solid-state           & +5  & $\times$30 \\
+9  & Transport + Mechanics           & +6  & $\times$25 \\
+10 & Meta-score active scheduler     & n/a & coverage-driven steering \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{phasebox}
+Phase 10 does not add new record axes.  It steers the sampler toward under-covered
+regions of the combined axis space defined by Phases 2--9.  Without it, the
+continual loop will over-generate common elements at standard conditions and
+under-represent actinides, high-pressure phases, and exotic geometries.
+\end{phasebox}
+
+% =========================================================
+\section{Shared Infrastructure (Review Before Phase 6)}
+% =========================================================
+
+These components are already built and must be understood before extending them.
+
+\subsection{AxisConfig}
+
+\texttt{include/ufx\_auto2/axis\_config.hpp} defines the sampling envelope.
+\texttt{AxisConfig::default\_phase2()} populates five axis vectors.  Phases 6--9
+each call a new static builder, \texttt{AxisConfig::extend\_phase\textit{N}()}, that
+adds axes to an existing config rather than replacing it.
+
+\subsection{AxisSample}
+
+\texttt{include/ufx\_auto2/axis\_config.hpp} also defines \texttt{AxisSample}.
+New axes are added as fields here.  Use \texttt{std::optional<>} for axes that
+are not populated in all phases.
+
+\begin{lstlisting}
+struct AxisSample {
+	// Phase 2 (mandatory)
+	std::string element_family;
+	std::string element;
+	int         oxidation_state;
+	int         coordination;
+	std::string geometry;
+	std::string phase;
+	double      temperature_K;
+	double      pressure_atm;
+	std::string target_property;
+	int         sample_index;
+	uint64_t    seed_used;
+
+	// Phase 6 -- molecular
+	std::optional<std::string> canonical_smiles;
+	std::optional<int>         heavy_atom_count;
+	std::optional<double>      molecular_weight;
+
+	// Phase 7 -- thermo
+	std::optional<double> delta_Hf_kJ_mol;
+	std::optional<double> cp_298_J_mol_K;
+	std::optional<std::string> eos_model;
+
+	// Phase 8 -- crystal
+	std::optional<std::string> space_group;
+	std::optional<double>      lattice_a_angstrom;
+	std::optional<std::string> structure_source;
+
+	// Phase 9 -- transport/mechanics
+	std::optional<double>      strain_rate;
+	std::optional<std::string> test_environment;
+};
+\end{lstlisting}
+
+\subsection{property\_values insert pattern}
+
+Every new block value is inserted via \texttt{ufx\_insert\_property\_value()} using
+the correct \texttt{block\_tier} and \texttt{block\_name} from the table below.
+State columns (\texttt{temperature\_K}, \texttt{pressure\_Pa}, \texttt{phase})
+are always populated.  Do not leave them at default without intent.
+
+\begin{center}
+\begin{tabular}{clll}
+\toprule
+\textbf{Tier} & \textbf{block\_name} & \textbf{Phase} & \textbf{Example property\_name} \\
+\midrule
+0 & \texttt{identity}    & 2  & \texttt{coordination\_number}, \texttt{geometry\_tag} \\
+1 & \texttt{force\_field} & 2  & \texttt{r1}, \texttt{D1}, \texttt{theta0} \\
+2 & \texttt{molecular}    & 6  & \texttt{molecular\_weight}, \texttt{inchikey} \\
+3 & \texttt{thermo}       & 7  & \texttt{delta\_Hf\_kJ\_mol}, \texttt{cp\_298} \\
+3 & \texttt{eos}          & 7  & \texttt{density\_kg\_m3}, \texttt{viscosity\_Pa\_s} \\
+4 & \texttt{crystal}      & 8  & \texttt{space\_group}, \texttt{density\_g\_cm3} \\
+5 & \texttt{mechanical}   & 9  & \texttt{E\_eff\_GPa}, \texttt{yield\_MPa} \\
+5 & \texttt{transport}    & 9  & \texttt{k\_eff\_W\_mK}, \texttt{diffusivity\_m2\_s} \\
+9 & \texttt{meta}         & 10 & \texttt{weirdness}, \texttt{coverage}, \texttt{composite\_score} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =========================================================
+\section{Phase 6 --- Molecular Descriptor Importer (Tier 2)}
+% =========================================================
+
+\begin{tierbox}
+\textbf{Goal:} attach \texttt{MolecularDescriptorBlock} data to existing generated records,
+validate via PubChem PUG REST, and expand the axis space with molecular-formula
+and structural dimensions.
+\end{tierbox}
+
+\subsection{Why Phase 6 first}
+
+Molecular descriptors are cheap to generate (formula arithmetic) and cheap to
+validate (one PubChem CID lookup).  They act as the first meaningful
+external-reference check after the Phase 5 web cache is warm.  They also unlock
+the Tier 2 sanity filter: a generated \texttt{CH3Br} entry with the wrong
+molecular weight should fail before thermo data is ever computed.
+
+\subsection{New axis dimensions}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{canonical\_smiles} --- sampled from a SMILES vocabulary per element family
+  \item \textbf{heavy\_atom\_count} --- integer 1--20
+  \item \textbf{hbond\_donor\_count} --- integer 0--6
+  \item \textbf{hbond\_acceptor\_count} --- integer 0--8
+\end{itemize}
+
+SMILES are not random strings.  They are drawn from a curated per-element table
+that encodes known coordination/oxidation combinations.  This table lives in
+\texttt{include/ufx\_auto2/smiles\_vocab.hpp}.
+
+\subsection{Generator class: MolecularDescriptorGenerator}
+
+File: \texttt{src/ufx\_auto2/molecular\_descriptor\_generator.cpp}
+
+\begin{lstlisting}
+class MolecularDescriptorGenerator {
+public:
+	MolecularDescriptorGenerator();
+
+	// Fill rec.molecular from axis sample + periodic table data.
+	// Does NOT call the network.  All values are deterministic.
+	void fill(UFXMaterialRecord& rec, const AxisSample& s) const;
+
+	// Compute molecular weight from elements + stoichiometry.
+	static double molecular_weight_from_formula(const std::string& formula);
+
+	// Build a canonical InChIKey approximation from element + oxidation.
+	static std::string inchikey_stub(const std::string& element,
+									 int ox_state,
+									 int coordination);
+private:
+	// Periodic table atomic weights (local; no external lookup).
+	static double atomic_weight_(const std::string& sym) noexcept;
+};
+\end{lstlisting}
+
+The generator fills \texttt{molecular\_formula}, \texttt{molecular\_weight},
+\texttt{exact\_mass}, \texttt{heavy\_atom\_count}, and a stub \texttt{inchikey}.
+It does not attempt SMILES generation from scratch --- that is a Phase 6b concern.
+For Phase 6, SMILES is either sampled from the vocabulary table or left empty.
+
+\subsection{LocalSanityChecker extension}
+
+Add the following Tier 2 checks to \texttt{LocalSanityChecker::check()}:
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{molecular.molecular\_weight > 0} --- must be positive
+  \item \texttt{molecular.heavy\_atom\_count >= 1} --- at least one heavy atom
+  \item molecular weight is consistent with formula (within 5\% tolerance)
+  \item \texttt{inchikey} is non-empty if identity block is fully populated
+\end{itemize}
+
+Failure mode tag: \texttt{molecular\_descriptor\_invalid}.
+
+\subsection{property\_values rows written by fill-molecular}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{property\_name} & \textbf{block\_tier} & \textbf{units} & \textbf{source} \\
+\midrule
+\texttt{molecular\_weight}       & 2 & g/mol    & \texttt{periodic\_table\_arithmetic} \\
+\texttt{exact\_mass}             & 2 & g/mol    & \texttt{periodic\_table\_arithmetic} \\
+\texttt{heavy\_atom\_count}      & 2 & count    & \texttt{formula\_parse} \\
+\texttt{hbond\_donor\_count}     & 2 & count    & \texttt{smiles\_count} \\
+\texttt{hbond\_acceptor\_count}  & 2 & count    & \texttt{smiles\_count} \\
+\texttt{inchikey}                & 2 & string   & \texttt{inchi\_stub} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Web cross-check (validate-web extension)}
+
+The Phase 5 PubChem fetcher already retrieves \texttt{molecular\_weight} and
+\texttt{inchikey}.  Phase 6 adds a comparison step inside
+\texttt{WebValidator::validate\_batch()}:
+
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item Lookup PubChem CID by formula or element symbol
+  \item Compare \texttt{MolecularWeight} response field vs.\ stored
+		\texttt{property\_values} row (block=\texttt{molecular}, property=\texttt{molecular\_weight})
+  \item If relative error $> 2\%$: write \texttt{validation\_records} row with
+		\texttt{passed=0}, note \texttt{molecular\_weight\_mismatch}
+  \item If CID not found: write \texttt{passed=1}, note \texttt{web\_missing}, confidence capped 0.85
+\end{enumerate}
+
+\subsection{CLI sub-command}
+
+\begin{lstlisting}[language={}]
+vsepr-ufx ufx auto2 fill-molecular --batch 500 --db ufx_auto2.sqlite
+vsepr-ufx ufx auto2 fill-molecular --batch 500 --db ufx_auto2.sqlite --verbose
+\end{lstlisting}
+
+Processes records where \texttt{block\_name='molecular'} rows are absent in
+\texttt{property\_values}.  Writes molecular descriptor rows, then queues
+for web cross-check on the next \texttt{validate-web} pass.
+
+\subsection{Continual harness integration}
+
+Insert after \texttt{randomfill}, before \texttt{validate}:
+
+\begin{lstlisting}[language={}]
+# Cycle order with Phase 6:
+randomfill  --count $BatchSize
+fill-molecular --batch $BatchSize
+validate    --batch $ValidateBatch
+validate-web --batch $WebBatch
+promote     --min-score $MinScore
+audit
+\end{lstlisting}
+
+\subsection{Audit success criteria after Phase 6}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{Total property values} nonzero and growing each cycle
+  \item \texttt{Missing provenance = 0} (fill-molecular writes provenance rows)
+  \item At least one \texttt{molecular\_weight\_mismatch} in rejected reasons
+		(confirms the cross-check fires)
+  \item Web validation: \texttt{web missing} acceptable, \texttt{web pass} nonzero
+\end{itemize}
+
+% =========================================================
+\section{Phase 7 --- Thermo + EOS Blocks (Tier 3)}
+% =========================================================
+
+\begin{tierbox}
+\textbf{Goal:} populate \texttt{ThermoBlock} and \texttt{EOSBlock} for generated records
+using NIST WebBook as the primary external reference, periodic trend heuristics
+as the generation fallback, and T/P-aware property curves stored in
+\texttt{property\_values}.
+\end{tierbox}
+
+\subsection{Axis expansion}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{delta\_Hf\_kJ\_mol} --- sampled from heuristic periodic trend ranges
+  \item \textbf{cp\_298\_J\_mol\_K} --- seed value; full curve generated from Shomate heuristic
+  \item \textbf{eos\_model} --- one of: \texttt{ideal}, \texttt{vdW}, \texttt{PR}, \texttt{tabular}
+  \item \textbf{temperature\_range} --- (T\_min, T\_max) bracket for the property curve
+  \item \textbf{phase\_transition\_flag} --- boolean; indicates whether the record spans a
+		phase boundary in the sample range
+  \item \textbf{vapor\_pressure\_seed} --- log10 seed value at 298 K
+\end{itemize}
+
+\subsection{Generator class: ThermoGenerator}
+
+File: \texttt{src/ufx\_auto2/thermo\_generator.cpp}
+
+\begin{lstlisting}
+class ThermoGenerator {
+public:
+	ThermoGenerator();
+
+	// Populate rec.thermo using:
+	//   1. Element-family heuristic ranges for Hf, Cp, Tb, Tm
+	//   2. Shomate polynomial estimate (6 coefficients from group/period)
+	//   3. EOS parameter estimates from critical property correlations
+	void fill(UFXMaterialRecord& rec, const AxisSample& s) const;
+
+	// Build a Cp(T) curve from Shomate heuristic in J/(mol K).
+	static PropertyCurve estimate_cp_shomate(int Z,
+											 double T_min_K,
+											 double T_max_K,
+											 int n_points = 20);
+
+	// Estimate critical properties via Lee-Kesler correlations.
+	static void estimate_critical_properties(UFXMaterialRecord& rec) noexcept;
+
+private:
+	// Group/period offsets for Cp seed values.
+	static double cp_seed_(int period, const std::string& family) noexcept;
+	static double Hf_seed_(int Z, int ox_state)                   noexcept;
+};
+\end{lstlisting}
+
+\subsection{Shomate heuristic outline}
+
+The Shomate polynomial is $C_p(T) = A + BT + CT^2 + DT^3 + E/T^2$.
+For Phase 7, coefficients A--E are seeded from a lookup by (period, element family):
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item A$_0$ from monatomic Dulong-Petit limit: $3R \approx 24.9$ J/(mol\,K)
+  \item B, C from polynomial regression offsets per period (stored in a 7-row table)
+  \item D, E are zero for Phase 7 (first-order heuristic only)
+\end{itemize}
+
+This is explicitly labelled \texttt{method\_tag = "shomate\_heuristic\_phase7"} and
+\texttt{confidence = 0.35} in the provenance row.  No false authority.
+
+\subsection{EOS model selection rules}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Condition} & \textbf{EOS assigned} \\
+\midrule
+phase = gas, $T > 2T_c$       & ideal \\
+phase = gas, $T \leq 2T_c$    & Peng-Robinson \\
+phase = liquid                 & Peng-Robinson \\
+phase = solid                  & tabular (density only) \\
+phase = molten\_salt            & Peng-Robinson + salt correction flag \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{NIST WebBook fetcher extension}
+
+The Phase 5 \texttt{NISTFetcher} is extended with two new query modes:
+
+\begin{lstlisting}
+// Fetch Cp(T) series from NIST thermochemical tables.
+WebResponse fetch_cp_curve(const std::string& formula,
+						   double T_min_K, double T_max_K);
+
+// Fetch phase transition temperatures (Tm, Tb).
+WebResponse fetch_phase_transitions(const std::string& formula);
+\end{lstlisting}
+
+Both go through \texttt{CachingFetcher} --- no raw network calls outside the
+decorator.  Cache keys include formula, T\_min, T\_max rounded to 50 K bands.
+
+\subsection{LocalSanityChecker extension (Tier 3)}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{thermo.melting\_point\_K > 0} if phase = solid
+  \item \texttt{thermo.boiling\_point\_K > thermo.melting\_point\_K} if both present
+  \item \texttt{cp\_T} curve has at least 2 points and is monotonically valid
+		(no negative Cp)
+  \item \texttt{delta\_Hf\_298} is in physically plausible range for the element
+		family (actinides: $-1500$ to $+200$ kJ/mol; noble gas: always near 0)
+  \item \texttt{eos.eos\_model} is non-empty
+\end{itemize}
+
+Failure tag: \texttt{thermo\_block\_invalid}.
+
+\subsection{property\_values rows written by fill-thermo}
+
+Thermo properties are stored as multiple rows, one per T/P point on the curve.
+The \texttt{temperature\_K} column is the state variable; \texttt{pressure\_Pa}
+defaults to 101325.0 for standard-state values.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{property\_name} & \textbf{units} & \textbf{note} \\
+\midrule
+\texttt{delta\_Hf\_kJ\_mol}       & kJ/mol        & single row, T=298.15 \\
+\texttt{delta\_Gf\_kJ\_mol}       & kJ/mol        & single row, T=298.15 \\
+\texttt{S\_298\_J\_mol\_K}        & J/(mol K)     & single row, T=298.15 \\
+\texttt{cp}                       & J/(mol K)     & one row per T point \\
+\texttt{melting\_point\_K}        & K             & single row \\
+\texttt{boiling\_point\_K}        & K             & single row \\
+\texttt{critical\_T\_K}           & K             & single row \\
+\texttt{critical\_P\_Pa}          & Pa            & single row \\
+\texttt{acentric\_factor}         & dimensionless & single row \\
+\texttt{density\_kg\_m3}          & kg/m\(^3\)    & one row per (T,P) point \\
+\texttt{viscosity\_Pa\_s}         & Pa s          & one row per (T,P) point \\
+\texttt{thermal\_conductivity\_W\_mK} & W/(m K)  & one row per (T,P) point \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{CLI sub-command}
+
+\begin{lstlisting}[language={}]
+vsepr-ufx ufx auto2 fill-thermo --batch 500 --db ufx_auto2.sqlite
+vsepr-ufx ufx auto2 fill-thermo --batch 500 --nist-validate --db ufx_auto2.sqlite
+\end{lstlisting}
+
+\texttt{--nist-validate} fires NIST WebBook lookups for Tm, Tb, Cp(298) and writes
+comparison rows to \texttt{validation\_records} with \texttt{validator\_id='nist\_thermo'}.
+
+\subsection{Continual harness integration}
+
+\begin{lstlisting}[language={}]
+# Cycle order with Phase 7:
+randomfill
+fill-molecular
+fill-thermo
+validate       --batch $ValidateBatch
+validate-web   --batch $WebBatch
+promote        --min-score $MinScore
+audit
+\end{lstlisting}
+
+\subsection{Audit success criteria after Phase 7}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{Total property values} grows by $\geq 12 \times$ \texttt{BatchSize} per cycle
+		(12 scalar rows + curve points per record)
+  \item \texttt{top rejected reasons} includes \texttt{thermo\_block\_invalid} for a
+		non-zero fraction (confirms the check fires)
+  \item NIST cross-check produces nonzero \texttt{web pass} and \texttt{web missing} counts
+  \item No record reaches \texttt{validate-web} without thermo provenance rows
+\end{itemize}
+
+% =========================================================
+\section{Phase 8 --- Crystal / Material Importer (Tier 4)}
+% =========================================================
+
+\begin{tierbox}
+\textbf{Goal:} attach \texttt{CrystalBlock} data to solid-phase records using
+Materials Project and OQMD as external references, lattice-parameter heuristics
+as fallback, and space-group sampling as a new generation axis.
+\end{tierbox}
+
+\subsection{Scope}
+
+Phase 8 applies only to records where \texttt{phase = solid}.  Gas and liquid
+records skip \texttt{fill-crystal} without failure.  The generator checks
+\texttt{rec.identity.phase == "solid"} before populating anything.
+
+\subsection{Axis expansion}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{space\_group} --- sampled from per-element-family space group frequency tables
+		(e.g., FCC metals favour Fm-3m; hexagonal metals favour P63/mmc)
+  \item \textbf{lattice\_a\_angstrom} --- sampled from empirical radius-coordination correlations
+  \item \textbf{packing\_fraction} --- sampled 0.52 (SC) to 0.74 (FCC/HCP)
+  \item \textbf{energy\_above\_hull\_eV\_atom} --- sampled 0.0 to 0.25 (stability filter)
+  \item \textbf{structure\_source} --- one of: \texttt{generated}, \texttt{mp\_lookup},
+		\texttt{oqmd\_lookup}
+\end{itemize}
+
+\subsection{Generator class: CrystalGenerator}
+
+File: \texttt{src/ufx\_auto2/crystal\_generator.cpp}
+
+\begin{lstlisting}
+class CrystalGenerator {
+public:
+	CrystalGenerator();
+
+	// Populate rec.crystal from axis sample.
+	// Phase: only runs for solid-phase records.
+	// Returns false (no-op) if rec.identity.phase != "solid".
+	bool fill(UFXMaterialRecord& rec, const AxisSample& s) const;
+
+	// Estimate lattice parameter a from element radius + coordination.
+	static double estimate_a_angstrom(int Z,
+									  int coordination,
+									  double ionic_radius_est_angstrom) noexcept;
+
+	// Map coordination number + element family to most probable space group.
+	static std::string probable_space_group(const std::string& family,
+											int coordination) noexcept;
+
+	// Compute unit cell volume from a, b, c, alpha, beta, gamma.
+	static double unit_cell_volume(const Vec3& abc,
+								   const Vec3& angles_deg) noexcept;
+private:
+	// Space group frequency table: family -> vector<(sg, weight)>
+	static const std::vector<std::pair<std::string,double>>&
+		sg_table_(const std::string& family) noexcept;
+};
+\end{lstlisting>
+
+\subsection{Materials Project fetcher}
+
+New file: \texttt{src/ufx\_auto2/materials\_project\_fetcher.cpp}
+
+\begin{lstlisting}
+class MaterialsProjectFetcher : public IWebFetcher {
+public:
+	// Requires MP_API_KEY environment variable.
+	// Falls back to cache-only mode if key not set.
+	explicit MaterialsProjectFetcher(const std::string& api_key = "");
+
+	WebResponse fetch(const WebQuery& q) override;
+
+private:
+	std::string api_key_;
+	std::string build_url_(const WebQuery& q) const;
+	WebResponse parse_response_(const std::string& body,
+								const WebQuery& q) const;
+};
+\end{lstlisting}
+
+\begin{rulebox}
+If \texttt{MP\_API\_KEY} is not set, \texttt{MaterialsProjectFetcher} operates in
+cache-read-only mode.  It will use existing cached responses but not make new
+HTTP requests.  This is the correct offline behavior; it is not an error.
+\end{rulebox}
+
+The fetcher queries:
+\texttt{https://api.materialsproject.org/materials/summary/?formula=\{formula\}\&fields=structure,formation\_energy\_per\_atom,energy\_above\_hull,band\_gap}
+
+Results are cached under \texttt{web\_cache/mp/\{sha256\_key\}.json}.
+
+\subsection{LocalSanityChecker extension (Tier 4)}
+
+Applied only when \texttt{rec.identity.phase == "solid"}:
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{crystal.space\_group} is non-empty
+  \item \texttt{crystal.lattice\_abc\_angstrom.x > 0}
+  \item \texttt{crystal.density\_g\_cm3 > 0}
+  \item \texttt{crystal.packing\_fraction} between 0.10 and 0.82
+  \item \texttt{crystal.energy\_above\_hull\_eV\_atom} between $-0.1$ and $1.5$
+		(large negative values indicate an error in the estimator)
+\end{itemize}
+
+Failure tag: \texttt{crystal\_block\_invalid}.
+
+\subsection{property\_values rows written by fill-crystal}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{property\_name} & \textbf{units} & \textbf{note} \\
+\midrule
+\texttt{space\_group}              & string    & stored as \texttt{value\_text} \\
+\texttt{space\_group\_number}      & ITA int   & stored as \texttt{value\_real} \\
+\texttt{lattice\_a}                & \AA{}     & \\
+\texttt{lattice\_b}                & \AA{}     & \\
+\texttt{lattice\_c}                & \AA{}     & \\
+\texttt{lattice\_alpha\_deg}       & degrees   & \\
+\texttt{unit\_cell\_volume}        & \AA{}$^3$ & \\
+\texttt{density\_g\_cm3}           & g/cm$^3$  & at T=298.15, P=101325 \\
+\texttt{packing\_fraction}         & \textemdash & \\
+\texttt{formation\_energy\_eV\_atom} & eV/atom  & \\
+\texttt{energy\_above\_hull\_eV\_atom} & eV/atom & \\
+\texttt{band\_gap\_eV}             & eV        & \texttt{NaN} if metallic \\
+\texttt{debye\_temperature\_K}     & K         & estimated from elastic modulus \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{CLI sub-command}
+
+\begin{lstlisting}[language={}]
+vsepr-ufx ufx auto2 fill-crystal --batch 500 --db ufx_auto2.sqlite
+vsepr-ufx ufx auto2 fill-crystal --batch 500 --mp-validate --db ufx_auto2.sqlite
+\end{lstlisting}
+
+\texttt{--mp-validate} fires Materials Project API lookups for formation energy and
+space group.  Writes comparison rows to \texttt{validation\_records} with
+\texttt{validator\_id='materials\_project'}.
+
+\subsection{Continual harness integration}
+
+\begin{lstlisting}[language={}]
+# Cycle order with Phase 8:
+randomfill
+fill-molecular
+fill-thermo
+fill-crystal
+validate       --batch $ValidateBatch
+validate-web   --batch $WebBatch
+promote        --min-score $MinScore
+audit
+\end{lstlisting>
+
+\subsection{Audit success criteria after Phase 8}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item Solid-phase records have nonzero \texttt{property\_values} rows with
+		\texttt{block\_name='crystal'}
+  \item Gas/liquid records have zero crystal rows (phase filter working)
+  \item If MP API key is set: nonzero \texttt{validator\_id='materials\_project'} rows
+  \item \texttt{crystal\_block\_invalid} appears in top rejected reasons
+\end{itemize}
+
+% =========================================================
+\section{Phase 9 --- Mechanics + Transport Macro Bridge (Tier 5)}
+% =========================================================
+
+\begin{tierbox}
+\textbf{Goal:} populate \texttt{MechanicalBlock} and \texttt{TransportBlock} using
+atomistic-to-engineering bridge correlations, and connect them to the macro
+observable layer needed for pipeline erosion, thermal coupling, and flow modeling.
+\end{tierbox}
+
+\subsection{Context: the atomistic-to-macro chain}
+
+Phases 2--8 built atomic-scale and molecular properties.  Phase 9 generates
+the engineering-scale observables that are actually used in macro simulations:
+
+\begin{center}
+\texttt{UFF curvature $\rightarrow$ $E_\text{eff}$}
+\quad$\cdot$\quad
+\texttt{Thermo $\rightarrow$ $k_\text{eff}$}
+\quad$\cdot$\quad
+\texttt{Crystal density $\rightarrow$ bulk modulus estimate}
+\quad$\cdot$\quad
+\texttt{EOS viscosity $\rightarrow$ Darcy coefficient}
+\end{center}
+
+These are not raw DFT results.  They are engineering estimates with explicit
+approximation labels.  Label them.
+
+\subsection{Axis expansion}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \textbf{strain\_rate} --- sampled $10^{-6}$ to $10^3$ s$^{-1}$
+  \item \textbf{test\_environment} --- one of: \texttt{vacuum}, \texttt{air},
+		\texttt{molten\_salt}, \texttt{brine}, \texttt{hydrogen}
+  \item \textbf{porosity} --- sampled 0.0 to 0.60
+  \item \textbf{tortuosity} --- sampled 1.0 to 5.0
+  \item \textbf{thermal\_gradient\_K\_m} --- sampled 0 to $10^4$
+  \item \textbf{flow\_velocity\_m\_s} --- sampled 0.0 to 100.0
+\end{itemize}
+
+\subsection{Generator class: MacroPropertyGenerator}
+
+File: \texttt{src/ufx\_auto2/macro\_property\_generator.cpp}
+
+\begin{lstlisting}
+class MacroPropertyGenerator {
+public:
+	MacroPropertyGenerator();
+
+	// Fill rec.mechanical using UFF stiffness-to-modulus bridge.
+	// Approximation: E ~ (r1 / D1) * coordination * k_harmonic_factor
+	void fill_mechanical(UFXMaterialRecord& rec,
+						 const AxisSample& s) const;
+
+	// Fill rec.transport using Bridgman correlations from thermo data.
+	// k_eff from thermal conductivity model (kinetic theory + phonon scattering)
+	// diffusivity from Stokes-Einstein / empirical scaling
+	void fill_transport(UFXMaterialRecord& rec,
+						const AxisSample& s) const;
+
+	// Effective thermal conductivity via Maxwell-Garnett (porous medium).
+	static double k_eff_maxwell_garnett(double k_solid,
+										double k_fluid,
+										double porosity) noexcept;
+
+	// Effective Young's modulus via Voigt bound.
+	static double E_eff_voigt(double E_bulk, double porosity) noexcept;
+
+	// Darcy permeability from Kozeny-Carman equation.
+	static double permeability_kozeny_carman(double d_particle_m,
+											 double porosity) noexcept;
+
+private:
+	static double k_phonon_estimate_(int Z, int period,
+									 double debye_T_K) noexcept;
+};
+\end{lstlisting>
+
+\subsection{Bridge correlations used in Phase 9}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Output property} & \textbf{Input} & \textbf{Model} \\
+\midrule
+$E_\text{eff}$ (GPa)          & $r_1$, $D_1$, coord, density   & UFF stiffness bridge \\
+$G_\text{eff}$ (GPa)          & $E_\text{eff}$, Poisson est.    & isotropic elasticity \\
+$K_\text{eff}$ (GPa)          & $E_\text{eff}$, Poisson est.    & isotropic elasticity \\
+$k_\text{eff}$ (W/m\,K)       & Debye T, density, $C_p$        & Bridgman / kinetic theory \\
+$D$ (m$^2$/s)                 & mol.\ weight, $T$, viscosity    & Stokes-Einstein \\
+Darcy permeability (m$^2$)    & $d_\text{particle}$, porosity   & Kozeny-Carman \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Every output carries:}
+\texttt{method\_tag = "phase9\_bridge\_heuristic"},
+\texttt{confidence = 0.30}, \texttt{approximation\_label} set.
+
+\subsection{LocalSanityChecker extension (Tier 5)}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{mechanical.E\_eff\_GPa} is in range $[0.001, 1200]$ GPa
+  \item \texttt{transport.k\_eff\_W\_mK} is positive
+  \item \texttt{transport.diffusivity\_m2\_s} is positive and below $10^{-4}$
+  \item \texttt{transport.porosity} between 0.0 and 0.98 if present
+  \item \texttt{mechanical.approximation\_label} non-empty
+		(enforces the ``label the approximation'' hard rule)
+\end{itemize}
+
+Failure tag: \texttt{macro\_block\_invalid}.
+
+\subsection{property\_values rows written by fill-transport and fill-mechanical}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{property\_name} & \textbf{units} & \textbf{block\_name} \\
+\midrule
+\texttt{E\_eff\_GPa}              & GPa        & mechanical \\
+\texttt{G\_eff\_GPa}              & GPa        & mechanical \\
+\texttt{K\_eff\_GPa}              & GPa        & mechanical \\
+\texttt{poisson\_ratio}           & \textemdash & mechanical \\
+\texttt{yield\_MPa}               & MPa        & mechanical \\
+\texttt{k\_eff\_W\_mK}            & W/(m K)    & transport \\
+\texttt{diffusivity\_m2\_s}       & m$^2$/s    & transport \\
+\texttt{permeability\_m2}         & m$^2$      & transport \\
+\texttt{porosity}                 & \textemdash & transport \\
+\texttt{tortuosity}               & \textemdash & transport \\
+\texttt{darcy\_coeff}             & \textemdash & transport \\
+\texttt{mass\_transfer\_coeff}    & m/s        & transport \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{CLI sub-commands}
+
+\begin{lstlisting}[language={}]
+vsepr-ufx ufx auto2 fill-transport  --batch 500 --db ufx_auto2.sqlite
+vsepr-ufx ufx auto2 fill-mechanical --batch 500 --db ufx_auto2.sqlite
+\end{lstlisting}
+
+These may be called as separate commands (for partial fills) or as a combined
+\texttt{fill-macro} alias that calls both.
+
+\subsection{Continual harness integration}
+
+\begin{lstlisting}[language={}]
+# Cycle order with Phase 9 (full):
+randomfill
+fill-molecular
+fill-thermo
+fill-crystal
+fill-transport
+fill-mechanical
+validate       --batch $ValidateBatch
+validate-web   --batch $WebBatch
+promote        --min-score $MinScore
+audit
+\end{lstlisting}
+
+\begin{phasebox}
+\textbf{Performance note:} each fill step should process only records that are
+missing the target block rows.  The query pattern is identical to the
+\texttt{validate} back-fill query:
+\begin{lstlisting}[language=SQL]
+SELECT id FROM material_records
+WHERE NOT EXISTS (
+  SELECT 1 FROM property_values pv
+  WHERE pv.material_id = material_records.id
+  AND   pv.block_name  = 'transport'
+)
+LIMIT ?;
+\end{lstlisting}
+This is idempotent.  Cycles do not re-fill already-filled records.
+\end{phasebox}
+
+\subsection{Audit success criteria after Phase 9}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item \texttt{Total property values} $\geq 30 \times$ record count
+  \item \texttt{mechanical} and \texttt{transport} block rows present for all
+		non-rejected records
+  \item \texttt{macro\_block\_invalid} in top rejected reasons for out-of-range
+		generated estimates
+  \item Average composite score rises above 0.85 (macro bridge contributes
+		to $S_\text{macro}$ component)
+\end{itemize}
+
+% =========================================================
+\section{Phase 10 --- Meta-Score Active Scheduler (Tier 9)}
+% =========================================================
+
+\begin{tierbox}
+\textbf{Goal:} compute \texttt{MetaScoreBlock} fields for every promoted record,
+then use them to bias the axis sampler toward under-covered, high-usefulness,
+low-risk regions of parameter space.  Stop generating the same octahedral iron
+oxide at 298 K for the thousandth time.
+\end{tierbox}
+
+\subsection{What Phase 10 is and is not}
+
+Phase 10 is \textbf{not} a machine learning system.  It is a deterministic
+coverage-aware scheduler built on the \texttt{CoverageMap} that already exists
+in Phase 2.
+
+Phase 10 extends \texttt{CoverageMap} with:
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item per-region \texttt{coverage\_score} (record count / region capacity)
+  \item per-region \texttt{weirdness\_avg} (mean weirdness of existing records in region)
+  \item per-region \texttt{macro\_usefulness\_avg} (mean macro usefulness)
+  \item per-region \texttt{extrapolation\_risk} (fraction of records in region with
+		confidence $< 0.5$)
+\end{itemize}
+
+\subsection{Generator class: MetaScoreEngine}
+
+File: \texttt{src/ufx\_auto2/meta\_score\_engine.cpp}
+
+\begin{lstlisting}
+class MetaScoreEngine {
+public:
+	MetaScoreEngine();
+
+	// Compute all MetaScoreBlock fields for a fully-filled record.
+	// Requires: identity, force_field, molecular, thermo, and crystal
+	// blocks populated (Phases 2-8).
+	void compute(UFXMaterialRecord& rec,
+				 const CoverageMap& coverage) const;
+
+	// Bias weight for choosing the next weak axis region.
+	// Higher = more likely to be sampled next.
+	double region_priority(const RegionKey& region,
+						   const CoverageMap& coverage) const noexcept;
+
+	// Update coverage map meta fields after a record is promoted.
+	void update_coverage(CoverageMap& coverage,
+						 const UFXMaterialRecord& rec) const;
+
+private:
+	double weirdness_(const UFXMaterialRecord& rec,
+					  const CoverageMap& coverage) const noexcept;
+	double novelty_   (const UFXMaterialRecord& rec,
+					  const CoverageMap& coverage) const noexcept;
+	double macro_usefulness_(const UFXMaterialRecord& rec) const noexcept;
+	double extrapolation_risk_(const UFXMaterialRecord& rec) const noexcept;
+};
+\end{lstlisting>
+
+\subsection{Composite score model}
+
+From \texttt{UFX\_continual\_2.tex} \S19:
+
+\begin{equation*}
+S = 0.25 S_\text{identity} + 0.20 S_\text{local} + 0.20 S_\text{reference} + 0.15 S_\text{web} + 0.10 S_\text{repeat} + 0.10 S_\text{macro}
+\end{equation*}
+
+Phase 10 populates the $S_\text{macro}$ component for the first time.
+Prior phases contribute to the others.  The composite score is stored in
+\texttt{property\_values} with \texttt{block\_name='meta'} and
+\texttt{property\_name='composite\_score'}.
+
+\subsection{Sampling bias: weak-region priority}
+
+The \texttt{RandomAxisSampler} accepts an optional priority weight map.
+Phase 10 injects this map at the start of each cycle via
+\texttt{CoverageMap::region\_weights()}:
+
+\begin{lstlisting}
+// Priority function:
+// p(region) = (1 - coverage_score)^2
+//            * (1 + macro_usefulness_avg)
+//            * (1 - extrapolation_risk)
+//            * (1 + weirdness_avg * 0.2)
+//
+// Normalization: weights are renormalized to sum to 1.0 before sampling.
+std::map<RegionKey, double> CoverageMap::region_weights() const;
+\end{lstlisting}
+
+This keeps the sampler deterministic (given the same seed and coverage state)
+while steering generation away from saturated, low-usefulness regions.
+
+\subsection{MetaScoreBlock writes to property\_values}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{property\_name} & \textbf{range} & \textbf{note} \\
+\midrule
+\texttt{weirdness}              & 0.0--1.0 & vs.\ periodic neighbours \\
+\texttt{coverage}               & 0.0--1.0 & region record density \\
+\texttt{confidence}             & 0.0--1.0 & aggregate validation \\
+\texttt{novelty}                & 0.0--1.0 & distance from validated entries \\
+\texttt{local\_consistency}     & 0.0--1.0 & agreement with neighbours \\
+\texttt{source\_conflict}       & 0.0--1.0 & inter-source disagreement \\
+\texttt{macro\_usefulness}      & 0.0--1.0 & predicts $E$, $k$, dP, damage \\
+\texttt{simulation\_stability}  & 0.0--1.0 & VSEPR run stability \\
+\texttt{extrapolation\_risk}    & 0.0--1.0 & model outside valid space \\
+\texttt{composite\_score}       & 0.0--1.0 & promotion gate value \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{CLI sub-command}
+
+\begin{lstlisting}[language={}]
+vsepr-ufx ufx auto2 score --batch 500 --db ufx_auto2.sqlite
+vsepr-ufx ufx auto2 score --batch 500 --recompute --db ufx_auto2.sqlite
+\end{lstlisting}
+
+\texttt{--recompute} recalculates meta scores for all promoted records, not just
+those missing scores.  Use after coverage map changes significantly.
+
+\subsection{Audit extensions for Phase 10}
+
+The \texttt{ufx auto2 audit} command is extended to show:
+
+\begin{lstlisting}[language={}]
+  -- Meta-Score Summary --
+  Avg composite score   : 0.8723
+  Highest weirdness     : Lu_ox3_c8_cubic_solid (0.91)
+  Highest macro use     : Fe_ox2_c6_octahedral_solid (0.87)
+  Highest extrap risk   : Og_ox0_c1_linear_gas (0.95)
+  Weakest region        : actinide::molten_salt::octahedral
+  Priority bias active  : yes  (Phase 10 scheduler)
+\end{lstlisting}
+
+\subsection{Continual harness integration}
+
+\begin{lstlisting}[language={}]
+# Cycle order with Phase 10 (full pipeline):
+randomfill     --count $BatchSize
+fill-molecular --batch $BatchSize
+fill-thermo    --batch $BatchSize
+fill-crystal   --batch $BatchSize
+fill-transport --batch $BatchSize
+fill-mechanical --batch $BatchSize
+score          --batch $BatchSize
+validate       --batch $ValidateBatch
+validate-web   --batch $WebBatch
+promote        --min-score $MinScore
+audit
+\end{lstlisting>
+
+\begin{phasebox}
+The harness parameter \texttt{-SleepSeconds} absorbs any latency from the
+extended fill chain.  For the 1 GB overnight run, \texttt{-SleepSeconds 3} is
+the minimum.  For the 10 GB run, use \texttt{-SleepSeconds 5} to avoid
+overwhelming the web cache rate limiter.
+\end{phasebox}
+
+% =========================================================
+\section{Schema Additions}
+% =========================================================
+
+Phases 6--10 add no new tables.  They use the existing generic
+\texttt{property\_values} table with correct \texttt{block\_tier} and
+\texttt{block\_name} values.  Dedicated tables for thermo curves, crystal
+structures, or mechanical tensors may be added post-Phase 10 if query patterns
+demand it, per the hard rule in \S\ref{sec:hardrules}.
+
+The one schema extension is a \textbf{meta-score summary view} for audit
+performance:
+
+\begin{lstlisting}[language=SQL]
+CREATE VIEW IF NOT EXISTS v_meta_scores AS
+SELECT
+	mr.id,
+	mr.material_key,
+	mr.source_class,
+	MAX(CASE WHEN pv.property_name = 'composite_score'
+			 THEN pv.value_real END)  AS composite_score,
+	MAX(CASE WHEN pv.property_name = 'weirdness'
+			 THEN pv.value_real END)  AS weirdness,
+	MAX(CASE WHEN pv.property_name = 'macro_usefulness'
+			 THEN pv.value_real END)  AS macro_usefulness,
+	MAX(CASE WHEN pv.property_name = 'extrapolation_risk'
+			 THEN pv.value_real END)  AS extrapolation_risk
+FROM material_records mr
+JOIN property_values pv ON pv.material_id = mr.id
+WHERE pv.block_name = 'meta'
+GROUP BY mr.id;
+\end{lstlisting}
+
+This view is created by \texttt{ufx\_auto2\_init\_db()} alongside the existing
+six tables.
+
+% =========================================================
+\section{CMake Integration}
+% =========================================================
+
+Each phase adds one or two source files to the \texttt{vsepr-ufx} target in
+\texttt{cmake/CoreBuild.cmake}.  The pattern is identical to the Phase 5 web
+source additions.
+
+\begin{lstlisting}[language={}]
+# Phase 6
+src/ufx_auto2/molecular_descriptor_generator.cpp
+
+# Phase 7
+src/ufx_auto2/thermo_generator.cpp
+src/ufx_auto2/nist_thermo_fetcher.cpp    # extends NISTFetcher with Cp query
+
+# Phase 8
+src/ufx_auto2/crystal_generator.cpp
+src/ufx_auto2/materials_project_fetcher.cpp
+
+# Phase 9
+src/ufx_auto2/macro_property_generator.cpp
+
+# Phase 10
+src/ufx_auto2/meta_score_engine.cpp
+\end{lstlisting}
+
+No new link dependencies are needed beyond those already in the Phase 5 build
+(\texttt{sqlite3}, \texttt{winhttp}).  The Materials Project fetcher uses the
+same WinHTTP path as PubChem and NIST.
+
+% =========================================================
+\section{File Layout Summary}
+% =========================================================
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{File} & \textbf{Phase} \\
+\midrule
+\texttt{include/ufx\_auto2/smiles\_vocab.hpp}                   & 6 \\
+\texttt{src/ufx\_auto2/molecular\_descriptor\_generator.cpp}     & 6 \\
+\texttt{src/ufx\_auto2/thermo\_generator.cpp}                    & 7 \\
+\texttt{src/ufx\_auto2/nist\_thermo\_fetcher.cpp}                & 7 \\
+\texttt{src/ufx\_auto2/crystal\_generator.cpp}                   & 8 \\
+\texttt{src/ufx\_auto2/materials\_project\_fetcher.cpp}          & 8 \\
+\texttt{include/ufx\_auto2/materials\_project\_fetcher.hpp}      & 8 \\
+\texttt{src/ufx\_auto2/macro\_property\_generator.cpp}           & 9 \\
+\texttt{src/ufx\_auto2/meta\_score\_engine.cpp}                  & 10 \\
+\texttt{include/ufx\_auto2/meta\_score\_engine.hpp}              & 10 \\
+\midrule
+\texttt{src/cli/cmd\_ufx.cpp}  & modified (6--10 sub-commands) \\
+\texttt{src/cli/cmd\_ufx.hpp}  & modified (6--10 handler declarations) \\
+\texttt{src/v4/uff/ufx\_schema.cpp} & modified (Phase 10 view, score queries) \\
+\texttt{cmake/CoreBuild.cmake} & modified (new sources added) \\
+\texttt{tools/run\_ufx\_auto2\_continual.ps1} & modified (fill steps in cycle) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =========================================================
+\section{Incremental Run Order}
+% =========================================================
+
+Do not implement all five phases simultaneously.  The correct order:
+
+\begin{enumerate}[leftmargin=*, itemsep=4pt]
+  \item \textbf{Implement Phase 6 only.}  Run medium test (250 MB target).
+		Confirm \texttt{property\_values} rows appear, molecular weight
+		cross-check fires, audit shows nonzero Tier 2 data.
+
+  \item \textbf{Implement Phase 7 only.}  Run medium test again.
+		Confirm Cp curves appear in \texttt{property\_values}, NIST thermo
+		validator produces nonzero pass/missing counts.
+
+  \item \textbf{Implement Phase 8 only.}  Run 1 GB overnight candidate.
+		Confirm solid-phase records gain crystal block, gas/liquid records
+		do not.  MP API either fires (if key set) or operates in cache-read mode.
+
+  \item \textbf{Implement Phase 9 only.}  Run 1 GB overnight candidate.
+		Confirm transport and mechanical rows appear.  Average composite score
+		should rise visibly.
+
+  \item \textbf{Implement Phase 10.}  Run the 10 GB candidate.
+		Confirm the weakest-region audit entry changes each cycle
+		(scheduler is steering).  Weirdness and macro-usefulness scores appear
+		in audit output.
+\end{enumerate}
+
+\begin{rulebox}
+Run the tiny test (25 MB, \texttt{-EmergencyStopOnFail}) after each phase
+before committing to the longer runs.  This is the lowest-cost proof that
+command wiring is correct and the harness cycle does not deadlock.
+\end{rulebox}
+
+% =========================================================
+\section{Hard Rules}
+\label{sec:hardrules}
+% =========================================================
+
+\begin{rulebox}
+\begin{enumerate}[leftmargin=*, itemsep=6pt]
+
+  \item \textbf{Fill steps process only records missing the target block.}
+		The missing-block query is idempotent.  Rerunning \texttt{fill-thermo}
+		on a database where thermo rows already exist is a no-op.  This is
+		correct behavior and not a performance regression.
+
+  \item \textbf{Every generated value carries an approximation label.}
+		Shomate heuristics, Bridgman correlations, UFF bridge estimates ---
+		all must have \texttt{method\_tag} and \texttt{confidence $\leq$ 0.40}
+		unless validated by an external source.
+
+  \item \textbf{State columns are not optional.}  \texttt{temperature\_K},
+		\texttt{pressure\_Pa}, and \texttt{phase} must be populated on every
+		\texttt{property\_values} row.  The generation fallback is T=298.15,
+		P=101325.0, phase=identity.phase.
+
+  \item \textbf{Generic \texttt{property\_values} before dedicated tables.}
+		Do not create \texttt{thermo\_properties} or \texttt{crystal\_properties}
+		tables until the query patterns from the 1 GB run clearly require them.
+
+  \item \textbf{Phase 10 is a scheduler, not a filter.}  It must not silently
+		drop records from the cycle.  It changes what gets generated next,
+		not what gets validated or promoted.
+
+  \item \textbf{Nuclear/radiation fields never enter these fill steps.}
+		Tier 7 (\texttt{RadiationBlock}) follows after Phase 10 is stable.
+		The isotope/decay axis exists in \texttt{UFXMaterialRecord} and
+		\texttt{AxisSample} but is not sampled until Tier 1 through 5 are stable.
+
+  \item \textbf{The harness cycle order is fixed.}  Fill steps run before
+		validate.  Score (\texttt{fill-meta}) runs before promote.
+		Promote never runs before validate-web on a \texttt{-WebValidate} run.
+
+  \item \textbf{SQLite is truth.  Audit is the instrument panel.}  If the
+		audit output does not show the expected block counts after a fill step,
+		the fill step is broken --- not the audit.
+
+\end{enumerate}
+\end{rulebox}
+
+\vspace{10pt}
+\hrule
+\vspace{8pt}
+
+\begin{center}
+\textit{Phase 2 proved the skeleton survives.\\
+Phases 6--10 teach it chemistry, thermodynamics, structure, mechanics, and taste.\\
+In that order.  Not all at once.}
+\end{center}
+
+\end{document}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VSEPR-SIM Report: demo_09_beta10_showcase</title>
+<style>
+  body { background:#0d1117; color:#c9d1d9; font-family:monospace;         max-width:860px; margin:40px auto; line-height:1.6; }
+  h1 { color:#58a6ff; } h2 { color:#8b949e; border-bottom:1px solid #21262d; }
+  pre { background:#161b22; padding:12px; border-radius:6px;        border:1px solid #30363d; overflow-x:auto; }
+  .ok { color:#3fb950; } .bad { color:#f85149; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th { background:#21262d; color:#8b949e; padding:6px 10px; text-align:left; }
+  td { padding:5px 10px; border-bottom:1px solid #21262d; }
+</style>
+</head>
+<body>
+<h1>VSEPR-SIM Run Report</h1>
+<p><strong>Project:</strong> demo_09_beta10_showcase<br>
+<strong>Formula:</strong> NaCl<br>
+<strong>Scenario class:</strong> solid<br>
+<strong>Generated:</strong> 2026-04-27T01:07:06Z</p>
+<h2>Event Summary</h2>
+<p>Total events: <strong>4</strong> &nbsp;Invalid: <strong class="ok">0</strong></p>
+<h2>Symbolic Trace</h2>
+<pre>
+[1] Reaction  NaCl
+  symbolic: NaCl -> NaCl_product
+  numeric:  Delta_E = (-89.793406) - (-57.739763) = -32.053643 kcal/mol
+
+[2] ChemicalState  NaCl
+  symbolic: delta_E_local = E_after - E_before
+  numeric:  delta_E_local = -95.736088 - -99.856692 = 4.120604 kcal/mol
+
+[3] ContinualReport  NaCl
+  symbolic: snapshot at frame_id
+  numeric:  U=-86.380561 T=306.389602 eta=0.506357 coord=2.708053 RMSD=0.152631
+
+[4] Defect  NaCl
+  symbolic: defect_fraction = N_defect / N_total
+  numeric:  defect_fraction = computed from coordination deficit
+
+</pre>
+<h2>Audit Table</h2>
+<table><tr><th>ID</th><th>Kind</th><th>Frame</th><th>Formula</th><th>Result</th><th>Unit</th><th>Valid</th></tr>
+<tr><td>1</td><td>Reaction</td><td>61</td><td>NaCl</td><td>-32.05</td><td>kcal/mol</td><td class="ok">OK</td></tr>
+<tr><td>2</td><td>ChemicalState</td><td>70</td><td>NaCl</td><td>4.121</td><td>kcal/mol</td><td class="ok">OK</td></tr>
+<tr><td>3</td><td>ContinualReport</td><td>34</td><td>NaCl</td><td>-86.38</td><td>kcal/mol</td><td class="ok">OK</td></tr>
+<tr><td>4</td><td>Defect</td><td>49</td><td>NaCl</td><td>0.07867</td><td>frac</td><td class="ok">OK</td></tr>
+</table>
+</body>
+</html>

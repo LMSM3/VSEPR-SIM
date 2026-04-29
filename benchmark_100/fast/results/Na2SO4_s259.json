@@ -1,0 +1,19 @@
+{
+  "formula": "Na2SO4",
+  "seed": 259,
+  "tier": "fast",
+  "num_atoms": 7,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 174.432876,
+  "energy_per_atom": 24.918982,
+  "rms_force": 195.459455,
+  "max_force": 195.459455,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.401400,
+  "timestamp": "2026-03-28T12:52:47",
+  "xyz_file": "benchmark_100\fast\structures\Na2SO4_s259.xyz"
+}

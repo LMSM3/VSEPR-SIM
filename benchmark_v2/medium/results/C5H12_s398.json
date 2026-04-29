@@ -1,0 +1,19 @@
+{
+  "formula": "C5H12",
+  "seed": 398,
+  "tier": "medium",
+  "num_atoms": 17,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 164744.549912,
+  "energy_per_atom": 9690.855877,
+  "rms_force": 204381.591529,
+  "max_force": 204381.591529,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 2.224100,
+  "timestamp": "2026-03-28T13:06:21",
+  "xyz_file": "benchmark_v2\medium\structures\C5H12_s398.xyz"
+}

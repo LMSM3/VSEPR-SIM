@@ -1,0 +1,19 @@
+{
+  "formula": "C5H5N",
+  "seed": 1008,
+  "tier": "medium",
+  "num_atoms": 11,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 6455.852316,
+  "energy_per_atom": 586.895665,
+  "rms_force": 7290.177651,
+  "max_force": 7290.177651,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.346400,
+  "timestamp": "2026-03-28T12:55:46",
+  "xyz_file": "benchmark_100\medium\structures\C5H5N_s1008.xyz"
+}

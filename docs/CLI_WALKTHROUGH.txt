@@ -1,0 +1,626 @@
+================================================================================
+  VSEPR-SIM CLI WALKTHROUGH
+  One example of every user-facing action — follow along step by step
+================================================================================
+
+This file walks through every distinct user action available in the VSEPR-SIM
+CLI. Each block shows the exact command to run, what it does, and what you
+should see. Run them in order — some steps produce files that later steps read.
+
+Executable: vsepr  (built from apps/vsepr.cpp)
+Working directory: the repo root (where data/ lives)
+
+--------------------------------------------------------------------------------
+SECTION 1 — ORIENTATION
+--------------------------------------------------------------------------------
+
+Step 1.1 — Show top-level help
+-------------------------------
+Command:
+    vsepr --help
+
+What happens:
+    Prints the full grammar reference: SPEC/ACTION/DOMAIN_PARAMS/GLOBAL_FLAGS,
+    all available actions, domain rules, and example commands.
+    Nothing is computed. Safe to run any time.
+
+Expected output (excerpt):
+    VSEPR CLI - Domain-Aware Molecular Simulation
+    USAGE:
+        vsepr <SPEC> <ACTION> [DOMAIN_PARAMS] [GLOBAL_FLAGS]
+        vsepr cg <COMMAND> [OPTIONS]
+        vsepr --viz [OPTIONS]
+
+
+--------------------------------------------------------------------------------
+SECTION 2 — EMIT  (generate a structure without optimization)
+--------------------------------------------------------------------------------
+
+Step 2.1 — Emit a water molecule (gas phase, no relaxation)
+------------------------------------------------------------
+Command:
+    vsepr H2O@molecule emit --out water_raw.xyz
+
+What happens:
+    Parses H2O as a gas-phase molecule.
+    Places atoms using VSEPR geometry rules only — no energy minimization.
+    Writes the raw structure to water_raw.xyz via the unified I/O layer
+    (vsepr::io::save_structure).
+
+Expected output:
+    water_raw.xyz written — 3 atoms (O + 2 H), unoptimized coordinates.
+
+--------------------------------------------------------------------------------
+
+Step 2.2 — Emit a NaCl crystal unit cell from a preset
+-------------------------------------------------------
+Command:
+    vsepr NaCl@crystal emit --preset nacl_atomistic --out nacl_unit.xyz
+
+What happens:
+    Selects the nacl_atomistic crystal preset.
+    Builds the unit cell using fixed lattice parameters.
+    Domain rule enforced: @crystal → PBC ON, no --cell needed for a preset.
+    Writes nacl_unit.xyz.
+
+Expected output:
+    nacl_unit.xyz — small NaCl unit cell, typically 8 atoms.
+
+--------------------------------------------------------------------------------
+
+Step 2.3 — Emit an aluminium supercell
+---------------------------------------
+Command:
+    vsepr Al@crystal emit --preset al --supercell 3,3,3 --out al_supercell.xyz
+
+What happens:
+    Builds the Al FCC unit cell then tiles it 3×3×3.
+    Result is a 108-atom supercell.
+    Writes al_supercell.xyz.
+
+Expected output:
+    al_supercell.xyz — 108 Al atoms in FCC arrangement.
+
+--------------------------------------------------------------------------------
+
+Step 2.4 — Emit a random gas cloud (periodic box)
+--------------------------------------------------
+Command:
+    vsepr H2O@gas emit --cloud 200 --box 50,50,50 --pbc --seed 42 --out cloud.xyz
+
+What happens:
+    Places 200 water molecules randomly inside a 50×50×50 Å box.
+    PBC is enabled (allowed for @gas when --box is supplied).
+    --seed 42 makes it reproducible.
+    Writes cloud.xyz.
+
+Expected output:
+    cloud.xyz — 600 atoms (200 × 3), random positions within the box.
+
+--------------------------------------------------------------------------------
+
+Step 2.5 — Emit with a custom NaCl cell (rocksalt motif)
+---------------------------------------------------------
+Command:
+    vsepr NaCl@crystal emit --preset rocksalt --cell 5.7,5.7,5.7 --out nacl_custom.xyz
+
+What happens:
+    Uses the rocksalt motif preset but overrides the cell with 5.7 Å cubic.
+    Writes nacl_custom.xyz.
+
+Expected output:
+    nacl_custom.xyz — NaCl unit cell at user-specified lattice parameter.
+
+
+--------------------------------------------------------------------------------
+SECTION 3 — RELAX  (energy minimization via FIRE algorithm)
+--------------------------------------------------------------------------------
+
+Step 3.1 — Relax a water molecule
+-----------------------------------
+Command:
+    vsepr H2O@molecule relax --steps 2000 --out water.xyz
+
+What happens:
+    Parses H2O, places atoms with VSEPR geometry, then runs FIRE energy
+    minimization for up to 2000 steps.
+    Writes the relaxed structure to water.xyz.
+    This is the core physics pipeline: VSEPR placement → gradient descent.
+
+Expected output:
+    Convergence report (step count, final energy, RMS force).
+    water.xyz — optimized O-H bond lengths ~0.96 Å, H-O-H angle ~104.5°.
+
+--------------------------------------------------------------------------------
+
+Step 3.2 — Relax methane
+--------------------------
+Command:
+    vsepr CH4@molecule relax --steps 2000 --out methane.xyz
+
+What happens:
+    Same pipeline for CH4. Tetrahedral geometry emerges from VSEPR + FIRE.
+    Writes methane.xyz.
+
+Expected output:
+    methane.xyz — 5 atoms, C-H ~1.09 Å, H-C-H angles ~109.5°.
+
+--------------------------------------------------------------------------------
+
+Step 3.3 — Relax from an existing XYZ file
+--------------------------------------------
+Command:
+    vsepr H2O@molecule relax --in water_raw.xyz --steps 1000 --out water_relaxed.xyz
+
+What happens:
+    Reads water_raw.xyz (produced in Step 2.1) as the starting geometry.
+    Runs FIRE for up to 1000 steps and writes the result.
+    Demonstrates the --in flag: skip re-emission, start from a saved structure.
+
+Expected output:
+    water_relaxed.xyz — same molecule, minimized from the raw starting point.
+
+--------------------------------------------------------------------------------
+
+Step 3.4 — Relax with a timestep override
+-------------------------------------------
+Command:
+    vsepr CH4@molecule relax --steps 500 --dt 0.005 --out methane_fine.xyz
+
+What happens:
+    Runs FIRE with a smaller timestep (0.005 vs default 0.001) for finer
+    convergence control. Useful for stiff molecules.
+
+Expected output:
+    methane_fine.xyz — CH4 geometry, potentially more tightly converged.
+
+--------------------------------------------------------------------------------
+
+Step 3.5 — Relax and write output to default path
+---------------------------------------------------
+Command:
+    vsepr NH3@molecule relax --steps 2000
+
+What happens:
+    Relaxes ammonia. Output goes to the default: out.xyz (no --out specified).
+    Shows that --out is optional.
+
+Expected output:
+    out.xyz written — NH3, trigonal pyramidal, N-H ~1.01 Å.
+
+
+--------------------------------------------------------------------------------
+SECTION 4 — TEST  (validate against known structural expectations)
+--------------------------------------------------------------------------------
+
+Step 4.1 — Test an aluminium FCC crystal
+------------------------------------------
+Command:
+    vsepr Al@crystal test --preset fcc
+
+What happens:
+    Builds the Al FCC structure from the preset, then compares the resulting
+    geometry against known FCC coordination number, nearest-neighbour distances,
+    and lattice parameter expectations.
+    Prints PASS/FAIL for each check. No file is written.
+
+Expected output:
+    Validation summary — coordination number 12, a ≈ 4.05 Å checks.
+
+--------------------------------------------------------------------------------
+
+Step 4.2 — Test NaCl crystal
+------------------------------
+Command:
+    vsepr NaCl@crystal test --preset nacl_atomistic
+
+What happens:
+    Builds NaCl from the preset and validates: coordination 6:6, bond lengths,
+    alternating charge assignment.
+
+Expected output:
+    Validation summary — PASS for geometry and charge checks.
+
+
+--------------------------------------------------------------------------------
+SECTION 5 — COARSE-GRAINED CONSOLE  (vsepr cg)
+--------------------------------------------------------------------------------
+
+Step 5.1 — Build a pair scene
+-------------------------------
+Command:
+    vsepr cg scene --preset pair --spacing 4.0
+
+What happens:
+    Constructs a two-bead coarse-grained scene with 4.0 Å separation.
+    Prints bead positions, types, and environment descriptors.
+
+Expected output:
+    Scene summary: 2 beads, coordinates, descriptor values.
+
+--------------------------------------------------------------------------------
+
+Step 5.2 — Build a shell scene with 12 beads
+----------------------------------------------
+Command:
+    vsepr cg scene --preset shell --beads 12
+
+What happens:
+    Places 12 beads on a shell (icosahedral-like arrangement).
+    Prints bead listing with positions.
+
+Expected output:
+    Scene summary: 12 beads in shell geometry.
+
+--------------------------------------------------------------------------------
+
+Step 5.3 — Inspect a shell scene after environment update
+----------------------------------------------------------
+Command:
+    vsepr cg inspect --preset shell --beads 12 --env-steps 100
+
+What happens:
+    Builds the shell scene, runs 100 steps of environment (eta) relaxation,
+    then prints per-bead descriptors: position, density rho, field eta.
+
+Expected output:
+    Table of 12 beads with rho and eta values after 100 relaxation steps.
+
+--------------------------------------------------------------------------------
+
+Step 5.4 — Run environment update pipeline
+-------------------------------------------
+Command:
+    vsepr cg env --preset stack --beads 8 --steps 200
+
+What happens:
+    Builds a stacked-bead scene, runs 200 environment update iterations.
+    Prints convergence info and final descriptor values.
+
+Expected output:
+    Convergence trace, final rho/eta per bead.
+
+--------------------------------------------------------------------------------
+
+Step 5.5 — Evaluate pairwise interactions
+-------------------------------------------
+Command:
+    vsepr cg interact --preset pair --spacing 4.0 --all
+
+What happens:
+    Computes all pairwise interaction terms between the two beads:
+    energy decomposition (repulsion, attraction, environment coupling).
+    --all prints the full breakdown.
+
+Expected output:
+    Energy terms table: E_rep, E_att, E_env, E_total for each pair.
+
+--------------------------------------------------------------------------------
+
+Step 5.6 — Launch the coarse-grained bead viewer
+--------------------------------------------------
+Command:
+    vsepr cg viz --preset shell --beads 12 --overlay rho
+
+What happens:
+    Opens the lightweight OpenGL bead viewer.
+    Beads coloured by local density (rho overlay).
+    Requires BUILD_VIS=ON at compile time.
+
+Expected output:
+    An OpenGL window showing 12 beads with a density colour map.
+    Close the window to exit.
+
+--------------------------------------------------------------------------------
+
+Step 5.7 — Show all CG sub-commands
+-------------------------------------
+Command:
+    vsepr cg help
+
+What happens:
+    Prints the full coarse-grained command reference.
+
+
+--------------------------------------------------------------------------------
+SECTION 6 — LIGHTWEIGHT VIEWER  (vsepr --viz)
+--------------------------------------------------------------------------------
+
+Step 6.1 — Open viewer with default pair preset
+-------------------------------------------------
+Command:
+    vsepr --viz --preset pair --spacing 4.0
+
+What happens:
+    Launches the minimal bead viewer directly (no cg prefix needed).
+    Two beads at 4.0 Å spacing. No overlay.
+    Requires BUILD_VIS=ON.
+
+Expected output:
+    OpenGL window with two beads. Close to exit.
+
+--------------------------------------------------------------------------------
+
+Step 6.2 — Open viewer with overlay
+-------------------------------------
+Command:
+    vsepr --viz --preset shell --beads 12 --env-steps 200 --overlay eta
+
+What happens:
+    Builds the shell scene, relaxes environment for 200 steps, then opens
+    the viewer with the eta (mean field) overlay applied as colour.
+
+Expected output:
+    OpenGL window: 12 beads coloured by eta value.
+
+--------------------------------------------------------------------------------
+
+Step 6.3 — Cloud scene in viewer
+----------------------------------
+Command:
+    vsepr --viz --preset cloud --beads 20 --spacing 12.0
+
+What happens:
+    Generates 20 beads in a cloud arrangement (random-ish) with 12.0 Å
+    nominal spacing, then opens viewer.
+
+Expected output:
+    OpenGL window: 20 beads in open cloud layout.
+
+
+--------------------------------------------------------------------------------
+SECTION 7 — CHAINING ACTIONS  (emit → inspect → relax → compare)
+--------------------------------------------------------------------------------
+
+These steps chain the primitives together into a small research workflow.
+
+Step 7.1 — Emit raw SF6
+-------------------------
+Command:
+    vsepr SF6@molecule emit --out sf6_raw.xyz
+
+Step 7.2 — Relax SF6 from the raw geometry
+--------------------------------------------
+Command:
+    vsepr SF6@molecule relax --in sf6_raw.xyz --steps 3000 --out sf6_relaxed.xyz
+
+What happens:
+    Uses sf6_raw.xyz as the starting point (Step 7.1's output).
+    Runs 3000 FIRE steps to fully relax the octahedral geometry.
+
+Expected output:
+    sf6_relaxed.xyz — SF6, S-F bonds ~1.56 Å, F-S-F angles ~90°.
+
+Step 7.3 — Emit and relax ammonia in one command
+-------------------------------------------------
+Command:
+    vsepr NH3@molecule relax --steps 2000 --seed 7 --out nh3_final.xyz
+
+What happens:
+    Combines emission and relaxation in a single invocation (relax always
+    emits first unless --in is supplied). Seed is fixed for reproducibility.
+
+Step 7.4 — Generate a reproducible random cloud and save
+---------------------------------------------------------
+Command:
+    vsepr Ar@gas emit --cloud 50 --box 30,30,30 --pbc --seed 99 --out argon_box.xyz
+
+What happens:
+    50 Ar atoms in a 30 Å periodic box, deterministic with seed 99.
+    Useful as a starting point for a MD run or RDF calculation.
+
+
+--------------------------------------------------------------------------------
+SECTION 8 — REFERENCE SUMMARY
+--------------------------------------------------------------------------------
+
+Action      Syntax skeleton                              Writes file?
+----------  -------------------------------------------  ------------
+emit        vsepr <SPEC> emit [--cloud N] [--out F]      Yes (--out)
+relax       vsepr <SPEC> relax [--in F] [--out F]        Yes (--out)
+test        vsepr <SPEC> test --preset <ID>              No
+therm       vsepr therm [--temperature T] [--viz]        No (console)
+cg scene    vsepr cg scene --preset <P>                  No
+cg env      vsepr cg env --preset <P> --steps N          No
+cg inspect  vsepr cg inspect --preset <P> --env-steps N  No
+cg interact vsepr cg interact --preset <P> --all         No
+cg viz      vsepr cg viz --preset <P> --overlay <M>      No (opens window)
+--viz       vsepr --viz --preset <P> --overlay <M>       No (opens window)
+
+Mode hints  @molecule  @gas  @crystal  @bulk
+Domain rule @crystal/@bulk: PBC mandatory, --cell required (or use --preset)
+            @gas/@molecule: PBC off by default, add --pbc + --box to enable
+
+Files produced by this walkthrough (in order):
+    water_raw.xyz       (Step 2.1)
+    nacl_unit.xyz       (Step 2.2)
+    al_supercell.xyz    (Step 2.3)
+    cloud.xyz           (Step 2.4)
+    nacl_custom.xyz     (Step 2.5)
+    water.xyz           (Step 3.1)
+    methane.xyz         (Step 3.2)
+    water_relaxed.xyz   (Step 3.3)
+    methane_fine.xyz    (Step 3.4)
+    out.xyz             (Step 3.5)
+    sf6_raw.xyz         (Step 7.1)
+    sf6_relaxed.xyz     (Step 7.2)
+    nh3_final.xyz       (Step 7.3)
+    argon_box.xyz       (Step 7.4)
+
+
+--------------------------------------------------------------------------------
+SECTION 9 — THERMAL ANALYSIS  (vsepr therm)
+--------------------------------------------------------------------------------
+
+The therm command analyzes thermal properties, bonding decomposition, and
+spatial temperature tracking. It uses the C++ atomistic kernel.
+
+Step 9.1 — Basic thermal analysis at default temperature
+---------------------------------------------------------
+Command:
+    vsepr therm
+
+What happens:
+    Runs thermal property analysis at the default temperature (300 K).
+    Prints bonding analysis, thermal properties (heat capacity, thermal
+    conductivity estimates), and spatial temperature grid.
+
+Expected output:
+    Bonding analysis table, thermal properties summary, spatial grid.
+
+--------------------------------------------------------------------------------
+
+Step 9.2 — Thermal analysis at elevated temperature
+----------------------------------------------------
+Command:
+    vsepr therm --temperature 500
+
+What happens:
+    Runs thermal analysis at 500 K. Temperature-dependent properties are
+    re-evaluated at the specified temperature.
+
+Expected output:
+    Same sections as 9.1 but at T = 500 K.
+
+--------------------------------------------------------------------------------
+
+Step 9.3 — Thermal evolution over time
+---------------------------------------
+Command:
+    vsepr therm --temperature 800 --generations 50 --sample-interval 5
+
+What happens:
+    Runs a multi-step thermal evolution: 50 generations of dynamics with
+    snapshots every 5 steps. Prints time-series of temperature and energy.
+    Useful for studying thermal equilibration behavior.
+
+Expected output:
+    Evolution table: step, temperature, kinetic energy, potential energy.
+
+--------------------------------------------------------------------------------
+
+Step 9.4 — Generate thermal object for visualization
+------------------------------------------------------
+Command:
+    vsepr therm --temperature 300 --generate-object
+
+What happens:
+    Computes thermal analysis and then generates a 3D thermal object
+    (XYZ file) for visualization. Prompts for save location.
+
+Expected output:
+    Thermal object saved to .xyz file for use with vsepr --viz.
+
+
+--------------------------------------------------------------------------------
+SECTION 10 — PYKERNEL THERMAL PIPELINES  (Python)
+--------------------------------------------------------------------------------
+
+The Python kernel provides batch thermal analysis via the pykernel modules.
+These are run as Python scripts or via the pykernel API.
+
+Step 10.1 — Parse a SolidWorks STEP file
+-----------------------------------------
+Python:
+    from pykernel import parse_step, StepAssembly
+    assembly = parse_step("bracket.step")
+    for part in assembly.parts:
+        print(f"{part.name}: {part.product_id}")
+
+What happens:
+    Reads an ISO 10303-21 STEP file (AP203 or AP214).
+    Extracts named PRODUCT entities with their identifiers.
+    Returns a StepAssembly with a list of NamedPart objects.
+
+Expected output:
+    Part names and product IDs from the STEP file.
+
+--------------------------------------------------------------------------------
+
+Step 10.2 — Compute metallic heat capacity
+-------------------------------------------
+Python:
+    from pykernel import compute_cp, METAL_DB
+    cp = compute_cp("Cu", 500.0)
+    print(f"Cu c_p at 500 K: {cp:.2f} J/(mol·K)")
+
+What happens:
+    Looks up copper in the 30-metal empirical database.
+    Computes Debye lattice c_v via Simpson integration of the Debye function.
+    Adds Sommerfeld electronic contribution (gamma * T).
+    Applies Nernst-Lindemann Cp-Cv correction.
+    Returns molar heat capacity at constant pressure.
+
+Expected output:
+    Cu c_p at 500 K: ~26.0 J/(mol·K)
+
+--------------------------------------------------------------------------------
+
+Step 10.3 — Run a heating simulation
+--------------------------------------
+Python:
+    from pykernel import HeatingSimulation, HeatSchedule
+    schedule = HeatSchedule.ramp(q_start=100.0, q_end=500.0)
+    sim = HeatingSimulation(
+        mass_kg=0.5, metal="Al", schedule=schedule, T_init=300.0
+    )
+    result = sim.run(duration=60.0, dt=0.1)
+    print(f"Final T: {result.T_history[-1]:.1f} K after {result.time[-1]:.0f} s")
+
+What happens:
+    Creates a time-stepping thermal evolution simulation.
+    Ramps heat input from 100 W to 500 W over 60 seconds.
+    Uses Debye-model c_p(T) for aluminium at each timestep.
+    Returns full time/temperature/energy history.
+
+Expected output:
+    Final temperature after 60 s of heating with ramped power input.
+
+--------------------------------------------------------------------------------
+
+Step 10.4 — Batch thermal pipeline from STEP file
+---------------------------------------------------
+Python:
+    from pykernel import ThermoRunner, BatchJob
+    job = BatchJob(
+        step_file="assembly.step",
+        material_map={"Bracket": "Steel", "Housing": "Al"},
+        mass_map={"Bracket": 1.2, "Housing": 0.8},
+        schedule_type="constant",
+        q_dot=200.0, duration=120.0, dt=0.5,
+        output_format="csv"
+    )
+    runner = ThermoRunner()
+    results = runner.run_batch([job])
+
+What happens:
+    Parses the STEP file, assigns materials and masses per part.
+    Runs heating simulation for each part in the assembly.
+    Exports results to CSV via the pipe infrastructure.
+
+Expected output:
+    CSV files with time-temperature-energy columns per part.
+
+--------------------------------------------------------------------------------
+
+Step 10.5 — Validate the metallic database
+--------------------------------------------
+Python:
+    from pykernel import ThermoValidator
+    validator = ThermoValidator()
+    report = validator.validate_all(T=298.15)
+    print(f"Passed: {report['passed']}/{report['total']}")
+
+What happens:
+    Validates all 30 metals in the empirical database against known
+    experimental c_p values at 298.15 K. Reports pass/fail per metal
+    with relative error percentages.
+
+Expected output:
+    Validation summary: 29/30 pass (Beryllium is a known outlier at
+    ~40% due to extreme Debye temperature Θ_D = 1440 K).
+
+
+================================================================================
+END OF WALKTHROUGH
+================================================================================

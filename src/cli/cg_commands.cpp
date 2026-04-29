@@ -22,6 +22,7 @@
 #include "coarse_grain/core/unified_descriptor.hpp"
 #include "coarse_grain/models/environment_coupling.hpp"
 #include "coarse_grain/models/interaction_engine.hpp"
+#include "coarse_grain/models/bead_fire.hpp"
 #ifdef BUILD_VISUALIZATION
 #include "coarse_grain/vis/cg_viz_viewer.hpp"
 #endif
@@ -94,6 +95,7 @@ static int cg_help() {
     tbl.PrintRow({"env",      "Run environment update pipeline (eta relaxation)"});
     tbl.PrintRow({"interact", "Evaluate pairwise interactions, energy decomposition"});
     tbl.PrintRow({"viz",      "Launch lightweight bead visualization"});
+    tbl.PrintRow({"fire",     "LL-FIRE minimization on bead system"});
     Display::BlankLine();
 
     Display::Subheader("Usage");
@@ -754,6 +756,188 @@ EXAMPLES:
 }
 
 // ============================================================================
+// 6. FIRE Command — LL-FIRE Minimization on CG Bead Systems
+// ============================================================================
+
+static int cmd_fire(const std::vector<std::string>& args) {
+    if (has_flag(args, "--help") || has_flag(args, "-h")) {
+        Display::Header("cg fire — LL-FIRE minimization on bead system");
+        Display::BlankLine();
+        std::cout << R"(USAGE:
+  vsepr cg fire [options]
+
+Builds a bead scene, populates unified descriptors (steric/electrostatic/
+dispersion channels with SH coefficients), then runs LL-FIRE minimization
+using the anisotropic interaction engine.
+
+Forces are evaluated via the per-channel, per-l radial kernels with
+optional environment-responsive modulation (eta coupling).
+
+OPTIONS:
+  --preset <name>     Scene preset (default: pair)
+  --beads <N>         Number of beads (default: 5)
+  --spacing <D>       Initial spacing in Angstroms (default: 5.0)
+  --seed <S>          RNG seed (default: 42)
+  --max-steps <N>     Maximum FIRE steps (default: 500)
+  --epsF <tol>        RMS force convergence threshold (default: 1e-4)
+  --epsU <tol>        Per-bead energy convergence threshold (default: 1e-8)
+  --dt <T>            Initial timestep in fs (default: 1.0)
+  --dt-max <T>        Maximum timestep in fs (default: 10.0)
+  --lmax <L>          SH truncation order for descriptors (default: 4)
+  --report <N>        Report interval (default: 10)
+  --no-env            Disable environment modulation
+  --verbose           Show per-step diagnostics
+
+EXAMPLES:
+  vsepr cg fire --preset pair --spacing 6.0
+  vsepr cg fire --preset stack --beads 8 --spacing 4.0 --max-steps 1000
+  vsepr cg fire --preset shell --beads 12 --spacing 5.0 --lmax 2
+  vsepr cg fire --preset cloud --beads 20 --spacing 12.0 --verbose
+)";
+        return 0;
+    }
+
+    // Parse options
+    std::string preset_str = get_option(args, "--preset", "pair");
+    int n_beads    = get_int_option(args, "--beads", 5);
+    double spacing = get_double_option(args, "--spacing", 5.0);
+    uint32_t seed  = static_cast<uint32_t>(get_int_option(args, "--seed", 42));
+    int max_steps  = get_int_option(args, "--max-steps", 500);
+    double epsF    = get_double_option(args, "--epsF", 1e-4);
+    double epsU    = get_double_option(args, "--epsU", 1e-8);
+    double dt_init = get_double_option(args, "--dt", 1.0);
+    double dt_max  = get_double_option(args, "--dt-max", 10.0);
+    int lmax       = get_int_option(args, "--lmax", 4);
+    int report_n   = get_int_option(args, "--report", 10);
+    bool use_env   = !has_flag(args, "--no-env");
+    bool verbose   = has_flag(args, "--verbose");
+
+    cg_banner();
+    Display::Subheader("LL-FIRE Minimization");
+    Display::BlankLine();
+
+    // 1. Build scene
+    Display::Info("Building scene: " + preset_str + " (" + std::to_string(n_beads) + " beads)");
+    CGSystemState state;
+    state.build_preset(parse_scene_preset(preset_str), n_beads, spacing, seed);
+
+    // 2. Populate unified descriptors on all beads
+    //    Each bead gets a UnifiedDescriptor with l_max channels.
+    //    Coefficients are initialized from the bead's local structure.
+    Display::Info("Populating unified descriptors (l_max=" + std::to_string(lmax) + ")");
+    for (auto& bead : state.beads) {
+        coarse_grain::UnifiedDescriptor ud;
+        ud.init(lmax);
+
+        // Isotropic c_{00} from bead mass (normalized)
+        double c00 = std::sqrt(bead.mass);
+        if (ud.steric.active && !ud.steric.coeffs.empty())
+            ud.steric.coeffs[0] = c00;
+        if (ud.dispersion.active && !ud.dispersion.coeffs.empty())
+            ud.dispersion.coeffs[0] = c00 * 0.5;
+        if (ud.electrostatic.active && !ud.electrostatic.coeffs.empty())
+            ud.electrostatic.coeffs[0] = bead.charge;
+
+        bead.unified = ud;
+    }
+
+    // 3. Initialize environment states
+    state.env_states.resize(state.num_beads());
+    if (use_env) {
+        Display::Info("Running initial environment update...");
+        state.update_environment(10);
+    }
+
+    // 4. Configure FIRE parameters
+    coarse_grain::BeadFIREParams fp;
+    fp.max_steps = max_steps;
+    fp.epsF = epsF;
+    fp.epsU = epsU;
+    fp.dt = dt_init;
+    fp.dt_max = dt_max;
+    fp.use_environment = use_env;
+
+    // 5. Report initial state
+    Display::BlankLine();
+    Display::Subheader("Initial Configuration");
+    auto E_init = coarse_grain::evaluate_bead_energy(
+        state.beads, state.env_states, state.interaction_params, state.env_params);
+    Display::KeyValue("Total energy", E_init.E_total, "kcal/mol");
+    Display::KeyValue("  Steric", E_init.E_steric, "kcal/mol");
+    Display::KeyValue("  Electrostatic", E_init.E_electrostatic, "kcal/mol");
+    Display::KeyValue("  Dispersion", E_init.E_dispersion, "kcal/mol");
+    Display::KeyValue("Environment", use_env ? "enabled" : "disabled");
+    Display::BlankLine();
+
+    // 6. Run LL-FIRE
+    Display::Subheader("Running LL-FIRE Minimization");
+    Display::Info("max_steps=" + std::to_string(max_steps)
+                  + "  epsF=" + std::to_string(epsF)
+                  + "  dt=" + std::to_string(dt_init));
+    Display::BlankLine();
+
+    auto result = coarse_grain::BeadFIRE::minimize(
+        state.beads, state.env_states, state.interaction_params, fp, state.env_params);
+
+    // 7. Report convergence history
+    if (verbose || !result.history.empty()) {
+        Display::Subheader("Step History");
+        Display::Table htbl({"Step", "U_total", "Frms", "Fmax", "dt", "alpha"},
+                            {8, 14, 12, 12, 10, 10});
+        htbl.PrintHeader();
+
+        for (const auto& h : result.history) {
+            if (verbose || (h.step % report_n == 0) || h.step == result.steps_taken) {
+                std::ostringstream u, f, fm, d, a;
+                u  << std::fixed << std::setprecision(6) << h.U_total;
+                f  << std::scientific << std::setprecision(3) << h.Frms;
+                fm << std::scientific << std::setprecision(3) << h.Fmax;
+                d  << std::fixed << std::setprecision(4) << h.dt;
+                a  << std::fixed << std::setprecision(4) << h.alpha;
+                htbl.PrintRow({std::to_string(h.step), u.str(), f.str(),
+                               fm.str(), d.str(), a.str()});
+            }
+        }
+        Display::BlankLine();
+    }
+
+    // 8. Final report
+    Display::Subheader("Minimization Result");
+    if (result.converged)
+        Display::Success("CONVERGED in " + std::to_string(result.steps_taken) + " steps");
+    else
+        Display::Warning("DID NOT CONVERGE after " + std::to_string(result.steps_taken) + " steps");
+
+    Display::KeyValue("U_final", result.U_final, "kcal/mol");
+    Display::KeyValue("  Steric", result.U_steric, "kcal/mol");
+    Display::KeyValue("  Electrostatic", result.U_electrostatic, "kcal/mol");
+    Display::KeyValue("  Dispersion", result.U_dispersion, "kcal/mol");
+    Display::KeyValue("Frms_final", result.Frms_final, "kcal/(mol·A)");
+    Display::KeyValue("Fmax_final", result.Fmax_final, "kcal/(mol·A)");
+    Display::KeyValue("dt_final", result.dt_final, "fs");
+    Display::KeyValue("alpha_final", result.alpha_final);
+    Display::BlankLine();
+
+    // 9. Final bead positions
+    Display::Subheader("Final Bead Positions");
+    Display::Table ptbl({"ID", "X (A)", "Y (A)", "Z (A)"}, {6, 14, 14, 14});
+    ptbl.PrintHeader();
+    for (int i = 0; i < state.num_beads(); ++i) {
+        const auto& b = state.beads[i];
+        std::ostringstream px, py, pz;
+        px << std::fixed << std::setprecision(6) << b.position.x;
+        py << std::fixed << std::setprecision(6) << b.position.y;
+        pz << std::fixed << std::setprecision(6) << b.position.z;
+        ptbl.PrintRow({std::to_string(i), px.str(), py.str(), pz.str()});
+    }
+    Display::BlankLine();
+
+    Display::Success("LL-FIRE complete");
+    Display::BlankLine();
+    return 0;
+}
+
+// ============================================================================
 // Main CG Dispatcher
 // ============================================================================
 
@@ -782,6 +966,7 @@ int cg_dispatch(int argc, char** argv) {
     if (action == "env")      return cmd_env(args);
     if (action == "interact") return cmd_interact(args);
     if (action == "viz")      return cmd_viz(args);
+    if (action == "fire")     return cmd_fire(args);
 
     Display::Error("Unknown CG command: " + action);
     Display::Info("Run 'vsepr cg help' for available commands");

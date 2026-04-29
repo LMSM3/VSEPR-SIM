@@ -1,0 +1,19 @@
+{
+  "formula": "CuCl",
+  "seed": 77,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 9964,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.033690,
+  "energy_per_atom": -0.016845,
+  "rms_force": 0.000112,
+  "max_force": 0.000112,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 1.140000,
+  "timestamp": "2026-03-28T12:55:20",
+  "xyz_file": "benchmark_100\highn\structures\CuCl_s77.xyz"
+}

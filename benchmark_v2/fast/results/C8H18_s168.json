@@ -1,0 +1,19 @@
+{
+  "formula": "C8H18",
+  "seed": 168,
+  "tier": "fast",
+  "num_atoms": 26,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 35848383.907040,
+  "energy_per_atom": 1378783.996425,
+  "rms_force": 158261867.037254,
+  "max_force": 158261867.037254,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.651900,
+  "timestamp": "2026-03-28T13:04:17",
+  "xyz_file": "benchmark_v2\fast\structures\C8H18_s168.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "Al2SiO5",
+  "seed": 202,
+  "tier": "medium",
+  "num_atoms": 8,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 13711.482431,
+  "energy_per_atom": 1713.935304,
+  "rms_force": 30984.848805,
+  "max_force": 30984.848805,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.000400,
+  "timestamp": "2026-03-28T12:56:10",
+  "xyz_file": "benchmark_100\medium\structures\Al2SiO5_s202.xyz"
+}

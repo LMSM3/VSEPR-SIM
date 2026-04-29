@@ -1,0 +1,19 @@
+{
+  "formula": "K3PO4",
+  "seed": 230,
+  "tier": "medium",
+  "num_atoms": 8,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1535.197191,
+  "energy_per_atom": 191.899649,
+  "rms_force": 3347.966883,
+  "max_force": 3347.966883,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.001500,
+  "timestamp": "2026-03-28T12:52:26",
+  "xyz_file": "benchmark_100\medium\structures\K3PO4_s230.xyz"
+}

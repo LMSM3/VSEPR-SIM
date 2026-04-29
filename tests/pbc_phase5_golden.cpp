@@ -1,3 +1,13 @@
+// =============================================================================
+// tests/pbc_phase5_golden.cpp — Group 25: PBC Core
+// =============================================================================
+//
+// Phase 5 — Golden Regression Tests:
+//   2-particle across boundary, 64-particle edge cloud, FCC 4×4×4 (256).
+//   Lock down physics for future refactors.
+//
+// Day #57A  |  WO-56C
+// =============================================================================
 /*
 pbc_phase5_golden.cpp
 ---------------------

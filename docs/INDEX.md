@@ -1,5 +1,5 @@
-# Formation Engine Methodology
-## Documentation Index
+# VSEPR-SIM Documentation Index
+## Version 3.0.0
 
 ---
 
@@ -30,13 +30,22 @@ Each is self-contained and PDF-compilable.
 | `section8_9_reaction_electronic.tex` | **SS8-9** | QEq charges, Fukui functions, HSAB, reaction templates |
 | `section8b_heat_gated_reaction_control.tex` | **SS8b** | Heat-gated reaction control, amino acid reference, 500-sim validation |
 | `section10_12_13_closing.tex` | **SS10,12,13** | Multiscale projection, validation doctrine (35 tests), future work |
+| `section10b_defect_microstate_classification.tex` | **SS10b** | Defect microstate classification |
 | `section11_self_audit.tex` | **SS11** | Failure classification, gap targeting, regression detection |
 | `section_bridge_architecture.tex` | **SBA** | Canonical structural bridge: three-layer architecture, EngineAdapter, conversion pipeline |
 | `section_phase_reports.tex` | **PHR** | Live phased revalidation reports (Phase 1+), pass/fail audit results |
-| `section_coarse_grained_layer.tex` | **CGL** | Coarse-grained and multi-scale layer: CG model construction, statistical mechanics, emergent behavior, multi-scale coupling, validation, scale transition, thermostats, free energy, emergent effective medium mapping (ensemble proxy formulas, bulk/edge classifier, correlation length, convergence diagnostics), macro property precursor channels (8 channels with -like suffix, interface penalty, confidence model), property learning pipeline (dataset construction, 31-feature vectorization, ridge regression, grouped splits, synthetic supervision), property calibration and target legitimacy (5 property families, target contracts, calibration profiles, supervision regimes, confidence decomposition, OOD detection, synthetic curricula, promotion/demotion policy) |
-| `section_anisotropic_beads.tex` | **ASB** | Anisotropic surface-mapped beads: spherical harmonic descriptors, inertia frames, probe-based sampling, orientation-coupled interactions, torques, benzene dimer configurations, model hierarchy, multi-channel descriptors (steric/electrostatic/dispersion), higher-order angular resolution, adaptive complexity, two-tier model selection guidelines, unified descriptor strategy (single formalism, adaptive truncation, residual-driven promotion), atomistic preparation layer (FragmentView scale boundary, validation status codes, dependency asymmetry), anisotropic bead model implementation specification (core data structure, 4-stage descriptor generation pipeline, per-ℓ channel kernels, harmonic-space interaction engine, SH rotation, adaptive refinement, system-level integration), formal bead state decomposition (per-variable physical analysis, four-layer architecture: identity/pose/resolution/provenance, update frequency classification, interaction engine view, dynamics engine view, rotational inertia extension with Euler equations, extended state tuple) |
-| `section_environment_responsive_beads.tex` | **ERB** | Environment-responsive coarse-grained bead dynamics: extended bead state (𝔹_B = {B, X_B}), design principles (derived observables, fast/slow separation, low-dimensional), fast environment observables (local density ρ_B, coordination number C_B, orientational order P_{2,B} with gradients), slow internal state variable (η_B with relaxation dynamics, timescale analysis, steady-state, numerical integration), coupling mechanisms (kernel modulation, descriptor scaling, additive environment energy), emergent behaviour (spontaneous ordering, density-dependent response, hysteresis/metastability, interface sensitivity), formal specification summary with parameter ranges |
-| `section_testing_infrastructure.tex` | **TIF** | Validation infrastructure for environment-responsive bead dynamics: testing philosophy (state-first, synthetic scenes), scene construction methodology (deterministic builders, randomised generators, transforms, validation helpers, neighbour cutoff policy), variable hierarchy (7 variables → 4 independent: ρ, C, P₂, η; 3 derived: ρ̂, P̂₂, f), causal chain (geometry → observables → target → η), test suite architecture (11 suites, 1013 tests: observable correctness, dynamical stability, Monte Carlo robustness across 4000 trials, structured N > 200 formation studies, dynamic regime mapping with invariance validation, emergent effective medium mapping with 131-test ensemble response proxy validation, macro precursor channel validation with directed perturbation tests, property learning pipeline validation with end-to-end regression and ranking, property calibration and target legitimacy with confidence decomposition and OOD detection, bead layer visualization validation), behavioural assertion framework (monotonicity, boundedness, convergence, statistical tools), trajectory runner specification, key empirical findings (variable redundancy, large-N stability gate at N = 216, edge vs bulk differentiation, coordination histogram structure, translation/rotation/permutation invariance confirmed, first-order relaxation with no multistability), validation gates, completed Stage 4 extensions (formation-under-conditions, hysteresis/memory, time-to-equilibrium, condition-to-structure atlas), Stage 5 ensemble analysis layer (EnsembleProxySummary, 5 macroscopic response proxies: cohesion, uniformity, texture, stabilization, surface sensitivity), Stage 6 macro precursor channels (8 property-like channels, interface penalty, confidence model, 85 tests), Stage 7 property learning pipeline (dataset construction, feature vectorization, ridge regression, evaluation metrics, synthetic supervision, 109 tests), Stage 8 property calibration and target legitimacy (property families, target contracts, calibration profiles, supervision regimes, confidence-gated prediction, OOD detection, synthetic curricula, promotion/demotion policy, 193 tests) |
+| `section_coarse_grained_layer.tex` | **CGL** | Coarse-grained and multi-scale layer: CG model construction, statistical mechanics, emergent behavior, multi-scale coupling, validation, scale transition, thermostats, free energy, emergent effective medium mapping, macro property precursor channels, property learning pipeline, property calibration and target legitimacy |
+| `section_anisotropic_beads.tex` | **ASB** | Anisotropic surface-mapped beads: spherical harmonic descriptors, inertia frames, probe-based sampling, orientation-coupled interactions, torques, multi-channel descriptors, adaptive complexity, unified descriptor strategy, atomistic preparation layer, formal bead state decomposition |
+| `section_environment_responsive_beads.tex` | **ERB** | Environment-responsive coarse-grained bead dynamics: extended bead state, fast environment observables, slow internal state variable, coupling mechanisms, emergent behaviour |
+| `section_testing_infrastructure.tex` | **TIF** | Validation infrastructure: testing philosophy, scene construction, variable hierarchy, test suite architecture (1013 tests), behavioural assertion framework, trajectory runner, empirical findings |
+| `section_database_architecture.tex` | **DBA** | Database architecture and data management |
+| `section_layer_stack.tex` | **LST** | Layer stack architecture |
+| `section_polarization_models.tex` | **POL** | Polarization models |
+| `section_seed_bead_model.tex` | **SBM** | Seed bead model |
+| `section_fuzzy_ball_model.tex` | **FBM** | Fuzzy ball model |
+| `section_petalized_compute_allocation.tex` | **PCA** | Petalized compute allocation |
+| `section_32bit_hourglass_lookglass.tex` | **HGL** | 32-bit hourglass/lookglass architecture |
+| `ALPHA_MODEL_BOOKLET.tex` | **AMB** | Alpha model booklet — consolidated atomistic model reference |
 
 **Compiled PDF included:** `section0_identity_state_decomposition.pdf`
 
@@ -63,7 +72,6 @@ for f in section*.tex; do pdflatex "$f"; done
 
 | File | Pages | Content |
 |------|-------|---------|
-| `alpha_fit_purpose.tex` | **1** | Purpose of the alpha polarizability fitter, why it is a dead end, and the transition decision |
 | `xyz_file_formats.tex` | **2** | Complete specification of `.xyz` / `.xyza` / `.xyzc` / `.xyzf` formats with grammars, unit tables, and implementation map |
 
 ---
@@ -74,7 +82,23 @@ for f in section*.tex; do pdflatex "$f"; done
 |------|---------|
 | `FILE_FORMATS.md` | XYZ / XYZA / XYZC / XYZF file format specification (Markdown) |
 | `VALIDATION_REPORT.md` | 35-test validation campaign with results |
-| `VALIDATION_CAMPAIGN_SUMMARY.md` | Executive summary and production certification |
+| `BEAD_FIRE_REFERENCE.md` | FIRE algorithm reference for bead-level relaxation |
+| `cg_mapping_report.md` | Coarse-grained mapping report |
+
+---
+
+## CLI Commands
+
+The unified CLI is accessed via `vsepr <COMMAND>`. See `CLI_WALKTHROUGH.txt` for a full step-by-step guide.
+
+| Command | Description |
+|---------|-------------|
+| `vsepr build` | Build molecules from chemical formulas |
+| `vsepr viz` | Interactive atomistic visualization |
+| `vsepr therm` | Analyze thermal properties, bonding, and evolution |
+| `vsepr cg <cmd>` | Coarse-grained console (scene, inspect, env, interact, viz, help) |
+| `vsepr help` | Display help information |
+| `vsepr version` | Show version and component information |
 
 ---
 
@@ -88,7 +112,7 @@ The coarse-grained operator console is accessed via `vsepr cg <COMMAND>`.
 | `vsepr cg inspect` | Inspect per-bead state: position, mass, orientation, neighbours, environment |
 | `vsepr cg env` | Run the environment update pipeline with trajectory and convergence reporting |
 | `vsepr cg interact` | Evaluate pairwise interactions with per-channel (steric/elec/disp) and per-ℓ decomposition |
-| `vsepr cg viz` | Launch lightweight visualization (stub — future feature) |
+| `vsepr cg viz` | Launch lightweight visualization (requires BUILD_VIS=ON) |
 | `vsepr cg help` | Display CG console help |
 
 ### Key Implementation Files
@@ -102,6 +126,63 @@ The coarse-grained operator console is accessed via `vsepr cg <COMMAND>`.
 
 ---
 
+## PyKernel Modules
+
+The Python kernel (`pykernel/`) provides scientific computation, automation, and batch processing.
+
+### Core Infrastructure
+
+| Module | Content |
+|--------|---------|
+| `pykernel/poly_fitter.py` | Polynomial fitting engine |
+| `pykernel/eigen_counter.py` | Eigenvalue counting and spectral analysis |
+| `pykernel/gpu_bridge.py` | GPU/CPU bridge with automatic fallback |
+| `pykernel/runner.py` | Walk-away improvement runner |
+| `pykernel/improvement_loop.py` | Autonomous improvement loop orchestration |
+| `pykernel/pipe.py` | Pipe[T], Transform[T,U], FanOut, Accumulator, CSVSink, JSONSink pipeline infrastructure |
+| `pykernel/test_forest.py` | Test forest — structured test discovery and execution |
+| `pykernel/benchmark.py` | GPU vs CPU benchmarking harness |
+
+### Visualization and TUI
+
+| Module | Content |
+|--------|---------|
+| `pykernel/live_viewer.py` | Live xyzA viewer orchestrator (Python side) |
+| `pykernel/crystal_tui.py` | Crystal lattice TUI — ANSI terminal renderer with lattice projection, force arrows, wind overlay, and math panel |
+
+### Thermal and Materials
+
+| Module | Content |
+|--------|---------|
+| `pykernel/metallic_cp.py` | Debye model + Sommerfeld electronic + Nernst-Lindemann Cp-Cv, 30-metal empirical database |
+| `pykernel/heating_sim.py` | Time-stepping thermal evolution — `HeatingSimulation`, `HeatSchedule` (constant/ramp/pulse/custom), per-part energy tracking |
+| `pykernel/step_parser.py` | SolidWorks STEP (ISO 10303-21) file parser — AP203/AP214, named PRODUCT extraction |
+| `pykernel/thermo_pipe.py` | Batch thermal pipeline — `ThermoRunner`, `ThermoValidator`, `XLSXSink`, `BatchJob` orchestration |
+
+### C++ Atomistic Components
+
+| File | Content |
+|------|---------|
+| `atomistic/models/wind_particle.hpp` | Wind particle force field — directional force with Gaussian envelope, ramp schedule, F_max clamp |
+| `atomistic/tui/crystal_tui.hpp` + `.cpp` | C++ crystal lattice TUI renderer |
+
+---
+
+## Visualization
+
+| File | Content |
+|------|---------|
+| `docs/vis/ARCHITECTURE_DIAGRAM.md` | Visualization architecture overview |
+| `docs/vis/BALLSTICK_GUIDE.md` | Ball-and-stick rendering guide |
+| `docs/vis/RENDERER_FEATURES.md` | Renderer feature list |
+| `docs/vis/INTERACTIVE_FEATURES.md` | Interactive features documentation |
+| `docs/vis/INTERACTIVE_UI_GUIDE.md` | Interactive UI guide |
+| `docs/vis/INTERACTIVE_SUMMARY.md` | Interactive feature summary |
+| `docs/vis/IMPLEMENTATION_COMPLETE.md` | Implementation completion status |
+| `docs/vis/QUICK_REFERENCE.md` | Quick reference for visualization |
+
+---
+
 ## Verification Records (`docs/verification/`)
 
 | File | Content |
@@ -112,51 +193,65 @@ Raw run artifacts: `verification/deep/milestone_A_run.txt`
 
 ---
 
+## Test Coverage
+
+| Suite | Tests | Status |
+|-------|-------|--------|
+| C++ kernel (Milestone A) | 256 | ✅ PASS |
+| C++ CG CLI | 72 | ✅ PASS |
+| C++ Wind/TUI | 8 | ✅ PASS |
+| Python crystal TUI | 37 | ✅ PASS |
+| Python STEP parser | 24 | ✅ PASS |
+| Python metallic c_p | 52 | ✅ PASS |
+| Python heating sim | 20 | ✅ PASS |
+| Python thermo pipe | 27 | ✅ PASS |
+| Python prior (pipe, benchmark, etc.) | 155 | ✅ PASS |
+
+---
+
 ## Reading Order
 
 **For understanding the methodology:**
-1. SS1 (Foundational Thesis) -- the problem definition
-2. SS2 (State Ontology) -- data structures
-3. SS3-7 -- physics, integration, statistics
-4. SS8-9 (Reaction/Electronic) -- reaction prediction, electronic properties
-5. SS8b (Heat-Gated Control) -- heat parameter, amino acid reference, 500-sim validation
-6. SS12 (Validation) -- what has been tested
-7. SS11 (Self-Audit) -- how failures are classified
-8. CGL (Coarse-Grained Layer) -- multi-scale extension architecture
-9. ASB (Anisotropic Beads) -- surface-mapped anisotropic bead descriptors
-10. ERB (Environment-Responsive Beads) -- environment-responsive dynamics, local observables, internal state evolution
-11. TIF (Testing Infrastructure) -- validation methodology, variable hierarchy, empirical findings, formation studies, dynamic regimes, invariance proofs
-12. EEM (Ensemble Proxy Layer) -- `coarse_grain/analysis/ensemble_proxy.hpp`: macroscopic response proxies from bead-state distributions (cohesion, uniformity, texture, stabilization, surface sensitivity)
+1. SS1 (Foundational Thesis) — the problem definition
+2. SS2 (State Ontology) — data structures
+3. SS3-7 — physics, integration, statistics
+4. SS8-9 (Reaction/Electronic) — reaction prediction, electronic properties
+5. SS8b (Heat-Gated Control) — heat parameter, amino acid reference, 500-sim validation
+6. SS12 (Validation) — what has been tested
+7. SS11 (Self-Audit) — how failures are classified
+8. CGL (Coarse-Grained Layer) — multi-scale extension architecture
+9. ASB (Anisotropic Beads) — surface-mapped anisotropic bead descriptors
+10. ERB (Environment-Responsive Beads) — environment-responsive dynamics, local observables, internal state evolution
+11. TIF (Testing Infrastructure) — validation methodology, variable hierarchy, empirical findings
 
 **For using the code:**
-1. `FILE_FORMATS.md` -- I/O specification
-2. `section_bridge_architecture.tex` -- three-layer engine/bridge/desktop design
-3. `section_coarse_grained_layer.tex` -- CG model, ensembles, emergent analysis, multi-scale coupling
-4. SS5 (Integration) -- algorithm details
-5. `VALIDATION_REPORT.md` -- known limits
-6. CG CLI Console -- `vsepr cg <command>` scientific operator console for coarse-grained engine
+1. `CLI_WALKTHROUGH.txt` — step-by-step CLI walkthrough
+2. `FILE_FORMATS.md` — I/O specification
+3. `section_bridge_architecture.tex` — three-layer engine/bridge/desktop design
+4. SS5 (Integration) — algorithm details
+5. `VALIDATION_REPORT.md` — known limits
+6. CG CLI Console — `vsepr cg <command>` scientific operator console
 
 ---
 
 ## Citation
 
 ```bibtex
-@techreport{formation_engine_methodology_v01,
-  title   = {Formation Engine Canonical Simulation Methodology},
-  author  = {Formation Engine Development Team},
-  institution = {VSEPR-Sim Project},
+@techreport{vsepr_sim_v3,
+  title   = {VSEPR-SIM: Atomistic Simulation and Analysis Platform},
+  author  = {VSEPR-SIM Development Team},
+  institution = {VSEPR-SIM Project},
   year    = {2025},
-  month   = {January},
-  version = {0.1},
-  note    = {13 sections, 35 validation tests, LaTeX source included}
+  version = {3.0.0},
+  note    = {Deterministic atomistic structure generation, thermal analysis, SolidWorks STEP import, batch pipelines}
 }
 ```
 
 ---
 
 **Last Updated:** June 2025  
-**Methodology Version:** 0.2  
-**Validation Status:** 28/35 atomistic PASS (80%) · 515 CG tests PASS (100%)  
-**Production Status:** ✅ CERTIFIED (LJ-dominated systems) · CG console operational · EEM analysis layer active
+**Version:** 3.0.0  
+**Validation Status:** 256/256 kernel PASS · 72 CG CLI PASS · 315 Python tests PASS  
+**Production Status:** ✅ CERTIFIED — Atomistic kernel operational · CG console operational · Thermal pipeline operational · STEP import operational
 
-**This is not a theoretical proposal. This is a documented, validated, production-ready scientific instrument.**
+**This is not a theoretical proposal. This is a documented, validated, research-oriented scientific instrument.**

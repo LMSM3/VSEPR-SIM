@@ -1,0 +1,19 @@
+{
+  "formula": "ZnS",
+  "seed": 90,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 0.566936,
+  "energy_per_atom": 0.283468,
+  "rms_force": 4.247771,
+  "max_force": 4.247771,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.504600,
+  "timestamp": "2026-03-28T12:55:24",
+  "xyz_file": "benchmark_100\medium\structures\ZnS_s90.xyz"
+}

@@ -15,6 +15,7 @@ Commands:
 #include "sim/optimizer.hpp"
 #include "core/json_schema.hpp"
 #include "core/geom_ops.hpp"
+#include "cli/cmd_validate.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -382,9 +383,11 @@ void print_usage() {
     std::cout << "    Analyze geometry and energy without optimization\n\n";
     std::cout << "  vsepr run input.json\n";
     std::cout << "    Run optimization from JSON file\n\n";
-    std::cout << "  vsepr optimize input.json --out result.json\n";
-    std::cout << "    Optimize and save result\n\n";
-}
+      std::cout << "  vsepr optimize input.json --out result.json\n";
+        std::cout << "    Optimize and save result\n\n";
+        std::cout << "  vsepr validate script.vsim\n";
+        std::cout << "    Parse and validate a .vsim run script\n\n";
+    }
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -411,6 +414,10 @@ int main(int argc, char** argv) {
             cmd_run(argv[2]);
         } else if (command == "optimize") {
             cmd_optimize(argc, argv);
+        } else if (command == "validate") {
+            std::vector<std::string> rest;
+            for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
+            return vsepr::cli::cmd_validate(rest);
         } else {
             std::cerr << "Unknown command: " << command << "\n\n";
             print_usage();

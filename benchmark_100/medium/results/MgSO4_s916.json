@@ -1,0 +1,19 @@
+{
+  "formula": "MgSO4",
+  "seed": 916,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 20.106013,
+  "energy_per_atom": 3.351002,
+  "rms_force": 31.273607,
+  "max_force": 31.273607,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.602000,
+  "timestamp": "2026-03-28T12:53:49",
+  "xyz_file": "benchmark_100\medium\structures\MgSO4_s916.xyz"
+}

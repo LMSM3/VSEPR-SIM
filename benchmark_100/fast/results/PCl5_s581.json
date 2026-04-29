@@ -1,0 +1,19 @@
+{
+  "formula": "PCl5",
+  "seed": 581,
+  "tier": "fast",
+  "num_atoms": 6,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 574.083091,
+  "energy_per_atom": 95.680515,
+  "rms_force": 704.476290,
+  "max_force": 704.476290,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.493200,
+  "timestamp": "2026-03-28T12:52:35",
+  "xyz_file": "benchmark_100\fast\structures\PCl5_s581.xyz"
+}

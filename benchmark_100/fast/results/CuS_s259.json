@@ -1,0 +1,19 @@
+{
+  "formula": "CuS",
+  "seed": 259,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 23.209251,
+  "energy_per_atom": 11.604625,
+  "rms_force": 118.192176,
+  "max_force": 118.192176,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.349100,
+  "timestamp": "2026-03-28T12:56:17",
+  "xyz_file": "benchmark_100\fast\structures\CuS_s259.xyz"
+}

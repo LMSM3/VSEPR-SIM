@@ -1,0 +1,786 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{bm}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{mathtools}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Internal Journal of Organometallics}}
+\fancyhead[R]{\small\textit{VSEPR-SIM Development Team — v3.0.1}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+
+\title{\textbf{Internal Journal of Organometallics} \\[6pt]
+\Large Matrix Folding Theory, Entropy Stacking, \\
+and Adsorption Isotherms for Atomistic Simulation \\[6pt]
+\large VSEPR-SIM Development Team}
+\author{Formation Engine Research Division}
+\date{Version 3.0.1 — \today}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+This report documents the theoretical foundations for polymer folding
+classification, entropy--enthalpy stacking competition, and surface
+adsorption modelling as they apply to the VSEPR-SIM atomistic simulation
+platform.  We treat RNA-type secondary structure enumeration through
+matrix methods, define the triangular truncation scheme for planar
+diagram selection, derive the entropy stacking partition function, and
+connect these to Langmuir and BET adsorption isotherms relevant to
+organometallic surface chemistry.  All derivations are given in forms
+suitable for direct implementation in the atomistic kernel.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+% PART I — MATRIX FOLDING THEORY
+% =====================================================================
+
+\part{Matrix Folding Theory}
+
+\section{The Dual-Layer Interaction Matrix}
+
+\subsection{Definition of the $N \times N \times 2$ System}
+
+Consider a polymer of $N$ residues (nucleotides, amino acids, or
+organometallic repeat units).  We define two interaction matrices
+operating simultaneously on the same index space:
+
+\begin{definition}[Dual-layer interaction matrix]
+Let $\mathbf{H} \in \mathbb{R}^{N \times N}$ be the \emph{base-pairing}
+(or ligand-coordination) energy matrix and
+$\mathbf{S} \in \mathbb{R}^{N \times N}$ be the \emph{stacking}
+(or $\pi$-interaction) energy matrix.  The composite system is the pair
+$(\mathbf{H}, \mathbf{S})$, which we write as an
+$N \times N \times 2$ tensor:
+\begin{equation}
+  \mathcal{M}_{ij}^{(\alpha)} =
+  \begin{cases}
+    H_{ij} & \alpha = 1 \quad \text{(pairing/coordination)} \\
+    S_{ij} & \alpha = 2 \quad \text{(stacking/$\pi$-interaction)}
+  \end{cases}
+\end{equation}
+where $i,j \in \{1, \ldots, N\}$ index residues and $\alpha \in \{1,2\}$
+selects the interaction layer.
+\end{definition}
+
+For the canonical RNA problem, $H_{ij}$ encodes Watson--Crick
+complementarity (or wobble pairs) and $S_{ij}$ encodes the stacking
+free energy between adjacent paired bases.  For organometallic polymers
+with bridging ligands (as in the uranium silyl-amide complexes of
+Compounds~59 and~60), $H_{ij}$ encodes metal--ligand coordination
+energies and $S_{ij}$ encodes inter-complex stacking or through-space
+orbital interactions.
+
+\subsection{Small-Scale Grids: The $4 \times 4$ Case}
+
+In practical atomistic simulation, the smallest non-trivial grid that
+captures both pairing and stacking is $N = 4$.  This gives a
+$4 \times 4 \times 2$ tensor with 32 independent entries (before
+symmetry reduction).
+
+For a symmetric polymer:
+\begin{equation}
+  H_{ij} = H_{ji}, \qquad S_{ij} = S_{ji}
+\end{equation}
+reducing to $2 \times \binom{4}{2} + 2 \times 4 = 20$ independent
+parameters.
+
+\begin{remark}
+The $4 \times 4$ grid is not merely a toy.  For RNA, the four
+nucleotides (A, U, G, C) define a $4 \times 4$ pairing energy matrix.
+For organometallic coordination, a four-ligand system (e.g., two
+amido-N, one oxo-bridge, one silyl group) similarly populates a
+$4 \times 4$ coordination-energy grid.
+\end{remark}
+
+\subsection{Matrix Symmetry and Constraint Classes}
+
+We classify entries by their physical role:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Entry type} & \textbf{Condition} & \textbf{Physical meaning} \\
+\midrule
+Diagonal ($i = j$)  & $H_{ii}$, $S_{ii}$ & Self-energy, on-site potential \\
+Near-diagonal ($|i-j|=1$) & $S_{i,i+1}$ & Nearest-neighbour stacking \\
+Off-diagonal ($|i-j|>1$) & $H_{ij}$ & Long-range pairing / coordination \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The stacking matrix $\mathbf{S}$ is typically \emph{banded} (only
+nearest-neighbour and next-nearest-neighbour terms are significant),
+while the pairing matrix $\mathbf{H}$ is generally \emph{sparse} but
+not banded.
+
+% =====================================================================
+\section{Secondary Structure as Planar Diagrams}
+
+\subsection{Definitions}
+
+\begin{definition}[Secondary structure]
+A \emph{secondary structure} on $\{1, \ldots, N\}$ is a set of pairs
+$\sigma = \{(i_1, j_1), \ldots, (i_k, j_k)\}$ such that:
+\begin{enumerate}
+  \item Each index appears in at most one pair (matching condition).
+  \item If $(i, j) \in \sigma$ with $i < j$, then $j - i > 3$
+        (minimum loop length).
+  \item If $(i, j), (k, l) \in \sigma$ with $i < k$, then either
+        $j < k$ or $i < k < l < j$ (no crossing; planarity).
+\end{enumerate}
+\end{definition}
+
+Condition~3 is the \emph{planarity constraint}: when we draw arcs
+connecting paired indices on a line, no two arcs cross.  This is
+precisely the condition that distinguishes \emph{secondary} from
+\emph{tertiary} structure (pseudoknots).
+
+\subsection{Counting Secondary Structures}
+
+The number of secondary structures on $N$ residues (with minimum loop
+length~1 for simplicity) satisfies the Catalan-like recurrence:
+\begin{equation}
+  s(N) = s(N-1) + \sum_{k=1}^{N-2} s(k-1)\, s(N-k-1)
+\end{equation}
+with $s(0) = s(1) = 1$.  The asymptotic growth is:
+\begin{equation}
+  s(N) \sim C \cdot N^{-3/2} \cdot \alpha^{N},
+  \qquad \alpha \approx 2.618\ldots
+\end{equation}
+
+For the partition function, each structure $\sigma$ is weighted by its
+Boltzmann factor:
+\begin{equation}
+  Z = \sum_{\sigma} \exp\!\Bigl(-\beta\, E(\sigma)\Bigr),
+  \qquad
+  E(\sigma) = \sum_{(i,j) \in \sigma} H_{ij}
+            + \sum_{\substack{(i,j),(i+1,j-1) \\ \in \sigma}} S_{i,i+1}
+\end{equation}
+
+% =====================================================================
+\section{Triangular Truncation}
+
+\subsection{Motivation}
+
+The full $N \times N$ interaction matrix contains $O(N^2)$ entries, but
+the secondary structure constraint restricts us to the upper triangle
+with the additional planarity filter.  \emph{Triangular truncation}
+formalizes this by zeroing out entries that cannot participate in valid
+secondary pairings.
+
+\begin{definition}[Triangular truncation operator]
+For a matrix $\mathbf{A} \in \mathbb{R}^{N \times N}$, define:
+\begin{equation}
+  [\mathcal{T}(\mathbf{A})]_{ij} =
+  \begin{cases}
+    A_{ij} & \text{if } j - i > d_{\min} \\
+    0      & \text{otherwise}
+  \end{cases}
+\end{equation}
+where $d_{\min}$ is the minimum loop length (typically 3--4 for RNA,
+variable for organometallic chains).
+\end{definition}
+
+\subsection{Spectral Properties}
+
+The truncated matrix $\mathcal{T}(\mathbf{H})$ has well-known spectral
+properties.  For Gaussian random matrices (the ``large-$N$'' limit of
+random polymer theory):
+
+\begin{theorem}[Wigner semicircle under truncation]
+If $\mathbf{H}$ is drawn from GOE$(N)$ and $d_{\min} = O(1)$, then
+$\mathcal{T}(\mathbf{H})$ retains the semicircle law in the
+$N \to \infty$ limit, with spectral radius scaled by
+$\sqrt{1 - d_{\min}/N}$.
+\end{theorem}
+
+In practice, we are far from the large-$N$ limit ($N = 4$ to $N \sim
+100$ for the systems of interest), so the spectral structure must be
+computed explicitly.
+
+\subsection{Implementation in the Atomistic Kernel}
+
+The triangular truncation is applied during matrix assembly:
+
+\begin{lstlisting}
+// atomistic kernel: triangular truncation
+template <int N>
+void triangular_truncate(double H[N][N], int d_min) {
+    for (int i = 0; i < N; ++i)
+        for (int j = 0; j < N; ++j)
+            if (std::abs(j - i) <= d_min)
+                H[i][j] = 0.0;
+}
+\end{lstlisting}
+
+This reduces the effective matrix density from $O(N^2)$ to
+$O(N^2 - N \cdot d_{\min})$ and eliminates non-physical short-range
+``pairings'' that would violate loop-length constraints.
+
+% =====================================================================
+\section{The Large-$N$ Limit and Planar Diagrams}
+
+\subsection{'t Hooft Expansion}
+
+In the matrix model formulation, the partition function admits a
+topological expansion in $1/N^2$:
+\begin{equation}
+  \ln Z = \sum_{g=0}^{\infty} N^{2-2g}\, F_g
+\end{equation}
+where $g$ is the genus of the corresponding surface.  The leading term
+($g = 0$) corresponds to \emph{planar} diagrams --- precisely the
+secondary structures with no crossing arcs.
+
+\begin{proposition}
+In the large-$N$ limit, only planar (secondary) structures contribute
+to the free energy at leading order.  Pseudoknots (tertiary structures)
+are suppressed by $O(1/N^2)$.
+\end{proposition}
+
+This provides the mathematical justification for the triangular
+truncation: at leading order, the truncated matrix captures all
+physically relevant interactions.
+
+\subsection{Connection to Organometallic Chains}
+
+For bridged organometallic polymers (e.g., the oxo-bridged diuranium
+complexes), the ``planarity'' condition translates to the requirement
+that bridging ligands connect only non-crossing pairs of metal centres.
+In the silyl-amide systems (Compounds~59 and~60), the oxo bridge
+($\mu$-O) connects two uranium centres without crossing any of the
+amido-N coordination bonds --- a geometrically planar arrangement
+consistent with the secondary structure formalism.
+
+% =====================================================================
+% PART II — ENTROPY STACKING
+% =====================================================================
+
+\part{Entropy Stacking Thermodynamics}
+
+\section{The Stacking Free Energy}
+
+\subsection{Enthalpy--Entropy Competition}
+
+When planar molecular units (nucleotide bases, porphyrin rings,
+organometallic coordination planes) stack, there is a thermodynamic
+competition:
+
+\begin{align}
+  \Delta G_{\text{stack}} &= \Delta H_{\text{stack}}
+                           - T \Delta S_{\text{stack}} \\
+  \Delta H_{\text{stack}} &< 0
+    \quad \text{(favourable: van der Waals, $\pi$--$\pi$, dispersion)} \\
+  \Delta S_{\text{stack}} &< 0
+    \quad \text{(unfavourable: ordering reduces configurational freedom)}
+\end{align}
+
+The net stacking propensity depends on temperature:
+\begin{equation}
+  T^{*} = \frac{\Delta H_{\text{stack}}}{\Delta S_{\text{stack}}}
+\end{equation}
+is the \emph{stacking melting temperature} --- above $T^{*}$, entropy
+dominates and the stack disassembles.
+
+\subsection{Nearest-Neighbour Model}
+
+In the nearest-neighbour approximation, the total stacking energy for a
+chain of $N$ residues is:
+\begin{equation}
+  E_{\text{stack}} = \sum_{i=1}^{N-1} S_{i,i+1}\, \sigma_i\, \sigma_{i+1}
+\end{equation}
+where $\sigma_i \in \{0, 1\}$ indicates whether residue $i$ participates
+in a stack.  The partition function factorizes as a transfer matrix:
+\begin{equation}
+  Z_{\text{stack}} = \text{Tr}\!\left(\prod_{i=1}^{N-1} \mathbf{T}_i\right),
+  \qquad
+  \mathbf{T}_i = \begin{pmatrix}
+    1 & 1 \\
+    1 & e^{-\beta S_{i,i+1}}
+  \end{pmatrix}
+\end{equation}
+
+\subsection{Entropy Contribution per Stack}
+
+The configurational entropy of a partially stacked chain with $k$
+stacked pairs out of $N-1$ possible:
+\begin{equation}
+  S_{\text{config}}(k) = k_B \ln \binom{N-1}{k}
+  \approx k_B \left[ (N-1) H\!\left(\frac{k}{N-1}\right) \right]
+\end{equation}
+where $H(x) = -x \ln x - (1-x) \ln(1-x)$ is the binary entropy
+function.
+
+The optimal stacking fraction $\phi^{*} = k^{*}/(N-1)$ satisfies:
+\begin{equation}
+  \frac{\partial}{\partial \phi}
+  \left[ \phi\, \langle S_{i,i+1} \rangle
+       - k_B T\, H(\phi) \right] = 0
+  \implies
+  \phi^{*} = \frac{1}{1 + \exp\!\bigl(\beta\, \langle S_{i,i+1} \rangle\bigr)}
+\end{equation}
+which is a Fermi--Dirac distribution over stacking sites.
+
+% =====================================================================
+\section{Entropy Stacking in Matrix Ensembles}
+
+\subsection{Ensemble Stacking (Machine Learning Analogy)}
+
+The term ``entropy stacking'' also appears in ensemble methods, where
+multiple base models (each represented by a matrix of predictions) are
+combined using entropy-weighted averaging:
+\begin{equation}
+  \hat{y} = \sum_{m=1}^{M} w_m\, \hat{y}_m,
+  \qquad
+  w_m \propto \exp\!\bigl(-\lambda\, H_m\bigr)
+\end{equation}
+where $H_m$ is the entropy of model $m$'s prediction distribution.
+Lower-entropy (more confident) models receive higher weight.
+
+\begin{remark}
+This is formally identical to the Boltzmann weighting of molecular
+configurations if we identify $\lambda \leftrightarrow \beta$ and
+$H_m \leftrightarrow E_m$.  The VSEPR-SIM kernel can therefore reuse
+the same partition function machinery for both physical stacking
+calculations and model-ensemble scoring.
+\end{remark}
+
+\subsection{Implementation: Combined Scoring}
+
+The combined health/quality score for a stacked ensemble of $M$
+atomistic models:
+\begin{equation}
+  Q = \frac{\sum_{m} e^{-\lambda H_m}\, q_m}
+           {\sum_{m} e^{-\lambda H_m}}
+\end{equation}
+where $q_m$ is the individual model quality score and $H_m$ is its
+prediction entropy.  This connects directly to the flower health
+indicator system's weighted deduction model, where each health metric
+acts as a ``model'' contributing to the overall score.
+
+% =====================================================================
+% PART III — ADSORPTION ISOTHERMS
+% =====================================================================
+
+\part{Adsorption Isotherms for Surface Chemistry}
+
+\section{Langmuir Adsorption}
+
+\subsection{Single-Layer Model}
+
+The Langmuir isotherm assumes monolayer adsorption on a surface with
+$N_s$ equivalent, non-interacting sites:
+
+\begin{equation}
+  \theta = \frac{K_L\, C}{1 + K_L\, C}
+\end{equation}
+
+where:
+\begin{itemize}
+  \item $\theta$ is the fractional surface coverage
+  \item $C$ is the bulk concentration (or partial pressure)
+  \item $K_L = k_a / k_d$ is the Langmuir equilibrium constant
+        (ratio of adsorption to desorption rate constants)
+\end{itemize}
+
+The adsorbed quantity per unit mass:
+\begin{equation}
+  q_t = q_{\max}\, \theta = \frac{q_{\max}\, K_L\, C}{1 + K_L\, C}
+\end{equation}
+
+\subsection{Kinetic Derivation}
+
+At equilibrium, the rate of adsorption equals the rate of desorption:
+\begin{align}
+  r_{\text{ads}} &= k_a\, C\, (1 - \theta) \\
+  r_{\text{des}} &= k_d\, \theta \\
+  r_{\text{ads}} &= r_{\text{des}}
+  \implies \theta = \frac{K_L\, C}{1 + K_L\, C}
+\end{align}
+
+The approach to equilibrium follows pseudo-first-order or
+pseudo-second-order kinetics:
+
+\begin{align}
+  \text{Pseudo-first-order:} \quad
+    \frac{dq_t}{dt} &= k_1 (q_e - q_t) \\
+  \text{Pseudo-second-order:} \quad
+    \frac{dq_t}{dt} &= k_2 (q_e - q_t)^2
+\end{align}
+
+\subsection{Linearized Forms for Fitting}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Form} & \textbf{Plot} & \textbf{Equation} \\
+\midrule
+Langmuir-1 & $C/q_t$ vs.\ $C$
+  & $\displaystyle \frac{C}{q_t} = \frac{1}{q_{\max} K_L} + \frac{C}{q_{\max}}$ \\[10pt]
+Langmuir-2 & $1/q_t$ vs.\ $1/C$
+  & $\displaystyle \frac{1}{q_t} = \frac{1}{q_{\max}} + \frac{1}{q_{\max} K_L C}$ \\[10pt]
+Freundlich & $\ln q_t$ vs.\ $\ln C$
+  & $\displaystyle q_t = K_F\, C^{1/n}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =====================================================================
+\section{BET Adsorption (Multilayer)}
+
+\subsection{The BET Equation}
+
+The Brunauer--Emmett--Teller (BET) model extends Langmuir to multilayer
+adsorption.  Each adsorbed layer $s_i$ serves as a substrate for the
+next layer:
+
+\begin{equation}
+  s_i = C_{\text{BET}}\, x^{i}\, s_0,
+  \qquad x = \frac{p}{p_0}
+\end{equation}
+
+where:
+\begin{itemize}
+  \item $s_0$ = number of bare surface sites
+  \item $s_i$ = number of sites covered by exactly $i$ layers
+  \item $C_{\text{BET}} = \exp\!\bigl[(\varepsilon_1 - \varepsilon_L)
+        / k_B T\bigr]$ is the BET constant
+  \item $\varepsilon_1$ = first-layer adsorption energy
+  \item $\varepsilon_L$ = liquefaction energy (layers $\geq 2$)
+  \item $x = p/p_0$ = relative pressure
+\end{itemize}
+
+The total adsorbed volume:
+\begin{equation}
+  V = V_0 \sum_{i=0}^{\infty} i\, s_i
+    = \frac{V_m\, C_{\text{BET}}\, x}
+           {(1 - x)\bigl[1 + (C_{\text{BET}} - 1)\, x\bigr]}
+  \label{eq:bet}
+\end{equation}
+
+\subsection{Derivation via Geometric Series}
+
+The total number of occupied layers:
+\begin{align}
+  N_{\text{total}} &= \sum_{i=1}^{\infty} i\, s_i
+    = C_{\text{BET}}\, s_0 \sum_{i=1}^{\infty} i\, x^i
+    = \frac{C_{\text{BET}}\, s_0\, x}{(1-x)^2}
+\end{align}
+
+The total number of sites (occupied and bare):
+\begin{align}
+  N_s &= s_0 + \sum_{i=1}^{\infty} s_i
+       = s_0\left(1 + \frac{C_{\text{BET}}\, x}{1-x}\right)
+       = \frac{s_0\bigl[1 + (C_{\text{BET}}-1)\, x\bigr]}{1-x}
+\end{align}
+
+The ratio yields Equation~\eqref{eq:bet}.
+
+\subsection{Linearized BET Form}
+
+Rearranging Equation~\eqref{eq:bet}:
+\begin{equation}
+  \frac{x}{V(1-x)} = \frac{1}{V_m\, C_{\text{BET}}}
+    + \frac{C_{\text{BET}} - 1}{V_m\, C_{\text{BET}}}\, x
+\end{equation}
+
+A plot of $x / [V(1-x)]$ vs.\ $x$ gives a straight line with:
+\begin{align}
+  \text{slope} &= \frac{C_{\text{BET}} - 1}{V_m\, C_{\text{BET}}} \\
+  \text{intercept} &= \frac{1}{V_m\, C_{\text{BET}}}
+\end{align}
+
+From which $V_m$ and $C_{\text{BET}}$ are extracted.
+
+% =====================================================================
+\section{Application to Organometallic Surface Chemistry}
+
+\subsection{Uranium Coordination Polymers}
+
+The diuranium oxo-bridged complexes (Compounds~59 and~60) exhibit
+surface-like coordination chemistry:
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Property} & \textbf{Compound 59} & \textbf{Compound 60} \\
+\midrule
+Metal centres     & U---O---U            & U---O---U            \\
+N-donor ligands   & 4 (NR, NR)           & 4 (NR$_2$)           \\
+Si substituents   & Bu$^t$, Me           & Me$_3$Si             \\
+Coordination no.  & 5--6                 & 5--6                 \\
+Bridging mode     & $\mu$-O + CH$_2$     & $\mu$-O              \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The coordination sites on each uranium centre act as ``adsorption
+sites'' in the Langmuir sense:  each site binds at most one ligand,
+and the binding energy depends on the ligand identity and the
+trans-influence of other coordinated groups.
+
+\subsection{Selectivity and Dissociation}
+
+For competitive binding (cf.\ the selectivity data for Na$^+$, K$^+$,
+Ca$^{2+}$, Mg$^{2+}$, Fe$^{3+}$, Co$^{2+}$, Cu$^{2+}$, Ni$^{2+}$,
+VO$^{3-}$), the multi-component Langmuir isotherm applies:
+
+\begin{equation}
+  \theta_j = \frac{K_j\, C_j}{1 + \sum_{k} K_k\, C_k}
+\end{equation}
+
+The dissociation constant $K_d$ (reported as $K_d = 3.35$\,nM for the
+uranyl system) is the inverse of the Langmuir constant:
+\begin{equation}
+  K_d = \frac{1}{K_L} = \frac{k_d}{k_a}
+\end{equation}
+
+The fraction of bound uranium as a function of total carbonate
+concentration follows the competitive displacement curve:
+\begin{equation}
+  f_{\text{bound}} = \frac{K_d}{K_d + [\text{CO}_3^{2-}]_{\text{total}}}
+\end{equation}
+
+% =====================================================================
+% PART IV — UNIFIED COMPUTATIONAL FRAMEWORK
+% =====================================================================
+
+\part{Unified Computational Framework}
+
+\section{The Complete Simulation Pipeline}
+
+The four theoretical components unite into a single simulation workflow:
+
+\begin{enumerate}
+  \item \textbf{Define the interaction matrices.}
+        Construct $\mathbf{H}$ (pairing/coordination) and $\mathbf{S}$
+        (stacking) from atomistic force field parameters or quantum
+        chemical calculations.
+
+  \item \textbf{Apply triangular truncation.}
+        Zero out entries with $|i - j| \leq d_{\min}$ to enforce the
+        minimum loop-length constraint and restrict to secondary
+        (planar) structures.
+
+  \item \textbf{Compute the partition function.}
+        Enumerate valid secondary structures (via dynamic programming)
+        and weight each by its Boltzmann factor incorporating both
+        pairing and stacking energies.
+
+  \item \textbf{Extract thermodynamic observables.}
+        From $Z$, compute:
+        \begin{itemize}
+          \item Free energy: $F = -k_B T \ln Z$
+          \item Pairing probability: $p_{ij} = \partial \ln Z / \partial(\beta H_{ij})$
+          \item Stacking fraction: $\langle \phi \rangle = -\partial \ln Z / \partial(\beta \langle S \rangle)$
+          \item Adsorption isotherms for surface-bound species
+        \end{itemize}
+
+  \item \textbf{Report and visualize.}
+        Generate structured output suitable for research documentation,
+        including isotherms, folding landscapes, and selectivity charts.
+\end{enumerate}
+
+\section{Data Structures in the Atomistic Kernel}
+
+\begin{lstlisting}
+// Dual-layer interaction system
+struct DualLayerMatrix {
+    int              N;           // residue count
+    std::vector<double> pairing;  // N*N, row-major (H)
+    std::vector<double> stacking; // N*N, row-major (S)
+    int              d_min;       // minimum loop length
+
+    double& H(int i, int j) { return pairing[i * N + j]; }
+    double& S(int i, int j) { return stacking[i * N + j]; }
+
+    void truncate() {
+        for (int i = 0; i < N; ++i)
+            for (int j = 0; j < N; ++j)
+                if (std::abs(j - i) <= d_min) {
+                    H(i, j) = 0.0;
+                    S(i, j) = 0.0;
+                }
+    }
+};
+
+// Langmuir isotherm
+struct LangmuirSite {
+    double K_L;    // equilibrium constant
+    double q_max;  // maximum capacity (mg/g)
+
+    double coverage(double C) const {
+        return (K_L * C) / (1.0 + K_L * C);
+    }
+    double capacity(double C) const {
+        return q_max * coverage(C);
+    }
+};
+
+// BET multilayer
+struct BETModel {
+    double V_m;     // monolayer volume
+    double C_BET;   // BET constant
+
+    double volume(double x) const {
+        return (V_m * C_BET * x)
+             / ((1.0 - x) * (1.0 + (C_BET - 1.0) * x));
+    }
+};
+\end{lstlisting}
+
+\section{Partition Function via Dynamic Programming}
+
+The Nussinov-style recursion for the secondary structure partition
+function with stacking:
+
+\begin{equation}
+  Z(i, j) =
+  \underbrace{Z(i+1, j)}_{\text{$i$ unpaired}}
+  + \sum_{\substack{k = i + d_{\min} + 1 \\ k \leq j}}^{}
+    \underbrace{e^{-\beta H_{ik}}}_{\text{pair $(i,k)$}}
+    \cdot
+    \underbrace{Z(i+1, k-1)}_{\text{interior}}
+    \cdot
+    \underbrace{Z(k+1, j)}_{\text{exterior}}
+\end{equation}
+
+with stacking bonus applied when consecutive pairs
+$(i, k)$ and $(i+1, k-1)$ are both present:
+\begin{equation}
+  Z_{\text{stack}}(i, j) = Z(i, j)
+  + \sum_{\substack{(i,k) \in \sigma \\ (i+1,k-1) \in \sigma}}
+    e^{-\beta S_{i,i+1}}\, Z(i+2, k-2)\, Z(k+1, j)
+\end{equation}
+
+\begin{lstlisting}
+// Nussinov partition function with stacking
+double partition_dp(const DualLayerMatrix& M, double beta) {
+    int N = M.N;
+    std::vector<std::vector<double>> Z(N, std::vector<double>(N, 1.0));
+
+    for (int len = 2; len <= N; ++len) {
+        for (int i = 0; i + len - 1 < N; ++i) {
+            int j = i + len - 1;
+            Z[i][j] = Z[i + 1][j];  // i unpaired
+            for (int k = i + M.d_min + 1; k <= j; ++k) {
+                double pair_weight = std::exp(-beta * M.pairing[i * N + k]);
+                Z[i][j] += pair_weight * Z[i + 1][k - 1] * Z[k + 1][j];
+            }
+        }
+    }
+    return Z[0][N - 1];
+}
+\end{lstlisting}
+
+The time complexity is $O(N^3)$ and space is $O(N^2)$, which is
+tractable for $N \leq 10{,}000$.
+
+% =====================================================================
+\section{Summary of Key Equations}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.8}
+\begin{tabular}{lp{8cm}}
+\toprule
+\textbf{System} & \textbf{Key equation} \\
+\midrule
+Dual-layer tensor &
+  $\mathcal{M}_{ij}^{(\alpha)} = H_{ij}\,\delta_{\alpha 1}
+   + S_{ij}\,\delta_{\alpha 2}$ \\
+Triangular truncation &
+  $[\mathcal{T}(\mathbf{A})]_{ij} = A_{ij}\,\Theta(|i-j| - d_{\min})$ \\
+Partition function &
+  $Z = \sum_{\sigma} \exp\!\bigl(-\beta E(\sigma)\bigr)$ \\
+Stacking fraction &
+  $\phi^{*} = \bigl[1 + e^{\beta \langle S \rangle}\bigr]^{-1}$ \\
+Langmuir &
+  $\theta = K_L C / (1 + K_L C)$ \\
+BET &
+  $V = V_m C x / [(1-x)(1 + (C-1)x)]$ \\
+Competitive binding &
+  $\theta_j = K_j C_j / (1 + \sum_k K_k C_k)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+\appendix
+
+\section{Notation Index}
+
+\begin{center}
+\begin{tabular}{lp{10cm}}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$N$            & Number of residues / sites \\
+$\mathbf{H}$  & Pairing / coordination energy matrix \\
+$\mathbf{S}$  & Stacking / $\pi$-interaction energy matrix \\
+$\alpha$       & Layer index $\in \{1, 2\}$ \\
+$d_{\min}$     & Minimum loop length \\
+$\sigma$       & Secondary structure (set of non-crossing pairs) \\
+$\beta$        & Inverse temperature $1/(k_B T)$ \\
+$Z$            & Partition function \\
+$\theta$       & Fractional surface coverage \\
+$K_L$          & Langmuir equilibrium constant \\
+$K_d$          & Dissociation constant ($= 1/K_L$) \\
+$C_{\text{BET}}$ & BET constant \\
+$V_m$          & Monolayer volume \\
+$x$            & Relative pressure $p/p_0$ \\
+$s_i$          & Sites with exactly $i$ adsorbed layers \\
+$\phi$         & Stacking fraction \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Computational Complexity}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Algorithm} & \textbf{Time} & \textbf{Space} \\
+\midrule
+Triangular truncation    & $O(N^2)$     & $O(N^2)$ \\
+Nussinov partition (DP)  & $O(N^3)$     & $O(N^2)$ \\
+Stacking transfer matrix & $O(N)$       & $O(1)$   \\
+Langmuir isotherm        & $O(1)$       & $O(1)$   \\
+BET isotherm             & $O(1)$       & $O(1)$   \\
+Competitive multi-site   & $O(M)$       & $O(M)$   \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

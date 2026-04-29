@@ -1,10 +1,11 @@
-/**
+﻿/**
  * ui_panels.cpp
  * -------------
  * Implementation of ImGui UI panels.
  */
 
 #include "vis/ui_panels.hpp"
+#include "vis/auto_pilot.hpp"
 #include "../../include/command_router.hpp"
 #include "vis/renderer.hpp"
 #include "imgui.h"
@@ -65,6 +66,10 @@ void UIManager::render(SimulationThread& sim_thread, Renderer* renderer) {
         render_gpu_status_panel(renderer);
     }
     
+    
+    if (show_auto_pilot_panel && auto_pilot_) {
+        render_auto_pilot_panel(*auto_pilot_);
+    }
     if (show_demo_window) {
         ImGui::ShowDemoWindow(&show_demo_window);
     }
@@ -103,6 +108,10 @@ void UIManager::render(SimulationThread& sim_thread, CommandRouter& command_rout
         render_gpu_status_panel(renderer);
     }
     
+    
+    if (show_auto_pilot_panel && auto_pilot_) {
+        render_auto_pilot_panel(*auto_pilot_);
+    }
     if (show_demo_window) {
         ImGui::ShowDemoWindow(&show_demo_window);
     }
@@ -185,7 +194,7 @@ void UIManager::render_parameters_panel(SimulationThread& sim_thread) {
         changed |= ImGui::SliderFloat("Initial dt", &dt_init_, 0.01f, 0.5f, "%.3f");
         changed |= ImGui::SliderFloat("Max dt", &dt_max_, 0.1f, 2.0f, "%.2f");
         changed |= ImGui::SliderFloat("Alpha", &alpha_init_, 0.01f, 0.5f, "%.3f");
-        changed |= ImGui::SliderFloat("Max Step", &max_step_, 0.05f, 0.5f, "%.3f Å");
+        changed |= ImGui::SliderFloat("Max Step", &max_step_, 0.05f, 0.5f, "%.3f Ã…");
         
         ImGui::Separator();
         
@@ -231,42 +240,42 @@ void UIManager::render_parameters_panel(SimulationThread& sim_thread) {
                 ImGui::Checkbox("Cubic Box", &pbc_cube_mode_);
                 
                 if (pbc_cube_mode_) {
-                    if (ImGui::SliderFloat("Box Size", &box_x_, 5.0f, 100.0f, "%.1f Å")) {
+                    if (ImGui::SliderFloat("Box Size", &box_x_, 5.0f, 100.0f, "%.1f Ã…")) {
                         box_y_ = box_x_;
                         box_z_ = box_x_;
                         changed = true;
                     }
                 } else {
-                    changed |= ImGui::SliderFloat("Box X", &box_x_, 5.0f, 100.0f, "%.1f Å");
-                    changed |= ImGui::SliderFloat("Box Y", &box_y_, 5.0f, 100.0f, "%.1f Å");
-                    changed |= ImGui::SliderFloat("Box Z", &box_z_, 5.0f, 100.0f, "%.1f Å");
+                    changed |= ImGui::SliderFloat("Box X", &box_x_, 5.0f, 100.0f, "%.1f Ã…");
+                    changed |= ImGui::SliderFloat("Box Y", &box_y_, 5.0f, 100.0f, "%.1f Ã…");
+                    changed |= ImGui::SliderFloat("Box Z", &box_z_, 5.0f, 100.0f, "%.1f Ã…");
                 }
                 // Remove buttons or make them optional.
                 // Quick preset buttons
                 ImGui::Text("Presets:");
-                if (ImGui::Button("10 Å")) {
+                if (ImGui::Button("10 Ã…")) {
                     box_x_ = box_y_ = box_z_ = 10.0f;
                     changed = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("20 Å")) {
+                if (ImGui::Button("20 Ã…")) {
                     box_x_ = box_y_ = box_z_ = 20.0f;
                     changed = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("30 Å")) {
+                if (ImGui::Button("30 Ã…")) {
                     box_x_ = box_y_ = box_z_ = 30.0f;
                     changed = true;
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("50 Å")) {
+                if (ImGui::Button("50 Ã…")) {
                     box_x_ = box_y_ = box_z_ = 50.0f;
                     changed = true;
                 }
                 
                 // Info
                 double volume = box_x_ * box_y_ * box_z_;
-                ImGui::Text("Volume: %.1f Å³", volume);
+                ImGui::Text("Volume: %.1f Ã…Â³", volume);
             }
             
             if (changed) {
@@ -303,8 +312,8 @@ void UIManager::render_diagnostics_panel(const FrameSnapshot& frame) {
     
     // Forces
     if (ImGui::CollapsingHeader("Forces", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Text("RMS Force: %.6f kcal/mol/Å", frame.rms_force);
-        ImGui::Text("Max Force: %.6f kcal/mol/Å", frame.max_force);
+        ImGui::Text("RMS Force: %.6f kcal/mol/Ã…", frame.rms_force);
+        ImGui::Text("Max Force: %.6f kcal/mol/Ã…", frame.max_force);
         
         // Convergence indicator
         float rms_threshold = 1e-3f;
@@ -391,7 +400,7 @@ void UIManager::render_visualization_panel(Renderer* renderer) {
             renderer->set_atom_scale(atom_scale);
         }
         
-        if (ImGui::SliderFloat("Bond Radius", &bond_radius, 0.05f, 0.5f, "%.2f Å")) {
+        if (ImGui::SliderFloat("Bond Radius", &bond_radius, 0.05f, 0.5f, "%.2f Ã…")) {
             renderer->set_bond_radius(bond_radius);
         }
     }
@@ -871,3 +880,62 @@ void UIManager::render_gpu_status_panel(Renderer* renderer) {
 // Removed legacy handlers - command console now uses simple ParseResult
 
 } // namespace vsepr
+
+
+// ============================================================================
+// Auto-Pilot Panel (auto-spin + auto-capture)
+// ============================================================================
+
+void UIManager::render_auto_pilot_panel(AutoPilot& pilot) {
+    ImGui::SetNextWindowSize(ImVec2(320, 280), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Auto-Pilot", &show_auto_pilot_panel)) {
+        ImGui::End();
+        return;
+    }
+
+    // --- Auto-Spin ---
+    ImGui::SeparatorText("Auto-Spin");
+
+    bool spin = pilot.spin_enabled();
+    if (ImGui::Checkbox("Enable Spin (S)", &spin)) {
+        pilot.set_spin_enabled(spin);
+    }
+
+    float speed = pilot.spin_speed();
+    if (ImGui::SliderFloat("Speed (px/s)", &speed, 10.0f, 600.0f, "%.0f")) {
+        pilot.set_spin_speed(speed);
+    }
+
+    float wobble = pilot.wobble();
+    if (ImGui::SliderFloat("Wobble", &wobble, 0.0f, 60.0f, "%.0f")) {
+        pilot.set_wobble(wobble);
+    }
+
+    ImGui::Spacing();
+
+    // --- Auto-Capture ---
+    ImGui::SeparatorText("Auto-Capture");
+
+    bool cap = pilot.capture_enabled();
+    if (ImGui::Checkbox("Enable Capture (P)", &cap)) {
+        pilot.set_capture_enabled(cap);
+    }
+
+    float interval = pilot.capture_interval();
+    if (ImGui::SliderFloat("Interval (s)", &interval, 0.25f, 10.0f, "%.2f")) {
+        pilot.set_capture_interval(interval);
+    }
+
+    ImGui::Text("Captures: %d", pilot.capture_count());
+    ImGui::Text("Directory: %s", pilot.capture_dir().c_str());
+
+    ImGui::Spacing();
+
+    if (ImGui::Button("Capture Now")) {
+        // Will be captured on next tick; force immediate
+        pilot.capture_now(0, 0);  // 0,0 signals "use current fb"
+    }
+
+    ImGui::End();
+}
+

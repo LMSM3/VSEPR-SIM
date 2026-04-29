@@ -1,0 +1,174 @@
+\documentclass[12pt,a4paper]{article}
+%% ═══════════════════════════════════════════════════════════════════
+%% VSEPR-SIM Revision Markup — permanent colour definitions
+%% DO NOT EDIT these definitions.  They are hardcoded project-wide.
+%% ═══════════════════════════════════════════════════════════════════
+\usepackage{xcolor}
+\usepackage{soul}
+\usepackage[normalem]{ulem}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+
+%% ── Hardcoded colours ──────────────────────────────────────────────
+\definecolor{vsgreen}{HTML}{27AE60}     %% additions
+\definecolor{vsred}{HTML}{E74C3C}       %% deletions
+\definecolor{vsyellow}{HTML}{F1C40F}    %% edits
+\definecolor{vsyellowbg}{HTML}{FEF9E7}  %% edit background
+\definecolor{vscyan}{HTML}{1ABC9C}      %% figures
+\definecolor{vsdarkred}{HTML}{C0392B}   %% charts
+
+%% ── Inline markup commands ────────────────────────────────────────
+\newcommand{\vsadd}[1]{\textcolor{vsgreen}{\textbf{+}~#1}}
+\newcommand{\vsdel}[1]{\textcolor{vsred}{\sout{#1}}}
+\newcommand{\vsedit}[1]{\sethlcolor{vsyellowbg}\hl{\textcolor{black}{#1}}}
+\newcommand{\vsfig}[1]{\textcolor{vscyan}{\textit{[Fig]~#1}}}
+\newcommand{\vschart}[1]{\textcolor{vsdarkred}{\textit{[Chart]~#1}}}
+
+%% ── Margin annotations ────────────────────────────────────────────
+\newcommand{\vsaddnote}[1]{\marginpar{\tiny\textcolor{vsgreen}{+#1}}}
+\newcommand{\vsdelnote}[1]{\marginpar{\tiny\textcolor{vsred}{-#1}}}
+\newcommand{\vseditnote}[1]{\marginpar{\tiny\textcolor{vsyellow}{\textrm{#1}}}}
+
+%% ── Block-level environments (tcolorbox) ──────────────────────────
+\newtcolorbox{vsaddblock}{%
+  colback=vsgreen!8, colframe=vsgreen, title=\textbf{Addition},
+  fonttitle=\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}
+\newtcolorbox{vsdelblock}{%
+  colback=vsred!8, colframe=vsred, title=\textbf{Deletion},
+  fonttitle=\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}
+\newtcolorbox{vseditblock}{%
+  colback=vsyellowbg, colframe=vsyellow, title=\textbf{Edit},
+  fonttitle=\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}
+\newtcolorbox{vsfigblock}{%
+  colback=vscyan!8, colframe=vscyan, title=\textbf{Figure},
+  fonttitle=\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}
+\newtcolorbox{vschartblock}{%
+  colback=vsdarkred!8, colframe=vsdarkred, title=\textbf{Chart},
+  fonttitle=\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}
+%% ═══════════════════════════════════════════════════════════════════
+%% END VSEPR-SIM Revision Markup
+%% ═══════════════════════════════════════════════════════════════════
+
+\usepackage{geometry}
+\geometry{margin=2.5cm, marginparwidth=2cm}
+\usepackage{parskip}
+\usepackage{booktabs}
+
+\title{\textbf{VSEPR-SIM Revision Markup} \\ \large Helper Demo}
+\author{VSEPR-SIM 3.0.0}
+\date{}
+
+\begin{document}
+\maketitle
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Colour Reference}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Command}   & \textbf{Colour}  & \textbf{Hex}    & \textbf{Meaning}       \\
+\midrule
+\verb|\vsadd|      & \textcolor{vsgreen}{\textbf{Green}}      & \texttt{27AE60} & Addition / new text    \\
+\verb|\vsdel|      & \textcolor{vsred}{\textbf{Red}}          & \texttt{E74C3C} & Deletion / removed     \\
+\verb|\vsedit|     & \sethlcolor{vsyellowbg}\hl{Yellow}       & \texttt{F1C40F} & Edit / modified        \\
+\verb|\vsfig|      & \textcolor{vscyan}{\textbf{Cyan}}        & \texttt{1ABC9C} & Figure reference       \\
+\verb|\vschart|    & \textcolor{vsdarkred}{\textbf{Dark Red}} & \texttt{C0392B} & Chart reference        \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Inline Markup}
+
+The activation energy of Mo dissolution in FLiBe was \vsdel{220 kJ/mol}
+\vsadd{238 kJ/mol} after re-fitting to the updated ORNL-4254 dataset.
+\vsaddnote{ref updated}
+
+The Larson--Miller constant was \vsedit{revised from $C=19$ to $C=20$}
+based on Hastelloy-N creep data from DeVan \& Evans (1962).
+\vseditnote{LM const}
+
+See \vsfig{Figure~3 — Cp(T) curves for INOR-8 alloys}
+and \vschart{Chart~2 — stochastic Cp spread at 1000 K} for
+the quantitative comparison.
+\vsdelnote{fig moved}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Block-level Environments}
+
+\begin{vsaddblock}
+Added in revision 2: the cylindrical heat-conduction analysis now includes
+a wall heat-flux term $q'' = k(T)\,\nabla T$ evaluated at $r = r_o$.
+The result is tabulated in Section~9.
+\end{vsaddblock}
+
+\begin{vsdelblock}
+Removed: the earlier rule-of-mixtures estimate of thermal conductivity
+using a simple arithmetic mean.  This underestimated scattering effects
+in W-doped alloys by up to 18\%.
+\end{vsdelblock}
+
+\begin{vseditblock}
+Revised: the stochastic Monte Carlo sample count was increased from
+$n = 100$ to $n = 200$ to reduce the 95\,\% confidence interval on
+$\overline{C}_p$ from $\pm 1.4$ to $\pm 0.9$\,J\,mol$^{-1}$\,K$^{-1}$.
+\end{vseditblock}
+
+\begin{vsfigblock}
+Figure 5 — Radial temperature profile $T(r)$ for a Hastelloy-N tube
+($r_i = 10$\,mm, $r_o = 14$\,mm) at steady state under 5\,MW\,m$^{-2}$
+wall loading.  Generated by \texttt{cylinder\_steady\_state()}.
+\end{vsfigblock}
+
+\begin{vschartblock}
+Chart 3 — Stochastic spread of $C_p(T)$ for nominal INOR-8 and
+Mo-22\,wt.\% variant.  200 Monte Carlo samples, $3\sigma$ composition
+perturbation.  Shaded band = 95\,\% confidence interval.
+\end{vschartblock}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Diff-line Pattern}
+
+The following illustrates the diff-line convention used by
+\texttt{markup\_diff\_line()} in \texttt{pykernel/latex\_markup.py}
+and \texttt{inject\_latex\_markup.sh}:
+
+\begin{verbatim}
++ New sentence added in this revision.
+- Old sentence that was removed.
+~ Sentence that was modified (shown highlighted).
+[Fig] Figure 3 caption was updated.
+[Chart] Chart 2 axis labels corrected.
+\end{verbatim}
+
+Rendered output:
+
+\vsadd{New sentence added in this revision.}
+
+\vsdel{Old sentence that was removed.}
+
+\vsedit{Sentence that was modified (shown highlighted).}
+
+\vsfig{Figure~3 caption was updated.}
+
+\vschart{Chart~2 axis labels corrected.}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Integration Notes}
+
+\begin{itemize}
+  \item \textbf{C/C++ generators} --- \texttt{\#include "include/chart/latex\_markup.h"},
+        call \texttt{latex\_markup\_add(buf, sz, text)} etc.,
+        then \texttt{latex\_markup\_write\_preamble(fp)} before the document body.
+  \item \textbf{Shell batch injection} ---
+        \texttt{bash scripts/inject\_latex\_markup.sh file.tex} (in-place) or
+        \texttt{--all docs/} for a whole directory.
+  \item \textbf{Python report generators} ---
+        \texttt{from pykernel.latex\_markup import vsadd, vsdel, vsedit, vsfig, vschart}
+        and \texttt{inject\_markup\_preamble("report.tex")}.
+  \item \textbf{Colours are permanent} --- hex values are hardcoded in all three
+        authorities (C header, Shell script, Python module).  Do not change them.
+\end{itemize}
+
+\end{document}

@@ -1233,6 +1233,129 @@ The layer introduces:
 All 193 tests pass.
 
 % ============================================================================
+% ============================================================================
+\section{Group 27: VSIM Runtime Day \#2 --- O(N) Fit Detection and Scripting Safety}
+\label{sec:group27}
+% ============================================================================
+
+Group~27 extends the runtime validation series to cover six behavioral
+guarantees of the VSIM scripting engine introduced in beta-10.  These tests
+operate at the \emph{scripting runtime layer} rather than the atomistic or
+coarse-grained layers: they verify that the five finalized scripting features
+(\texttt{[while]}, \texttt{[batch]}, \texttt{[visual.external]},
+\texttt{[N\_evolution]}, \texttt{[variance]}) behave correctly under
+adversarial and edge-case conditions.
+
+The six tests are ordered by priority and cover the following concerns:
+
+\begin{enumerate}
+    \item \textbf{while-loop safety cap (priority~1).}  A
+          \texttt{[while]} guard whose condition never converges must
+          terminate at \texttt{max\_iters} without crashing, and partial
+          event output must be preserved.  This prevents the machine from
+          becoming a room heater when a user writes \texttt{while true}.
+    \item \textbf{Batch artifact isolation (priority~2).}  Each case in a
+          \texttt{[batch]} sweep must receive a clean \texttt{KernelEventLog}
+          (log is cleared before each run).  Cross-contamination between
+          \texttt{vacancy\_case}, \texttt{interstitial\_case}, and
+          \texttt{thermal\_jitter\_case} must be zero.
+    \item \textbf{Visual decimation (priority~3).}  A
+          \texttt{[visual.external]} render request with interval 100
+          across 1000 simulated frames must produce exactly 10 renders at
+          frames 100, 200, \ldots, 1000.  Frame~0 is never rendered; the
+          render loop must not fire on off-interval frames; the core
+          simulation must not stall during render dispatch.
+    \item \textbf{N\_evolution event counter (priority~4).}  The
+          \texttt{[N\_evolution]} probe must derive $\mathrm{d}N/\mathrm{d}t$
+          from stored frame-group population history rather than a full
+          particle scan.  Three sub-scenarios are verified: spawn phase
+          ($\mathrm{d}N/\mathrm{d}t > 0$), removal phase
+          ($\mathrm{d}N/\mathrm{d}t < 0$), and stable state
+          ($\mathrm{d}N/\mathrm{d}t \approx 0$).  This matters for
+          nucleation, fragmentation, defect growth, and cluster birth/death.
+    \item \textbf{Cached metric guard (priority~5).}  A
+          \texttt{[while]} guard must exit early when the cached
+          \texttt{[variance]} probe is updated by the emit function and
+          the condition becomes false.  The guard must not re-scan all
+          particles per iteration; only a log snapshot (O(N) once) and a
+          cached \texttt{EvalResult} read (O(1)) are permitted per cycle.
+    \item \textbf{Open/closed boundary dispatch (priority~6).}  The
+          boundary type (\texttt{closed}, \texttt{open}, \texttt{ambient},
+          \texttt{ambient\_open}) must route correctly to the 12-combination
+          allow/reject table.  Closed systems must never allow particle
+          injection; open systems must not allow thermal coupling by default;
+          ambient systems must require an explicit \texttt{ambient\_open}
+          flag before permitting mass exchange.
+\end{enumerate}
+
+\subsection{Implementation Files}
+
+\begin{center}
+\begin{tabular}{@{}lp{9cm}@{}}
+\toprule
+\textbf{File} & \textbf{Purpose} \\
+\midrule
+\file{tests/test\_vsim\_runtime\_day2.cpp}
+    & C++ test executable — six functions, main runs in priority order \\
+\file{scripts/group\_27\_kernel\_safety\_tests.vsim}
+    & Canonical \texttt{.vsim} script exercising all six behavioral
+      primitives (\texttt{[while]}, \texttt{[batch]},
+      \texttt{[visual.external]}, \texttt{[N\_evolution]},
+      \texttt{[variance]}, \texttt{[boundary.*]}) \\
+\file{tests/CMakeLists.txt}
+    & Group~27 target: \texttt{test\_vsim\_runtime\_day2},
+      labels \texttt{vsim runtime scripting while batch visual
+      N\_evolution boundary beta10 quick} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Architecture Position}
+
+Group~27 tests sit at the scripting runtime layer, one level above the
+kernel event spine and one level below the formation engine:
+
+\begin{center}
+\begin{tabular}{c}
+\texttt{.vsim} script (parsed by \texttt{VsimParser}) \\
+$\downarrow$ \\
+\texttt{VsimDocument} (five scripting sections) \\
+$\downarrow$ \\
+\texttt{VsimRuntime} (Group~27 test target) \\
+$\downarrow$ \\
+\texttt{KernelEventLog} (append-only spine) \\
+$\downarrow$ \\
+analysis / report / dashboard
+\end{tabular}
+\end{center}
+
+\noindent The \texttt{boundary\_allows()} dispatch table introduced in
+test~6 is defined locally in the test file and documents the intended
+semantics of \texttt{closed} / \texttt{open} / \texttt{ambient} /
+\texttt{solution} as first-class VSIM primitives pending a future runtime
+landing.
+
+\subsection{Test Count and Status}
+
+\begin{center}
+\begin{tabular}{@{}clcc@{}}
+\toprule
+\textbf{Priority} & \textbf{Test name} & \textbf{Status} & \textbf{C++ function} \\
+\midrule
+1 & \texttt{test\_while\_loop\_safety\_cap}     & pass & \fn{test\_while\_loop\_safety\_cap()} \\
+2 & \texttt{test\_batch\_artifact\_isolation}   & pass & \fn{test\_batch\_artifact\_isolation()} \\
+3 & \texttt{test\_visual\_decimation}           & pass & \fn{test\_visual\_decimation()} \\
+4 & \texttt{test\_N\_evolution\_event\_counter} & pass & \fn{test\_N\_evolution\_event\_counter()} \\
+5 & \texttt{test\_cached\_metric\_guard}        & pass & \fn{test\_cached\_metric\_guard()} \\
+6 & \texttt{test\_open\_closed\_boundary\_dispatch} & pass & \fn{test\_open\_closed\_boundary\_dispatch()} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent 6 tests, all passing.  Cumulative test count across all groups:
+1019.
+
+% ============================================================================
 \section{Conclusion}
 % ============================================================================
 
@@ -1241,7 +1364,7 @@ dynamics is not a peripheral convenience---it is a co-equal scientific
 instrument.  It has:
 
 \begin{enumerate}
-    \item Established 1013 tests across eleven suites, all passing
+    \item Established 1019 tests across twelve suites and groups, all passing
     \item Identified the variable hierarchy: four independent degrees of
           freedom ($\rho$, $C$, $P_2$, $\eta$), three derived quantities
           ($\hat{\rho}$, $\hat{P}_2$, $f$)
@@ -1272,6 +1395,11 @@ instrument.  It has:
     \item Provided a complete, validated pipeline from per-bead environment
           state through ensemble proxies, precursor channels, property
           learning, and calibrated prediction
+    \item Validated six VSIM scripting runtime safety and dispatch
+          guarantees (Group~27, 6 tests): while-loop safety cap,
+          batch artifact isolation, visual decimation interval, N\_evolution
+          event-counter sign correctness, cached metric guard early exit,
+          and open/closed/ambient boundary dispatch table exhaustiveness
 \end{enumerate}
 
 The model is not merely defined.  It is tested, measured, and

@@ -35,6 +35,7 @@
  */
 
 #include "v4/formation_record.hpp"
+#include "include/pipeline/pipeline_trace.hpp"
 
 #include <array>
 #include <cmath>
@@ -126,6 +127,9 @@ struct FingerprintRecord {
 
 	// Validity warnings accumulated during this stage
 	std::vector<WarningCode> warnings;
+
+	// Symbolic trace and animation cues accumulated by stage_fingerprint
+	StageTraceBundle trace;
 };
 
 // ============================================================================
@@ -223,6 +227,9 @@ struct ClusterRecord {
 	std::string      cluster_label;      // e.g. "BCC-dense", "FCC-soft", etc. (set in analysis)
 
 	std::vector<WarningCode> warnings;
+
+	// Animation cues accumulated by stage_cluster
+	StageTraceBundle trace;
 };
 
 // ============================================================================
@@ -261,6 +268,9 @@ struct AnalysisRecord {
 
 	// Validity warnings
 	std::vector<WarningCode> warnings;
+
+	// Symbolic trace and animation cues accumulated by stage_analysis
+	StageTraceBundle trace;
 };
 
 // ============================================================================
@@ -287,6 +297,13 @@ struct ReportRecord {
 
 	// Validity warnings forwarded from prior stages
 	std::vector<WarningCode> warnings;
+
+	// Trace bundle forwarded from AnalysisRecord
+	StageTraceBundle trace;
+
+	// Markdown block containing the full symbolic calculation trace
+	// Populated by stage_report from ar.trace.expressions.
+	std::string symbolic_markdown;
 
 	static std::string csv_header() {
 		return "symbol,name,cluster_id,cluster_label,"
@@ -321,6 +338,9 @@ struct DashboardRecord {
 
 	// One-line run summary
 	std::string run_summary;
+
+	// Aggregated animation cues collected from all ReportRecords
+	StageTraceBundle trace;
 };
 
 // ============================================================================

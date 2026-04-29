@@ -1,0 +1,19 @@
+{
+  "formula": "C5H10",
+  "seed": 328,
+  "tier": "medium",
+  "num_atoms": 15,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 166471.483997,
+  "energy_per_atom": 11098.098933,
+  "rms_force": 292342.896347,
+  "max_force": 292342.896347,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.944100,
+  "timestamp": "2026-03-28T13:07:37",
+  "xyz_file": "benchmark_v2\medium\structures\C5H10_s328.xyz"
+}

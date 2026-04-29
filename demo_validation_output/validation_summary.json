@@ -1,0 +1,88 @@
+{
+  "n_total": 16,
+  "n_scored": 16,
+  "n_unsupported": 0,
+  "family_counts": {
+    "simple_inorganic": 6,
+    "hydrocarbon": 5,
+    "simple_alcohol": 2,
+    "ketone_simple": 1,
+    "acid_base_simple": 2
+  },
+  "rmse": {
+    "bond_angle_deg": 0.0,
+    "boiling_point_C": 0.0,
+    "melting_point_C": 0.0,
+    "density_g_cm3": 0.0,
+    "enthalpy_combustion_kJ_mol": 0.0
+  },
+  "rmse_by_family": {
+    "simple_inorganic": {
+      "bond_angle_deg": 0.0,
+      "boiling_point_C": 0.0,
+      "melting_point_C": 0.0,
+      "density_g_cm3": 0.0
+    },
+    "hydrocarbon": {
+      "bond_angle_deg": 0.0,
+      "boiling_point_C": 0.0,
+      "melting_point_C": 0.0,
+      "density_g_cm3": 0.0,
+      "enthalpy_combustion_kJ_mol": 0.0
+    },
+    "simple_alcohol": {
+      "bond_angle_deg": 0.0,
+      "boiling_point_C": 0.0,
+      "melting_point_C": 0.0,
+      "density_g_cm3": 0.0,
+      "enthalpy_combustion_kJ_mol": 0.0
+    },
+    "ketone_simple": {
+      "bond_angle_deg": 0.0,
+      "boiling_point_C": 0.0,
+      "melting_point_C": 0.0,
+      "density_g_cm3": 0.0
+    },
+    "acid_base_simple": {
+      "bond_angle_deg": 0.0,
+      "boiling_point_C": 0.0
+    }
+  },
+  "accuracy": {
+    "geometry": 1.0,
+    "polarity": 1.0,
+    "imf": 1.0,
+    "reaction_class": 1.0
+  },
+  "accuracy_by_family": {
+    "simple_inorganic": {
+      "geometry": 1.0,
+      "polarity": 1.0,
+      "imf": 1.0
+    },
+    "hydrocarbon": {
+      "geometry": 1.0,
+      "polarity": 1.0,
+      "imf": 1.0,
+      "reaction_class": 1.0
+    },
+    "simple_alcohol": {
+      "geometry": 1.0,
+      "polarity": 1.0,
+      "imf": 1.0,
+      "reaction_class": 1.0
+    },
+    "ketone_simple": {
+      "geometry": 1.0,
+      "polarity": 1.0,
+      "imf": 1.0
+    },
+    "acid_base_simple": {
+      "geometry": 1.0,
+      "polarity": 1.0,
+      "imf": 1.0,
+      "reaction_class": 1.0
+    }
+  },
+  "weighted_score": 1.0
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "C3H8",
+  "seed": 672,
+  "tier": "medium",
+  "num_atoms": 11,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 3060.282402,
+  "energy_per_atom": 278.207491,
+  "rms_force": 5010.865487,
+  "max_force": 5010.865487,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.189300,
+  "timestamp": "2026-03-28T13:04:24",
+  "xyz_file": "benchmark_v2\medium\structures\C3H8_s672.xyz"
+}

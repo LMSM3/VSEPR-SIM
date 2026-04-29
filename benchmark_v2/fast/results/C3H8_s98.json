@@ -1,0 +1,19 @@
+{
+  "formula": "C3H8",
+  "seed": 98,
+  "tier": "fast",
+  "num_atoms": 11,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 5489.786707,
+  "energy_per_atom": 499.071519,
+  "rms_force": 9613.149740,
+  "max_force": 9613.149740,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.513100,
+  "timestamp": "2026-03-28T13:03:51",
+  "xyz_file": "benchmark_v2\fast\structures\C3H8_s98.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "C4H4O",
+  "seed": 77,
+  "tier": "fast",
+  "num_atoms": 9,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 5046.538495,
+  "energy_per_atom": 560.726499,
+  "rms_force": 9263.993513,
+  "max_force": 9263.993513,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.521200,
+  "timestamp": "2026-03-28T13:04:46",
+  "xyz_file": "benchmark_v2\fast\structures\C4H4O_s77.xyz"
+}

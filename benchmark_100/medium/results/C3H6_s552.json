@@ -1,0 +1,19 @@
+{
+  "formula": "C3H6",
+  "seed": 552,
+  "tier": "medium",
+  "num_atoms": 9,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1090.401378,
+  "energy_per_atom": 121.155709,
+  "rms_force": 1490.375625,
+  "max_force": 1490.375625,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.057300,
+  "timestamp": "2026-03-28T12:55:32",
+  "xyz_file": "benchmark_100\medium\structures\C3H6_s552.xyz"
+}

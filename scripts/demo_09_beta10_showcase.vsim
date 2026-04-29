@@ -1,0 +1,175 @@
+# scripts/demo_09_beta10_showcase.vsim
+# ======================================
+# VSEPR-SIM  |  v5.0.0 beta-10 scripting showcase
+#
+# Demonstrates every finalized scripting feature:
+#   [visual.external]   — output-side visual rendering requests
+#   [variance]          — statistical spread probes
+#   [N_evolution]       — population growth-rate tracking
+#   [while]             — conditional simulation continuation
+#   [batch]             — parameter sweep execution
+#
+# Theme: control flow + population evolution + visible output
+#        "the simulator is now a tiny civilization with syntax"
+#
+# Run:
+#   beta10_demo.exe --headless --visual --render
+#   beta10_demo.exe --visual --render    (interactive)
+
+[project]
+name        = demo_09_beta10_showcase
+version     = v5.0.0-beta.10
+seed_base   = 9001
+determinism = true
+description = "Beta-10 scripting milestone: all five features in one run"
+
+[simulation]
+fire_max_steps   = 400
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = ceramic
+
+# ── UX pacing ──────────────────────────────────────────────────────────────
+step_delay_ms    = 40    # 40 ms between FIRE steps — smooth visible convergence
+resim_delay_ms   = 600   # 600 ms fade before resim
+smooth_resim     = true  # animated divider between resims
+
+[simulation.molecule]
+formula     = C
+count       = 240
+temperature = 300.0
+lattice     = hexagonal
+layer_mode  = AB
+n_layers    = 3
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [visual.external] — output-side render requests
+# These trigger VsimRenderLayer after the simulation without any physics.
+# ══════════════════════════════════════════════════════════════════════════════
+
+[visual.external]
+enabled           = true
+render            = state_current
+render            = energy_trace
+render            = rdf
+render            = defect_map
+render            = dashboard
+export_format     = auto
+export_frame_png  = false
+show_progress     = true
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [variance] — statistical spread measurements
+# Syntax: probe_name = "field  window  [threshold]"
+# ══════════════════════════════════════════════════════════════════════════════
+
+[variance]
+print_results   = true
+energy_var      = "energy.total  last 50  0.05"
+displacement_var = "displacement  all  0.01"
+eta_spread      = "eta  last 30"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [N_evolution] — population growth-rate tracking (dN/dt)
+# Syntax: probe_name = "target  window  [threshold]"
+# ══════════════════════════════════════════════════════════════════════════════
+
+[N_evolution]
+print_results    = true
+cluster_growth   = "cluster_count  last 20  0.05"
+defect_growth    = "defect_count   all"
+event_rate       = "event_count    last 10  0.0"
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [while] — conditional simulation continuation
+# Each key declares a guard: name = "condition string"
+# body_steps / max_iters / iter_delay_ms apply to the LAST declared guard.
+# ══════════════════════════════════════════════════════════════════════════════
+
+[while]
+equilibrate     = "variance energy_var > 0.05"
+body_steps      = 100
+max_iters       = 8
+iter_delay_ms   = 200
+measure         = energy_var
+
+cluster_stable  = "N_evolution cluster_growth > 0.02"
+body_steps      = 80
+max_iters       = 5
+iter_delay_ms   = 150
+measure         = cluster_growth
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [batch] — parameter sweep execution
+# ══════════════════════════════════════════════════════════════════════════════
+
+[batch]
+print_plan   = true
+abort_on_fail = false
+
+job          = crystal_imperfection_sweep
+lattice      = ["hexagonal", "FCC", "BCC"]
+defect       = ["vacancy", "interstitial", "substitutional"]
+seed_count   = 2
+export_each  = false
+aggregate    = true
+analyze      = rmsd
+analyze      = variance displacement
+measure      = N_evolution
+
+job          = temperature_ramp
+temperature  = ["300", "600", "900", "1200", "1500"]
+seed_count   = 1
+aggregate    = true
+analyze      = variance energy.total
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [export] — ground-truth data outputs
+# ══════════════════════════════════════════════════════════════════════════════
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_report_md           = true
+write_manifest_json       = true
+output_dir                = out/demo_09/
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [export.visual] — rendered artifact outputs
+# ══════════════════════════════════════════════════════════════════════════════
+
+[export.visual]
+write_energy_trace_svg    = true
+write_rdf_svg             = true
+write_svg_figures         = true
+write_defect_map_svg      = true
+write_cluster_map_svg     = true
+write_html_dashboard      = true
+write_report_html         = true
+visual_output_dir         = figures/demo_09/
+
+# ══════════════════════════════════════════════════════════════════════════════
+# [visual] — interactive terminal display
+# ══════════════════════════════════════════════════════════════════════════════
+
+[visual]
+output_type              = terminal_overlay_cycle
+animation_mode           = overlay
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_snapshot_chart      = true
+show_event_timeline      = true
+show_bar_chart           = true
+show_symbolic_trace      = true
+show_animation_cues      = true
+show_audit_table         = true
+overlay_sequence         = ["density", "coordination", "memory", "orient_order"]
+gl_overlay_hold_s        = 2.5
+gl_auto_orbit            = true
+gl_window_width          = 1280
+gl_window_height         = 800

@@ -1,0 +1,19 @@
+{
+  "formula": "BaTiO3",
+  "seed": 182,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1.481474,
+  "energy_per_atom": 0.370368,
+  "rms_force": 4.325907,
+  "max_force": 4.325907,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.481900,
+  "timestamp": "2026-03-28T13:04:01",
+  "xyz_file": "benchmark_v2\medium\structures\BaTiO3_s182.xyz"
+}

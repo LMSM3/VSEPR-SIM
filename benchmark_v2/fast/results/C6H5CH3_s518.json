@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5CH3",
+  "seed": 518,
+  "tier": "fast",
+  "num_atoms": 15,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 112454.100095,
+  "energy_per_atom": 7496.940006,
+  "rms_force": 185195.186506,
+  "max_force": 185195.186506,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.418500,
+  "timestamp": "2026-03-28T13:04:10",
+  "xyz_file": "benchmark_v2\fast\structures\C6H5CH3_s518.xyz"
+}

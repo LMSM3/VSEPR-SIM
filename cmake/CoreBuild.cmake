@@ -13,6 +13,35 @@
 # 1. Internal Librariesn
 # ============================================================================
 
+# ============================================================================
+# Eigen3 (header-only linear algebra — used only by analysis/bridge code)
+# Prefer a system install; FetchContent fallback keeps the build self-contained.
+# DO NOT link vsepr_eigen to state or simulation targets.  Analysis only.
+# ============================================================================
+include(FetchContent)
+find_package(Eigen3 3.4 QUIET NO_MODULE)
+if(NOT Eigen3_FOUND)
+    message(STATUS "Eigen3 not found on system — fetching via FetchContent...")
+    FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG        3.4.0
+        GIT_SHALLOW    TRUE
+    )
+    set(EIGEN_BUILD_DOC        OFF CACHE BOOL "" FORCE)
+    set(EIGEN_BUILD_PKGCONFIG  OFF CACHE BOOL "" FORCE)
+    set(BUILD_TESTING          OFF CACHE BOOL "" FORCE)
+    FetchContent_MakeAvailable(eigen)
+endif()
+
+# Thin INTERFACE target so analysis headers can link cleanly
+add_library(vsepr_eigen INTERFACE)
+if(Eigen3_FOUND)
+    target_link_libraries(vsepr_eigen INTERFACE Eigen3::Eigen)
+else()
+    target_include_directories(vsepr_eigen INTERFACE ${eigen_SOURCE_DIR})
+endif()
+
 # --- Core Library (header-only, everything depends on this) ---
 add_library(vsepr_core INTERFACE)
 target_include_directories(vsepr_core INTERFACE src/core)
@@ -116,6 +145,16 @@ target_include_directories(vsepr_report PUBLIC
 )
 target_link_libraries(vsepr_report PUBLIC vsepr_core)
 
+# --- Bio Report Engine Library (organic/biochemical experiment + report generation) ---
+add_library(vsepr_bio_report STATIC
+    src/core/bio_report_engine.cpp
+)
+target_include_directories(vsepr_bio_report PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_bio_report PUBLIC vsepr_report vsepr_core)
+
 # --- Infrastructure Library (bootstrap probe, MOTD, NVIDIA TUI) ---
 add_library(vsepr_infra STATIC
     src/infra/bootstrap_probe.cpp
@@ -197,6 +236,20 @@ target_link_libraries(vsepr_nl INTERFACE vsepr_core)
 add_library(vsepr_int INTERFACE)
 target_include_directories(vsepr_int INTERFACE src/int)
 target_link_libraries(vsepr_int INTERFACE vsepr_core)
+
+# --- Glass Module Library (molecule prerender: topology -> layout -> instance buffers) ---
+add_library(vsepr_glass STATIC
+    src/molecule/topology_graph.cpp
+    src/molecule/ring_detect.cpp
+    src/molecule/layout_prerender3d.cpp
+    src/molecule/prerender_buffers.cpp
+    src/molecule/report_prerender.cpp
+)
+target_include_directories(vsepr_glass PUBLIC
+    ${PROJECT_SOURCE_DIR}/src/molecule
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_glass PUBLIC vsepr_core)
 
 # --- Build System Library (Formula -> Molecule, header-only) ---
 add_library(vsepr_build INTERFACE)
@@ -289,6 +342,35 @@ add_subdirectory(coarse_grain)
 # --- Electrohydrodynamic Simulation Library (coupled flow + electrostatics + ion transport) ---
 add_subdirectory(sim/ehd)
 
+# --- Organic / Peptide Formation Core (Day 48A — C ABI + C++23 engine) ---
+add_library(vsepr_chem STATIC
+    chem/peptide/peptide_formation.cpp
+)
+target_include_directories(vsepr_chem PUBLIC
+    ${PROJECT_SOURCE_DIR}/chem
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(vsepr_chem PUBLIC vsepr_core)
+
+# --- VSEPR Module targets (pipe_thermal, etc.) — after atomistic ---
+include(VSEPR/cmake/CoreBuild.cmake)
+
+# --- UFF Parameter Table + Auto-Creator Core (v4.1.0 UFX Foundation) ---
+add_library(vsepr_uff STATIC
+    src/v4/uff/uff_table.cpp
+    src/v4/uff/uff_reference_provider.cpp
+    src/v4/uff/uff_autocreate.cpp
+    src/v4/uff/uff_provenance_writer.cpp
+    src/v4/uff/uff_spotcheck.cpp
+    src/v4/uff/uff_live_relay.cpp
+    src/v4/uff/uff_batch_validator.cpp
+)
+target_include_directories(vsepr_uff PUBLIC
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(vsepr_uff PUBLIC vsepr_core)
+
 # ============================================================================
 # 2. Headless Applications (BUILD_APPS)
 # ============================================================================
@@ -317,24 +399,84 @@ if(BUILD_APPS)
         src/cli/viewer_launcher.cpp
         src/cli/cg_commands.cpp
         src/cli/cmd_therm.cpp
+        src/cli/cmd_tui.cpp
+        src/cli/cmd_ufx.cpp
+        src/v4/uff/ufx_schema.cpp
     )
     target_include_directories(vsepr_cli PUBLIC include/ ${PROJECT_SOURCE_DIR})
-    target_link_libraries(vsepr_cli PUBLIC vsepr_core vsepr_tracker atomistic vsepr_io coarse_grain)
+    # SQLite3 amalgamation (bundled in third_party/sqlite3/)
+    if(NOT TARGET sqlite3_bundled)
+        add_library(sqlite3_bundled STATIC ${PROJECT_SOURCE_DIR}/third_party/sqlite3/sqlite3.c)
+        target_include_directories(sqlite3_bundled PUBLIC ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
+        set_target_properties(sqlite3_bundled PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    endif()
+    target_link_libraries(vsepr_cli PUBLIC vsepr_core vsepr_tracker atomistic vsepr_io coarse_grain sqlite3_bundled)
+    target_include_directories(vsepr_cli PUBLIC ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
 
     # Unified CLI executable
     add_executable(vsepr apps/vsepr.cpp)
     target_link_libraries(vsepr vsepr_cli vsepr_sim vsepr_pot vsepr_io vsepr_thermal atomistic vsepr_gas vsepr_gas2 vsepr_gas3 vsepr_live_lib vsepr_viz_lib)
     target_include_directories(vsepr PRIVATE src/ include/ ${PROJECT_SOURCE_DIR})
 
+    # UFX AUTO2 command-registry CLI (apps/cli.cpp -- CommandRegistry-based router)
+    add_executable(vsepr-ufx apps/cli.cpp
+        src/cli/cmd_build.cpp
+        src/cli/cmd_help.cpp
+        src/cli/cmd_version.cpp
+        src/cli/cmd_viz.cpp
+        src/cli/cmd_tui.cpp
+        src/cli/cmd_therm.cpp
+        src/cli/cmd_ufx.cpp
+        src/v4/uff/ufx_schema.cpp
+        # --- Phase 2: random generation core ---
+        src/ufx_auto2/auto2_randomfill.cpp
+        src/ufx_auto2/random_axis_sampler.cpp
+        src/ufx_auto2/coverage_map.cpp
+        src/ufx_auto2/material_generator.cpp
+        src/ufx_auto2/local_sanity.cpp
+        # --- Phase 5: web fetch / cache / validation ---
+        src/ufx_auto2/web_cache.cpp
+        src/ufx_auto2/web_validator.cpp
+        src/ufx_auto2/pubchem_fetcher.cpp
+        src/ufx_auto2/nist_fetcher.cpp
+        # --- Phase 6: molecular descriptor generator ---
+        src/ufx_auto2/molecular_descriptor_generator.cpp
+        # --- Phase 7: thermo + EOS generator ---
+        src/ufx_auto2/thermo_generator.cpp
+        # --- Phase 8: crystal generator + Materials Project fetcher ---
+        src/ufx_auto2/crystal_generator.cpp
+        src/ufx_auto2/materials_project_fetcher.cpp
+        # --- Phase 9: macro property bridge ---
+        src/ufx_auto2/macro_property_generator.cpp
+        # --- Phase 10: meta-score engine ---
+        src/ufx_auto2/meta_score_engine.cpp
+    )
+    target_link_libraries(vsepr-ufx vsepr_cli vsepr_sim vsepr_pot vsepr_io vsepr_thermal vsepr_uff atomistic sqlite3_bundled winhttp)
+    target_include_directories(vsepr-ufx PRIVATE src/ include/ ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
+    install(TARGETS vsepr-ufx DESTINATION bin)
+
     # Autonomous Report Generator (WO-TMS-CRG-001)
     add_executable(report_generator apps/report_generator.cpp)
     target_link_libraries(report_generator vsepr_report vsepr_core)
     target_include_directories(report_generator PRIVATE ${PROJECT_SOURCE_DIR}/include)
 
-    # Code Trail Wind v0.1 — semi-visual demo
+    # Bio-Organic Report Generator (WO-BIO-CRG-003)
+    add_executable(bio_report_generator apps/bio_report_generator.cpp)
+    target_link_libraries(bio_report_generator vsepr_bio_report vsepr_report vsepr_core)
+    target_include_directories(bio_report_generator PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+    # Code Trail Wind v0.1
     add_executable(demo_code_trail apps/demo_code_trail.cpp)
     target_link_libraries(demo_code_trail vsepr_trail vsepr_core)
     target_include_directories(demo_code_trail PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+    # XYZ Demo Generator (WO-DEV54-XYZ-SPEC-INTEGRATION)
+    add_executable(gen_xyz_demo apps/gen_xyz_demo.cpp)
+    target_link_libraries(gen_xyz_demo vsepr_io vsepr_core)
+    target_include_directories(gen_xyz_demo PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR})
 
     # Equipartition test (Langevin thermostat validation)
     add_executable(test_equipartition apps/test_equipartition.cpp)
@@ -418,6 +560,10 @@ if(BUILD_APPS)
     target_link_libraries(test_thermal_ar13 atomistic vsepr_core)
     target_include_directories(test_thermal_ar13 PRIVATE ${PROJECT_SOURCE_DIR})
 
+    add_executable(thermal_loss_explorer apps/thermal_loss_explorer.cpp)
+    target_link_libraries(thermal_loss_explorer vsepr_core)
+    target_include_directories(thermal_loss_explorer PRIVATE ${PROJECT_SOURCE_DIR})
+
     add_executable(test_pmf_calculator apps/test_pmf_calculator.cpp)
     target_link_libraries(test_pmf_calculator atomistic vsepr_core)
     target_include_directories(test_pmf_calculator PRIVATE ${PROJECT_SOURCE_DIR})
@@ -431,6 +577,14 @@ if(BUILD_APPS)
         target_link_libraries(test_application_validation atomistic vsepr_core)
         target_include_directories(test_application_validation PRIVATE ${PROJECT_SOURCE_DIR})
     endif()
+
+    # UFX smoke-test (UFF table + auto-creator + provenance + OsO4/CH3HgI)
+    add_executable(uff_smoketest apps/uff_smoketest.cpp)
+    target_link_libraries(uff_smoketest vsepr_uff vsepr_core)
+    target_include_directories(uff_smoketest PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR})
 
     # Batch runner
     add_executable(vsepr_batch apps/vsepr_batch.cpp)
@@ -495,6 +649,13 @@ if(BUILD_APPS)
     target_include_directories(nuclear-core-runner PRIVATE
         ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR})
     install(TARGETS nuclear-core-runner DESTINATION bin)
+
+    # Nuclear Core Runner — Z=2..102 complete elemental sweep (gas2 + nuclear encoding)
+    add_executable(nuclear-core-z2-102 apps/nuclear_core_z2_102.cpp)
+    target_link_libraries(nuclear-core-z2-102 vsepr_gas2 vsepr_sim vsepr_core)
+    target_include_directories(nuclear-core-z2-102 PRIVATE
+        ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include ${PROJECT_SOURCE_DIR})
+    install(TARGETS nuclear-core-z2-102 DESTINATION bin)
 
     # QA suites
     add_executable(qa_golden_tests apps/qa_golden_tests.cpp)
@@ -595,6 +756,18 @@ if(BUILD_APPS)
     target_include_directories(vsepr_live PRIVATE ${PROJECT_SOURCE_DIR}/include)
     install(TARGETS vsepr_live DESTINATION bin)
 
+    # Stochastic Peptide Formation Viz Runner (Day 48A)
+    add_executable(peptide-stochastic-viz apps/peptide_stochastic_viz.cpp)
+    target_link_libraries(peptide-stochastic-viz vsepr_chem vsepr_core)
+    target_include_directories(peptide-stochastic-viz PRIVATE
+        ${PROJECT_SOURCE_DIR}
+        ${PROJECT_SOURCE_DIR}/chem
+    )
+    if(WIN32)
+        target_link_libraries(peptide-stochastic-viz ws2_32)
+    endif()
+    install(TARGETS peptide-stochastic-viz DESTINATION bin)
+
 endif() # BUILD_APPS
 
 # --- Standalone C Tools ---
@@ -607,6 +780,30 @@ add_executable(fatigue_calc tools/fatigue_calc.c)
 set_source_files_properties(tools/fatigue_calc.c PROPERTIES LANGUAGE C)
 target_link_libraries(fatigue_calc vsepr_fatigue)
 install(TARGETS fatigue_calc DESTINATION bin)
+
+# --- XYZ Make: colorful interactive build-target browser (pure C, no deps) ---
+add_executable(xyz_make tools/xyz_make.c)
+set_source_files_properties(tools/xyz_make.c PROPERTIES LANGUAGE C)
+target_compile_options(xyz_make PRIVATE
+    $<$<C_COMPILER_ID:GNU,Clang>:-std=c99 -O2>
+    $<$<C_COMPILER_ID:MSVC>:/TC /O2>
+)
+if(WIN32)
+    target_link_libraries(xyz_make)
+endif()
+install(TARGETS xyz_make DESTINATION bin)
+
+# --- VSEPR Entry / MOTD Precursor Renderer (pure C, no deps) ---
+add_executable(vsepr-entry apps/vsepr_motd.c)
+set_source_files_properties(apps/vsepr_motd.c PROPERTIES LANGUAGE C)
+target_compile_options(vsepr-entry PRIVATE
+    $<$<C_COMPILER_ID:GNU,Clang>:-std=c99 -O2>
+    $<$<C_COMPILER_ID:MSVC>:/TC /O2>
+)
+if(WIN32)
+    target_link_libraries(vsepr-entry)
+endif()
+install(TARGETS vsepr-entry DESTINATION bin)
 
 # --- Module Registry + Gas Module + Live Server Tests ---
 add_executable(test_modules tests/test_modules.cpp)
@@ -635,4 +832,30 @@ target_link_libraries(test_species_family vsepr_core)
 add_executable(test_sensor tests/test_sensor.cpp)
 target_include_directories(test_sensor PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(test_sensor vsepr_core)
+
+# ============================================================================
+# Organic / Peptide Formation Tests (Day 48A)
+# ============================================================================
+
+# --- Glycine residue validation (8 tests) ---
+add_executable(test_glycine chem/tests/test_glycine.cpp)
+target_link_libraries(test_glycine vsepr_chem vsepr_core)
+target_include_directories(test_glycine PRIVATE ${PROJECT_SOURCE_DIR}/chem ${PROJECT_SOURCE_DIR})
+add_test(NAME PeptideGlycineTest COMMAND test_glycine)
+set_tests_properties(PeptideGlycineTest PROPERTIES LABELS "core;chem;peptide;quick")
+
+# --- Gly-Ala peptide bond formation and scoring (8 tests) ---
+add_executable(test_gly_ala chem/tests/test_gly_ala.cpp)
+target_link_libraries(test_gly_ala vsepr_chem vsepr_core)
+target_include_directories(test_gly_ala PRIVATE ${PROJECT_SOURCE_DIR}/chem ${PROJECT_SOURCE_DIR})
+add_test(NAME PeptideGlyAlaTest COMMAND test_gly_ala)
+set_tests_properties(PeptideGlyAlaTest PROPERTIES LABELS "core;chem;peptide;quick")
+
+# --- Backbone planarity and geometry (8 tests) ---
+add_executable(test_backbone_planarity chem/tests/test_backbone_planarity.cpp)
+target_link_libraries(test_backbone_planarity vsepr_chem vsepr_core)
+target_include_directories(test_backbone_planarity PRIVATE ${PROJECT_SOURCE_DIR}/chem ${PROJECT_SOURCE_DIR})
+add_test(NAME PeptideBackbonePlanarityTest COMMAND test_backbone_planarity)
+set_tests_properties(PeptideBackbonePlanarityTest PROPERTIES LABELS "core;chem;peptide;quick")
+
 

@@ -1,8 +1,10 @@
 #include "cli/parse.hpp"
+#include "core/molecule_alias.hpp"
 #include <sstream>
 #include <cctype>
 #include <stdexcept>
 #include <algorithm>
+#include <iostream>
 
 namespace vsepr {
 namespace cli {
@@ -67,11 +69,11 @@ ParsedCommand CommandParser::parse(int argc, char** argv) {
 
 Spec CommandParser::parse_spec(const std::string& spec_str) {
     Spec spec;
-    
-    // Check for mode hint: H2O@crystal
+
+    // Check for mode hint: H2O@crystal or "water@gas"
     size_t at_pos = spec_str.find('@');
     std::string formula_part;
-    
+
     if (at_pos != std::string::npos) {
         formula_part = spec_str.substr(0, at_pos);
         std::string mode_hint = spec_str.substr(at_pos + 1);
@@ -80,10 +82,32 @@ Spec CommandParser::parse_spec(const std::string& spec_str) {
         formula_part = spec_str;
         spec.mode = DomainMode::Molecule;  // Default
     }
-    
+
+    // Try alias resolution before formula parsing
+    // This allows: vsepr water emit, vsepr benzene@gas emit, etc.
+    if (!vsepr::looks_like_formula(formula_part)) {
+        auto result = vsepr::resolve_alias(formula_part);
+        if (result.is_ok()) {
+            const auto& entry = result.value();
+            if (entry.family == "oxalate_default") {
+                std::cerr << "[alias] Unrecognized name: \"" << formula_part
+                          << "\" -> defaulting to random oxalate: "
+                          << entry.name << " (" << entry.formula << ")\n";
+            } else {
+                std::cerr << "[alias] Resolved: \"" << formula_part
+                          << "\" -> " << entry.formula;
+                if (!entry.iupac.empty() && entry.iupac != entry.name) {
+                    std::cerr << " [" << entry.iupac << "]";
+                }
+                std::cerr << "\n";
+            }
+            formula_part = entry.formula;
+        }
+    }
+
     // Parse formula
     spec.composition = parse_formula(formula_part);
-    
+
     return spec;
 }
 

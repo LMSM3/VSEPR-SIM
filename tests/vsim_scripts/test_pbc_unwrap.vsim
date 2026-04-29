@@ -1,0 +1,26 @@
+# test_pbc_unwrap.vsim
+# Parser test: pbc.unwrap syntax + track_images dependency
+# Expression-level execution: WO-57C
+
+[project]
+name        = test_pbc_unwrap
+version     = v5.0.0-beta.8
+determinism = true
+
+[cell]
+type    = orthorhombic
+lengths = 10.0, 10.0, 10.0
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+track_images         = true
+unwrap_for_diffusion = true
+
+# [script] — 57C
+# r_unwrap = pbc.unwrap(1)
+# # At step 0, image counts are zero; unwrapped == wrapped

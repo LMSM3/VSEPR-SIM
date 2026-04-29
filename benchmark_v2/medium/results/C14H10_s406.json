@@ -1,0 +1,19 @@
+{
+  "formula": "C14H10",
+  "seed": 406,
+  "tier": "medium",
+  "num_atoms": 24,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1682944.741991,
+  "energy_per_atom": 70122.697583,
+  "rms_force": 1204625.493339,
+  "max_force": 1204625.493339,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 4.222700,
+  "timestamp": "2026-03-28T13:06:30",
+  "xyz_file": "benchmark_v2\medium\structures\C14H10_s406.xyz"
+}

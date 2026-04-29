@@ -1,0 +1,19 @@
+{
+  "formula": "CH3NH2",
+  "seed": 742,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 271.781176,
+  "energy_per_atom": 38.825882,
+  "rms_force": 609.702544,
+  "max_force": 609.702544,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.794700,
+  "timestamp": "2026-03-28T12:54:24",
+  "xyz_file": "benchmark_100\medium\structures\CH3NH2_s742.xyz"
+}

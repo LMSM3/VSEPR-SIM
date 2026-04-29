@@ -1,0 +1,19 @@
+{
+  "formula": "HNO3",
+  "seed": 314,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 7.851224,
+  "energy_per_atom": 1.570245,
+  "rms_force": 14.719210,
+  "max_force": 14.719210,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.545400,
+  "timestamp": "2026-03-28T13:04:33",
+  "xyz_file": "benchmark_v2\medium\structures\HNO3_s314.xyz"
+}

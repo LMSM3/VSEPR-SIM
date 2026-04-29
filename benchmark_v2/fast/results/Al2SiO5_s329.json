@@ -1,0 +1,19 @@
+{
+  "formula": "Al2SiO5",
+  "seed": 329,
+  "tier": "fast",
+  "num_atoms": 8,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 20904.364251,
+  "energy_per_atom": 2613.045531,
+  "rms_force": 52604.947659,
+  "max_force": 52604.947659,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.601900,
+  "timestamp": "2026-03-28T13:07:02",
+  "xyz_file": "benchmark_v2\fast\structures\Al2SiO5_s329.xyz"
+}

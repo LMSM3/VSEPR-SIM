@@ -1,0 +1,30 @@
+# test_pbc_delta.vsim
+# Parser test: minimum-image delta configuration
+# Expression-level execution: WO-57C
+
+[project]
+name        = test_pbc_delta
+version     = v5.0.0-beta.8
+determinism = true
+
+[cell]
+type    = orthorhombic
+lengths = 10.0, 10.0, 10.0
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image  = true
+wrap_positions = after_step
+
+# [script] — 57C
+# ri = vec3(9.9, 5.0, 5.0)
+# rj = vec3(0.1, 5.0, 5.0)
+# dr = pbc.delta(ri, rj)
+# assert_near(dr.x,  0.2, 1e-12, "minimum-image delta x")
+# assert_near(dr.y,  0.0, 1e-12, "delta y is zero")
+# assert_near(dr.z,  0.0, 1e-12, "delta z is zero")

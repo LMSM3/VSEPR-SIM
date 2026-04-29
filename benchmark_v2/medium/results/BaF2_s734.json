@@ -1,0 +1,19 @@
+{
+  "formula": "BaF2",
+  "seed": 734,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 13.114517,
+  "energy_per_atom": 6.557259,
+  "rms_force": 71.377748,
+  "max_force": 71.377748,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.541400,
+  "timestamp": "2026-03-28T13:05:41",
+  "xyz_file": "benchmark_v2\medium\structures\BaF2_s734.xyz"
+}

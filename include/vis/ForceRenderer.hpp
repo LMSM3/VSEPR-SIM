@@ -31,8 +31,8 @@ enum class ForceColorScheme {
 // ════════════════════════════════════════════════════════════════════════════
 
 struct ForceArrow {
-    data::Vec3 origin;        // Start position (atom)
-    data::Vec3 direction;     // Unit vector
+    data::Vec3f origin;        // Start position (atom)
+    data::Vec3f direction;     // Unit vector
     float magnitude;          // Force magnitude
     std::string source;       // Source atom ID (for tooltip)
     
@@ -87,8 +87,8 @@ private:
     void build_decomposed_arrows();
     void build_interaction_pairs();
     
-    ForceArrow create_arrow(const data::Vec3& origin,
-                           const data::Vec3& direction,
+    ForceArrow create_arrow(const data::Vec3f& origin,
+                           const data::Vec3f& direction,
                            float magnitude,
                            const std::string& source);
     
@@ -123,13 +123,13 @@ private:
 // ════════════════════════════════════════════════════════════════════════════
 
 // Generate cylinder mesh for arrow shaft
-void generate_cylinder(const data::Vec3& start, const data::Vec3& end,
+void generate_cylinder(const data::Vec3f& start, const data::Vec3f& end,
                       float radius, int segments,
                       std::vector<float>& vertices,
                       std::vector<unsigned int>& indices);
 
 // Generate cone mesh for arrow head
-void generate_cone(const data::Vec3& base, const data::Vec3& tip,
+void generate_cone(const data::Vec3f& base, const data::Vec3f& tip,
                   float radius, int segments,
                   std::vector<float>& vertices,
                   std::vector<unsigned int>& indices);

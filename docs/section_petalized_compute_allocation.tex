@@ -1,0 +1,435 @@
+% ============================================================================
+%  VSEPR-SIM — §P: Petalized Compute Allocation Model
+%  Resource Partitioning as Botanical Abstraction.
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code listings ─────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{lstbg}{RGB}{248,248,248}
+\definecolor{lstkw}{RGB}{0,0,180}
+\definecolor{lstcm}{RGB}{80,120,80}
+\lstdefinestyle{cppstyle}{
+  language=C++, basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{lstbg},
+  keywordstyle=\color{lstkw}\bfseries,
+  commentstyle=\color{lstcm}\itshape,
+  frame=single, framesep=3pt, breaklines=true, keepspaces=true, tabsize=4,
+  showstringspaces=false
+}
+\lstset{style=cppstyle}
+
+% ── Theorem environments ───────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{postulate}[definition]{Postulate}
+\newtheorem{remark}[definition]{Remark}
+
+% ── TColorbox ─────────────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+\definecolor{rootcol}{RGB}{235,225,200}
+\definecolor{stemcol}{RGB}{230,245,220}
+\definecolor{corecol}{RGB}{255,245,220}
+\definecolor{petalcol}{RGB}{255,230,240}
+\definecolor{bloomcol}{RGB}{230,240,255}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM Research Platform}}
+\fancyhead[R]{\small\textit{§P — Petalized Compute Allocation Model}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{§\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!70!black}
+
+% ── Macros ─────────────────────────────────────────────────────────────────
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+
+% ============================================================================
+\begin{document}
+% ============================================================================
+
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+
+{\Huge\bfseries Petalized Compute\\[6pt] Allocation Model\par}
+\vspace{1.0cm}
+{\Large\itshape Resource Partitioning as Botanical Abstraction\par}
+\vspace{1.5cm}
+{\large VSEPR-SIM Research Platform\par}
+\vspace{0.5cm}
+{\large Section §P — Theoretical Foundation\par}
+\vspace{2.0cm}
+{\normalsize Version 3.0.0 — First Principles Draft\par}
+\vfill
+{\small\today}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Motivation: The Botanical Metaphor for Computation}
+% ============================================================================
+
+Modern compute environments expose resources as anonymous pools: a count of
+cores, a quantity of memory, a fractional share of accelerator time.  While
+technically sufficient, this flat representation obscures the \emph{structure}
+of resource availability and the \emph{dependency relationships} that connect
+visible computation to its supporting infrastructure.
+
+The \textbf{Petalized Compute Allocation Model} introduces a botanical
+metaphor that maps resource partitioning onto the anatomy of a flower.
+The metaphor is not decorative; it encodes a specific hierarchy:
+
+\begin{itemize}
+  \item The \textbf{bloom} is the exposed computational surface of the machine.
+  \item Each \textbf{petal} is a schedulable compute partition.
+  \item The \textbf{roots} and \textbf{stem} represent the non-visible support
+        systems required to sustain execution: power delivery, thermal
+        stability, storage movement, network access, and system coordination.
+\end{itemize}
+
+The metaphor thus captures both the \emph{beauty of variation} (heterogeneous
+resource profiles across partitions) and the \emph{physical dependency} of
+computation on deeper infrastructural support.
+
+% ============================================================================
+\section{Formal Flower Decomposition}
+% ============================================================================
+
+\begin{definition}[Flower]
+A \textbf{flower} $F$ is a quadruple
+\begin{equation}
+  F = \bigl\{ R,\; S,\; C,\; P \bigr\}
+\end{equation}
+where each component represents a distinct functional layer of the compute
+system.
+\end{definition}
+
+\begin{tcolorbox}[colback=rootcol, title={\textbf{$R$ — Root Systems (Support Layer)}}]
+Power delivery, cooling, storage, network ingress, persistence.
+The root systems are the non-visible infrastructure upon which all
+computation ultimately depends.  A root failure collapses the entire flower.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=stemcol, title={\textbf{$S$ — Stem (Transport and Control Backbone)}}]
+Scheduler path, process routing, kernel coordination.
+The stem connects the exposed bloom to the root systems, providing the
+transport and arbitration layer through which resource requests propagate.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=corecol, title={\textbf{$C$ — Core (Orchestration Center)}}]
+Allocator, supervisor, node manager, system controller.
+The core is the decision point: it determines how resources are distributed
+across petals and how competing demands are resolved.
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=petalcol, title={\textbf{$P$ — Petals (Exposed Compute Partitions)}}]
+The set of schedulable compute partitions:
+\begin{equation}
+  P = \bigl\{ p_1,\; p_2,\; \ldots,\; p_n \bigr\}
+\end{equation}
+Each petal is a bounded, explicitly described region of machine capability
+visible to user-facing workloads.
+\end{tcolorbox}
+
+% ============================================================================
+\section{Petal Structure}
+% ============================================================================
+
+\begin{definition}[Petal]
+Each petal $p_i$ is defined as
+\begin{equation}
+  p_i = \bigl\{ M_i,\; C_i,\; G_i,\; D_i \bigr\}
+\end{equation}
+where:
+\begin{itemize}
+  \item $M_i$ — memory assigned to petal $i$ (e.g.\ in GB),
+  \item $C_i$ — CPU cores assigned to petal $i$,
+  \item $G_i$ — GPU fraction or accelerator share assigned to petal $i$
+        ($0 \le G_i \le 1$),
+  \item $D_i$ — number of internal divisions (sub-partitions) available
+        within petal $i$.
+\end{itemize}
+\end{definition}
+
+\begin{remark}[Sub-division]
+The internal divisions $D_i$ allow tasks to be distributed at finer
+granularity within the same visible compute region.  A petal with $D_i = 4$
+can host up to four independently scheduled work units, each receiving an
+equal share of $M_i$, $C_i$, and $G_i$ unless explicitly overridden by the
+orchestration core.
+\end{remark}
+
+\subsection{Concrete Example}
+
+Consider a single node represented as a flower whose petals each expose:
+
+\begin{equation}
+  p_i = \bigl\{ 25.6\;\text{GB},\; 6\;\text{cores},\; 0.30\;\text{GPU},\; 4 \bigr\}
+\end{equation}
+
+This states that petal $i$ provides 25.6\,GB of memory, 6~CPU cores, 30\% of
+a GPU allocation, and 4~sub-divisions for internal scheduling.
+
+% ============================================================================
+\section{Bloom Capacity}
+% ============================================================================
+
+\begin{definition}[Bloom Capacity]
+The \textbf{total exposed bloom capacity} $B$ of a flower with $n$ petals is
+\begin{equation}
+  B = \sum_{i=1}^{n} p_i
+\end{equation}
+interpreted component-wise:
+\begin{equation}
+  B = \left(
+    \sum_{i=1}^{n} M_i,\;\;
+    \sum_{i=1}^{n} C_i,\;\;
+    \sum_{i=1}^{n} G_i,\;\;
+    \sum_{i=1}^{n} D_i
+  \right)
+\end{equation}
+\end{definition}
+
+For a flower with $n = 4$ identical petals as in the example above:
+
+\begin{equation}
+  B = \bigl( 102.4\;\text{GB},\; 24\;\text{cores},\; 1.20\;\text{GPU},\; 16 \bigr)
+\end{equation}
+
+Note that $\sum G_i > 1$ is valid when a node contains multiple physical
+accelerators or when GPU fractions are expressed relative to a single device
+among several.
+
+% ============================================================================
+\section{Heterogeneous Petal Configurations}
+% ============================================================================
+
+The petalized model is particularly suitable for heterogeneous or mixed-load
+systems.  Petals need not be uniform:
+
+\begin{center}
+\begin{tabular}{@{} l C{2.2cm} C{1.8cm} C{1.8cm} C{1.4cm} @{}}
+\toprule
+\textbf{Petal} & \textbf{Memory (GB)} & \textbf{CPU Cores} & \textbf{GPU Share} & \textbf{Divisions} \\
+\midrule
+$p_1$ (CPU-dense)     & 16.0  & 12 & 0.00 & 6 \\
+$p_2$ (Memory-heavy)  & 64.0  & 4  & 0.00 & 2 \\
+$p_3$ (Accelerated)   & 8.0   & 2  & 0.50 & 1 \\
+$p_4$ (Balanced)      & 25.6  & 6  & 0.30 & 4 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Color, placement, and visual encoding may then represent:
+\begin{itemize}
+  \item node role (compute, storage, accelerator),
+  \item priority class (interactive, batch, preemptible),
+  \item thermal state (nominal, throttled, critical),
+  \item resource pressure (idle, loaded, saturated).
+\end{itemize}
+
+A petal is therefore both a \textbf{compute unit} and a \textbf{visual
+contract}: it tells the user what resources exist, how they are divided, and
+where tasks are currently placed.
+
+% ============================================================================
+\section{Scheduling Interpretation}
+% ============================================================================
+
+The flower decomposition provides a natural mapping to scheduling abstractions:
+
+\begin{enumerate}
+  \item \textbf{Petal selection} — the scheduler selects a petal $p_i$ whose
+        resource profile matches the task requirements.
+  \item \textbf{Division assignment} — within the selected petal, the task
+        is assigned to one of $D_i$ available sub-partitions.
+  \item \textbf{Resource binding} — the task receives its share of $M_i$,
+        $C_i$, and $G_i$ proportional to the division count.
+  \item \textbf{Bloom monitoring} — the orchestration core $C$ monitors
+        aggregate bloom utilization and may rebalance across petals.
+\end{enumerate}
+
+This hierarchy maps cleanly onto existing container orchestration, NUMA-aware
+scheduling, and GPU partitioning (e.g.\ MIG, MPS) paradigms while providing a
+human-readable structural overlay.
+
+% ============================================================================
+\section{Infrastructure Dependencies}
+% ============================================================================
+
+The root and stem layers encode a critical design principle: \emph{visible
+computation depends on invisible infrastructure}.  A flower whose roots are
+compromised (e.g.\ insufficient cooling, failing storage) cannot sustain its
+bloom regardless of how well petals are configured.
+
+\subsection{Root System Components}
+
+\begin{itemize}
+  \item \textbf{Power delivery} — wattage budget, PSU redundancy, UPS state.
+  \item \textbf{Cooling} — ambient temperature, fan RPM, thermal throttle
+        thresholds.
+  \item \textbf{Storage} — IOPS capacity, read/write bandwidth, persistence
+        guarantees.
+  \item \textbf{Network ingress} — link bandwidth, latency, packet loss rate.
+\end{itemize}
+
+\subsection{Stem Components}
+
+\begin{itemize}
+  \item \textbf{Scheduler path} — queue depth, dispatch latency, fairness
+        policy.
+  \item \textbf{Process routing} — affinity masks, NUMA topology, interrupt
+        steering.
+  \item \textbf{Kernel coordination} — syscall overhead, context-switch cost,
+        lock contention.
+\end{itemize}
+
+% ============================================================================
+\section{Thermal Monitoring Integration}
+% ============================================================================
+
+The root layer naturally incorporates thermal monitoring as a first-class
+concern.  Temperature readings from hardware sensors can be converted to
+a consistent Celsius representation:
+
+\begin{equation}
+  T_{\text{C}} = \frac{T_{\text{raw}}}{10} - 273.15
+\end{equation}
+
+where $T_{\text{raw}}$ is the value reported by firmware interfaces such as
+\type{MsAcpi\_ThermalZoneTemperature} on Windows systems.  Thermal state
+feeds back into petal scheduling: a thermally stressed root may force the
+orchestration core to reduce bloom capacity by disabling or throttling
+individual petals.
+
+% ============================================================================
+\section{GPU Telemetry as Petal Metadata}
+% ============================================================================
+
+For accelerator-bearing petals, runtime telemetry enriches the petal
+description with dynamic state:
+
+\begin{itemize}
+  \item \textbf{GPU utilization} $u_{\text{gpu}}$ — fraction of active SMs
+        (0--100\%).
+  \item \textbf{VRAM usage} $m_{\text{gpu}}$ — memory currently allocated
+        (in MB or GB).
+\end{itemize}
+
+These values are cached to avoid per-prompt overhead (e.g.\ querying
+\type{nvidia-smi} on every render cycle).  A cache lifetime of
+$\sim$\!2\,s balances freshness against launch cost.
+
+Color encoding of GPU state within the petal visualization follows the
+convention:
+
+\begin{center}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Metric} & \textbf{Threshold} & \textbf{Color} \\
+\midrule
+$u_{\text{gpu}} \ge 80\%$  & High load    & Red (ANSI 196) \\
+$u_{\text{gpu}} \ge 50\%$  & Medium load  & Orange (ANSI 208) \\
+$u_{\text{gpu}} < 50\%$    & Low load     & Green (ANSI 118) \\
+$m_{\text{gpu}}$            & Any          & Light cyan (ANSI 159) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Relationship to the VSEPR-SIM Platform}
+% ============================================================================
+
+Within VSEPR-SIM, the petalized compute allocation model serves as the
+conceptual bridge between the atomistic simulation kernel and the physical
+hardware that executes it.  The mapping is:
+
+\begin{itemize}
+  \item \textbf{Atomistic structure generation} tasks are assigned to petals
+        based on memory and core requirements.
+  \item \textbf{Visualization rendering} tasks may require accelerator-bearing
+        petals with nonzero $G_i$.
+  \item \textbf{Reporting and export} tasks are lightweight and may occupy
+        minimal petals or share divisions within a larger petal.
+  \item \textbf{Discovery workflows} involving parameter sweeps distribute
+        candidate evaluations across the full bloom $B$.
+\end{itemize}
+
+This ensures that resource allocation is explicit, inspectable, and
+deterministic — consistent with the anti-black-box philosophy of the
+platform.
+
+% ============================================================================
+\section{Summary}
+% ============================================================================
+
+The Petalized Compute Allocation Model provides:
+
+\begin{enumerate}
+  \item A structured decomposition of compute resources into a four-layer
+        botanical hierarchy: roots, stem, core, and petals.
+  \item A formal definition of each petal as an explicit tuple of memory,
+        CPU, GPU, and sub-division capacity.
+  \item A component-wise bloom capacity metric that aggregates across all
+        petals.
+  \item Support for heterogeneous configurations where petals vary in
+        resource profile and scheduling role.
+  \item Natural integration with thermal monitoring, GPU telemetry, and
+        infrastructure health as feedback signals.
+  \item A human-readable visual contract that makes resource state
+        inspectable at every level.
+\end{enumerate}
+
+The model is both a \textbf{scheduling abstraction} and an
+\textbf{interface abstraction}: it organizes computation into explicit,
+auditable partitions while providing a visual language for communicating
+system state to the researcher.
+
+% ============================================================================
+\end{document}
+% ============================================================================

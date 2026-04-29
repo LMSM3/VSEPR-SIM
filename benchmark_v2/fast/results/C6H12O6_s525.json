@@ -1,0 +1,19 @@
+{
+  "formula": "C6H12O6",
+  "seed": 525,
+  "tier": "fast",
+  "num_atoms": 24,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 958849.419991,
+  "energy_per_atom": 39952.059166,
+  "rms_force": 1093773.802944,
+  "max_force": 1093773.802944,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.779800,
+  "timestamp": "2026-03-28T13:05:58",
+  "xyz_file": "benchmark_v2\fast\structures\C6H12O6_s525.xyz"
+}

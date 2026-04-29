@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+﻿\documentclass[11pt]{article}
 \usepackage{amsmath,amssymb,amsthm}
 \usepackage{geometry}
 \usepackage{booktabs}
@@ -9,7 +9,8 @@
 \usepackage{xcolor}
 \usepackage{array}
 \usepackage{enumitem}
-
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \geometry{letterpaper, margin=1in}
 
 \lstset{
@@ -28,13 +29,32 @@
 \newcommand{\field}[1]{\texttt{#1}}
 \newcommand{\op}[1]{\texttt{#1}}
 
-\title{\textbf{Formation Engine Methodology} \\
-\Large Canonical Structural Bridge Architecture}
+\title{\textbf{Formation Engine Methodology}\\
+\Large Canonical Structural Bridge Architecture\\[4pt]
+\large Atomistic Kernel, Coarse-Grained Extension, and LL-FIRE Minimization}
 \author{Formation Engine Development Team}
-\date{Version 0.1 --- As Implemented in Codebase}
+\date{Version 3.0.0 --- Revised Technical Draft}
 
 \begin{document}
 \maketitle
+\begin{abstract}
+This section documents the canonical bridge architecture that separates the
+formation engine into three deliberately independent layers: the atomistic
+kernel, the canonical structural document layer, and the desktop visualization
+workstation. The bridge is not a convenience wrapper. It is the architectural
+constraint that allows simulation, persistence, and presentation to evolve
+without entangling their internal representations. The coarse-grained
+extension preserves these invariants while introducing anisotropic
+surface-mapped bead descriptors, environment-responsive coupling, and a
+lattice-level FIRE minimizer that operates entirely through the same bridge
+contract. The purpose of this document is therefore threefold: first, to
+record the atomistic bridge implementation as it exists in the codebase;
+second, to make explicit the invariants that preserve extensibility,
+reproducibility, and front-end independence; and third, to document the
+coarse-grained layer and its LL-FIRE minimizer as a concrete demonstration
+that the architecture scales without exception.
+\end{abstract}
+
 \tableofcontents
 \newpage
 
@@ -42,10 +62,10 @@
 \section{Introduction}
 % =============================================================================
 
-The formation engine is organised around a strict three-layer architecture.
+The formation engine is organized around a strict three-layer architecture.
 Computational chemistry algorithms, canonical structural data, and
-visualization or analysis tools are kept separate and communicate only through
-a shared structural representation.
+visualization or analysis tools remain separate and communicate only through a
+shared structural representation.
 
 \[
   \underbrace{\text{Computational Chemistry}}_{\text{atomistic kernel}}
@@ -55,23 +75,32 @@ a shared structural representation.
   \underbrace{\text{Visual / Desktop Output}}_{\text{Qt workstation}}
 \]
 
-This constraint is not merely stylistic.  It is an invariant of the system:
-no component outside the computational kernel may operate on
-algorithm-specific internal data structures.  Every inter-layer communication
-must pass through the canonical structural representation.
+This separation is not merely stylistic. It is an invariant of the system. No
+component outside the computational kernel is permitted to operate directly on
+algorithm-specific internal data structures. Every inter-layer exchange must
+pass through the canonical representation.
 
-The present section documents the architecture as it exists in the codebase,
-covering the three layers, the bridge implementation, the conversion pipeline,
-and the design rules that enforce separation.
+That decision gives the engine a stable internal contract. The physics layer
+may change its models, numerical procedures, or internal bookkeeping; the
+visualization layer may change its widgets, renderer, or workflow; the file
+pipeline may add new readers and writers. None of those changes requires the
+other layers to understand the private implementation details of the rest.
 
+The present section documents the architecture as implemented in the current
+codebase. It covers the three layers, the bridge implementation, the
+conversion pathway, and the design rules that enforce separation. Sections
+8--10 extend the treatment to the coarse-grained bead model and its
+lattice-level FIRE minimizer, demonstrating that the bridge contract scales
+to a fundamentally different physical representation without architectural
+compromise.
 % =============================================================================
-\section{Layer One — Computational Chemistry}
+\section{Layer One -- Computational Chemistry}
 % =============================================================================
 
 \subsection{The Canonical Simulation State}
 
 The computational layer operates on a single data structure defined in
-\file{atomistic/core/state.hpp}.  This structure represents the complete
+\file{atomistic/core/state.hpp}. This structure represents the complete
 instantaneous configuration of an $N$-particle system:
 
 \begin{lstlisting}
@@ -79,16 +108,16 @@ instantaneous configuration of an $N$-particle system:
 struct State {
     uint32_t N{};
     std::vector<Vec3>   X;      // positions      (N x 3, Angstrom)
-    std::vector<Vec3>   V;      // velocities      (N x 3, Ang/fs)
+    std::vector<Vec3>   V;      // velocities     (N x 3, Ang/fs)
     std::vector<double> T;      // per-particle temperature proxy
-    std::vector<double> Q;      // charges         (N, elementary charge e)
-    std::vector<double> M;      // masses          (N, amu)
-    std::vector<uint32_t> type; // species id      (N)
+    std::vector<double> Q;      // charges        (N, elementary charge e)
+    std::vector<double> M;      // masses         (N, amu)
+    std::vector<uint32_t> type; // species id     (N)
 
-    std::vector<Edge>   B;      // bond topology   (graph edges)
+    std::vector<Edge>   B;      // bond topology  (graph edges)
     std::vector<Event>  L;      // event log
 
-    std::vector<Vec3>   F;      // forces          (N x 3, kcal/mol/Ang)
+    std::vector<Vec3>   F;      // forces         (N x 3, kcal/mol/Ang)
     EnergyTerms         E{};    // energy ledger
 
     BoxPBC              box;    // periodic boundary conditions
@@ -125,13 +154,15 @@ The energy ledger decomposes the total potential energy into additive terms:
 \end{equation}
 
 This decomposition is recorded in the \type{EnergyTerms} struct and carried
-through to the canonical bridge layer, where it is stored as named scalar
-properties on the output frame.
+forward to the bridge layer, where it is stored as named scalar properties on
+the output frame. The important point is that the kernel does not export a
+special-case visualization object. It exports state.
 
 \subsection{Sanity Invariant}
 
 A helper function \op{sane()} enforces a minimal consistency check on any
 \type{State} before it is passed to a kernel operation:
+
 \begin{lstlisting}
 inline bool sane(const State& s) {
     if (s.N == 0) return false;
@@ -144,14 +175,16 @@ inline bool sane(const State& s) {
 }
 \end{lstlisting}
 
-All vectors must be of length $N$. A state with $N = 0$ or mismatched array
-lengths is treated as invalid and rejected before any kernel operation executes.
-
+All vectors must have length $N$. A state with $N = 0$ or mismatched array
+lengths is rejected before any kernel operation executes. This check is
+simple, but it establishes the baseline contract on which the rest of the
+system depends.
 \subsection{Kernel Operations}
 
-The computational layer exposes the following algorithms.  Each operates
-on a \type{State} in place (modifying \field{X}, \field{V}, \field{F},
-\field{E} as appropriate) and returns a statistics struct:
+The computational layer exposes a compact set of algorithms. Each operates on a
+\type{State} in place, modifying \field{X}, \field{V}, \field{F}, and
+\field{E} as appropriate, and returns a statistics object suitable for the
+calling context.
 
 \begin{center}
 \begin{tabular}{lll}
@@ -159,7 +192,7 @@ on a \type{State} in place (modifying \field{X}, \field{V}, \field{F},
 Algorithm & Implementation file & Output statistics \\
 \midrule
 Force evaluation (single-point) & \file{atomistic/models/}$*$ & \type{EnergyTerms} \\
-FIRE energy minimisation & \file{atomistic/integrators/fire.cpp} & \type{FIREStats} \\
+FIRE energy minimization & \file{atomistic/integrators/fire.cpp} & \type{FIREStats} \\
 Velocity Verlet (NVE) & \file{atomistic/integrators/velocity\_verlet.cpp} & \type{VelocityVerletStats} \\
 Langevin dynamics (NVT) & \file{atomistic/integrators/velocity\_verlet.cpp} & \type{LangevinStats} \\
 Maxwell--Boltzmann init & \file{atomistic/core/maxwell\_boltzmann.cpp} & --- \\
@@ -168,7 +201,8 @@ Bond inference & \file{include/io/xyz\_format.hpp} & bond list \\
 \end{tabular}
 \end{center}
 
-The force model interface is:
+The force-model interface is:
+
 \begin{lstlisting}
 // atomistic/models/model.hpp
 struct IModel {
@@ -180,14 +214,14 @@ std::unique_ptr<IModel> create_lj_coulomb_model();
 \end{lstlisting}
 
 Calling \op{eval()} fills \field{s.F} and \field{s.E} for the current
-positions \field{s.X}, charges \field{s.Q}, and parameters $r_c$,
-$k_\mathrm{Coul}$.  The model does not know about frames, documents, files,
-or any visualization concept.
+positions \field{s.X}, charges \field{s.Q}, and parameters such as $r_c$ and
+$k_{\mathrm{Coul}}$. The model has no knowledge of documents, widgets, files,
+or presentation logic. That ignorance is a feature, not a limitation.
 
 \subsection{Structural Parsers and Compilers}
 
 Because the computational layer predates the canonical bridge, conversion
-functions are provided in two sub-namespaces:
+functions are provided in two subordinate namespaces:
 
 \begin{lstlisting}
 // atomistic/parsers/xyz_parser.hpp
@@ -209,31 +243,31 @@ namespace atomistic::compilers {
 }
 \end{lstlisting}
 
-These functions handle atomic mass lookups via a lazy-loaded
+These functions handle atomic-mass lookup via a lazy-loaded
 \type{vsepr::PeriodicTable} singleton (\file{src/pot/periodic\_db.hpp}),
-type-map construction, bond edge conversion, and optional
-velocity/charge extraction.  They form the bottom half of the conversion
-pipeline described in Section~\ref{sec:pipeline}.
-
+type-map construction, bond-edge conversion, and optional velocity or charge
+extraction. They form the lower half of the conversion pathway described in
+Section~\ref{sec:pipeline}.
 % =============================================================================
-\section{Layer Two — Canonical Structure and State Data}
+\section{Layer Two -- Canonical Structure and State Data}
 % =============================================================================
 
 \subsection{Design Principle}
 
-The canonical data layer provides a representation that is shared between
-all components of the platform.  It serves three purposes:
+The canonical data layer provides the representation shared by all major
+components of the platform. It serves three purposes:
 
 \begin{enumerate}
-  \item Decouple simulation algorithms from visualization and user interfaces.
-  \item Provide a persistent representation for simulation artifacts.
-  \item Enable multiple front-end tools to interpret the same structural data
-        without requiring algorithm-specific logic.
+  \item to decouple simulation algorithms from visualization and user
+        interfaces;
+  \item to provide a persistent representation for simulation artifacts; and
+  \item to allow multiple front-end tools to interpret the same structural
+        data without requiring algorithm-specific logic.
 \end{enumerate}
 
-The implementation of this layer is the \type{scene::SceneDocument} type,
-defined in \file{apps/desktop/scene/SceneDocument.h}.  The desktop never
-touches \type{atomistic::State} directly.
+The concrete implementation of this layer is \type{scene::SceneDocument},
+defined in \file{apps/desktop/scene/SceneDocument.h}. The desktop never
+operates on \type{atomistic::State} directly.
 
 \subsection{SceneDocument}
 
@@ -253,10 +287,11 @@ struct SceneDocument {
 };
 \end{lstlisting}
 
-A document holds an ordered sequence of \type{FrameData} snapshots.  A
-single-element sequence represents a static structure.  A multi-element
-sequence is a trajectory.  This distinction is exposed through
-\op{is\_trajectory()}.
+A document holds an ordered sequence of \type{FrameData} snapshots. A
+single-frame document represents a static structure. A multi-frame document
+represents a trajectory. This distinction is exposed through
+\op{is\_trajectory()} and gives the bridge a uniform way to represent both
+one-shot results and time-resolved simulations.
 
 \subsection{FrameData}
 
@@ -286,12 +321,13 @@ struct FrameData {
 };
 \end{lstlisting}
 
-The \field{properties} map is intentionally open-ended.  The engine adapter
-(Section~\ref{sec:adapter}) writes named scalars such as
-\texttt{"energy\_total"}, \texttt{"energy\_vdw"}, \texttt{"energy\_coul"},
+The \field{properties} map is intentionally open-ended. The engine adapter
+writes named scalars such as \texttt{"energy\_total"},
+\texttt{"energy\_vdw"}, \texttt{"energy\_coul"},
 \texttt{"energy\_bond"}, \texttt{"force\_rms"}, and
-\texttt{"temperature"} into this map.  The \type{PropertiesPanel} widget
-reads them by name.
+\texttt{"temperature"} into this map. The \type{PropertiesPanel} widget then
+reads those values by name. In other words, semantics travel as stable keys,
+not as privileged knowledge embedded in the UI.
 
 \subsection{AtomRecord and BondRecord}
 
@@ -308,9 +344,9 @@ struct BondRecord {
 };
 \end{lstlisting}
 
-Atomic number \field{Z} drives the CPK colour and van-der-Waals radius
-lookup in \type{ViewportWidget} (Table~\ref{tab:cpk}).  The element symbol
-string is the round-trip carrier across file formats.
+Atomic number \field{Z} drives the CPK color and van der Waals radius lookup
+in \type{ViewportWidget} (Table~\ref{tab:cpk}). The element symbol string
+serves as the round-trip carrier across file formats and bridge conversions.
 
 \subsection{Provenance}
 
@@ -324,15 +360,19 @@ struct Provenance {
 };
 \end{lstlisting}
 
-Every document carries provenance describing how it was produced.  The
-\type{ObjectTree} widget uses \field{source\_file} (falling back to
-\field{mode}) as the display name in the scene hierarchy.  The
+Every document carries provenance describing how it was produced. The
+\type{ObjectTree} widget uses \field{source\_file}, falling back to
+\field{mode}, as the display name in the scene hierarchy. The
 \type{PropertiesPanel} reads \field{formula} for the identity section.
+
+Provenance matters because the document is not merely a render target. It is a
+simulation artifact. Once saved, moved, reopened, or reprocessed, it must
+still be able to explain what it is and where it came from.
 
 \subsection{File Format Representation}
 
-Because the canonical layer is the persistent form of structural data, it
-is serialized using the following formats:
+Because the canonical layer is the persistent form of structural data, it is
+serialized using the following formats:
 
 \begin{center}
 \begin{tabular}{lll}
@@ -346,31 +386,29 @@ Extension & Content & Reader / Writer \\
 \end{tabular}
 \end{center}
 
-All three formats are plain-text and human-readable.  The standard
+All three formats are plain text and human-readable. The standard
 \texttt{.xyz} format stores $N$ atom lines of the form
-\texttt{<element> <x> <y> <z>}, with coordinates in \AA.  The
-\texttt{.xyza} extended format appends an energy-annotated comment line and
-optional per-atom velocity and charge columns.  The
-\texttt{.xyzc} checkpoint format adds velocity, charge, and simulation cell
-information sufficient to restart an MD run.
+\texttt{<element> <x> <y> <z>}, with coordinates in \AA. The
+\texttt{.xyza} format appends an energy-annotated comment line and optional
+per-atom velocity and charge columns. The \texttt{.xyzc} checkpoint format
+adds velocity, charge, and simulation-cell information sufficient to restart
+an MD run.
 
-Bond topology is not natively encoded in any of the XYZ family.  It is
-either inferred post-load via \op{XYZReader::detect\_bonds()} (covalent
-radius test with a 1.2$\times$ scale factor) or stored separately in
-structured manifests.
-
+Bond topology is not natively encoded in the XYZ family. It is either inferred
+post-load via \op{XYZReader::detect\_bonds()} using a covalent-radius test
+with a $1.2\times$ scale factor, or stored separately in structured manifests.
 % =============================================================================
-\section{Layer Three — Visualization and Desktop}
+\section{Layer Three -- Visualization and Desktop}
 % =============================================================================
 
 \subsection{Overview}
 
-The visualization layer consists of a Qt~6 desktop workstation defined in
-\file{apps/desktop/}.  It consumes \type{scene::SceneDocument} exclusively
-and has no knowledge of \type{atomistic::State}, force models, integrators,
-or any other kernel type.
+The visualization layer consists of a Qt 6 desktop workstation defined in
+\file{apps/desktop/}. It consumes \type{scene::SceneDocument} exclusively and
+has no knowledge of \type{atomistic::State}, force models, integrators, or
+other kernel types.
 
-The workstation layout follows the SolidWorks / FreeCAD grammar:
+The workstation layout follows a familiar CAD-style grammar:
 
 \begin{verbatim}
 +-------+-----------------------------+-----------+
@@ -384,11 +422,15 @@ The workstation layout follows the SolidWorks / FreeCAD grammar:
 +-------------------------------------------------+
 \end{verbatim}
 
+That arrangement is not just visual convention. It reflects the role of the
+front end: inspect the document, invoke operations, and display results. The
+Qt layer is an operator console, not a second simulation engine.
+
 \subsection{ViewportWidget}
 
-\file{apps/desktop/ViewportWidget.h} hosts an OpenGL~3.3 Core Profile
-renderer.  It receives a document via \op{setDocument()} and calls
-\op{currentFrame()} on each paint cycle.
+\file{apps/desktop/ViewportWidget.h} hosts an OpenGL 3.3 Core Profile
+renderer. It receives a document via \op{setDocument()} and queries the
+current frame on each paint cycle.
 
 \begin{lstlisting}
 // ViewportWidget.h
@@ -397,17 +439,17 @@ void setDocument(std::shared_ptr<scene::SceneDocument> doc);
 const scene::FrameData* currentFrame() const;
 \end{lstlisting}
 
-Rendering proceeds entirely from \type{FrameData}: atoms are drawn as
-sphere imposters whose colour and radius are indexed by \field{Z} against
-an inline CPK table (Table~\ref{tab:cpk}); bonds are drawn as cylinder
-pairs.  The viewport does not perform any force evaluation, bond inference,
-or element identification: all of that has already been resolved in the
+Rendering proceeds entirely from \type{FrameData}: atoms are drawn as sphere
+imposters whose color and radius are indexed by \field{Z} against an inline
+CPK table (Table~\ref{tab:cpk}); bonds are drawn as cylinder pairs. The
+viewport performs no force evaluation, bond inference, or element
+identification. Those decisions have already been resolved upstream in the
 canonical layer.
 
 \begin{table}[ht]
 \centering
-\caption{Selected CPK colour and covalent radius entries from the inline
-table in \file{apps/desktop/ViewportWidget.cpp} (indices $= Z - 1$)}
+\caption{Selected CPK color entries from the inline table in
+\file{apps/desktop/ViewportWidget.cpp} (index $= Z - 1$).}
 \label{tab:cpk}
 \begin{tabular}{cllll}
 \toprule
@@ -425,10 +467,9 @@ $Z$ & Symbol & R & G & B \\
 
 \subsection{ObjectTree}
 
-\file{apps/desktop/ObjectTree.h} is a \type{QTreeWidget} with three
-fixed root nodes: \emph{Molecules}, \emph{Crystals}, and \emph{Results}.
-Items are added by \type{MainWindow::syncPanels()} after every kernel
-operation:
+\file{apps/desktop/ObjectTree.h} is a \type{QTreeWidget} with three fixed
+root nodes: \emph{Molecules}, \emph{Crystals}, and \emph{Results}. Items are
+added by \type{MainWindow::syncPanels()} after each kernel operation:
 
 \begin{lstlisting}
 // From MainWindow::syncPanels()
@@ -440,44 +481,45 @@ QString name = QString::fromStdString(
 objectTree_->addMolecule(name, f.atom_count(), f.bond_count());
 \end{lstlisting}
 
-The tree therefore reflects \emph{provenance}, not internal engine state.
-A document loaded from \texttt{water.xyz} will appear as ``water.xyz'';
-one produced by FIRE relaxation will appear as ``fire''.
+The tree therefore reflects provenance rather than internal engine state. A
+document loaded from \texttt{water.xyz} appears as ``water.xyz''; one produced
+by FIRE relaxation appears as ``fire''.
 
 \subsection{PropertiesPanel}
 
-\file{apps/desktop/PropertiesPanel.h} is a \type{QScrollArea} containing
-two \type{QGroupBox} sections:
+\file{apps/desktop/PropertiesPanel.h} is a \type{QScrollArea} containing two
+\type{QGroupBox} sections:
 
 \begin{itemize}
-  \item \textbf{Identity} — formula (from \field{provenance.formula}) and
+  \item \textbf{Identity} -- formula (from \field{provenance.formula}) and
         atom count.
-  \item \textbf{Energy} — total energy in kcal/mol (from
+  \item \textbf{Energy} -- total energy in kcal/mol (from
         \field{properties["energy\_total"]}) and RMS force (from
         \field{properties["force\_rms"]}).
 \end{itemize}
 
-All values are read from the canonical \type{FrameData} by name.  The
-panel has no knowledge of which kernel produced them.
+All values are read from the canonical \type{FrameData} by name. The panel
+knows nothing about which kernel produced them, which is precisely why it does
+not need to change when new simulation modes are added.
 
 \subsection{ConsolePanel}
 
 \file{apps/desktop/ConsolePanel.h} provides a timestamped log output and a
-command-entry line.  The \op{commandSubmitted()} signal connects to
-\op{MainWindow::onCommand()}, which dispatches text commands (\texttt{relax},
-\texttt{md}, \texttt{sp}, \texttt{reset}) through the \type{EngineAdapter}
-using the same request--result pathway as the toolbar actions.
-
+command-entry line. The \op{commandSubmitted()} signal connects to
+\op{MainWindow::onCommand()}, which dispatches text commands such as
+\texttt{relax}, \texttt{md}, \texttt{sp}, and \texttt{reset} through the
+\type{EngineAdapter} using the same request--result pathway as the toolbar
+actions.
 % =============================================================================
-\section{The Bridge — EngineAdapter}
+\section{The Bridge -- EngineAdapter}
 \label{sec:adapter}
 % =============================================================================
 
 \subsection{Role}
 
 \type{bridge::EngineAdapter} (\file{apps/desktop/bridge/EngineAdapter.h}) is
-the only class in the desktop that instantiates and calls into the
-atomistic kernel.  It translates between the two representations:
+the only desktop class that instantiates and calls into the atomistic kernel.
+It translates between the two representations:
 
 \[
   \text{scene::SceneDocument}
@@ -501,16 +543,21 @@ std::future<KernelResult> runAsync(const KernelRequest& req,
                                    ProgressFn progress = nullptr);
 \end{lstlisting}
 
+This makes \type{EngineAdapter} the architectural choke point. That sounds
+harsh because it is. Every path between UI and kernel is forced through one
+controlled translation boundary, which is exactly how the layers avoid quietly
+bleeding into one another.
+
 \subsection{KernelOp Enumeration}
 
-All operations that the desktop can request are listed in a single
-enumeration.  New chemistry is added here and nowhere else in the UI:
+All operations that the desktop may request are listed in a single
+enumeration. New chemistry is added here and nowhere else in the UI:
 
 \begin{lstlisting}
 enum class KernelOp {
     LoadXYZ,     // parse file -> SceneDocument
     SaveXYZ,     // write current frame to file
-    Relax,       // FIRE energy minimisation
+    Relax,       // FIRE energy minimization
     MD_NVE,      // velocity Verlet (constant energy)
     MD_NVT,      // Langevin thermostat (constant temperature)
     SinglePoint, // evaluate energy & forces, no motion
@@ -519,10 +566,10 @@ enum class KernelOp {
 };
 \end{lstlisting}
 
-This enumeration is the authoritative contract between the UI and the
-kernel.  Because the UI only constructs \type{KernelRequest} values and
-reads \type{KernelResult} values, the internal implementation of each
-operation is completely hidden.
+This enumeration is the authoritative contract between the UI and the kernel.
+Because the desktop constructs only \type{KernelRequest} values and consumes
+only \type{KernelResult} values, the internal implementation of each
+operation remains hidden.
 
 \subsection{KernelRequest and KernelResult}
 
@@ -549,14 +596,15 @@ struct KernelResult {
 };
 \end{lstlisting}
 
-Both structs are value types containing only standard-library types and a
-\type{shared\_ptr} to a document.  They carry no kernel-internal pointers,
-no raw state references, and no handles to FIRE or Langevin objects.
+Both structs are plain value carriers containing only standard-library types
+and a \type{shared\_ptr} to a document. They carry no kernel-internal
+pointers, no raw state references, and no handles to FIRE or Langevin
+objects.
 
-\subsection{Internal Implementation — EngineCore}
+\subsection{Internal Implementation -- EngineCore}
 
-The adapter uses a pimpl idiom.  The real kernel objects are hidden in a
-private \type{detail::EngineCore} struct that is fully defined only inside
+The adapter uses a pimpl idiom. The actual kernel objects are hidden in a
+private \type{detail::EngineCore} struct defined only inside
 \file{apps/desktop/bridge/EngineAdapter.cpp}:
 
 \begin{lstlisting}
@@ -574,9 +622,8 @@ struct EngineCore {
 } // namespace detail
 \end{lstlisting}
 
-The \type{EngineAdapter} header forward-declares this struct but never
-exposes it to the rest of the desktop.
-
+The \type{EngineAdapter} header forward-declares this struct but never exposes
+it to the rest of the desktop.
 % =============================================================================
 \section{Conversion Pipeline}
 \label{sec:pipeline}
@@ -584,52 +631,51 @@ exposes it to the rest of the desktop.
 
 \subsection{SceneDocument $\rightarrow$ atomistic::State}
 
-Before any modify operation (Relax, MD\_NVE, MD\_NVT, SinglePoint), the
-adapter converts the current \type{SceneDocument} frame into a
-\type{State}.  The procedure:
+Before any modifying operation (\texttt{Relax}, \texttt{MD\_NVE},
+\texttt{MD\_NVT}, or \texttt{SinglePoint}), the adapter converts the current
+\type{SceneDocument} frame into a \type{State}. The procedure is as follows:
 
 \begin{enumerate}
   \item Construct a temporary \type{vsepr::io::XYZMolecule} from
-        \field{FrameData::atoms} (using \field{symbol} and \field{pos}).
+        \field{FrameData::atoms} using \field{symbol} and \field{pos}.
   \item Copy bond records into \field{XYZMolecule::bonds}.
-  \item Call \op{atomistic::parsers::from\_xyz(mol)} — this populates
-        masses via the \type{vsepr::PeriodicTable} singleton, builds the
-        type map, and zero-initialises velocities.
+  \item Call \op{atomistic::parsers::from\_xyz(mol)}. This populates masses via
+        the \type{vsepr::PeriodicTable} singleton, builds the type map, and
+        zero-initializes velocities.
   \item If \field{FrameData::velocities} is non-empty, overwrite
         \field{State::V} with the stored velocity vectors.
 \end{enumerate}
 
-This route routes through the canonical parser rather than duplicating its
-mass-lookup and type-map logic.
+This route intentionally passes through the canonical parser rather than
+re-implementing its mass-lookup and type-map logic inside the adapter.
 
 \subsection{atomistic::State $\rightarrow$ scene::FrameData}
 
-After any modify operation, the resulting state is packed back into a
+After any modifying operation, the resulting state is packed back into a
 \type{FrameData}:
 
 \begin{enumerate}
   \item Copy positions, velocities, and forces component-wise into
         \field{AtomRecord::pos}, \field{FrameData::velocities}, and
         \field{FrameData::forces}.
-  \item Look up \field{AtomRecord::Z} from the element symbol.
-  \item Write energy decomposition into the properties map:
+  \item Recover \field{AtomRecord::Z} from the element symbol.
+  \item Write the energy decomposition into the properties map:
         \texttt{energy\_total}, \texttt{energy\_bond},
-        \texttt{energy\_vdw}, \texttt{energy\_coul}.
-  \item Compute and write \texttt{force\_rms} as
+        \texttt{energy\_vdw}, and \texttt{energy\_coul}.
+  \item Compute and store \texttt{force\_rms} as
         $\sqrt{\frac{1}{N}\sum_i |\mathbf{F}_i|^2}$.
-  \item Set \field{source\_mode} to the operation name
-        (\texttt{"fire"}, \texttt{"md\_nvt"}, \texttt{"single\_point"},
-        etc.).
+  \item Set \field{source\_mode} to the operation name, for example
+        \texttt{"fire"}, \texttt{"md\_nvt"}, or
+        \texttt{"single\_point"}.
 \end{enumerate}
 
-The resulting \type{FrameData} is appended to a copy of the input document
-(\field{SceneDocument::frames}).  This preserves the original frame as
-frame~0, making every successful operation extend the trajectory rather
-than overwriting it.
+The resulting \type{FrameData} is appended to a copy of the input document.
+That choice preserves the original frame as frame 0 and makes each successful
+operation extend the trajectory rather than overwrite history.
 
 \subsection{File Load Pathway}
 
-For \op{KernelOp::LoadXYZ} the conversion does not pass through
+For \op{KernelOp::LoadXYZ}, the conversion does not pass through
 \type{SceneDocument} on the way in:
 
 \[
@@ -640,8 +686,8 @@ For \op{KernelOp::LoadXYZ} the conversion does not pass through
   \texttt{SceneDocument}
 \]
 
-Bond detection uses \op{XYZReader::detect\_bonds()} with a covalent radius
-scale factor of $1.2$.  The resulting bond list is stored in
+Bond detection uses \op{XYZReader::detect\_bonds()} with a covalent-radius
+scale factor of $1.2$. The resulting bond list is stored in
 \field{FrameData::bonds} and appears immediately in the viewport and object
 tree.
 
@@ -659,133 +705,667 @@ For \op{KernelOp::SaveXYZ}:
 The element symbol list is extracted from
 \field{FrameData::atoms[i].symbol} and passed to \op{to\_xyz()} as the
 \field{element\_names} argument.
-
 % =============================================================================
 \section{Bidirectional Data Flow}
 % =============================================================================
 
-Although the architecture is presented as a forward pipeline, the data
-bridge is bidirectional.
+Although the architecture is often drawn as a forward pipeline, the bridge is
+fundamentally bidirectional.
 
 \begin{itemize}
-  \item \textbf{Forward (kernel $\rightarrow$ desktop):} Every kernel
+  \item \textbf{Forward (kernel $\rightarrow$ desktop):} every kernel
         operation returns a \type{KernelResult} whose \field{output}
         document is passed to \op{ViewportWidget::setDocument()} and
-        \op{MainWindow::syncPanels()}.  The viewport redraws; the object
-        tree and properties panel update atomically.
+        \op{MainWindow::syncPanels()}. The viewport redraws, and the object
+        tree and properties panel update from the same canonical source.
 
-  \item \textbf{Reverse (desktop $\rightarrow$ kernel):} Every
-        modify-type \type{KernelRequest} carries an \field{input} field
-        containing the current \type{SceneDocument}.  The adapter converts
-        this back into a \type{State}, runs the requested algorithm, and
-        returns a new document.  From the kernel's perspective the
-        \type{SceneDocument} is both the input carrier and the output
-        carrier.
+  \item \textbf{Reverse (desktop $\rightarrow$ kernel):} every modifying
+        \type{KernelRequest} carries an \field{input} field containing the
+        current \type{SceneDocument}. The adapter converts that document back
+        into a \type{State}, runs the requested algorithm, and returns a new
+        document. From the kernel's perspective, the document is both the
+        incoming carrier and the outgoing artifact.
 \end{itemize}
 
-The console command dispatcher illustrates the full round-trip.  The
-\op{onCommand()} slot in \type{MainWindow} converts a text string into a
+The console command dispatcher illustrates the full round trip. The
+\op{onCommand()} slot in \type{MainWindow} converts a text command into a
 \type{KernelRequest}, calls \op{engine\_.run()}, checks
 \type{KernelResult::success}, and forwards the result to
-\op{syncPanels()}.  No kernel type is visible at any point in the UI code.
+\op{syncPanels()}. No kernel type becomes visible in the UI code at any point.
+% =============================================================================
+\section{The Coarse-Grained Extension}
+\label{sec:cg}
+% =============================================================================
 
+The coarse-grained layer introduces a fundamentally different physical
+representation---anisotropic surface-mapped beads with environment-responsive
+coupling---yet it obeys the same bridge invariants established in Sections
+2--7. This is not an accident; it is the test that validates the architecture.
+
+\subsection{Bead State}
+
+Where the atomistic kernel operates on point particles carrying mass, charge,
+and element identity, the coarse-grained kernel operates on beads carrying
+continuous surface descriptors. The CG state for a system of $N_B$ beads is
+
+\begin{equation}
+\label{eq:bead-state}
+  \mathcal{S}_{\mathrm{CG}} = \bigl\{
+    \mathbf{R}_B,\; \hat{\mathbf{n}}_B,\; \mathcal{D}_B,\; X_B
+  \bigr\}_{B=1}^{N_B}
+\end{equation}
+
+where $\mathbf{R}_B$ is the bead centre position, $\hat{\mathbf{n}}_B$ is the
+primary orientation axis, $\mathcal{D}_B$ is the unified surface descriptor,
+and $X_B$ is the environment-responsive state. Each of these is documented
+below.
+
+\subsection{Spherical Harmonic Surface Descriptors}
+
+Each bead's anisotropic surface is encoded as a truncated real spherical
+harmonic expansion. For a single interaction channel $k$ and angular momentum
+cutoff $\ell_{\max}$, the surface function is
+
+\begin{equation}
+\label{eq:sh-coeffs}
+  \sigma_B^{(k)}(\theta, \phi)
+    = \sum_{\ell=0}^{\ell_{\max}} \sum_{m=-\ell}^{\ell}
+      c_{\ell m}^{(k,B)} \, Y_\ell^m(\theta, \phi)
+\end{equation}
+
+where $Y_\ell^m$ are the real spherical harmonics and $c_{\ell m}^{(k,B)}$
+are the expansion coefficients stored in a flat vector of length
+$(\ell_{\max}+1)^2$. The implementation is in
+\file{coarse\_grain/core/surface\_descriptor.hpp} and
+\file{coarse\_grain/core/spherical\_harmonics.hpp}.
+
+\subsection{Unified Descriptor}
+
+The unified descriptor (\file{coarse\_grain/core/unified\_descriptor.hpp})
+groups three channels under a single inspectable object:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Channel $k$ & Physical role & Typical $\ell_{\max}$ \\
+\midrule
+Steric        & Excluded-volume shape  & 2--4 \\
+Electrostatic & Charge anisotropy      & 1--3 \\
+Dispersion    & Polarizability surface & 0--2 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each channel carries its own coefficient vector, its own $\ell_{\max}$, and
+an \field{active} flag. This is deliberately \emph{not} a tiered model
+selector. A bead does not choose between ``low'' and ``high'' resolution; it
+carries whatever resolution its coefficients describe, and the interaction
+engine reads those coefficients directly. The unified descriptor replaced
+an earlier discrete model selector precisely because tier-based branching
+introduced silent discontinuities that were invisible to the user.
+\subsection{Per-Channel Radial Kernels}
+
+The interaction between two beads is decomposed into per-channel, per-$\ell$
+contributions. Each channel has a physically motivated radial kernel
+$K_k(\ell, r)$ defined in \file{coarse\_grain/core/channel\_kernels.hpp}:
+
+\begin{align}
+\label{eq:kernel-steric}
+  K_{\mathrm{steric}}(\ell, r)
+    &= \frac{\exp(-\alpha_s \, r)}{1 + \ell} \\[4pt]
+\label{eq:kernel-elec}
+  K_{\mathrm{elec}}(\ell, r)
+    &= \frac{1}{r^{\,\ell+1}} \\[4pt]
+\label{eq:kernel-disp}
+  K_{\mathrm{disp}}(\ell, r)
+    &= \frac{-C_6}{r^{\,6+\ell}}
+\end{align}
+
+The steric kernel decays exponentially with a $(1+\ell)$ suppression that
+damps higher-order contributions at short range. The electrostatic kernel
+follows the standard multipole expansion. The dispersion kernel extends the
+$r^{-6}$ London interaction to anisotropic geometry. All three are evaluated
+for every $(\ell, r)$ pair during the harmonic-space interaction sum.
+
+\subsection{Interaction Engine}
+
+The full pairwise interaction energy between beads $A$ and $B$ is computed by
+the interaction engine (\file{coarse\_grain/models/interaction\_engine.hpp}).
+The procedure is:
+
+\begin{enumerate}
+  \item Compute the separation vector $\mathbf{r}_{AB}$ and distance
+        $r = |\mathbf{r}_{AB}|$.
+  \item Compute the relative rotation matrix
+        $R = Q_A^{\mathsf{T}} Q_B$ from the bead orientation frames.
+  \item Rotate $B$'s SH coefficients into $A$'s local frame using Wigner
+        $D$-matrices (\file{coarse\_grain/core/sh\_rotation.hpp}):
+        \[
+          \tilde{c}_{\ell m}^{(k,B)}
+            = \sum_{m'=-\ell}^{\ell} D^{(\ell)}_{mm'}(R)\;
+              c_{\ell m'}^{(k,B)}
+        \]
+  \item Sum the per-channel, per-$(\ell, m)$ contributions:
+\end{enumerate}
+
+\begin{equation}
+\label{eq:interaction}
+  U_{AB}
+    = \sum_{k} \lambda_k \sum_{\ell=0}^{\ell_{\max}}
+      K_k(\ell, r)
+      \sum_{m=-\ell}^{\ell}
+        c_{\ell m}^{(k,A)} \, \tilde{c}_{\ell m}^{(k,B)}
+\end{equation}
+
+where $\lambda_k$ are per-channel coupling weights. The implementation
+returns a fully decomposed \type{InteractionResult} containing the total
+energy, per-channel energies, and per-$\ell$ breakdowns. Nothing is hidden.
+
+\subsection{Residual-Driven Adaptive Refinement}
+
+The descriptor residual module
+(\file{coarse\_grain/models/descriptor\_residual.hpp}) monitors the truncation
+error of each channel's SH expansion and can promote a bead's resolution
+when the residual exceeds a configurable threshold. Promotion adds
+coefficients for the next angular momentum order. There is no demotion path
+in the current implementation; refinement is monotone. The key point is that
+this operates on the same unified descriptor---there is no second descriptor
+type for ``refined'' beads.
+\subsection{Environment State}
+
+The environment-responsive extension adds four per-bead variables grouped as
+
+\begin{equation}
+\label{eq:env-state}
+  X_B = \bigl\{\rho_B,\; C_B,\; P_{2,B},\; \eta_B\bigr\}
+\end{equation}
+
+where $\rho_B$ is the local density (Gaussian-weighted neighbour sum), $C_B$
+is the coordination number, and $P_{2,B}$ is the second Legendre polynomial
+of the inter-orientation angle, measuring local orientational order:
+
+\[
+  P_{2,B} = \frac{1}{|\mathcal{N}_B|}
+    \sum_{C \in \mathcal{N}_B}
+    \tfrac{1}{2}\bigl(3\cos^2\theta_{BC} - 1\bigr)
+\]
+
+The first three are fast observables recomputed at every step. The fourth,
+$\eta_B \in [0,1]$, is a slow internal state variable that relaxes toward a
+target function via first-order dynamics:
+
+\begin{equation}
+\label{eq:eta-relax}
+  \eta_B(t + \Delta t)
+    = f_B + \bigl(\eta_B(t) - f_B\bigr)\,\exp\!\bigl(-\Delta t / \tau\bigr)
+\end{equation}
+
+where $f_B = \alpha\,\hat{\rho}_B + \beta\,\hat{P}_{2,B}$ is the target
+function, $\hat{\rho}_B$ and $\hat{P}_{2,B}$ are the normalised observables,
+and $\tau$ is the relaxation timescale. The implementation provides both
+this exact exponential integrator and a forward-Euler fallback.
+
+\subsection{Environment-Responsive Kernel Modulation}
+
+The environment state modifies the interaction kernels through a linear
+coupling. Each channel's kernel is scaled by a modulation factor:
+
+\begin{equation}
+\label{eq:modulation}
+  K_k(\ell, r;\, \eta_A, \eta_B)
+    = K_k(\ell, r) \cdot g_k(\eta_A, \eta_B)
+\end{equation}
+
+where
+
+\[
+  g_k(\eta_A, \eta_B) = 1 + \gamma_k \, \bar{\eta},
+  \qquad
+  \bar{\eta} = \tfrac{1}{2}(\eta_A + \eta_B)
+\]
+
+and the per-channel coupling constants have the following physical
+interpretation:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Channel $k$ & $\gamma_k$ & Default & Physical effect \\
+\midrule
+Steric        & $\gamma_{\mathrm{steric}}$ & $+0.2$ & Hardening under compression \\
+Electrostatic & $\gamma_{\mathrm{elec}}$   & $-0.1$ & Screening under crowding \\
+Dispersion    & $\gamma_{\mathrm{disp}}$   & $+0.5$ & Enhancement under ordering \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+A sign invariant is enforced: $|1 + \gamma_k \bar{\eta}| > 0$ for all
+channels, so the kernel never changes sign. The implementation is in
+\file{coarse\_grain/models/environment\_coupling.hpp}.
+% =============================================================================
+\section{Lattice-Level FIRE Minimization}
+\label{sec:fire}
+% =============================================================================
+
+The lattice-level FIRE (LL-FIRE) minimizer
+(\file{coarse\_grain/models/bead\_fire.hpp}) brings energy minimization to
+the coarse-grained layer. It operates on bead positions using the full
+anisotropic interaction engine for force evaluation, including SH rotation,
+per-channel kernels, and optional environment modulation.
+
+\subsection{Total Energy}
+
+The objective function is the sum of all pairwise interaction energies:
+
+\begin{equation}
+\label{eq:total-energy}
+  U_{\mathrm{total}} = \sum_{A < B} U_{AB}
+    = \sum_{A < B} \sum_{k} \lambda_k
+      \sum_{\ell, m}
+        c_{\ell m}^{(k,A)} \, \tilde{c}_{\ell m}^{(k,B)} \, K_k(\ell, r_{AB})
+\end{equation}
+
+When environment coupling is active, each kernel $K_k$ is replaced by its
+modulated form from Eq.~\eqref{eq:modulation}.
+
+\subsection{Force Evaluation}
+
+Analytical gradients through the SH rotation and per-$\ell$ kernel chain are
+nontrivial. The current implementation uses central finite differences on each
+Cartesian component of each bead position:
+
+\begin{equation}
+\label{eq:fd-forces}
+  F_{B}^{\alpha}
+    = -\frac{U(\mathbf{R}_B + \delta\,\hat{e}_\alpha)
+           - U(\mathbf{R}_B - \delta\,\hat{e}_\alpha)}{2\delta}
+\end{equation}
+
+for $\alpha \in \{x, y, z\}$ and $\delta = 10^{-4}$~\AA\ by default. This
+requires $6N_B$ energy evaluations per step, each of which is a full
+traversal of the pairwise interaction sum. The cost is intentional: it
+guarantees that the forces are exactly consistent with the energy surface,
+which matters more during development than raw throughput. Analytical
+gradients are a planned replacement once the model stabilizes.
+
+\subsection{FIRE Algorithm}
+
+The FIRE procedure~\cite{Bitzek2006} adapts the following steps at each
+iteration $t$:
+
+\begin{enumerate}[label=\arabic*.]
+  \item Evaluate forces $\mathbf{F}_B$ and total energy $U$ at current
+        positions.
+  \item Compute RMS force $F_{\mathrm{rms}} = \sqrt{N_B^{-1} \sum_B |\mathbf{F}_B|^2}$
+        and maximum per-bead force $F_{\max}$.
+  \item Check convergence: if $F_{\mathrm{rms}} < \varepsilon_F$ or
+        $|\Delta U|/N_B < \varepsilon_U$, terminate.
+  \item Compute power $P = \sum_B \mathbf{v}_B \cdot \mathbf{F}_B$.
+  \item Velocity mixing:
+        $\mathbf{v}_B \leftarrow
+          (1 - \alpha)\,\mathbf{v}_B
+          + \alpha\,|\mathbf{v}|\,\hat{\mathbf{F}}_B$,
+        where $|\mathbf{v}| = \sqrt{\sum_B |\mathbf{v}_B|^2}$ and
+        $\hat{\mathbf{F}}_B = \mathbf{F}_B / |\mathbf{F}|$.
+  \item If $P > 0$ for more than $n_{\min}$ consecutive steps:
+        $\Delta t \leftarrow \min(\Delta t \cdot f_{\mathrm{inc}},\, \Delta t_{\max})$
+        and $\alpha \leftarrow \alpha \cdot f_\alpha$.
+  \item If $P \leq 0$: reset $\Delta t \leftarrow \Delta t \cdot f_{\mathrm{dec}}$,
+        $\alpha \leftarrow \alpha_0$, and kick velocities along the force
+        direction.
+  \item Position update: $\mathbf{R}_B \leftarrow \mathbf{R}_B + \Delta t \cdot \mathbf{v}_B$.
+\end{enumerate}
+
+Environment states are optionally refreshed every $n_{\mathrm{env}}$ steps
+when environment coupling is active.
+\subsection{Parameter Table}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Parameter & Symbol & Default & Unit \\
+\midrule
+Initial timestep      & $\Delta t_0$         & 1.0   & fs \\
+Velocity mixing       & $\alpha_0$           & 0.1   & --- \\
+dt increase factor    & $f_{\mathrm{inc}}$   & 1.1   & --- \\
+dt decrease factor    & $f_{\mathrm{dec}}$   & 0.5   & --- \\
+$\alpha$ decay        & $f_\alpha$           & 0.99  & --- \\
+Min positive steps    & $n_{\min}$           & 5     & --- \\
+Maximum timestep      & $\Delta t_{\max}$    & 10.0  & fs \\
+Force tolerance       & $\varepsilon_F$      & $10^{-4}$ & kcal/(mol$\cdot$\AA) \\
+Energy tolerance      & $\varepsilon_U$      & $10^{-8}$ & kcal/mol \\
+Maximum steps         & ---                  & 2000  & --- \\
+FD step size          & $\delta$             & $10^{-4}$ & \AA \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+All parameters are stored in the inspectable \type{BeadFIREParams} struct.
+None are compiled in as magic numbers; all are overridable from the CLI.
+
+\subsection{Convergence Diagnostics}
+
+The minimizer records a \type{BeadFIREStep} struct at every iteration,
+containing $U_{\mathrm{total}}$, per-channel energies ($U_{\mathrm{steric}}$,
+$U_{\mathrm{elec}}$, $U_{\mathrm{disp}}$), $F_{\mathrm{rms}}$,
+$F_{\max}$, $\alpha$, $\Delta t$, and per-bead energy change
+$|\Delta U|/N_B$. The full history is stored in
+\type{BeadFIREResult::history} and is available for plotting, regression
+testing, or post-mortem analysis. This is the anti-black-box philosophy
+applied to optimization: every step is a public record.
+% =============================================================================
+\section{CLI Front-End}
+\label{sec:cli}
+% =============================================================================
+
+The coarse-grained engine is exposed to the user through a scientific operator
+console implemented in \file{src/cli/cg\_commands.cpp}. The CLI serves the
+same role for the CG layer that the Qt desktop serves for the atomistic layer:
+it consumes canonical state, invokes kernel operations, and displays results.
+It does not contain physics.
+
+The command grammar is:
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+\toprule
+Command & Description \\
+\midrule
+\texttt{scene}    & Build a bead scene from geometric presets
+                    (isolated, pair, stack, T-shape, square, shell, cloud) \\
+\texttt{inspect}  & Display bead positions, environment state,
+                    unified descriptors \\
+\texttt{env}      & Run the environment update pipeline ($\eta$ relaxation)
+                    with per-step trajectory reporting \\
+\texttt{interact} & Evaluate pairwise interactions with full per-channel,
+                    per-$\ell$ decomposition \\
+\texttt{viz}      & Launch lightweight GLFW/ImGui bead viewer
+                    (when built with \texttt{-DBUILD\_VIS=ON}) \\
+\texttt{fire}     & Run LL-FIRE minimization with convergence reporting \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each command follows the same pattern: build or load a
+\type{CGSystemState}, optionally run environment updates, execute the
+requested operation, and print a fully decomposed report. The
+\texttt{fire} command, for example, builds a scene, populates unified
+descriptors, calls \op{BeadFIRE::minimize()}, and reports the full
+convergence trajectory including per-channel energy decomposition at every
+reported step.
+
+All commands route through \type{CGSystemState}
+(\file{include/cli/system\_state.hpp}), which is the CG analogue of the
+atomistic \type{State}. The same principle applies: the CLI never
+instantiates kernel objects directly. It operates on the interpretation layer,
+and the interpretation layer calls the engine.
 % =============================================================================
 \section{Architectural Invariants}
 % =============================================================================
 
-The canonical bridge architecture enforces three invariants by construction:
+The canonical bridge architecture enforces five invariants by construction.
+Invariants A--C govern the atomistic layer; D and E extend the contract to the
+coarse-grained extension.
 
-\paragraph{Invariant A — Kernel opacity.}
-No class in \file{apps/desktop/} (except \file{bridge/EngineAdapter.cpp})
-may include any header from \file{atomistic/}.  The \type{atomistic::State},
-\type{atomistic::IModel}, \type{FIREParams}, \type{LangevinParams}, and all
-related types are invisible to the Qt layer.
+\paragraph{Invariant A -- Kernel opacity.}
+No class in \file{apps/desktop/} except
+\file{apps/desktop/bridge/EngineAdapter.cpp} may include headers from
+\file{atomistic/}. Types such as \type{atomistic::State},
+\type{atomistic::IModel}, \type{FIREParams}, and \type{LangevinParams}
+remain invisible to the Qt layer.
 
-\paragraph{Invariant B — Document as sole inter-layer currency.}
+\paragraph{Invariant B -- Document as sole inter-layer currency.}
 \type{KernelRequest::input} and \type{KernelResult::output} are both
-\type{shared\_ptr<scene::SceneDocument>}.  Raw pointers to simulation
-arrays, force model references, and integrator handles are never passed
-across the boundary.
+\type{shared\_ptr<scene::SceneDocument>}. Raw simulation arrays, force-model
+references, and integrator handles are never passed across the boundary.
 
-\paragraph{Invariant C — Automatic compatibility of new models.}
+\paragraph{Invariant C -- Automatic compatibility of new models.}
 Any new \type{KernelOp} that produces a valid \type{scene::SceneDocument}
 becomes immediately compatible with the viewport, object tree, properties
-panel, console, and file-save pipeline without any modification to those
-components.  Adding a new simulation mode requires only:
-\begin{enumerate}
-  \item Adding an entry to the \type{KernelOp} enum.
-  \item Adding a case to the \op{run()} dispatch switch in
-        \file{EngineAdapter.cpp}.
-  \item Optionally adding a UI action in \file{MainWindow.cpp}.
-\end{enumerate}
-The visualization system requires no changes.
+panel, console, and file-save pipeline without modification to those
+components. Adding a new simulation mode therefore requires only:
 
+\begin{enumerate}
+  \item adding an entry to the \type{KernelOp} enum,
+  \item adding a case to the \op{run()} dispatch switch in
+        \file{EngineAdapter.cpp}, and
+  \item optionally adding a UI action in \file{MainWindow.cpp}.
+\end{enumerate}
+
+The visualization system itself does not need to be rewritten. That is the
+practical payoff of the bridge: once the output satisfies the canonical
+contract, the rest of the stack already knows how to consume it.
+
+\paragraph{Invariant D -- Unified descriptor identity.}
+A bead does not select between discrete model tiers. It carries a single
+\type{UnifiedDescriptor} with three channels, each at its own angular
+momentum resolution. The interaction engine reads those channels directly.
+There is no switch statement on a tier label, no model-selector dispatch, and
+no silent fallback to a simpler approximation. The unified descriptor
+replaced an earlier \type{ModelSelector} precisely because tier-based
+branching created discontinuities that the bridge could not represent honestly.
+
+\paragraph{Invariant E -- Full inspectability.}
+Every intermediate quantity in the CG pipeline---per-$\ell$ kernel values,
+per-channel energies, environment observables, modulation factors, FIRE
+per-step diagnostics---is stored in a named, typed field and is accessible
+from the CLI or any front-end that reads the canonical state. There are no
+internal-only diagnostic modes and no quantities that require a debugger to
+observe. If a value affects the physics, it appears in the output.
 % =============================================================================
 \section{Advantages of the Bridge Architecture}
 % =============================================================================
 
 \paragraph{Decoupling of Components.}
 Simulation algorithms, visualization tools, and analysis modules remain
-independent.  Each communicates only through the canonical structural
-representation.  A complete replacement of the Qt desktop with a different
-front-end would require only a new consumer of \type{scene::SceneDocument},
-not a rewrite of any physics code.
+independent because each communicates only through the canonical structural
+representation. Replacing the Qt desktop with a different front end would
+require only a new consumer of \type{scene::SceneDocument}, not a rewrite of
+the physics code.
 
 \paragraph{Reproducibility.}
-Simulation outputs are recorded as explicit structural artifacts.  A saved
+Simulation outputs are recorded as explicit structural artifacts. A saved
 \texttt{.xyz} or \texttt{.xyza} file can be reloaded, visualized, and
 re-simulated independently of the original runtime environment.
-\type{Provenance} metadata records the operation mode and original source
-file, making the history of a structure traceable.
+\type{Provenance} metadata records operation mode and source information,
+making the history of a structure traceable rather than anecdotal.
 
 \paragraph{Multiple Front-End Interfaces.}
-Because the visualization layer consumes canonical structural data rather
-than internal engine state, multiple front-ends can coexist.  The current
-codebase already has a lightweight ImGui viewer (\file{apps/simple-viewer.cpp})
-and the Qt desktop workstation (\file{apps/desktop/}), both consuming
-\type{scene::SceneDocument}-equivalent representations through separate
-rendering pipelines.
+Because the visualization layer consumes canonical structural data rather than
+internal engine state, multiple front ends can coexist. The current codebase
+includes a lightweight ImGui viewer (\file{apps/simple-viewer.cpp}),
+the Qt desktop workstation (\file{apps/desktop/}), and the CG scientific
+console (\file{src/cli/cg\_commands.cpp}), each consuming canonical state
+through its own rendering or reporting path.
 
 \paragraph{Testability.}
-The bridge layer is independently testable.  A unit test can construct a
-synthetic \type{SceneDocument}, submit it as a \type{KernelRequest},
-and assert properties of the returned \type{KernelResult} without
-starting a Qt application or opening a file.
+The bridge layer is independently testable. A unit test can construct a
+synthetic \type{SceneDocument}, submit it as a \type{KernelRequest}, and
+assert properties of the returned \type{KernelResult} without launching a Qt
+application or opening a file. The CG CLI commands are testable in the same
+way: build a \type{CGSystemState}, invoke a kernel operation, and inspect the
+result.
 
 \paragraph{Thread Safety.}
-\op{EngineAdapter::runAsync()} launches kernel operations on a worker
-thread via \op{std::async}.  The \type{KernelRequest} and
-\type{KernelResult} are value types copied into and out of the worker,
-so no shared mutable state crosses the thread boundary.  The
-\type{shared\_ptr<scene::SceneDocument>} output is immutable from the
-kernel's point of view once returned.
-
+\op{EngineAdapter::runAsync()} launches kernel operations on a worker thread
+via \op{std::async}. \type{KernelRequest} and \type{KernelResult} are value
+carriers copied into and out of that worker context, so no shared mutable
+kernel state crosses the thread boundary. The returned
+\type{shared\_ptr<scene::SceneDocument>} is then consumed as an output
+artifact, not as a live simulation handle.
 % =============================================================================
 \section{Summary}
 % =============================================================================
 
-The canonical structural bridge architecture organises the formation engine
+The canonical structural bridge architecture organizes the formation engine
 into three independent layers connected by a single shared data
-representation.
+representation. The coarse-grained extension preserves the same invariants
+while introducing anisotropic descriptors, environment coupling, and a
+lattice-level energy minimizer.
 
 \begin{center}
 \begin{tabular}{lll}
 \toprule
 Layer & Primary type & Location \\
 \midrule
-Computational kernel & \type{atomistic::State} & \file{atomistic/} \\
-Canonical bridge     & \type{scene::SceneDocument} & \file{apps/desktop/scene/} \\
-Bridge adapter       & \type{bridge::EngineAdapter} & \file{apps/desktop/bridge/} \\
-Visualization        & \type{ViewportWidget}, docks & \file{apps/desktop/} \\
+Atomistic kernel     & \type{atomistic::State}       & \file{atomistic/} \\
+CG kernel            & \type{BeadSystem}, \type{UnifiedDescriptor} & \file{coarse\_grain/} \\
+Canonical bridge     & \type{scene::SceneDocument}    & \file{apps/desktop/scene/} \\
+Bridge adapter       & \type{bridge::EngineAdapter}   & \file{apps/desktop/bridge/} \\
+CG interpretation    & \type{CGSystemState}           & \file{include/cli/system\_state.hpp} \\
+Visualization        & \type{ViewportWidget}, docks   & \file{apps/desktop/} \\
+CG CLI               & \op{cg\_dispatch()}            & \file{src/cli/cg\_commands.cpp} \\
+LL-FIRE minimizer    & \type{BeadFIRE}                & \file{coarse\_grain/models/bead\_fire.hpp} \\
+Interaction engine   & \op{interaction\_energy()}     & \file{coarse\_grain/models/interaction\_engine.hpp} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-The design rule is absolute: no component outside the computational kernel
-may rely on algorithm-specific internal data structures.  All communication
-must pass through \type{scene::SceneDocument}.  This constraint prevents
-coupling between simulation physics and user-interface implementation, and
-ensures the system remains extensible as new physical modelling methods are
-introduced.
+The governing rule is absolute: no component outside the computational kernel
+may rely on algorithm-specific internal data structures. All communication
+must pass through the canonical representation. That restriction prevents
+coupling between simulation physics and interface implementation, preserves
+extensibility, and keeps the system intelligible as additional physical models
+are introduced.
+
+The coarse-grained extension is the proof. It introduces spherical harmonic
+descriptors, Wigner $D$-matrix rotation, per-channel radial kernels,
+environment-responsive modulation, and a full FIRE minimizer, and none of
+that required the bridge contract to bend. The architecture did not need an
+exception. It needed the discipline to not ask for one.
+
+% =============================================================================
+\section{Canonical Vector Type: \type{vsepr::Vec3}}
+% =============================================================================
+
+\subsection{Motivation}
+
+Every layer in the bridge architecture --- atomistic kernel, bead system,
+energy models, XYZ serialization, sensor subsystem, EHD multiphysics, and
+analysis pipelines --- requires a three-dimensional position or vector
+quantity. Prior to Day~\#56 of the development log, each subsystem carried
+its own local \type{Vec3} definition. These definitions were structurally
+equivalent but semantically isolated: the atomistic kernel, the UFX schema
+layer, the peptide formation engine, the sensor module, and the EHD continuum
+solver each declared independent \texttt{struct Vec3} types. The result was a
+fragmented vector ecosystem that violated the bridge invariant stated
+throughout this document: all inter-layer exchange must pass through a shared,
+canonical representation.
+
+The \type{vsepr::Vec3} unification resolves this by replacing every local
+definition with a single project-wide type. Compatibility shims were
+introduced where callers depended on legacy method names (\texttt{norm\_sq()}
+for EHD code; float-space \type{Vec3f} retained in the crystal data model
+where single-precision storage is intentional). All other subsystems now
+alias directly to the authoritative type.
+
+\subsection{Implementation}
+
+The authoritative definition lives at
+\file{src/core/math\_vec3.hpp} and is exposed through the stable canonical
+include path \file{src/core/math/vec3.hpp}. The struct is a
+plain-data, double-precision aggregate with no external dependencies:
+
+\begin{lstlisting}
+namespace vsepr {
+
+struct Vec3 {
+    double x{}, y{}, z{};
+
+    // Future interoperability adapter (non-mandatory)
+    Eigen::Vector3d to_eigen() const {
+        return Eigen::Vector3d{x, y, z};
+    }
+
+    static Vec3 from_eigen(const Eigen::Vector3d& v) {
+        return {v.x(), v.y(), v.z()};
+    }
+};
+
+} // namespace vsepr
+\end{lstlisting}
+
+The Eigen adapter methods (\texttt{to\_eigen}, \texttt{from\_eigen}) are
+present as a migration-safe boundary. They allow individual subsystems to
+interoperate with Eigen-backed math at call sites without requiring the rest
+of the project to take an Eigen dependency. The adapter is a seam, not an
+entanglement.
+
+All previously fragmented definitions are now aliases:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Subsystem & Alias form \\
+\midrule
+\file{atomistic/core/state.hpp}          & \texttt{using Vec3 = vsepr::Vec3;} \\
+\file{src/v4/uff/ufx\_material\_record.hpp} & \texttt{using Vec3 = vsepr::Vec3;} \\
+\file{src/io/xyz\_unified.hpp}           & \texttt{using XYZVec3 = vsepr::Vec3;} \\
+\file{chem/peptide/peptide\_formation.hpp} & \texttt{using Vec3 = vsepr::Vec3;} \\
+\file{include/sensor/sensor.hpp}         & \texttt{using Vec3 = vsepr::Vec3;} \\
+\file{sim/ehd/ehd\_types.hpp}            & \texttt{using Vec3 = vsepr::Vec3;} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The aliasing contract is enforced by a compile-time audit test at
+\file{tests/vec3\_type\_audit.cpp} (CMake target \texttt{Vec3TypeAudit},
+Group~19). The test uses \texttt{static\_assert} to confirm that
+\type{atomistic::Vec3} and \type{vsepr::ufx::Vec3} are the same type as
+\type{vsepr::Vec3}, and runs smoke tests for \texttt{OnlineStats},
+\texttt{StationarityGate}, and core vector operations. The test must pass
+before any refactor that touches vector types is considered complete.
+
+\subsection{Design Rationale}
+
+\begin{center}
+\begin{tabular}{p{0.32\textwidth}p{0.60\textwidth}}
+\toprule
+Benefit & Why it matters \\
+\midrule
+One project-wide type &
+  Atomistic, bead, energy, XYZ, and analysis layers all speak the same vector
+  language. No conversion overhead, no silent type mismatch between layers. \\[4pt]
+Stable file compatibility &
+  The XYZ and \texttt{xyzFull} writers know exactly how
+  \texttt{position.x}/\texttt{y}/\texttt{z} are stored and serialized.
+  The canonical type is the serialization truth. \\[4pt]
+No dependency lock-in &
+  The project is not tied to Eigen, GLM, Qt, VTK, or any other library's
+  vector assumptions. External library vectors are converted at the boundary,
+  not threaded through every subsystem. \\[4pt]
+Physics-specific helpers &
+  Only the helpers VSEPR-SIM actually needs are present: \texttt{norm()},
+  \texttt{dot()}, \texttt{cross()}, unit conversions, tolerances, and
+  planned periodic boundary condition helpers. No excess API surface. \\[4pt]
+Safer audits &
+  If every module uses \type{vsepr::Vec3}, duplicate or divergent vector
+  definitions become immediately visible to the compiler and to the audit
+  test. Regressions cannot hide behind a locally identical struct. \\[4pt]
+Cleaner future migration &
+  If SIMD acceleration or Eigen-backed math is introduced later, the
+  internals of \type{vsepr::Vec3} or its adapters change. No subsystem
+  needs to be rewritten because no subsystem holds a private vector type. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Exception: Float-Space Crystal Data}
+
+The crystal data model (\file{include/data/Crystal.hpp}) retains a separate
+\type{Vec3f} (single-precision float) because the crystal lattice and
+visualization geometry pipeline deliberately operates in float-space for
+memory and rendering performance. This is not a violation of the bridge
+invariant; it is a documented precision boundary. The canonical double-precision
+\type{vsepr::Vec3} is used at all physics and analysis call sites.
+\type{Vec3f} is used only inside the visualization geometry subsystem and
+is never exchanged across the bridge.
+
+\begin{thebibliography}{9}
+\bibitem{Bitzek2006}
+  E.~Bitzek, P.~Koskinen, F.~G\"ahler, M.~Moseler, P.~Gumbsch,
+  ``Structural Relaxation Made Simple,''
+  \emph{Phys.\ Rev.\ Lett.}, \textbf{97}, 170201 (2006).
+\end{thebibliography}
 
 \end{document}

@@ -31,6 +31,7 @@
 #include <map>
 #include <optional>
 #include <array>
+#include <cstdint>
 #include <cmath>
 
 #ifdef VSEPR_HAS_GLM
@@ -52,6 +53,10 @@ class XYZReader;
 class XYZWriter;
 class XYZAReader;
 class XYZAWriter;
+struct XYZWAtom;
+struct XYZWField;
+class XYZWReader;
+class XYZWWriter;
 
 // ============================================================================
 // Data Structures
@@ -330,6 +335,101 @@ private:
 };
 
 // ============================================================================
+// XYZW Format: Wind Particle Field
+// ============================================================================
+
+/**
+ * Wind particle — an atomistic site with a directed momentum flux vector
+ * and a scalar influence weight omega in [0, 1].
+ */
+struct XYZWAtom {
+    std::string element;             // Element symbol
+    std::array<double, 3> position;  // Cartesian position (Å)
+    std::array<double, 3> wind;      // Wind velocity vector (Å/fs)
+    double omega;                    // Wind weight [0, 1]: 0=quiescent, 1=full flux
+
+    XYZWAtom() : position{0.0, 0.0, 0.0}, wind{0.0, 0.0, 0.0}, omega(0.0) {}
+    XYZWAtom(const std::string& elem,
+             double x,  double y,  double z,
+             double wx, double wy, double wz,
+             double om)
+        : element(elem), position{x, y, z}, wind{wx, wy, wz}, omega(om) {}
+};
+
+/**
+ * Wind field: a complete set of wind particles describing a directed flux
+ * state over the full atomistic system.
+ */
+struct XYZWField {
+    std::vector<XYZWAtom> atoms;
+
+    // Header metadata
+    std::string source;              // e.g. "phonon_seed", "shock_front", "field_injection"
+    std::array<double, 3> direction; // Global wind axis unit vector; (0,0,0) = radial
+    double magnitude;                // Reference wind speed (Å/fs)
+    double wavelength;               // Characteristic spatial wavelength (Å); 0 = N/A
+    double decay;                    // Spatial decay constant (Å⁻¹); 0 = no decay
+    uint64_t step;                   // Timestep at capture/application
+    double time;                     // Simulation time (fs)
+    uint64_t seed;                   // RNG seed if stochastically generated; 0 = N/A
+
+    XYZWField()
+        : direction{0.0, 0.0, 0.0}, magnitude(0.0),
+          wavelength(0.0), decay(0.0), step(0), time(0.0), seed(0) {}
+
+    size_t num_atoms() const { return atoms.size(); }
+
+    // Clamp all omega values to [0, 1]
+    void clamp_omega();
+
+    // Scale all wind vectors by factor
+    void scale_wind(double factor);
+
+    // Convert wind vectors to per-atom velocity offsets for XYZC injection
+    // Returns a flat list of (vx, vy, vz) in atom order
+    std::vector<std::array<double, 3>> to_velocity_offsets() const;
+};
+
+/**
+ * XYZW reader — parses .xyzw files into XYZWField
+ */
+class XYZWReader {
+public:
+    XYZWReader() = default;
+
+    bool read(const std::string& filename, XYZWField& field);
+    bool read_stream(std::istream& input, XYZWField& field);
+
+    const std::string& get_error() const { return error_message_; }
+
+private:
+    std::string error_message_;
+    void parse_header_meta(const std::string& comment, XYZWField& field);
+};
+
+/**
+ * XYZW writer — serialises XYZWField to .xyzw text format
+ */
+class XYZWWriter {
+public:
+    XYZWWriter() = default;
+
+    bool write(const std::string& filename, const XYZWField& field);
+    bool write_stream(std::ostream& output, const XYZWField& field);
+    std::string to_string(const XYZWField& field);
+
+    void set_precision(int digits) { precision_ = digits; }
+
+    const std::string& get_error() const { return error_message_; }
+
+private:
+    int precision_ = 6;
+    std::string error_message_;
+
+    std::string build_header_comment(const XYZWField& field) const;
+};
+
+// ============================================================================
 // XYZ Format Utilities
 // ============================================================================
 
@@ -342,6 +442,7 @@ enum class XYZFormat {
     STANDARD_XYZ,   // .xyz
     EXTENDED_XYZA,  // .xyzA
     THERMAL_XYZC,   // .xyzC (binary)
+    WIND_XYZW,      // .xyzW  — wind particle field (position + wind vector + omega)
     UNKNOWN
 };
 

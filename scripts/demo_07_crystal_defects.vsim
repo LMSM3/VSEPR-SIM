@@ -1,0 +1,191 @@
+# scripts/demo_07_crystal_defects.vsim
+# VSEPR-SIM solid-state defect and transport demo
+# Scenarios: 14 (BCC-Fe vacancy), 15 (Al2O3 grain boundary),
+#            16 (NaCl dissolution), 17 (SiC oxidation Deal-Grove)
+# vsper validate scripts/demo_07_crystal_defects.vsim
+# Back-call: vsper run kernel_demo --scenario <14-17>
+
+[project]
+name        = demo_07_crystal_defects
+version     = v5.0.0-beta.7.1
+seed_base   = 7014
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events  = true
+defect_events     = true
+transport_events  = true
+dynamic_energy    = true
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 5000
+steps_relax      = 5000
+save_every       = 50
+temperature_low  = 300
+temperature_mid  = 900
+temperature_high = 1800
+
+[material.bcc_fe_vacancy]
+id      = bcc_fe_vacancy
+classes = metallic_crystal,point_defect_migration
+formula = Fe
+rule    = vacancy_hop
+# scenario 14 in kernel_demo
+
+[material.bcc_fe_vacancy.structure]
+type    = bcc_lattice
+elements = Fe
+size    = 8x8x8
+defects_initial = vacancy
+
+[material.bcc_fe_vacancy.formation]
+mode        = relax_from_ordered_lattice
+temperature = 900
+relax_steps = 5000
+
+[material.bcc_fe_vacancy.analysis]
+vacancy_migration  = true
+diffusion_proxy    = true
+mean_displacement  = true
+local_disorder     = true
+
+[material.bcc_fe_vacancy.expected_signature]
+primary = vacancy_hop_coordination_7_from_8
+trend_1 = migration_energy_governs_hop_rate
+trend_2 = temperature_increases_hop_frequency
+
+[material.al2o3_grain]
+id      = al2o3_grain
+classes = ceramic_crystal,grain_boundary_sliding
+formula = Al2O3
+rule    = grain_boundary_diffusion
+# scenario 15 in kernel_demo
+# uncertain: grain boundary model is planar interface proxy
+
+[material.al2o3_grain.structure]
+type    = corundum_lattice
+elements = Al,O
+size    = 8x8x8
+
+[material.al2o3_grain.formation]
+mode        = relax_from_ordered_lattice
+temperature = 1600
+relax_steps = 5000
+
+[material.al2o3_grain.analysis]
+grain_boundary_sliding = true
+anisotropy_ratio       = true
+domain_size            = true
+
+[material.al2o3_grain.expected_signature]
+primary = grain_boundary_slip_coordination_5_from_6
+trend_1 = high_temperature_accelerates_boundary_sliding
+
+[material.nacl_dissolution]
+id      = nacl_dissolution
+classes = ionic_crystal,surface_dissolution
+formula = NaCl
+rule    = dissolution_surface
+# scenario 16 in kernel_demo
+
+[material.nacl_dissolution.structure]
+type    = fcc_ionic_lattice
+elements = Na,Cl
+size    = 6x6x6
+
+[material.nacl_dissolution.formation]
+mode        = relax_from_ordered_lattice
+temperature = 300
+relax_steps = 3000
+
+[material.nacl_dissolution.analysis]
+surface_residence  = true
+diffusion_proxy    = true
+local_order        = true
+
+[material.nacl_dissolution.expected_signature]
+primary = surface_ion_desorption_coordination_5_from_6
+trend_1 = surface_ions_desorb_before_bulk_ions
+trend_2 = dissolution_rate_increases_with_temperature
+
+[material.sic_oxidation]
+id      = sic_oxidation
+classes = ceramic_crystal,parabolic_oxidation
+formula = SiC+O2
+rule    = deal_grove_parabolic
+# scenario 17 in kernel_demo
+# uncertain: Deal-Grove parabolic rate is a proxy scaling law
+
+[material.sic_oxidation.structure]
+type    = zincblende_lattice
+elements = Si,C,O
+size    = 8x8x4
+
+[material.sic_oxidation.formation]
+mode        = relax_from_ordered_lattice
+temperature = 1200
+relax_steps = 5000
+
+[material.sic_oxidation.analysis]
+defect_fraction    = true
+diffusion_proxy    = true
+surface_residence  = true
+packing_fraction   = true
+
+[material.sic_oxidation.expected_signature]
+primary = oxide_layer_growth_parabolic
+trend_1 = oxide_thickness_follows_sqrt_time
+trend_2 = defect_fraction_increases_at_interface
+
+[universal_smoke_tests]
+check_state_validity     = true
+check_no_nan             = true
+check_no_inferred_state  = true
+check_reproducibility    = true
+
+[sweep]
+enabled   = true
+materials = bcc_fe_vacancy,al2o3_grain,nacl_dissolution,sic_oxidation
+seeds     = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+
+[report]
+title                  = demo_07_crystal_defects
+include_material_cards = true
+include_metric_tables  = true
+include_expected_trends = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_overlay_cycle
+animation_mode        = overlay
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = true
+show_audit_table      = true
+overlay_sequence      = density,coordination,memory,orient_order
+gl_overlay_hold_s     = 2.5
+gl_auto_orbit         = true
+gl_window_width       = 1280
+gl_window_height      = 800

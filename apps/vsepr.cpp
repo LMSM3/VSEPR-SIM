@@ -21,6 +21,14 @@
 #include "cli/run_context.hpp"
 #include "cli/actions.hpp"
 #include "cli/cg_commands.hpp"
+#include "cli/cmd_therm.hpp"
+#include "cli/cmd_tui.hpp"
+#include "core/gas_module.hpp"
+#include "gas2/gas2_engine.hpp"
+#include "gas3/gas3_engine.hpp"
+#include "core/live_server.hpp"
+#include "core/viz_server.hpp"
+#include "core/module_registry.hpp"
 #ifdef BUILD_VISUALIZATION
 #include "coarse_grain/vis/cg_viz_viewer.hpp"
 #include "cli/system_state.hpp"
@@ -32,10 +40,11 @@ using namespace vsepr::cli;
 
 void show_help() {
     std::cout << R"(
-VSEPR CLI - Domain-Aware Molecular Simulation
+VSEPR-SIM v4.0.1 Beta - Atomistic Simulation and Analysis Platform
 
 USAGE:
     vsepr <SPEC> <ACTION> [DOMAIN_PARAMS] [GLOBAL_FLAGS]
+    vsepr therm <input.xyz> [OPTIONS]
     vsepr cg <COMMAND> [OPTIONS]
     vsepr --viz [OPTIONS]
 
@@ -118,16 +127,136 @@ COARSE-GRAINED CONSOLE:
         inspect   Inspect bead positions, environment, descriptors
         env       Run environment update pipeline (eta relaxation)
         interact  Evaluate pairwise interactions, energy decomposition
+        fire      LL-FIRE minimization on bead system
         viz       Launch lightweight bead viewer
 
     Examples:
         vsepr cg scene --preset pair --spacing 4.0
         vsepr cg env --preset stack --beads 8 --steps 200
         vsepr cg interact --preset pair --spacing 4.0 --all
+        vsepr cg fire --preset shell --beads 12 --spacing 5.0
         vsepr cg inspect --preset shell --beads 12 --env-steps 100
         vsepr cg viz --preset shell --beads 12 --overlay rho
 
     Run 'vsepr cg help' for full details.
+
+GAS MODULE:
+    vsepr gas <command> [options]
+
+    Commands:
+        props <FORMULA> [opts]   Compute gas properties (PV=nRT, VdW, kinetic)
+        sample <FORMULA> [opts]  Sample Maxwell-Boltzmann velocities
+        help                     Show gas module help
+
+    Examples:
+        vsepr gas props Ar -T 300 -P 1.0
+        vsepr gas sample N2 -T 300 -N 5000 --histogram
+
+GAS2 MODULE (Advanced Heat + Gas):
+    vsepr gas2 <command> [options]
+
+    Commands:
+        analyze <FORMULA> [opts]   Full analysis (3-EOS + kinetic + thermal)
+        thermal <FORMULA> [opts]   Thermal property report (DOF, Cp, Cv)
+        compare <FORMULA> [opts]   Compare Ideal vs VdW vs Redlich-Kwong
+        sample  <FORMULA> [opts]   Maxwell-Boltzmann velocity sampling
+        species [FORMULA]          Show species database
+        help                       Show gas2 module help
+
+    Examples:
+        vsepr gas2 analyze Ar -T 300 -P 1.0
+        vsepr gas2 thermal CO2 -T 500
+        vsepr gas2 compare N2 -T 200 -P 50
+        vsepr gas2 species
+
+GAS3 MODULE (Quality Pipeline + Fitting + Reporting):
+    vsepr gas3 <command> [options]
+
+    Commands:
+        quick                      Quick sanity check (all species, STP)
+        sweep [opts]               Linear deterministic sweep with export
+        random [opts]              Random sampling stress test
+        pipeline [opts]            Full quality pipeline (sweep + fit + report)
+        help                       Show gas3 module help
+
+    Options:
+        --T-min, --T-max, --T-step   Temperature range (K)
+        --P-grid <list>              Pressure points (atm, comma-separated)
+        --random <N>                 Random sample count
+        --species <list>             Species filter (comma-separated)
+        --verbose                    Print every state to stdout
+
+    Quality Tiers: Q4 (reference) > Q3 (production) > Q2 (usable) > Q1 (weak) > Q0 (failed)
+
+    Examples:
+        vsepr gas3 quick
+        vsepr gas3 sweep --T-min 200 --T-max 1000 --T-step 25
+        vsepr gas3 pipeline --species CO2,N2,Ar --verbose
+        vsepr gas3 pipeline --random 2000
+
+VIZ STREAM SERVER
+    vsepr viz <FORMULA> [options]
+
+    Port 9999  -> Atomic View  (live atom positions, bonds, lattice, HUD)
+    Port 10001 -> Analysis View (graphs, candidates, property panels)
+
+    Connect viewers after starting the server:
+        python tools/viz_atomic.py
+        python tools/viz_analysis.py
+
+    Options:
+        -T <K>              Temperature (or single T for constant)
+        --T-start/--T-end   Temperature sweep range
+        -N <INT>            Number of atoms in view (default: 64)
+        --frames <INT>      Total frames (0 = infinite)
+        --atomic-fps <N>    Atomic view frame rate (default: 15)
+        --analysis-fps <N>  Analysis view frame rate (default: 2)
+        --verbose           Print frame stats to stdout
+
+    Examples:
+        vsepr viz Ar -T 300
+        vsepr viz N2 --T-start 77 --T-end 500 -N 125
+        vsepr viz CO2 -T 400 --frames 500 --atomic-fps 20
+
+LIVE ANALYSIS SERVER:
+    vsepr serve [options]
+
+    Zero-input HTTP server streaming random molecular analysis.
+    Starts on port 99998 with no configuration required.
+
+    Options:
+        --port <PORT>       Listen port (default: 99998)
+        --interval <MS>     Cycle interval in ms (default: 3000)
+        --seed <S>          Base RNG seed (default: time-based)
+
+    Endpoints:
+        /              HTML dashboard (auto-updating)
+        /stream        Server-Sent Events
+        /snapshot      Latest analysis as JSON
+        /status        Server uptime and stats
+
+    Examples:
+        vsepr serve
+        vsepr serve --port 8080 --interval 1000
+
+MODULE REGISTRY:
+    vsepr modules              List all registered modules
+    vsepr help <module>        Detailed help for a specific module
+
+THERMAL ANALYSIS:
+    vsepr therm <input.xyz> [options]
+
+    Options:
+        --temperature, -T <K>   Set temperature (default: 298.15 K)
+        --generate-object, -g   Generate thermal object file
+        --viz                   Enhanced visualization output
+        --generations <N>       Run thermal evolution over N generations
+        --sample-interval <M>   Sample every Mth generation
+
+    Examples:
+        vsepr therm water.xyz
+        vsepr therm molecule.xyz --temperature 500
+        vsepr therm diamond.xyz -T 1000 --generate-object --viz
 
 LIGHTWEIGHT VIEWER:
     vsepr --viz [options]
@@ -141,8 +270,9 @@ LIGHTWEIGHT VIEWER:
         vsepr --viz --preset cloud --beads 20 --spacing 12.0
 
 SEE ALSO:
-    Full documentation: docs/VSEPR_CLI_GUIDE.md
-    Grammar reference: docs/VSEPR_CLI_GRAMMAR.md
+    Full documentation:    docs/INDEX.md
+    CLI walkthrough:       docs/CLI_WALKTHROUGH.txt
+    File format reference: docs/FILE_FORMATS.md
 
 )";
 }
@@ -155,9 +285,74 @@ int main(int argc, char** argv) {
             return 0;
         }
 
+        // Version flag
+        if (std::string(argv[1]) == "--version" || std::string(argv[1]) == "-v") {
+            std::cout << "VSEPR-SIM v4.0.1 Beta\n";
+            return 0;
+        }
+
+        // Route to module registry listing
+        if (std::string(argv[1]) == "modules") {
+            vsepr::modules::register_builtin_modules();
+            vsepr::ModuleRegistry::instance().print_table();
+            return 0;
+        }
+
+        // Route to per-module help: vsepr help <module>
+        if (std::string(argv[1]) == "help" && argc >= 3) {
+            vsepr::modules::register_builtin_modules();
+            vsepr::ModuleRegistry::instance().print_help(argv[2]);
+            return 0;
+        }
+
+        // Route to gas module when argv[1] == "gas"
+        if (std::string(argv[1]) == "gas") {
+            return vsepr::gas::gas_dispatch(argc, argv);
+        }
+
+        // Route to gas2 module (advanced heat + gas analysis)
+        if (std::string(argv[1]) == "gas2") {
+            return vsepr::gas2::gas2_dispatch(argc, argv);
+        }
+
+        // Route to gas3 module (quality pipeline, fitting, reporting)
+        if (std::string(argv[1]) == "gas3") {
+            return vsepr::gas3::gas3_dispatch(argc, argv);
+        }
+
+        // Route to dual-port viz stream server when argv[1] == "viz"
+        if (std::string(argv[1]) == "viz") {
+            return vsepr::viz::viz_dispatch(argc, argv);
+        }
+
+        // Route to live analysis server when argv[1] == "serve"
+        if (std::string(argv[1]) == "serve") {
+            return vsepr::live::serve_dispatch(argc, argv);
+        }
+
         // Route to coarse-grained console when argv[1] == "cg"
         if (std::string(argv[1]) == "cg") {
             return vsepr::cli::cg_dispatch(argc, argv);
+        }
+
+        // Route to TUI terminal XYZ viewer when argv[1] == "tui"
+        if (std::string(argv[1]) == "tui") {
+            vsepr::cli::TuiCommand tui;
+            std::vector<std::string> tui_args;
+            for (int i = 2; i < argc; ++i) {
+                tui_args.push_back(argv[i]);
+            }
+            return tui.Execute(tui_args);
+        }
+
+        // Route to thermal analysis when argv[1] == "therm"
+        if (std::string(argv[1]) == "therm") {
+            vsepr::cli::ThermCommand therm;
+            std::vector<std::string> therm_args;
+            for (int i = 2; i < argc; ++i) {
+                therm_args.push_back(argv[i]);
+            }
+            return therm.Execute(therm_args);
         }
 
         // Route to lightweight visualization when argv[1] == "--viz"

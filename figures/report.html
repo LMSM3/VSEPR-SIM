@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VSEPR-SIM Report: demo_03_graphite_stack</title>
+<style>
+  body { background:#0d1117; color:#c9d1d9; font-family:monospace;         max-width:860px; margin:40px auto; line-height:1.6; }
+  h1 { color:#58a6ff; } h2 { color:#8b949e; border-bottom:1px solid #21262d; }
+  pre { background:#161b22; padding:12px; border-radius:6px;        border:1px solid #30363d; overflow-x:auto; }
+  .ok { color:#3fb950; } .bad { color:#f85149; }
+  table { border-collapse:collapse; width:100%; font-size:12px; }
+  th { background:#21262d; color:#8b949e; padding:6px 10px; text-align:left; }
+  td { padding:5px 10px; border-bottom:1px solid #21262d; }
+</style>
+</head>
+<body>
+<h1>VSEPR-SIM Run Report</h1>
+<p><strong>Project:</strong> demo_03_graphite_stack<br>
+<strong>Formula:</strong> RMgX<br>
+<strong>Scenario class:</strong> complex<br>
+<strong>Generated:</strong> 2026-04-27T00:55:01Z</p>
+<h2>Event Summary</h2>
+<p>Total events: <strong>3</strong> &nbsp;Invalid: <strong class="ok">0</strong></p>
+<h2>Symbolic Trace</h2>
+<pre>
+[1] Reaction  RMgX
+  symbolic: RMgX -> RMgX_product
+  numeric:  Delta_E = (-89.400000) - (-36.000000) = -53.400000 kcal/mol
+
+[2] ChemicalState  RMgX
+  symbolic: delta_E_local = E_after - E_before
+  numeric:  delta_E_local = -89.400000 - -36.000000 = -53.400000 kcal/mol
+
+[3] ContinualReport  RMgX
+  symbolic: snapshot at frame_id
+  numeric:  U=-89.400000 T=342.500000 eta=0.550000 coord=2.500000 RMSD=0.140000
+
+</pre>
+<h2>Audit Table</h2>
+<table><tr><th>ID</th><th>Kind</th><th>Frame</th><th>Formula</th><th>Result</th><th>Unit</th><th>Valid</th></tr>
+<tr><td>1</td><td>Reaction</td><td>51</td><td>RMgX</td><td>-53.4</td><td>kcal/mol</td><td class="ok">OK</td></tr>
+<tr><td>2</td><td>ChemicalState</td><td>52</td><td>RMgX</td><td>-53.4</td><td>kcal/mol</td><td class="ok">OK</td></tr>
+<tr><td>3</td><td>ContinualReport</td><td>56</td><td>RMgX</td><td>-89.4</td><td>kcal/mol</td><td class="ok">OK</td></tr>
+</table>
+</body>
+</html>

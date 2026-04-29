@@ -1,0 +1,19 @@
+{
+  "formula": "C3H4",
+  "seed": 1140,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 417.187904,
+  "energy_per_atom": 59.598272,
+  "rms_force": 940.623763,
+  "max_force": 940.623763,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.682400,
+  "timestamp": "2026-03-28T13:07:37",
+  "xyz_file": "benchmark_v2\medium\structures\C3H4_s1140.xyz"
+}

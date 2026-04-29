@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 ################################################################################
 # VSEPR-Sim Automated Batch Report Generator
-# Version: 2.3.1
+# Version: 3.0.0
 #
 # Runs multiple discovery runs with different seeds and generates
 # comparative reports for analysis
@@ -9,7 +9,7 @@
 
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VENV="$ROOT/.venv"
 BATCH_DIR="$ROOT/outputs/batch_$(date +%Y%m%d_%H%M%S)"
 NUM_RUNS=${1:-10}
@@ -34,7 +34,7 @@ print_banner() {
     cat << 'EOF'
 ╔═══════════════════════════════════════════════════════════════╗
 ║                                                               ║
-║     VSEPR-Sim Automated Batch Report Generator v2.3.1        ║
+║     VSEPR-Sim Automated Batch Report Generator v3.0.0        ║
 ║     Multiple Discovery Runs with Comparative Analysis        ║
 ║                                                               ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -71,7 +71,7 @@ setup_batch_dir() {
   "batch_id": "$(basename $BATCH_DIR)",
   "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "num_runs": $NUM_RUNS,
-  "vsepr_version": "2.3.1",
+  "vsepr_version": "3.0.0",
   "git_commit": "$(git rev-parse HEAD 2>/dev/null || echo 'unknown')"
 }
 EOF
@@ -162,6 +162,7 @@ generate_individual_reports() {
         # Generate report for this run
         python "$ROOT/reporting/generate_report.py" \
             --out "$report_dir" \
+            --scan "$run_dir" \
             --seed $i \
             2>/dev/null || log_warning "Report generation failed for run #$i"
         
@@ -315,7 +316,7 @@ Automated batch discovery run with $NUM_RUNS independent runs (100 molecules eac
 - **Molecules per Run**: 100
 - **Total Attempts**: $((NUM_RUNS * 100))
 - **Seeds**: 1 through $NUM_RUNS
-- **VSEPR Version**: 2.3.1
+- **VSEPR Version**: 3.0.0
 - **Git Commit**: $(git rev-parse HEAD 2>/dev/null | cut -c1-8 || echo 'unknown')
 
 ---

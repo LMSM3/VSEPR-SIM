@@ -1,3 +1,14 @@
+// =============================================================================
+// tests/pbc_phase4_perf.cpp — Group 26: PBC Performance / Regression
+// =============================================================================
+//
+// Phase 4 — Performance Baselines:
+//   Microbench delta() (10–100M calls), pair-loop throughput (LJ O(N²)),
+//   scaling analysis N = 256/512/1024.
+//   Not a correctness gate — timing anchor only.
+//
+// Day #57A  |  WO-56C
+// =============================================================================
 /*
 pbc_phase4_perf.cpp
 -------------------

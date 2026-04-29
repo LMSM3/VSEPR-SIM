@@ -1,0 +1,19 @@
+{
+  "formula": "H2O",
+  "seed": 650,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": -0.066673,
+  "energy_per_atom": -0.022224,
+  "rms_force": 0.352413,
+  "max_force": 0.352413,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.496300,
+  "timestamp": "2026-03-28T13:05:33",
+  "xyz_file": "benchmark_v2\medium\structures\H2O_s650.xyz"
+}

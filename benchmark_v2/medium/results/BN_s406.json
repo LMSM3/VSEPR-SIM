@@ -1,0 +1,19 @@
+{
+  "formula": "BN",
+  "seed": 406,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 37.133781,
+  "energy_per_atom": 18.566890,
+  "rms_force": 177.631228,
+  "max_force": 177.631228,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.649600,
+  "timestamp": "2026-03-28T13:07:24",
+  "xyz_file": "benchmark_v2\medium\structures\BN_s406.xyz"
+}

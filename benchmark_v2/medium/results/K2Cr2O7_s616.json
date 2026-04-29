@@ -1,0 +1,19 @@
+{
+  "formula": "K2Cr2O7",
+  "seed": 616,
+  "tier": "medium",
+  "num_atoms": 11,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 8728.236089,
+  "energy_per_atom": 793.476008,
+  "rms_force": 15048.507762,
+  "max_force": 15048.507762,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.150800,
+  "timestamp": "2026-03-28T13:03:42",
+  "xyz_file": "benchmark_v2\medium\structures\K2Cr2O7_s616.xyz"
+}

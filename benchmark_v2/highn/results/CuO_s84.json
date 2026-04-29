@@ -1,0 +1,19 @@
+{
+  "formula": "CuO",
+  "seed": 84,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 8211,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.017320,
+  "energy_per_atom": -0.008660,
+  "rms_force": 0.000127,
+  "max_force": 0.000127,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 0.937900,
+  "timestamp": "2026-03-28T13:06:25",
+  "xyz_file": "benchmark_v2\highn\structures\CuO_s84.xyz"
+}

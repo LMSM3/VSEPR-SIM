@@ -1,0 +1,55 @@
+# scripts/demo_02_graphene_sheet.vsim
+# VSEPR-SIM single-layer graphene formation demo
+# ERB gamma_disp active; steric hardening expected at free edges
+# vsper validate scripts/demo_02_graphene_sheet.vsim
+
+[project]
+name        = demo_02_graphene_sheet
+version     = v5.0.0-beta.7.1
+seed_base   = 2002
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+layer_events     = true
+
+[simulation.molecule]
+formula     = C
+count       = 96
+temperature = 300.0
+lattice     = hexagonal
+layer_mode  = none
+n_layers    = 1
+
+[simulation]
+fire_max_steps   = 500
+fire_dt_fs       = 0.5
+box_size_ang     = 25.0
+periodic         = false
+formation_preset = ceramic
+
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = false
+write_events_json   = true
+write_symbolic_trace_json = true
+
+[visual]
+output_type           = terminal_chart
+animation_mode        = spark
+show_proxy_table      = true
+show_convergence_trace = false
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = false
+show_symbolic_trace   = false
+show_audit_table      = false

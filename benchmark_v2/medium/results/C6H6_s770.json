@@ -1,0 +1,19 @@
+{
+  "formula": "C6H6",
+  "seed": 770,
+  "tier": "medium",
+  "num_atoms": 12,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 11148.194577,
+  "energy_per_atom": 929.016215,
+  "rms_force": 15991.187506,
+  "max_force": 15991.187506,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.552500,
+  "timestamp": "2026-03-28T13:04:35",
+  "xyz_file": "benchmark_v2\medium\structures\C6H6_s770.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "BCl3",
+  "seed": 1140,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 60.767314,
+  "energy_per_atom": 15.191829,
+  "rms_force": 140.376244,
+  "max_force": 140.376244,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.649900,
+  "timestamp": "2026-03-28T13:03:56",
+  "xyz_file": "benchmark_v2\medium\structures\BCl3_s1140.xyz"
+}

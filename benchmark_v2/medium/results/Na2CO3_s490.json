@@ -1,0 +1,19 @@
+{
+  "formula": "Na2CO3",
+  "seed": 490,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 20.893752,
+  "energy_per_atom": 3.482292,
+  "rms_force": 33.245740,
+  "max_force": 33.245740,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.059300,
+  "timestamp": "2026-03-28T13:06:30",
+  "xyz_file": "benchmark_v2\medium\structures\Na2CO3_s490.xyz"
+}

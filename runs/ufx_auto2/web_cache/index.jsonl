@@ -1,0 +1,15 @@
+{"key":"285c2131c2f763b3","source":"pubchem","formula":"Pu","property":"molecular_weight","hash":"843965721dc08978","status":202,"ts":1777035300540}
+{"key":"1f206cc048b279e2","source":"pubchem","formula":"Pu","property":"inchikey","hash":"ff79982109b378c5","status":202,"ts":1777035301080}
+{"key":"40aaca8d3a3e1b25","source":"nist","formula":"Pu","property":"species_exists","hash":"2d867501fefe3a93","status":202,"ts":1777035301730}
+{"key":"d937048aeeea014d","source":"pubchem","formula":"Ni","property":"molecular_weight","hash":"3e98be0910044e5b","status":202,"ts":1777035302220}
+{"key":"b2eb2e31870bc300","source":"pubchem","formula":"Ni","property":"inchikey","hash":"ecc858091fc9db0d","status":202,"ts":1777035302827}
+{"key":"44d88f6a070e4a3b","source":"nist","formula":"Ni","property":"species_exists","hash":"f18cf487b4f30b5f","status":202,"ts":1777035303341}
+{"key":"52655c92a927065f","source":"pubchem","formula":"K","property":"molecular_weight","hash":"9fa67a9e2b903be5","status":202,"ts":1777035303800}
+{"key":"109124afd1f777a6","source":"pubchem","formula":"K","property":"inchikey","hash":"9bf150645ad36f39","status":202,"ts":1777035304292}
+{"key":"6a579837a75c7e29","source":"nist","formula":"K","property":"species_exists","hash":"bb0bc2b535d8bd06","status":202,"ts":1777035304799}
+{"key":"4163fd5053287b91","source":"pubchem","formula":"Fe","property":"molecular_weight","hash":"5dbb2c824165b7ec","status":202,"ts":1777035305280}
+{"key":"5c4b1991b190a7cc","source":"pubchem","formula":"Fe","property":"inchikey","hash":"6d680e1fe54297ca","status":202,"ts":1777035305944}
+{"key":"4a2c9f11fb52a157","source":"nist","formula":"Fe","property":"species_exists","hash":"9f92d9991f1100ee","status":202,"ts":1777035306603}
+{"key":"15d51b283145fac8","source":"pubchem","formula":"Cs","property":"molecular_weight","hash":"f9c220500c74aea7","status":202,"ts":1777035307084}
+{"key":"566aa8cf0cc6c895","source":"pubchem","formula":"Cs","property":"inchikey","hash":"73ac6cab95e89dd3","status":202,"ts":1777035307583}
+{"key":"b343d1fdee5f8ffe","source":"nist","formula":"Cs","property":"species_exists","hash":"c3a423bebbbb96a2","status":202,"ts":1777035308160}

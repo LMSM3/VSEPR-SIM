@@ -114,7 +114,7 @@ void print_header(const std::string& title) {
 }
 
 void print_section(const std::string& title) {
-    std::cout << "\n┌─ " << title << " " << std::string(60 - title.length(), '─') << "\n";
+    std::cout << "\n+- " << title << " " << std::string(60 - title.length(), '-') << "\n";
 }
 
 void print_metrics(const ResourceMetrics& metrics) {
@@ -126,7 +126,7 @@ void print_metrics(const ResourceMetrics& metrics) {
     if (metrics.gpu_utilization > 0.0) {
         std::cout << "│   GPU:    " << metrics.gpu_utilization << "%\n";
     }
-    std::cout << "└" << std::string(64, '─') << "\n";
+    std::cout << "+" << std::string(64, '-') << "\n";
 }
 
 // ============================================================================
@@ -139,8 +139,8 @@ void show_backend_structure(const io::XYZMolecule& mol) {
     // Atom data
     std::cout << "│ Atoms (" << mol.atoms.size() << "):\n";
     std::cout << "│   Idx | Element | Position (Å)                    | ${RED}Charge\n";
-    std::cout << "│   " << std::string(60, '─') << "\n";
-    
+    std::cout << "|   " << std::string(60, '-') << "\n";
+
     size_t display_limit = std::min(mol.atoms.size(), size_t(10));
     for (size_t i = 0; i < display_limit; ++i) {
         const auto& atom = mol.atoms[i];
@@ -159,8 +159,8 @@ void show_backend_structure(const io::XYZMolecule& mol) {
     if (!mol.bonds.empty()) {
         std::cout << "│\n│ Bonds (" << mol.bonds.size() << "):\n";
         std::cout << "│   Idx | Atom I | Atom J | Order | Length (Å)\n";
-        std::cout << "│   " << std::string(60, '─') << "\n";
-        
+        std::cout << "|   " << std::string(60, '-') << "\n";
+
         size_t bond_limit = std::min(mol.bonds.size(), size_t(10));
         for (size_t i = 0; i < bond_limit; ++i) {
             const auto& bond = mol.bonds[i];
@@ -199,7 +199,7 @@ void show_backend_structure(const io::XYZMolecule& mol) {
               << std::setprecision(3) << center[0] << ", " 
               << center[1] << ", " << center[2] << ") Å\n";
     
-    std::cout << "└" << std::string(64, '─') << "\n";
+    std::cout << "+" << std::string(64, '-') << "\n";
 }
 
 // ============================================================================
@@ -296,8 +296,8 @@ bool test_round_trip(const std::string& filepath, ResourceMonitor& monitor) {
     std::cout << "│   Formula:     " << (formula_match ? "✓" : "❌") << "\n";
     
     fs::remove(temp_file);
-    std::cout << "└" << std::string(64, '─') << "\n";
-    
+    std::cout << "+" << std::string(64, '-') << "\n";
+
     return atoms_match && formula_match;
 }
 
@@ -320,8 +320,8 @@ bool test_bond_detection(const std::string& filepath, ResourceMonitor& monitor) 
     
     std::cout << "│ After detection:  " << num_bonds << " bonds\n";
     std::cout << "│ Detection time:   " << metrics.elapsed_time.count() / 1000.0 << " ms\n";
-    std::cout << "└" << std::string(64, '─') << "\n";
-    
+    std::cout << "+" << std::string(64, '-') << "\n";
+
     return true;
 }
 

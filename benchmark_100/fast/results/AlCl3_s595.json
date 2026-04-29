@@ -1,0 +1,19 @@
+{
+  "formula": "AlCl3",
+  "seed": 595,
+  "tier": "fast",
+  "num_atoms": 4,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 205.593948,
+  "energy_per_atom": 51.398487,
+  "rms_force": 497.708326,
+  "max_force": 497.708326,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.653200,
+  "timestamp": "2026-03-28T12:53:14",
+  "xyz_file": "benchmark_100\fast\structures\AlCl3_s595.xyz"
+}

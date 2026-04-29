@@ -2,26 +2,47 @@
  * energy_nonbonded.cu
  * -------------------
  * CUDA kernel for nonbonded energy computation (LJ + Coulomb).
- * 
+ *
  * Performance targets:
- * - 1000 atoms: ~0.5 ms (vs 50 ms CPU)
- * - 10000 atoms: ~50 ms (vs 5000 ms CPU)
+ * - 1000 atoms:   ~0.5 ms  (vs 50 ms CPU)
+ * - 10000 atoms:  ~50 ms   (vs 5000 ms CPU)
+ *
+ * WO-56B scaling: force kernel, warp reduction, dynamic charge buffer,
+ *                 CUDA_CHECK error handling.
  */
 
 #include <cuda_runtime.h>
 #include <device_launch_parameters.h>
 #include <cmath>
+#include <cstdio>
 
 namespace vsepr {
 namespace gpu {
 
 // ============================================================================
-// Device Constants (loaded once at init)
+// Error checking
+// ============================================================================
+
+#define CUDA_CHECK(call)                                                        \
+    do {                                                                        \
+        cudaError_t _e = (call);                                                \
+        if (_e != cudaSuccess) {                                                 \
+            printf("[CUDA ERROR] %s:%d  %s\n",                                  \
+                   __FILE__, __LINE__, cudaGetErrorString(_e));                  \
+        }                                                                       \
+    } while (0)
+
+// ============================================================================
+// Device Constants (loaded once at init — element-indexed, fixed size fine)
 // ============================================================================
 
 __constant__ float d_epsilon[118];  // LJ epsilon per element (Z=1-118)
 __constant__ float d_sigma[118];    // LJ sigma per element
-__constant__ float d_charge[10000]; // Per-atom partial charges (max 10k atoms)
+
+// Per-atom charges: stored in global device memory (no 10k hardcap).
+// Pointer set via cuda_set_charges() before each evaluation.
+static float* d_charge_global = nullptr;
+static int    d_charge_alloc_n = 0;
 
 // ============================================================================
 // Configuration
@@ -32,9 +53,9 @@ __constant__ float d_charge[10000]; // Per-atom partial charges (max 10k atoms)
 #define COULOMB_CONSTANT 332.0636f  // kcal*Å/(mol*e²)
 
 // Cutoffs
-#define LJ_CUTOFF 12.0f
+#define LJ_CUTOFF      12.0f
 #define COULOMB_CUTOFF 12.0f
-#define LJ_CUTOFF_SQ (LJ_CUTOFF * LJ_CUTOFF)
+#define LJ_CUTOFF_SQ      (LJ_CUTOFF      * LJ_CUTOFF)
 #define COULOMB_CUTOFF_SQ (COULOMB_CUTOFF * COULOMB_CUTOFF)
 
 // ============================================================================
@@ -85,92 +106,76 @@ float compute_coulomb_pair(float r2, float qi, float qj) {
 // ============================================================================
 
 __global__ void compute_nonbonded_energy(
-    const float* __restrict__ coords,  // [3*N] atom positions (x,y,z,x,y,z,...)
-    const uint8_t* __restrict__ atomic_numbers,  // [N] element Z
-    const int* __restrict__ exclusions,  // [N*max_excl] bonded exclusions
+    const float* __restrict__ coords,
+    const uint8_t* __restrict__ atomic_numbers,
+    const float* __restrict__ charges,         // device pointer (dynamic)
+    const int* __restrict__ exclusions,
     int num_exclusions_per_atom,
     int num_atoms,
-    float* __restrict__ energy_out  // [num_threads] partial energies
+    float* __restrict__ energy_out
 )
 {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int stride = blockDim.x * gridDim.x;
-    
+
     float local_energy = 0.0f;
-    
-    // Each thread processes a subset of atom pairs
+
     for (int i = tid; i < num_atoms; i += stride) {
         float xi = coords[3*i];
         float yi = coords[3*i + 1];
         float zi = coords[3*i + 2];
-        
-        uint8_t Zi = atomic_numbers[i];
-        float qi = d_charge[i];
+
+        uint8_t Zi   = atomic_numbers[i];
+        float   qi   = charges[i];
         float epsilon_i = d_epsilon[Zi];
-        float sigma_i = d_sigma[Zi];
-        
-        // Interact with all j > i (avoid double counting)
+        float sigma_i   = d_sigma[Zi];
+
         for (int j = i + 1; j < num_atoms; ++j) {
-            // Check exclusion list
             bool excluded = false;
-            #if ENABLE_DEBUG_CHECKS
-            // In production, we trust the exclusion list is correct
             for (int e = 0; e < num_exclusions_per_atom; ++e) {
                 if (exclusions[i * num_exclusions_per_atom + e] == j) {
                     excluded = true;
                     break;
                 }
             }
-            #else
-            // Simplified: assume first few are bonded neighbors (1-2, 1-3 exclusions)
-            if (j < i + 4) {
-                for (int e = 0; e < num_exclusions_per_atom && e < 4; ++e) {
-                    if (exclusions[i * num_exclusions_per_atom + e] == j) {
-                        excluded = true;
-                        break;
-                    }
-                }
-            }
-            #endif
-            
             if (excluded) continue;
-            
-            // Compute distance
-            float dx = coords[3*j] - xi;
+
+            float dx = coords[3*j]     - xi;
             float dy = coords[3*j + 1] - yi;
             float dz = coords[3*j + 2] - zi;
             float r2 = dx*dx + dy*dy + dz*dz;
-            
-            // Apply cutoffs (early exit)
+
             if (r2 > fmaxf(LJ_CUTOFF_SQ, COULOMB_CUTOFF_SQ)) continue;
-            
-            // Mixing rules (Lorentz-Berthelot)
-            uint8_t Zj = atomic_numbers[j];
-            float epsilon_j = d_epsilon[Zj];
-            float sigma_j = d_sigma[Zj];
-            
+
+            uint8_t Zj        = atomic_numbers[j];
+            float epsilon_j   = d_epsilon[Zj];
+            float sigma_j     = d_sigma[Zj];
             float epsilon_mix = sqrtf(epsilon_i * epsilon_j);
-            float sigma_mix = 0.5f * (sigma_i + sigma_j);
-            
-            // Lennard-Jones
-            if (r2 < LJ_CUTOFF_SQ) {
+            float sigma_mix   = 0.5f * (sigma_i + sigma_j);
+
+            if (r2 < LJ_CUTOFF_SQ)
                 local_energy += compute_lj_pair(r2, epsilon_mix, sigma_mix);
-            }
-            
-            // Coulomb
-            if (r2 < COULOMB_CUTOFF_SQ) {
-                float qj = d_charge[j];
-                local_energy += compute_coulomb_pair(r2, qi, qj);
-            }
+
+            if (r2 < COULOMB_CUTOFF_SQ)
+                local_energy += compute_coulomb_pair(r2, qi, charges[j]);
         }
     }
-    
-    // Write partial sum
+
     energy_out[tid] = local_energy;
 }
 
 // ============================================================================
-// Kernel: Reduce Partial Energies (Parallel Reduction)
+// Warp-level reduction helper
+// ============================================================================
+
+__device__ __forceinline__ float warp_reduce_sum(float val) {
+    for (int offset = warpSize / 2; offset > 0; offset >>= 1)
+        val += __shfl_down_sync(0xffffffff, val, offset);
+    return val;
+}
+
+// ============================================================================
+// Kernel: Reduce Partial Energies (Warp + Block reduction)
 // ============================================================================
 
 __global__ void reduce_energy(
@@ -179,27 +184,121 @@ __global__ void reduce_energy(
     float* __restrict__ total_energy
 )
 {
-    __shared__ float shared_energy[256];
-    
-    int tid = threadIdx.x;
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    
-    // Load into shared memory
-    shared_energy[tid] = (idx < num_partials) ? partial_energies[idx] : 0.0f;
+    float val = (idx < num_partials) ? partial_energies[idx] : 0.0f;
+
+    // Warp-level reduction
+    val = warp_reduce_sum(val);
+
+    // First lane of each warp writes to shared memory
+    __shared__ float warp_sums[32];
+    int lane = threadIdx.x % warpSize;
+    int warp_id = threadIdx.x / warpSize;
+    if (lane == 0) warp_sums[warp_id] = val;
     __syncthreads();
-    
-    // Parallel reduction
-    for (int stride = blockDim.x / 2; stride > 0; stride >>= 1) {
-        if (tid < stride) {
-            shared_energy[tid] += shared_energy[tid + stride];
+
+    // Final reduction across warps (thread 0 only)
+    if (threadIdx.x == 0) {
+        float block_sum = 0.0f;
+        int num_warps = (blockDim.x + warpSize - 1) / warpSize;
+        for (int w = 0; w < num_warps; ++w)
+            block_sum += warp_sums[w];
+        atomicAdd(total_energy, block_sum);
+    }
+}
+
+// ============================================================================
+// Kernel: Nonbonded Forces (Gradients) — enables GPU-accelerated FIRE/MD
+// ============================================================================
+
+__global__ void compute_nonbonded_forces(
+    const float* __restrict__ coords,
+    const uint8_t* __restrict__ atomic_numbers,
+    const float* __restrict__ charges,
+    const int* __restrict__ exclusions,
+    int num_exclusions_per_atom,
+    int num_atoms,
+    float* __restrict__ forces,            // [3*N] accumulated (+=)
+    float* __restrict__ energy_out         // [num_threads] partial energies
+)
+{
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x * gridDim.x;
+
+    float local_energy = 0.0f;
+
+    for (int i = tid; i < num_atoms; i += stride) {
+        float xi = coords[3*i];
+        float yi = coords[3*i + 1];
+        float zi = coords[3*i + 2];
+
+        uint8_t Zi      = atomic_numbers[i];
+        float   qi      = charges[i];
+        float epsilon_i = d_epsilon[Zi];
+        float sigma_i   = d_sigma[Zi];
+
+        float fix = 0.0f, fiy = 0.0f, fiz = 0.0f;
+
+        for (int j = 0; j < num_atoms; ++j) {
+            if (j == i) continue;
+
+            bool excluded = false;
+            for (int e = 0; e < num_exclusions_per_atom; ++e) {
+                if (exclusions[i * num_exclusions_per_atom + e] == j) {
+                    excluded = true;
+                    break;
+                }
+            }
+            if (excluded) continue;
+
+            float dx = coords[3*j]     - xi;
+            float dy = coords[3*j + 1] - yi;
+            float dz = coords[3*j + 2] - zi;
+            float r2 = dx*dx + dy*dy + dz*dz;
+
+            if (r2 > fmaxf(LJ_CUTOFF_SQ, COULOMB_CUTOFF_SQ)) continue;
+
+            uint8_t Zj        = atomic_numbers[j];
+            float epsilon_j   = d_epsilon[Zj];
+            float sigma_j     = d_sigma[Zj];
+            float epsilon_mix = sqrtf(epsilon_i * epsilon_j);
+            float sigma_mix   = 0.5f * (sigma_i + sigma_j);
+
+            float inv_r2 = 1.0f / r2;
+            float dU_dr = 0.0f; // dU/dr2 * 2 = force magnitude scalar (divided by r)
+
+            // LJ force: dU/dr = 4ε [ -12σ¹²/r¹³ + 6σ⁶/r⁷ ]
+            // In terms of r²: f_scalar = (1/r²) * 4ε [ -12(σ²/r²)⁶ + 6(σ²/r²)³ ]
+            if (r2 < LJ_CUTOFF_SQ) {
+                float s2 = sigma_mix * sigma_mix * inv_r2;
+                float s6 = s2 * s2 * s2;
+                float lj_force = 24.0f * epsilon_mix * inv_r2 * s6 * (1.0f - 2.0f * s6);
+                dU_dr += lj_force;
+                // Energy (half weight — each pair counted once from both sides)
+                local_energy += 0.5f * 4.0f * epsilon_mix * s6 * (s6 - 1.0f);
+            }
+
+            // Coulomb force: dU/dr = -k*qi*qj / r² → in r²: -k*qi*qj*inv_r2*inv_r
+            if (r2 < COULOMB_CUTOFF_SQ) {
+                float qj = charges[j];
+                float inv_r = safe_rsqrt(r2);
+                dU_dr += -COULOMB_CONSTANT * qi * qj * inv_r * inv_r2;
+                local_energy += 0.5f * COULOMB_CONSTANT * qi * qj * inv_r;
+            }
+
+            // Accumulate force on i: F_i = -dU/dx_i = dU/dr * (xi - xj)/r² * (-1) ... simplified
+            fix += dU_dr * dx;
+            fiy += dU_dr * dy;
+            fiz += dU_dr * dz;
         }
-        __syncthreads();
+
+        // Atomic accumulation (threads may overlap on the same i when stride != 1)
+        atomicAdd(&forces[3*i],     fix);
+        atomicAdd(&forces[3*i + 1], fiy);
+        atomicAdd(&forces[3*i + 2], fiz);
     }
-    
-    // First thread writes result
-    if (tid == 0) {
-        atomicAdd(total_energy, shared_energy[0]);
-    }
+
+    energy_out[tid] = local_energy;
 }
 
 // ============================================================================
@@ -209,16 +308,23 @@ __global__ void reduce_energy(
 extern "C" {
 
 void cuda_init_nonbonded_params(
-    const float* epsilon,  // [118] LJ epsilon per element
-    const float* sigma,    // [118] LJ sigma per element
+    const float* epsilon,
+    const float* sigma,
     int num_elements
 ) {
-    cudaMemcpyToSymbol(d_epsilon, epsilon, num_elements * sizeof(float));
-    cudaMemcpyToSymbol(d_sigma, sigma, num_elements * sizeof(float));
+    CUDA_CHECK(cudaMemcpyToSymbol(d_epsilon, epsilon, num_elements * sizeof(float)));
+    CUDA_CHECK(cudaMemcpyToSymbol(d_sigma,   sigma,   num_elements * sizeof(float)));
 }
 
 void cuda_set_charges(const float* charges, int num_atoms) {
-    cudaMemcpyToSymbol(d_charge, charges, num_atoms * sizeof(float));
+    // Grow device buffer if needed
+    if (num_atoms > d_charge_alloc_n) {
+        if (d_charge_global) CUDA_CHECK(cudaFree(d_charge_global));
+        CUDA_CHECK(cudaMalloc(&d_charge_global, num_atoms * sizeof(float)));
+        d_charge_alloc_n = num_atoms;
+    }
+    CUDA_CHECK(cudaMemcpy(d_charge_global, charges,
+                          num_atoms * sizeof(float), cudaMemcpyHostToDevice));
 }
 
 float cuda_compute_nonbonded_energy(
@@ -228,55 +334,99 @@ float cuda_compute_nonbonded_energy(
     int num_exclusions_per_atom,
     int num_atoms
 ) {
-    // Allocate device memory
     float *d_coords, *d_partial_energies, *d_total_energy;
     uint8_t *d_atomic_numbers;
     int *d_exclusions;
-    
-    size_t coord_size = 3 * num_atoms * sizeof(float);
-    size_t atom_size = num_atoms * sizeof(uint8_t);
-    size_t excl_size = num_atoms * num_exclusions_per_atom * sizeof(int);
-    
-    cudaMalloc(&d_coords, coord_size);
-    cudaMalloc(&d_atomic_numbers, atom_size);
-    cudaMalloc(&d_exclusions, excl_size);
-    
-    // Copy to device
-    cudaMemcpy(d_coords, h_coords, coord_size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_atomic_numbers, h_atomic_numbers, atom_size, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_exclusions, h_exclusions, excl_size, cudaMemcpyHostToDevice);
-    
-    // Launch configuration
+
+    CUDA_CHECK(cudaMalloc(&d_coords,          3 * num_atoms * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_atomic_numbers,  num_atoms * sizeof(uint8_t)));
+    CUDA_CHECK(cudaMalloc(&d_exclusions,      num_atoms * num_exclusions_per_atom * sizeof(int)));
+
+    CUDA_CHECK(cudaMemcpy(d_coords,         h_coords,         3 * num_atoms * sizeof(float),            cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_atomic_numbers, h_atomic_numbers, num_atoms * sizeof(uint8_t),              cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_exclusions,     h_exclusions,     num_atoms * num_exclusions_per_atom * sizeof(int), cudaMemcpyHostToDevice));
+
     int threads_per_block = 256;
-    int num_blocks = (num_atoms + threads_per_block - 1) / threads_per_block;
+    int num_blocks   = (num_atoms + threads_per_block - 1) / threads_per_block;
     int num_partials = num_blocks * threads_per_block;
-    
-    cudaMalloc(&d_partial_energies, num_partials * sizeof(float));
-    cudaMalloc(&d_total_energy, sizeof(float));
-    cudaMemset(d_total_energy, 0, sizeof(float));
-    
-    // Launch kernel
+
+    CUDA_CHECK(cudaMalloc(&d_partial_energies, num_partials * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_total_energy,     sizeof(float)));
+    CUDA_CHECK(cudaMemset(d_total_energy, 0,   sizeof(float)));
+
     compute_nonbonded_energy<<<num_blocks, threads_per_block>>>(
-        d_coords, d_atomic_numbers, d_exclusions,
-        num_exclusions_per_atom, num_atoms, d_partial_energies
+        d_coords, d_atomic_numbers, d_charge_global,
+        d_exclusions, num_exclusions_per_atom, num_atoms,
+        d_partial_energies
     );
-    
-    // Reduce partial energies
-    reduce_energy<<<1, threads_per_block>>>(
+
+    reduce_energy<<<num_blocks, threads_per_block>>>(
         d_partial_energies, num_partials, d_total_energy
     );
-    
-    // Copy result back
+
     float total_energy;
-    cudaMemcpy(&total_energy, d_total_energy, sizeof(float), cudaMemcpyDeviceToHost);
-    
-    // Cleanup
-    cudaFree(d_coords);
-    cudaFree(d_atomic_numbers);
-    cudaFree(d_exclusions);
-    cudaFree(d_partial_energies);
-    cudaFree(d_total_energy);
-    
+    CUDA_CHECK(cudaMemcpy(&total_energy, d_total_energy, sizeof(float), cudaMemcpyDeviceToHost));
+
+    CUDA_CHECK(cudaFree(d_coords));
+    CUDA_CHECK(cudaFree(d_atomic_numbers));
+    CUDA_CHECK(cudaFree(d_exclusions));
+    CUDA_CHECK(cudaFree(d_partial_energies));
+    CUDA_CHECK(cudaFree(d_total_energy));
+
+    return total_energy;
+}
+
+float cuda_compute_nonbonded_forces(
+    const float* h_coords,
+    const uint8_t* h_atomic_numbers,
+    const int* h_exclusions,
+    int num_exclusions_per_atom,
+    int num_atoms,
+    float* h_forces_out
+) {
+    float *d_coords, *d_forces, *d_partial_energies, *d_total_energy;
+    uint8_t *d_atomic_numbers;
+    int *d_exclusions;
+
+    CUDA_CHECK(cudaMalloc(&d_coords,          3 * num_atoms * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_atomic_numbers,  num_atoms * sizeof(uint8_t)));
+    CUDA_CHECK(cudaMalloc(&d_exclusions,      num_atoms * num_exclusions_per_atom * sizeof(int)));
+    CUDA_CHECK(cudaMalloc(&d_forces,          3 * num_atoms * sizeof(float)));
+
+    CUDA_CHECK(cudaMemcpy(d_coords,         h_coords,         3 * num_atoms * sizeof(float),            cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_atomic_numbers, h_atomic_numbers, num_atoms * sizeof(uint8_t),              cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(d_exclusions,     h_exclusions,     num_atoms * num_exclusions_per_atom * sizeof(int), cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemset(d_forces, 0,      3 * num_atoms * sizeof(float)));
+
+    int threads_per_block = 256;
+    int num_blocks   = (num_atoms + threads_per_block - 1) / threads_per_block;
+    int num_partials = num_blocks * threads_per_block;
+
+    CUDA_CHECK(cudaMalloc(&d_partial_energies, num_partials * sizeof(float)));
+    CUDA_CHECK(cudaMalloc(&d_total_energy,     sizeof(float)));
+    CUDA_CHECK(cudaMemset(d_total_energy, 0,   sizeof(float)));
+
+    compute_nonbonded_forces<<<num_blocks, threads_per_block>>>(
+        d_coords, d_atomic_numbers, d_charge_global,
+        d_exclusions, num_exclusions_per_atom, num_atoms,
+        d_forces, d_partial_energies
+    );
+
+    reduce_energy<<<num_blocks, threads_per_block>>>(
+        d_partial_energies, num_partials, d_total_energy
+    );
+
+    float total_energy;
+    CUDA_CHECK(cudaMemcpy(h_forces_out,  d_forces,       3 * num_atoms * sizeof(float), cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(&total_energy, d_total_energy, sizeof(float),                 cudaMemcpyDeviceToHost));
+
+    CUDA_CHECK(cudaFree(d_coords));
+    CUDA_CHECK(cudaFree(d_atomic_numbers));
+    CUDA_CHECK(cudaFree(d_exclusions));
+    CUDA_CHECK(cudaFree(d_forces));
+    CUDA_CHECK(cudaFree(d_partial_energies));
+    CUDA_CHECK(cudaFree(d_total_energy));
+
     return total_energy;
 }
 

@@ -1,0 +1,19 @@
+{
+  "formula": "CH3CH2COCH3",
+  "seed": 49,
+  "tier": "highn",
+  "num_atoms": 13,
+  "steps_taken": 8720,
+  "max_steps": 10000,
+  "energy_kcal_mol": -2.398489,
+  "energy_per_atom": -0.184499,
+  "rms_force": 0.053841,
+  "max_force": 0.053841,
+  "alpha_final": 0.000811,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 8.119700,
+  "timestamp": "2026-03-28T12:53:18",
+  "xyz_file": "benchmark_100\highn\structures\CH3CH2COCH3_s49.xyz"
+}

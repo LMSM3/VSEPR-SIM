@@ -1,0 +1,19 @@
+{
+  "formula": "C3H8",
+  "seed": 658,
+  "tier": "medium",
+  "num_atoms": 11,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 3450.485317,
+  "energy_per_atom": 313.680483,
+  "rms_force": 5495.883566,
+  "max_force": 5495.883566,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.244000,
+  "timestamp": "2026-03-28T13:06:47",
+  "xyz_file": "benchmark_v2\medium\structures\C3H8_s658.xyz"
+}

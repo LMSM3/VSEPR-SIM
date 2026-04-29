@@ -10,6 +10,7 @@
 #include "atomistic/crystal/unit_cell.hpp"
 #include "atomistic/crystal/supercell.hpp"
 #include "io/xyz_format.hpp"
+#include "io/molecular_io.hpp"
 
 #include <future>
 #include <random>
@@ -121,9 +122,11 @@ KernelResult EngineAdapter::run(const KernelRequest& req, ProgressFn /*progress*
         switch (req.op) {
 
         case KernelOp::LoadXYZ: {
-            vsepr::io::XYZReader reader; vsepr::io::XYZMolecule mol;
-            if (!reader.read(req.file_path, mol)) { res.message = "Read failed: " + reader.get_error(); return res; }
-            reader.detect_bonds(mol);
+            vsepr::io::IOOptions opts;
+            opts.detect_bonds = true;
+            auto result = vsepr::io::load_structure(req.file_path, opts);
+            if (!result.is_ok()) { res.message = "Read failed: " + result.error().to_string(); return res; }
+            auto& mol = result.value();
             atomistic::State s = atomistic::parsers::from_xyz(mol);
             std::vector<std::string> names;
             names.reserve(mol.atoms.size());
@@ -142,8 +145,8 @@ KernelResult EngineAdapter::run(const KernelRequest& req, ProgressFn /*progress*
             if (!req.input || req.input->empty()) { res.message = "Nothing to save"; return res; }
             auto [s, names] = detail::doc_to_state(*req.input);
             vsepr::io::XYZMolecule mol = atomistic::compilers::to_xyz(s, names);
-            vsepr::io::XYZWriter writer;
-            if (!writer.write(req.file_path, mol)) { res.message = "Write failed: " + writer.get_error(); return res; }
+            const auto status = vsepr::io::save_structure(req.file_path, mol);
+            if (status.is_error()) { res.message = "Write failed: " + status.error().to_string(); return res; }
             res.success = true;
             res.message = "Saved " + std::to_string(s.N) + " atoms to " + req.file_path;
             break;

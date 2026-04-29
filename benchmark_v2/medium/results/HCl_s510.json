@@ -1,0 +1,19 @@
+{
+  "formula": "HCl",
+  "seed": 510,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 8.055696,
+  "energy_per_atom": 4.027848,
+  "rms_force": 41.628554,
+  "max_force": 41.628554,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.571400,
+  "timestamp": "2026-03-28T13:06:40",
+  "xyz_file": "benchmark_v2\medium\structures\HCl_s510.xyz"
+}

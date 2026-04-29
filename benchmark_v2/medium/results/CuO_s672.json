@@ -1,0 +1,19 @@
+{
+  "formula": "CuO",
+  "seed": 672,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1.089920,
+  "energy_per_atom": 0.544960,
+  "rms_force": 5.491332,
+  "max_force": 5.491332,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.610300,
+  "timestamp": "2026-03-28T13:06:30",
+  "xyz_file": "benchmark_v2\medium\structures\CuO_s672.xyz"
+}

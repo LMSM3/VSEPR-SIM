@@ -1,0 +1,19 @@
+{
+  "formula": "CH3COCH3",
+  "seed": 161,
+  "tier": "fast",
+  "num_atoms": 10,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 49300.233854,
+  "energy_per_atom": 4930.023385,
+  "rms_force": 199391.604757,
+  "max_force": 199391.604757,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.734800,
+  "timestamp": "2026-03-28T13:06:45",
+  "xyz_file": "benchmark_v2\fast\structures\CH3COCH3_s161.xyz"
+}

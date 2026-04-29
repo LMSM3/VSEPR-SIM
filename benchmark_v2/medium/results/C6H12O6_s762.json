@@ -1,0 +1,19 @@
+{
+  "formula": "C6H12O6",
+  "seed": 762,
+  "tier": "medium",
+  "num_atoms": 24,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 524305.469893,
+  "energy_per_atom": 21846.061246,
+  "rms_force": 344272.128522,
+  "max_force": 344272.128522,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 3.955400,
+  "timestamp": "2026-03-28T13:04:24",
+  "xyz_file": "benchmark_v2\medium\structures\C6H12O6_s762.xyz"
+}

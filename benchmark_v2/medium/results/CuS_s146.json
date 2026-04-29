@@ -1,0 +1,19 @@
+{
+  "formula": "CuS",
+  "seed": 146,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 2.765710,
+  "energy_per_atom": 1.382855,
+  "rms_force": 12.958165,
+  "max_force": 12.958165,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.442900,
+  "timestamp": "2026-03-28T13:03:44",
+  "xyz_file": "benchmark_v2\medium\structures\CuS_s146.xyz"
+}

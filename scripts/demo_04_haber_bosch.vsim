@@ -1,0 +1,110 @@
+# scripts/demo_04_haber_bosch.vsim
+# VSEPR-SIM catalytic synthesis demo
+# Scenarios: 0 (Haber-Bosch NH3), 1 (Fischer-Tropsch chain growth)
+# vsper validate scripts/demo_04_haber_bosch.vsim
+# Back-call: vsper run kernel_demo --scenario 0
+#            vsper run kernel_demo --scenario 1
+
+[project]
+name        = demo_04_haber_bosch
+version     = v5.0.0-beta.7.1
+seed_base   = 4001
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events  = true
+chemical_events   = true
+dynamic_energy    = true
+
+[universal_controls]
+dt              = 0.001
+steps_form      = 3000
+steps_relax     = 3000
+save_every      = 50
+temperature_low = 300
+temperature_mid = 722
+temperature_high = 1000
+
+[material.nh3_synthesis]
+id      = nh3_synthesis
+classes = catalytic_surface,heterogeneous_reaction
+formula = N2+H2
+rule    = associative_mechanism
+# scenario 0 in kernel_demo
+
+[material.nh3_synthesis.structure]
+type    = diatomic_gas_over_surface
+lattice = FCC
+elements = Fe,N,H
+# uncertain: surface facet is Fe(111) proxy — not full slab model
+
+[material.nh3_synthesis.formation]
+mode        = relax_from_precursor
+temperature = 722
+relax_steps = 5600
+
+[material.nh3_synthesis.expected_signature]
+primary = ammonia_product_coordination_4
+trend_1 = N2_dissociation_is_rate_limiting
+trend_2 = H_coverage_increases_selectivity
+
+[material.ft_chain]
+id      = ft_chain
+classes = catalytic_surface,chain_growth_reaction
+formula = CO+H2
+rule    = carbide_insertion
+# scenario 1 in kernel_demo
+
+[material.ft_chain.structure]
+type     = gas_phase_mixture
+elements = C,O,H
+# uncertain: carbide_insertion is a simplified rule before full Co/Fe surface model
+
+[material.ft_chain.formation]
+mode        = relax_from_precursor
+temperature = 500
+relax_steps = 2000
+
+[material.ft_chain.expected_signature]
+primary = chain_growth_product_coordination_3
+trend_1 = CO_insertion_length_increases_with_chain
+
+[sweep]
+enabled   = true
+materials = nh3_synthesis,ft_chain
+seeds     = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+
+[report]
+title                  = demo_04_haber_bosch
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_chart
+animation_mode        = bar
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = false
+show_audit_table      = false

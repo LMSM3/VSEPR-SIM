@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.15)
-project(vsepr-sim VERSION 4.0.0 LANGUAGES C CXX)
+﻿cmake_minimum_required(VERSION 3.15)
+project(vsepr-sim VERSION 5.0.0 LANGUAGES C CXX)
 
 # ============================================================================
 # VSEPR-SIM  Two-Part Build System (Orchestrator)
@@ -12,11 +12,11 @@ project(vsepr-sim VERSION 4.0.0 LANGUAGES C CXX)
 #   4. Tests (after both parts so all targets are available)
 #   5. Summary
 #
-# Branch: 4.0-legacy-beta
-# Lineage: kernel v0.1 → v0.3 → user 2.7 → 2.9 → 3.0 → 4.0-LB
+# Branch: 4.0.4.03
+# Lineage: kernel v0.1 â†’ v0.3 â†’ user 2.7 â†’ 2.9 â†’ 3.0 â†’ 4.0-LB
 # Purpose: Multi-scale property search with mature deterministic kernel
 #
-# Previous audit checkpoint: 3.0.1
+# Previous audit checkpoint: 4.0.0
 # Original monolithic file archived at:
 #   archive/CMakeLists.txt.monolithic-backup
 # ============================================================================
@@ -51,8 +51,12 @@ option(BUILD_DEMOS "Build demo targets" OFF)
 # ============================================================================
 # Compiler Settings
 # ============================================================================
+# C++23 (N4950) â€” upgraded from C++20 for std::expected, monadic optional,
+# std::unreachable, std::to_underlying, consteval improvements.
+# GCC 15.2.0 (UCRT64) supports the full C++23 feature set.
+# C++26 (N5014) features tracked for future adoption â€” see cpp_corpus/.
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -89,6 +93,11 @@ if(BUILD_TESTS)
 endif()
 
 # ============================================================================
+# Bridge Beta (scaffold for next-gen architecture prerequisites)
+# ============================================================================
+add_subdirectory(bridge_beta)
+
+# ============================================================================
 # Summary
 # ============================================================================
 
@@ -105,14 +114,15 @@ message(STATUS "CUDA:                ${VSEPR_HAS_CUDA}")
 message(STATUS "")
 message(STATUS "Core Libraries (Part 1):")
 message(STATUS "  vsepr_core        (INTERFACE)")
-message(STATUS "  vsepr_tracker     (STATIC — particle identity + random picker)")
-message(STATUS "  vsepr_infra       (STATIC — bootstrap probe, MOTD, NVIDIA TUI)")
+message(STATUS "  vsepr_tracker     (STATIC â€” particle identity + random picker)")
+message(STATUS "  vsepr_infra       (STATIC â€” bootstrap probe, MOTD, NVIDIA TUI)")
 message(STATUS "  vsepr_periodic    (STATIC Z=1-102)")
 message(STATUS "  vsepr_sim         (STATIC)")
 message(STATUS "  vsepr_pot         (INTERFACE)")
 message(STATUS "  vsepr_box         (INTERFACE)")
 message(STATUS "  vsepr_nl          (INTERFACE)")
 message(STATUS "  vsepr_int         (INTERFACE)")
+message(STATUS "  vsepr_glass       (STATIC -- molecule prerender pipeline)")
 message(STATUS "  vsepr_build       (INTERFACE)")
 message(STATUS "  vsepr_dynamic     (STATIC)")
 message(STATUS "  vsepr_gpu         (STATIC)")
@@ -123,7 +133,11 @@ message(STATUS "  spec_parser       (STATIC)")
 message(STATUS "  vsepr_demo        (STATIC)")
 message(STATUS "  atomistic         (STATIC + TUI active)")
 message(STATUS "  coarse_grain      (INTERFACE)")
-message(STATUS "  vsepr_ehd         (INTERFACE — Electrohydrodynamic Multiphysics)")
+message(STATUS "  vsepr_dnf_sim    (STATIC -- mock dependency resolver)")
+message(STATUS "  vsepr_cg3d_new   (STATIC -- CG bead -> glass 3D bridge)")
+message(STATUS "  xyz_make          (C standalone -- XYZ Make target browser)")
+message(STATUS "  vsepr-entry       (C standalone -- MOTD precursor renderer)")
+message(STATUS "  vsepr_ehd         (INTERFACE â€” Electrohydrodynamic Multiphysics)")
 if(VSEPR_VIS_READY)
     message(STATUS "")
     message(STATUS "VIS/GUI Libraries (Part 2 active):")
@@ -138,3 +152,6 @@ else()
     message(STATUS "VIS/GUI Libraries: OFF (deps not available)")
 endif()
 message(STATUS "")
+
+
+

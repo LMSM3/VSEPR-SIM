@@ -1,291 +1,187 @@
 # Copilot Instructions
 
-Version: 2026-03-14  
+Version: 2026-04-25
 Status: Research-oriented active development  
 Scope: High-level project direction, scientific framing, system philosophy, development priorities, and intended utilization context  
 
 ---
 
-## 1. Project Identity
+## 1. Identity
 
-**VSEPR-SIM** is a research-oriented, deterministic, atomistic simulation and analysis platform intended to support the study, generation, interpretation, and reporting of molecular and material structures.
+**VSEPR-SIM** is a deterministic atomistic simulation, analysis, and reporting platform for molecular, material, bead-based, and premacro systems.
 
-At its highest level, the project exists to bridge:
+It is a long-term research platform under active construction.
 
-- scientific theory
-- molecular identity
-- deterministic structural generation
-- atomistic analysis
-- visualization
-- computational reporting
-- future discovery workflows
-- full desktop research support and workflow
-- solidworks and xlsx file export and integration
+It is **not**:
 
-The system is not merely a visualization toy, a chemistry parser, or a static educational demo. It is being developed as a broader scientific software environment capable of supporting structured research and repeatable computational investigation. 
+- a finished product  
+- a visualization toy  
+- a chemistry gimmick  
+- a static educational demo  
+- a folder full of heroic but suspiciously undocumented experiments  
 
-Primary post stability application chemical and process engineering, materials science, and computational chemistry research. The project is not intended for casual use or as a marketing gimmick. It is meant to be a credible scientific tool that can contribute to real research workflows and outputs.
+The final direction is:
 
-Clone and develop with the understanding that this is a long-term research platform under active construction, not a finished product or a simple utility. The project should be developed with a focus on scientific coherence, deterministic behavior, and research utility rather than visual polish or feature sprawl.
+- Digital twin support  
+- Predictive modeling  
+- Candidate evaluation  
+- Report generation  
+- Discovery-oriented workflows grounded in deterministic modeling and empirical comparison  
 
-Final purpose --> Digital twin, predictive modeling, computational investigation, candidate evaluation, report generation, discovery-oriented workflows grounded in deterministic modeling and empirical comparison. Working in tandem with the theoretical foundation documents, the project should be developed in a way that reflects and supports the scientific principles and research goals outlined in those documents. The code should be organized around the core scientific concepts and workflows rather than arbitrary technical layers or marketing-style features. Along with a fabrication lab, where only the highest priority output targets are supported, and where the system is designed to produce research-usable outputs.
-
----
-
-## 2. Primary Mission
-
-The primary mission of VSEPR-SIM is:
-
-> **To create a scientifically serious atomistic platform for deterministic molecular and structural interpretation, generation, visualization, and research-oriented reporting.**
-
-This includes support for:
-
-- interpreting molecular inputs
-- resolving names, formulas, and canonical representations
-- generating atomistic structures
-- producing scientifically useful outputs
-- enabling comparison, analysis, and eventual discovery workflows
-- integrating computational outputs into research documentation
-
-The project should be understood as a **research platform under active construction**, not as a finished product.
+The project should be developed as a serious scientific software environment. Every module should make the research kernel stronger, not just add another shiny lever for future regret.
 
 ---
 
-## 3. Current Development Stage
+## 2. Current Stage: **beta-7**
 
-VSEPR-SIM is in a **research-oriented development stage**.
+**Beta-6 is closed.**
 
-This means the project is currently focused on:
+**Beta-6 established:**
 
-- building core scientific infrastructure
-- refining system architecture
-- establishing reliable terminology
-- improving input and output workflows
-- creating research-usable tooling
-- making the platform more coherent and less dependent on ad hoc internal conventions
+- isolated Eigen bridge through `vsepr::eigen_bridge`  
+- preservation of native `vsepr::Vec3`  
+- production-ready Kabsch alignment  
+- production-ready RMSD analysis  
+- stationarity backbone  
+- crystal imperfection emergence tests  
+- surface interaction analysis  
+- diffusion analysis  
+- transport inference  
+- packing analysis  
+- macro property inference  
+- report output  
+- xyzFull audit  
 
-At this stage, the system should prioritize:
-- clarity of purpose
-- scientific consistency
-- modular architecture
-- deterministic behavior
-- portable tooling
-- credible research utility
+**Beta-7 goal:**
 
-It should **not** prioritize:
-- visual polish over scientific substance
-- decorative complexity
-- marketing-style claims
-- unfinished abstraction layers presented as complete systems
+Wire existing modules into a coherent research pipeline:
 
----
 
-## 4. Research Context
+FormationOutput
+→ FingerprintRecord
+→ ClusterRecord
+→ AnalysisRecord
+→ ReportRecord
+→ DashboardRecord
 
-The project is intended for use in a research context where users may need to:
 
-- evaluate molecular structures
-- compare candidate systems
-- inspect atomistic properties
-- generate deterministic structural outputs
-- produce figures and data for reports
-- organize molecule-level scientific information
-- build toward higher-confidence computational screening
+A completed beta-7 run should produce:
 
-VSEPR-SIM should therefore be designed as a platform that can contribute to:
+- formation log  
+- final structure  
+- trajectory  
+- energy trace  
+- stationarity result  
+- fingerprint  
+- cluster assignment  
+- defect or surface interpretation  
+- diffusion or packing analysis  
+- validity warnings  
+- report tables  
+- dashboard export  
 
-- exploratory computational chemistry workflows
-- atomistic modeling support
-- material and molecular investigation
-- report generation for technical and academic use
-- future structured discovery pipelines
-
-The project should be usable by someone who is not merely “running a cool simulation,” but who is trying to **extract meaningful scientific value** from computational structure generation and analysis.
-
----
-
-## 5. Utilization Philosophy
-
-VSEPR-SIM is meant to be used as a **scientific instrument**, not as a black-box gimmick.
-
-Outputs should be:
-- explicit
-- inspectable
-- deterministic
-- modular
-- explainable
-- suitable for technical interpretation
-
-The software should support workflows where a user may:
-1. provide a molecular input
-2. resolve it into a structured internal representation
-3. generate atomistic interpretation
-4. inspect geometry, radius, or structural data
-5. export outputs for further analysis
-6. embed results into broader research documentation
-
-This means the platform should eventually function as both:
-- a computational engine
-- a reporting and research support environment
-
-The project follows an **anti-black-box** design philosophy: every mapping decision, every metric, every intermediate result must be explicitly inspectable, traceable, and deterministic. No hidden state. This applies to all layers — atomistic, coarse-grained, visualization, and reporting.
+**Beta-7 is not the time to invent five new ornamental subsystems because the dopamine goblin demanded more complexity.**
 
 ---
 
-## 6. Scientific Terminology Rules
+## 3. Permanent Core Architectural Rule
 
-### 6.1 Forbidden terminology
-The term **"meso"** must never appear in the codebase or documentation.
+`xyz` and `xyzFull` store **ground-truth state and trajectory only**.
 
-This includes:
-- meso
-- mesoscopic
-- meso-scale
-- meso renderer
-- meso model
-- meso visualization
+They may store:
 
-### 6.2 Required terminology
-Use **"atomistic"** instead.
+- particle identity  
+- position  
+- position history  
+- timestep  
+- orientation  
+- velocity  
+- persistent ID  
+- lineage ID  
+- decay seed  
+- energy-layer trace  
+- simulation metadata needed to reconstruct the state  
 
-Examples:
-- atomistic model
-- atomistic structure
-- atomistic visualization
-- atomistic radius output
-- atomistic generator
-- atomistic analysis
+They must **not** store:
 
-### 6.3 Scope of enforcement
-This terminology rule applies to:
-- code
-- comments
-- documentation
-- diagrams
-- file names
-- function names
-- CLI help text
-- internal notes intended for project use
+- inferred material class  
+- inferred diffusion label  
+- inferred permeability label  
+- inferred packing label  
+- inferred macro property  
+- analysis-only classification result  
 
-This is a permanent project rule.
+**Permanent doctrine:**
 
----
+- `xyzFull` stores **what happened**  
+- Analysis determines **what it means**  
 
-## 7. System Philosophy
+Inferred properties belong in:
 
-The project should follow these principles:
+- analysis records  
+- reports  
+- dashboards  
+- sidecar files  
 
-### 7.1 Deterministic over theatrical
-The system should prefer reproducible outputs over vague “AI-like” or ornamental behavior.
+They do **not** belong inside State, `xyz`, or `xyzFull`.
 
-### 7.2 Scientific coherence over feature sprawl
-New features should strengthen the scientific core, not distract from it.
+> Encoding conclusions into state and then “discovering” them later is not emergence. It is a magic trick for people who clap when Excel opens.
 
-### 7.3 Research utility over interface vanity
-A plain but useful output is better than a polished but meaningless one.
-
-### 7.4 Architecture must reflect actual use
-The system should be organized around how scientific workflows actually occur:
-- input
-- normalization
-- resolution
-- generation
-- analysis
-- reporting
-
-### 7.5 Frontends should remain lightweight
-User-facing tools should route, interpret, and display. Scientific computation should remain in the kernel or core engine.
+Engineering geometry truth: include CAD/export artifacts (.step) as required workflow artifacts representing engineering geometry truth. Treat .step files as export/sidecar artifacts that document intended engineering geometry; do not conflate them with inferred analysis results or embed analysis conclusions into these files.
 
 ---
 
-## 8. Broad Scope of the Project
+## 4. Permanent Terminology Rule
 
-At a high level, the long-term scope of VSEPR-SIM includes:
+The following terms are **forbidden**:
 
-- deterministic atomistic structure generation
-- molecular identity handling
-- formula and alias resolution
-- geometry and radius analysis
-- atomistic visualization
-- structured scientific output
-- computational reporting
-- support for molecule and material investigation
-- future extension toward broader discovery-oriented workflows
+- meso  
+- mesoscopic  
+- meso-scale  
+- meso renderer  
+- meso model  
+- meso visualization  
 
-The broad scope is intentionally larger than a single CLI tool or a single rendering mode.
+Use these instead:
 
-The project should be developed with the understanding that:
-- visualization is one layer
-- reporting is one layer
-- structure generation is one layer
-- kernel science is one layer
-- research utilization is the real destination
+- atomistic  
+- bead  
+- coarse bead  
+- premacro  
+- macro  
+- formation  
+- trajectory  
+- state history  
+- analysis layer  
+- inference layer  
+- reporting layer  
 
----
+**Correct examples:**
 
-## 9. High-Level Targets
-
-### 9.1 Near-term targets
-Current near-term targets include:
-
-- improving the coherence of the visualization system
-- building a dedicated atomistic visualization frontend
-- supporting common-name and formula-based molecular input
-- connecting user-facing tools more cleanly to the scientific kernel
-- generating research-usable figures and structured outputs
-- improving portability and install reliability
-
-### 9.2 Mid-term targets
-Mid-term targets include:
-
-- stronger canonical molecule handling
-- cleaner routing between frontend and kernel
-- improved atomistic data generation
-- better report-ready outputs
-- more robust scientific metadata and export support
-- reduction of legacy naming and structural inconsistencies
-
-### 9.3 Long-term targets
-Long-term targets include:
-
-- a mature atomistic simulation and analysis environment
-- reliable structure-generation pipelines
-- broad scientific reporting integration
-- a platform useful for computational investigation and candidate evaluation
-- eventual support for discovery-oriented workflows grounded in deterministic modeling and empirical comparison
+- atomistic model  
+- atomistic structure  
+- atomistic visualization  
+- atomistic generator  
+- atomistic analysis  
+- bead dynamics  
+- premacro inference  
+- macro transport inference  
 
 ---
 
-## 10. Current Active Direction
+## 5. System Layers
 
-The current active direction is to strengthen the **visualization and interpretation layer** of the project so that it becomes a proper research-facing interface rather than just a bolt-on mode.
+The project is organized around scientific workflow layers:
 
-This includes the introduction of a dedicated visualization command such as:
-viz "benzene carbonate" --radius
+| Layer           | Contents |
+|----------------|----------|
+| Input          | names, formulas, aliases, scripted runs, presets, seed structures |
+| Identity       | canonical identity, particle identity, molecular identity, material identity, persistent IDs, lineage IDs |
+| Formation      | structure generation, priors, relaxation, dynamics, temperature schedules, energy tracking |
+| State          | positions, velocities, orientations, time history, event history, decay events, energy traces |
+| Analysis       | Kabsch, RMSD, stationarity, defect emergence, surface interaction, diffusion, packing, transport inference, macro inference |
+| Classification | fingerprints, structure clustering, polymorph grouping, isomorph grouping, defect grouping |
+| Reporting      | tables, figures, dashboards, SVG/PNG, technical summaries, validation warnings |
+| Export         | xyz, xyzFull, CSV, JSON, XLSX, SVG, report documents, .step (engineering geometry truth), future SolidWorks outputs |
 
----
-
-## 11. Development Phases
-
-### 11.1 Working Structure
-The development phases should follow this structure:
-1. Review and implement theoretical foundation documents (add LaTeX section)
-2. Expand or edit the code (implement in headers/source)
-3. Perform tests if finishing a development phase (create test file, add CMake target, verify compilation)
-
-New sections are appended to documents rather than replacing previous ones, showing model growth over time.
-
----
-
-## 12. Planned Feature Additions
-
-### 12.1 Version ???+0.1 Roadmap
-- Add bead dynamics
-- Introduce organics comprised of peptide code + beads + actinides with decay system -1 through -37 (-1 through -14 primarily)
-
-This is a planned feature addition for the VSEPR-SIM stochastic generators.
-
----
-
-## General Instructions
-- Do not ask for confirmation before continuing to the next phase — just proceed automatically after completing each phase.
+**Architecture flow:**

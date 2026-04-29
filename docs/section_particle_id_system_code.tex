@@ -1,0 +1,796 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{parskip}
+clear
+clear
+clear
+exit
+
+
+
+% ---------------------------------------------------------------------------
+% Colour palette
+% ---------------------------------------------------------------------------
+\definecolor{codebg}{RGB}{245,246,248}
+\definecolor{kw}{RGB}{0,80,160}
+\definecolor{cm}{RGB}{60,128,60}
+\definecolor{st}{RGB}{160,40,40}
+\definecolor{nu}{RGB}{140,60,180}
+\definecolor{pp}{RGB}{100,50,0}
+\definecolor{rulecol}{RGB}{180,190,200}
+
+% ---------------------------------------------------------------------------
+% C++20 listing style
+% ---------------------------------------------------------------------------
+\lstdefinestyle{cpp20}{
+  language=C++,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cm}\itshape,
+  stringstyle=\color{st},
+  numberstyle=\color{nu}\tiny,
+  emphstyle=\color{pp}\bfseries,
+  emph={constexpr,noexcept,nodiscard,string_view,int32_t,
+        size_t,uint32_t,ParticleID,DecayEvent,KineticEventRecord,
+        EventKind,EventPayload,NuclearState,DaughterState,
+        GenericTransportEvent},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{rulecol},
+  framesep=4pt,
+  numbers=left,
+  numbersep=8pt,
+  tabsize=4,
+  showstringspaces=false,
+  xleftmargin=14pt,
+  captionpos=b
+}
+
+% C style
+\lstdefinestyle{clang}{
+  language=C,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cm}\itshape,
+  stringstyle=\color{st},
+  numberstyle=\color{nu}\tiny,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{rulecol},
+  framesep=4pt,
+  numbers=left,
+  numbersep=8pt,
+  tabsize=4,
+  showstringspaces=false,
+  xleftmargin=14pt,
+  captionpos=b
+}
+
+\lstset{style=cpp20}
+
+% ---------------------------------------------------------------------------
+% Section formatting
+% ---------------------------------------------------------------------------
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+% ---------------------------------------------------------------------------
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries Particle Identifier and Decay Event Subsystem}\\[4pt]
+  {\large VSEPR-SIM --- Code Reference Draft}\\[2pt]
+  {\small\texttt{include/physics/} \quad \texttt{include/kinetics/} \quad
+         \texttt{legacy/c\_api/} \quad \texttt{tests/}}\\[6pt]
+  {\small v4.0.0 \quad June 2025}
+\end{center}
+
+\vspace{6pt}
+\hrule
+\vspace{10pt}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Overview}
+% ============================================================================
+
+The particle identifier subsystem defines a signed-integer identity
+namespace that spans ordinary matter species, emitted decay particles,
+radiation bookkeeping tokens, and defect physics sentinels.  Every entity
+the engine emits, tracks, or accounts for is tagged with a value of type
+\texttt{ParticleID}.
+
+\[
+ID_p \in \mathbb{Z}, \quad
+\begin{cases}
+ID_p \ge 0 & \text{ordinary matter (atoms, isotopes, molecules, candidates)} \\
+ID_p  <  0 & \text{emitted particles, energy stand-ins, defect tokens}
+\end{cases}
+\]
+
+The entire scheme is constexpr-queryable at compile time.  No runtime
+tables, no lookup files, no hidden state.
+
+\bigskip
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Header} & \textbf{Namespace} & \textbf{Contents} \\
+\midrule
+\texttt{include/physics/particle\_id.hpp}           & \texttt{vsepr::physics} & \texttt{ParticleID} enum + 5 constexpr queries \\
+\texttt{include/physics/decay\_event.hpp}            & \texttt{vsepr::physics} & \texttt{DecayEvent} struct \\
+\texttt{include/physics/decay\_event\_builder.hpp}   & \texttt{vsepr::physics} & Builder factories + daughter arithmetic \\
+\texttt{include/kinetics/kinetic\_event\_kind.hpp}   & \texttt{vsepr::kinetics} & \texttt{EventKind} enum \\
+\texttt{include/kinetics/kinetic\_event\_record.hpp} & \texttt{vsepr::kinetics} & \texttt{KineticEventRecord} + \texttt{EventPayload} \\
+\texttt{legacy/c\_api/particle\_ids.h/.c}            & --- (plain C) & C enum + 4 query functions \\
+\texttt{legacy/c\_api/decay\_event.h/.c}             & --- (plain C) & C struct + init/add \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{\texttt{particle\_id.hpp} --- Identity Layer}
+\label{sec:particle-id}
+% ============================================================================
+
+\subsection{The \texttt{ParticleID} Enum}
+
+\texttt{ParticleID} is a scoped enum with \texttt{std::int32\_t} backing.
+Negative values are reserved.  Positive values are assigned at runtime by
+the species registry.
+
+\begin{lstlisting}[style=cpp20, caption={\texttt{include/physics/particle\_id.hpp} --- enum definition}]
+namespace vsepr::physics {
+
+enum class ParticleID : std::int32_t {
+    nuclear_placeholder    =  0,
+
+    // Emitted decay particles
+    alpha_particle         = -1,
+    beta_minus             = -2,
+    gamma_photon           = -3,
+    energy_packet_generic  = -4,
+    beta_plus              = -5,
+    electron_capture_token = -6,
+    neutron_emission       = -7,
+    proton_emission        = -8,
+    neutrino_loss_token    = -9,
+
+    // Defect tokens
+    vacancy_token          = -10,
+    interstitial_token     = -11,
+    defect_cluster_token   = -12,
+    helium_bubble_seed     = -13,
+    lattice_damage_packet  = -14
+};
+
+} // namespace vsepr::physics
+\end{lstlisting}
+
+The enum partitions into three sub-ranges that the constexpr queries
+exploit directly:
+
+\[
+\underbrace{[-14,\,-10]}_{\text{defect tokens}}
+\quad
+\underbrace{[-9,\,-1]}_{\text{emitted particles}}
+\quad
+\underbrace{\{0\}}_{\text{placeholder}}
+\quad
+\underbrace{[1,\,+\infty)}_{\text{matter species (runtime)}}
+\]
+
+\subsection{Constexpr Query Functions}
+
+All five queries are \texttt{[[nodiscard]] constexpr noexcept}. They cost
+zero runtime cycles when the argument is a compile-time constant.
+
+\begin{lstlisting}[style=cpp20, caption={Constexpr queries --- \texttt{particle\_id.hpp}}]
+// Reserved: 0 through -99 (the full engine sentinel range)
+[[nodiscard]] constexpr bool is_reserved_particle_id(ParticleID id) noexcept {
+    const auto v = static_cast<std::int32_t>(id);
+    return (v <= 0 && v >= -99);
+}
+
+// Transportable: physically propagates through matter
+[[nodiscard]] constexpr bool is_transportable(ParticleID id) noexcept {
+    switch (id) {
+        case ParticleID::alpha_particle:
+        case ParticleID::beta_minus:
+        case ParticleID::gamma_photon:
+        case ParticleID::beta_plus:
+        case ParticleID::neutron_emission:
+        case ParticleID::proton_emission:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// Bookkeeping only: token exists for accounting, never transported
+[[nodiscard]] constexpr bool is_bookkeeping_only(ParticleID id) noexcept {
+    switch (id) {
+        case ParticleID::energy_packet_generic:
+        case ParticleID::electron_capture_token:
+        case ParticleID::neutrino_loss_token:
+            return true;
+        default:
+            return false;
+    }
+}
+
+// Defect token: range check [-14, -10]
+[[nodiscard]] constexpr bool is_defect_token(ParticleID id) noexcept {
+    const auto v = static_cast<std::int32_t>(id);
+    return (v <= -10 && v >= -14);
+}
+
+// String label for logging and output
+[[nodiscard]] constexpr std::string_view to_string(ParticleID id) noexcept {
+    switch (id) {
+        case ParticleID::nuclear_placeholder:    return "nuclear_placeholder";
+        case ParticleID::alpha_particle:         return "alpha_particle";
+        case ParticleID::beta_minus:             return "beta_minus";
+        case ParticleID::gamma_photon:           return "gamma_photon";
+        case ParticleID::energy_packet_generic:  return "energy_packet_generic";
+        case ParticleID::beta_plus:              return "beta_plus";
+        case ParticleID::electron_capture_token: return "electron_capture_token";
+        case ParticleID::neutron_emission:       return "neutron_emission";
+        case ParticleID::proton_emission:        return "proton_emission";
+        case ParticleID::neutrino_loss_token:    return "neutrino_loss_token";
+        case ParticleID::vacancy_token:          return "vacancy_token";
+        case ParticleID::interstitial_token:     return "interstitial_token";
+        case ParticleID::defect_cluster_token:   return "defect_cluster_token";
+        case ParticleID::helium_bubble_seed:     return "helium_bubble_seed";
+        case ParticleID::lattice_damage_packet:  return "lattice_damage_packet";
+        default:                                 return "unknown_particle_id";
+    }
+}
+\end{lstlisting}
+
+\subsection{Query Classification Table}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{ParticleID} & \textbf{reserved} & \textbf{transportable} & \textbf{bookkeeping} & \textbf{defect} \\
+\midrule
+\texttt{nuclear\_placeholder}    & \checkmark & & & \\
+\texttt{alpha\_particle}         & \checkmark & \checkmark & & \\
+\texttt{beta\_minus}             & \checkmark & \checkmark & & \\
+\texttt{gamma\_photon}           & \checkmark & \checkmark & & \\
+\texttt{energy\_packet\_generic} & \checkmark & & \checkmark & \\
+\texttt{beta\_plus}              & \checkmark & \checkmark & & \\
+\texttt{electron\_capture\_token}& \checkmark & & \checkmark & \\
+\texttt{neutron\_emission}       & \checkmark & \checkmark & & \\
+\texttt{proton\_emission}        & \checkmark & \checkmark & & \\
+\texttt{neutrino\_loss\_token}   & \checkmark & & \checkmark & \\
+\texttt{vacancy\_token}          & \checkmark & & & \checkmark \\
+\texttt{interstitial\_token}     & \checkmark & & & \checkmark \\
+\texttt{defect\_cluster\_token}  & \checkmark & & & \checkmark \\
+\texttt{helium\_bubble\_seed}    & \checkmark & & & \checkmark \\
+\texttt{lattice\_damage\_packet} & \checkmark & & & \checkmark \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{\texttt{decay\_event.hpp} --- Event Record}
+\label{sec:decay-event}
+% ============================================================================
+
+\texttt{DecayEvent} is a plain aggregate that captures the full
+information of a single nuclear transition.  Default member
+initialisation means a value-constructed \texttt{DecayEvent\{\}} is
+always zero-safe.
+
+\begin{lstlisting}[style=cpp20, caption={\texttt{include/physics/decay\_event.hpp}}]
+namespace vsepr::physics {
+
+struct DecayEvent {
+    static constexpr std::size_t max_emitted_particles = 8;
+
+    std::int32_t parent_species_id  {0};
+    std::int32_t daughter_species_id {0};
+
+    std::array<ParticleID, max_emitted_particles> emitted_particle_ids {};
+    std::size_t emitted_count {0};
+
+    double released_energy_eV          {0.0};
+    double deposited_energy_fraction   {0.0};
+    double transported_energy_fraction {0.0};
+    double local_damage_score          {0.0};
+
+    double event_time_s {0.0};
+    double confidence   {0.0};
+
+    [[nodiscard]] bool add_emitted(ParticleID id) noexcept {
+        if (emitted_count >= emitted_particle_ids.size()) {
+            return false;
+        }
+        emitted_particle_ids[emitted_count++] = id;
+        return true;
+    }
+};
+
+} // namespace vsepr::physics
+\end{lstlisting}
+
+\subsection{Field Semantics}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Field} & \textbf{Type} & \textbf{Meaning} \\
+\midrule
+\texttt{parent\_species\_id}            & \texttt{int32\_t} & Engine-assigned ID of parent nuclide \\
+\texttt{daughter\_species\_id}          & \texttt{int32\_t} & Engine-assigned ID of daughter nuclide \\
+\texttt{emitted\_particle\_ids}         & \texttt{array<ParticleID,8>} & Reserved IDs of emitted particles \\
+\texttt{emitted\_count}                 & \texttt{size\_t}  & How many slots are populated \\
+\texttt{released\_energy\_eV}           & \texttt{double}   & Total Q-value in electron-volts \\
+\texttt{deposited\_energy\_fraction}    & \texttt{double}   & Fraction absorbed locally $\in [0,1]$ \\
+\texttt{transported\_energy\_fraction}  & \texttt{double}   & Fraction carried away $\in [0,1]$ \\
+\texttt{local\_damage\_score}           & \texttt{double}   & Lattice displacement proxy $\in [0,1]$ \\
+\texttt{event\_time\_s}                 & \texttt{double}   & Engine time of event in seconds \\
+\texttt{confidence}                     & \texttt{double}   & Source reliability $\in [0,1]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The invariant \texttt{deposited\_energy\_fraction + transported\_energy\_fraction $\approx$ 1}
+is enforced by the builder factories but not by the struct itself, which
+remains a plain data holder.
+
+% ============================================================================
+\section{\texttt{decay\_event\_builder.hpp} --- Factory Layer}
+\label{sec:builder}
+% ============================================================================
+
+\subsection{Nuclear State and Daughter Arithmetic}
+
+\texttt{NuclearState} is a minimal struct carrying only the fields
+needed for transition arithmetic.  It does \emph{not} replace
+\texttt{ElementDescriptor} (the full identity layer).
+
+\begin{lstlisting}[style=cpp20, caption={Transition structs and constexpr daughter arithmetic}]
+namespace vsepr::physics {
+
+struct NuclearState {
+    std::int32_t species_id {0};
+    int Z {0};
+    int A {0};
+};
+
+struct DaughterState {
+    int Z {0};
+    int A {0};
+};
+
+[[nodiscard]] constexpr DaughterState
+alpha_daughter(const NuclearState& s) noexcept {
+    return DaughterState{ s.Z - 2, s.A - 4 };
+}
+
+[[nodiscard]] constexpr DaughterState
+beta_minus_daughter(const NuclearState& s) noexcept {
+    return DaughterState{ s.Z + 1, s.A };
+}
+
+[[nodiscard]] constexpr DaughterState
+beta_plus_daughter(const NuclearState& s) noexcept {
+    return DaughterState{ s.Z - 1, s.A };
+}
+
+} // namespace vsepr::physics
+\end{lstlisting}
+
+The arithmetic corresponds directly to the standard nuclear transition
+equations:
+\[
+\alpha:\quad S(Z,A) \;\to\; S(Z-2,\,A-4) + P_{-1}
+\]
+\[
+\beta^-:\quad S(Z,A) \;\to\; S(Z+1,\,A) + P_{-2} + P_{-9}
+\]
+\[
+\beta^+:\quad S(Z,A) \;\to\; S(Z-1,\,A) + P_{-5} + P_{-9}
+\]
+
+\subsection{Builder Factories}
+
+Each factory populates a \texttt{DecayEvent} with mode-specific energy
+partitioning defaults and the correct emitted-particle list.
+
+\begin{lstlisting}[style=cpp20, caption={Alpha decay factory}]
+// Alpha: heavy, short-range, high local damage
+// Deposited 0.85 / Transported 0.15 / Damage 0.90
+[[nodiscard]] inline DecayEvent make_alpha_decay(
+    std::int32_t parent_species_id,
+    std::int32_t daughter_species_id,
+    double released_energy_eV,
+    double event_time_s,
+    double confidence
+) {
+    DecayEvent ev {};
+    ev.parent_species_id   = parent_species_id;
+    ev.daughter_species_id = daughter_species_id;
+    ev.released_energy_eV  = released_energy_eV;
+    ev.event_time_s        = event_time_s;
+    ev.confidence          = confidence;
+    ev.deposited_energy_fraction   = 0.85;
+    ev.transported_energy_fraction = 0.15;
+    ev.local_damage_score          = 0.90;
+    (void)ev.add_emitted(ParticleID::alpha_particle);
+    return ev;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=cpp20, caption={Beta-minus decay factory}]
+// Beta-minus: light, medium range, moderate damage
+// Deposited 0.35 / Transported 0.65 / Damage 0.30
+[[nodiscard]] inline DecayEvent make_beta_minus_decay(
+    std::int32_t parent_species_id,
+    std::int32_t daughter_species_id,
+    double released_energy_eV,
+    double event_time_s,
+    double confidence
+) {
+    DecayEvent ev {};
+    ev.parent_species_id   = parent_species_id;
+    ev.daughter_species_id = daughter_species_id;
+    ev.released_energy_eV  = released_energy_eV;
+    ev.event_time_s        = event_time_s;
+    ev.confidence          = confidence;
+    ev.deposited_energy_fraction   = 0.35;
+    ev.transported_energy_fraction = 0.65;
+    ev.local_damage_score          = 0.30;
+    (void)ev.add_emitted(ParticleID::beta_minus);
+    (void)ev.add_emitted(ParticleID::neutrino_loss_token);
+    return ev;
+}
+\end{lstlisting}
+
+\begin{lstlisting}[style=cpp20, caption={Gamma decay factory}]
+// Gamma: penetrating, low local damage, high transport
+// Deposited 0.10 / Transported 0.90 / Damage 0.05
+[[nodiscard]] inline DecayEvent make_gamma_decay(
+    std::int32_t parent_species_id,
+    std::int32_t daughter_species_id,
+    double released_energy_eV,
+    double event_time_s,
+    double confidence
+) {
+    DecayEvent ev {};
+    ev.parent_species_id   = parent_species_id;
+    ev.daughter_species_id = daughter_species_id;
+    ev.released_energy_eV  = released_energy_eV;
+    ev.event_time_s        = event_time_s;
+    ev.confidence          = confidence;
+    ev.deposited_energy_fraction   = 0.10;
+    ev.transported_energy_fraction = 0.90;
+    ev.local_damage_score          = 0.05;
+    (void)ev.add_emitted(ParticleID::gamma_photon);
+    return ev;
+}
+\end{lstlisting}
+
+\subsection{Energy Partitioning Defaults}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Factory} & \textbf{Deposited} & \textbf{Transported} & \textbf{Damage score} \\
+\midrule
+\texttt{make\_alpha\_decay}     & 0.85 & 0.15 & 0.90 \\
+\texttt{make\_beta\_minus\_decay} & 0.35 & 0.65 & 0.30 \\
+\texttt{make\_gamma\_decay}     & 0.10 & 0.90 & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{\texttt{kinetic\_event\_kind.hpp} --- Classification}
+\label{sec:eventkind}
+% ============================================================================
+
+\texttt{EventKind} is the coarse universal classifier that sits at the top
+of the kinetics layer.  Formation-specific \texttt{EventType} values from
+\texttt{formation\_kinetics.hpp} (28-type taxonomy) map into the 11 kinds
+here at the scheduling layer.
+
+\begin{lstlisting}[style=cpp20, caption={\texttt{include/kinetics/kinetic\_event\_kind.hpp}}]
+namespace vsepr::kinetics {
+
+enum class EventKind : std::int32_t {
+    unknown        = 0,
+    decay,
+    transport,
+    collision,
+    adsorption,
+    desorption,
+    coalescence,
+    nucleation,
+    deposition,
+    restructuring,
+    phase_change
+};
+
+} // namespace vsepr::kinetics
+\end{lstlisting}
+
+% ============================================================================
+\section{\texttt{kinetic\_event\_record.hpp} --- Kinetics Wrapper}
+\label{sec:record}
+% ============================================================================
+
+\texttt{KineticEventRecord} wraps any physics-specific event in a single
+schedulable unit.  The payload is a \texttt{std::variant} so the kinetic
+scheduler never needs to cast or union-punch.
+
+\begin{lstlisting}[style=cpp20, caption={\texttt{include/kinetics/kinetic\_event\_record.hpp}}]
+namespace vsepr::kinetics {
+
+struct GenericTransportEvent {
+    int source_id {0};
+    int target_id {0};
+    double time_s {0.0};
+    double confidence {0.0};
+};
+
+using EventPayload = std::variant<
+    vsepr::physics::DecayEvent,
+    GenericTransportEvent
+>;
+
+struct KineticEventRecord {
+    EventKind kind {EventKind::unknown};
+    double intensity {0.0};
+    double barrier_score {0.0};
+    double environment_multiplier {1.0};
+    EventPayload payload {};
+};
+
+} // namespace vsepr::kinetics
+\end{lstlisting}
+
+\subsection{Dispatch Pattern}
+
+The canonical dispatch pattern over \texttt{EventPayload} uses
+\texttt{std::get\_if}, which is zero-overhead on most ABIs:
+
+\begin{lstlisting}[style=cpp20, caption={Variant dispatch at the scheduling layer}]
+void dispatch(const KineticEventRecord& rec) {
+    if (auto* d = std::get_if<vsepr::physics::DecayEvent>(&rec.payload)) {
+        // nuclear decay path
+        process_decay(*d);
+    } else if (auto* t = std::get_if<GenericTransportEvent>(&rec.payload)) {
+        // transport path
+        process_transport(*t);
+    }
+}
+\end{lstlisting}
+
+% ============================================================================
+\section{Plain C Legacy API}
+\label{sec:c-api}
+% ============================================================================
+
+The plain C bridge in \texttt{legacy/c\_api/} mirrors the C++ enum with
+SCREAMING\_SNAKE\_CASE constants and provides four query functions via
+\texttt{extern "C"} linkage.
+
+\begin{lstlisting}[style=clang, caption={\texttt{legacy/c\_api/particle\_ids.h}}]
+typedef enum ParticleID {
+    PARTICLE_NUCLEAR_PLACEHOLDER    =  0,
+
+    PARTICLE_ALPHA                  = -1,
+    PARTICLE_BETA_MINUS             = -2,
+    PARTICLE_GAMMA                  = -3,
+    PARTICLE_ENERGY_PACKET          = -4,
+    PARTICLE_BETA_PLUS              = -5,
+    PARTICLE_ELECTRON_CAPTURE       = -6,
+    PARTICLE_NEUTRON_EMISSION       = -7,
+    PARTICLE_PROTON_EMISSION        = -8,
+    PARTICLE_NEUTRINO_LOSS          = -9,
+
+    PARTICLE_VACANCY                = -10,
+    PARTICLE_INTERSTITIAL           = -11,
+    PARTICLE_DEFECT_CLUSTER         = -12,
+    PARTICLE_HELIUM_BUBBLE_SEED     = -13,
+    PARTICLE_LATTICE_DAMAGE_PACKET  = -14
+} ParticleID;
+
+const char* particle_id_name(int id);
+int particle_id_is_reserved(int id);
+int particle_id_is_transportable(int id);
+int particle_id_is_bookkeeping_only(int id);
+\end{lstlisting}
+
+\begin{lstlisting}[style=clang, caption={\texttt{legacy/c\_api/decay\_event.h}}]
+#define MAX_EMITTED_PARTICLES 8
+
+typedef struct DecayEvent {
+    int parent_species_id;
+    int daughter_species_id;
+
+    int emitted_particle_ids[MAX_EMITTED_PARTICLES];
+    size_t emitted_count;
+
+    double released_energy_eV;
+    double deposited_energy_fraction;
+    double transported_energy_fraction;
+    double local_damage_score;
+
+    double event_time_s;
+    double confidence;
+} DecayEvent;
+
+void decay_event_init(DecayEvent* ev);
+int decay_event_add_emitted(DecayEvent* ev, int particle_id);
+\end{lstlisting}
+
+% ============================================================================
+\section{Test Suite --- \texttt{test\_particle\_id\_decay.cpp}}
+\label{sec:tests}
+% ============================================================================
+
+The test executable runs 76 assertions across 8 groups and exits
+non-zero on any failure.
+
+\begin{lstlisting}[style=cpp20, caption={Test harness macro and structure}]
+#define CHECK(cond, msg) do { \
+    ++tests_run; \
+    if (cond) { ++tests_passed; std::printf("  [PASS] %s\n", msg); } \
+    else      { std::printf("  [FAIL] %s  (line %d)\n", msg, __LINE__); } \
+} while(0)
+\end{lstlisting}
+
+\begin{lstlisting}[style=cpp20, caption={Alpha decay test --- Pu-239 to U-235}]
+auto ev = make_alpha_decay(
+    /*parent_species_id=*/  942390,
+    /*daughter_species_id=*/922350,
+    /*released_energy_eV=*/ 5.24e6,
+    /*event_time_s=*/        1.0,
+    /*confidence=*/          0.98
+);
+
+CHECK(ev.parent_species_id   == 942390, "parent ID");
+CHECK(ev.daughter_species_id == 922350, "daughter ID");
+CHECK(ev.emitted_count == 1,            "one emitted particle");
+CHECK(ev.emitted_particle_ids[0] == ParticleID::alpha_particle, "emitted alpha");
+CHECK(ev.released_energy_eV > 5.0e6,   "energy > 5 MeV");
+CHECK(ev.deposited_energy_fraction > 0.8,   "high deposition");
+CHECK(ev.local_damage_score > 0.8,          "high damage");
+\end{lstlisting}
+
+\begin{lstlisting}[style=cpp20, caption={Overflow guard --- capacity capped at 8}]
+DecayEvent ev {};
+for (int i = 0; i < 8; ++i) {
+    CHECK(ev.add_emitted(ParticleID::gamma_photon), "add succeeds");
+}
+CHECK(!ev.add_emitted(ParticleID::gamma_photon), "9th add fails (overflow)");
+CHECK(ev.emitted_count == 8, "count capped at 8");
+\end{lstlisting}
+
+\begin{lstlisting}[style=cpp20, caption={Variant dispatch test}]
+KineticEventRecord rec {};
+rec.kind    = EventKind::decay;
+rec.payload = make_alpha_decay(942390, 922350, 5.24e6, 1.0, 0.98);
+
+bool dispatched = false;
+if (auto* d = std::get_if<vsepr::physics::DecayEvent>(&rec.payload)) {
+    dispatched = true;
+    CHECK(d->parent_species_id == 942390, "variant: parent ID");
+    CHECK(d->emitted_count == 1,          "variant: emitted count");
+}
+CHECK(dispatched, "variant dispatch succeeded");
+\end{lstlisting}
+
+\begin{lstlisting}[style=cpp20, caption={Daughter-state arithmetic test}]
+NuclearState pu239 { 942390, 94, 239 };
+
+auto da = alpha_daughter(pu239);
+CHECK(da.Z == 92, "alpha daughter Z = 92 (U)");
+CHECK(da.A == 235, "alpha daughter A = 235");
+
+auto db = beta_minus_daughter(pu239);
+CHECK(db.Z == 95, "beta- daughter Z = 95 (Am)");
+CHECK(db.A == 239, "beta- daughter A = 239");
+\end{lstlisting}
+
+\subsection{Test Results}
+
+\begin{center}
+\begin{tabular}{llr}
+\toprule
+\textbf{Group} & \textbf{Coverage} & \textbf{Assertions} \\
+\midrule
+Constexpr queries      & reserved / transportable / bookkeeping / defect & 19 \\
+\texttt{to\_string}    & all 15 known IDs + unknown sentinel              & 16 \\
+Alpha decay            & parent, daughter, emitted, energy, fractions     &  8 \\
+Beta-minus decay       & two emitted particles, fractions                 &  5 \\
+Gamma decay            & one emitted, transport fraction, damage          &  5 \\
+Overflow guard         & 8 successful adds + 1 failure + count check      & 10 \\
+Variant dispatch       & decay + transport variant paths                  &  8 \\
+Daughter arithmetic    & $\alpha$, $\beta^-$, $\beta^+$ Z and A values   &  6 \\
+\midrule
+\textbf{Total}         &                                                  & \textbf{77} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Compile and run:
+
+\begin{lstlisting}[style=cpp20, language={},
+  caption={Build and execute}]
+g++ -std=c++20 -I include -o test_particle_id_decay \
+    tests/test_particle_id_decay.cpp
+./test_particle_id_decay
+# Results: 76 / 76 passed
+\end{lstlisting}
+
+% ============================================================================
+\section{Integration with Existing Infrastructure}
+\label{sec:integration}
+% ============================================================================
+
+\subsection{Orthogonality with DecayMode and DecayType}
+
+Three enums address three different questions:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Enum} & \textbf{Location} & \textbf{Answers} \\
+\midrule
+\texttt{vsepr::nuclear::DecayMode}     & \texttt{decay\_chains.hpp}      & How does the chain progress? \\
+\texttt{atomistic::nuclear::DecayType} & \texttt{nuclear\_stability.hpp} & What mode dominates at this Z? \\
+\texttt{vsepr::physics::ParticleID}    & \texttt{particle\_id.hpp}       & What was emitted? \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{DecayMode::Alpha} in \texttt{decay\_chains.hpp} classifies a step
+in the Th/U/Ac natural series.  \texttt{ParticleID::alpha\_particle}
+identifies the He-4 nucleus that was emitted from that step as a
+bookkeeping object --- they are complementary, not competing.
+
+\subsection{Relationship to ElementDescriptor}
+
+\texttt{ElementDescriptor} (in \texttt{include/core/element\_descriptor.hpp})
+carries the full identity fields for an element or isotope, including:
+\texttt{decay\_clock} (half-life countdown in seconds), \texttt{metastable}
+(nuclear isomer flag), \texttt{mass\_number} $A$, \texttt{neutron\_number} $N$,
+and \texttt{isotope\_label}.
+
+\texttt{NuclearState} in the builder layer carries only \texttt{species\_id},
+\texttt{Z}, and \texttt{A} --- the minimum needed for transition arithmetic.
+Full identity resolution defers to \texttt{ElementDescriptor}.
+
+\subsection{Layer Mapping}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Layer} & \textbf{Files} & \textbf{Role} \\
+\midrule
+A (identity)  & \texttt{particle\_id.hpp}, \texttt{particle\_ids.h} & Signed-int namespace \\
+B (event)     & \texttt{decay\_event.hpp}, \texttt{decay\_event\_builder.hpp} & Physics payload \\
+C (kinetics)  & \texttt{kinetic\_event\_kind.hpp}, \texttt{kinetic\_event\_record.hpp} & Scheduler wrapper \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

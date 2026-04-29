@@ -1,0 +1,19 @@
+# test_pbc_error_no_cell.vsim
+# Parser test: calling pbc.* with no [boundary] configured must raise error.
+# The parser succeeds (no [boundary] is valid — open system).
+# The error is raised at binding call time, NOT at parse time.
+# C++ test harness verifies this via pbc_bindings::require_periodic().
+# Expression-level execution: WO-57C
+
+[project]
+name        = test_pbc_error_no_cell
+version     = v5.0.0-beta.8
+determinism = true
+
+# Intentionally no [boundary] or [cell] block.
+# pbc.* calls in this context must throw at runtime.
+
+# [script] — 57C
+# expect_error("pbc.wrap", "no periodic cell") {
+#     rw = pbc.wrap(vec3(1.0, 1.0, 1.0))
+# }

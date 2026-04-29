@@ -1,0 +1,653 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{longtable}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{Formation Engine Methodology} \\
+\Large Section 8c --- Pipe Flow and Thermal Analysis Module}
+\author{Formation Engine Development Team}
+\date{Version 3.0.1 --- As Implemented in Codebase}
+
+\begin{document}
+\maketitle
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction and Motivation}
+% ============================================================================
+
+Sections~8 and~8b established the thermodynamic framework and heat-gated
+reaction control within the atomistic simulation kernel.  This section
+extends the thermal infrastructure to \textbf{macroscopic pipe flow and
+heat transfer analysis}, providing a deterministic, interactive module
+for studying internal forced convection in cylindrical conduits.
+
+The pipe flow and thermal module occupies Layer~5 (macro-scale) of the
+VSEPR-SIM layer stack (cf.\ \texttt{include/layer\_stack.hpp}) and is
+designed to:
+
+\begin{enumerate}
+  \item Solve steady-state internal pipe flow for both laminar and turbulent
+        regimes,
+  \item Couple flow solutions to convective heat transfer via established
+        Nusselt correlations,
+  \item Model thermal conduction through pipe walls,
+  \item Propagate energy balance through multi-segment series networks,
+  \item Support stochastic network generation for uncertainty studies,
+  \item Provide parametric sweep capability for design-space exploration,
+  \item Export results as Markdown reports and CSV datasets.
+\end{enumerate}
+
+All computations use SI units internally.  Unit conversions are applied
+\textbf{only at the display boundary}, preserving kernel clarity and
+preventing unit confusion in future extensions.
+
+% ============================================================================
+\section{Governing Equations}
+% ============================================================================
+
+\subsection{Reynolds Number and Flow Regime Classification}
+
+The Reynolds number characterizes the flow regime:
+
+\begin{equation}
+  \mathrm{Re} = \frac{\rho \, v \, D}{\mu}
+  \label{eq:reynolds}
+\end{equation}
+
+where $\rho$ is the fluid density~[kg/m$^3$], $v$ the mean velocity~[m/s],
+$D$ the inner pipe diameter~[m], and $\mu$ the dynamic viscosity~[Pa\,s].
+
+The flow is classified as:
+
+\begin{equation}
+  \text{Regime} =
+  \begin{cases}
+    \text{Laminar}    & \mathrm{Re} < 2300 \\
+    \text{Turbulent}  & \mathrm{Re} \geq 2300
+  \end{cases}
+\end{equation}
+
+\noindent
+The transition region ($2000 < \mathrm{Re} < 4000$) is handled by the
+Churchill correlation, which provides a smooth blend (Section~\ref{sec:friction}).
+
+\subsection{Pressure Drop: Darcy--Weisbach}
+
+The pressure drop across a pipe segment of length~$L$ is:
+
+\begin{equation}
+  \Delta P = f \cdot \frac{L}{D} \cdot \frac{\rho \, v^2}{2}
+  \label{eq:darcy-weisbach}
+\end{equation}
+
+where $f$ is the Darcy friction factor.
+
+\subsection{Friction Factor}
+\label{sec:friction}
+
+\subsubsection{Laminar Regime}
+
+For $\mathrm{Re} < 2300$, the analytical Hagen--Poiseuille result is used:
+
+\begin{equation}
+  f = \frac{64}{\mathrm{Re}}
+  \label{eq:laminar-friction}
+\end{equation}
+
+\subsubsection{Turbulent and Transitional Regime: Churchill Approximation}
+
+The implicit Colebrook--White equation:
+
+\begin{equation}
+  \frac{1}{\sqrt{f}} = -2.0 \log_{10}
+    \!\left(\frac{\varepsilon/D}{3.7} + \frac{2.51}{\mathrm{Re}\sqrt{f}}\right)
+  \label{eq:colebrook}
+\end{equation}
+
+is solved using the explicit Churchill approximation~\cite{churchill1977},
+which avoids iteration and smoothly covers both the transitional and
+fully turbulent regimes:
+
+\begin{align}
+  A &= \left[2.457 \ln\!\left(\frac{1}{(7/\mathrm{Re})^{0.9}
+       + 0.27\,\varepsilon/D}\right)\right]^{16} \\
+  B &= \left(\frac{37530}{\mathrm{Re}}\right)^{16} \\
+  f &= 8\left[\left(\frac{8}{\mathrm{Re}}\right)^{12}
+       + \frac{1}{(A+B)^{3/2}}\right]^{1/12}
+  \label{eq:churchill}
+\end{align}
+
+\subsection{Hagen--Poiseuille Volume Flow Rate (Laminar Verification)}
+
+For laminar flow, the analytical volume flow rate provides a cross-check:
+
+\begin{equation}
+  Q = \frac{\pi \, D^4 \, \Delta P}{128 \, \mu \, L}
+  \label{eq:hagen-poiseuille}
+\end{equation}
+
+This identity is validated in the test suite (Section~\ref{sec:validation}).
+
+% ============================================================================
+\section{Heat Transfer Model}
+% ============================================================================
+
+\subsection{Nusselt Number Correlations}
+
+\subsubsection{Laminar: Constant Wall Temperature}
+
+For fully-developed laminar flow with constant wall temperature:
+
+\begin{equation}
+  \mathrm{Nu} = 3.66
+  \label{eq:nu-laminar}
+\end{equation}
+
+\subsubsection{Turbulent: Dittus--Boelter Correlation}
+
+For turbulent flow ($\mathrm{Re} > 2300$, $0.6 \leq \mathrm{Pr} \leq 160$),
+the Dittus--Boelter equation for heating:
+
+\begin{equation}
+  \mathrm{Nu} = 0.023 \, \mathrm{Re}^{0.8} \, \mathrm{Pr}^{0.4}
+  \label{eq:dittus-boelter}
+\end{equation}
+
+where the Prandtl number is:
+
+\begin{equation}
+  \mathrm{Pr} = \frac{\mu \, c_p}{k_f}
+  \label{eq:prandtl}
+\end{equation}
+
+\subsection{Convection Coefficient}
+
+The convective heat transfer coefficient is derived from the Nusselt number:
+
+\begin{equation}
+  h = \frac{\mathrm{Nu} \cdot k_f}{D}
+  \label{eq:h-conv}
+\end{equation}
+
+where $k_f$ is the fluid thermal conductivity~[W/(m\,K)].
+
+\subsection{Thermal Resistance Network}
+
+Each pipe segment is modeled as two thermal resistances in series:
+
+\begin{equation}
+  R_{\text{conv}} = \frac{1}{h \cdot \pi \, D_i \, L}
+  \label{eq:r-conv}
+\end{equation}
+
+\begin{equation}
+  R_{\text{wall}} = \frac{\ln(r_o / r_i)}{2\pi \, k_w \, L}
+  \label{eq:r-wall}
+\end{equation}
+
+\begin{equation}
+  R_{\text{total}} = R_{\text{conv}} + R_{\text{wall}}
+  \label{eq:r-total}
+\end{equation}
+
+where $r_i = D_i/2$, $r_o = D_o/2$, and $k_w$ is the wall material
+thermal conductivity.
+
+\subsection{Outlet Temperature: Exponential Model}
+
+For constant wall temperature, the fluid outlet temperature is:
+
+\begin{equation}
+  T_{\text{out}} = T_w - (T_w - T_{\text{in}}) \, e^{-\mathrm{NTU}}
+  \label{eq:t-out}
+\end{equation}
+
+where the Number of Transfer Units is:
+
+\begin{equation}
+  \mathrm{NTU} = \frac{h \cdot P \cdot L}{\dot{m} \, c_p}
+  \label{eq:ntu}
+\end{equation}
+
+with $P = \pi D_i$ (wetted perimeter), $\dot{m} = \rho v A$ (mass flow
+rate), and $c_p$ the fluid specific heat.
+
+\subsection{Heat Transfer and LMTD}
+
+The total heat exchanged in a segment is:
+
+\begin{equation}
+  \dot{Q} = \dot{m} \, c_p \, (T_{\text{out}} - T_{\text{in}})
+  \label{eq:energy-balance}
+\end{equation}
+
+The log-mean temperature difference provides the effective driving force:
+
+\begin{equation}
+  \Delta T_{\text{lm}} = \frac{\Delta T_1 - \Delta T_2}
+                              {\ln(\Delta T_1 / \Delta T_2)}
+  \label{eq:lmtd}
+\end{equation}
+
+where $\Delta T_1 = T_w - T_{\text{in}}$ and
+$\Delta T_2 = T_w - T_{\text{out}}$.
+
+\subsection{Thermal Effectiveness}
+
+The network effectiveness is defined as:
+
+\begin{equation}
+  \varepsilon = \frac{T_{\text{out}} - T_{\text{in}}}
+                     {T_w - T_{\text{in}}}
+  \label{eq:effectiveness}
+\end{equation}
+
+representing the fraction of maximum achievable temperature change.
+
+% ============================================================================
+\section{Network Topology}
+% ============================================================================
+
+\subsection{Deterministic Series Network}
+
+The primary mode solves $N$ identical pipe segments in series.  The outlet
+temperature of segment~$i$ becomes the inlet temperature of segment~$i+1$:
+
+\begin{equation}
+  T_{\text{in}}^{(i+1)} = T_{\text{out}}^{(i)}, \qquad i = 0, \ldots, N-1
+\end{equation}
+
+All segments share the same geometry, material, and flow velocity.
+Pressure drops and heat transfer rates are accumulated:
+
+\begin{align}
+  \Delta P_{\text{total}} &= \sum_{i=0}^{N-1} \Delta P_i \\
+  \dot{Q}_{\text{total}}  &= \sum_{i=0}^{N-1} \dot{Q}_i
+\end{align}
+
+\subsection{Stochastic Network}
+
+The stochastic mode introduces controlled randomness via a seeded
+\texttt{mt19937\_64} generator:
+
+\begin{itemize}
+  \item Segment lengths drawn from a log-normal distribution:
+        $L_i \sim \text{LogNormal}(\ln L_0, \, 0.3)$
+  \item Inner diameters perturbed:
+        $D_i = D_0 + \mathcal{N}(0, \, 0.002\,\text{m})$, clamped to $\geq 5$~mm
+  \item Wall thickness preserved from the nominal configuration
+\end{itemize}
+
+\noindent
+\textbf{Determinism guarantee:} Identical seed $\Rightarrow$ bit-identical
+output.  Different seeds $\Rightarrow$ statistically different networks.
+This is validated in the test suite (Section~\ref{sec:validation}).
+
+% ============================================================================
+\section{Parametric Sweeps}
+% ============================================================================
+
+The engine provides three built-in parametric sweep functions, each
+varying a single design parameter while holding all others at their
+configured values:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Sweep & Parameter & Range & Outputs \\
+\midrule
+\texttt{sweep\_velocity}         & $v$ [m/s]   & $[v_{\min}, v_{\max}]$ & $\Delta P$, $\dot{Q}$, $T_{\text{out}}$, $\varepsilon$ \\
+\texttt{sweep\_diameter}         & $D_i$ [m]   & $[D_{\min}, D_{\max}]$ & $\Delta P$, $\dot{Q}$, $T_{\text{out}}$, $\varepsilon$ \\
+\texttt{sweep\_wall\_temperature} & $T_w$ [K]  & $[T_{\min}, T_{\max}]$ & $\Delta P$, $\dot{Q}$, $T_{\text{out}}$, $\varepsilon$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each sweep returns $n$ points uniformly distributed across the range.
+Sweeps can be exported to CSV or visualized in the GUI panel
+(Section~\ref{sec:gui}).
+
+% ============================================================================
+\section{Material and Fluid Database}
+% ============================================================================
+
+\subsection{Fluid Properties}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Fluid & $\rho$ [kg/m$^3$] & $\mu$ [Pa\,s] & $c_p$ [J/(kg\,K)] & $k_f$ [W/(m\,K)] \\
+\midrule
+Water (20\textdegree C) & 998.2 & $1.002 \times 10^{-3}$ & 4182 & 0.598 \\
+Water (80\textdegree C) & 971.8 & $3.545 \times 10^{-4}$ & 4197 & 0.670 \\
+Air (20\textdegree C)   & 1.204 & $1.825 \times 10^{-5}$ & 1007 & 0.0257 \\
+Ethylene Glycol          & 1113  & $1.61 \times 10^{-2}$  & 2382 & 0.258 \\
+Engine Oil (SAE~30)      & 876   & 0.290                  & 1964 & 0.145 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Pipe Materials}
+
+\begin{center}
+\begin{tabular}{lccccc}
+\toprule
+Material & $k_w$ [W/(m\,K)] & $\varepsilon$ [m] & $\rho_w$ [kg/m$^3$] & $\sigma_y$ [MPa] & $\alpha$ [$10^{-6}$/K] \\
+\midrule
+Copper    & 385   & $1.5 \times 10^{-6}$ & 8960 & 210 & 16.5 \\
+Steel     & 50.2  & $4.5 \times 10^{-5}$ & 7850 & 250 & 12.0 \\
+PVC       & 0.16  & $1.5 \times 10^{-6}$ & 1400 & 45  & 70.0 \\
+Stainless & 16.3  & $2.0 \times 10^{-6}$ & 8000 & 205 & 17.3 \\
+Aluminum  & 237   & $1.5 \times 10^{-6}$ & 2700 & 276 & 23.1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+Source: Incropera et al.\ (2007), engineering data tables.  Values represent
+typical properties; temperature-dependent lookup is a planned future extension.
+
+% ============================================================================
+\section{Unit Conversion Architecture}
+% ============================================================================
+
+A core design principle of the pipe thermal module is that \textbf{unit
+conversions occur only at the display boundary}.  The kernel operates
+entirely in SI:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Quantity & Kernel Unit \\
+\midrule
+Temperature  & K (Kelvin) \\
+Pressure     & Pa (Pascal) \\
+Length        & m (metre) \\
+Velocity     & m/s \\
+Mass flow    & kg/s \\
+Heat flux    & W \\
+Conductivity & W/(m\,K) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The \texttt{pipe\_thermal::units} namespace provides conversion functions
+for display:
+
+\begin{lstlisting}
+namespace pipe_thermal::units {
+  double K_to_C(double K);      double C_to_K(double C);
+  double K_to_F(double K);      double F_to_K(double F);
+  double Pa_to_kPa(double Pa);  double Pa_to_bar(double Pa);
+  double Pa_to_psi(double Pa);  double Pa_to_atm(double Pa);
+  double m_to_mm(double m);     double m_to_in(double m);
+  double m3s_to_Lmin(double);   double m3s_to_gpm(double);
+  double W_to_kW(double W);     double W_to_BTUhr(double W);
+}
+\end{lstlisting}
+
+These functions are \textbf{never} called inside \texttt{solve\_segment()},
+\texttt{solve\_series\_network()}, or \texttt{solve\_stochastic\_network()}.
+They are only invoked by the TUI, GUI, report generator, and CSV export.
+
+% ============================================================================
+\section{Implementation Architecture}
+% ============================================================================
+
+\subsection{File Map}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+File & Purpose \\
+\midrule
+\texttt{include/pipe\_thermal/pipe\_thermal\_engine.hpp} & Kernel: physics, network solver, sweeps, export \\
+\texttt{include/pipe\_thermal/pipe\_thermal\_panel.hpp}  & ImGui GUI panel \\
+\texttt{apps/pipe\_thermal\_tui.cpp}                     & Interactive TUI (REPL) \\
+\texttt{apps/pipe\_thermal\_viewer.cpp}                  & Standalone ImGui viewer \\
+\texttt{tests/test\_pipe\_thermal.cpp}                   & Validation suite (32 assertions) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Data Flow}
+
+The data flow follows a strict unidirectional pipeline:
+
+\begin{enumerate}
+  \item \textbf{Input:} User provides \texttt{PipeThermalConfig} (all SI).
+  \item \textbf{Kernel:} \texttt{solve\_segment()} computes all intermediates in SI.
+  \item \textbf{Propagation:} \texttt{solve\_series\_network()} chains segments,
+        accumulating totals.
+  \item \textbf{Collection:} \texttt{NetworkResult} stores all segment results
+        and network-level metrics.
+  \item \textbf{Display:} TUI/GUI/report calls \texttt{units::*} for human-readable output.
+\end{enumerate}
+
+\noindent
+This ensures that no intermediate computation ever encounters a unit ambiguity.
+
+\subsection{Anti-Black-Box Design}
+
+Every intermediate quantity is stored in \texttt{SegmentResult} and fully
+accessible to the user:
+
+\begin{itemize}
+  \item Geometry: $L$, $D_i$, $D_o$, wall thickness, flow area, wetted perimeter
+  \item Flow: $v$, $\mathrm{Re}$, laminar/turbulent flag, $f$, $\Delta P$, $Q$, $\dot{m}$
+  \item Thermal: $\mathrm{Nu}$, $h$, $R_{\text{conv}}$, $R_{\text{wall}}$, $R_{\text{total}}$,
+        $T_{\text{in}}$, $T_{\text{out}}$, $T_w$, LMTD, $\dot{Q}$
+  \item Derived: $\varepsilon$, pumping power
+\end{itemize}
+
+No hidden state.  No implicit assumptions.
+
+% ============================================================================
+\section{TUI Application}
+% ============================================================================
+
+The TUI (\texttt{apps/pipe\_thermal\_tui.cpp}) provides a REPL interface:
+
+\begin{lstlisting}[language=bash]
+$ pipe-thermal-tui
+> c              # show configuration
+> f 2            # select fluid (Air)
+> m 3            # select material (PVC)
+> v 2.5          # set velocity to 2.5 m/s
+> d 0.050        # set inner diameter to 50 mm
+> r              # run series network
+> s              # run stochastic network
+> sv 0.5 5.0 20  # sweep velocity from 0.5 to 5.0 m/s, 20 points
+> report         # generate Markdown report
+> csv            # generate CSV export
+> q              # quit
+\end{lstlisting}
+
+Batch mode is also supported:
+
+\begin{lstlisting}[language=bash]
+$ pipe-thermal-tui --batch 10
+\end{lstlisting}
+
+This solves a 10-segment series network with default parameters and
+prints a complete Markdown report to stdout.
+
+% ============================================================================
+\section{GUI Panel}
+\label{sec:gui}
+% ============================================================================
+
+The GUI panel (\texttt{include/pipe\_thermal/pipe\_thermal\_panel.hpp})
+provides an ImGui-based interactive interface with:
+
+\begin{itemize}
+  \item Sliders for all geometric and flow parameters
+  \item Combo boxes for fluid and pipe material selection
+  \item Auto-solve on parameter change
+  \item Per-segment detail table with all intermediates
+  \item Parametric sweep visualization via \texttt{ImGui::PlotLines}
+\end{itemize}
+
+The panel is conditionally compiled under \texttt{BUILD\_VISUALIZATION}
+and can be embedded in any ImGui host application.
+
+% ============================================================================
+\section{Validation}
+\label{sec:validation}
+% ============================================================================
+
+The test suite (\texttt{tests/test\_pipe\_thermal.cpp}) contains 32~assertions
+across 7~test groups:
+
+\subsection{Test Group 1: Laminar Hagen--Poiseuille}
+
+\begin{itemize}
+  \item $\mathrm{Re} < 2300$ confirmed
+  \item $f = 64/\mathrm{Re}$ verified to $\pm 1\%$
+  \item $\Delta P$ matches analytical Hagen--Poiseuille within $1\%$
+  \item $\mathrm{Nu} = 3.66$ verified to $\pm 0.01$
+\end{itemize}
+
+\subsection{Test Group 2: Turbulent Dittus--Boelter}
+
+\begin{itemize}
+  \item $\mathrm{Re} > 2300$ confirmed
+  \item $\mathrm{Nu} = 0.023 \, \mathrm{Re}^{0.8} \, \mathrm{Pr}^{0.4}$ verified to $\pm 5\%$
+  \item $h = \mathrm{Nu} \cdot k_f / D$ verified to $\pm 1\%$
+\end{itemize}
+
+\subsection{Test Group 3: Energy Balance}
+
+The energy balance $\dot{Q} = \dot{m} \, c_p \, \Delta T$ is verified to
+$\pm 0.1\%$ for both laminar and turbulent cases.
+
+\subsection{Test Group 4: Unit Conversions}
+
+All 14~conversion functions are verified against exact reference values.
+
+\subsection{Test Group 5: Deterministic Reproducibility}
+
+\begin{itemize}
+  \item Same seed $\Rightarrow$ identical $T_{\text{out}}$ to machine precision
+  \item Different seed $\Rightarrow$ different $T_{\text{out}}$
+\end{itemize}
+
+\subsection{Test Group 6: Sweep Consistency}
+
+Pressure drop increases monotonically with velocity across the sweep range.
+
+\subsection{Test Group 7: Welford Heat Capacity}
+
+A synthetic Gaussian energy distribution ($\mu = 1000$, $\sigma = 50$,
+$100{,}000$ samples) is fed to both the naive and Welford estimators.
+The Welford result is verified to match the naive result within $10\%$
+and to agree with the analytical $C_v = \sigma^2 / (k_B T^2)$.
+
+\subsection{Validation Summary}
+
+All 32~assertions pass.  The validation covers the complete physics chain
+from Reynolds number through outlet temperature to network effectiveness.
+
+% ============================================================================
+\section{Prerequisite Fixes}
+% ============================================================================
+
+Three prerequisite issues were resolved as part of this development phase:
+
+\subsection{Coulomb Stability (lj\_coulomb.cpp)}
+
+The Coulomb potential $U = k_e q_i q_j / r$ has a $1/r$ singularity that
+causes integrator instability at short range.  A softcore damping term was
+introduced:
+
+\begin{align}
+  r_{\text{soft}}^2 &= r^2 + \delta^2 \qquad (\delta = 0.2\,\text{\AA}) \\
+  U_{\text{coul}} &= \frac{k_e \, q_i \, q_j}{\sqrt{r_{\text{soft}}^2}} \\
+  F_{\text{coul}} &= \frac{k_e \, q_i \, q_j \, r}{r_{\text{soft}}^2 \cdot \sqrt{r_{\text{soft}}^2}}
+\end{align}
+
+Additionally, a force magnitude clamp ($F_{\max} = 1000$~kcal/(mol\,\AA))
+prevents catastrophic acceleration if particles overlap.
+
+\subsection{Neighbor List (neighbor\_list.hpp)}
+
+The O($N^2$) placeholder was replaced with a cell-list accelerated Verlet
+neighbor list:
+
+\begin{itemize}
+  \item Cell grid with side length $\geq r_{\text{list}} = r_{\text{cut}} + r_{\text{skin}}$
+  \item 13-cell half-shell stencil (avoids double counting)
+  \item Periodic boundary condition support via minimum image convention
+  \item Half-skin rebuild criterion: rebuild when any particle has moved
+        more than $r_{\text{skin}}/2$ since last build
+\end{itemize}
+
+Build cost: O($N$) for uniform systems.
+
+\subsection{Welford Heat Capacity (thermodynamics.hpp)}
+
+The \texttt{heat\_capacity\_welford()} function was added to the
+\texttt{atomistic::thermo} namespace, using the existing
+\texttt{atomistic::OnlineStats} (Welford algorithm) for numerically
+stable online variance computation:
+
+\begin{equation}
+  C_v = \frac{\mathrm{Var}(E)}{k_B \, T^2}
+  \label{eq:welford-cv}
+\end{equation}
+
+This avoids the catastrophic cancellation that can occur with the
+naive two-pass formula when $\langle E^2 \rangle \approx \langle E \rangle^2$.
+
+% ============================================================================
+\section{References}
+% ============================================================================
+
+\begin{enumerate}
+  \item Incropera, F.P., DeWitt, D.P., Bergman, T.L., and Lavine, A.S.
+        (2007). \textit{Fundamentals of Heat and Mass Transfer}. 6th~ed.
+        Wiley.
+
+  \item White, F.M. (2011). \textit{Fluid Mechanics}. 7th~ed. McGraw-Hill.
+
+  \item Colebrook, C.F. (1939). ``Turbulent Flow in Pipes, with Particular
+        Reference to the Transition Region Between the Smooth and Rough
+        Pipe Laws.'' \textit{J.\ Inst.\ Civil Eng.}, \textbf{11}, 133--156.
+
+  \item Churchill, S.W. (1977). ``Friction-Factor Equation Spans All
+        Fluid-Flow Regimes.'' \textit{Chem.\ Eng.}, \textbf{84}(24), 91--92.
+        \label{churchill1977}
+
+  \item Dittus, F.W.\ and Boelter, L.M.K. (1930). ``Heat Transfer in
+        Automobile Radiators of the Tubular Type.''
+        \textit{Univ.\ Calif.\ Publ.\ Eng.}, \textbf{2}(13), 443--461.
+
+  \item Welford, B.P. (1962). ``Note on a Method for Calculating
+        Corrected Sums of Squares and Products.''
+        \textit{Technometrics}, \textbf{4}(3), 419--420.
+\end{enumerate}
+
+\end{document}

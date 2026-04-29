@@ -1,0 +1,19 @@
+{
+  "formula": "BaF2",
+  "seed": 63,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 6181,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.050000,
+  "energy_per_atom": -0.025000,
+  "rms_force": 0.000106,
+  "max_force": 0.000106,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 1.001600,
+  "timestamp": "2026-03-28T12:56:07",
+  "xyz_file": "benchmark_100\highn\structures\BaF2_s63.xyz"
+}

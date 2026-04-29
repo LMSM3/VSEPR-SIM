@@ -1,0 +1,19 @@
+{
+  "formula": "CoFe2O4",
+  "seed": 672,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 55.064181,
+  "energy_per_atom": 7.866312,
+  "rms_force": 81.496665,
+  "max_force": 81.496665,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.678100,
+  "timestamp": "2026-03-28T13:04:20",
+  "xyz_file": "benchmark_v2\medium\structures\CoFe2O4_s672.xyz"
+}
