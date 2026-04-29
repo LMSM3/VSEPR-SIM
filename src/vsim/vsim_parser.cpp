@@ -126,6 +126,17 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 	if (sec == "suite.limits") { in_suite_limits_ = true; return; }
 	if (sec == "suite.smoke")  { in_suite_smoke_  = true; return; }
 
+	// WO-VSIM-03B: [excite.<type>]
+	if (sec.rfind("excite.", 0) == 0) {
+		current_excite_type_ = sec.substr(7);
+		current_section_ = "excite";
+		if (!doc_.excite.has(current_excite_type_)) { ExciteEntry e; e.type = current_excite_type_; doc_.excite.entries[current_excite_type_] = e; }
+		return;
+	}
+	if (sec == "override.particle") { in_override_particle_=true; in_raw_object_=false; doc_.overrides.emplace_back(); return; }
+	if (sec == "raw.object")        { in_raw_object_=true; in_override_particle_=false; doc_.raw_objects.emplace_back(); return; }
+	in_override_particle_=false; in_raw_object_=false; current_excite_type_.clear();
+
 	// Normalise dotted sub-sections to their root for dispatch:
 	// [simulation.molecule] -> in_molecule_block_ already set above
 	// [kernel], [kernel.trace], [sweep], [runner], etc. -> raw_sections
@@ -146,6 +157,13 @@ void VsimParser::handle_key_value(const std::string& key,
 		apply_simulation_key(key, val, line_no);
 	} else if (in_molecule_block_) {
 		apply_molecule_key(key, val, line_no);
+	} else if (current_section_ == "material")    { apply_material_key(key, val, line_no);
+	} else if (current_section_ == "run")         { apply_run_key(key, val, line_no);
+	} else if (current_section_ == "environment") { apply_environment_key(key, val, line_no);
+	} else if (current_section_ == "excite")      { apply_excite_key(key, val, line_no);
+	} else if (current_section_ == "observe")     { apply_observe_key(key, val, line_no);
+	} else if (in_override_particle_)              { apply_override_particle_key(key, val, line_no);
+	} else if (in_raw_object_)                     { apply_raw_object_key(key, val, line_no);
 	} else if (current_section_ == "export") {
 		apply_export_key(key, val, line_no);
 	} else if (current_section_ == "export.visual") {
@@ -384,6 +402,7 @@ void VsimParser::apply_visual_external_key(const std::string& key, const Value& 
 	auto as_str = [&]() -> std::string {
 		return value_is_string(val) ? as_string(val) : to_string(val);
 	};
+	auto as_num = [&]() -> double { return numeric(val); };
 
 	if      (key == "enabled")          doc_.visual_external.enabled          = as_flag();
 	else if (key == "export_format")    doc_.visual_external.export_format    = as_str();
@@ -1009,6 +1028,105 @@ void VsimParser::apply_pbc_key(const std::string& key, const Value& val, int lin
 	} else {
 		(void)line_no;
 	}
+}
+
+
+// ============================================================================
+// WO-VSIM-03B appliers
+// ============================================================================
+
+void VsimParser::apply_material_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	if      (key=="formula")     doc_.material.formula=s();
+	else if (key=="prototype")   doc_.material.prototype=s();
+	else if (key=="structure")   { doc_.material.structure=s(); if(doc_.material.prototype.empty()) doc_.material.prototype=std::string(resolve_structure_alias(doc_.material.structure)); }
+	else if (key=="space_group") doc_.material.space_group=s();
+	else if (key=="lattice")     doc_.material.lattice=s();
+	else if (key=="basis")       doc_.material.basis=s();
+	else if (key=="cell")        doc_.material.cell=s();
+	else if (key=="phase")       doc_.material.phase=s();
+	else                         doc_.raw_sections["material"][key]=val;
+}
+
+void VsimParser::apply_run_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	if      (key=="mode")                               doc_.run.mode=s();
+	else if (key=="max_steps")                          doc_.run.max_steps=static_cast<int>(numeric(val));
+	else if (key=="dt_fs")                              doc_.run.dt_fs=numeric(val);
+	else if (key=="temperature"||key=="temperature_K")  doc_.run.temperature_K=numeric(val);
+	else if (key=="pressure"||key=="pressure_GPa")      doc_.run.pressure_GPa=numeric(val);
+	else if (key=="converge")                           doc_.run.converge=value_is_bool(val)?as_bool(val):true;
+	else if (key=="output_level")                       doc_.run.output_level=s();
+	else                                                doc_.raw_sections["run"][key]=val;
+}
+
+void VsimParser::apply_environment_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	if      (key=="periodic")    doc_.environment.periodic=value_is_bool(val)?as_bool(val):false;
+	else if (key=="temperature") doc_.environment.temperature=numeric(val);
+	else if (key=="pressure")    doc_.environment.pressure=numeric(val);
+	else if (key=="medium")      doc_.environment.medium=s();
+	else if (key=="humidity")    doc_.environment.humidity=numeric(val);
+	else if (key=="field_x")     doc_.environment.field_x=numeric(val);
+	else if (key=="field_y")     doc_.environment.field_y=numeric(val);
+	else if (key=="field_z")     doc_.environment.field_z=numeric(val);
+	else                         doc_.raw_sections["environment"][key]=val;
+}
+
+void VsimParser::apply_excite_key(const std::string& key, const Value& val, int /*lno*/) {
+	if (current_excite_type_.empty()) return;
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	auto& e=doc_.excite.entries[current_excite_type_];
+	if      (key=="axis")             e.axis=s();
+	else if (key=="polarization")     e.polarization=s();
+	else if (key=="intensity")        e.intensity=numeric(val);
+	else if (key=="pulse_width_fs")   e.pulse_width_fs=numeric(val);
+	else if (key=="photon_energy_eV") e.photon_energy_eV=numeric(val);
+	else if (key=="fluence")          e.fluence=numeric(val);
+	else if (key=="profile")          e.profile=s();
+	else doc_.raw_sections["excite."+current_excite_type_][key]=val;
+}
+
+void VsimParser::apply_observe_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	if (key=="metrics") {
+		if (value_is_list(val)) { for (const auto& it:as_list(val)) doc_.observe.metrics.push_back(it); }
+		else doc_.observe.metrics.push_back(s());
+	} else if (key=="output_format") { doc_.observe.output_format=s();
+	} else if (key=="every_n_steps") { doc_.observe.every_n_steps=static_cast<int>(numeric(val));
+	} else { doc_.raw_sections["observe"][key]=val; }
+}
+
+void VsimParser::apply_override_particle_key(const std::string& key, const Value& val, int ln) {
+	if (doc_.overrides.empty()) return;
+	auto& ov=doc_.overrides.back();
+	if (key=="id") { ov.id=static_cast<int>(numeric(val));
+	} else if (key=="velocity") {
+		if (!value_is_list(val)||as_list(val).size()!=3) throw ParseError(ln,"velocity needs 3 numbers");
+		const auto& l=as_list(val); ov.velocity={std::stod(l[0]),std::stod(l[1]),std::stod(l[2])}; ov.has_velocity=true;
+	} else if (key=="position") {
+		if (!value_is_list(val)||as_list(val).size()!=3) throw ParseError(ln,"position needs 3 numbers");
+		const auto& l=as_list(val); ov.position={std::stod(l[0]),std::stod(l[1]),std::stod(l[2])}; ov.has_position=true;
+	} else if (key=="charge")    { ov.charge=numeric(val); ov.has_charge=true;
+	} else if (key=="mass_scale"){ ov.mass_scale=numeric(val);
+	} else if (key=="fixed")     { ov.fixed=value_is_bool(val)?as_bool(val):false; }
+}
+
+void VsimParser::apply_raw_object_key(const std::string& key, const Value& val, int ln) {
+	if (doc_.raw_objects.empty()) return;
+	auto& ro=doc_.raw_objects.back();
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	if      (key=="id")       { ro.id=s();
+	} else if (key=="species") { ro.species=s();
+	} else if (key=="position") {
+		if (!value_is_list(val)||as_list(val).size()!=3) throw ParseError(ln,"position needs 3 numbers");
+		const auto& l=as_list(val); ro.position={std::stod(l[0]),std::stod(l[1]),std::stod(l[2])};
+	} else if (key=="velocity") {
+		if (!value_is_list(val)||as_list(val).size()!=3) throw ParseError(ln,"velocity needs 3 numbers");
+		const auto& l=as_list(val); ro.velocity={std::stod(l[0]),std::stod(l[1]),std::stod(l[2])};
+	} else if (key=="charge") { ro.charge=numeric(val);
+	} else if (key=="mass")   { ro.mass=numeric(val);
+	} else if (key=="label")  { ro.label=s(); }
 }
 
 } // namespace vsim

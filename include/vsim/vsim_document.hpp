@@ -669,6 +669,149 @@ struct PostStepSection {
 };
 
 // ============================================================================
+// WO-VSIM-03B — Intent-based structure authoring (Level 0–4)
+// ============================================================================
+
+// Structure alias map — resolves casual hints to deterministic prototype keys.
+// "rocksalt" → "B1_NaCl", "diamond" → "A4_Si", etc.
+// Only called during parsing; the resolved prototype is stored in MaterialSection.
+[[nodiscard]] inline std::string_view resolve_structure_alias(std::string_view hint) noexcept {
+    if (hint == "rocksalt"  || hint == "rock_salt")   return "B1_NaCl";
+    if (hint == "zincblende"|| hint == "zinc_blende")  return "B3";
+    if (hint == "diamond"   || hint == "diamond_cubic") return "A4_Si";
+    if (hint == "wurtzite")                             return "B4";
+    if (hint == "perovskite")                           return "E21";
+    if (hint == "fluorite")                             return "C1";
+    if (hint == "cubic")                                return "A1_cubic";
+    if (hint == "bcc")                                  return "A2_bcc";
+    if (hint == "fcc")                                  return "A1_fcc";
+    if (hint == "hcp")                                  return "A3_hcp";
+    return hint;   // unknown → pass through verbatim
+}
+
+// ── Level 0 / 1: [material] ──────────────────────────────────────────────────
+//
+// Declares the material identity and structural intent.
+// Level 0:  formula + structure (alias resolved to prototype)
+// Level 1:  prototype (deterministic key) | space_group + basis (explicit)
+//
+// Hierarchy (highest wins):
+//   explicit basis  >  prototype  >  structure alias
+//
+struct MaterialSection {
+    std::string formula;          // e.g. "NaCl", "Si", "Fe2O3"
+    std::string prototype;        // Deterministic generator key: "B1_NaCl", "A4_Si"
+    std::string structure;        // Casual hint, resolved via resolve_structure_alias()
+    std::string space_group;      // e.g. "Fm-3m", "Fd-3m"
+    std::string lattice;          // e.g. "fcc_ionic", "bcc", "hexagonal"
+    std::string basis;            // e.g. "Na:0,0,0; Cl:0.5,0.5,0.5"
+    std::string cell;             // Supercell spec: "4x4x4", "2x2x1", or scalar Å
+    std::string phase;            // "solid", "liquid", "gas", "amorphous"
+
+    bool has_formula()     const { return !formula.empty(); }
+    bool has_prototype()   const { return !prototype.empty(); }
+    bool has_basis()       const { return !basis.empty(); }
+    bool has_space_group() const { return !space_group.empty(); }
+
+    // Returns the resolved generator key: explicit basis > prototype > alias
+    std::string resolved_prototype() const {
+        if (!basis.empty() && !space_group.empty()) return "__explicit_basis__";
+        if (!prototype.empty())                     return prototype;
+        if (!structure.empty())
+            return std::string(resolve_structure_alias(structure));
+        return "";
+    }
+};
+
+// ── Level 0: [run] ───────────────────────────────────────────────────────────
+//
+// Declares the run mode and top-level controls.
+// mode values: "relax", "md", "npt", "nvt", "nve", "scan", "single_point"
+//
+struct RunSection {
+    std::string mode;              // Required: "relax", "md", "npt", …
+    int         max_steps  = 500;  // Step / iteration limit
+    double      dt_fs      = 1.0;  // Timestep (fs) — ignored for "relax"
+    double      temperature_K = 300.0;
+    double      pressure_GPa  = 0.0;   // For NPT
+    bool        converge   = true;     // Stop early on convergence
+    std::string output_level = "standard"; // "minimal", "standard", "verbose"
+
+    bool has_mode() const { return !mode.empty(); }
+};
+
+// ── Level 2: [environment] ───────────────────────────────────────────────────
+struct EnvironmentSection {
+    bool   periodic     = false;
+    double temperature  = 300.0;   // K
+    double pressure     = 0.0;     // GPa
+    std::string medium;            // "vacuum", "water", "argon_gas", …
+    double humidity     = 0.0;     // 0–1 fraction
+    double field_x      = 0.0;    // External E-field components (V/Å)
+    double field_y      = 0.0;
+    double field_z      = 0.0;
+};
+
+// ── Level 2: [excite.*] ──────────────────────────────────────────────────────
+// Each named excite subsection (e.g. [excite.laser]) becomes one ExciteEntry.
+//
+struct ExciteEntry {
+    std::string type;              // "laser", "xray", "electron_beam", "thermal_spike"
+    std::string axis;              // "x", "y", "z"
+    std::string polarization;      // "x", "y", "z", "circular"
+    double      intensity   = 1.0; // Arbitrary units (type-dependent)
+    double      pulse_width_fs = 100.0;
+    double      photon_energy_eV = 0.0;  // For xray / electron beam
+    double      fluence     = 0.0;       // J/cm²
+    std::string profile;           // "gaussian", "flat", "sech2"
+};
+
+struct ExciteSection {
+    std::map<std::string, ExciteEntry> entries;  // keyed by subtype name
+
+    bool has(const std::string& name) const { return entries.count(name) > 0; }
+    const ExciteEntry* get(const std::string& name) const {
+        auto it = entries.find(name);
+        return it != entries.end() ? &it->second : nullptr;
+    }
+};
+
+// ── Level 2: [observe] ───────────────────────────────────────────────────────
+struct ObserveSection {
+    std::vector<std::string> metrics;  // e.g. ["energy_map","interference","spectral_response"]
+    std::string output_format = "auto"; // "csv", "json", "svg", "auto"
+    int         every_n_steps = 1;     // Observation cadence
+};
+
+// ── Level 3: [[override.particle]] ──────────────────────────────────────────
+// Array-of-tables: selectively mutate specific particles before or during run.
+//
+struct ParticleOverrideEntry {
+    int    id          = -1;        // 1-indexed particle ID (-1 = unset)
+    std::array<double,3> velocity   = {{0.0, 0.0, 0.0}};
+    std::array<double,3> position   = {{0.0, 0.0, 0.0}};  // 0,0,0 = unset
+    double charge      = 0.0;
+    double mass_scale  = 1.0;       // Multiplicative mass override
+    bool   fixed       = false;     // Freeze position
+    bool   has_velocity = false;    // True when velocity was explicitly set
+    bool   has_position = false;    // True when position was explicitly set
+    bool   has_charge   = false;
+};
+
+// ── Level 4: [[raw.object]] ─────────────────────────────────────────────────
+// Explicit particle injection — tests, importers, file bridges, debugging only.
+//
+struct RawObjectEntry {
+    std::string id;                 // Arbitrary label: "debug_particle_001"
+    std::string species;            // Element symbol or reserved label: "C", "alpha", "ghost"
+    std::array<double,3> position   = {{0.0, 0.0, 0.0}};
+    std::array<double,3> velocity   = {{0.0, 0.0, 0.0}};
+    double charge      = 0.0;
+    double mass        = 0.0;       // 0 = derive from species
+    std::string label;              // Optional display label
+};
+
+// ============================================================================
 // VsimDocument — full parsed .vsim file
 // ============================================================================
 
@@ -679,6 +822,15 @@ struct VsimDocument {
 	CellSection         cell;         // [cell]     — WO-57B
 	BoundarySection     boundary;     // [boundary] — WO-57B
 	PBCSection          pbc;          // [pbc]      — WO-57B
+
+	// WO-VSIM-03B — intent-based authoring
+	MaterialSection     material;                       // [material]
+	RunSection          run;                            // [run]
+	EnvironmentSection  environment;                    // [environment]
+	ExciteSection       excite;                         // [excite.*]
+	ObserveSection      observe;                        // [observe]
+	std::vector<ParticleOverrideEntry> overrides;       // [[override.particle]]
+	std::vector<RawObjectEntry>        raw_objects;     // [[raw.object]]
 	ExportSection       exports;
 	ExportVisualSection export_visual;
 	VisualSection       visual;
@@ -734,6 +886,23 @@ struct VsimDocument {
 
 		if (simulation.box_size_ang < 0.0)
 			r.error("[simulation] box_size_ang must be >= 0 (0 = auto)");
+
+		// WO-VSIM-03B validations
+		if (material.has_formula() && simulation.molecules.empty()) {
+			// [material] used without [simulation] — that is fine, no error
+		}
+		if (run.has_mode()) {
+			const std::string& m = run.mode;
+			if (m != "relax" && m != "md" && m != "npt" && m != "nvt" &&
+				m != "nve"   && m != "scan" && m != "single_point")
+				r.warn("[run] mode '" + m + "' is unrecognized — will pass through to runtime");
+			if (run.max_steps < 1)
+				r.error("[run] max_steps must be >= 1");
+		}
+		for (const auto& ov : overrides) {
+			if (ov.id < 1)
+				r.error("[[override.particle]] id must be >= 1");
+		}
 
 		if (!exports.output_dir.empty()) {
 			// output_dir is informational — no filesystem check at parse time

@@ -1,13 +1,90 @@
 # VSEPR-SIM — Development Stage Marker
 
-> Version: **5.0.0-beta-7**  
-> Date: 2025-07-11  
+> Version: **5.0.0-beta-9**  
+> Date: 2025-07-14  
 > Branch: `v5.0.0-beta.7-step-attempt`  
-> Checkpoint tag: `v5.0.0-beta7-display`
+> Checkpoint tag: `v5.0.0-beta8-closed`
 
 ---
 
-## Stage: beta-7
+## Stage: beta-9
+
+### What beta-9 is
+
+**v5.0.0-beta.9 — Registry Resolution and Minimal Lab Script Layer**
+
+Take the language reference resolution chain:
+
+```
+explicit value
+→ auto keyword
+→ registry bundle defaults
+→ context defaults
+→ universal defaults
+→ derived values
+```
+
+and make it real in runtime. Beta-9 is where `structure = "rocksalt"` actually expands into prototype, space group, basis, generator, coordination, and default material behavior — without the user filling in a crystallography tax return.
+
+Beta-9 success criteria:
+
+- `structure = "rocksalt"` resolves fully through the registry layer
+- Registry-resolved fields are logged as `[REGISTRY]`
+- A Level 0 `.vsim` script (`[material]` + `[run]`) runs to completion and exports xyz
+- `[material]`, `[run]`, `[environment]`, `[excite.*]`, `[observe]`, `[[override.particle]]`, `[[raw.object]]` all parse and resolve correctly
+- WO-VSIM-03B and WO-VSIM-03C gate tables closed
+
+Beta-9 does **not** own:
+
+- installation / consumer-facing packaging → **beta-10**
+- large phonon/band-structure analysis modules
+- UI runtime beyond what beta-8 established
+
+---
+
+## WO-VSEPR-SIM-58A — Beta-8 Closeout / Beta-9 Promotion
+
+| Gate | Item | Status |
+|---|---|---:|
+| 58A-1 | Beta-8 runtime scope reviewed | ✅ |
+| 58A-2 | Beta-8 declared closed for new feature intake | ✅ |
+| 58A-3 | Installation code explicitly deferred to beta-10 | ✅ |
+| 58A-4 | Registry/minimal-input work removed from beta-8 scope | ✅ |
+| 58A-5 | Beta-9 theme defined | ✅ |
+| 58A-6 | WO-VSIM-03B promoted into beta-9 | ✅ |
+| 58A-7 | WO-VSIM-03C promoted into beta-9 | ✅ |
+| 58A-8 | Beta-9 success criteria defined | ✅ |
+
+---
+
+## Beta-8 — CLOSED
+
+**Status: CLOSED / RUNTIME FOUNDATION COMPLETE**
+
+Beta-8 owns:
+
+- PBC runtime behavior
+- FIRE/PBC compatibility
+- Ewald ionic support
+- runtime export flushing
+- dashboard/report artifacts
+- STEP sidecar export
+- render cadence control
+- basic language/runtime bridge (VSIM schema + parser foundation)
+
+Beta-8 does **not** own (explicitly deferred):
+
+| Item | Deferred to |
+|---|---|
+| Registry resolution engine | beta-9 |
+| Minimal-input lab syntax expansion | beta-9 |
+| Structure/material/run/environment registries | beta-9 |
+| Large alias databases (canonical alias map done; resolution engine deferred) | beta-9 |
+| Installation / packaging / consumer-grade launch flow | beta-10 |
+
+---
+
+
 
 ### What beta-7 is
 
@@ -309,6 +386,78 @@ Work items moved from aspirational bullet points into the active implementation 
 
 ---
 
+### WO-VSIM-03B — Kill Explicit Object Authoring (PROMOTED TO BETA-9)
+
+**Status: SCHEMA + PARSER + ALIAS MAP COMPLETE — runtime registry wiring is beta-9**
+
+| Gate check | Status |
+|---|---|
+| `MaterialSection`, `RunSection`, `EnvironmentSection` schema | ✅ |
+| `ExciteEntry`/`ExciteSection`, `ObserveSection` schema | ✅ |
+| `ParticleOverrideEntry` (`[[override.particle]]`) schema | ✅ |
+| `RawObjectEntry` (`[[raw.object]]`) schema | ✅ |
+| `resolve_structure_alias()` — ~70 canonical entries across 8 groups | ✅ |
+| Parser dispatch for all 7 new section types | ✅ |
+| Group 36 (`IntentAuthoringTest`) — 11 tests + ALIAS coverage | ✅ |
+| `VSIM_REFERENCE.md` alias table updated | ✅ |
+| `docs/VSIM_LANGUAGE.md` §3 updated with all new sections | ✅ |
+| Registry resolution engine (structure → full crystallographic expansion) | ⬜ **beta-9** |
+| `[REGISTRY]` log tagging for resolved fields | ⬜ **beta-9** |
+| Level 0 script running to xyz export end-to-end | ⬜ **beta-9** |
+
+**Files changed:**
+- `include/vsim/vsim_document.hpp` — 8 new types + `resolve_structure_alias()` (70 entries)
+- `include/vsim/vsim_parser.hpp` — 7 new applier declarations + parser state flags
+- `src/vsim/vsim_parser.cpp` — section dispatch + 7 appliers; `as_num` lambda fix
+- `tests/test_wo_03b.cpp` — Group 36: 11 tests + ~70-assertion ALIAS coverage
+- `tests/CMakeLists.txt` — Group 36 registered (`IntentAuthoringTest`)
+- `VSIM_REFERENCE.md` — 8-group alias table + all new section field tables
+- `docs/VSIM_LANGUAGE.md` — §3 pre-populated with all 7 new sections (annotated by level)
+
+---
+
+## Beta-9 Stack — IN PROGRESS
+
+### Beta-9 Active Work Orders
+
+| WO | Title | Status |
+|---|---|---|
+| WO-VSIM-03B | Kill Explicit Object Authoring | Schema/parser done; registry wiring pending |
+| WO-VSIM-03C | Registry Resolution Engine | Not started |
+
+### Beta-9 Item 1 — Registry Resolution Engine (WO-VSIM-03C)
+
+**Status: NOT STARTED**
+
+Goal: when `structure = "rocksalt"` is parsed, the runtime expands it into:
+
+```
+prototype    = "B1_NaCl"
+space_group  = "Fm-3m"
+basis        = "Na:0,0,0; Cl:0.5,0.5,0.5"
+generator    = "ionic_rocksalt"
+coordination = 6
+default_charge_model = "formal"
+```
+
+logged as `[REGISTRY] material.prototype ← B1_NaCl (from alias rocksalt)`.
+
+Gate criteria for WO-VSIM-03C:
+
+| Gate | Item |
+|---|---|
+| Registry data file format defined (JSON or embedded C++ constexpr) | |
+| `RegistryResolver` struct: `resolve(MaterialSection&) → RegistryBundle` | |
+| All 70 alias targets have a registry entry (even if partial) | |
+| `[REGISTRY]` logging wired into resolver | |
+| Level 0 `.vsim` (formula + structure + run mode only) runs to xyz export | |
+| Group 37 acceptance tests | |
+| `VSIM_REFERENCE.md` + `docs/VSIM_LANGUAGE.md` updated | |
+
+---
+
+---
+
 ## Closed stages (prior to beta-7)
 
 | Stage | Closed | Description |
@@ -326,4 +475,5 @@ Work items moved from aspirational bullet points into the active implementation 
 - `xyzFull` stores **what happened** — analysis determines **what it means**
 - Inferred properties belong in analysis records, reports, dashboards — **not** in State/xyz/xyzFull
 - Terms `meso`, `mesoscopic`, `meso-scale` are **forbidden** — use `atomistic`, `bead`, `coarse bead`, `premacro`
-- beta-7 is not the time to invent new ornamental subsystems
+- Installation / packaging is beta-10. Do not wire installation in beta-9.
+- Registry resolution belongs in beta-9. Do not invent new subsystems outside the registry pipeline arc.
