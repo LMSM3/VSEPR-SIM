@@ -1,0 +1,19 @@
+{
+  "formula": "Li2CO3",
+  "seed": 846,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 19.003662,
+  "energy_per_atom": 3.167277,
+  "rms_force": 34.620527,
+  "max_force": 34.620527,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.727900,
+  "timestamp": "2026-03-28T12:53:54",
+  "xyz_file": "benchmark_100\medium\structures\Li2CO3_s846.xyz"
+}

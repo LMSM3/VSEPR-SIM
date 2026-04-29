@@ -1,0 +1,19 @@
+{
+  "formula": "NiFe2O4",
+  "seed": 476,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 73.582174,
+  "energy_per_atom": 10.511739,
+  "rms_force": 143.312866,
+  "max_force": 143.312866,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.748500,
+  "timestamp": "2026-03-28T13:05:33",
+  "xyz_file": "benchmark_v2\medium\structures\NiFe2O4_s476.xyz"
+}

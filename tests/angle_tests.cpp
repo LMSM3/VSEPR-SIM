@@ -4,6 +4,9 @@
 #include <iostream>
 #include <cmath>
 #include <cassert>
+#include <algorithm>
+#include <numeric>
+#include <vector>
 
 using namespace vsepr;
 
@@ -13,6 +16,65 @@ using namespace vsepr;
 #define ASSERT_ANGLE_RANGE(angle_deg, min_deg, max_deg) \
     assert((angle_deg) >= (min_deg) && (angle_deg) <= (max_deg) && \
            "Assertion failed: angle outside expected range")
+
+// ============================================================================
+// Angle statistics helpers (require N > 2 angles)
+// ============================================================================
+
+// Returns arithmetic mean of angles in degrees.
+inline double average_angle(const std::vector<double>& angles_deg) {
+    if (angles_deg.empty()) return 0.0;
+    return std::accumulate(angles_deg.begin(), angles_deg.end(), 0.0)
+           / static_cast<double>(angles_deg.size());
+}
+
+// Returns the most common angle bucketed at the given resolution (degrees).
+// Ties are broken by taking the lowest bucket value.
+inline double most_common_angle(const std::vector<double>& angles_deg,
+                                double bucket_deg = 1.0) {
+    if (angles_deg.empty()) return 0.0;
+    // bin each angle into integer bucket
+    std::vector<int> bins;
+    bins.reserve(angles_deg.size());
+    for (double a : angles_deg)
+        bins.push_back(static_cast<int>(std::floor(a / bucket_deg)));
+
+    std::sort(bins.begin(), bins.end());
+
+    int best_bin   = bins[0];
+    int best_count = 1;
+    int cur_bin    = bins[0];
+    int cur_count  = 1;
+
+    for (size_t i = 1; i < bins.size(); ++i) {
+        if (bins[i] == cur_bin) {
+            ++cur_count;
+        } else {
+            if (cur_count > best_count) {
+                best_count = cur_count;
+                best_bin   = cur_bin;
+            }
+            cur_bin   = bins[i];
+            cur_count = 1;
+        }
+    }
+    if (cur_count > best_count) best_bin = cur_bin;
+
+    // return the centre of the winning bucket
+    return (best_bin + 0.5) * bucket_deg;
+}
+
+// Print average and most-common angle statistics when N > 2.
+inline void print_angle_stats(const std::vector<double>& angles_deg,
+                               const char* label = "") {
+    if (angles_deg.size() <= 2) return;   // stats only meaningful for N > 2
+    double avg  = average_angle(angles_deg);
+    double mode = most_common_angle(angles_deg);
+    std::cout << "  [stats" << (label[0] ? " " : "") << label << "]"
+              << "  N=" << angles_deg.size()
+              << "  avg=" << avg << "deg"
+              << "  most-common=" << mode << "deg\n";
+}
 
 // ============================================================================
 // Test: Methane (CH4) - Tetrahedral
@@ -82,7 +144,8 @@ void test_ch4_with_angles() {
     for (double a : angles_deg) avg += a;
     avg /= angles_deg.size();
     std::cout << "  Average: " << avg << "° (expected: 109.5°)\n";
-    
+    print_angle_stats(angles_deg, "H-C-H");
+
     // All angles should be near tetrahedral
     for (double a : angles_deg) {
         ASSERT_ANGLE_RANGE(a, 108.0, 111.0);
@@ -147,6 +210,10 @@ void test_nh3_with_angles() {
     
     double avg = (angle_H1NH2 + angle_H1NH3 + angle_H2NH3) / 3.0;
     std::cout << "  Average: " << avg << "° (target: ~107°)\n";
+    {
+        std::vector<double> nh3_angles = {angle_H1NH2, angle_H1NH3, angle_H2NH3};
+        print_angle_stats(nh3_angles, "H-N-H");
+    }
     
     std::cout << "\n  ⚠️  WARNING: May converge to planar (~120°) without H-H repulsion!\n";
     std::cout << "  Angle terms alone can't distinguish pyramidal from planar.\n";
@@ -213,6 +280,10 @@ void test_nf3_with_angles() {
     
     double avg = (angle_F1NF2 + angle_F1NF3 + angle_F2NF3) / 3.0;
     std::cout << "  Average: " << avg << "°\n";
+    {
+        std::vector<double> nf3_angles = {angle_F1NF2, angle_F1NF3, angle_F2NF3};
+        print_angle_stats(nf3_angles, "F-N-F");
+    }
     
     std::cout << "\n  ⚠️  Similar to NH3: may not achieve exact 102° without F-F repulsion.\n";
     std::cout << "  Angle terms set target to 107° (AX3E), but F-F 1-3 repulsion\n";

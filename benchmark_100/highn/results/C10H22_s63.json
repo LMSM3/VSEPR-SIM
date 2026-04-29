@@ -1,0 +1,19 @@
+{
+  "formula": "C10H22",
+  "seed": 63,
+  "tier": "highn",
+  "num_atoms": 32,
+  "steps_taken": 9197,
+  "max_steps": 10000,
+  "energy_kcal_mol": -6.806564,
+  "energy_per_atom": -0.212705,
+  "rms_force": 0.189990,
+  "max_force": 0.189990,
+  "alpha_final": 0.000010,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 44.398000,
+  "timestamp": "2026-03-28T12:55:06",
+  "xyz_file": "benchmark_100\highn\structures\C10H22_s63.xyz"
+}

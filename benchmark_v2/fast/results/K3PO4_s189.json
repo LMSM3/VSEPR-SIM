@@ -1,0 +1,19 @@
+{
+  "formula": "K3PO4",
+  "seed": 189,
+  "tier": "fast",
+  "num_atoms": 8,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 2894.820819,
+  "energy_per_atom": 361.852602,
+  "rms_force": 5300.758603,
+  "max_force": 5300.758603,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.393200,
+  "timestamp": "2026-03-28T13:06:56",
+  "xyz_file": "benchmark_v2\fast\structures\K3PO4_s189.xyz"
+}

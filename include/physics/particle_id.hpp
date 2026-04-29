@@ -11,7 +11,7 @@
  *                        0..108  element Z (H=1 .. Og=118, 0=placeholder)
  *                        > 118   engine-assigned molecule / candidate IDs
  *
- *   species_code <  0   reserved class space — nonstandard or derived
+ *   species_code <  0   reserved class space — nonsta                          ndard or derived
  *                        entities that have coordinates but are not
  *                        ordinary atoms
  *

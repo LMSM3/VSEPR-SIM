@@ -1,0 +1,19 @@
+{
+  "formula": "MgO",
+  "seed": 350,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 2.439849,
+  "energy_per_atom": 1.219924,
+  "rms_force": 13.346213,
+  "max_force": 13.346213,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.727600,
+  "timestamp": "2026-03-28T13:05:33",
+  "xyz_file": "benchmark_v2\medium\structures\MgO_s350.xyz"
+}

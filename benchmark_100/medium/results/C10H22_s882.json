@@ -1,0 +1,19 @@
+{
+  "formula": "C10H22",
+  "seed": 882,
+  "tier": "medium",
+  "num_atoms": 32,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 48913482.113905,
+  "energy_per_atom": 1528546.316060,
+  "rms_force": 164434016.805627,
+  "max_force": 164434016.805627,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 6.947700,
+  "timestamp": "2026-03-28T12:54:16",
+  "xyz_file": "benchmark_100\medium\structures\C10H22_s882.xyz"
+}

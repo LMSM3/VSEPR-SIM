@@ -92,7 +92,7 @@
     of molecular and crystalline structure from elemental identity and
     thermodynamic boundary conditions, without recourse to empirical
     molecular data.}}\\[1.5em]
-  {\small Version 0.1 — First Principles Draft}
+  {\small Version 3.0.0 — First Principles Draft}
 \end{center}
 
 \vspace{1em}
@@ -439,6 +439,48 @@ For computational purposes, define an effective interaction envelope:
 
 This allows identical species to share container topology while
 differing only in parameterisation.
+
+\begin{remark}[Realisation: Fuzzy Ball Model]
+\label{rem:fuzzy-ball}
+The Container Geometry Approximation~$\Omega_i$ is realised in the
+coarse-grained visualisation subsystem as the \emph{Fuzzy Ball Model}
+(see \texttt{docs/section\_fuzzy\_ball\_model.tex}).  The
+correspondence is:
+%
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabularx}{\linewidth}{l c >{\raggedright\arraybackslash}X}
+  \toprule
+  $\Omega_i$ component
+    & $\longleftrightarrow$
+    & Fuzzy Ball implementation \\
+  \midrule
+  $R_i$ (effective radius)
+    & & \texttt{effective\_radius}: probe-radius or mass-derived,
+        shell extent of Layer~1 \\
+  $\mathcal{T}_i(\theta,\phi)$ (angular texture)
+    & & $S^{(k)}(\theta,\varphi)$: three-channel SH descriptor
+        field, rendered as Layer~2 heatmap \\
+  $\rho_i(r)$ (radial density)
+    & & Radial exaggeration parameter~$\xi$: deforms shell
+        proportionally to local field strength \\
+  $\Sigma_i$ (structural role)
+    & & \texttt{structural\_role} field on \texttt{Bead} and
+        \texttt{BeadVisualRecord}; biases per-channel kernel
+        weights \\
+  $\Lambda_i$ (stability class)
+    & & \texttt{stability\_class} field; inspectable in the
+        bead inspector panel \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+%
+The angular texture undergoes a three-channel generalisation:
+$\mathcal{T}_i \to \{S^{(0)},\, S^{(1)},\, S^{(2)}\}$, with a
+synthesised contraction recovering the single-scalar §0 form.
+Implementation: \texttt{coarse\_grain/vis/bead\_visual\_record.hpp},
+\texttt{coarse\_grain/core/bead.hpp}.
+\end{remark}
 
 
 % ════════════════════════════════════════════════════════════════════════════
@@ -1005,13 +1047,13 @@ optional acceleration, never as truth.
 
 
 % ════════════════════════════════════════════════════════════════════════════
-%  0.3.7 — Nano–Meso Boundary Extensions
+%  0.3.7 — Nano–Atomistic Boundary Extensions
 % ════════════════════════════════════════════════════════════════════════════
 
 \bigskip
-\subsubsection*{0.3.7\quad Nano–Meso Boundary Extensions}
-\addcontentsline{toc}{subsubsection}{0.3.7 Nano–Meso Boundary Extensions}
-\label{sec:nano-meso}
+\subsubsection*{0.3.7\quad Nano–Atomistic Boundary Extensions}
+\addcontentsline{toc}{subsubsection}{0.3.7 Nano–Atomistic Boundary Extensions}
+\label{sec:nano-atomistic}
 
 % ·········································································
 \paragraph{0.3.7.1\quad Surface–Interior Decomposition.}
@@ -1068,10 +1110,10 @@ Coarse graining that erases this split produces beads with
 \label{sec:formation-determinism}
 \mbox{}\\[0.4em]
 
-At the nano–meso boundary, emergent structure is highly sensitive to
+At the nano–atomistic boundary, emergent structure is highly sensitive to
 formation conditions.  The design goal is not to ``fit'' outcomes,
 but to model a deterministic projection from formation controls to
-mesoscopic identity.
+atomistic identity.
 
 Define a formation condition vector:
 \begin{equation}
@@ -1102,20 +1144,20 @@ The core postulate for the boundary scale is:
   \;}
   \label{eq:formation-map}
 \end{equation}
-where $M(t^{*})$ is a mesoscopic descriptor at the end of formation
+where $M(t^{*})$ is an atomistic domain descriptor at the end of formation
 (or at a chosen observation epoch~$t^{*}$).
 
 This is framed positively because it is exactly what makes the
-nano–meso boundary scientifically valuable: formation is not noise,
+nano–atomistic boundary scientifically valuable: formation is not noise,
 it is structure selection.
 
 % ·········································································
-\paragraph{0.3.7.3\quad Lower Meso Descriptor (Precise Boundary
+\paragraph{0.3.7.3\quad Lower Atomistic Domain Descriptor (Precise Boundary
   Definition).}
-\label{sec:lower-meso}
+\label{sec:lower-atomistic}
 \mbox{}\\[0.4em]
 
-Define ``lower meso'' (nano–meso boundary) as the regime where:
+Define the ``lower atomistic'' boundary as the regime where:
 \begin{itemize}
   \item individual atoms are no longer the preferred degrees of
         freedom,
@@ -1138,7 +1180,7 @@ Each domain carries a minimal descriptor vector:
     \omega_k,\;\;
     E_k
   \,\bigr]
-  \label{eq:meso-descriptor}
+  \label{eq:atomistic-descriptor}
 \end{equation}
 where:
 
@@ -1243,13 +1285,13 @@ and preserves the full trace:
 \end{equation}
 
 So rather than coarse graining being a destructive step, it becomes
-the formal bridge between formation physics and mesoscopic realism.
+the formal bridge between formation physics and atomistic realism.
 
 % ════════════════════════════════════════════════════════════════════════════
 \vfill
 \begin{center}
   \rule{0.4\textwidth}{0.4pt}\\[0.5em]
-  \textit{Formation Engine Methodology v0.1 —
+  \textit{Formation Engine Methodology v3.0.0 —
           End of §0 (Pre-Section Theory Layer)}
 \end{center}
 

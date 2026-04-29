@@ -1,0 +1,1101 @@
+% docs/UFX_LANGUAGE_REFERENCE.tex
+% UFX AUTO2 Command Language -- Formal Reference
+% VSEPR-SIM v5 beta9+
+%
+% Purpose:
+%   Authoritative specification of the UFX AUTO2 command language as it exists
+%   today, written as a foundation for a future universal VSEPR-SIM scripting
+%   language.  Every construct documented here is implemented and testable.
+%
+% Audience:
+%   Scientists, engineers, and future language implementers who need to
+%   understand how UFX AUTO2 commands compose, what types they operate on,
+%   what guarantees they make, and how the command layer maps to the
+%   underlying database and generator stack.
+
+\documentclass[11pt,letterpaper]{article}
+
+\usepackage{geometry}
+\geometry{margin=1.1in}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!70!black,
+  urlcolor=blue!70!black,
+  citecolor=blue!70!black
+}
+
+\definecolor{codeblue}{rgb}{0.08,0.25,0.52}
+\definecolor{codegray}{rgb}{0.45,0.45,0.45}
+\definecolor{codegreen}{rgb}{0.0,0.45,0.08}
+\definecolor{codeback}{rgb}{0.97,0.97,0.97}
+\definecolor{keywordred}{rgb}{0.65,0.08,0.08}
+
+\lstdefinelanguage{ufxlang}{
+  morekeywords={ufx,auto2,init,audit,randomfill,validate,promote,
+				validate-web,fill-molecular,fill-thermo,fill-crystal,
+				fill-transport,fill-mechanical,fill-macro,score,
+				pipeline,block,record,axis,region,tier},
+  morekeywords=[2]{--db,--batch,--count,--seed,--min-score,--warn-score,
+				   --verbose,--quiet,--recompute,--web-validate,
+				   --cache,--run-dir,--validate-batch,--web-batch},
+  sensitive=true,
+  morecomment=[l]{\#},
+  morestring=[b]",
+  morestring=[b]',
+}
+
+\lstset{
+  language=ufxlang,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  keywordstyle=[2]\color{keywordred},
+  commentstyle=\color{codegray}\itshape,
+  stringstyle=\color{codegreen},
+  backgroundcolor=\color{codeback},
+  frame=single,
+  rulecolor=\color{black!20},
+  framesep=4pt,
+  xleftmargin=6pt,
+  xrightmargin=4pt,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=4,
+  captionpos=b,
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\texttt{UFX AUTO2 Language Reference}}
+\lhead{VSEPR-SIM v5 beta9+}
+\cfoot{\thepage}
+
+% ============================================================================
+\begin{document}
+% ============================================================================
+
+\begin{titlepage}
+\vspace*{2cm}
+{\huge\bfseries UFX AUTO2 Command Language\\[0.4em]
+\Large Formal Reference and Scripting Foundation\par}
+\vspace{1.5cm}
+{\large VSEPR-SIM Platform --- Materials State Database Generator\par}
+\vspace{0.5cm}
+{\normalsize Version: 5 beta9+ \quad Branch: 4.0-legacy-beta\par}
+\vspace{0.3cm}
+{\normalsize Document status: \textbf{Active specification}\par}
+\vspace{2cm}
+\hrule
+\vspace{0.4cm}
+{\small
+This document is the authoritative reference for the \texttt{ufx auto2}
+sub-language embedded inside the VSEPR-SIM executable.  It describes the
+complete command grammar, data model, type system, block ontology, option
+vocabulary, pipeline semantics, and correctness invariants.
+
+It is written as a \emph{language specification} rather than a user guide,
+so that future work can extend these constructs into a standalone scripting
+language capable of expressing full VSEPR-SIM research workflows.
+}
+\vspace{0.5cm}
+\hrule
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction and Motivation}
+% ============================================================================
+
+\subsection{What the UFX language is}
+
+The UFX AUTO2 command language is a deterministic, pipeline-oriented
+sub-language for driving the generation, validation, enrichment, scoring,
+and promotion of atomistic material state records.  It is currently embedded
+in the \texttt{vsepr-ufx} executable and invoked as:
+
+\begin{lstlisting}
+vsepr ufx auto2 <command> [options]
+\end{lstlisting}
+
+The language is \emph{not} Turing-complete in its current form.  It is a
+\textbf{command vocabulary} with typed options, a fixed execution model, and
+a set of correctness invariants that together constitute a small but rigorous
+domain-specific language (DSL) for materials database work.
+
+\subsection{Design goals}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Deterministic.}  Given the same seed and database state,
+		every command produces identical results.
+  \item \textbf{Idempotent.}  Re-running any fill command against an
+		already-filled database must produce zero new rows.
+  \item \textbf{Composable.}  Commands chain into a well-defined pipeline
+		with explicit ordering constraints.
+  \item \textbf{Auditable.}  Every row written carries a \texttt{method\_tag},
+		\texttt{confidence}, and provenance reference.  Nothing is hidden.
+  \item \textbf{Extensible.}  The type system, block ontology, and command
+		registry are designed to grow into a richer scripting language
+		without breaking existing semantics.
+\end{enumerate}
+
+\subsection{Relationship to the future VSEPR-SIM scripting language}
+
+The constructs in this document are the \emph{building blocks} of a planned
+universal scripting language for VSEPR-SIM research workflows.  A future
+version may expose:
+
+\begin{itemize}
+  \item First-class \texttt{pipeline} literals (ordered command sequences)
+  \item Named \texttt{block} expressions with typed property access
+  \item \texttt{axis} range constructors and sampler expressions
+  \item \texttt{region} predicates for coverage-guided sampling
+  \item Conditional execution (\texttt{if tier $\geq$ 3 then fill-thermo})
+  \item Scripted promotion rules (replace the hard-coded score threshold)
+\end{itemize}
+
+Everything defined in this document has a direct, tested implementation.
+
+% ============================================================================
+\section{Command Grammar}
+% ============================================================================
+
+\subsection{Top-level invocation}
+
+\begin{lstlisting}
+vsepr ufx auto2 <command> [<option> <value>]*
+\end{lstlisting}
+
+The token sequence is:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Position & Token & Role \\
+\midrule
+0 & \texttt{vsepr} & executable name \\
+1 & \texttt{ufx} & subsystem qualifier \\
+2 & \texttt{auto2} & version/namespace qualifier \\
+3 & \texttt{<command>} & command name (see \S\ref{sec:commands}) \\
+4\ldots & \texttt{<option> <value>} & key-value option pairs \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The qualifiers \texttt{ufx} and \texttt{auto2} are reserved for the current
+namespace.  Future versions may introduce \texttt{auto3}, \texttt{viz}, or
+\texttt{report} namespaces under \texttt{vsepr}.
+
+\subsection{EBNF grammar}
+
+\begin{lstlisting}[language={}]
+invocation  ::= "vsepr" qualifier version command option*
+qualifier   ::= "ufx"
+version     ::= "auto2"
+command     ::= "init" | "audit" | "randomfill"
+			  | "validate" | "promote" | "validate-web"
+			  | "fill-molecular" | "fill-thermo"  | "fill-crystal"
+			  | "fill-transport" | "fill-mechanical" | "fill-macro"
+			  | "score"
+option      ::= flag | param
+flag        ::= "--verbose" | "--quiet" | "--recompute" | "--web-validate"
+param       ::= "--db"             path
+			  | "--batch"          integer
+			  | "--count"          integer
+			  | "--seed"           uint64
+			  | "--min-score"      float64
+			  | "--warn-score"     float64
+			  | "--validate-batch" integer
+			  | "--web-batch"      integer
+			  | "--cache"          path
+			  | "--run-dir"        path
+integer     ::= [0-9]+
+uint64      ::= [0-9]+
+float64     ::= [0-9]+ ("." [0-9]+)?
+path        ::= <filesystem path, absolute or relative>
+\end{lstlisting}
+
+\subsection{Option parsing rules}
+
+\begin{enumerate}[leftmargin=2em]
+  \item Options are parsed left-to-right; later values override earlier ones.
+  \item Unknown tokens are silently ignored at the CLI layer (forward
+		compatibility).
+  \item Integer overflow on \texttt{--count} or \texttt{--batch} is caught;
+		the command exits with code~2.
+  \item \texttt{--db} is required for all Phase~6--10 commands.  Missing
+		\texttt{--db} on a fill or score command exits with code~2.
+  \item Boolean flags (\texttt{--verbose}, \texttt{--recompute}) default to
+		\texttt{false} and are set by presence only; there is no
+		\texttt{--no-verbose} negation form in this version.
+\end{enumerate}
+
+% ============================================================================
+\section{Command Reference}
+\label{sec:commands}
+% ============================================================================
+
+\subsection{Overview}
+
+\begin{longtable}{lllp{6cm}}
+\toprule
+Command & Phase & Tier & Description \\
+\midrule
+\texttt{init}            & 2   & ---  & Create or verify the database schema \\
+\texttt{audit}           & 2   & ---  & Print coverage and health report \\
+\texttt{randomfill}      & 2   & 0--1 & Generate candidate material records \\
+\texttt{validate}        & 3--4& ---  & Run local sanity checks \\
+\texttt{validate-web}    & 5   & ---  & External identity checks via PubChem/NIST \\
+\texttt{promote}         & 4   & ---  & Evaluate scores and advance source\_class \\
+\texttt{fill-molecular}  & 6   & 2    & Molecular descriptor block \\
+\texttt{fill-thermo}     & 7   & 3    & Thermo + EOS blocks \\
+\texttt{fill-crystal}    & 8   & 4    & Crystal structure block (solids only) \\
+\texttt{fill-transport}  & 9   & 5    & Transport property block \\
+\texttt{fill-mechanical} & 9   & 5    & Mechanical property block \\
+\texttt{fill-macro}      & 9   & 5    & Alias: transport then mechanical \\
+\texttt{score}           & 10  & 9    & Meta-score block and scheduler update \\
+\bottomrule
+\end{longtable}
+
+\subsection{\texttt{init}}
+
+\begin{lstlisting}
+vsepr ufx auto2 init [--db <path>]
+\end{lstlisting}
+
+Creates all required tables and views in the target database using
+\texttt{CREATE TABLE IF NOT EXISTS}.  Safe to re-run at any time.
+Returns exit code~0 on success.
+
+\textbf{Tables created:}
+\texttt{material\_records}, \texttt{property\_values},
+\texttt{validation\_records}, \texttt{generation\_axes},
+\texttt{promotion\_history}, \texttt{property\_provenance}.
+
+\textbf{Views created:} \texttt{v\_meta\_scores}.
+
+\subsection{\texttt{audit}}
+
+\begin{lstlisting}
+vsepr ufx auto2 audit [--db <path>]
+\end{lstlisting}
+
+Queries the database and prints a structured coverage report covering:
+record counts by source class, validation pass/fail rates, promotion
+history summary, block fill coverage per tier, and weakest region
+according to the \texttt{CoverageMap}.
+
+\subsection{\texttt{randomfill}}
+
+\begin{lstlisting}
+vsepr ufx auto2 randomfill --count <n> [--db <path>] [--seed <uint64>]
+\end{lstlisting}
+
+Samples \texttt{count} points from the Phase~2 axis configuration
+(\texttt{AxisConfig::default\_phase2()}) and inserts them as
+\texttt{candidate} records into \texttt{material\_records} and
+\texttt{generation\_axes}.  Deterministic when \texttt{--seed} is
+provided.  Each record is assigned a unique \texttt{record\_id} derived
+from its element, oxidation state, coordination, geometry, phase,
+temperature, and pressure.
+
+\subsection{\texttt{validate}}
+
+\begin{lstlisting}
+vsepr ufx auto2 validate [--batch <n>] [--db <path>] [--run-dir <path>]
+\end{lstlisting}
+
+Runs \texttt{LocalSanityChecker::check\_all()} over unvalidated records.
+Writes a row to \texttt{validation\_records} for each record checked.
+Operates only on records without an existing validation entry (idempotent).
+
+\textbf{Sanity tiers checked:}
+identity (Tier~0), provenance (Tier~0), state (Tier~0), force\_field
+(Tier~1), molecular (Tier~2), thermo (Tier~3), crystal (Tier~4),
+macro (Tier~5).
+
+\subsection{\texttt{validate-web}}
+
+\begin{lstlisting}
+vsepr ufx auto2 validate-web [--batch <n>] [--db <path>]
+							 [--cache <dir>] [--run-dir <path>]
+\end{lstlisting}
+
+Fetches external identity data from PubChem and NIST WebBook.  Results
+are cached under \texttt{web\_cache/} to avoid redundant HTTP requests.
+Failures are non-fatal to the pipeline (external data availability is not
+a model error).
+
+\subsection{\texttt{promote}}
+
+\begin{lstlisting}
+vsepr ufx auto2 promote [--min-score <f>] [--warn-score <f>]
+						[--db <path>] [--run-dir <path>]
+\end{lstlisting}
+
+Evaluates the composite score for each validated record.  Records meeting
+\texttt{min-score} transition from \texttt{candidate} to \texttt{promoted}
+in \texttt{material\_records.source\_class}.  Promotion requires non-zero
+provenance (hard rule: no provenance = no promotion).
+
+\subsection{\texttt{fill-molecular} --- Phase 6}
+
+\begin{lstlisting}
+vsepr ufx auto2 fill-molecular --db <path> [--batch <n>] [--verbose]
+\end{lstlisting}
+
+Fills the \texttt{molecular} block (Tier~2) for records that do not yet
+have it.  All values are computed deterministically from the periodic
+table; no network calls.
+
+\textbf{Properties written per record:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Property & Units & Method \\
+\midrule
+\texttt{molecular\_weight}      & g/mol   & atomic weight sum \\
+\texttt{exact\_mass}            & Da      & monoisotopic mass \\
+\texttt{heavy\_atom\_count}     & ---     & from coordination \\
+\texttt{hbond\_donor\_count}    & ---     & element heuristic \\
+\texttt{hbond\_acceptor\_count} & ---     & element heuristic \\
+\texttt{inchikey}               & string  & stub (UFXSTUB format) \\
+\texttt{canonical\_smiles}      & string  & SmilesVocab lookup \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{method\_tag = "atomic\_table\_phase6"}, \texttt{confidence = 0.70}.
+
+\subsection{\texttt{fill-thermo} --- Phase 7}
+
+\begin{lstlisting}
+vsepr ufx auto2 fill-thermo --db <path> [--batch <n>] [--verbose]
+\end{lstlisting}
+
+Fills the \texttt{thermo} and \texttt{eos} blocks (Tier~3) using
+Shomate polynomial heuristics and Lee-Kesler critical property
+correlations.
+
+\textbf{Properties written per record (block = \texttt{thermo}):}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Property & Units & Method \\
+\midrule
+\texttt{delta\_Hf\_kJ\_mol}     & kJ/mol    & element-family seed \\
+\texttt{delta\_Gf\_kJ\_mol}     & kJ/mol    & Hf + TS estimate \\
+\texttt{S\_298\_J\_mol\_K}      & J/(mol·K) & Dulong-Petit proxy \\
+\texttt{cp}                     & J/(mol·K) & Shomate curve, 20 pts \\
+\texttt{melting\_point\_K}      & K         & family heuristic \\
+\texttt{boiling\_point\_K}      & K         & family heuristic \\
+\texttt{critical\_T\_K}         & K         & Lee-Kesler \\
+\texttt{critical\_P\_Pa}        & Pa        & Lee-Kesler \\
+\texttt{acentric\_factor}       & ---       & family estimate \\
+\texttt{density\_kg\_m3}        & kg/m³     & phase estimate \\
+\texttt{viscosity\_Pa\_s}       & Pa·s      & phase estimate \\
+\texttt{thermal\_conductivity\_W\_mK} & W/(m·K) & Bridgman \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Properties written per record (block = \texttt{eos}):}
+\texttt{density\_kg\_m3} at multiple (T, P) points per the axis sample range.
+
+\texttt{method\_tag = "shomate\_heuristic\_phase7"}, \texttt{confidence = 0.35}.
+
+\subsection{\texttt{fill-crystal} --- Phase 8}
+
+\begin{lstlisting}
+vsepr ufx auto2 fill-crystal --db <path> [--batch <n>] [--verbose]
+\end{lstlisting}
+
+Fills the \texttt{crystal} block (Tier~4) for \emph{solid-phase records
+only}.  Gas and liquid records are skipped cleanly (not an error).
+
+\textbf{Properties written per record:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Property & Units & Method \\
+\midrule
+\texttt{space\_group}             & string  & element-family heuristic \\
+\texttt{space\_group\_number}     & integer & Hermann-Mauguin map \\
+\texttt{lattice\_a}               & Å       & ionic radius estimate \\
+\texttt{lattice\_b}               & Å       & from symmetry \\
+\texttt{lattice\_c}               & Å       & from symmetry \\
+\texttt{lattice\_alpha\_deg}      & degrees & from space group \\
+\texttt{unit\_cell\_volume}       & Å³      & geometry product \\
+\texttt{density\_g\_cm3}         & g/cm³   & mass / volume \\
+\texttt{packing\_fraction}        & ---     & family seed \\
+\texttt{formation\_energy\_eV\_atom} & eV/atom & element heuristic \\
+\texttt{energy\_above\_hull\_eV\_atom} & eV/atom & stability estimate \\
+\texttt{band\_gap\_eV}           & eV      & family heuristic \\
+\texttt{debye\_temperature\_K}   & K       & Lindemann estimate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{method\_tag = "crystal\_heuristic\_phase8"}, \texttt{confidence = 0.30}.
+
+\subsection{\texttt{fill-transport} --- Phase 9}
+
+\begin{lstlisting}
+vsepr ufx auto2 fill-transport --db <path> [--batch <n>] [--verbose]
+\end{lstlisting}
+
+Fills the \texttt{transport} block (Tier~5) using Bridgman and
+Kozeny-Carman correlations from prior thermo and crystal data.
+
+\textbf{Properties written per record:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Property & Units & Method \\
+\midrule
+\texttt{k\_eff\_W\_mK}          & W/(m·K) & Maxwell-Garnett \\
+\texttt{diffusivity\_m2\_s}     & m²/s    & Stokes-Einstein proxy \\
+\texttt{permeability\_m2}       & m²      & Kozeny-Carman \\
+\texttt{porosity}               & ---     & axis sample or default \\
+\texttt{tortuosity}             & ---     & axis sample or default \\
+\texttt{darcy\_coeff}           & ---     & porosity/tortuosity product \\
+\texttt{mass\_transfer\_coeff}  & m/s     & film theory estimate \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{method\_tag = "phase9\_bridge\_heuristic"}, \texttt{confidence = 0.30}.
+
+\subsection{\texttt{fill-mechanical} --- Phase 9}
+
+\begin{lstlisting}
+vsepr ufx auto2 fill-mechanical --db <path> [--batch <n>] [--verbose]
+\end{lstlisting}
+
+Fills the \texttt{mechanical} block (Tier~5) using UFF stiffness-to-modulus
+bridge estimates and Voigt/Reuss bounds.
+
+\textbf{Properties written per record:}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Property & Units & Method \\
+\midrule
+\texttt{E\_eff\_GPa}    & GPa & Voigt bound + porosity correction \\
+\texttt{G\_eff\_GPa}    & GPa & from E and Poisson ratio \\
+\texttt{K\_eff\_GPa}    & GPa & bulk modulus estimate \\
+\texttt{poisson\_ratio} & --- & family heuristic \\
+\texttt{yield\_MPa}     & MPa & $0.6 \times E / 300$ proxy \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{method\_tag = "phase9\_bridge\_heuristic"}, \texttt{confidence = 0.30}.
+
+\subsection{\texttt{fill-macro} --- Phase 9 alias}
+
+\begin{lstlisting}
+vsepr ufx auto2 fill-macro --db <path> [--batch <n>] [--verbose]
+\end{lstlisting}
+
+Executes \texttt{fill-transport} followed by \texttt{fill-mechanical} in
+order.  Stops on first failure.  Transport data feeds mechanical
+estimates, so order is mandatory.
+
+\subsection{\texttt{score} --- Phase 10}
+
+\begin{lstlisting}
+vsepr ufx auto2 score --db <path> [--batch <n>] [--verbose] [--recompute]
+\end{lstlisting}
+
+Computes the \texttt{meta} block (Tier~9) for fully-filled records.
+Updates the \texttt{CoverageMap} and steers the Phase~2 sampler
+toward under-covered regions.
+
+\textbf{Composite score model:}
+\begin{equation}
+  S_{\text{composite}} = 0.25 S_{\text{identity}} + 0.20 S_{\text{local}}
+  + 0.20 S_{\text{reference}} + 0.15 S_{\text{web}}
+  + 0.10 S_{\text{repeat}} + 0.10 S_{\text{macro}}
+\end{equation}
+
+\textbf{Properties written per record:}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Property & Description \\
+\midrule
+\texttt{weirdness}           & Distance from nearest neighbour in axis space \\
+\texttt{coverage}            & Regional record density \\
+\texttt{confidence}          & Mean confidence over all filled blocks \\
+\texttt{novelty}             & Inverse of hit count for this region \\
+\texttt{local\_consistency}  & Variance in composite scores within region \\
+\texttt{source\_conflict}    & Flag if local and web checks disagree \\
+\texttt{macro\_usefulness}   & Mechanical/transport property utility score \\
+\texttt{simulation\_stability} & UFF convergence quality \\
+\texttt{extrapolation\_risk} & Fraction of properties below confidence threshold \\
+\texttt{composite\_score}    & Weighted sum (see equation above) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textbf{Sampling priority function:}
+\begin{equation}
+  p(r) = (1 - c_r)^{2} \cdot (1 + \bar{u}_r) \cdot (1 - e_r) \cdot (1 + 0.2\,\bar{w}_r)
+\end{equation}
+where $c_r$ = coverage, $\bar{u}_r$ = mean macro usefulness, $e_r$ = extrapolation
+risk, $\bar{w}_r$ = mean weirdness for region $r$.
+
+\texttt{method\_tag = "meta\_score\_phase10"}, \texttt{confidence = 0.50}.
+
+% ============================================================================
+\section{Type System}
+% ============================================================================
+
+\subsection{Primitive types}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+UFX type & C++ type & Notes \\
+\midrule
+\texttt{integer}   & \texttt{int}                    & signed 32-bit \\
+\texttt{uint64}    & \texttt{uint64\_t}              & seed values \\
+\texttt{float64}   & \texttt{double}                 & all physical quantities \\
+\texttt{string}    & \texttt{std::string}            & UTF-8 \\
+\texttt{path}      & \texttt{std::filesystem::path}  & OS-native path \\
+\texttt{bool}      & \texttt{bool}                   & flags only \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Structured types}
+
+\textbf{\texttt{Auto2Options}} --- the parsed option bag passed to every
+Phase~6--10 handler:
+
+\begin{lstlisting}[language=C++]
+struct Auto2Options {
+	std::filesystem::path db_path;
+	int         batch          = 500;
+	int         validate_batch = 100;
+	int         web_batch      = 25;
+	double      min_score      = 0.92;
+	bool        verbose        = true;
+	bool        recompute      = false;
+	bool        web_validate   = false;
+	std::string cache_dir      = "web_cache";
+	std::string run_dir;
+};
+\end{lstlisting}
+
+Raw subcommand strings must not pass beyond the CLI layer.  All
+string-to-value conversions happen in \texttt{parse\_auto2\_options\_()}.
+
+\textbf{\texttt{AxisSample}} --- one drawn point from the generation space:
+
+\begin{lstlisting}[language=C++]
+struct AxisSample {
+	// Phase 2 (mandatory)
+	std::string element_family;
+	std::string element;
+	int         oxidation_state;
+	int         coordination;
+	std::string geometry;
+	std::string phase;
+	double      temperature_K;
+	double      pressure_atm;
+	std::string target_property;
+	uint64_t    seed_used;
+	int         sample_index;
+	// Phase 6-9 (optional, populated by generators)
+	std::optional<std::string> canonical_smiles;
+	std::optional<int>         heavy_atom_count;
+	// ... (see axis_config.hpp for complete definition)
+};
+\end{lstlisting}
+
+\textbf{Phase result types} --- each fill command returns a typed result:
+
+\begin{lstlisting}[language=C++]
+struct FillMolecularResult {
+	std::string db_path;
+	int processed, filled, skipped, failed;
+	bool        success;
+	std::string error_message;
+};
+// Analogous: FillThermoResult, FillCrystalResult,
+//            FillMacroResult, ScoreResult
+\end{lstlisting}
+
+\textbf{Exit codes:}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Code & Meaning \\
+\midrule
+0 & Success (including NoOp / already filled) \\
+1 & Generator or database error \\
+2 & Invalid invocation (missing required option) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Block Ontology}
+% ============================================================================
+
+\subsection{What a block is}
+
+A \emph{block} is a named, versioned group of properties written to
+\texttt{property\_values} for a given material record.  Every row in
+\texttt{property\_values} carries:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Column & Meaning \\
+\midrule
+\texttt{material\_id}   & FK to \texttt{material\_records.id} \\
+\texttt{block\_tier}    & Integer tier (0--9) \\
+\texttt{block\_name}    & Block identifier string \\
+\texttt{property\_name} & Property identifier within the block \\
+\texttt{value}          & Float64 value \\
+\texttt{value\_string}  & String value (when not numeric) \\
+\texttt{temperature\_K} & State temperature \\
+\texttt{pressure\_atm}  & State pressure \\
+\texttt{phase\_label}   & Phase label at measurement state \\
+\texttt{method\_tag}    & Algorithm used to produce this value \\
+\texttt{confidence}     & Estimated reliability $\in [0, 1]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Block name constants}
+
+Block names are centrally defined in \texttt{ufx\_blocks} and must
+not be written as raw string literals at call sites:
+
+\begin{lstlisting}[language=C++]
+namespace ufx_blocks {
+	constexpr std::string_view molecular  = "molecular";
+	constexpr std::string_view thermo     = "thermo";
+	constexpr std::string_view crystal    = "crystal";
+	constexpr std::string_view transport  = "transport";
+	constexpr std::string_view mechanical = "mechanical";
+	constexpr std::string_view meta       = "meta";
+}
+\end{lstlisting}
+
+\textbf{Invariant:} A trailing space in a block name is a data error.
+SQLite will store it silently.  Always use the constants above.
+
+\subsection{Tier definitions}
+
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+Tier & Block(s) & Source \\
+\midrule
+0 & identity, provenance, state & \texttt{randomfill} \\
+1 & force\_field                 & \texttt{randomfill} (UFF) \\
+2 & molecular                    & \texttt{fill-molecular} \\
+3 & thermo, eos                  & \texttt{fill-thermo} \\
+4 & crystal                      & \texttt{fill-crystal} \\
+5 & transport, mechanical        & \texttt{fill-transport/mechanical} \\
+6--8 & (reserved)               & future phases \\
+9 & meta                         & \texttt{score} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Each fill command targets exactly one tier.  A record missing a lower
+tier does not block a higher-tier fill (fills are independent), but
+lower-tier data enriches higher-tier estimates.
+
+% ============================================================================
+\section{Pipeline Semantics}
+% ============================================================================
+
+\subsection{Canonical pipeline order}
+
+\begin{lstlisting}
+randomfill
+fill-molecular
+fill-thermo
+fill-crystal
+fill-transport
+fill-mechanical
+validate
+validate-web        # optional
+score
+promote
+audit
+\end{lstlisting}
+
+\textbf{Ordering constraint:} \texttt{score} must run after \texttt{validate}
+and \texttt{validate-web}.  Scoring before validation produces scores that
+do not account for validation failures.
+
+\textbf{Independence:} Fill steps for different tiers are independent.
+Running them out of phase-order is permitted but produces lower-quality
+estimates (e.g.\ crystal estimates are better when thermo density is
+already filled).
+
+\subsection{Idempotency invariant}
+
+Every fill command implements:
+
+\begin{lstlisting}[language=SQL]
+SELECT id FROM material_records mr
+WHERE NOT EXISTS (
+	SELECT 1 FROM property_values pv
+	WHERE pv.material_id = mr.id
+	  AND pv.block_name  = ?    -- block name constant
+)
+LIMIT ?;
+\end{lstlisting}
+
+Re-running any fill command on an already-filled database produces exactly
+zero new rows.  The result status is \texttt{NoOp}, exit code~0.
+
+\subsection{Continual loop}
+
+The PowerShell harness \texttt{tools/run\_ufx\_auto2\_continual.ps1}
+wraps the canonical pipeline in a loop that repeats until the database
+reaches a target size.  Each cycle produces:
+
+\begin{itemize}
+  \item A timestamped run directory with per-command log files
+  \item A row appended to \texttt{summary.csv} with per-step exit codes
+  \item An optional snapshot copy of the database
+\end{itemize}
+
+The harness checks \texttt{\$LASTEXITCODE} after each step and throws
+on failure.  \texttt{validate-web} failure is non-fatal (external
+network availability is not a model error).
+
+% ============================================================================
+\section{Correctness Invariants}
+% ============================================================================
+
+These invariants are enforced by the implementation and must be preserved
+by any future extension.
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{No provenance = no promotion.}  A record without at least
+		one \texttt{property\_provenance} row cannot be promoted regardless
+		of its composite score.
+
+  \item \textbf{State on every row.}  Every \texttt{property\_values} row
+		must carry non-null \texttt{temperature\_K}, \texttt{pressure\_atm},
+		and \texttt{phase\_label}.
+
+  \item \textbf{Fill idempotency.}  See \S5.2.  Duplicate rows are a
+		data error; the idempotency SELECT must be present in every fill loop.
+
+  \item \textbf{Crystal only for solids.}  \texttt{fill-crystal} must
+		skip gas and liquid records cleanly.  It must not emit
+		\texttt{crystal\_block\_invalid} for non-solid records.
+
+  \item \textbf{fill-macro order.}  Transport must run before mechanical.
+		Transport data (density, viscosity, conductivity) feeds the
+		mechanical estimate bridge.
+
+  \item \textbf{Score after validate.}  \texttt{score} reads validation
+		outcomes from \texttt{validation\_records}.  Running before
+		validate produces stale scores.
+
+  \item \textbf{Block names from constants.}  Raw block name string literals
+		must not appear at call sites.  Use \texttt{ufx\_blocks::*} constants.
+
+  \item \textbf{Phase 10 steers, not suppresses.}  The meta-score engine
+		adjusts sampling priority.  It must never delete or reject records
+		based on score alone.
+
+  \item \textbf{Determinism.}  Given the same seed, \texttt{randomfill}
+		produces the same records.  Given the same database state, all
+		fill commands produce the same rows.  No random or time-dependent
+		behavior may appear in the fill path.
+\end{enumerate}
+
+% ============================================================================
+\section{Axis Space}
+% ============================================================================
+
+\subsection{Phase 2 generation axes}
+
+The base sampling space is defined by \texttt{AxisConfig::default\_phase2()}.
+
+\begin{center}
+\begin{longtable}{llp{6.5cm}}
+\toprule
+Axis & Type & Values / Range \\
+\midrule
+\texttt{element\_family}  & discrete  & alkali, alkaline\_earth, transition\_metal,
+										post\_transition, metalloid, nonmetal,
+										halogen, noble\_gas, lanthanide, actinide \\
+\texttt{element}          & discrete  & 56 elements from H through Pu \\
+\texttt{geometry}         & discrete  & linear, trigonal\_planar, tetrahedral,
+										square\_planar, trigonal\_bipyramidal,
+										octahedral, pentagonal\_bipyramidal \\
+\texttt{phase}            & discrete  & gas, liquid, solid, powder, molten\_salt \\
+\texttt{target\_property} & discrete  & force\_field, thermo, crystal, transport, mechanical \\
+\texttt{oxidation\_state} & integer   & $[-4, 8]$ \\
+\texttt{coordination}     & integer   & $[1, 12]$ \\
+\texttt{temperature\_K}   & float64   & $[50, 2500]$ \\
+\texttt{pressure\_atm}    & float64   & $[0.001, 1000]$ \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Phase 6--9 extended axes}
+
+Additional fields on \texttt{AxisSample} are populated by the generators
+and may be used to bias future sampling runs:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Field & Phase & Type & Units \\
+\midrule
+\texttt{canonical\_smiles}         & 6 & string  & --- \\
+\texttt{heavy\_atom\_count}        & 6 & integer & --- \\
+\texttt{delta\_Hf\_kJ\_mol}        & 7 & float64 & kJ/mol \\
+\texttt{cp\_298\_J\_mol\_K}        & 7 & float64 & J/(mol·K) \\
+\texttt{eos\_model}                & 7 & string  & --- \\
+\texttt{space\_group}              & 8 & string  & --- \\
+\texttt{lattice\_a\_angstrom}      & 8 & float64 & Å \\
+\texttt{packing\_fraction}         & 8 & float64 & --- \\
+\texttt{energy\_above\_hull\_eV\_atom} & 8 & float64 & eV/atom \\
+\texttt{porosity}                  & 9 & float64 & --- \\
+\texttt{tortuosity}                & 9 & float64 & --- \\
+\texttt{strain\_rate}              & 9 & float64 & s$^{-1}$ \\
+\texttt{test\_environment}         & 9 & string  & --- \\
+\texttt{thermal\_gradient\_K\_m}   & 9 & float64 & K/m \\
+\texttt{flow\_velocity\_m\_s}      & 9 & float64 & m/s \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Coverage and Region Model}
+% ============================================================================
+
+\subsection{Region key}
+
+A \emph{region} is identified by a \texttt{RegionKey} string constructed
+from a record's element family, phase, and oxidation bracket:
+
+\begin{lstlisting}[language=C++]
+// Example: "transition_metal|solid|ox_positive"
+RegionKey make_key(const std::string& family,
+				   const std::string& phase,
+				   int oxidation_state);
+
+// Derive directly from a material record
+RegionKey make_key_from_identity(const UFXMaterialRecord& rec);
+\end{lstlisting}
+
+\subsection{Coverage map operations}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Method & Semantics \\
+\midrule
+\texttt{load\_from\_db(db, path)} & Load hit counts from \texttt{generation\_axes} \\
+\texttt{record\_hit(key)}         & Increment hit count for region \\
+\texttt{count\_for(key)}          & Return hit count \\
+\texttt{weakest\_region()}        & Region with lowest hit count \\
+\texttt{all\_regions()}           & Set of all known region keys \\
+\texttt{region\_count()}          & Number of distinct regions \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Phase 10 scheduler}
+
+The meta-score engine uses the coverage map to bias \texttt{randomfill}
+sampling.  The priority weight $p(r)$ is high for regions that are
+under-covered, have high macro usefulness, and carry low extrapolation risk.
+
+The scheduler does not drop records.  It only adjusts the probability
+of drawing from each region in the next cycle.
+
+% ============================================================================
+\section{Schema Reference}
+% ============================================================================
+
+\subsection{Core tables}
+
+\begin{center}
+\begin{longtable}{lp{9cm}}
+\toprule
+Table & Purpose \\
+\midrule
+\texttt{material\_records}   & One row per material state.  Carries
+							   \texttt{record\_id} (derived from identity),
+							   \texttt{element}, \texttt{phase},
+							   \texttt{source\_class}, and timestamp. \\
+\texttt{property\_values}    & All generated property data.  Foreign key
+							   to \texttt{material\_records}.  One row per
+							   (material, block, property, T, P). \\
+\texttt{validation\_records} & Local and web validation outcomes per record. \\
+\texttt{generation\_axes}    & The raw \texttt{AxisSample} that produced
+							   each record, for full reproducibility. \\
+\texttt{promotion\_history}  & Timestamped log of every source\_class
+							   transition. \\
+\texttt{property\_provenance}& Links each property group to the algorithm
+							   that produced it.  Required for promotion. \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsection{Views}
+
+\texttt{v\_meta\_scores} --- joins \texttt{material\_records} with Tier~9
+rows from \texttt{property\_values} to present composite score, weirdness,
+novelty, and extrapolation risk in a single queryable view.
+
+% ============================================================================
+\section{Future Language Extensions}
+% ============================================================================
+
+The following constructs are \emph{not yet implemented} but are natural
+next steps given the current command vocabulary.  They are documented here
+as design seeds for the universal VSEPR-SIM scripting language.
+
+\subsection{Pipeline literal}
+
+A named, ordered sequence of commands that can be saved and replayed:
+
+\begin{lstlisting}
+pipeline phase10_full {
+	randomfill  --count 500
+	fill-molecular
+	fill-thermo
+	fill-crystal
+	fill-macro
+	validate
+	validate-web  --optional
+	score
+	promote  --min-score 0.92
+	audit
+}
+run phase10_full --db output/ufx_auto2.sqlite
+\end{lstlisting}
+
+\subsection{Block expression}
+
+Access a named block's properties in a condition or assignment:
+
+\begin{lstlisting}
+if block(molecular).heavy_atom_count > 6 {
+	fill-thermo --extended
+}
+\end{lstlisting}
+
+\subsection{Axis constructor}
+
+Build a sampling axis inline:
+
+\begin{lstlisting}
+axis temperature_K = range(200, 1200, step=50)
+axis phase = ["solid", "molten_salt"]
+randomfill --count 1000 --axes temperature_K, phase
+\end{lstlisting}
+
+\subsection{Region predicate}
+
+Filter commands to a specific region:
+
+\begin{lstlisting}
+fill-crystal --where region.family == "lanthanide"
+score        --where region.coverage < 0.1
+\end{lstlisting}
+
+\subsection{Conditional promotion rule}
+
+Replace the hard-coded score threshold with a composable expression:
+
+\begin{lstlisting}
+promote --rule {
+	composite_score >= 0.90
+	AND block(molecular).confidence >= 0.60
+	AND NOT source_conflict
+}
+\end{lstlisting}
+
+\subsection{Typed variable binding}
+
+\begin{lstlisting}
+let db     = "output/ufx_auto2.sqlite"
+let batch  = 500
+let target = 1GB
+
+run phase10_full --db $db --batch $batch until db_size >= $target
+\end{lstlisting}
+
+% ============================================================================
+\section{Quick Reference Card}
+% ============================================================================
+
+\begin{lstlisting}
+# Full Phase 10 pipeline, batch 500
+vsepr ufx auto2 init            --db ufx_auto2.sqlite
+vsepr ufx auto2 randomfill      --count 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 fill-molecular  --batch 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 fill-thermo     --batch 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 fill-crystal    --batch 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 fill-transport  --batch 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 fill-mechanical --batch 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 validate        --batch 200   --db ufx_auto2.sqlite
+vsepr ufx auto2 validate-web    --batch 25    --db ufx_auto2.sqlite
+vsepr ufx auto2 score           --batch 500   --db ufx_auto2.sqlite
+vsepr ufx auto2 promote         --min-score 0.92  --db ufx_auto2.sqlite
+vsepr ufx auto2 audit           --db ufx_auto2.sqlite
+
+# Idempotency test (second run should produce 0 new rows)
+vsepr ufx auto2 fill-molecular  --batch 500   --db ufx_auto2.sqlite
+
+# Continual loop until 1 GB
+.\tools\run_ufx_auto2_continual.ps1 -TargetBytes 1GB -BatchSize 500
+
+# Audit only
+vsepr ufx auto2 audit --db ufx_auto2.sqlite
+\end{lstlisting}
+
+\vspace{1cm}
+\hrule
+\vspace{0.4cm}
+{\small
+\textbf{Document version:} 1.0 \quad
+\textbf{Specification status:} Active \quad
+\textbf{Platform:} VSEPR-SIM v5 beta9+, branch 4.0-legacy-beta \\
+All commands described in this document are implemented in
+\texttt{src/cli/cmd\_ufx.cpp} and testable via the \texttt{vsepr-ufx}
+executable.
+}
+
+\end{document}

@@ -1,0 +1,220 @@
+# =====================================================================
+# ordeal_tests.vsim
+# VSIM Scripting Language — Ordeal Test Suite
+#
+# Ordeal tests are complex but valid normal examples.
+# They are not malformed, adversarial, impossible, or failure-injection tests.
+#
+# Golden proves correctness on simple references.
+# Ordeal proves generality across real structural classes that do not fit
+# tidy classroom VSEPR assumptions.
+# =====================================================================
+
+[suite]
+name              = ordeal_tests
+version           = beta8_day2B
+level             = ordeal
+purpose           = complex_valid_schema_breadth_examples
+expected_behavior = parse_build_analyze_hash
+failure_policy    = fail_on_schema_regression
+
+tests = group:cage_network,
+		group:mechanical_bond,
+		group:quasicrystal,
+		group:aperiodic_surface
+
+# ---------------------------------------------------------------------
+# Defaults
+# ---------------------------------------------------------------------
+
+[defaults.test]
+enabled          = true
+expected_hash    = unset
+hash_policy      = capture_from_verified_strict_mode
+
+[defaults.framework]
+type             = crystal
+
+[defaults.framework.run]
+mode             = build_relax_hash
+temperature      = 300
+relax_steps      = 2000
+canonical_target = framework_lattice
+
+[defaults.framework.analysis]
+coordination_number = true
+canonical_hash      = true
+
+[defaults.topology_object]
+type             = topology_object
+chemistry_hint   = none
+
+[defaults.topology_object.run]
+mode             = build_hash
+canonical_target = topological_invariant
+
+[defaults.topology_object.analysis]
+canonical_hash   = true
+
+[defaults.quasicrystal]
+type             = quasicrystal
+periodicity      = none
+long_range_order = true
+
+[defaults.quasicrystal.run]
+mode             = build_hash
+canonical_target = diffraction_pattern
+
+[defaults.quasicrystal.analysis]
+pair_distribution = true
+canonical_hash    = true
+
+[defaults.surface]
+type             = surface
+periodicity      = none
+bulk             = false
+
+[defaults.surface.run]
+mode             = generate_hash
+canonical_target = tiling_patch
+
+[defaults.surface.analysis]
+canonical_hash   = true
+
+# =====================================================================
+# 01 — Fe-Co Prussian Blue Analog Cage Network
+# =====================================================================
+# This is not a VSEPR molecule. It is a framework/cage-network crystal.
+# node_species replaces central_atom.
+# linker replaces ligands.
+# pore_volume is framework-specific and meaningless for simple molecules.
+# vacancy_model marks the structure as a statistical ensemble.
+# =====================================================================
+
+[test.Fe_Co_PBA]
+group           = cage_network
+type            = crystal
+formula         = Fe4[Co(CN)6]3
+topology        = cubic_cage_CN_bridged
+node_species    = Fe,Co
+linker          = CN
+linker_role     = end_on_bridge
+coordination    = Fe:N-end,Co:C-end
+structure       = prussian_blue_analog
+basis           = fcc_derived_framework
+supercell       = 3x3x3
+vacancy_model   = Co_deficient_statistical
+# uncertainty: vacancy distribution is stochastic; hash is ensemble-dependent.
+# no central_atom, no ligands, no lone_pairs — this is not a molecule.
+
+[test.Fe_Co_PBA.run]
+mode             = build_relax_hash
+temperature      = 300
+relax_steps      = 2000
+canonical_target = framework_lattice
+
+[test.Fe_Co_PBA.analysis]
+coordination_number = true
+pore_volume         = true
+linker_angle_dist   = true
+vacancy_statistics  = true
+canonical_hash      = true
+
+# =====================================================================
+# 02 — Borromean Rings / Topological Interlocking
+# =====================================================================
+# Topological proxy only.
+# No formula, no lattice, no basis, no VSEPR fields.
+# pairwise_linked=false is load-bearing metadata:
+# remove one ring and the other two separate.
+# =====================================================================
+
+[test.borromean_rings]
+group           = mechanical_bond
+type            = topology_object
+topology        = borromean_L6a4
+component_count = 3
+component_type  = ring
+link_invariant  = L6a4
+pairwise_linked = false
+globally_linked = true
+chemistry_hint  = none
+# uncertainty: hash depends on ring geometry parametrisation, not just topology.
+# pairwise_linked=false is the whole point — remove one ring, the others separate.
+
+[test.borromean_rings.run]
+mode             = build_hash
+canonical_target = topological_invariant
+
+[test.borromean_rings.analysis]
+linking_number = true
+writhe         = true
+component_separation_test = true
+canonical_hash = true
+
+# =====================================================================
+# 03 — Icosahedral Al-Mn Quasicrystal
+# =====================================================================
+# Aperiodic, but long-range ordered.
+# No conventional unit cell exists.
+# canonical_hash targets finite cluster/diffraction behavior, not a lattice.
+# =====================================================================
+
+[test.AlMn_icosahedral_QC]
+group            = quasicrystal
+type             = quasicrystal
+formula          = Al86Mn14
+symmetry         = icosahedral_Ih
+periodicity      = none
+long_range_order = true
+inflation_ratio  = golden_ratio
+projection_from  = 6D_hypercubic
+tiling_type      = 3D_Penrose
+# uncertainty: no unit cell exists; hash must target a finite cluster or diffraction pattern.
+# lattice = inapplicable. supercell = inapplicable. this is the point.
+# inflation_ratio encodes tau = (1+sqrt(5))/2.
+
+[test.AlMn_icosahedral_QC.run]
+mode                    = build_hash
+cluster_cutoff_angstrom = 15.0
+canonical_target        = diffraction_pattern
+
+[test.AlMn_icosahedral_QC.analysis]
+pair_distribution = true
+fivefold_symmetry = true
+phason_strain     = true
+canonical_hash    = true
+
+# =====================================================================
+# 04 — Penrose P3 Tiling / 2D Aperiodic Surface
+# =====================================================================
+# No chemistry required. This is a generated 2D surface/topology patch.
+# seed is required because different legal finite patches are equally valid.
+# =====================================================================
+
+[test.penrose_P3_surface]
+group           = aperiodic_surface
+type            = surface
+topology        = penrose_P3
+tile_types      = fat_rhomb,thin_rhomb
+tile_ratio      = golden_ratio
+matching_rules  = arrow_decoration
+symmetry        = D10_local
+periodicity     = none
+bulk            = false
+projection_from = 4D_hypercubic
+patch_size      = 200_tiles
+# uncertainty: tiling is infinite and non-repeating; hash covers finite patch only.
+# matching_rules enforces legal Penrose tiling — arrow decorations on tile edges must align.
+# D10_local = local 10-fold rotational symmetry, globally forbidden in periodic tilings.
+
+[test.penrose_P3_surface.run]
+mode             = generate_hash
+canonical_target = tiling_patch
+seed             = 42
+
+[test.penrose_P3_surface.analysis]
+tile_frequency_ratio = true
+local_isomorphism    = true
+fivefold_symmetry    = true
+canonical_hash       = true

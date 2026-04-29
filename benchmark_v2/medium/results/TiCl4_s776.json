@@ -1,0 +1,19 @@
+{
+  "formula": "TiCl4",
+  "seed": 776,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 136.375641,
+  "energy_per_atom": 27.275128,
+  "rms_force": 256.514963,
+  "max_force": 256.514963,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.669200,
+  "timestamp": "2026-03-28T13:07:37",
+  "xyz_file": "benchmark_v2\medium\structures\TiCl4_s776.xyz"
+}

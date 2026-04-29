@@ -1,0 +1,132 @@
+# scripts/demo_08_polymerisation.vsim
+# VSEPR-SIM polymerisation demo
+# Scenarios: 2 (Ziegler-Natta coordination insertion),
+#            7 (ROP epsilon-caprolactam)
+# vsper validate scripts/demo_08_polymerisation.vsim
+# Back-call: vsper run kernel_demo --scenario 2
+#            vsper run kernel_demo --scenario 7
+
+[project]
+name        = demo_08_polymerisation
+version     = v5.0.0-beta.7.1
+seed_base   = 8002
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+chemical_events  = true
+formation_events = true
+dynamic_energy   = true
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 4000
+steps_relax      = 3000
+save_every       = 50
+temperature_low  = 200
+temperature_mid  = 400
+temperature_high = 600
+
+[material.ziegler_natta]
+id      = ziegler_natta
+classes = coordination_polymerisation,heterogeneous_catalysis
+formula = C2H4
+rule    = coordination_insertion
+# scenario 2 in kernel_demo
+# uncertain: Ziegler-Natta catalyst site model is a coordination proxy
+
+[material.ziegler_natta.structure]
+type     = polymer_chain
+elements = C,H
+n_beads  = 256
+
+[material.ziegler_natta.formation]
+mode        = relax_from_monomer
+temperature = 350
+relax_steps = 4000
+
+[material.ziegler_natta.analysis]
+chain_length_distribution = true
+tacticity_fraction        = true
+packing_fraction          = true
+local_order               = true
+
+[material.ziegler_natta.expected_signature]
+primary = isotactic_polyethylene_coordination_4
+trend_1 = chain_length_increases_with_monomer_count
+trend_2 = coordination_number_4_at_active_site
+trend_3 = packing_fraction_above_0_70
+
+[material.rop_caprolactam]
+id      = rop_caprolactam
+classes = ring_opening_polymerisation,anionic_mechanism
+formula = C6H11NO
+rule    = ring_opening_polymerisation
+# scenario 7 in kernel_demo
+
+[material.rop_caprolactam.structure]
+type     = polymer_chain
+elements = C,H,N,O
+n_beads  = 128
+
+[material.rop_caprolactam.formation]
+mode        = relax_from_cyclic_monomer
+temperature = 250
+relax_steps = 3000
+
+[material.rop_caprolactam.analysis]
+chain_length_distribution = true
+degree_of_polymerisation  = true
+packing_fraction          = true
+local_order               = true
+
+[material.rop_caprolactam.expected_signature]
+primary = nylon6_amide_coordination_3
+trend_1 = ring_opening_exothermic
+trend_2 = molar_mass_dispersity_narrows_with_living_character
+
+[universal_smoke_tests]
+check_state_validity    = true
+check_no_nan            = true
+check_no_inferred_state = true
+check_reproducibility   = true
+
+[sweep]
+enabled   = true
+materials = ziegler_natta,rop_caprolactam
+seeds     = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+
+[report]
+title                  = demo_08_polymerisation
+include_material_cards = true
+include_metric_tables  = true
+include_expected_trends = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_snapshot
+animation_mode        = bar
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = false
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = false
+show_audit_table      = false

@@ -1,0 +1,282 @@
+﻿\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{Statistical Interpretation Layer} \\
+\Large Implementation Status and Gap Analysis}
+\author{Formation Engine Development Team}
+\date{Version 1.0.0 --- June 28, 2025}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\vfill
+\begin{center}
+\large\textit{VSEPR Simulation Program --- Internal Report} \\[0.5em]
+\normalsize Derived from Section~7 audit of the statistical interpretation subsystem. \\
+Documents production-ready components, conceptual-only frameworks, \\
+and concrete integration tasks required for statistical rigor.
+\end{center}
+\vfill
+
+\newpage
+\tableofcontents
+\newpage
+
+%% ---------------------------------------------------------------
+\section{Executive Summary}
+
+An audit of the statistical interpretation layer (Section~7) reveals a split
+maturity profile:
+
+\begin{itemize}
+\item \textbf{Production-ready:} Kabsch structural alignment, RMSD computation,
+	  animated alignment with linear interpolation.
+\item \textbf{Conceptual only:} Welford online statistics, stationarity-gated
+	  convergence detection, observable tracking in integrators.
+\end{itemize}
+
+This report catalogs the current state, identifies the gaps, and proposes
+prioritized integration work.
+
+%% ---------------------------------------------------------------
+\section{Production-Ready Components}
+
+\subsection{Kabsch Algorithm --- \texttt{atomistic/core/alignment.cpp}}
+
+The Kabsch algorithm is fully implemented and finds the optimal rigid-body
+rotation $\mathbf{R}^*$ that minimizes RMSD between two $N$-atom structures:
+
+\begin{equation}
+\mathbf{R}^* = \mathbf{V}\mathbf{U}^T, \qquad
+\mathbf{H} = \mathbf{U}\boldsymbol{\Sigma}\mathbf{V}^T = \sum_{i=1}^{N} \mathbf{x}_i \otimes \mathbf{r}_i
+\end{equation}
+
+SVD is computed via Jacobi iteration. The implementation handles:
+\begin{itemize}
+\item COM centering of both structures before alignment
+\item Reflection correction ($\det(\mathbf{V}\mathbf{U}^T) < 0$)
+\item Pre- and post-alignment RMSD reporting
+\item Identity-rotation fallback for degenerate input ($N < 2$)
+\end{itemize}
+
+\subsection{RMSD Computation}
+
+Standard textbook definition:
+\begin{equation}
+\text{RMSD} = \sqrt{\frac{1}{N}\sum_{i=1}^{N} |\mathbf{R}\mathbf{x}_i - \mathbf{r}_i|^2}
+\end{equation}
+
+Validated for conformer clustering workflows.
+
+\subsection{Animated Alignment}
+
+Functional with linear matrix interpolation between initial and aligned orientations.
+
+\textbf{Known limitation:} Intermediate matrices are not proper rotations for
+large angular displacements. A SLERP (quaternion) upgrade is documented but
+not yet implemented.
+
+%% ---------------------------------------------------------------
+\section{Conceptual-Only Frameworks}
+
+\subsection{Welford's Online Statistics}
+
+Welford's one-pass recurrence avoids catastrophic cancellation when accumulating
+variance over energy trajectories with large absolute values:
+
+\begin{align}
+\bar{x}_n &= \bar{x}_{n-1} + \frac{x_n - \bar{x}_{n-1}}{n} \\
+M_{2,n}   &= M_{2,n-1} + (x_n - \bar{x}_{n-1})(x_n - \bar{x}_n) \\
+\text{Var}(x) &= \frac{M_2}{n-1}
+\end{align}
+
+A Python reference class exists in \texttt{tools/scoring.py}. No C++
+\texttt{OnlineStats} struct is present in the integrator codebase.
+
+\subsection{Stationarity Gate / Convergence Detection}
+
+The conceptual \texttt{ObservableTracker} monitors energy terms and temperature,
+declaring convergence after $k$ consecutive samples remain within $3\sigma$ of
+the running mean:
+
+\begin{equation}
+|x_{\text{new}} - \bar{x}| < 3\,\sigma(\bar{x}) + \varepsilon
+\end{equation}
+
+Currently requires manual trajectory inspection. No auto-stop mechanism exists
+in Velocity Verlet, FIRE, or Langevin integrators.
+
+%% ---------------------------------------------------------------
+\section{Gap Analysis}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lccl@{}}
+\toprule
+\textbf{Component} & \textbf{Documented} & \textbf{Implemented} & \textbf{Blocking} \\
+\midrule
+Kabsch alignment             & Yes & Yes & --- \\
+RMSD computation             & Yes & Yes & --- \\
+Animated alignment           & Yes & Yes (linear) & SLERP upgrade \\
+Welford \texttt{OnlineStats} & Yes & No  & Heat capacity (S4.6) \\
+Stationarity gate            & Yes & No  & Auto-equilibration \\
+Multi-reference Kabsch       & Yes & No  & Ensemble averaging \\
+Partial (weighted) Kabsch    & Yes & No  & Backbone-only align \\
+\bottomrule
+\end{tabular}
+\caption{Implementation status of statistical interpretation components.}
+\end{table}
+
+%% ---------------------------------------------------------------
+\section{Recommended Integration Order}
+
+\begin{enumerate}
+\item \textbf{C++ \texttt{OnlineStats} struct} --- Direct port of the Python
+	  reference. Required by all downstream statistical work.
+\item \textbf{Integrator instrumentation} --- Add \texttt{OnlineStats} members
+	  to Velocity Verlet and FIRE state structs; accumulate energy, temperature,
+	  and force-magnitude variance each step.
+\item \textbf{Stationarity gate in Langevin dynamics} --- Wire
+	  \texttt{ObservableTracker} into the Langevin loop with configurable
+	  pass count and auto-stop.
+	  interpolation with quaternion geodesic interpolation on SO(3).
+\item \textbf{Weighted / partial Kabsch} --- Extend alignment to support atom
+	  subsets and iterative ensemble refinement.
+\end{enumerate}
+
+
+%% ---------------------------------------------------------------
+\section{New Features: Auto-Spin and Auto-Capture}
+
+Two new features have been added to the 3D visualization module
+(\texttt{src/vis/}) to support hands-free molecular review:
+
+\subsection{Auto-Spin}
+
+Continuous camera orbit around the molecule center at a configurable speed.
+Implemented in \texttt{AutoPilot::tick()} which calls \texttt{Camera::orbit()}
+scaled by frame delta time each frame.
+
+\begin{itemize}
+\item Toggle: \textbf{S} key or ImGui checkbox
+\item Speed: adjustable 10--600 px-equivalent/sec (default 120)
+\item Wobble: optional vertical sinusoidal oscillation for presentation views
+\end{itemize}
+
+\subsection{Auto-Capture}
+
+Periodic framebuffer screenshot export to PNG via \texttt{stb\_image\_write}.
+Reads the GL framebuffer with \texttt{glReadPixels}, flips vertically, and
+writes sequentially numbered files to a configurable output directory.
+
+\begin{itemize}
+\item Toggle: \textbf{P} key or ImGui checkbox
+\item Interval: adjustable 0.25--10 seconds (default 2\,s)
+\item Output: \texttt{captures/frame\_0001.png}, \texttt{frame\_0002.png}, \ldots
+\item Manual trigger: `Capture Now'' button in the Auto-Pilot panel
+\end{itemize}
+
+\subsection{Integration Points}
+
+\begin{itemize}
+\item \texttt{src/vis/auto\_pilot.hpp / .cpp} --- self-contained \texttt{AutoPilot} class
+\item \texttt{src/vis/window.cpp} --- ticked in all three run-loop variants
+\item \texttt{src/vis/ui\_panels.cpp} --- dedicated ImGui panel with real-time controls
+\end{itemize}
+
+%% ---------------------------------------------------------------
+\section{Guiding Principle}
+
+\begin{quote}
+\textit{If you cannot compute the variance of an observable, you cannot claim it
+has converged. If you cannot align two structures optimally, you cannot claim
+they are different. Statistical rigor is not optional---it is the foundation of
+scientific validity.}
+\end{quote}
+
+
+\section{Offline SVG Prerendering for Reports}
+
+The glass module now includes a complete offline report-rendering pipeline
+that converts 3D molecule layouts into publication-quality SVG without
+requiring an OpenGL context.
+
+\subsection{Pipeline Summary}
+
+\begin{enumerate}
+  \item \textbf{Topology} --- \texttt{build\_topology()} constructs a
+        lightweight \texttt{GlassMolecule} adjacency graph from atomic
+        numbers and bond pairs.
+  \item \textbf{Ring Detection} --- \texttt{detect\_rings()} identifies
+        planar ring systems for correct polygon pinning.
+  \item \textbf{3D Layout} --- \texttt{TopologyPrerender3D::build\_layout()}
+        places atoms via BFS with ring pre-placement, chain smoothing, and
+        sinusoidal arc injection.
+  \item \textbf{Instance Buffers} --- \texttt{MoleculePrerenderBuilder::build()}
+        converts positions into typed atom/bond instances with style flags.
+  \item \textbf{SVG Export} --- \texttt{ReportRenderer::render\_svg()} performs
+        software orthographic/perspective projection, depth-sorted painting,
+        CPK colouring, and multi-bond rendering into a self-contained SVG string.
+\end{enumerate}
+
+\subsection{Key Design Decisions}
+
+\begin{itemize}
+  \item \textbf{No GPU dependency} --- The entire report path runs in pure C++
+        with no OpenGL, GLFW, or shader requirements.
+  \item \textbf{CPK colour palette} --- A 54-element Corey--Pauling--Koltun
+        table maps atomic number to standard colours (H\,=\,white, C\,=\,grey,
+        N\,=\,blue, O\,=\,red, etc.).
+  \item \textbf{Depth shading} --- Atoms further from the camera are
+        progressively dimmed, giving a pseudo-3D appearance in 2D output.
+  \item \textbf{Multi-bond rendering} --- Double and triple bonds are drawn as
+        parallel strokes with configurable lateral offsets.
+  \item \textbf{Deterministic output} --- The layout engine uses a seeded
+        xorshift RNG, so identical input always produces identical SVG.
+\end{itemize}
+
+\subsection{Usage in \LaTeX{} Documents}
+
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily\small]
+#include "molecule/glass.hpp"
+using namespace vsepr::glass;
+
+auto mol     = build_topology(Z_values, bond_pairs);
+auto rings   = detect_rings(mol);
+auto layout  = TopologyPrerender3D{}.build_layout(mol);
+auto buffers = MoleculePrerenderBuilder{}.build(mol, layout, rings);
+
+ReportSettings rs;
+rs.label_atoms = true;
+ReportRenderer{rs}.write_svg("water.svg", buffers);
+\end{lstlisting}
+
+The resulting SVG can be included directly:
+\begin{verbatim}
+\includegraphics[width=0.5\textwidth]{water.svg}
+\end{verbatim}
+
+\\end{document}
+
+

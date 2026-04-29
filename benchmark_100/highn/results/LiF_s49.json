@@ -1,0 +1,19 @@
+{
+  "formula": "LiF",
+  "seed": 49,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 6299,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.035355,
+  "energy_per_atom": -0.017678,
+  "rms_force": 0.000113,
+  "max_force": 0.000113,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 0.726300,
+  "timestamp": "2026-03-28T12:53:04",
+  "xyz_file": "benchmark_100\highn\structures\LiF_s49.xyz"
+}

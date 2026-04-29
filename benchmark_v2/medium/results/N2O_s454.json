@@ -1,0 +1,19 @@
+{
+  "formula": "N2O",
+  "seed": 454,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 13.098342,
+  "energy_per_atom": 4.366114,
+  "rms_force": 53.112959,
+  "max_force": 53.112959,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.598900,
+  "timestamp": "2026-03-28T13:05:41",
+  "xyz_file": "benchmark_v2\medium\structures\N2O_s454.xyz"
+}

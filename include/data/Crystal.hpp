@@ -21,14 +21,16 @@ enum class XYZFormat {
     C   // Constructed (derived: supercells, relaxed, CG)
 };
 
-struct Vec3 {
+// Day #56: float-precision Vec3 for this data layer (visualisation/layout).
+// Not the same as vsepr::Vec3 (double). Named Vec3f to be explicit.
+struct Vec3f {
     float x, y, z;
 };
 
 struct Atom {
     std::string element;
-    Vec3 position;
-    
+    Vec3f position;
+
     // xyzA extensions
     std::string id;          // "a1", "a2", ...
     std::string group;       // grouping (e.g., "ring", "chain")
@@ -46,7 +48,7 @@ struct Bond {
 };
 
 struct LatticeVectors {
-    Vec3 a, b, c;            // Cell vectors (Angstroms)
+    Vec3f a, b, c;           // Cell vectors (Angstroms)
 };
 
 // ════════════════════════════════════════════════════════════════════════════

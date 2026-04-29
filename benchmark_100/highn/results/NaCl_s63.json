@@ -1,0 +1,19 @@
+{
+  "formula": "NaCl",
+  "seed": 63,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 7439,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.082523,
+  "energy_per_atom": -0.041261,
+  "rms_force": 0.000099,
+  "max_force": 0.000099,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 1.233400,
+  "timestamp": "2026-03-28T12:53:43",
+  "xyz_file": "benchmark_100\highn\structures\NaCl_s63.xyz"
+}

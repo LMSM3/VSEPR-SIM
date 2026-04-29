@@ -1,0 +1,19 @@
+{
+  "formula": "ZnS",
+  "seed": 658,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1.622084,
+  "energy_per_atom": 0.811042,
+  "rms_force": 9.495779,
+  "max_force": 9.495779,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.500600,
+  "timestamp": "2026-03-28T12:54:40",
+  "xyz_file": "benchmark_100\medium\structures\ZnS_s658.xyz"
+}

@@ -1,0 +1,423 @@
+# ============================================================
+# golden_tests.vsim
+# VSIM canonical test suite
+# Doctrine: minimal source / complete runtime object /
+#           zero duplicate truth / optional chemistry roles /
+#           derived lattice+basis / group-based suite /
+#           hashes only when real
+# ============================================================
+
+
+# ============================================================
+# DEFAULTS
+# Merged into every test at runtime. Per-test blocks override.
+# ============================================================
+
+[defaults.run]
+mode             = build_relax_hash
+temperature      = 300
+relax_steps      = 1000
+canonical_target = crystal_lattice
+
+[defaults.analysis]
+coordination_number = true
+packing_fraction    = true
+lattice_rmsd        = true
+canonical_hash      = true
+
+
+# ============================================================
+# GROUP 01 — Molecules (VSEPR and geometry-only)
+# chemistry roles are optional hints, not required truth fields
+# ============================================================
+
+[test.H2O]
+group    = molecule
+type     = molecule
+formula  = H2O
+geometry = bent
+central_atom = O
+ligands      = H,H
+lone_pairs   = 2
+# uncertainty: lone_pair repulsion drives ~104.5 deg angle; geometry hint encodes that.
+
+[test.H2O.analysis]
+bond_angle      = true
+dipole_moment   = true
+canonical_hash  = true
+
+[test.NH3]
+group    = molecule
+type     = molecule
+formula  = NH3
+geometry = trigonal_pyramidal
+central_atom = N
+ligands      = H,H,H
+lone_pairs   = 1
+
+[test.NH3.analysis]
+bond_angle     = true
+dipole_moment  = true
+canonical_hash = true
+
+[test.CH4]
+group    = molecule
+type     = molecule
+formula  = CH4
+geometry = tetrahedral
+central_atom = C
+ligands      = H,H,H,H
+lone_pairs   = 0
+
+[test.CH4.analysis]
+bond_angle     = true
+canonical_hash = true
+
+[test.CO2]
+group    = molecule
+type     = molecule
+formula  = CO2
+geometry = linear
+central_atom = C
+ligands      = O,O
+lone_pairs   = 0
+
+[test.CO2.analysis]
+bond_angle     = true
+dipole_moment  = true
+canonical_hash = true
+
+[test.SF6]
+group    = molecule
+type     = molecule
+formula  = SF6
+geometry = octahedral
+central_atom = S
+ligands      = F,F,F,F,F,F
+lone_pairs   = 0
+
+[test.SF6.analysis]
+bond_angle     = true
+canonical_hash = true
+
+[test.XeF4]
+group    = molecule
+type     = molecule
+formula  = XeF4
+geometry = square_planar
+central_atom = Xe
+ligands      = F,F,F,F
+lone_pairs   = 2
+# uncertainty: lone pairs occupy axial positions; square planar is the observed geometry.
+
+[test.XeF4.analysis]
+bond_angle     = true
+canonical_hash = true
+
+[test.PCl5]
+group    = molecule
+type     = molecule
+formula  = PCl5
+geometry = trigonal_bipyramidal
+central_atom = P
+ligands      = Cl,Cl,Cl,Cl,Cl
+lone_pairs   = 0
+
+[test.PCl5.analysis]
+bond_angle     = true
+canonical_hash = true
+
+
+# ============================================================
+# GROUP 02 — Ionic crystal (geometry-only, no VSEPR)
+# ============================================================
+
+[test.NaCl]
+group     = ionic_crystal
+type      = crystal
+formula   = NaCl
+structure = rock_salt
+basis     = Na,Cl
+supercell = 4x4x4
+
+[test.CsCl]
+group     = ionic_crystal
+type      = crystal
+formula   = CsCl
+structure = cesium_chloride
+basis     = Cs,Cl
+supercell = 4x4x4
+
+[test.CaF2]
+group     = ionic_crystal
+type      = crystal
+formula   = CaF2
+structure = fluorite
+basis     = Ca,F
+supercell = 4x4x4
+
+
+# ============================================================
+# GROUP 03 — Covalent crystal
+# ============================================================
+
+[test.Si]
+group     = covalent_crystal
+type      = crystal
+formula   = Si
+structure = diamond_cubic
+supercell = 4x4x4
+# uncertainty: expected_hash pending first verified STRICT mode run.
+
+
+# ============================================================
+# GROUP 04 — Metallic crystals
+# lattice derived from structure by engine; not declared here
+# ============================================================
+
+[test.Al_FCC]
+group     = metallic_crystal
+type      = crystal
+formula   = Al
+structure = fcc
+supercell = 4x4x4
+
+[test.Fe_BCC]
+group     = metallic_crystal
+type      = crystal
+formula   = Fe
+structure = bcc
+supercell = 4x4x4
+
+[test.Mg_HCP]
+group     = metallic_crystal
+type      = crystal
+formula   = Mg
+structure = hcp
+supercell = 4x4x4
+
+[test.Po_SC]
+group     = metallic_crystal
+type      = crystal
+formula   = Po
+structure = simple_cubic
+supercell = 4x4x4
+# uncertainty: Po used as structural simple-cubic reference only. No radiation model.
+
+
+# ============================================================
+# GROUP 05 — Perturbed / strained
+# perturbation is a run mode flag, not a group taxonomy
+# ============================================================
+
+[test.Al_FCC_Strained]
+group     = metallic_crystal
+type      = crystal
+formula   = Al
+structure = fcc
+supercell = 4x4x4
+strain_mode      = uniaxial
+strain_axis      = x
+strain_magnitude = 0.02
+# uncertainty: strain applied before hash generation. canonical_target reflects this.
+
+[test.Al_FCC_Strained.run]
+mode             = build_perturb_relax_hash
+relax_steps      = 1000
+canonical_target = strained_crystal_lattice
+
+[test.Al_FCC_Strained.analysis]
+strain_tensor_proxy = true
+
+
+# ============================================================
+# GROUP 06 — Cage networks (no VSEPR, framework topology)
+# ============================================================
+
+[test.Fe_Co_PBA]
+group          = cage_network
+type           = crystal
+formula        = Fe4[Co(CN)6]3
+topology       = cubic_cage_CN_bridged
+node_species   = Fe,Co
+linker         = CN
+linker_role    = end_on_bridge
+coordination   = Fe:N-end,Co:C-end
+vacancy_model  = Co_deficient_statistical
+supercell      = 3x3x3
+# uncertainty: vacancy distribution is stochastic; hash is ensemble-dependent.
+
+[test.Fe_Co_PBA.run]
+relax_steps      = 2000
+canonical_target = framework_lattice
+
+[test.Fe_Co_PBA.analysis]
+pore_volume        = true
+linker_angle_dist  = true
+
+
+# ============================================================
+# GROUP 07 — Topological objects (no chemistry, no lattice)
+# ============================================================
+
+[test.borromean_rings]
+group           = mechanical_bond
+type            = topology_object
+topology        = borromean_L6a4
+component_count = 3
+component_type  = ring
+link_invariant  = L6a4
+pairwise_linked = false
+globally_linked = true
+# uncertainty: hash depends on ring geometry parametrisation, not topology alone.
+# pairwise_linked=false is the defining Borromean property — not a defect flag.
+
+[test.borromean_rings.run]
+mode             = build_hash
+canonical_target = topological_invariant
+
+[test.borromean_rings.analysis]
+linking_number = true
+writhe         = true
+
+
+# ============================================================
+# GROUP 08 — Quasicrystals (aperiodic, no unit cell)
+# ============================================================
+
+[test.AlMn_icosahedral_QC]
+group            = quasicrystal
+type             = quasicrystal
+formula          = Al86Mn14
+symmetry         = icosahedral_Ih
+periodicity      = none
+long_range_order = true
+inflation_ratio  = golden_ratio
+projection_from  = 6D_hypercubic
+tiling_type      = 3D_Penrose
+# uncertainty: no unit cell; hash targets finite cluster, not a lattice.
+# uncertainty: cluster_cutoff defines hash boundary — record it alongside hash.
+
+[test.AlMn_icosahedral_QC.run]
+mode                    = build_hash
+cluster_cutoff_angstrom = 15.0
+canonical_target        = diffraction_pattern
+
+[test.AlMn_icosahedral_QC.analysis]
+pair_distribution  = true
+fivefold_symmetry  = true
+phason_strain      = true
+
+
+# ============================================================
+# GROUP 09 — Aperiodic surfaces (2D, no bulk)
+# ============================================================
+
+[test.penrose_P3_surface]
+group          = aperiodic_surface
+type           = surface
+topology       = penrose_P3
+tile_types     = fat_rhomb,thin_rhomb
+tile_ratio     = golden_ratio
+matching_rules = arrow_decoration
+symmetry       = D10_local
+periodicity    = none
+bulk           = false
+projection_from = 4D_hypercubic
+patch_size     = 200_tiles
+# uncertainty: tiling is infinite; hash covers finite patch only.
+# uncertainty: different seeds produce valid but non-identical patches.
+
+[test.penrose_P3_surface.run]
+mode             = generate_hash
+canonical_target = tiling_patch
+seed             = 42
+
+[test.penrose_P3_surface.analysis]
+tile_frequency_ratio = true
+local_isomorphism    = true
+fivefold_symmetry    = true
+
+
+# ============================================================
+# GROUP 10 — Frustrated magnets
+# ============================================================
+
+[test.kagome_AFM_herbertsmithite]
+group              = frustrated_magnet
+type               = magnetic_lattice
+formula            = ZnCu3(OH)6Cl2
+structure          = kagome_planes_stacked
+magnetic_sites     = Cu2+
+spin               = 1/2
+exchange_model     = Heisenberg_AFM
+frustration        = geometric
+frustration_origin = triangular_corner_sharing
+ground_state       = quantum_spin_liquid_candidate
+supercell          = 4x4x2
+# uncertainty: ground state contested in literature (2024). hash reflects classical relaxation only.
+# uncertainty: spin_initialisation=random because no ordered ground state exists to bias toward.
+
+[test.kagome_AFM_herbertsmithite.run]
+mode                 = build_relax_hash
+temperature          = 0
+relax_steps          = 5000
+spin_initialisation  = random
+canonical_target     = magnetic_structure
+
+[test.kagome_AFM_herbertsmithite.analysis]
+frustration_index     = true
+spin_structure_factor = true
+static_susceptibility = true
+
+
+# ============================================================
+# SUITE
+# group-based selection; no flat name lists
+# ============================================================
+
+[suite]
+enabled = true
+tests   = group:molecule,
+		  group:ionic_crystal,
+		  group:covalent_crystal,
+		  group:metallic_crystal,
+		  group:cage_network,
+		  group:mechanical_bond,
+		  group:quasicrystal,
+		  group:aperiodic_surface,
+		  group:frustrated_magnet
+
+run_modes    = build,relax,analyze,hash,compare
+strict_order = true
+
+[suite.limits]
+max_runtime_per_test_seconds = 60
+fail_fast                    = true
+continue_on_warning          = false
+
+[suite.smoke]
+groups  = group:molecule,group:metallic_crystal
+purpose = fast sanity check before full suite
+
+
+# ============================================================
+# EXPORT
+# ============================================================
+
+[export]
+write_xyz              = true
+write_analysis_json    = true
+write_metrics_tsv      = true
+write_summary_csv      = true
+write_report_md        = true
+write_actual_hashes_tsv = true
+
+[report]
+title                     = goldentests
+include_test_manifest     = true
+include_actual_hashes     = true
+include_hash_mismatches   = true
+include_placeholder_failures = false
+# placeholder_failures disabled: unset hashes are absent, not placeholder strings.
+include_smoke_tests       = true

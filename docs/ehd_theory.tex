@@ -1,0 +1,1245 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath,amssymb,bm}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+
+\title{Electrohydrodynamic Simulation Theory\\
+       \large VSEPR-SIM --- Coupled Navier-Stokes / Poisson / Nernst-Planck\\
+       for Structured Channel Geometries}
+\author{VSEPR-SIM Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+% ============================================================================
+\section{Scope}
+% ============================================================================
+
+This document establishes the theoretical foundation for the
+\texttt{sim/ehd} module of VSEPR-SIM.  The module solves a coupled
+multiphysics problem: incompressible fluid flow, electrostatics, and ionic
+species transport inside structured (helical-electrode) channel geometries.
+
+The governing equations are:
+\begin{enumerate}
+  \item \textbf{Continuity and Momentum} (incompressible Navier--Stokes)
+  \item \textbf{Poisson equation} for the electrostatic potential
+  \item \textbf{Nernst--Planck equation} for ionic species transport
+\end{enumerate}
+
+% ============================================================================
+\section{Governing Equations}
+% ============================================================================
+
+\subsection{Fluid Flow}
+
+Incompressible continuity:
+\begin{equation}
+  \nabla\cdot\bm{u} = 0
+\end{equation}
+
+Momentum conservation with electric body force:
+\begin{equation}
+  \rho\!\left(\frac{\partial\bm{u}}{\partial t}
+  + \bm{u}\cdot\nabla\bm{u}\right)
+  = -\nabla p + \mu\,\nabla^{2}\bm{u} + \bm{f}_{\mathrm{elec}}
+\end{equation}
+
+where the electric body force is
+\begin{equation}
+  \bm{f}_{\mathrm{elec}} = \rho_{e}\,\bm{E}
+  = \rho_{e}\!\left(-\nabla\phi\right)
+\end{equation}
+
+and $\rho_{e}$ is the local space-charge density from ionic species.
+
+Reynolds number for a tube of hydraulic diameter~$D_h$:
+\begin{equation}
+  \mathrm{Re} = \frac{\rho\,U\,D_h}{\mu}
+\end{equation}
+
+\subsection{Electrostatics}
+
+Poisson equation for the electric potential~$\phi$:
+\begin{equation}
+  \nabla\cdot\!\left(\epsilon\,\nabla\phi\right) = -\rho_{e}
+\end{equation}
+
+Electric field:
+\begin{equation}
+  \bm{E} = -\nabla\phi
+\end{equation}
+
+Boundary conditions:
+\begin{align}
+  \phi &= V_{+} \quad\text{on electrode}_{+} \\
+  \phi &= V_{-} \quad\text{on electrode}_{-} \\
+  \bm{n}\cdot(\epsilon\,\nabla\phi) &= 0
+    \quad\text{on insulating walls}
+\end{align}
+
+\subsection{Ion Transport (Nernst--Planck)}
+
+Species conservation for ion~$i$:
+\begin{equation}
+  \frac{\partial c_{i}}{\partial t} + \nabla\cdot\bm{N}_{i} = 0
+\end{equation}
+
+Molar flux:
+\begin{equation}\label{eq:NP}
+  \bm{N}_{i}
+  = \underbrace{-D_{i}\,\nabla c_{i}}_{\text{diffusion}}
+    \underbrace{-\,z_{i}\,\mu_{i}\,F\,c_{i}\,\nabla\phi}_{\text{electromigration}}
+    + \underbrace{c_{i}\,\bm{u}}_{\text{convection}}
+\end{equation}
+
+where $D_i$ is diffusivity, $z_i$ is valence, $\mu_i$ is ionic mobility, and
+$F$ is Faraday's constant.
+
+Nernst--Einstein relation (when mobility is not independently known):
+\begin{equation}
+  \mu_{i} = \frac{|z_i|\,F\,D_i}{R\,T}
+\end{equation}
+
+Space-charge density assembly:
+\begin{equation}
+  \rho_{e} = F\sum_{i} z_{i}\,c_{i}
+\end{equation}
+
+% ============================================================================
+\section{Coupling Strategy}
+% ============================================================================
+
+A segregated outer-iteration scheme is used:
+\begin{enumerate}
+  \item Solve flow: $\bm{u}, p$ (Navier--Stokes with current $\bm{f}_{\mathrm{elec}}$)
+  \item Solve electric: $\phi, \bm{E}$ (Poisson with current $\rho_e$)
+  \item Solve species: $c_i, \bm{N}_i$ (Nernst--Planck with current $\bm{u}, \bm{E}$)
+  \item Update $\rho_e = F\sum z_i c_i$
+  \item Repeat until convergence
+\end{enumerate}
+
+Under-relaxation factors $\alpha_{\mathrm{flow}}, \alpha_{\mathrm{elec}},
+\alpha_{\mathrm{species}}$ are applied to stabilise the outer loop.
+
+% ============================================================================
+\section{Analytical Baselines}
+% ============================================================================
+
+\subsection{Hagen--Poiseuille Flow (Straight Tube)}
+
+Axial velocity profile:
+\begin{equation}
+  u_z(r) = 2\,\bar{U}\!\left(1 - \frac{r^2}{R^2}\right)
+\end{equation}
+
+Pressure drop:
+\begin{equation}
+  \Delta P = \frac{8\,\mu\,\bar{U}\,L}{R^2}
+\end{equation}
+
+\subsection{Coaxial Capacitor Field}
+
+Potential between inner radius~$R_{\mathrm{in}}$ and outer radius~$R_{\mathrm{out}}$:
+\begin{equation}
+  \phi(r) = V\,\frac{\ln(R_{\mathrm{out}}/r)}{\ln(R_{\mathrm{out}}/R_{\mathrm{in}})}
+\end{equation}
+
+Radial field:
+\begin{equation}
+  E_r(r) = \frac{V}{r\,\ln(R_{\mathrm{out}}/R_{\mathrm{in}})}
+\end{equation}
+
+% ============================================================================
+\section{Parametric Description}
+% ============================================================================
+
+The full parameter set for a helical EHD reactor case is:
+\begin{equation}
+  \mathcal{P} = \bigl\{
+    R_{\mathrm{tube}},\;L,\;p_{\mathrm{helix}},\;d_{\mathrm{wire}},\;
+    n_{\mathrm{turns}},\;g,\;V,\;Q,\;\mu,\;\epsilon,\;D_i,\;z_i
+  \bigr\}
+\end{equation}
+
+Derived quantities:
+\begin{align}
+  R_{\mathrm{helix}} &= R_{\mathrm{tube}} - g - d_{\mathrm{wire}}/2 \\
+  D_h &= 2\,R_{\mathrm{tube}} \\
+  \mathrm{Re} &= \rho\,U\,D_h / \mu
+\end{align}
+
+% ============================================================================
+\section{Engineering Metrics}
+% ============================================================================
+
+\begin{align}
+  \Delta P &= P_{\mathrm{in}} - P_{\mathrm{out}} \\
+  \bar{E}  &= \frac{1}{V_{\Omega}}\int_{\Omega}|\bm{E}|\,dV \\
+  \dot{N}_i &= \int_{A_{\mathrm{out}}}\bm{N}_i\cdot\bm{n}\,dA
+\end{align}
+
+Enhancement factor between geometries:
+\begin{equation}
+  \eta = \frac{\text{performance (modulated geometry)}}
+              {\text{performance (baseline)}}
+\end{equation}
+
+Weighted optimisation objective:
+\begin{equation}
+  J = w_1\,\bar{E} + w_2\,\dot{N}_{\mathrm{out}} - w_3\,\Delta P
+\end{equation}
+
+% ============================================================================
+\section{Implementation Mapping}
+% ============================================================================
+
+\begin{table}[h]
+\centering
+\caption{EHD module stage structure}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Stage & Namespace & Key Classes \\
+\midrule
+1. CAD       & \texttt{vsepr::ehd::cad}     & HelixGenerator, TubeBodyGenerator, ElectrodeLayout, StepManifest \\
+2. Domain    & \texttt{vsepr::ehd::domain}   & DomainExtract, NamedRegionRegistry, BCTemplate \\
+3. Physics   & \texttt{vsepr::ehd::physics}  & FlowModel, ElectrostaticModel, IonTransportModel, CoupledSolver \\
+4. Mesh      & \texttt{vsepr::ehd::mesh}     & MeshControlSpec, InflationSpec, RefinementZone \\
+5. Post      & \texttt{vsepr::ehd::post}     & ContourExport, StreamlineExport, SectionProbe, ComparisonTable \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ############################################################################
+%   EXPANDED THEORY — Phases 1–6
+%   Appended sections providing full mathematical treatment of each stage
+%   and the cross-cutting dimensional / sensitivity framework.
+% ############################################################################
+
+% ============================================================================
+\section{Phase 1 — Parametric Geometry and Helical Electrode Theory}
+\label{sec:phase1}
+% ============================================================================
+
+The CAD stage generates the physical geometry of the helical-electrode EHD
+reactor from a minimal parameter set~$\mathcal{P}$.  Every geometric body is
+derived deterministically; no stochastic elements are introduced.
+
+\subsection{Helix Centreline}
+
+The electrode wire follows a circular helix of radius~$R_h$ and pitch~$p$
+wound along the tube axis~$\hat{\bm{z}}$.  The centreline is parameterised by
+the azimuthal angle~$\theta$:
+\begin{equation}\label{eq:helix_centre}
+  \bm{r}_h(\theta) = \bigl(R_h\cos\theta,\;
+                            R_h\sin\theta,\;
+                            z_0 + p\,\theta/(2\pi)\bigr)
+\end{equation}
+where $z_0$ is the axial offset of the first turn (the inlet development
+length) and the total number of discrete points for $n_t$ turns at angular
+resolution~$\Delta\theta$ is
+\begin{equation}\label{eq:helix_npts}
+  N_{\mathrm{pts}} = n_t \cdot (2\pi/\Delta\theta) + 1
+\end{equation}
+
+The helix radius is derived from the run-card geometry:
+\begin{equation}\label{eq:helix_radius}
+  R_h = R_{\mathrm{tube}} - g - d_w / 2
+\end{equation}
+where $g$ is the wall-clearance gap and $d_w$ is the wire diameter.
+
+\subsection{Wire Cross-Section}
+
+At each centreline station the wire occupies a disk of radius~$r_w = d_w/2$
+in a plane normal to the local tangent.  The tangent vector is
+\begin{equation}\label{eq:helix_tangent}
+  \bm{t}(\theta) = \frac{d\bm{r}_h}{d\theta}\bigg/
+                    \left|\frac{d\bm{r}_h}{d\theta}\right|
+  ,\qquad
+  \frac{d\bm{r}_h}{d\theta}
+  = \bigl(-R_h\sin\theta,\; R_h\cos\theta,\; p/(2\pi)\bigr)
+\end{equation}
+
+A local orthonormal frame $(\bm{t}, \bm{n}, \bm{b})$ is constructed via a
+reference-vector projection.  The cross-section circle is then
+\begin{equation}\label{eq:wire_circle}
+  \bm{r}_{\mathrm{wire}}(\alpha) = \bm{r}_h
+    + r_w\bigl(\bm{n}\cos\alpha + \bm{b}\sin\alpha\bigr),
+  \quad \alpha \in [0, 2\pi)
+\end{equation}
+
+\subsection{Tube Profile — Straight and Modulated}
+
+The inner wall of the tube is a surface of revolution.  For the straight
+geometry the radius is constant:
+\begin{equation}\label{eq:tube_straight}
+  R_{\mathrm{inner}}(z) = R_{\mathrm{tube}}
+\end{equation}
+
+For the modulated (sinusoidal bulge) geometry:
+\begin{equation}\label{eq:tube_mod}
+  R_{\mathrm{inner}}(z)
+  = R_{\mathrm{tube}}
+    + A_m\,\sin\!\left(\frac{2\pi\,z}{\lambda_m}\right)
+\end{equation}
+where $A_m$ is the modulation half-amplitude and $\lambda_m$ is the spatial
+wavelength.  The outer wall is offset by the wall thickness~$t_w$:
+\begin{equation}\label{eq:tube_outer}
+  R_{\mathrm{outer}}(z) = R_{\mathrm{inner}}(z) + t_w
+\end{equation}
+
+Annular ring tessellation at axial station~$z$ produces a vertex set
+\begin{equation}\label{eq:ring}
+  \bm{r}_{\mathrm{ring}}(\theta_j, z) =
+    \bigl(R\cos\theta_j,\; R\sin\theta_j,\; z\bigr),
+  \qquad \theta_j = \frac{2\pi\,j}{N_\theta}
+\end{equation}
+for $j = 0, \ldots, N_\theta - 1$.
+
+\subsection{Electrode Layout and STEP Manifest}
+
+Each electrode is described by a polarity~$\sigma\in\{+, -, \mathrm{gnd}\}$,
+an applied voltage, and a geometry type (helical sweep, coaxial cylinder, or
+planar pair).  The layout assembles all electrodes into a device description
+from which a STEP-style manifest of named bodies is generated.
+
+The total wire length for a helical electrode is
+\begin{equation}\label{eq:wire_length}
+  L_{\mathrm{wire}} = n_t\,\sqrt{(2\pi R_h)^2 + p^2}
+\end{equation}
+and the approximate wire volume (used for domain subtraction) is
+\begin{equation}\label{eq:wire_volume}
+  V_{\mathrm{wire}} = \pi\,r_w^2\,L_{\mathrm{wire}}
+\end{equation}
+
+% ============================================================================
+\section{Phase 2 — Domain Decomposition and Boundary Classification}
+\label{sec:phase2}
+% ============================================================================
+
+The computational domain is partitioned into disjoint material regions:
+\begin{equation}\label{eq:domain_decomp}
+  \Omega = \Omega_f \;\cup\; \Omega_{s,c} \;\cup\; \Omega_{s,d}
+\end{equation}
+where $\Omega_f$ is the fluid region, $\Omega_{s,c}$ the solid conductors
+(electrodes), and $\Omega_{s,d}$ the solid dielectrics (tube wall, support
+structures).
+
+\subsection{Fluid Volume Extraction}
+
+The net fluid volume is the cylindrical envelope minus all embedded solid
+volumes:
+\begin{equation}\label{eq:fluid_volume}
+  |\Omega_f| = \pi\,R_{\mathrm{tube}}^2\,L_{\mathrm{total}}
+             - \sum_k V_{s,k}
+\end{equation}
+where $L_{\mathrm{total}} = L_{\mathrm{inlet}} + L + L_{\mathrm{outlet}}$ and
+$V_{s,k}$ is the volume of the $k$-th embedded solid.
+
+\subsection{Boundary Surface Taxonomy}
+
+Every surface of $\partial\Omega_f$ is assigned a unique tag from a fixed
+taxonomy:
+\begin{align}
+  \Gamma_{\mathrm{in}}     &\quad\text{— inlet face}  \\
+  \Gamma_{\mathrm{out}}    &\quad\text{— outlet face}  \\
+  \Gamma_{\mathrm{wall}}   &\quad\text{— no-slip insulating wall}  \\
+  \Gamma_{\mathrm{elec}+}  &\quad\text{— positive electrode surface}  \\
+  \Gamma_{\mathrm{elec}-}  &\quad\text{— negative / grounded electrode surface}
+\end{align}
+Each tag maps to a triple of physics-specific boundary conditions
+$(\text{flow BC},\;\text{electric BC},\;\text{transport BC})$ as follows:
+
+\begin{table}[h]
+\centering
+\caption{Boundary condition mapping per surface tag}
+\begin{tabular}{@{}lccc@{}}
+\toprule
+Surface            & Flow         & Electric            & Transport \\
+\midrule
+$\Gamma_{\mathrm{in}}$    & Velocity inlet $\bar{U}$  & Neumann $\bm{n}\!\cdot\!\nabla\phi=0$ & Fixed $c_{i,0}$ \\
+$\Gamma_{\mathrm{out}}$   & Pressure outlet $P_0$     & Neumann insulating  & Convective outflow \\
+$\Gamma_{\mathrm{wall}}$  & No-slip $\bm{u}=\bm{0}$  & Neumann insulating  & Zero flux $\bm{N}_i\!\cdot\!\bm{n}=0$ \\
+$\Gamma_{\mathrm{elec}+}$ & No-slip                   & Dirichlet $\phi=V_+$ & Zero flux \\
+$\Gamma_{\mathrm{elec}-}$ & No-slip                   & Dirichlet $\phi=V_-$ & Zero flux \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Multi-Species Boundary Conditions}
+
+For $N_s$ ionic species, the inlet boundary assigns a fixed concentration
+for each species:
+\begin{equation}\label{eq:bc_species}
+  c_i\big|_{\Gamma_{\mathrm{in}}} = c_{i,0}, \qquad i = 1,\ldots,N_s
+\end{equation}
+All insulating walls and electrode surfaces enforce zero normal flux:
+\begin{equation}\label{eq:bc_zero_flux}
+  \bm{N}_i \cdot \bm{n}\big|_{\Gamma_{\mathrm{wall}}\cup\Gamma_{\mathrm{elec}}} = 0
+\end{equation}
+
+% ============================================================================
+\section{Phase 3 — Coupled Multiphysics: Discretisation and Solution Strategy}
+\label{sec:phase3}
+% ============================================================================
+
+This section extends the governing equations from \S2 with the discrete
+field representations, the finite-difference operators, and the segregated
+coupling algorithm implemented in the \texttt{CoupledSolver}.
+
+\subsection{Axisymmetric Structured Grid}
+
+All three field variables are stored on a collocated $(r, z)$ grid with
+$N_r$ radial and $N_z$ axial cells:
+\begin{equation}\label{eq:grid}
+  r_i = \bigl(i + \tfrac{1}{2}\bigr)\,\Delta r, \qquad
+  z_j = \bigl(j + \tfrac{1}{2}\bigr)\,\Delta z
+\end{equation}
+where $\Delta r = R_{\mathrm{tube}} / N_r$ and
+$\Delta z = L_{\mathrm{total}} / N_z$.  The total cell count is
+$N_{\mathrm{cells}} = N_r \times N_z$.
+
+\subsection{Flow Field Storage}
+
+Each flow cell stores velocity $\bm{u}_{ij} = (u_r, u_\theta, u_z)$ and
+pressure $p_{ij}$.  The flow field is initialised to the Hagen--Poiseuille
+baseline:
+\begin{equation}\label{eq:poiseuille_init}
+  u_z(r_i) = 2\,\bar{U}\!\left(1 - \frac{r_i^2}{R_{\mathrm{tube}}^2}\right),
+  \qquad
+  p(z_j) = \Delta P_{\mathrm{HP}}\!\left(1 - \frac{j}{N_z}\right)
+\end{equation}
+where $\Delta P_{\mathrm{HP}} = 8\,\mu_f\,\bar{U}\,L_{\mathrm{total}} / R_{\mathrm{tube}}^2$.
+
+The maximum velocity magnitude over the grid is
+\begin{equation}\label{eq:umax}
+  u_{\max} = \max_{i,j} |\bm{u}_{ij}|
+\end{equation}
+
+\subsection{Electric Field Storage and Finite-Difference Gradient}
+
+Each electric cell stores potential $\phi_{ij}$, field
+$\bm{E}_{ij}$, and local charge density $\rho_{e,ij}$.
+
+The field is initialised to the coaxial analytical solution
+(\S\ref{sec:phase3}, equations~\eqref{eq:helix_centre}--\eqref{eq:wire_volume}
+are in Phase~1).  After each outer iteration the gradient is recomputed via
+second-order central differences:
+\begin{equation}\label{eq:E_fd}
+  E_{r,ij} = -\frac{\phi_{i+1,j} - \phi_{i-1,j}}{2\,\Delta r},
+  \qquad
+  E_{z,ij} = -\frac{\phi_{i,j+1} - \phi_{i,j-1}}{2\,\Delta z}
+\end{equation}
+Interior cells only ($1 \le i \le N_r-2$, $1 \le j \le N_z-2$).
+
+Peak and volume-averaged field magnitudes:
+\begin{align}
+  E_{\max} &= \max_{i,j} |\bm{E}_{ij}| \label{eq:Emax} \\
+  \bar{E}  &= \frac{1}{|\Omega|}\sum_{i,j}|\bm{E}_{ij}|\,\Delta V_{ij}
+             \approx \frac{1}{N_{\mathrm{cells}}}\sum_{i,j}|\bm{E}_{ij}|
+             \label{eq:Eavg}
+\end{align}
+
+\subsection{Species Field and Flux Discretisation}
+
+For each species~$i$ the concentration gradient at cell $(i_r, i_z)$ is
+\begin{equation}\label{eq:grad_c}
+  \nabla c_i\big|_{i_r, i_z} \approx
+  \left(
+    \frac{c_{i_r+1,i_z} - c_{i_r-1,i_z}}{2\,\Delta r},\;
+    0,\;
+    \frac{c_{i_r,i_z+1} - c_{i_r,i_z-1}}{2\,\Delta z}
+  \right)
+\end{equation}
+
+The discrete Nernst--Planck flux (equation~\eqref{eq:NP}) at a cell is then
+\begin{equation}\label{eq:NP_discrete}
+  \bm{N}_{i}^{\,(k)} = -D_i\,\nabla c_i
+                       - z_i\,\mu_i\,F\,c_i\,\nabla\phi
+                       + c_i\,\bm{u}
+\end{equation}
+where all fields are evaluated at the $(k)$-th outer iteration.
+
+\subsection{Charge-Density Assembly}
+
+After species fluxes are updated, the charge density at each cell is
+\begin{equation}\label{eq:rho_e_assembly}
+  \rho_{e,ij} = F \sum_{s=1}^{N_s} z_s\,c_{s,ij}
+\end{equation}
+This feeds back into the Poisson solve for the next outer iteration.
+
+\subsection{Segregated Outer-Iteration Algorithm}
+
+The coupling loop (Algorithm~\ref{alg:coupling}) is:
+
+\begin{enumerate}
+  \item \textbf{Flow sub-solve}: update $\bm{u}, p$ from Navier--Stokes with
+        current $\rho_e \bm{E}$ body force.  (Production: SIMPLE or projection
+        method; baseline: retain Poiseuille.)
+  \item \textbf{Electrostatic sub-solve}: recompute $\bm{E}$ from $\phi$ via
+        \eqref{eq:E_fd}.  (Production: assemble $\rho_e$ into Poisson,
+        solve with CG/GMRES.)
+  \item \textbf{Transport sub-solve}: evaluate $\bm{N}_i$ for all species
+        using current $\bm{u}$ and $\bm{E}$.  (Production: upwind advection
+        + implicit diffusion.)
+  \item \textbf{Charge update}: assemble $\rho_e$ from \eqref{eq:rho_e_assembly}.
+  \item \textbf{Convergence check}: compute residual
+        \begin{equation}\label{eq:residual}
+          \mathcal{R} = \sqrt{\frac{1}{N_{\mathrm{cells}}}
+                        \sum_{i,j}\rho_{e,ij}^2}
+        \end{equation}
+        Converged if $\mathcal{R} < \varepsilon_{\mathrm{tol}}$.
+\end{enumerate}
+\label{alg:coupling}
+
+Under-relaxation is applied to each sub-solve:
+\begin{equation}\label{eq:underrelax}
+  \xi^{(k+1)} = \alpha\,\xi_{\mathrm{new}} + (1 - \alpha)\,\xi^{(k)}
+\end{equation}
+with factors $\alpha_{\mathrm{flow}}$, $\alpha_{\mathrm{elec}}$,
+$\alpha_{\mathrm{species}}$ specified in the run card.
+
+\subsection{Outlet Molar Flux Integration}
+
+The species molar flow rate across the outlet is computed as
+\begin{equation}\label{eq:outlet_flux}
+  \dot{N}_i = \int_{\Gamma_{\mathrm{out}}} \bm{N}_i\cdot\bm{n}\,dA
+  \approx \sum_{i_r=0}^{N_r-1} N_{i,z}\big|_{i_r,N_z-1}\;
+           \cdot\; 2\pi\,r_{i_r}\,\Delta r
+\end{equation}
+
+\subsection{Accumulation Index}
+
+A measure of species focusing or depletion by the electric field:
+\begin{equation}\label{eq:accumulation}
+  \mathcal{A}_i = \frac{\max_{i_r,i_z}\,c_{i}}
+                       {\min_{i_r,i_z}\,c_{i}}
+\end{equation}
+$\mathcal{A}_i = 1$ for a perfectly uniform field; large values indicate
+strong electromigration-driven concentration.
+
+% ============================================================================
+\section{Phase 4 — Mesh Sizing and Adaptive Refinement}
+\label{sec:phase4}
+% ============================================================================
+
+Although the current solver uses a uniform structured grid, the mesh-control
+framework specifies element-size fields that external meshers (gmsh, ANSYS
+Meshing, snappyHexMesh) consume for unstructured or hybrid mesh generation.
+
+\subsection{Global and Local Sizing}
+
+A base element size $h_0$ is set proportional to the tube radius:
+\begin{equation}\label{eq:h0}
+  h_0 = \alpha_h\,R_{\mathrm{tube}}
+\end{equation}
+with $\alpha_h \approx 0.12$.  Local sizes are imposed near critical features:
+\begin{align}
+  h_{\mathrm{elec}} &= \beta_e\,d_w  & (\beta_e \approx 0.06) \label{eq:h_elec} \\
+  h_{\mathrm{wall}} &= \beta_w\,R_{\mathrm{tube}} & (\beta_w \approx 0.025) \label{eq:h_wall}
+\end{align}
+
+A geometric growth rate~$\gamma$ transitions from the fine local size to the
+global base size:
+\begin{equation}\label{eq:growth}
+  h_{n+1} = \gamma\,h_n, \qquad \gamma \approx 1.2
+\end{equation}
+
+\subsection{Boundary-Layer Inflation}
+
+Near viscous walls and electrode surfaces, prism (inflation) layers resolve the
+velocity and concentration boundary layers.  The first cell height is
+\begin{equation}\label{eq:first_cell}
+  \delta_1 = \alpha_\delta\,R_{\mathrm{tube}}
+\end{equation}
+with $\alpha_\delta \approx 0.003$.  Subsequent layers grow geometrically:
+\begin{equation}\label{eq:inflation_growth}
+  \delta_k = \delta_1\,\gamma_{\mathrm{inf}}^{\,k-1}, \qquad
+  k = 1, \ldots, N_{\mathrm{layers}}
+\end{equation}
+Total inflation thickness must not exceed $\delta_{\max}$.
+
+\subsection{Refinement Zones — Electrode Vicinity}
+
+For each of the $n_t$ helix turns, a cylindrical refinement zone is centred
+on the helix wire:
+\begin{equation}\label{eq:refine_zone}
+  \mathcal{Z}_t = \bigl\{(r, z) :
+    |r - R_h| \le d_w,\;
+    |z - z_{c,t}| \le 0.6\,p
+  \bigr\}
+\end{equation}
+where $z_{c,t} = z_0 + (t + \tfrac{1}{2})\,p$ is the axial centre of turn~$t$.
+
+The total number of refinement zones scales linearly with turn count:
+\begin{equation}\label{eq:n_zones}
+  N_{\mathrm{zones}} = n_t + N_{\mathrm{transition}}
+\end{equation}
+where $N_{\mathrm{transition}}$ accounts for inlet/outlet transition zones.
+
+% ============================================================================
+\section{Phase 5 — Postprocessing, Probes, and Comparison Framework}
+\label{sec:phase5}
+% ============================================================================
+
+\subsection{Contour Field Export}
+
+Scalar field quantities $\psi(r_i, z_j)$ are exported as structured $(r, z,
+\psi)$ CSV grids.  The supported quantities and their definitions are:
+\begin{align}
+  |\bm{u}|_{ij}  &= \sqrt{u_{r,ij}^2 + u_{\theta,ij}^2 + u_{z,ij}^2}
+                    & \text{(velocity magnitude)} \\
+  p_{ij}          && \text{(pressure)} \\
+  \phi_{ij}       && \text{(electric potential)} \\
+  |\bm{E}|_{ij}  &= \sqrt{E_{r,ij}^2 + E_{z,ij}^2}
+                    & \text{(field magnitude)} \\
+  \rho_{e,ij}     && \text{(charge density)} \\
+  c_{s,ij}        && \text{(species concentration)}
+\end{align}
+
+\subsection{Streamline Tracing}
+
+Streamlines are integrated through the velocity field by forward-Euler
+advection from inlet seed positions:
+\begin{equation}\label{eq:euler_step}
+  \bm{x}^{(n+1)} = \bm{x}^{(n)} + \Delta s\;\frac{\bm{u}(\bm{x}^{(n)})}{|\bm{u}(\bm{x}^{(n)})|}
+\end{equation}
+with step size $\Delta s = f_s\,\min(\Delta r, \Delta z)$ and step fraction
+$f_s \approx 0.3$.  Seeds are distributed uniformly across the inlet radius:
+\begin{equation}\label{eq:seeds}
+  r_{0,k} = \frac{R_{\mathrm{tube}}(k + \tfrac{1}{2})}{N_{\mathrm{seeds}}},
+  \qquad k = 0,\ldots,N_{\mathrm{seeds}}-1
+\end{equation}
+
+\subsection{Section Probes — Radial and Axial}
+
+A \emph{radial probe} extracts the profile $\psi(r)$ at a fixed axial
+station~$j^*$:
+\begin{equation}\label{eq:radial_probe}
+  \{(r_i, \psi_{ij^*})\}_{i=0}^{N_r-1}
+\end{equation}
+
+An \emph{axial probe} extracts $\psi(z)$ at a fixed radial index~$i^*$:
+\begin{equation}\label{eq:axial_probe}
+  \{(z_j, \psi_{i^*j})\}_{j=0}^{N_z-1}
+\end{equation}
+
+Both probes support all six field quantities listed in \S\ref{sec:phase5}.
+
+\subsection{Comparison Tables and Enhancement Factor}
+
+Given two solver metric sets $\mathcal{M}_{\mathrm{base}}$ (straight) and
+$\mathcal{M}_{\mathrm{mod}}$ (modulated), the enhancement factor for each
+metric is
+\begin{equation}\label{eq:eta}
+  \eta_m = \frac{m_{\mathrm{mod}}}{m_{\mathrm{base}}},
+  \qquad m \in \{\Delta P,\; E_{\max},\; \bar{E},\;
+  u_{\max},\; \mathrm{Re},\; \dot{N}_{i},\; \mathcal{A}_i\}
+\end{equation}
+
+\subsection{Multi-Objective Optimisation}
+
+The weighted objective function for geometry optimisation is
+\begin{equation}\label{eq:objective}
+  J(\mathcal{P}) = w_1\,\bar{E} + w_2\,\dot{N}_{\mathrm{out}} - w_3\,\Delta P
+\end{equation}
+The negative sign on $\Delta P$ penalises excessive pressure loss.  Pareto
+exploration sweeps weight vectors $\bm{w} = (w_1, w_2, w_3)$ to identify
+non-dominated geometry candidates.
+
+% ============================================================================
+\section{Phase 6 — Dimensional Analysis, Sensitivity, and Verification}
+\label{sec:phase6}
+% ============================================================================
+
+\subsection{Dimensionless Groups}
+
+The EHD system is governed by the following key dimensionless numbers:
+
+\begin{align}
+  \mathrm{Re}   &= \frac{\rho\,\bar{U}\,D_h}{\mu_f}
+                  & \text{(Reynolds — inertia/viscous)}
+                  \label{eq:Re_dim} \\[4pt]
+  \mathrm{Eh}   &= \frac{\epsilon\,\Delta V}{\mu_f\,\bar{U}\,D_h}
+                  & \text{(electric Hartmann analogue)}
+                  \label{eq:Eh} \\[4pt]
+  \mathrm{Pe}_i &= \frac{\bar{U}\,D_h}{D_i}
+                  & \text{(Péclet — convection/diffusion)}
+                  \label{eq:Pe} \\[4pt]
+  \mathrm{Da}_i &= \frac{|z_i|\,\mu_i\,F\,\Delta V}{D_i}
+                  & \text{(Damköhler-migration — migration/diffusion)}
+                  \label{eq:Da}
+\end{align}
+
+These groups classify the dominant physics regime: for $\mathrm{Re} \ll 2300$
+the flow is laminar; for $\mathrm{Pe}_i \gg 1$ convection dominates species
+transport; for $\mathrm{Da}_i \gg 1$ electromigration dominates diffusion.
+
+\subsection{Parametric Sensitivity — Voltage Sweep}
+
+At constant flow rate, increasing $\Delta V$ scales the electric field
+linearly:
+\begin{equation}\label{eq:E_vs_V}
+  E_{\max}(\Delta V) = \frac{\Delta V}{R_{\mathrm{in}}\,
+    \ln(R_{\mathrm{out}} / R_{\mathrm{in}})}
+  \propto \Delta V
+\end{equation}
+while the pressure drop remains approximately constant (the Lorentz body
+force is small compared to the viscous force for typical EHD operating
+conditions at low $\mathrm{Re}$).
+
+\subsection{Parametric Sensitivity — Velocity Sweep}
+
+The analytical pressure drop scales linearly with mean velocity:
+\begin{equation}\label{eq:dP_vs_U}
+  \Delta P = \frac{8\,\mu_f\,\bar{U}\,L_{\mathrm{total}}}
+                  {R_{\mathrm{tube}}^2}
+  \propto \bar{U}
+\end{equation}
+and the Reynolds number also scales linearly:
+\begin{equation}\label{eq:Re_vs_U}
+  \mathrm{Re} = \frac{\rho\,\bar{U}\,D_h}{\mu_f} \propto \bar{U}
+\end{equation}
+
+\subsection{Memory Footprint Estimation}
+
+Per-cell storage requirements:
+\begin{align}
+  S_{\mathrm{flow}} &= |\texttt{FlowCell}| = 32\;\text{bytes}
+    & (3\times 8\;\text{B velocity} + 8\;\text{B pressure}) \\
+  S_{\mathrm{elec}} &= |\texttt{ElectricCell}| = 40\;\text{bytes}
+    & (8\;\text{B }\phi + 3\times 8\;\text{B }\bm{E} + 8\;\text{B }\rho_e) \\
+  S_{\mathrm{spec}} &= |\texttt{SpeciesCell}| = 32\;\text{bytes}
+    & (8\;\text{B }c_i + 3\times 8\;\text{B }\bm{N}_i)
+\end{align}
+Total memory for $N_s$ species on an $N_r \times N_z$ grid:
+\begin{equation}\label{eq:memory}
+  M_{\mathrm{total}} = N_r\,N_z\,\bigl(S_{\mathrm{flow}}
+                      + S_{\mathrm{elec}}
+                      + N_s\,S_{\mathrm{spec}}\bigr)
+\end{equation}
+
+For the default single-species case ($N_s = 1$) on a $160\times 800$ grid
+($128{,}000$ cells):
+\begin{equation}
+  M \approx 128{,}000 \times (32 + 40 + 32) = 13.31\;\text{MB}
+\end{equation}
+
+\subsection{Determinism Verification}
+
+A core design requirement of the VSEPR-SIM platform is bit-exact
+reproducibility.  All field computations are IEEE~754 double-precision with
+deterministic reduction order.  Verification confirms that repeated
+execution produces identical output metrics:
+\begin{equation}\label{eq:determinism}
+  \bigl|\,\Delta P^{(a)} - \Delta P^{(b)}\bigr| = 0,
+  \qquad
+  \bigl|\,E_{\max}^{(a)} - E_{\max}^{(b)}\bigr| = 0,
+  \qquad
+  \bigl|\,u_{\max}^{(a)} - u_{\max}^{(b)}\bigr| = 0
+\end{equation}
+for any two invocations $(a)$, $(b)$ with identical input parameters.
+
+% ============================================================================
+\section{Phase 7 — EHD Pump Configurations and Pumping Mechanisms}
+\label{sec:phase7}
+% ============================================================================
+
+The preceding phases treated a single device topology (helical wire electrode
+inside a cylindrical tube).  Real EHD pump systems span a broader design space
+with at least four principal electrode configurations and three distinct
+pumping mechanisms.  This phase formalises the theoretical basis for each.
+
+% ----------------------------------------------------------------------------
+\subsection{Four Principal Configurations}
+% ----------------------------------------------------------------------------
+
+\subsubsection{Configuration (a): Planar Electrode Channel}
+
+Two parallel planar electrodes separated by a gap~$H$ drive flow through a
+rectangular fluidic channel of width~$W$ and streamwise length~$L_{ch}$.
+
+\paragraph{Uniform field.}
+The electric field between infinite parallel plates is
+\begin{equation}\label{eq:planar_field}
+  E_y = \frac{\Delta V}{H}
+\end{equation}
+and the potential varies linearly:
+\begin{equation}\label{eq:planar_phi}
+  \phi(y) = \Delta V\!\left(1 - \frac{y}{H}\right)
+\end{equation}
+
+\paragraph{Plane-Poiseuille baseline.}
+The velocity profile between no-slip plates is
+\begin{equation}\label{eq:plane_poiseuille}
+  u_z(y) = \frac{6\,\bar{U}}{H^2}\,y\,(H - y)
+\end{equation}
+with peak velocity $u_{\max} = \tfrac{3}{2}\bar{U}$ at the midplane.  The
+associated pressure drop is
+\begin{equation}\label{eq:plane_dp}
+  \Delta P = \frac{12\,\mu_f\,\bar{U}\,L_{ch}}{H^2}
+\end{equation}
+
+\paragraph{Hydraulic diameter.}
+\begin{equation}\label{eq:D_h_rect}
+  D_h = \frac{2\,H\,W}{H + W}
+\end{equation}
+
+\subsubsection{Configuration (b): Needle-Ring Ion Injection}
+
+A sharp needle electrode (tip curvature~$r_{\mathrm{tip}}$) faces a grounded
+ring electrode (inner radius~$R_{\mathrm{ring}}$) across an axial
+gap~$d_{\mathrm{gap}}$.  Corona discharge at the needle tip injects ions that
+are accelerated by the field, transferring momentum to the neutral gas/liquid.
+
+\paragraph{Tip field enhancement.}
+For a hyperboloidal needle the field at the tip is
+\begin{equation}\label{eq:needle_tip}
+  E_{\mathrm{tip}} \approx
+    \frac{\Delta V}{r_{\mathrm{tip}}
+    \,\ln\!\bigl(2\,d_{\mathrm{gap}} / r_{\mathrm{tip}}\bigr)}
+\end{equation}
+The ratio $E_{\mathrm{tip}} / ({\Delta V}/{d_{\mathrm{gap}}})$ is the
+geometric enhancement factor, typically $\gg 1$ for sharp tips.
+
+\paragraph{Peek's corona onset criterion.}
+In air at relative density~$\delta$ (STP $\delta = 1$) the onset field for
+positive corona is
+\begin{equation}\label{eq:peek}
+  E_{\mathrm{onset}} = 3.1\times10^{6}\;\delta\!
+    \left(1 + \frac{0.308}{\sqrt{\delta\,r_{\mathrm{tip}}}}\right)
+  \quad [\text{V/m}]
+\end{equation}
+
+\paragraph{Ion-drag pressure.}
+The generated pressure head from corona current~$I$ is
+\begin{equation}\label{eq:ion_drag_P}
+  \Delta P_{\mathrm{ion}} \approx
+    \frac{I\,d_{\mathrm{gap}}}{\mu_i\,A_{\mathrm{ring}}}
+\end{equation}
+where $\mu_i$ is the ion mobility and
+$A_{\mathrm{ring}} = \pi R_{\mathrm{ring}}^2$.
+
+\subsubsection{Configuration (c): Stacked Perforated Disk Electrodes}
+
+$N_d$ circular disks of radius~$R_{\mathrm{disk}}$ and thickness~$t_d$
+are arranged along the flow axis with alternating polarity.  Each disk is
+perforated with $N_p$ through-holes of radius~$r_p$.
+
+\paragraph{Stack geometry.}
+Total stack length:
+\begin{equation}\label{eq:stack_length}
+  L_{\mathrm{stack}} = N_d\,t_d + (N_d - 1)\,d_s
+\end{equation}
+where $d_s$ is the inter-disk spacing.  The open-area fraction is
+\begin{equation}\label{eq:oaf}
+  \alpha_{\mathrm{OA}} = \frac{N_p\,\pi\,r_p^2}{\pi\,R_{\mathrm{disk}}^2}
+  = \frac{N_p\,r_p^2}{R_{\mathrm{disk}}^2}
+\end{equation}
+
+\paragraph{Inter-disk field.}
+Between adjacent disks (uniform approximation):
+\begin{equation}\label{eq:disk_field}
+  E_{\mathrm{gap}} = \frac{\Delta V}{d_s}
+\end{equation}
+
+\paragraph{Flow character.}
+The device produces both axial through-flow (via perforations) and rotational
+swirl in the inter-disk gaps.  The effective cross-section for through-flow is
+$A_{\mathrm{eff}} = N_p\,\pi\,r_p^2$.
+
+\subsubsection{Configuration (d): Triangular Prism Slit-Electrode}
+
+An array of $N_{\mathrm{prism}}$ triangular prism electrodes with base~$b$
+and height~$h_p$ are separated by slit gaps of width~$w_s$.  The prism tips
+produce strongly non-uniform fields that drive cross-flow patterns.
+
+\paragraph{Array pitch.}
+\begin{equation}\label{eq:prism_pitch}
+  p_{\mathrm{array}} = b + w_s
+\end{equation}
+Total array width:
+$W_{\mathrm{array}} = N_{\mathrm{prism}}\,b + (N_{\mathrm{prism}} - 1)\,w_s$.
+
+\paragraph{Tip field enhancement.}
+For an isosceles triangle with half-angle
+$\alpha = \arctan(b/2h_p)$, the field at the apex is enhanced relative to
+the uniform slit field:
+\begin{equation}\label{eq:prism_tip}
+  E_{\mathrm{tip}} \approx \frac{\Delta V}{w_s} \cdot \frac{1}{\sin\alpha}
+\end{equation}
+The factor $\beta = 1/\sin\alpha$ captures the lightning-rod concentration
+of field lines at sharp tips.
+
+% ----------------------------------------------------------------------------
+\subsection{Three EHD Pumping Mechanisms}
+% ----------------------------------------------------------------------------
+
+\subsubsection{Mechanism 1: Coulomb / Ion-Drag Force}
+
+The dominant mechanism in ion-injection and corona-discharge devices.
+Space charge $\rho_e$ interacts with the local field:
+\begin{equation}\label{eq:f_coulomb}
+  \bm{f}_{\mathrm{C}} = \rho_e\,\bm{E}
+\end{equation}
+This produces a volumetric body force that is injected into the momentum
+equation.  The characteristic Coulomb pressure scale is
+\begin{equation}\label{eq:P_coulomb}
+  P_C \sim \epsilon\,E^2 = \epsilon\!\left(\frac{\Delta V}{d}\right)^{\!2}
+\end{equation}
+
+\subsubsection{Mechanism 2: Dielectrophoretic (DEP) Force}
+
+Arises from permittivity gradients in non-uniform electric fields.  The
+time-averaged DEP force on a polarisable medium is
+\begin{equation}\label{eq:f_dep}
+  \bm{f}_{\mathrm{DEP}} = \frac{1}{2}\,\epsilon_0\,K_{\mathrm{CM}}
+    \,\nabla|\bm{E}|^2
+\end{equation}
+where $K_{\mathrm{CM}} = \mathrm{Re}[K(\omega)]$ is the Clausius-Mossotti
+factor (bounded between $-0.5$ and $+1.0$ for spherical particles).
+
+The characteristic DEP velocity is
+\begin{equation}\label{eq:u_dep}
+  u_{\mathrm{DEP}} \sim
+    \frac{\epsilon\,K_{\mathrm{CM}}\,E^2\,d}{\mu_f}
+\end{equation}
+
+\subsubsection{Mechanism 3: Electroosmotic Flow (EOF)}
+
+In micro-channels with charged walls, the electric double layer (EDL)
+interacts with the tangential field to produce a plug-flow slip at the wall.
+
+\paragraph{Helmholtz-Smoluchowski slip.}
+\begin{equation}\label{eq:eof_slip}
+  \bm{u}_{\mathrm{slip}} = -\frac{\epsilon\,\zeta}{\mu_f}\,\bm{E}_t
+\end{equation}
+where $\zeta$ is the wall zeta potential and $\bm{E}_t$ is the
+tangential (wall-parallel) component of the field.
+
+\paragraph{Debye length.}
+The characteristic thickness of the EDL is
+\begin{equation}\label{eq:debye}
+  \lambda_D = \sqrt{\frac{\epsilon\,R\,T}{2\,F^2\,c_0}}
+\end{equation}
+The thin-EDL approximation ($\kappa\,H \gg 1$ where $\kappa = 1/\lambda_D$)
+is valid when the Debye length is much smaller than the channel dimension.
+
+\paragraph{EOF flow rate (capillary).}
+In a cylindrical capillary of radius~$R_c$:
+\begin{equation}\label{eq:Q_eof}
+  Q_{\mathrm{EOF}} = -\frac{\epsilon\,\zeta\,E_z\,\pi\,R_c^2}{\mu_f}
+\end{equation}
+
+\paragraph{EOF pressure head.}
+Under closed-channel conditions the electroosmotic flow generates a
+back-pressure:
+\begin{align}
+  \Delta P_{\mathrm{EOF,cyl}}    &= \frac{8\,\epsilon\,|\zeta|\,|E_z|\,L}{R_c^2}
+    \label{eq:dP_eof_cyl} \\
+  \Delta P_{\mathrm{EOF,planar}} &= \frac{12\,\epsilon\,|\zeta|\,|E_z|\,L}{H^2}
+    \label{eq:dP_eof_planar}
+\end{align}
+
+% ----------------------------------------------------------------------------
+\subsection{Topology--Mechanism Affinity}
+% ----------------------------------------------------------------------------
+
+Not every mechanism is equally relevant to every configuration.  The natural
+pairings are:
+
+\begin{table}[h]
+\centering
+\caption{Primary pumping mechanisms by device topology}
+\begin{tabular}{@{}lcccp{4.5cm}@{}}
+\toprule
+Configuration & Coulomb & DEP & EOF & Typical Application \\
+\midrule
+(a) Planar channel    & \checkmark & --- & \checkmark & Micro-pump, lab-on-chip \\
+(b) Needle-ring       & \checkmark & --- & ---        & Gas pump, ion wind \\
+(c) Disk stack        & \checkmark & --- & ---        & Multi-stage liquid pump \\
+(d) Prism slit        & \checkmark & \checkmark & --- & Particle manipulation \\
+Helical wire (orig.)  & \checkmark & --- & ---        & Tubular reactor \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ############################################################################
+%   PHASE 8 — Metallic Particle Combustion and Reactive Multiphase Flow
+% ############################################################################
+\section{Phase 8: Metallic Particle Combustion and Reactive Multiphase Flow}
+\label{sec:phase8}
+
+This phase introduces a Lagrangian--Eulerian reactive multiphase model
+coupling discrete burning particles with the carrier-gas continuum.  Five
+representative fuel types—methane~(CH$_4$), iron~(Fe), aluminum~(Al),
+boron/aluminum~(B/Al), and zirconium~(Zr)—are modelled following the
+experimental observations of Bergthorson (2015) and the classical combustion
+theory of Glassman \& Yetter.
+
+% ----------------------------------------------------------------------------
+\subsection{Fuel Classification}
+% ----------------------------------------------------------------------------
+
+The five fuels span three combustion regimes:
+
+\begin{table}[h]
+\centering
+\caption{Fuel types, combustion regimes, and characteristic emission species}
+\begin{tabular}{@{}llllr@{}}
+\toprule
+Fuel & Formula & Regime & Emitter & $T_{\mathrm{ad}}$ (K) \\
+\midrule
+Methane        & CH$_4$  & Premixed gas  & CH$^*$  & 2\,223 \\
+Iron           & Fe      & Surface       & FeO     & 2\,340 \\
+Aluminum       & Al      & Vapour-phase  & AlO     & 3\,673 \\
+Boron/Aluminum & B/Al    & Hybrid        & BO$_2$  & 3\,450 \\
+Zirconium      & Zr      & Hybrid        & ZrO     & 2\,950 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\subsection{d\textsuperscript{n}-Law Burning Model}
+% ----------------------------------------------------------------------------
+
+The classical shrinking-particle model generalises the d$^2$-law to an
+arbitrary exponent~$n$:
+\begin{equation}\label{eq:dn_law}
+  d(t)^{n} = d_0^{n} - K\,t
+\end{equation}
+where $K$~(m$^n$/s) is the \emph{burning-rate constant}.  For
+vapour-phase combustion (Al, B/Al) the classical $n=2$ applies; for
+surface-limited heterogeneous oxidation (Fe) $n\approx 1$; and for hybrid
+fuels (Zr) $n\approx 1.8$.
+
+The particle burnout time follows immediately:
+\begin{equation}\label{eq:t_burn}
+  t_{\mathrm{burn}} = \frac{d_0^{n}}{K}
+\end{equation}
+
+The instantaneous mass-loss rate for a spherical particle of density
+$\rho_p$ is:
+\begin{equation}\label{eq:dm_dt}
+  \frac{\mathrm{d}m}{\mathrm{d}t}
+    = -\frac{\pi}{2}\,\rho_p\,K\,d^{\,2-n}
+\end{equation}
+which is \emph{constant} for $n=2$ (classical d$^2$-law) and linearly
+proportional to~$d$ for $n=1$ (surface regime).
+
+% ----------------------------------------------------------------------------
+\subsection{Burning-Rate Corrections}
+% ----------------------------------------------------------------------------
+
+\paragraph{Temperature correction (Arrhenius).}
+\begin{equation}\label{eq:K_arrhenius}
+  K(T) = K_0 \exp\!\left[\frac{E_a}{R}
+         \left(\frac{1}{T_0} - \frac{1}{T}\right)\right]
+\end{equation}
+where $E_a$ is the activation energy and $T_0=300$\,K is the reference
+temperature.
+
+\paragraph{Oxygen fraction correction.}
+\begin{equation}\label{eq:K_O2}
+  K(Y_{\mathrm{O}_2}) = K_0 \,\frac{Y_{\mathrm{O}_2}}{0.233}
+\end{equation}
+
+\paragraph{EHD electric-field enhancement.}
+An applied electric field modifies combustion via ionic-wind-enhanced
+transport (Lawton \& Weinberg):
+\begin{equation}\label{eq:K_ehd}
+  K_E = K_0 \left[1 + \alpha_E
+        \left(\frac{E}{E_{\mathrm{ref}}}\right)^{\!2}\right]
+\end{equation}
+with $\alpha_E \approx 0.05$--$0.3$ (fuel-dependent) and
+$E_{\mathrm{ref}} = 10$\,kV/m.
+
+% ----------------------------------------------------------------------------
+\subsection{Heat Release}
+% ----------------------------------------------------------------------------
+
+The instantaneous heat release rate from a single particle is:
+\begin{equation}\label{eq:Q_dot}
+  \dot{Q} = \left|\frac{\mathrm{d}m}{\mathrm{d}t}\right|\,\Delta H_c
+\end{equation}
+
+The adiabatic flame temperature at stoichiometric conditions in air:
+\begin{equation}\label{eq:T_ad}
+  T_{\mathrm{ad}} = T_0
+    + \frac{\Delta H_c}{c_{p,\mathrm{mix}}\,(1 + \mathrm{AF}_{\mathrm{stoich}})}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Radiative Emission}
+% ----------------------------------------------------------------------------
+
+The Stefan--Boltzmann radiative power from a spherical particle of
+diameter~$d$ at temperature~$T_p$:
+\begin{equation}\label{eq:P_rad}
+  P_{\mathrm{rad}} = \varepsilon_p\,\sigma\,\pi\,d^2\,
+    \left(T_p^4 - T_\infty^4\right)
+\end{equation}
+
+The distinct flame colours observed in Figure~Z.3 arise from
+element-specific electronic transitions.  The peak emission wavelength
+follows Wien's displacement law:
+\begin{equation}\label{eq:wien}
+  \lambda_{\mathrm{peak}} = \frac{b}{T_p}
+  \qquad (b = 2.898 \times 10^{-3}~\mathrm{m \cdot K})
+\end{equation}
+
+The spectral radiance at wavelength~$\lambda$ is given by Planck's law:
+\begin{equation}\label{eq:planck}
+  B(\lambda, T) = \frac{2hc^2}{\lambda^5}
+    \,\frac{1}{\exp\!\left(\dfrac{hc}{\lambda\,k_B\,T}\right) - 1}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Lagrangian Particle Phase}
+% ----------------------------------------------------------------------------
+
+Each particle is tracked as a Lagrangian entity with state
+$(x_p, v_p, d, T_p, m)$.  The equations of motion are:
+
+\paragraph{Position.}
+\begin{equation}\label{eq:dxp_dt}
+  \frac{\mathrm{d}x_p}{\mathrm{d}t} = v_p
+\end{equation}
+
+\paragraph{Velocity (Stokes drag + EHD force).}
+\begin{equation}\label{eq:dvp_dt}
+  \frac{\mathrm{d}v_p}{\mathrm{d}t}
+    = \frac{u - v_p}{\tau_p} + \frac{F_E}{m_p}
+\end{equation}
+where the particle relaxation time is:
+\begin{equation}\label{eq:tau_p}
+  \tau_p = \frac{\rho_p\,d^2}{18\,\mu_g}
+\end{equation}
+and $F_E = q_p\,E$ is the Lorentz force on a thermionically charged
+particle.
+
+\paragraph{Temperature (heat balance).}
+\begin{equation}\label{eq:dTp_dt}
+  m_p\,c_p\,\frac{\mathrm{d}T_p}{\mathrm{d}t}
+    = \dot{Q}_{\mathrm{gen}} - P_{\mathrm{rad}}
+\end{equation}
+
+\paragraph{Thermionic charge.}
+Burning metal particles acquire charge via thermionic emission.
+The Rayleigh-limit estimate gives:
+\begin{equation}\label{eq:q_p}
+  q_p \approx 4\pi\varepsilon_0\,r_p\,\frac{k_B\,T_p}{e}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Eulerian Source Terms (Two-Way Coupling)}
+% ----------------------------------------------------------------------------
+
+Particle effects are projected onto the Eulerian grid as volumetric
+source terms.  For $N_p$ particles in a cell of volume~$V_{\mathrm{cell}}$:
+
+\paragraph{Mass source.}
+\begin{equation}\label{eq:S_mass}
+  S_{\mathrm{mass}} = \frac{N_p}{V_{\mathrm{cell}}}
+    \left|\frac{\mathrm{d}m}{\mathrm{d}t}\right|
+\end{equation}
+
+\paragraph{Energy source.}
+\begin{equation}\label{eq:S_energy}
+  S_{\mathrm{energy}} = \frac{N_p}{V_{\mathrm{cell}}}\,\dot{Q}
+\end{equation}
+
+\paragraph{Momentum source (drag coupling).}
+\begin{equation}\label{eq:S_mom}
+  S_{\mathrm{mom}} = \frac{18\,\mu_g\,N_p}{\rho_p\,d^2\,V_{\mathrm{cell}}}
+    \,(u - v_p)
+\end{equation}
+
+\paragraph{Oxygen consumption.}
+\begin{equation}\label{eq:S_O2}
+  S_{\mathrm{O}_2} = -\frac{N_p}{V_{\mathrm{cell}}}
+    \left|\frac{\mathrm{d}m}{\mathrm{d}t}\right|
+    \frac{0.233\,\mathrm{AF}_{\mathrm{stoich}}}{1 + \mathrm{AF}_{\mathrm{stoich}}}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Dimensionless Numbers}
+% ----------------------------------------------------------------------------
+
+\paragraph{Damk\"ohler number (first kind).}
+The ratio of flow residence time to reaction burnout time:
+\begin{equation}\label{eq:Da_I}
+  \mathrm{Da}_I = \frac{\tau_{\mathrm{flow}}}{\tau_{\mathrm{rxn}}}
+    = \frac{L / U}{d_0^{n} / K}
+\end{equation}
+$\mathrm{Da} \gg 1$: fast reaction (mixing-limited);
+$\mathrm{Da} \ll 1$: slow reaction (kinetics-limited).
+
+\paragraph{Stokes number.}
+\begin{equation}\label{eq:St_comb}
+  \mathrm{St} = \frac{\tau_p}{\tau_f}
+    = \frac{\rho_p\,d^2}{18\,\mu_g} \cdot \frac{U}{L}
+\end{equation}
+
+\paragraph{Mass loading ratio.}
+\begin{equation}\label{eq:phi_m}
+  \phi_m = \frac{N_p\,m_p}{\rho_g\,Q}
+\end{equation}
+$\phi_m < 0.1$: one-way coupling; $\phi_m > 0.1$: two-way coupling required.
+
+\paragraph{Biot number.}
+\begin{equation}\label{eq:Bi}
+  \mathrm{Bi} = \frac{h\,d}{2\,k_p}
+\end{equation}
+For metal particles $\mathrm{Bi} \ll 1$ (lumped-capacitance valid).
+
+\paragraph{Nusselt number (Ranz--Marshall).}
+\begin{equation}\label{eq:Nu_RM}
+  \mathrm{Nu} = 2 + 0.6\,\mathrm{Re}_p^{1/2}\,\mathrm{Pr}^{1/3}
+\end{equation}
+
+\paragraph{Particle Reynolds number.}
+\begin{equation}\label{eq:Re_p}
+  \mathrm{Re}_p = \frac{\rho_g\,|u - v_p|\,d}{\mu_g}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Fuel Comparison Framework}
+% ----------------------------------------------------------------------------
+
+The five fuels are compared using:
+\begin{itemize}
+  \item Gravimetric energy density: $e_g = \Delta H_c$ (J/kg)
+  \item Volumetric energy density: $e_v = \rho\,\Delta H_c$ (J/m$^3$)
+  \item Burnout time for $d_0 = 10\,\mu$m reference particle
+  \item Adiabatic flame temperature $T_{\mathrm{ad}}$
+  \item Emissivity and peak emission wavelength
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\caption{Fuel comparison for $d_0 = 10\,\mu$m particles}
+\begin{tabular}{@{}lrrrrl@{}}
+\toprule
+Fuel & $e_g$ (MJ/kg) & $e_v$ (GJ/m$^3$) & $K$ (m$^n$/s) & $t_b$ ($\mu$s) & $\varepsilon$ \\
+\midrule
+CH$_4$ & 50.0  & 0.033  & ---         & ---   & 0.10 \\
+Fe     &  7.4  & 58.3   & $3.0\!\times\!10^{-7}$ & 33   & 0.85 \\
+Al     & 31.1  & 84.0   & $2.0\!\times\!10^{-6}$ & 50   & 0.95 \\
+B/Al   & 40.0  & 100.0  & $1.5\!\times\!10^{-6}$ & 67   & 0.88 \\
+Zr     & 12.0  & 78.1   & $4.0\!\times\!10^{-7}$ & 68   & 0.80 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================================
+\section*{Equation Index}
+% ============================================================================
+
+This document contains numbered equations grouped across eight expanded phases
+and the preceding foundational sections.  Equation numbering is sequential and
+cross-referenceable via \texttt{\textbackslash eqref}.
+
+\end{document}

@@ -1,0 +1,19 @@
+{
+  "formula": "C2H2",
+  "seed": 594,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 26.330787,
+  "energy_per_atom": 6.582697,
+  "rms_force": 86.064186,
+  "max_force": 86.064186,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.468000,
+  "timestamp": "2026-03-28T13:05:33",
+  "xyz_file": "benchmark_v2\medium\structures\C2H2_s594.xyz"
+}

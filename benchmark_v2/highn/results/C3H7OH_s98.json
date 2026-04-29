@@ -1,0 +1,19 @@
+{
+  "formula": "C3H7OH",
+  "seed": 98,
+  "tier": "highn",
+  "num_atoms": 12,
+  "steps_taken": 6070,
+  "max_steps": 10000,
+  "energy_kcal_mol": -1.937404,
+  "energy_per_atom": -0.161450,
+  "rms_force": 0.056133,
+  "max_force": 0.056133,
+  "alpha_final": 0.000426,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 4.851100,
+  "timestamp": "2026-03-28T13:04:07",
+  "xyz_file": "benchmark_v2\highn\structures\C3H7OH_s98.xyz"
+}

@@ -29,6 +29,7 @@
 #include <functional>
 #include <cmath>
 #include <map>
+#include <utility>      // C++23: std::to_underlying
 
 namespace vsepr {
 namespace multiscale {
@@ -159,13 +160,13 @@ public:
      */
     double cumulative_fidelity(SimulationScale target) const {
         double f = 1.0;
-        uint8_t current = 1;
-        uint8_t target_val = static_cast<uint8_t>(target);
+        auto current = std::to_underlying(SimulationScale::Atomistic);
+        auto target_val = std::to_underlying(target);
 
         while (current < target_val) {
             for (const auto& t : transitions_) {
-                if (static_cast<uint8_t>(t.from) == current &&
-                    static_cast<uint8_t>(t.to) == current + 1) {
+                if (std::to_underlying(t.from) == current &&
+                    std::to_underlying(t.to) == current + 1) {
                     f *= t.fidelity;
                     break;
                 }
@@ -180,15 +181,14 @@ public:
      * Domain must be preserved at every transition in the chain.
      */
     bool domain_survives_to(PropertyDomain domain, SimulationScale target) const {
-        uint8_t current = 1;
-        uint8_t target_val = static_cast<uint8_t>(target);
+        auto current = std::to_underlying(SimulationScale::Atomistic);
+        auto target_val = std::to_underlying(target);
 
         while (current < target_val) {
             bool found = false;
             for (const auto& t : transitions_) {
-                if (static_cast<uint8_t>(t.from) == current &&
-                    static_cast<uint8_t>(t.to) == current + 1) {
-                    // Check if domain is in preserved list
+                if (std::to_underlying(t.from) == current &&
+                    std::to_underlying(t.to) == current + 1) {
                     for (auto d : t.preserved_domains) {
                         if (d == domain) { found = true; break; }
                     }
@@ -212,8 +212,8 @@ public:
             case SimulationScale::Grain:         return "Grain";
             case SimulationScale::Component:     return "Component";
             case SimulationScale::Macroscopic:   return "Macroscopic";
-            default:                             return "Unknown";
         }
+        std::unreachable();  // C++23 (N4950 §17.13.6)
     }
 
     static const char* domain_name(PropertyDomain d) {
@@ -225,8 +225,8 @@ public:
             case PropertyDomain::Transport:  return "Transport";
             case PropertyDomain::Stability:  return "Stability";
             case PropertyDomain::Nuclear:    return "Nuclear";
-            default:                         return "Unknown";
         }
+        std::unreachable();  // C++23 (N4950 §17.13.6)
     }
 
 private:

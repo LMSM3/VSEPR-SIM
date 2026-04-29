@@ -1,0 +1,19 @@
+{
+  "formula": "Fe2O3",
+  "seed": 56,
+  "tier": "highn",
+  "num_atoms": 5,
+  "steps_taken": 8301,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.313926,
+  "energy_per_atom": -0.062785,
+  "rms_force": 0.054223,
+  "max_force": 0.054223,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 1.582200,
+  "timestamp": "2026-03-28T13:07:06",
+  "xyz_file": "benchmark_v2\highn\structures\Fe2O3_s56.xyz"
+}

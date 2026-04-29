@@ -1,0 +1,19 @@
+{
+  "formula": "HBr",
+  "seed": 126,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 2.303647,
+  "energy_per_atom": 1.151824,
+  "rms_force": 11.791432,
+  "max_force": 11.791432,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.489700,
+  "timestamp": "2026-03-28T12:54:01",
+  "xyz_file": "benchmark_100\medium\structures\HBr_s126.xyz"
+}

@@ -6,6 +6,7 @@
 #include "atomistic/crystal/unit_cell.hpp"
 #include "atomistic/crystal/supercell.hpp"
 #include "atomistic/crystal/crystal_metrics.hpp"
+#include "core/math_vec3.hpp"
 #include <iostream>
 #include <stdexcept>
 #include <vector>
@@ -26,10 +27,8 @@ struct CrystalEmissionResult {
 // Forward declarations
 CrystalEmissionResult emit_atomistic_preset(const std::string& preset_name);
 
-// Simple 3D vector for fractional coordinates
-struct Vec3 {
-    double x, y, z;
-};
+// Day #56: Vec3 unified — alias to vsepr::Vec3 (fractional coordinates).
+using Vec3 = vsepr::Vec3;
 
 // ============================================================================
 // CRYSTAL STRUCTURE MOTIFS

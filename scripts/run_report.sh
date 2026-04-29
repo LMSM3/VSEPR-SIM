@@ -12,7 +12,7 @@ OUT="$ROOT/outputs/reports"
 SRC="$ROOT/reporting"
 
 echo "╔═══════════════════════════════════════════════════════════════╗"
-echo "║  VSEPR-Sim Report Generator v2.3.1                            ║"
+║  VSEPR-Sim Report Generator v3.0.0                            ║
 echo "╚═══════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -113,6 +113,37 @@ if [[ -f "$SRC/analysis.ipynb" ]]; then
     }
 else
     echo "[!] $SRC/analysis.ipynb not found - skipping notebook conversion"
+fi
+
+echo ""
+
+# --- 5) Layering report (Python data generation + LaTeX) ---
+if [[ -f "$SRC/generate_layering_report.py" ]]; then
+    echo "[*] Running layering report data generation..."
+    python "$SRC/generate_layering_report.py" --root "$ROOT"
+    echo "[✓] Layering data generated"
+
+    if [[ -f "$SRC/layering_report.tex" ]] && command -v pdflatex >/dev/null 2>&1; then
+        echo "[*] Building layering report LaTeX → PDF..."
+        cd "$SRC"
+        pdflatex -interaction=nonstopmode layering_report.tex >/dev/null 2>&1 || true
+        pdflatex -interaction=nonstopmode layering_report.tex >/dev/null 2>&1 || true
+        cd "$ROOT"
+
+        if [[ -f "$SRC/layering_report.pdf" ]]; then
+            cp "$SRC/layering_report.pdf" "$OUT/"
+            # Clean auxiliary files
+            rm -f "$SRC"/layering_report.{aux,log,toc,out,fls,fdb_latexmk,synctex.gz}
+            echo "[✓] Layering PDF: $OUT/layering_report.pdf"
+        else
+            echo "[!] Layering PDF generation failed"
+        fi
+    else
+        echo "[!] pdflatex not found - skipping layering PDF compilation"
+        echo "[!] On Windows, run: .\\scripts\\build_layering_report.ps1"
+    fi
+else
+    echo "[!] $SRC/generate_layering_report.py not found - skipping"
 fi
 
 echo ""

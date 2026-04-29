@@ -1,0 +1,16 @@
+# seed_hash: 0000000317569BFD
+# sample_index: 110
+# arrangement: benzene_nitration_std_strong
+# equation: C6H6 + HNO3 -> C6H5NO2 + H2O  [H2SO4 catalyst]
+# tau_drawn: 124.36
+# g_steric_drawn: 0.469232
+# g_elec_drawn: -0.265033
+# g_disp_drawn: 0.909915
+# temperature_K: 245.902
+# dt_drawn: 0.533446
+# N_beads: 41
+# total_mass_amu: 380.324
+#
+step,energy,ke,rms_force,max_force,dt,avg_rho,avg_C,avg_P2,avg_eta,avg_target_f,max_deta,g_steric,g_elec,g_disp,n_inert,n_ionic,n_cov,n_met,n_mix,steady
+0,-0.00000000,557256442981790464.00000000,1737637897.04421449,3131428325.87375069,0.266723,0.00000000,0.00000000,0.00000000,0.00000000,0.00000000,0.00000000,1.00000000,1.00000000,1.00000000,0,0,0,0,41,0
+1,-0.00000000,0.00000000,0.00000000,0.00000000,0.133361,0.00000000,0.00000000,0.00000000,0.00000000,0.00000000,0.00000000,1.00000000,1.00000000,1.00000000,0,0,0,0,41,1

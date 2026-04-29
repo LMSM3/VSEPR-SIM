@@ -1,0 +1,36 @@
+# test_pbc_wrap.vsim
+# Parser test: [cell] + [boundary] + pbc.wrap behavior
+# Parsed by test_pbc_vsim_parser.cpp (Group 57B)
+# Expression-level assert execution: WO-57C
+
+[project]
+name        = test_pbc_wrap
+version     = v5.0.0-beta.8
+determinism = true
+
+[cell]
+type    = orthorhombic
+lengths = 10.0, 10.0, 10.0
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = true
+unwrap_for_diffusion = true
+
+# [script] — expression evaluation in 57C
+# r_overflow = vec3(10.2, 5.0, 5.0)
+# r_wrapped  = pbc.wrap(r_overflow)
+# assert_near(r_wrapped.x, 0.2, 1e-12, "wrap positive overflow x")
+# assert_near(r_wrapped.y, 5.0, 1e-12, "wrap y unchanged")
+# assert_near(r_wrapped.z, 5.0, 1e-12, "wrap z unchanged")
+#
+# r_negative = vec3(-0.2, 5.0, 5.0)
+# r_neg_wrap = pbc.wrap(r_negative)
+# assert_near(r_neg_wrap.x, 9.8, 1e-12, "wrap negative overflow x")

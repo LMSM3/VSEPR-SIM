@@ -1,0 +1,1470 @@
+% Formation Engine -- XYZ File Formats (Edition 4)
+% VSEPR-SIM 4.2.0  |  Compile: pdflatex (twice)
+%
+\documentclass[12pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in, headheight=14pt]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath, amssymb, mathtools}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{mdframed}
+\usepackage{multicol}
+
+\lstset{basicstyle=\ttfamily\small, keywordstyle=\color{blue}, commentstyle=\color{gray},
+  stringstyle=\color{red}, breaklines=true, columns=fullflexible, keepspaces=true,
+  frame=single, backgroundcolor=\color{gray!8}, xleftmargin=0.5em, xrightmargin=0.5em,
+  language=C++}
+
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Formation Engine Methodology}}
+\fancyhead[R]{\small\textit{XYZ File Formats --- Edition 4}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\S{}\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\Ang}{\text{\AA}}
+\newcommand{\kcalmol}{\text{kcal/mol}}
+
+\title{%
+  \textbf{Formation Engine Methodology}\\[6pt]
+  \textbf{XYZ File Formats}\\[10pt]
+  \large VSEPR-SIM Atomistic Engine\\
+  Formats: \texttt{.xyz}\quad\texttt{.xyza}\quad\texttt{.xyzc}\quad\texttt{.xyzf}\quad\texttt{.xyzfull}\\[4pt]
+  \normalsize Edition 4 --- Expanded Reference with Optional INFO Encoding
+}
+\author{VSEPR-SIM Project}
+\date{Version 4.2.0 --- \today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+All VSEPR-SIM molecular I/O uses plain-text, line-oriented files.
+Four formats share a common structural grammar; each adds fields to
+the preceding one.  This document is the fourth-edition reference
+for the \texttt{.xyz}, \texttt{.xyza}, \texttt{.xyzc},
+\texttt{.xyzf}, and \texttt{.xyzfull} file formats, including grammar
+specifications, field semantics, coordinate conventions, checkpoint and
+trajectory usage, bounding-box encoding, implementation mapping, typical
+observable ranges, the rich replay container format, the optional
+\texttt{INFO} tail block, compute kernel tags, and the new
+\texttt{INFO\_ENCODED} optional encoding mechanism introduced in Edition 4
+for guaranteed backward compatibility with legacy readers.
+\end{abstract}
+
+\tableofcontents
+
+% ---- colour definitions ----
+\definecolor{revblue}{RGB}{30,80,140}
+\definecolor{revbluelight}{RGB}{220,232,245}
+\definecolor{specgold}{RGB}{180,130,0}
+\definecolor{specgoldlight}{RGB}{255,248,220}
+\definecolor{warnred}{RGB}{160,30,30}
+\definecolor{warnredlight}{RGB}{253,235,235}
+\definecolor{okgreen}{RGB}{20,110,50}
+\definecolor{okgreenlight}{RGB}{225,245,230}
+\definecolor{coregray}{RGB}{60,60,70}
+\definecolor{rulegray}{RGB}{180,185,195}
+\definecolor{enc4green}{RGB}{45,100,60}
+\definecolor{enc4greenlight}{RGB}{215,240,220}
+
+\newpage
+\thispagestyle{fancy}
+
+\begin{tcolorbox}[
+  enhanced, breakable=false,
+  colback=enc4greenlight, colframe=enc4green,
+  boxrule=1.2pt, arc=4pt,
+  title={\large\bfseries\color{white} What Is New in Edition 4 --- v4.2.0},
+  attach boxed title to top left={yshift=-2mm, xshift=6mm},
+  boxed title style={colback=enc4green, colframe=enc4green, arc=3pt},
+  fonttitle=\bfseries, left=6pt, right=6pt, top=8pt, bottom=6pt
+]
+
+\textbf{Edition 4 adds optional encoding of the \texttt{INFO} tail block.}
+All prior formats and their semantics are unchanged and fully backward-compatible
+with Edition 3 readers.
+
+\medskip
+\begin{tcolorbox}[
+  colback=white, colframe=rulegray,
+  boxrule=0.6pt, arc=2pt, left=4pt, right=4pt, top=4pt, bottom=4pt
+]
+\textbf{New in this edition:}
+\begin{itemize}
+  \item \textbf{\S{}B --- Optional \texttt{INFO} Block Encoding (\texttt{INFO\_ENCODED}):}
+        An alternative to the plain \texttt{INFO} tail block.  Block content may be
+        encoded as \texttt{plain}, \texttt{base64}, \texttt{hex}, or \texttt{zlib+base64}.
+        Legacy readers that halt after atom data lines are unaffected.
+  \item \textbf{Encoding schemes:} \texttt{plain} (identity), \texttt{base64} (RFC~4648),
+        \texttt{hex} (lowercase), \texttt{zlib+base64} (DEFLATE then base64).
+  \item \textbf{Writer config:} \texttt{encode\_info\_block} and \texttt{info\_encoding}
+        added to \type{XYZWriterConfig}.
+  \item \textbf{Decoder API:} \type{InfoBlockDecoder::decode} /
+        \type{InfoBlockDecoder::encode} in \texttt{namespace vsepr::io}.
+  \item \textbf{New source files:} \file{include/io/info\_block\_codec.hpp} and
+        \file{src/io/info\_block\_codec.cpp}.
+  \item \textbf{New error codes:} \type{DUAL\_INFO\_BLOCK}, \type{UNKNOWN\_ENCODING},
+        \type{INFO\_DECODE\_ERROR}.
+  \item \textbf{Feature matrix} and \textbf{INFO applicability table} updated.
+  \item \textbf{Per-format backward-compatibility} guarantees stated explicitly.
+\end{itemize}
+\end{tcolorbox}
+
+\medskip
+\begin{tcolorbox}[
+  colback=warnredlight, colframe=warnred,
+  boxrule=0.6pt, arc=2pt, left=4pt, right=4pt, top=4pt, bottom=4pt
+]
+\textbf{\color{warnred}Rule:} a file must carry either \texttt{INFO} or
+\texttt{INFO\_ENCODED}, never both.  \texttt{INFO\_ENCODED plain} is valid
+but redundant; prefer plain \texttt{INFO}.
+\end{tcolorbox}
+
+\end{tcolorbox}
+
+\bigskip
+\begin{tcolorbox}[
+  enhanced, breakable=false,
+  colback=revbluelight, colframe=revblue,
+  boxrule=1.0pt, arc=4pt,
+  title={\normalsize\bfseries\color{white} What Was New in Edition 3 --- v4.1.0 (retained for reference)},
+  attach boxed title to top left={yshift=-2mm, xshift=6mm},
+  boxed title style={colback=revblue, colframe=revblue, arc=3pt},
+  fonttitle=\bfseries, left=6pt, right=6pt, top=8pt, bottom=6pt
+]
+\small
+Edition 3 added \texttt{.xyzfull} (the rich replay and render container)
+and the optional plain \texttt{INFO} tail block for all formats.
+All prior formats (\texttt{.xyz}, \texttt{.xyza}, \texttt{.xyzc}, \texttt{.xyzf})
+remained unchanged and fully backward-compatible with Edition 2 readers.
+\end{tcolorbox}
+
+\newpage
+\thispagestyle{fancy}
+
+\begin{tcolorbox}[
+  enhanced,
+  colback=gray!5, colframe=coregray,
+  boxrule=1.2pt, arc=4pt,
+  title={\large\bfseries\color{white} \texttt{.xyzfull} --- At-a-Glance Spec Card},
+  attach boxed title to top left={yshift=-2mm, xshift=6mm},
+  boxed title style={colback=coregray, colframe=coregray, arc=3pt},
+  left=6pt, right=6pt, top=8pt, bottom=6pt
+]
+
+\begin{multicols}{2}
+
+% --- LEFT COLUMN ---
+\begin{tcolorbox}[
+  colback=revbluelight, colframe=revblue,
+  boxrule=0.7pt, arc=3pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\bfseries\small File Structure},
+  fonttitle=\small\bfseries, attach title to upper, after title={\\[2pt]}
+]
+\small
+\texttt{XYZFULL}\\
+\texttt{version 1}\\
+\texttt{units angstrom fs kcal/mol}\\
+\texttt{mode <string>}\\
+\texttt{energy\_layers <N> <names...>}\\
+\texttt{static\_count <S>}\\
+\texttt{dynamic\_count <D>}\\
+\texttt{properties ...}\\[4pt]
+\texttt{STATIC}\\
+\texttt{<id> <type> <sym> x y z q cg\_id}\\[4pt]
+\texttt{FRAMES}\\
+\texttt{FRAME <k> time <t>}\\
+\texttt{<dynamic rows>}\\
+\texttt{END\_FRAME}\\[4pt]
+\texttt{INFO} \textit{or} \texttt{INFO\_ENCODED <scheme>}\\
+\texttt{<content / encoded blob>}\\
+\texttt{TOTAL\_FRAMES <N>}\\
+\texttt{DT <dt>}\\
+\texttt{END\_INFO} \textit{or} \texttt{END\_INFO\_ENCODED}
+\end{tcolorbox}
+
+\medskip
+\begin{tcolorbox}[
+  colback=okgreenlight, colframe=okgreen,
+  boxrule=0.7pt, arc=3pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\bfseries\small Energy Layers},
+  fonttitle=\small\bfseries, attach title to upper, after title={\\[2pt]}
+]
+\small
+\begin{tabular}{ll}
+\texttt{e0} & \texttt{U\_total} \\
+\texttt{e1} & \texttt{U\_bond} \\
+\texttt{e2} & \texttt{U\_vdw} \\
+\texttt{e3} & \texttt{U\_coul} \\
+\texttt{e4} & \texttt{U\_ext} \\
+\texttt{e5} & \texttt{U\_thermal} \\
+\end{tabular}\\[4pt]
+Count: $k \in \{4, 5, 6\}$.  Declare in header.\\
+Do not invent arbitrary counts.
+\end{tcolorbox}
+
+\columnbreak
+
+% --- RIGHT COLUMN ---
+\begin{tcolorbox}[
+  colback=specgoldlight, colframe=specgold,
+  boxrule=0.7pt, arc=3pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\bfseries\small Key Constraints},
+  fonttitle=\small\bfseries, attach title to upper, after title={\\[2pt]}
+]
+\small
+\begin{itemize}[leftmargin=1em]
+  \item File \emph{must} start with \texttt{XYZFULL}
+  \item \texttt{TOTAL\_FRAMES} and \texttt{DT} required (in decoded INFO)
+  \item Parsed frame count $=$ \texttt{TOTAL\_FRAMES}
+  \item Dynamic IDs unique within frame
+  \item Static IDs $\neq$ dynamic IDs
+  \item $\|\mathbf{o}\| > 10^{-12}$ (orientation vector)
+  \item Energy layer count: 4, 5, or 6 only
+  \item Unknown \texttt{step\_tag}: warn, not fatal
+  \item \texttt{INFO} and \texttt{INFO\_ENCODED}: mutually exclusive
+\end{itemize}
+\end{tcolorbox}
+
+\medskip
+\begin{tcolorbox}[
+  colback=white, colframe=rulegray,
+  boxrule=0.7pt, arc=3pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\bfseries\small CG Proxy Shapes},
+  fonttitle=\small\bfseries, attach title to upper, after title={\\[2pt]}
+]
+\small
+\begin{tabular}{ll}
+\texttt{bead}    & sphere / dot \\
+\texttt{rod}     & capsule / line \\
+\texttt{plate}   & rectangle proxy \\
+\texttt{gear}    & low-poly wheel \\
+\texttt{pipe}    & tube segment \\
+\texttt{crystal} & lattice proxy \\
+\end{tabular}\\[4pt]
+Not CAD.  Visual truth only.
+\end{tcolorbox}
+
+\medskip
+\begin{tcolorbox}[
+  colback=warnredlight, colframe=warnred,
+  boxrule=0.7pt, arc=3pt, left=4pt, right=4pt, top=3pt, bottom=3pt,
+  title={\bfseries\small NOT a checkpoint},
+  fonttitle=\small\bfseries, attach title to upper, after title={\\[2pt]}
+]
+\small
+\texttt{.xyzfull} $\neq$ restartable state.\\
+Use \texttt{.xyzc} to restart MD.\\
+Use \texttt{XYZFullStreamWriter} for long runs.
+\end{tcolorbox}
+
+\end{multicols}
+\end{tcolorbox}
+
+\newpage
+
+% ================================================
+\section{Overview}
+% ================================================
+
+The VSEPR-SIM atomistic engine reads and writes molecular geometry,
+dynamics, and checkpoint data using four progressively richer
+plain-text formats.  Each format extends the previous one by appending
+per-atom or per-frame metadata while preserving backward compatibility
+with simple line-oriented parsers.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Format hierarchy.}
+  \label{tab:hierarchy}
+  \begin{tabular}{llp{8cm}}
+    \toprule
+    Extension & Name & Use case \\
+    \midrule
+    \texttt{.xyz}     & Standard XYZ     & Static geometry snapshot \\
+    \texttt{.xyza}    & Extended XYZ     & Charges, velocities, forces \\
+    \texttt{.xyzc}    & Checkpoint XYZ   & Restartable MD state \\
+    \texttt{.xyzf}    & Formation XYZ    & Multi-frame trajectory \\
+    \texttt{.xyzfull} & Full Replay XYZ  & Rich replay/render container \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Unit Conventions}
+
+All formats share a single, non-negotiable unit system:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Unit system (all formats).}
+  \label{tab:units}
+  \begin{tabular}{lll}
+    \toprule
+    Quantity & Unit & SI equivalent \\
+    \midrule
+    Coordinates   & \AA{} (angstrom) & $10^{-10}$\,m \\
+    Energy        & kcal/mol         & $4.184 \times 10^{3}$\,J/mol \\
+    Velocity      & \AA/fs           & $10^{5}$\,m/s \\
+    Force         & kcal/(mol\,\AA)  & $6.947 \times 10^{13}$\,N/mol \\
+    Charge        & elementary $e$   & $1.602 \times 10^{-19}$\,C \\
+    Time          & fs               & $10^{-15}$\,s \\
+    Temperature   & K                & kelvin \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Coordinate System}
+
+Right-handed Cartesian $(x, y, z)$ in \AA.  Origin is arbitrary;
+the conventional choice is near the centre of mass.  Coordinate
+precision: six decimal places ($\Rightarrow$ resolution $\approx 0.1$\,pm).
+
+% ================================================
+\section{Standard XYZ (\texttt{.xyz})}
+\label{sec:xyz}
+% ================================================
+
+\subsection{Grammar}
+
+\begin{lstlisting}[language={},frame=single]
+<N>
+<comment>
+<sym> <x> <y> <z>
+...  (N lines)
+\end{lstlisting}
+
+\begin{itemize}
+  \item \textbf{Line 1}: atom count $N$ (integer $\ge 1$).
+  \item \textbf{Line 2}: free-text comment (may be empty).
+  \item \textbf{Lines 3--$(N{+}2)$}: element symbol + three Cartesian
+        coordinates, whitespace-separated.
+\end{itemize}
+
+\subsection{Comment Line Convention}
+
+The comment line follows a structured-but-optional pattern:
+
+\begin{lstlisting}[language={},frame=single]
+<name> | E = <val> kcal/mol | <notes>
+\end{lstlisting}
+
+Fields are pipe-delimited.  The energy key \texttt{E =} is recognised
+by the reader for energy-tracking contexts.
+
+\subsection{Example: Water}
+
+\begin{lstlisting}[language={},frame=single]
+3
+H2O | E = -6.245 kcal/mol
+O   0.000000   0.000000   0.119262
+H   0.000000   0.763239  -0.477049
+H   0.000000  -0.763239  -0.477049
+\end{lstlisting}
+
+\subsection{Parsing Notes}
+
+\begin{itemize}
+  \item Element symbols are case-sensitive: \texttt{He} is helium, \texttt{HE} is rejected.
+  \item Trailing whitespace on atom lines is ignored.
+  \item Blank lines between the comment and the first atom line are \emph{not} permitted.
+  \item Coordinate fields must parse as IEEE~754 double-precision values.
+\end{itemize}
+
+% ================================================
+\section{Extended XYZ (\texttt{.xyza})}
+\label{sec:xyza}
+% ================================================
+
+Adds per-atom scalar and vector properties after the $(x, y, z)$ fields.
+
+\subsection{Grammar}
+
+\begin{lstlisting}[language={},frame=single]
+<N>
+<comment> properties=<list>
+<sym> <x> <y> <z> [<q> <vx> <vy> <vz> <fx> <fy> <fz> <e>]
+\end{lstlisting}
+
+The \texttt{properties} key declares which optional columns are present.
+Column order is fixed; omission is permitted only from the right.
+
+\subsection{Property Columns}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Extended property columns (fixed order).}
+  \label{tab:xyza_cols}
+  \begin{tabular}{llll}
+    \toprule
+    Key & Symbol & Unit & Columns \\
+    \midrule
+    \texttt{charge}   & $q_i$          & $e$                   & 1 \\
+    \texttt{velocity} & $\mathbf{v}_i$ & \AA/fs                & 3 \\
+    \texttt{force}    & $\mathbf{F}_i$ & kcal/(mol\,\AA)       & 3 \\
+    \texttt{energy}   & $\varepsilon_i$& kcal/mol              & 1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Properties Declaration Syntax}
+
+\begin{lstlisting}[language={},frame=single]
+properties="charge:velocity"
+properties="charge:velocity:force:energy"
+\end{lstlisting}
+
+Unrecognised keys trigger a parse warning but do not abort the read.
+
+\subsection{Example: H\texorpdfstring{$_2$}{2}O with Charges and Velocities}
+
+\begin{lstlisting}[language={},frame=single]
+3
+Water MD frame 1 properties="charge:velocity"
+O   0.00   0.00   0.12  -0.834   0.00   0.00   0.00
+H   0.00   0.76  -0.48   0.417   0.12   0.08  -0.03
+H   0.00  -0.76  -0.48   0.417  -0.12   0.08  -0.03
+\end{lstlisting}
+
+\subsection{Charge Semantics}
+
+The charge field $q_i$ represents the effective partial charge used in
+Coulomb interactions.  It is \emph{not} an oxidation state.
+
+% ================================================
+\section{Checkpoint XYZ (\texttt{.xyzc})}
+\label{sec:xyzc}
+% ================================================
+
+Extends \texttt{.xyza} with a simulation-state header block required
+to restart an interrupted MD run without loss of trajectory continuity.
+
+\subsection{Header Block}
+
+\begin{lstlisting}[language={},frame=single]
+CHECKPOINT
+step       <integer>
+time       <float> fs
+dt         <float> fs
+T_target   <float> K
+seed       <integer>
+box        <ax> <ay> <az>
+END_CHECKPOINT
+<N>
+<comment>
+<atom lines with charge + velocity + force>
+\end{lstlisting}
+
+\subsection{Header Field Semantics}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Checkpoint header fields.}
+  \label{tab:xyzc_header}
+  \begin{tabular}{llp{7.5cm}}
+    \toprule
+    Field & Type & Meaning \\
+    \midrule
+    \texttt{step}      & integer & MD step number at checkpoint \\
+    \texttt{time}      & float   & Accumulated simulation time (fs) \\
+    \texttt{dt}        & float   & Integrator timestep (fs) \\
+    \texttt{T\_target} & float   & Thermostat set-point (K); 0 = NVE ensemble \\
+    \texttt{seed}      & integer & RNG seed for reproducible continuation \\
+    \texttt{box}       & 3 floats & Box side lengths (\AA); omit for open boundary \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Restart Protocol}
+
+\begin{enumerate}
+  \item Header parsed; integrator state restored.
+  \item Atom block read as a standard \texttt{.xyza} frame.
+  \item Neighbour lists reconstructed; never serialised into checkpoint.
+  \item If \texttt{box} line present, PBC activated.
+\end{enumerate}
+
+\subsection{Checkpoint vs.\ Trajectory}
+
+A \texttt{.xyzc} file contains exactly one frame.  For multi-frame output,
+use \texttt{.xyzf} (\S\ref{sec:xyzf}).
+
+% ================================================
+\section{Formation XYZ (\texttt{.xyzf})}
+\label{sec:xyzf}
+% ================================================
+
+A multi-frame format: one or more \texttt{.xyz} or \texttt{.xyza} blocks
+concatenated in a single file.
+
+\subsection{Grammar}
+
+\begin{lstlisting}[language={},frame=single]
+<N>           <- frame 1
+<comment>
+<atom lines>
+<N>           <- frame 2
+<comment>
+<atom lines>
+...
+\end{lstlisting}
+
+Each frame is self-contained and independently parseable.
+
+\subsection{Comment Line Convention (Multi-Frame)}
+
+\begin{lstlisting}[language={},frame=single]
+Step 0 | E = -12.30 kcal/mol | FIRE iter
+Step 1 | E = -13.11 kcal/mol | FIRE iter
+\end{lstlisting}
+
+\subsection{Frame Independence}
+
+\begin{itemize}
+  \item Atom count $N$ may vary between frames.
+  \item The \texttt{properties} declaration may differ between frames.
+  \item Readers must re-parse the header of each frame.
+\end{itemize}
+
+\subsection{Typical Uses}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Common \texttt{.xyzf} applications.}
+  \label{tab:xyzf_uses}
+  \begin{tabular}{lp{8cm}}
+    \toprule
+    Application & Comment line pattern \\
+    \midrule
+    FIRE minimisation trace  & \texttt{Step <k> | E = <val> kcal/mol | FIRE iter} \\
+    NVT trajectory dump      & \texttt{Step <k> | E = <val> kcal/mol | T = <T> K} \\
+    Reaction path (NEB)      & \texttt{Image <k> | E = <val> kcal/mol | dE = <dE>} \\
+    Conformer scan           & \texttt{Conf <k> | E = <val> kcal/mol | <dihedral>} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ================================================
+\section{Bounding Box and Periodic Boundary Conditions}
+\label{sec:pbc}
+% ================================================
+
+When PBC are active, box geometry is stored in the \texttt{.xyzc} header
+(\S\ref{sec:xyzc}) or as comment-line keys in any format.
+
+\subsection{Comment-Line Encoding}
+
+\begin{lstlisting}[language={},frame=single]
+Lattice="ax 0 0  0 ay 0  0 0 az" pbc="T T T"
+\end{lstlisting}
+
+\begin{itemize}
+  \item Box vectors in \AA, flattened $3\times 3$ row-major matrix.
+  \item \texttt{pbc} flags: \texttt{T} = periodic, \texttt{F} = open.
+  \item Compatible with ASE Extended XYZ convention.
+\end{itemize}
+
+\subsection{Box Vector Interpretation}
+
+\begin{equation}
+  \mathbf{L} = \begin{pmatrix} a_x & 0 & 0 \\ 0 & a_y & 0 \\ 0 & 0 & a_z \end{pmatrix}
+  \label{eq:lattice}
+\end{equation}
+The cell volume is $V = \det(\mathbf{L}) = a_x \cdot a_y \cdot a_z$.
+
+\subsection{Minimum Image Convention}
+
+\begin{equation}
+  \Delta r_\alpha = r_\alpha^{(j)} - r_\alpha^{(i)}
+    - L_\alpha \cdot \mathrm{round}\!\left(
+      \frac{r_\alpha^{(j)} - r_\alpha^{(i)}}{L_\alpha}
+    \right), \qquad \alpha \in \{x, y, z\}
+  \label{eq:mic}
+\end{equation}
+
+% ================================================
+\section{Bond Auto-Detection}
+\label{sec:bonds}
+% ================================================
+
+Bond connectivity is inferred from geometry, never stored in the file.
+\begin{equation}
+  d_{ij} < s \cdot \bigl(r_{\text{cov}}(Z_i) + r_{\text{cov}}(Z_j)\bigr)
+  \quad \Longrightarrow \quad \text{bond}(i, j) \label{eq:bond}
+\end{equation}
+where $s$ is the scale factor (default $s = 1.2$).
+
+\subsection{Design Rationale}
+
+Bonds are derived data, not ground truth.  Stale bond tables are a
+silent-corruption vector.  Caches never become truth.
+
+% ================================================
+\section{Implementation Mapping}
+\label{sec:impl}
+% ================================================
+
+\begin{table}[htbp]
+  \centering
+  \caption{Source files implementing the XYZ format family.}
+  \label{tab:impl}
+  \begin{tabular}{lp{8.5cm}}
+    \toprule
+    File & Role \\
+    \midrule
+    \file{include/io/xyz\_format.hpp}
+      & Public API: \type{XYZReader}, \type{XYZWriter}, \type{XYZAReader}, \type{XYZAWriter} \\
+    \file{src/io/xyz\_format.cpp}
+      & Reader / writer implementation \\
+    \file{include/thermal/xyzc\_format.hpp}
+      & Checkpoint reader/writer declarations \\
+    \file{src/thermal/xyzc\_format.cpp}
+      & Checkpoint reader/writer implementation \\
+    \file{include/io/xyzfull\_format.hpp}
+      & Replay container: \type{XYZFullReader}, \type{XYZFullWriter}, \type{XYZFullStreamWriter} \\
+    \file{src/io/xyzfull\_format.cpp}
+      & Full replay reader / writer / streaming writer \\
+    \file{include/render/xyzfull\_replay.hpp}
+      & Low-poly replay renderer declarations \\
+    \file{src/render/xyzfull\_replay.cpp}
+      & Replay renderer and CG proxy reconstruction \\
+    \file{include/io/info\_block\_codec.hpp}
+      & \type{InfoBlockDecoder} / \type{InfoBlockEncoder} (Edition~4) \\
+    \file{src/io/info\_block\_codec.cpp}
+      & Encoding/decoding: base64, hex, zlib+base64 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+All reader and writer types reside in namespace \type{vsepr::io}.
+
+\subsection{Reader API Pattern}
+
+\begin{lstlisting}
+// Standard / Extended / Checkpoint / Formation
+auto frame  = vsepr::io::XYZReader::read(molecule.xyz);
+auto frame  = vsepr::io::XYZAReader::read(dynamics.xyza);
+auto state  = vsepr::io::XYZCReader::read(restart.xyzc);
+auto traj   = vsepr::io::XYZFReader::read_all(trajectory.xyzf);
+// Full replay container
+auto replay = vsepr::io::XYZFullReader::read(replay.xyzfull);
+// replay.info_encoding tells you the scheme used
+\end{lstlisting}
+
+\subsection{Writer API Pattern}
+
+\begin{lstlisting}
+vsepr::io::XYZWriter::write(output.xyz, atoms, comment);
+vsepr::io::XYZAWriter::write(output.xyza, atoms, props, comment);
+vsepr::io::XYZCWriter::write(checkpoint.xyzc, state);
+
+vsepr::io::XYZFWriter writer(trajectory.xyzf, /*append=*/true);
+writer.write_frame(atoms, comment);
+
+// Full replay (streaming)
+vsepr::io::XYZFullStreamWriter sw(replay.xyzfull);
+sw.write_header(header);
+sw.write_static_block(statics);
+sw.begin_frames();
+for (const auto& frame : frames) sw.write_frame(frame);
+sw.write_footer(info, total_frames, dt);
+
+// Edition 4: encoded INFO block
+vsepr::io::XYZWriterConfig cfg;
+cfg.encode_info_block = true;
+cfg.info_encoding     = "base64";  // or "hex", "zlib+base64"
+vsepr::io::XYZFWriter writer2(trajectory.xyzf, cfg);
+\end{lstlisting}
+
+% ================================================
+\section{Typical Energy and Observable Ranges}
+\label{sec:ranges}
+% ================================================
+
+\begin{table}[htbp]
+  \centering
+  \caption{Typical observable magnitudes for sanity checking.}
+  \label{tab:ranges}
+  \begin{tabular}{llr}
+    \toprule
+    Observable & Typical range & Unit \\
+    \midrule
+    Total bonded energy          & $-10^2$ to $-10^5$   & kcal/mol \\
+    Relative conformer energy    & 0.1 -- 10            & kcal/mol \\
+    Activation barrier           & 5 -- 50              & kcal/mol \\
+    Force (unrelaxed atom)       & 1 -- 100             & kcal/(mol\,\AA) \\
+    Force convergence criterion  & $< 0.01$             & kcal/(mol\,\AA) \\
+    Velocity (300\,K, C atom)    & $\sim 0.02$          & \AA/fs \\
+    Partial charge (O in water)  & $-0.82$ to $-0.84$   & $e$ \\
+    Partial charge (H in water)  & $+0.41$ to $+0.42$   & $e$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Values outside these bounds in production output should trigger audit warnings.
+
+% ================================================
+\section{Integration with the Identity--State Framework}
+\label{sec:s0}
+% ================================================
+
+The XYZ formats serve as the serialisation layer for the particle
+identity vector $\mathbf{I}_i$ defined in \S{}0 of the Formation
+Engine methodology.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Identity vector components and their file-format encoding.}
+  \label{tab:s0_map}
+  \begin{tabular}{llp{6.5cm}}
+    \toprule
+    Component & Symbol & File encoding \\
+    \midrule
+    Nuclear identity     & $Z_i$       & Element symbol (looked up to $Z$) \\
+    Mass identity        & $A_i$       & Implicit via $Z_i$ \\
+    Charge participation & $Q_i$       & \texttt{charge} column in \texttt{.xyza} \\
+    Structural role      & $\Sigma_i$  & Not serialised; inferred at load \\
+    Stability class      & $\Lambda_i$ & Not serialised; computed post-load \\
+    Provenance memory    & $\Theta_i$  & Comment-line metadata \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+$\mathcal{K}_{\text{geom}}$ maps to the lattice matrix from the
+$\texttt{Lattice}$ key or \texttt{box} header.
+$\mathcal{K}_{\text{comp}}$ is reconstructed at load from element
+composition and geometry.
+
+% ================================================
+\section{Format Comparison Matrix}
+\label{sec:matrix}
+% ================================================
+
+\begin{table}[htbp]
+  \centering
+  \caption{Feature comparison across formats.}
+  \label{tab:matrix}
+  \begin{tabular}{lccccc}
+    \toprule
+    Feature & \texttt{.xyz} & \texttt{.xyza} & \texttt{.xyzc} & \texttt{.xyzf} & \texttt{.xyzfull} \\
+    \midrule
+    Atom count + coordinates            & \checkmark & \checkmark & \checkmark & \checkmark & \checkmark \\
+    Partial charges                     &            & \checkmark & \checkmark & opt.       & static     \\
+    Velocities                          &            & \checkmark & \checkmark & opt.       & \checkmark \\
+    Forces                              &            & \checkmark & \checkmark & opt.       &            \\
+    Per-atom energy                     &            & \checkmark & \checkmark & opt.       & layered    \\
+    Integrator state                    &            &            & \checkmark &            &            \\
+    Thermostat / RNG                    &            &            & \checkmark &            &            \\
+    Box geometry (header)               &            &            & \checkmark &            &            \\
+    Box geometry (comment key)          & \checkmark & \checkmark & \checkmark & \checkmark &            \\
+    Multi-frame                         &            &            &            & \checkmark & \checkmark \\
+    Static / dynamic separation         &            &            &            &            & \checkmark \\
+    CG orientation vector               &            &            &            &            & \checkmark \\
+    Energy layer decomposition          &            &            &            &            & \checkmark \\
+    STEP proxy tag                      &            &            &            &            & \checkmark \\
+    Low-poly render support             &            &            &            &            & \checkmark \\
+    Optional plain \texttt{INFO} block  & opt. & opt. & opt. & opt. & struct. \\
+    Optional encoded \texttt{INFO} block& opt. & opt. & opt. & opt. & opt.    \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ================================================
+\section{Error Handling and Validation}
+\label{sec:errors}
+% ================================================
+
+Readers enforce these validation rules at parse time:
+
+\begin{enumerate}
+  \item \textbf{Atom count mismatch.}  $\Rightarrow$ \type{XYZParseError::INCOMPLETE\_FRAME}.
+  \item \textbf{Unknown element.}  $\Rightarrow$ \type{XYZParseError::UNKNOWN\_ELEMENT}.
+  \item \textbf{Malformed coordinates.}  $\Rightarrow$ \type{XYZParseError::BAD\_COORDINATE}.
+  \item \textbf{Column count mismatch.}  Warn and zero-fill (fail-soft for velocities/forces;
+        fail-hard for coordinates).
+  \item \textbf{Checkpoint integrity.}  $\Rightarrow$ \type{XYZCParseError::NO\_HEADER}.
+  \item \textbf{Dual INFO blocks.}  Both \texttt{INFO} and \texttt{INFO\_ENCODED} in same
+        file $\Rightarrow$ \type{XYZParseError::DUAL\_INFO\_BLOCK}.
+  \item \textbf{Unknown encoding scheme.}  $\Rightarrow$ \type{XYZParseError::UNKNOWN\_ENCODING}.
+  \item \textbf{Decoding failure.}  $\Rightarrow$ \type{XYZParseError::INFO\_DECODE\_ERROR}.
+\end{enumerate}
+
+% ================================================
+\section{Full Replay XYZ (\texttt{.xyzfull})}
+\label{sec:xyzfull}
+% ================================================
+
+The \texttt{.xyzfull} format is the terminal form of the XYZ family: a rich replay
+and render container that captures bead/CG dynamics, orientation state, energy
+layers, and STEP proxy tags in a single streamable file.
+
+\textbf{It is not a checkpoint.  It is not a canonical simulation state.
+It is a replay artifact.}  Restarting physics from \texttt{.xyzfull} data is
+not supported and would be unsound.
+
+\subsection{Design Rationale}
+
+\begin{itemize}
+  \item Separates \emph{static} particles (walls, fixtures) from \emph{dynamic}
+        particles (beads, CG bodies).  Statics stored once; dynamic state per frame.
+  \item Orientation vectors $(\mathbf{o})$ enable low-poly proxy reconstruction.
+  \item Energy layers declared in header, stored inline, supporting 4--6 named components.
+  \item STEP proxy tags link each bead to a part identifier for renderer-side look-up.
+\end{itemize}
+
+\subsection{Grammar}
+
+\begin{lstlisting}[language={},frame=single]
+XYZFULL
+version 1
+units angstrom fs kcal/mol
+mode <mode_string>
+energy_layers <N> <name0> ... <nameN-1>
+static_count <S>
+dynamic_count <D>
+properties id type sym x y z vx vy vz ox oy oz cg_id step_tag e0 [e1 ...]
+
+STATIC
+<id> <type> <sym> <x> <y> <z> <q> <cg_id>
+...  (S lines)
+
+FRAMES
+FRAME <k> time <t>
+<id> <type> <sym> <x> <y> <z> <vx> <vy> <vz> <ox> <oy> <oz> <cg_id> <step_tag> <e0> [...]
+...  (D lines)
+END_FRAME
+...
+
+INFO                      <- plain (Edition 3+)
+  or
+INFO_ENCODED <scheme>     <- encoded (Edition 4+)
+<content>
+TOTAL_FRAMES <N>
+DT <dt>
+END_INFO / END_INFO_ENCODED
+\end{lstlisting}
+
+\subsection{File-Level Rules}
+
+\begin{itemize}
+  \item File must begin with \texttt{XYZFULL}.
+  \item \texttt{version} must be a supported integer (currently 1).
+  \item \texttt{energy\_layers} declares count $k \in \{4,5,6\}$ followed by names.
+  \item Must contain exactly one of \texttt{INFO} or \texttt{INFO\_ENCODED}.
+  \item \texttt{TOTAL\_FRAMES} and \texttt{DT} must be present in decoded INFO content.
+  \item Parsed frame count must equal \texttt{TOTAL\_FRAMES}.
+\end{itemize}
+
+\subsection{Energy Layer Convention}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Recommended 6-layer energy decomposition for \texttt{.xyzfull}.}
+  \label{tab:xyzfull_energy}
+  \begin{tabular}{lll}
+    \toprule
+    Index & Key & Description \\
+    \midrule
+    \texttt{e0} & \texttt{U\_total}   & Total potential energy \\
+    \texttt{e1} & \texttt{U\_bond}    & Bonded interactions \\
+    \texttt{e2} & \texttt{U\_vdw}     & van der Waals \\
+    \texttt{e3} & \texttt{U\_coul}    & Coulomb/electrostatic \\
+    \texttt{e4} & \texttt{U\_ext}     & External field \\
+    \texttt{e5} & \texttt{U\_thermal} & Thermal / thermostat contribution \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+A reduced 4-layer mode (\texttt{e0}=\texttt{U\_total}, \texttt{e1}=\texttt{U\_internal},
+\texttt{e2}=\texttt{U\_external}, \texttt{e3}=\texttt{U\_state}) is also valid.
+Do not create arbitrary layer counts.
+
+\subsection{Orientation Vector and STEP Proxy}
+
+\begin{equation}
+  \|\mathbf{o}\| = \sqrt{o_x^2 + o_y^2 + o_z^2} > 10^{-12} \label{eq:orient}
+\end{equation}
+Violation produces a warning; the frame is not discarded.
+
+\begin{table}[htbp]
+  \centering
+  \caption{CG proxy shape map.}
+  \label{tab:xyzfull_proxy}
+  \begin{tabular}{ll}
+    \toprule
+    Bead type & Proxy geometry \\
+    \midrule
+    \texttt{bead}    & Sphere / dot \\
+    \texttt{rod}     & Capsule / line \\
+    \texttt{plate}   & Rectangle proxy \\
+    \texttt{gear}    & Low-poly wheel \\
+    \texttt{pipe}    & Tube segment \\
+    \texttt{crystal} & Lattice proxy \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Minimal Example (plain INFO)}
+
+\begin{lstlisting}[language={},frame=single]
+XYZFULL
+version 1
+units angstrom fs kcal/mol
+mode bead_cg_replay
+energy_layers 6 U_total U_bond U_vdw U_coul U_ext U_thermal
+static_count 2
+dynamic_count 2
+properties id type sym x y z vx vy vz ox oy oz cg_id step_tag e0 e1 e2 e3 e4 e5
+
+STATIC
+900 wall X 0.000000 0.000000 0.000000 0.0 -1
+901 wall X 10.00000 0.000000 0.000000 0.0 -1
+
+FRAMES
+FRAME 0 time 0.000000
+1 bead C 0.000000 0.000000 0.000000 0.00 0.00 0.00 1.00 0.00 0.00 10 STEP_A -12.3 -1.2 -4.1 -2.0 -0.4 -0.2
+2 bead O 1.000000 0.000000 0.000000 0.00 0.01 0.00 0.00 1.00 0.00 10 STEP_A -10.1 -1.0 -3.8 -1.7 -0.2 -0.1
+END_FRAME
+FRAME 1 time 0.010000
+1 bead C 0.010000 0.000000 0.000000 0.01 0.00 0.00 1.00 0.00 0.00 10 STEP_B -12.0 -1.1 -4.0 -1.9 -0.4 -0.2
+2 bead O 1.010000 0.000100 0.000000 0.01 0.01 0.00 0.00 1.00 0.00 10 STEP_B  -9.9 -1.0 -3.7 -1.6 -0.2 -0.1
+END_FRAME
+
+INFO
+Replay stores dynamic bead positions and CG orientation vectors.
+Static particles are stored once and reconstructed during playback.
+TOTAL_FRAMES 2
+DT 0.010000
+\end{lstlisting}
+
+\subsection{Data Model}
+
+\begin{lstlisting}
+struct XYZFullHeader {
+    int version = 1;
+    std::string units;
+    std::string mode;
+    std::vector<std::string> energy_layers;
+    int static_count  = 0;
+    int dynamic_count = 0;
+};
+
+struct XYZFullStatic {
+    int id; std::string type; std::string sym;
+    double x, y, z; double q; int cg_id;
+};
+
+struct XYZFullDynamic {
+    int id; std::string type; std::string sym;
+    double x, y, z;
+    double vx, vy, vz;
+    double ox, oy, oz;       // orientation vector
+    int cg_id; std::string step_tag;
+    std::array<double, 6> energy;
+};
+
+struct XYZFullFrame {
+    int frame_index; double time;
+    std::vector<XYZFullDynamic> dynamic;
+};
+
+struct XYZFullData {
+    XYZFullHeader header;
+    std::vector<XYZFullStatic>  static_particles;
+    std::vector<XYZFullFrame>   frames;
+    std::string info_block;      // decoded plain text
+    std::string info_encoding;   // scheme used (Edition 4)
+    int    total_frames;
+    double dt;
+};
+\end{lstlisting}
+
+\subsection{Reader / Writer API}
+
+\begin{lstlisting}
+namespace vsepr::io {
+
+class XYZFullReader {
+public:
+    static XYZFullData read(const std::string& path);
+};
+
+class XYZFullWriter {
+public:
+    static void write(const std::string& path, const XYZFullData& data);
+};
+
+class XYZFullStreamWriter {
+public:
+    explicit XYZFullStreamWriter(const std::string& path);
+    void write_header(const XYZFullHeader& header);
+    void write_static_block(const std::vector<XYZFullStatic>& statics);
+    void begin_frames();
+    void write_frame(const XYZFullFrame& frame);
+    void write_footer(const std::string& info, int total_frames, double dt);
+};
+
+} // namespace vsepr::io
+\end{lstlisting}
+
+\subsection{Replay Flow}
+
+\begin{lstlisting}
+void replay_xyzfull(const XYZFullData& data) {
+    RenderWorld world;
+    world.load_static(data.static_particles);
+    for (const auto& frame : data.frames) {
+        world.update_dynamic(frame.dynamic);
+        world.update_cg_orientation(frame.dynamic);
+        render_low_poly(world);
+        sleep_fs(data.dt);
+    }
+}
+\end{lstlisting}
+
+\subsection{Shell Commands}
+
+\begin{lstlisting}[language={},frame=single]
+export xyzfull last    out.xyzfull
+export xyzfull history replay.xyzfull
+replay xyzfull         replay.xyzfull
+tui    xyzfull         replay.xyzfull
+convert xyzf xyzfull   trajectory.xyzf replay.xyzfull
+
+# Edition 4 encoded-INFO options
+export xyzfull history replay.xyzfull --encode-info base64
+export xyzfull history replay.xyzfull --encode-info zlib+base64
+\end{lstlisting}
+
+\subsection{Validation Rules}
+
+\begin{enumerate}
+  \item File must begin with \texttt{XYZFULL}.
+  \item \texttt{version} must be a supported value.
+  \item Energy layer count must be 4, 5, or 6.
+  \item Exactly one of \texttt{INFO} or \texttt{INFO\_ENCODED} must be present.
+  \item \texttt{TOTAL\_FRAMES} and \texttt{DT} must appear in decoded INFO content.
+  \item Parsed frame count must equal \texttt{TOTAL\_FRAMES}.
+  \item Dynamic IDs must be unique within each frame.
+  \item Static IDs must not collide with dynamic IDs.
+  \item $\|\mathbf{o}\| > 10^{-12}$; violation is warned, not fatal.
+  \item Unknown \texttt{step\_tag} is permitted with a warning.
+\end{enumerate}
+
+% ================================================
+\section{Optional \texttt{INFO} Block and Compute Kernel Tags}
+\label{sec:info_kernels}
+% ================================================
+
+Any format in the XYZ family may carry an optional \texttt{INFO} tail block.
+In \texttt{.xyzfull} this block is structural (the file is invalid without
+\texttt{TOTAL\_FRAMES} and \texttt{DT}).  For the other formats, the block
+is \emph{optional}: readers must not fail if it is absent.
+See \S\ref{sec:info_encoding} for the optional encoded form (\texttt{INFO\_ENCODED}).
+
+\subsection{INFO Block Grammar (All Formats)}
+
+\begin{lstlisting}[language={},frame=single]
+INFO
+<free text lines>
+KERNEL  <kernel_id>  <backend>  <threads>  [<flags>]
+KERNEL  ...
+TOTAL_FRAMES <N>   # .xyzf and .xyzfull only
+DT <dt>            # .xyzfull only; optional annotation elsewhere
+END_INFO           # optional terminator; assumed at EOF
+\end{lstlisting}
+
+\subsection{KERNEL Directive}
+
+\begin{table}[htbp]
+  \centering
+  \caption{\texttt{KERNEL} directive fields.}
+  \label{tab:kernel_fields}
+  \begin{tabular}{lll}
+    \toprule
+    Field & Type & Description \\
+    \midrule
+    \texttt{kernel\_id} & string  & Logical kernel name (e.g.\ \texttt{nbody\_vdw}) \\
+    \texttt{backend}    & string  & \texttt{cpu}, \texttt{cuda}, \texttt{opencl}, \texttt{simd}, \texttt{tui} \\
+    \texttt{threads}    & integer & Thread / warp count at time of write \\
+    \texttt{flags}      & string* & Space-separated optional flags \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Standard Kernel IDs}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Standard kernel identifiers.}
+  \label{tab:kernel_ids}
+  \begin{tabular}{lp{9cm}}
+    \toprule
+    Kernel ID & Description \\
+    \midrule
+    \texttt{nbody\_vdw}      & Pairwise van der Waals (Lennard-Jones or similar) \\
+    \texttt{nbody\_coul}     & Pairwise Coulomb / electrostatics \\
+    \texttt{bond\_harmonic}  & Harmonic bond stretching \\
+    \texttt{angle\_cosine}   & Cosine angle bending \\
+    \texttt{torsion\_fourier}& Fourier torsion series \\
+    \texttt{thermostat\_nhc} & Nos\'{e}--Hoover chain thermostat \\
+    \texttt{integrator\_vv}  & Velocity-Verlet integrator step \\
+    \texttt{cg\_orient}      & CG orientation propagation (bead replay) \\
+    \texttt{render\_proxy}   & Low-poly proxy reconstruction (\texttt{.xyzfull} only) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsubsection{Optional Flags}
+
+\begin{itemize}
+  \item \texttt{pbc} --- periodic boundary conditions active
+  \item \texttt{cutoff=<r>} --- non-bonded cutoff radius (\AA)
+  \item \texttt{skin=<r>} --- neighbour-list skin distance (\AA)
+  \item \texttt{dt=<val>} --- timestep used by this kernel (fs)
+  \item \texttt{reduced} --- energy written in reduced 4-layer mode
+  \item \texttt{stream} --- file produced by \type{XYZFullStreamWriter}
+\end{itemize}
+
+\subsection{INFO Block per Format}
+
+\begin{table}[htbp]
+  \centering
+  \caption{\texttt{INFO} block applicability across formats.}
+  \label{tab:info_formats}
+  \begin{tabular}{lccccc}
+    \toprule
+    Field & \texttt{.xyz} & \texttt{.xyza} & \texttt{.xyzc} & \texttt{.xyzf} & \texttt{.xyzfull} \\
+    \midrule
+    Free-text notes        & opt. & opt. & opt. & opt. & opt. \\
+    \texttt{KERNEL} lines  & opt. & opt. & opt. & opt. & opt. \\
+    \texttt{TOTAL\_FRAMES} & ---  & ---  & ---  & opt. & \textbf{req.} \\
+    \texttt{DT}            & ---  & ---  & ---  & opt. & \textbf{req.} \\
+    \texttt{END\_INFO}     & opt. & opt. & opt. & opt. & opt. \\
+    Encoded form allowed   & yes  & yes  & yes  & yes  & yes  \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Example: \texttt{.xyzf} with INFO and Kernel Tags}
+
+\begin{lstlisting}[language={},frame=single]
+3
+Step 0 | E = -12.30 kcal/mol | FIRE iter
+C 0.000000 0.000000 0.000000
+O 1.230000 0.000000 0.000000
+H 2.100000 0.800000 0.000000
+3
+Step 1 | E = -13.11 kcal/mol | FIRE iter
+C 0.001000 0.000000 0.000000
+O 1.229000 0.000000 0.000000
+H 2.099000 0.799000 0.000000
+
+INFO
+FIRE minimisation trace, 2 steps.
+KERNEL  bond_harmonic   cpu   4   dt=0.010000
+KERNEL  nbody_vdw       cpu   4   cutoff=12.0 skin=2.0
+KERNEL  integrator_vv   cpu   4   dt=0.010000
+TOTAL_FRAMES 2
+END_INFO
+\end{lstlisting}
+
+\subsection{Reader Behaviour}
+
+\begin{enumerate}
+  \item No \texttt{INFO} token: silently succeed; \texttt{KERNEL} list is empty.
+  \item Unknown \texttt{KERNEL} IDs: stored as-is, warned in verbose mode.
+  \item Unrecognised flags: stored as raw strings; no parse error.
+  \item For \texttt{.xyzfull}: missing \texttt{TOTAL\_FRAMES} or \texttt{DT} is a hard error.
+  \item If \texttt{INFO\_ENCODED} present and reader does not implement
+        \S\ref{sec:info_encoding}: silently skip block; must not emit a fatal error.
+\end{enumerate}
+
+% ================================================
+\section{Optional \texttt{INFO} Block Encoding}
+\label{sec:info_encoding}
+% ================================================
+
+Edition 4 introduces an alternative to the plain \texttt{INFO} tail block:
+the \texttt{INFO\_ENCODED} block.  Its purpose is to guarantee that legacy
+tools which scan or post-process XYZ files cannot accidentally corrupt or
+misinterpret structured metadata embedded at the end of the file.
+
+\begin{tcolorbox}[
+  colback=enc4greenlight, colframe=enc4green,
+  boxrule=0.8pt, arc=3pt, left=6pt, right=6pt, top=5pt, bottom=5pt
+]
+\textbf{Backward-compatibility guarantee.}
+Readers that pre-date Edition 4 and halt after the atom data lines
+(correct behaviour for \texttt{.xyz}, \texttt{.xyza}, \texttt{.xyzc}, \texttt{.xyzf})
+will never encounter \texttt{INFO\_ENCODED} and are entirely unaffected.
+For \texttt{.xyzfull}, the token \texttt{INFO\_ENCODED} will be encountered;
+conformant readers must treat an unrecognised block-start token as a
+non-fatal skip condition.
+\end{tcolorbox}
+
+\subsection{Grammar}
+
+\begin{lstlisting}[language={},frame=single]
+INFO_ENCODED <scheme>
+<encoded blob line 1>
+<encoded blob line 2>
+...
+END_INFO_ENCODED
+\end{lstlisting}
+
+\begin{itemize}
+  \item \texttt{<scheme>} is a single whitespace-free token
+        (\S\ref{sec:encoding_schemes}).
+  \item The encoded blob may span any number of lines.  Line breaks are
+        insignificant and stripped before decoding.  Use 76-character
+        line wrapping for readability.
+  \item \texttt{END\_INFO\_ENCODED} is the mandatory block terminator.
+        EOF is \emph{not} a valid substitute.
+  \item The decoded content is treated identically to a plain
+        \texttt{INFO} block body, including all \texttt{KERNEL} directives
+        and (for \texttt{.xyzfull}) the required \texttt{TOTAL\_FRAMES}
+        and \texttt{DT} fields.
+\end{itemize}
+
+\subsection{Encoding Schemes}
+\label{sec:encoding_schemes}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Supported \texttt{INFO\_ENCODED} encoding schemes.}
+  \label{tab:enc_schemes}
+  \begin{tabular}{llp{6cm}}
+    \toprule
+    Token & Standard & Notes \\
+    \midrule
+    \texttt{plain}       & identity          & Same bytes as plain \texttt{INFO};
+                                               valid but redundant. \\
+    \texttt{base64}      & RFC~4648 \S{}4    & Default recommended encoding.
+                                               Line-wrapped at 76 characters. \\
+    \texttt{hex}         & lowercase nibbles & Two hex digits per byte; space-free. \\
+    \texttt{zlib+base64} & RFC~1950 + RFC~4648 & DEFLATE then base64.
+                                               Use for INFO blocks exceeding 4\,KiB. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+No other scheme tokens are defined.  Writers must not invent private scheme names.
+Readers must emit \type{XYZParseError::UNKNOWN\_ENCODING} for any unrecognised token.
+
+\subsection{Backward Compatibility per Format}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Impact of \texttt{INFO\_ENCODED} on legacy readers by format.}
+  \label{tab:enc_compat}
+  \begin{tabular}{lp{9.5cm}}
+    \toprule
+    Format & Legacy reader behaviour \\
+    \midrule
+    \texttt{.xyz}     & Stops after $N$ atom lines.  \texttt{INFO\_ENCODED} never reached.
+                        Zero impact. \\
+    \texttt{.xyza}    & Same as \texttt{.xyz}.  Zero impact. \\
+    \texttt{.xyzc}    & Stops after atom block following \texttt{END\_CHECKPOINT}.
+                        Zero impact. \\
+    \texttt{.xyzf}    & Stops after last frame's atom lines.  Zero impact. \\
+    \texttt{.xyzfull} & Reader encounters \texttt{INFO\_ENCODED} after final
+                        \texttt{END\_FRAME}.  A conformant Edition-3 reader treats
+                        unknown block tokens as skip-to-EOF; a non-conformant reader
+                        may fail.  Prefer plain \texttt{INFO} when targeting
+                        Edition-3 \texttt{.xyzfull} consumers. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Writer Configuration}
+
+\begin{lstlisting}
+struct XYZWriterConfig {
+    // ... existing fields from Edition 3 ...
+
+    bool        encode_info_block = false;    // default: emit plain INFO
+    std::string info_encoding     = "base64"; // scheme when encoding is on
+};
+\end{lstlisting}
+
+When \texttt{encode\_info\_block} is \texttt{false} (default), writers emit
+a plain \texttt{INFO} block as in Edition 3.  This flag has no effect if no
+INFO content is present.
+
+\subsection{Decoder / Encoder API}
+
+\begin{lstlisting}
+namespace vsepr::io {
+
+struct InfoBlockDecoder {
+    // Decode encoded blob.  Throws XYZParseError on unknown scheme or corrupt blob.
+    static std::string decode(const std::string& scheme,
+                              const std::string& blob);
+
+    // Encode plain INFO body.  Returns blob for INFO_ENCODED / END_INFO_ENCODED.
+    static std::string encode(const std::string& scheme,
+                              const std::string& plain);
+
+    // Returns true if scheme token is recognised.
+    static bool known_scheme(const std::string& scheme) noexcept;
+};
+
+} // namespace vsepr::io
+\end{lstlisting}
+
+\subsection{Reader Algorithm}
+
+\begin{enumerate}
+  \item Scan remaining lines for token \texttt{INFO} or \texttt{INFO\_ENCODED}.
+  \item \textbf{If \texttt{INFO}:} parse as plain INFO block (Edition 3 behaviour).
+  \item \textbf{If \texttt{INFO\_ENCODED}:}
+    \begin{enumerate}
+      \item Read scheme token from the same line.
+      \item Collect lines until \texttt{END\_INFO\_ENCODED} (mandatory terminator).
+      \item Strip inter-line whitespace from the blob.
+      \item Call \type{InfoBlockDecoder::decode(scheme, blob)}.
+      \item Parse decoded string as plain INFO block body.
+    \end{enumerate}
+  \item \textbf{Neither token:} silently succeed; INFO is empty.
+  \item \textbf{Both tokens:} emit \type{XYZParseError::DUAL\_INFO\_BLOCK}.
+\end{enumerate}
+
+\subsection{Example: \texttt{.xyzf} with Base64-Encoded INFO}
+
+The decoded content is identical to the plain example in \S\ref{sec:info_kernels}.
+
+\begin{lstlisting}[language={},frame=single]
+3
+Step 0 | E = -12.30 kcal/mol | FIRE iter
+C 0.000000 0.000000 0.000000
+O 1.230000 0.000000 0.000000
+H 2.100000 0.800000 0.000000
+3
+Step 1 | E = -13.11 kcal/mol | FIRE iter
+C 0.001000 0.000000 0.000000
+O 1.229000 0.000000 0.000000
+H 2.099000 0.799000 0.000000
+INFO_ENCODED base64
+RklSRSBtaW5pbWlzYXRpb24gdHJhY2UsIDIgc3RlcHMuCktFUk5FTCAgYm9u
+ZF9oYXJtb25pYyAgIGNwdSAgIDQgICBkdD0wLjAxMDAwMApLRVJORUwgIG5i
+b2R5X3ZkdyAgICAgICBjcHUgICA0ICAgY3V0b2ZmPTEyLjAgc2tpbj0yLjAK
+S0VSTkVMICBpbnRlZ3JhdG9yX3Z2ICAgY3B1ICAgNCAgIGR0PTAuMDEwMDAw
+ClRPVEFMX0ZSQU1FUyAyCg==
+END_INFO_ENCODED
+\end{lstlisting}
+
+\subsection{Example: \texttt{.xyzfull} with Base64-Encoded INFO}
+
+\begin{lstlisting}[language={},frame=single]
+XYZFULL
+version 1
+units angstrom fs kcal/mol
+mode bead_cg_replay
+energy_layers 4 U_total U_internal U_external U_state
+static_count 1
+dynamic_count 1
+properties id type sym x y z vx vy vz ox oy oz cg_id step_tag e0 e1 e2 e3
+
+STATIC
+900 wall X 0.000000 0.000000 0.000000 0.0 -1
+
+FRAMES
+FRAME 0 time 0.000000
+1 bead C 0.000000 0.000000 0.000000 0.00 0.00 0.00 1.00 0.00 0.00 10 STEP_A -12.3 -1.2 -4.1 -2.0
+END_FRAME
+
+INFO_ENCODED base64
+UmVwbGF5IHN0b3JlcyBkeW5hbWljIGJlYWQgcG9zaXRpb25zLgpLRVJORUwg
+IGNnX29yaWVudCAgICAgICBjcHUgICAgNCAgIGR0PTAuMDEwMDAwCktFUk5F
+TCAgcmVuZGVyX3Byb3h5ICAgIHR1aSAgICAxICAgc3RyZWFtClRPVEFMX0ZS
+QU1FUyAxCkRUIDEuMDAwMDAwCg==
+END_INFO_ENCODED
+\end{lstlisting}
+
+\subsection{Compressed Encoding: \texttt{zlib+base64}}
+
+When the INFO block is large, \texttt{zlib+base64} provides significant
+size reduction.
+
+\begin{enumerate}
+  \item Encode the plain INFO body as UTF-8 bytes.
+  \item Apply RFC~1950 zlib DEFLATE compression (level 6 recommended).
+  \item Encode the compressed bytes as RFC~4648 base64, wrapped at 76 characters.
+\end{enumerate}
+
+\begin{lstlisting}
+std::string plain = "FIRE trace...\nKERNEL ...\nTOTAL_FRAMES 2\n";
+std::string blob  = InfoBlockDecoder::encode("zlib+base64", plain);
+// blob is ready between INFO_ENCODED / END_INFO_ENCODED
+\end{lstlisting}
+
+\subsection{Shell Command Extensions (Edition 4)}
+
+\begin{lstlisting}[language={},frame=single]
+# Write with encoded INFO block
+export xyzf    out.xyzf    --encode-info base64
+export xyzfull out.xyzfull --encode-info zlib+base64
+
+# Inspect / decode INFO block from any file
+info decode    file.xyzf
+info decode    replay.xyzfull
+
+# Re-encode existing plain INFO block
+info encode    file.xyzf   --scheme base64   --out file_enc.xyzf
+\end{lstlisting}
+
+% ================================================
+\section{Cross-References}
+% ================================================
+
+\begin{table}[htbp]
+  \centering
+  \caption{Related documentation.}
+  \label{tab:xrefs}
+  \begin{tabular}{lp{8cm}}
+    \toprule
+    Document & Relevance \\
+    \midrule
+    \file{docs/FILE\_FORMATS.md}              & Prose description of all I/O formats \\
+    \file{section0\_identity\_state.pdf}       & Formal particle/cell/world definitions \\
+    \file{section5\_integration.tex}           & MD timestep and integrator details \\
+    \file{ALPHA\_MODEL\_BOOKLET.tex}           & Alpha model (Drude charge coupling) \\
+    \file{section\_fuzzy\_ball\_model.tex}     & Coarse-grained bead visualisation \\
+    \file{include/io/xyzfull\_format.hpp}      & \texttt{.xyzfull} reader/writer/stream API \\
+    \file{include/render/xyzfull\_replay.hpp}  & Low-poly CG replay renderer \\
+    \file{include/io/info\_block\_codec.hpp}   & Edition 4 INFO encoding/decoding API \\
+    \file{docs/xyz\_file\_formats\_r3.tex}     & Previous revision (Edition 3, preserved) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\vfill
+
+\begin{center}
+\rule{0.5\textwidth}{0.4pt}\\[6pt]
+\small Formation Engine Methodology v4.2.0 --- XYZ File Formats (Edition 4)
+\end{center}
+
+\end{document}

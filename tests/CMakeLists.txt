@@ -117,6 +117,12 @@ add_executable(pbc_test pbc_test.cpp)
 target_link_libraries(pbc_test vsepr_core vsepr_box)
 vsepr_add_test(NAME PBCTest TARGET pbc_test LABELS core pbc quick)
 
+# Beta-8 gate: FIRE+PBC coordinate wrapping + Ewald summation
+add_executable(test_pbc_fire test_pbc_fire.cpp)
+target_include_directories(test_pbc_fire PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(test_pbc_fire vsepr_core vsepr_box vsepr_pot)
+vsepr_add_test(NAME PBCFireEwald TARGET test_pbc_fire LABELS core pbc ewald beta8)
+
 add_executable(pbc_verification pbc_verification.cpp)
 target_link_libraries(pbc_verification vsepr_core vsepr_box)
 vsepr_add_test(NAME PBCVerification TARGET pbc_verification LABELS core pbc)
@@ -134,6 +140,20 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pbc_phase5_regression.cpp)
     vsepr_add_test(NAME PBCPhase5Golden TARGET pbc_phase5_regression LABELS core pbc)
 else()
     message(STATUS "Skipping pbc_phase5_regression: source not found")
+endif()
+
+# Group 25 — PBC Core: WO-VSEPR-SIM-57A canonical API gate
+add_executable(test_pbc_core test_pbc_core.cpp)
+target_include_directories(test_pbc_core PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(test_pbc_core vsepr_core vsepr_box)
+vsepr_add_test(NAME PBCCoreGate TARGET test_pbc_core LABELS core pbc pbc_core beta8 quick)
+
+# Group 28 — Beta-8 PBC/Ewald Empirical Validation: CaF2 fluorite 4×4×4 supercell
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_pbc_ewald_caf2.cpp)
+    add_executable(test_pbc_ewald_caf2 test_pbc_ewald_caf2.cpp)
+    target_include_directories(test_pbc_ewald_caf2 PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
+    target_link_libraries(test_pbc_ewald_caf2 vsepr_core vsepr_box vsepr_pot)
+    vsepr_add_test(NAME PBCEwaldCaF2 TARGET test_pbc_ewald_caf2 LABELS core pbc ewald caf2 beta8)
 endif()
 
 # ============================================================================
@@ -682,3 +702,183 @@ target_include_directories(test_beta7_pipeline PRIVATE
 target_link_libraries(test_beta7_pipeline vsepr_core)
 vsepr_add_test(NAME Beta7PipelineTest TARGET test_beta7_pipeline
     LABELS pipeline beta7 formation fingerprint cluster analysis report dashboard)
+
+# ============================================================================
+# Group 28: WO-56D-AuditChain — FormationEvent FIRE Exit Wiring
+# ============================================================================
+# Acceptance tests verifying that real FIRE relaxation runs record a
+# FormationEvent into KernelEventLog — not just test harnesses.
+#
+# Tests:
+#   1. test_fire_records_formation_event      — event appears after real FIRE run
+#   2. test_fire_event_fields_are_populated   — symbolic trace, result_value, unit
+#   3. test_fire_event_source_formula_threaded — source_formula threads from settings
+#   4. test_fire_nonconverged_event_flagged   — is_valid=false, warning non-empty
+#   5. test_fire_multiple_runs_accumulate_events — 2 runs → 2 events, monotonic IDs
+
+add_executable(test_formation_event_wiring test_formation_event_wiring.cpp)
+target_include_directories(test_formation_event_wiring PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_formation_event_wiring vsepr_sim vsepr_pot vsepr_core)
+vsepr_add_test(NAME FormationEventWiringTest TARGET test_formation_event_wiring
+    LABELS kernel audit formation fire event_log wiring beta10 quick)
+
+# ============================================================================
+# Group 27: VSIM Runtime Day #2 — O(N) Fit Detection Tests
+# ============================================================================
+# 1. test_cached_metric_guard        — while guards use cached metric; O(1) eval path
+# 2. test_batch_artifact_isolation   — batch runs isolate artifacts per case
+# 3. test_visual_decimation          — [visual external] render interval respected
+# 4. test_N_evolution_event_counter  — spawn/remove counters drive dN/dt; no full scan
+# 5. test_while_loop_safety_cap      — max_iter stops non-converging loops; warning emitted
+# 6. test_open_closed_boundary_dispatch — closed/open/ambient boundary routing
+
+add_executable(test_vsim_runtime_day2 test_vsim_runtime_day2.cpp)
+target_include_directories(test_vsim_runtime_day2 PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_vsim_runtime_day2 vsepr_core)
+vsepr_add_test(NAME VsimRuntimeDay2Test TARGET test_vsim_runtime_day2
+    LABELS vsim runtime scripting while batch visual N_evolution boundary beta10 quick)
+
+# ============================================================================
+# Group 29: Script-Declared Export Flush
+# ============================================================================
+# 1. test_no_flags_no_output              — no [export] flags → no files written
+# 2. test_jsonl_written                   — write_events_json=true → events.jsonl
+# 3. test_markdown_written                — write_report_md=true → events.md
+# 4. test_both_flags_both_files           — both flags → both files in one call
+# 5. test_multi_run_appends               — multiple flush calls accumulate in one file
+# 6. test_empty_log_produces_valid_files  — empty log → valid but empty files (no crash)
+
+add_executable(test_export_flush test_export_flush.cpp)
+target_include_directories(test_export_flush PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_export_flush vsepr_core)
+vsepr_add_test(NAME ExportFlushTest TARGET test_export_flush
+    LABELS vsim export kernel audit beta7 pipeline quick)
+
+# ============================================================================
+# Group 30: Phase 1 Gate 1 — Real Simulation Exit → Pipeline
+# ============================================================================
+# T1 — empty log → graceful empty DashboardRecord, no crash
+# T2 — single FormationEvent → PipelineRecord + ClusterRecord produced
+# T3 — multiple FormationEvents → AnalysisRecord produced for each
+# T4 — symbol and energy round-trip through pipeline
+# T5 — non-converged event → pipeline processes without drop
+# T6 — run_pipeline_from_log does NOT mutate the log
+
+add_executable(test_pipeline_sim_exit test_pipeline_sim_exit.cpp)
+target_include_directories(test_pipeline_sim_exit PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_pipeline_sim_exit vsepr_sim vsepr_pot vsepr_core)
+vsepr_add_test(NAME PipelineSimExitTest TARGET test_pipeline_sim_exit
+    LABELS pipeline kernel audit formation beta7 phase1 gate1 quick)
+
+# ============================================================================
+# Group 31: Phase 2 Gate — Artifact Export Completion
+# ============================================================================
+# T1 — 2A: report MD and JSON written under reports/
+# T2 — 2B: SVG dashboard written under reports/dashboard/ + PNG deferred marker
+# T3 — 2C: audit JSONL written with all stage entries, no placeholder status
+# T4 — 2D: write_analysis_json → pipeline_records.json present
+# T5 — 2E: run_manifest.json written with all artifact paths + deferred list
+# T6 — Full Phase 2 gate: all flags → all files present on disk
+
+add_executable(test_artifact_export test_artifact_export.cpp)
+target_include_directories(test_artifact_export PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_artifact_export vsepr_sim vsepr_pot vsepr_core)
+vsepr_add_test(NAME ArtifactExportTest TARGET test_artifact_export
+    LABELS pipeline export report dashboard audit formation beta7 phase2 gate2 quick)
+
+# ============================================================================
+# Group 32: WO-VSEPR-SIM-57B/57C — PBC Scripting Surface
+# ============================================================================
+# test_pbc_vsim_parser — [cell]/[boundary]/[pbc] parser + binding helpers (57B)
+# test_pbc_bindings    — pbc.* binding correctness + error semantics (57C)
+
+add_executable(test_pbc_vsim_parser test_pbc_vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_pbc_vsim_parser PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME PBCVsimParserTest TARGET test_pbc_vsim_parser
+    LABELS pbc vsim parser scripting beta8 quick)
+
+add_executable(test_pbc_bindings test_pbc_bindings.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/bindings/pbc_bindings.cpp)
+target_include_directories(test_pbc_bindings PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME PBCBindingsTest TARGET test_pbc_bindings
+    LABELS pbc vsim bindings scripting beta8 quick)
+
+# ============================================================================
+# Group 33: WO-VSEPR-SIM-57D — XYZVec3 / VsimInterpreter / PBC bridge
+# ============================================================================
+# test_vsim_value_xyzvec3      — VsimValue XYZVec3 / Int3 type layer (57D)
+# test_vsim_interpreter_pbc    — VsimInterpreter pbc.* expression eval (57D)
+# test_vsim_xyz_pbc_bridge     — xyz comment-line → runtime → pbc.* bridge (57D)
+
+set(VSIM_INTERP_SRCS
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_interpreter.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/register_pbc_builtins.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/register_particle_builtins.cpp)
+
+add_executable(test_vsim_value_xyzvec3 test_vsim_value_xyzvec3.cpp)
+target_include_directories(test_vsim_value_xyzvec3 PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME VsimValueXYZVec3Test TARGET test_vsim_value_xyzvec3
+    LABELS vsim value xyzvec3 scripting beta8 quick)
+
+add_executable(test_vsim_interpreter_pbc test_vsim_interpreter_pbc.cpp
+    ${VSIM_INTERP_SRCS})
+target_include_directories(test_vsim_interpreter_pbc PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME VsimInterpreterPBCTest TARGET test_vsim_interpreter_pbc
+    LABELS vsim interpreter pbc scripting beta8 quick)
+
+add_executable(test_vsim_xyz_pbc_bridge test_vsim_xyz_pbc_bridge.cpp
+    ${VSIM_INTERP_SRCS})
+target_include_directories(test_vsim_xyz_pbc_bridge PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME VsimXYZPBCBridgeTest TARGET test_vsim_xyz_pbc_bridge
+    LABELS vsim xyz pbc bridge scripting beta8 quick)
+
+# ============================================================================
+# Group 34: WO-VSEPR-SIM-57E — PBC post-step script execution
+# ============================================================================
+# test_vsim_post_step  — VsimRuntime::run_post_step() wires interpreter into
+#                        simulation loop; [post_step] script_block executes
+#                        pbc.* and particle.* against live particle state.
+
+add_executable(test_vsim_post_step test_vsim_post_step.cpp
+    ${VSIM_INTERP_SRCS})
+target_include_directories(test_vsim_post_step PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME VsimPostStepTest TARGET test_vsim_post_step
+    LABELS vsim pbc post_step scripting beta8 quick)
+
+# ============================================================================
+# Group 35: WO-VSEPR-SIM-57D — render_interval cadence field
+# ============================================================================
+# test_render_interval — VisualSection + VisualExternalSection render_interval
+#                        field: default, step gating, zero guard, parser
+#                        round-trip, external override, external fallback.
+
+add_executable(test_render_interval test_render_interval.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_render_interval PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME RenderIntervalTest TARGET test_render_interval
+    LABELS vsim visual render_interval scripting beta8 quick)

@@ -63,6 +63,7 @@ private slots:
     void onFileOpen();
     void onFileSave();
     void onFileExportImage();
+    void onScreenshot();
 
     // Simulation
     void onRunRelax();
@@ -71,10 +72,12 @@ private slots:
 
     // View
     void onResetCamera();
+    void onFitCamera();
     void onToggleWireframe();
 
     // Console
     void onCommand(const QString& cmd);
+    void onClearConsole();
 
 private:
     void createActions();
@@ -109,6 +112,7 @@ private:
     QAction* openAct_;
     QAction* saveAct_;
     QAction* exportImageAct_;
+    QAction* screenshotAct_;
     QAction* exitAct_;
 
     QAction* relaxAct_;
@@ -116,5 +120,8 @@ private:
     QAction* singlePointAct_;
 
     QAction* resetCameraAct_;
+    QAction* fitCameraAct_;
     QAction* wireframeAct_;
+
+    QAction* clearConsoleAct_;
 };

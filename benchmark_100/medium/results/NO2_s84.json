@@ -1,0 +1,19 @@
+{
+  "formula": "NO2",
+  "seed": 84,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 3.334091,
+  "energy_per_atom": 1.111364,
+  "rms_force": 12.963484,
+  "max_force": 12.963484,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.533200,
+  "timestamp": "2026-03-28T12:55:45",
+  "xyz_file": "benchmark_100\medium\structures\NO2_s84.xyz"
+}

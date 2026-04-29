@@ -1,0 +1,19 @@
+{
+  "formula": "K2O",
+  "seed": 168,
+  "tier": "fast",
+  "num_atoms": 3,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 9.719463,
+  "energy_per_atom": 3.239821,
+  "rms_force": 33.382968,
+  "max_force": 33.382968,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.361200,
+  "timestamp": "2026-03-28T12:53:51",
+  "xyz_file": "benchmark_100\fast\structures\K2O_s168.xyz"
+}

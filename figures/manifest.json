@@ -1,0 +1,15 @@
+{
+  "run_name": "demo_03_graphite_stack",
+  "formula": "RMgX",
+  "scenario_class": "complex",
+  "generated": "2026-04-27T00:55:01Z",
+  "vsim_source": "scripts/demo_03_graphite_stack.vsim",
+  "artifacts": [
+    {"path":"figures/energy_trace.svg","type":"svg","description":"Energy trace per FIRE step"},
+    {"path":"figures/rdf.svg","type":"svg","description":"Radial distribution function"},
+    {"path":"figures/defect_map.svg","type":"svg","description":"Defect site map"},
+    {"path":"figures/summary.svg","type":"svg","description":"Run summary figure (eta + coord)"},
+    {"path":"figures/dashboard.html","type":"html","description":"Self-contained HTML dashboard"},
+    {"path":"figures/report.html","type":"html","description":"Standalone HTML report"}
+  ]
+}

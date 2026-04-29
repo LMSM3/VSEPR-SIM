@@ -1,0 +1,23 @@
+{
+  "timestamp_ms": 1776028794669,
+  "symbol": "Au",
+  "name": "Gold",
+  "Z": 79,
+  "lattice": "FCC",
+  "a0_angstrom": 4.078,
+  "Tmelt_K": 1337.3,
+  "Ecoh_eV": -3.81,
+  "gamma": 0.25,
+  "q_data": 0.56,
+  "compact": 0.34,
+  "render_mode": "2D",
+  "complexity_label": "3\u00d73",
+  "supercell_dims": [
+    3,
+    3,
+    2
+  ],
+  "view_azimuth_deg": 29.999999999999996,
+  "view_elevation_deg": 22.0,
+  "pid": 32420
+}

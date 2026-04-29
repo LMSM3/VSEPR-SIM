@@ -1,0 +1,19 @@
+{
+  "formula": "Ti2O3",
+  "seed": 56,
+  "tier": "highn",
+  "num_atoms": 5,
+  "steps_taken": 6878,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.335226,
+  "energy_per_atom": -0.067045,
+  "rms_force": 0.013035,
+  "max_force": 0.013035,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 1.653100,
+  "timestamp": "2026-03-28T13:04:07",
+  "xyz_file": "benchmark_v2\highn\structures\Ti2O3_s56.xyz"
+}

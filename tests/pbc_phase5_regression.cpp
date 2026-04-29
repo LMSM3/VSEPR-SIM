@@ -1,3 +1,12 @@
+// =============================================================================
+// tests/pbc_phase5_regression.cpp — Group 25: PBC Core
+// =============================================================================
+//
+// Phase 5 — Golden regression tests for vsepr::BoxOrtho.
+// Validates PBC implementation against reference data across refactors.
+//
+// Day #57A  |  WO-56C
+// =============================================================================
 /**
  * pbc_phase5_regression.cpp
  * -------------------------
@@ -16,7 +25,7 @@
  */
 
 #include "../src/core/types.hpp"
-#include "../src/box/pbc.hpp"
+#include "box/pbc.hpp"
 #include "../src/core/math_vec3.hpp"
 #include <iostream>
 #include <cmath>

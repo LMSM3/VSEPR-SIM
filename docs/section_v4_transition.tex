@@ -1,0 +1,536 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[letterpaper,margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{multicol}
+\usepackage{float}
+
+\definecolor{codeblue}{RGB}{40,100,180}
+\definecolor{codegray}{RGB}{100,100,100}
+\definecolor{codegreen}{RGB}{50,140,60}
+\definecolor{backgray}{RGB}{248,248,248}
+
+\lstset{
+  language=C++,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegray}\itshape,
+  stringstyle=\color{codegreen},
+  backgroundcolor=\color{backgray},
+  frame=single, framerule=0.4pt, rulecolor=\color{codegray},
+  breaklines=true, columns=fullflexible, keepspaces=true,
+  showstringspaces=false, tabsize=4,
+  xleftmargin=1.5em, framexleftmargin=1em,
+  numbers=left, numberstyle=\tiny\color{codegray}, numbersep=8pt,
+  morekeywords={constexpr,size_t,uint64_t,auto,inline,struct,concept,requires,
+                expected,span,coroutine_handle,generator,mdspan,
+                contract_assert,pre,post},
+}
+
+\newcommand{\var}[1]{\ensuremath{\mathrm{#1}}}
+\newcommand{\svar}[1]{\ensuremath{S_{\mathrm{#1}}}}
+\newcommand{\cvar}[1]{\ensuremath{C_{\mathrm{#1}}}}
+
+\title{\textbf{Version 4 Beta --- Transition Architecture} \\[6pt]
+\Large Extreme Scalability, $O(xN)$ Convergence, and Hardware Convergence \\[6pt]
+\large VSEPR-SIM Development Day \#47 \\[4pt]
+\normalsize From Version 3.0.X Stabilised Kernel to Version 4 Beta Formation Engine}
+\author{VSEPR-SIM Development}
+\date{Version 4.0.0-beta.1 --- Phase 17}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Scope: The 3.0.X $\to$ 4.0 Transition}
+\label{sec:scope}
+% ============================================================================
+
+Development Day \#47 marks the boundary between the stabilised Version~3.0.X
+branch and the emerging Version~4 beta kernel.
+The 3.0.X kernel can already:
+\begin{itemize}[noitemsep]
+  \item generate repeated structure-level outputs across multiple elemental
+        systems and lattice classes (FCC, BCC, HCP),
+  \item track convergence, energetics, compactness, and macro-response
+        indicators in one pipeline,
+  \item stream live atomistic frames via dual-port NDJSON (Phase~16),
+  \item evaluate macro-property precursors (rigidity, ductility,
+        thermal/electrical transport, brittleness, cohesion, fracture).
+\end{itemize}
+
+\noindent
+\textbf{What 3.0.X cannot do:}
+\begin{itemize}[noitemsep]
+  \item distinguish a merely \emph{converged} case from a
+        \emph{scientifically useful} case,
+  \item quantify configurational exploration richness,
+  \item rank output quality for downstream training or surrogate-model use,
+  \item correlate structural compactness against macro properties,
+  \item scale formation to $O(xN)$ with hardware-aware partitioning.
+\end{itemize}
+
+Version~4 beta addresses all five gaps by introducing:
+\begin{enumerate}[noitemsep]
+  \item the \textbf{gamma score} $\gamma$ (exploration richness),
+  \item the \textbf{data quality score} $Q_\var{data}$
+        (storage/publish worthiness),
+  \item the \textbf{compactness score} $C_\var{compact}$
+        (structural tightness),
+  \item a \textbf{Pearson correlation matrix} across all final variables,
+  \item an $O(xN)$ \textbf{scalable formation engine} with C++26
+        contracts, erroneous-behaviour trapping, and hardware-convergent
+        partitioning.
+\end{enumerate}
+
+% ============================================================================
+\section{Gamma Score: Controlled Randomness and Richness}
+\label{sec:gamma}
+% ============================================================================
+
+The gamma score quantifies how much meaningful configurational exploration
+occurred during generation.
+It does \emph{not} reward chaos; it rewards \emph{landscape coverage}.
+
+\begin{equation}
+  \label{eq:gamma}
+  \boxed{
+  \gamma = w_1\,\svar{bead}
+         + w_2\,\svar{scale}
+         + w_3\,\svar{var}
+         + w_4\,\svar{intensity}
+         + w_5\,\svar{orbital}
+  }
+\end{equation}
+
+\subsection{Component Definitions}
+
+\begin{description}[style=nextline,noitemsep]
+  \item[$\svar{bead}$: Bead Resolution Response]
+    Measures sensitivity of the final state to bead-count changes.
+    For a system run at bead count $N_b$ and a reference run at $N_b'$:
+    \begin{equation}
+      \svar{bead} = 1 - \exp\!\Bigl(-\frac{|\eta(N_b) - \eta(N_b')|}{
+                          \sigma_\eta}\Bigr)
+    \end{equation}
+    where $\sigma_\eta$ is the standard deviation of $\eta$ across the
+    history.  A value near 0 means the result is insensitive to resolution;
+    near 1 means highly resolution-dependent.
+
+  \item[$\svar{scale}$: Multi-Scale Consistency]
+    Compares derived properties at two scales (local bead level and
+    macro precursor level):
+    \begin{equation}
+      \svar{scale} = 1 - \bigl|\rho_\var{local} - \rho_\var{macro}\bigr|
+    \end{equation}
+    clamped to $[0,1]$.  Rewards scale-consistency; penalises divergence
+    between local packing density and macro-inferred density.
+
+  \item[$\svar{var}$: Configurational Spread]
+    The coefficient of variation of $\eta$ across all beads at the final step:
+    \begin{equation}
+      \svar{var} = \min\!\left(1,\;
+        \frac{\sigma_\eta}{\bar{\eta}+\epsilon}\right),
+      \qquad \epsilon = 10^{-12}
+    \end{equation}
+    Distinguishes a homogeneous crystal (low $\svar{var}$) from a
+    structurally diverse morphology (high $\svar{var}$).
+
+  \item[$\svar{intensity}$: Informational Density]
+    Fraction of tracked state fields that are populated and finite:
+    \begin{equation}
+      \svar{intensity} = \frac{1}{F} \sum_{f=1}^{F}
+        \mathbf{1}\!\bigl[\text{field}_f \neq 0 \wedge
+                          \text{field}_f \in \mathbb{R}\bigr]
+    \end{equation}
+    where $F$ is the total number of reportable fields in the formation
+    record.  A run that populates all 22 columns of the spreadsheet
+    scores $\svar{intensity} = 1$.
+
+  \item[$\svar{orbital}$: Orbital Augmentation Richness]
+    Measures the active descriptor depth:
+    \begin{equation}
+      \svar{orbital} = \frac{\ell_\mathrm{max,active}}
+                            {\ell_\mathrm{max,capable}}
+    \end{equation}
+    where $\ell_\mathrm{max,active}$ is the highest $\ell$ with a nonzero
+    coefficient in the unified descriptor, and $\ell_\mathrm{max,capable}$
+    is the system's maximum supported $\ell$.
+\end{description}
+
+\subsection{Default Weights}
+
+\begin{center}
+\begin{tabular}{ccccc}
+\toprule
+$w_1$ & $w_2$ & $w_3$ & $w_4$ & $w_5$ \\
+\midrule
+0.20 & 0.15 & 0.25 & 0.25 & 0.15 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+The weights sum to 1, keeping $\gamma \in [0,1]$.
+
+% ============================================================================
+\section{Data Quality Score}
+\label{sec:qdata}
+% ============================================================================
+
+The data quality score separates ``case finished'' from ``case is good.''
+
+\begin{equation}
+  \label{eq:qdata}
+  \boxed{
+  Q_\var{data} = a_1\,\cvar{conv}
+               + a_2\,\cvar{energy}
+               + a_3\,\cvar{stability}
+               + a_4\,\cvar{consistency}
+               + a_5\,\cvar{completeness}
+               - a_6\,P_\var{failure}
+  }
+\end{equation}
+
+\subsection{Component Definitions}
+
+\begin{description}[style=nextline,noitemsep]
+  \item[$\cvar{conv}$: Convergence Reward]
+    Binary: 1 if the run converged within the step budget, 0 otherwise.
+
+  \item[$\cvar{energy}$: Energy Physicality]
+    Rewards negative (bound) final energy and penalises positive (unbound)
+    or zero energy:
+    \begin{equation}
+      \cvar{energy} = \sigma\!\left(-\frac{E_\var{final}}{E_\var{ref}}\right),
+      \qquad \sigma(x) = \frac{1}{1+e^{-5x}}
+    \end{equation}
+    where $E_\var{ref}$ is a per-element reference energy.
+
+  \item[$\cvar{stability}$: Late-Step Stability]
+    Penalises oscillation in the final 10\% of the trajectory:
+    \begin{equation}
+      \cvar{stability} = 1 - \min\!\left(1,\;
+        \frac{\sigma_\eta^{\,\mathrm{tail}}}
+             {\bar{\eta}^{\,\mathrm{tail}}+\epsilon}\right)
+    \end{equation}
+
+  \item[$\cvar{consistency}$: Cross-Field Agreement]
+    Measures whether macro-precursor channels agree with structural metrics:
+    \begin{equation}
+      \cvar{consistency} = 1 - \frac{1}{M}\sum_{i<j}
+        \bigl|\hat{x}_i - \hat{x}_j\bigr|
+    \end{equation}
+    for selected normalised field pairs
+    $\{(\rho^*,\eta^*),\;(\var{rigidity},C^*),\;(\var{ductility},1-\var{brittleness})\}$.
+
+  \item[$\cvar{completeness}$: Descriptor Population]
+    Same as $\svar{intensity}$ from the gamma score.
+
+  \item[$P_\var{failure}$: Failure Penalty]
+    \begin{equation}
+      P_\var{failure} = p_1\,\mathbf{1}[\text{step limit hit}]
+                      + p_2\,\mathbf{1}[\text{NaN in output}]
+                      + p_3\,\frac{n_\var{zero}}{F}
+    \end{equation}
+\end{description}
+
+\subsection{Default Weights}
+
+\begin{center}
+\begin{tabular}{cccccc}
+\toprule
+$a_1$ & $a_2$ & $a_3$ & $a_4$ & $a_5$ & $a_6$ \\
+\midrule
+0.25 & 0.20 & 0.15 & 0.15 & 0.15 & 0.10 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+After subtraction of the failure penalty, $Q_\var{data}$ is clamped to
+$[0,1]$. A score above 0.7 qualifies a case for publication or
+surrogate-model ingestion.
+
+% ============================================================================
+\section{Structure Compactness Score}
+\label{sec:compact}
+% ============================================================================
+
+\begin{equation}
+  \label{eq:compact}
+  \boxed{
+  C_\var{compact} = b_1\,\rho^*
+                  + b_2\,\eta^*
+                  + b_3\,R_\var{coord}^*
+                  + b_4\,D_\var{macro}^*
+                  - b_5\,\Phi_\var{void}^*
+  }
+\end{equation}
+
+where the starred terms are normalised to $[0,1]$:
+
+\begin{description}[style=nextline,noitemsep]
+  \item[$\rho^*$: Effective Density]
+    $\rho^* = \min(1,\;\bar{\rho}/\rho_\var{ref})$
+    where $\rho_\var{ref}$ is the experimental crystal density.
+
+  \item[$\eta^*$: Packing Efficiency]
+    $\eta^* = \bar{\eta}$
+    directly from the bead environment state (already in $[0,1]$).
+
+  \item[$R_\var{coord}^*$: Coordination Regularity]
+    $R_\var{coord}^* = 1 - \sigma_C/(\bar{C}+\epsilon)$
+    Rewards uniform coordination (crystalline) and penalises irregular coordination.
+
+  \item[$D_\var{macro}^*$: Macro Deformation Stiffness]
+    $D_\var{macro}^* = (\var{rigidity\_like} + \var{cohesion\_like})/2$
+    from the \texttt{MacroPrecursorState}.
+
+  \item[$\Phi_\var{void}^*$: Void Fraction Penalty]
+    $\Phi_\var{void}^* = 1 - \bar{\eta}$, the complement of packing efficiency.
+\end{description}
+
+\subsection{Default Weights}
+
+\begin{center}
+\begin{tabular}{ccccc}
+\toprule
+$b_1$ & $b_2$ & $b_3$ & $b_4$ & $b_5$ \\
+\midrule
+0.25 & 0.25 & 0.20 & 0.15 & 0.15 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Correlation Matrix}
+\label{sec:correlation}
+% ============================================================================
+
+\subsection{Variable Set}
+
+The clean variable set for the first-pass correlation:
+\begin{equation}
+  \mathbf{X} = \bigl\{
+    \bar{\eta},\;\bar{\rho},\;\bar{C},\;
+    \var{rms\_force},\;E_\var{final},\;
+    \var{rigidity},\;\var{ductility},\;\var{cohesion},\;
+    \gamma,\;Q_\var{data},\;C_\var{compact}
+  \bigr\}
+\end{equation}
+
+\subsection{Pearson Correlation}
+
+For variables $x_i$ and $x_j$ across $n$ systems:
+\begin{equation}
+  R_{ij} = \frac{\sum_{k=1}^{n}(x_{ik}-\bar{x}_i)(x_{jk}-\bar{x}_j)}
+                {\sqrt{\sum_{k=1}^{n}(x_{ik}-\bar{x}_i)^2}
+                 \sqrt{\sum_{k=1}^{n}(x_{jk}-\bar{x}_j)^2}}
+\end{equation}
+
+\subsection{Interpretation Targets}
+
+\begin{enumerate}[noitemsep]
+  \item Which variables most strongly predict compactness?
+  \item Does compactness track stiffness or ductility?
+  \item Does convergence quality correlate with physically meaningful outputs?
+  \item Do energy and compactness move together across FCC, BCC, and HCP?
+  \item Are $\gamma$ and $Q_\var{data}$ genuinely informative or decorative?
+\end{enumerate}
+
+\subsection{Reference Data (Day \#47 Spreadsheet)}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\scriptsize
+\begin{tabular}{llccccccccccc}
+\toprule
+Sym & Name & Struct & Conv & Steps & $\bar{\eta}$ & $\bar{\rho}$ &
+$\bar{C}$ & $E_\mathrm{final}$ & Rigid & Duct & Coh &
+$E_\mathrm{coh}$ (eV) \\
+\midrule
+Au & Gold       & FCC & T & 1698 & 0.279 & 5.201 & 25.66 & $-$10370 & 0.165 & 0.454 & 0.474 & $-$3.81 \\
+Ag & Silver     & FCC & T &    6 & 0.001 & 0     & 0     & 0.26     & 0     & 0     & 0     & $-$2.95 \\
+Cu & Copper     & FCC & T &    5 & 0.001 & 0     & 0     & 0.23     & 0     & 0     & 0     & $-$3.49 \\
+Pt & Platinum   & FCC & F & 6000 & 0     & 0     & 0     & 263.3    & 0.178 & 0.433 & 0.397 & $-$5.84 \\
+Ni & Nickel     & FCC & F & 5000 & 0     & 0     & 0     & 216.6    & 0.178 & 0.398 & 0.452 & $-$4.44 \\
+Al & Aluminium  & FCC & T &    5 & 0.000 & 0.001 & 0     & $-$0.001 & 0.21  & 0     & 0     & $-$3.39 \\
+\addlinespace
+Fe & Iron       & BCC & T & 2668 & 0.469 & 11.80 & 45.34 & $-$15736 & 0.238 & 0.505 & 0.509 & $-$4.28 \\
+W  & Tungsten   & BCC & T & 2954 & 0.494 & 9.394 & 40.09 & $-$33207 & 0.246 & 0.504 & 0.616 & $-$8.90 \\
+Mo & Molybdenum & BCC & T & 2811 & 0.454 & 9.522 & 40.31 & $-$25013 & 0.229 & 0.495 & 0.590 & $-$6.82 \\
+Cr & Chromium   & BCC & T & 2684 & 0.467 & 11.67 & 45.00 & $-$15065 & 0.237 & 0.504 & 0.607 & $-$4.10 \\
+\addlinespace
+Ti & Titanium   & HCP & T &   62 & 0.001 & 0.001 & 0     & $-$0.000 & 0     & 0     & 0     & $-$4.85 \\
+Co & Cobalt     & HCP & F & 6000 & 0     & 0     & 0     & 253.5    & 0.091 & 0.379 & 0.361 & $-$4.39 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+\textit{Observation}: BCC systems (Fe, W, Mo, Cr) converge with rich
+structural content; FCC stalls (Pt, Ni) or produces near-zero descriptors
+(Ag, Cu, Al); HCP is underdeveloped.
+The gamma and quality scores will make these distinctions quantitative.
+
+% ============================================================================
+\section{$O(xN)$ Scalable Formation Architecture}
+\label{sec:scalability}
+% ============================================================================
+
+Version~4 beta transitions the formation engine from sequential per-bead
+evaluation to a partitioned parallel architecture.
+
+\subsection{Computational Complexity}
+
+The current kernel evaluates $N_b$ beads over $S$ steps.
+Per step, each bead queries its local neighbourhood
+($k$ neighbours on average):
+\begin{equation}
+  T_\var{step} = O(N_b \cdot k)
+  \qquad\Rightarrow\qquad
+  T_\var{total} = O(S \cdot N_b \cdot k)
+\end{equation}
+
+For fixed $k$ (truncated neighbour list), this is $O(S \cdot N_b)$.
+The target is to reduce wall-clock time by a factor $x$ via
+$x$-way partitioning:
+\begin{equation}
+  T_\var{parallel} = O\!\left(\frac{S \cdot N_b}{x}\right)
+  + O(\log x) \;\text{(reduction)}
+  = O(xN)
+\end{equation}
+where $x$ is the number of hardware work partitions (CPU threads or GPU SMs).
+
+\subsection{Hardware-Convergent Partitioning}
+
+On the target system (i9-13900K, 32 threads; RTX~4070, 46 SMs):
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Partition} & \textbf{Hardware} & \textbf{Task} \\
+\midrule
+P-Cores (8)  & Raptor Cove 5.8~GHz & Formation evolution (FIRE/env update) \\
+E-Cores (16) & Gracemont 4.3~GHz   & Neighbour rebuild, histogram, I/O \\
+GPU SMs (46) & AD104 2.5~GHz       & Batch correlation, descriptor fitting \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Domain Decomposition}
+
+Beads are assigned to spatial cells; each cell is owned by one thread.
+Ghost-zone exchange handles cross-cell neighbours:
+\begin{equation}
+  N_\var{cell} = \left\lceil\frac{L_\var{box}}{r_\var{cut}}\right\rceil^3,
+  \qquad
+  \text{beads/cell} \approx \frac{N_b}{N_\var{cell}}
+\end{equation}
+
+Communication volume scales as the surface-to-volume ratio:
+\begin{equation}
+  V_\var{ghost} \propto N_\var{cell}^{2/3} \cdot k
+\end{equation}
+which remains subdominant for $N_b > 1000$.
+
+% ============================================================================
+\section{C++26 Feature Integration}
+\label{sec:cpp26}
+% ============================================================================
+
+Version~4 beta adopts the following C++26 / C++23 features:
+
+\subsection{Runtime Contracts}
+
+Function signatures carry executable preconditions and postconditions:
+\begin{lstlisting}
+auto compute_gamma(const FormationRecord& r) -> double
+{
+    CONTRACT_PRE(r.converged || r.steps > 0);
+    double gamma = /* ... */;
+    CONTRACT_POST(gamma >= 0.0 && gamma <= 1.0);
+    return gamma;
+}
+\end{lstlisting}
+
+\subsection{Erroneous Behaviour Trapping}
+
+With \texttt{-ftrivial-auto-var-init=pattern}, uninitialised stack
+variables receive the \texttt{0xFEFEFEFE} pattern, converting silent
+data corruption into immediate, deterministic failure.
+
+\subsection{Native Stack Traces}
+
+Using \texttt{<stacktrace>} and \texttt{-lstdc++exp}, contract
+violations produce full call-chain traces without external debuggers.
+
+\subsection{Flat Matrix Storage}
+
+All matrices use flat \texttt{std::vector<double>} for cache efficiency.
+Row-major flat indexing: \texttt{data[i*n+j]}.
+
+% ============================================================================
+\section{Implementation Plan}
+\label{sec:plan}
+% ============================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{clll}
+\toprule
+\# & Task & Header & Dependencies \\
+\midrule
+1 & Formation record v4   & \texttt{v4/formation\_record.hpp} & Day~47 spreadsheet \\
+2 & Gamma score           & \texttt{v4/gamma\_score.hpp}      & FormationRecord \\
+3 & Data quality score    & \texttt{v4/data\_quality.hpp}     & FormationRecord \\
+4 & Compactness score     & \texttt{v4/compactness.hpp}       & MacroPrecursorState \\
+5 & Correlation matrix    & \texttt{v4/correlation\_matrix.hpp} & all three scores \\
+6 & Heatmap export        & \texttt{v4/corr\_heatmap.hpp}     & CorrMatrix \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+% ============================================================================
+
+Development Day~\#47 establishes the basis for moving VSEPR-SIM from a
+convergent structural kernel into a continual generation platform with
+measurable informational value.
+The shift from Version~3.0.X to Version~4 beta is not merely a version
+increment but a methodological upgrade: each run is now judged by
+convergence, variation richness, data quality, and compactness relevance.
+
+By introducing gamma-based exploration scoring, data-quality filtering,
+and a correlation matrix centred on compactness, the kernel becomes
+better suited for large-scale structured generation, ranking, and
+downstream thermodynamic or materials analysis.
+The result is a more selective, more informative, and more scientifically
+useful formation engine.
+
+A prerequisite for reliable large-scale generation is that every
+subsystem speaks the same data language. The vector type unification
+completed on Development Day~\#56 (see the canonical bridge architecture
+document, Section: \textit{Canonical Vector Type: \texttt{vsepr::Vec3}})
+is part of this migration discipline. All layers --- atomistic kernel,
+bead system, XYZ I/O, sensor, EHD, and peptide formation --- now alias
+to a single authoritative \texttt{vsepr::Vec3}. This removes a class of
+silent type-mismatch errors that would otherwise surface under the
+increased cross-layer communication demanded by the v4 formation engine.
+The Eigen adapter boundary (\texttt{to\_eigen}/\texttt{from\_eigen})
+ensures that future SIMD or Eigen-backed math can be introduced without
+rewriting every subsystem.
+
+\bigskip\noindent
+\textit{Humanity occasionally stumbles into competence.}
+
+\end{document}

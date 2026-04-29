@@ -1,0 +1,16 @@
+# seed_hash: 00000008A737AE6E
+# sample_index: 102
+# arrangement: thorium_oxalate_std_strong
+# equation: Th(NO3)4 + 2 H2C2O4 + 6 H2O -> Th(C2O4)2*6H2O(s) + 4 HNO3
+# tau_drawn: 90.0832
+# g_steric_drawn: 0.510176
+# g_elec_drawn: -0.426137
+# g_disp_drawn: 0.623597
+# temperature_K: 297.857
+# dt_drawn: 0.551186
+# N_beads: 102
+# total_mass_amu: 1536.42
+#
+step,energy,ke,rms_force,max_force,dt,avg_rho,avg_C,avg_P2,avg_eta,avg_target_f,max_deta,g_steric,g_elec,g_disp,n_inert,n_ionic,n_cov,n_met,n_mix,steady
+0,-0.41116722,1744950981135840738562539520.00000000,122006643111767.09375000,615074962522053.25000000,0.275593,0.00678715,0.21568627,0.00000000,0.00000166,0.00054297,0.00007227,1.00000085,0.99999929,1.00000103,0,0,0,0,102,0
+1,-0.41186439,0.00017140,0.02740976,0.19273838,0.137797,0.00679807,0.21568627,0.00000000,0.00000249,0.00054385,0.00003612,1.00000127,0.99999894,1.00000155,0,0,0,0,102,1

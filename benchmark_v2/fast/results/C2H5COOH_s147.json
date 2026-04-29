@@ -1,0 +1,19 @@
+{
+  "formula": "C2H5COOH",
+  "seed": 147,
+  "tier": "fast",
+  "num_atoms": 11,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 47083.899219,
+  "energy_per_atom": 4280.354474,
+  "rms_force": 156241.661401,
+  "max_force": 156241.661401,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.466700,
+  "timestamp": "2026-03-28T13:03:51",
+  "xyz_file": "benchmark_v2\fast\structures\C2H5COOH_s147.xyz"
+}

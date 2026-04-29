@@ -1,0 +1,118 @@
+# scripts/demo_05_pericyclic.vsim
+# VSEPR-SIM organic reaction mechanism demo
+# Scenarios: 4 (Diels-Alder), 6 (Aldol condensation), 8 (Hofmann elimination)
+# vsper validate scripts/demo_05_pericyclic.vsim
+# Back-call: vsper run kernel_demo --scenario 4
+#            vsper run kernel_demo --scenario 6
+#            vsper run kernel_demo --scenario 8
+
+[project]
+name        = demo_05_pericyclic
+version     = v5.0.0-beta.7.1
+seed_base   = 5004
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+chemical_events  = true
+dynamic_energy   = true
+formation_events = true
+
+[universal_controls]
+dt              = 0.001
+steps_form      = 2000
+steps_relax     = 2000
+save_every      = 50
+temperature_low = 200
+temperature_mid = 400
+temperature_high = 600
+
+[material.diels_alder]
+id      = diels_alder
+classes = pericyclic_reaction,cycloaddition
+formula = C4H6+C2H4
+rule    = pericyclic_4+2
+# scenario 4 in kernel_demo
+# uncertain: pericyclic transition state uses geometry proxy, not full orbital model
+
+[material.diels_alder.formation]
+mode        = relax_from_precursor
+temperature = 300
+relax_steps = 2000
+
+[material.diels_alder.expected_signature]
+primary = cyclohexene_coordination_4
+trend_1 = concerted_bond_formation_lowers_activation_energy
+trend_2 = endo_preference_from_secondary_orbital_interaction
+
+[material.aldol]
+id      = aldol
+classes = enolate_reaction,carbonyl_addition
+formula = CH3CHO
+rule    = enolate_electrophile
+# scenario 6 in kernel_demo
+
+[material.aldol.formation]
+mode        = relax_from_precursor
+temperature = 250
+relax_steps = 1500
+
+[material.aldol.expected_signature]
+primary = beta_hydroxy_carbonyl_coordination_2
+trend_1 = enolate_formation_is_rate_limiting
+
+[material.hofmann]
+id      = hofmann
+classes = elimination_reaction,base_promoted
+formula = C4H9N
+rule    = e2_anti_periplanar
+# scenario 8 in kernel_demo
+
+[material.hofmann.formation]
+mode        = relax_from_precursor
+temperature = 350
+relax_steps = 1500
+
+[material.hofmann.expected_signature]
+primary = alkene_coordination_3_to_2
+trend_1 = anti_periplanar_geometry_required
+trend_2 = less_substituted_alkene_predominates
+
+[sweep]
+enabled   = true
+materials = diels_alder,aldol,hofmann
+seeds     = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+
+[report]
+title                  = demo_05_pericyclic
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_chart
+animation_mode        = bar
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = false
+show_audit_table      = false

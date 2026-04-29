@@ -1,0 +1,19 @@
+{
+  "formula": "C4H9OH",
+  "seed": 343,
+  "tier": "fast",
+  "num_atoms": 15,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 95263.207386,
+  "energy_per_atom": 6350.880492,
+  "rms_force": 170699.433500,
+  "max_force": 170699.433500,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.598300,
+  "timestamp": "2026-03-28T12:52:45",
+  "xyz_file": "benchmark_100\fast\structures\C4H9OH_s343.xyz"
+}

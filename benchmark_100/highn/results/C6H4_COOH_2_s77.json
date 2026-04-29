@@ -1,0 +1,19 @@
+{
+  "formula": "C6H4(COOH)2",
+  "seed": 77,
+  "tier": "highn",
+  "num_atoms": 14,
+  "steps_taken": 7149,
+  "max_steps": 10000,
+  "energy_kcal_mol": -3.293665,
+  "energy_per_atom": -0.235262,
+  "rms_force": 0.017724,
+  "max_force": 0.017724,
+  "alpha_final": 0.001263,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 7.632000,
+  "timestamp": "2026-03-28T12:52:40",
+  "xyz_file": "benchmark_100\highn\structures\C6H4_COOH_2_s77.xyz"
+}

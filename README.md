@@ -17,6 +17,34 @@
 
 ---
 
+## Start Here
+
+| Where you want to go | Jump to |
+|----------------------|---------|
+| Understand the build system and folder layout | [TOUR.md](TOUR.md) |
+| Day-to-day shell — browse, edit, compile, export | [scripts/doc_shell.py](scripts/doc_shell.py) — run `python scripts/doc_shell.py` |
+| Shell command reference | [scripts/README.md](scripts/README.md) |
+| Generate or compile reports | [reporting/README.md](reporting/README.md) |
+| Formal 186-page methodology | [docs/ALPHA_MODEL_BOOKLET.tex](docs/ALPHA_MODEL_BOOKLET.tex) |
+| Validation report | [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md) |
+| Python physics kernel | [pykernel/](pykernel/) |
+
+```powershell
+# Activate the Python environment (once per session)
+.venv\Scripts\Activate.ps1
+
+# Open the interactive maintenance shell
+python scripts\doc_shell.py
+
+# Or build the C++ engine directly
+cmake -B build -S . && cmake --build build --parallel
+```
+
+---
+
+
+---
+
 ## Overview
 
 Long-term development targets reaction modeling and structured multiscale coupling while preserving reproducibility and auditability. Long-term development targets expanding reaction modeling, and creating multiscale coupling while preserving reproducibility and auditability.
@@ -31,6 +59,111 @@ Long-term development targets reaction modeling and structured multiscale coupli
 
 > **Guiding principle:**  
 > *Every state is reproducible. Every result is traceable. Structure is a primary simulation output, not an input assumption.*
+
+---
+
+## 3D Output Gallery
+
+Deterministic atomistic structures generated and rendered by the VSEPR-Sim engine. All outputs use CPK coloring, Phong shading, and automatic bond detection from covalent radii.
+
+### Ball-and-Stick — VSEPR Geometries
+
+<table>
+<tr>
+<td align="center"><img src="assets/images/ballstick_h2o.png" width="380"/><br/><b>H₂O — Water</b><br/>Bent · 104.5° bond angle</td>
+<td align="center"><img src="assets/images/ballstick_ch4.png" width="380"/><br/><b>CH₄ — Methane</b><br/>Tetrahedral · 109.5° bond angles</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/images/ballstick_nh3.png" width="380"/><br/><b>NH₃ — Ammonia</b><br/>Trigonal pyramidal · lone pair compression</td>
+<td align="center"><img src="assets/images/ballstick_sf6.png" width="380"/><br/><b>SF₆ — Sulfur Hexafluoride</b><br/>Octahedral · 6 equivalent bonds</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/images/ballstick_pf5.png" width="380"/><br/><b>PF₅ — Phosphorus Pentafluoride</b><br/>Trigonal bipyramidal · axial/equatorial</td>
+<td align="center"><img src="assets/images/ballstick_xef4.png" width="380"/><br/><b>XeF₄ — Xenon Tetrafluoride</b><br/>Square planar · 2 lone pairs</td>
+</tr>
+</table>
+
+### Ball-and-Stick — Organic & Larger Structures
+
+<table>
+<tr>
+<td align="center"><img src="assets/images/ballstick_benzene.png" width="380"/><br/><b>C₆H₆ — Benzene</b><br/>Planar hexagonal ring · 12 atoms</td>
+<td align="center"><img src="assets/images/ballstick_ethanol.png" width="380"/><br/><b>C₂H₅OH — Ethanol</b><br/>Multi-center organic · 9 atoms</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/images/ballstick_hexane.png" width="380"/><br/><b>C₆H₁₄ — Hexane</b><br/>Linear alkane chain · 20 atoms</td>
+<td align="center"><img src="assets/images/ballstick_h2so4.png" width="380"/><br/><b>H₂SO₄ — Sulfuric Acid</b><br/>Tetrahedral S center · strong acid</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/images/ballstick_ikaite.png" width="380"/><br/><b>CaCO₃·6H₂O — Ikaite</b><br/>Hydrated mineral · 20 atoms</td>
+<td align="center"><img src="assets/images/ballstick_ar13.png" width="380"/><br/><b>Ar₁₃ — Argon Cluster</b><br/>Icosahedral noble gas · Lennard-Jones</td>
+</tr>
+</table>
+
+### Space-Filling (Van der Waals)
+
+<table>
+<tr>
+<td align="center"><img src="assets/images/spacefill_h2o.png" width="380"/><br/><b>H₂O</b><br/>VdW radii · no bonds</td>
+<td align="center"><img src="assets/images/spacefill_benzene.png" width="380"/><br/><b>C₆H₆</b><br/>Electron cloud overlap visible</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/images/spacefill_h2so4.png" width="380"/><br/><b>H₂SO₄</b><br/>Sulfur buried by oxygen shells</td>
+<td align="center"><img src="assets/images/spacefill_ar13.png" width="380"/><br/><b>Ar₁₃</b><br/>Close-packed noble gas cluster</td>
+</tr>
+</table>
+
+### Wireframe
+
+<table>
+<tr>
+<td align="center"><img src="assets/images/wireframe_benzene.png" width="380"/><br/><b>C₆H₆ — Benzene</b><br/>Bond topology · split CPK coloring</td>
+<td align="center"><img src="assets/images/wireframe_hexane.png" width="380"/><br/><b>C₆H₁₄ — Hexane</b><br/>Carbon backbone visible</td>
+</tr>
+</table>
+
+### Render Style Comparison
+
+Same molecule rendered in all three styles side-by-side.
+
+<div align="center">
+<img src="assets/images/multiview_ch4.png" width="760"/>
+<br/>
+<i>CH₄ — Ball-and-Stick · Space-Filling · Wireframe</i>
+</div>
+
+<br/>
+
+<div align="center">
+<img src="assets/images/multiview_benzene.png" width="760"/>
+<br/>
+<i>C₆H₆ — Ball-and-Stick · Space-Filling · Wireframe</i>
+</div>
+
+### PBC Supercell Visualization
+
+<div align="center">
+<img src="assets/images/pbc_h2o_supercell.png" width="600"/>
+<br/>
+<i>H₂O 3×3×3 supercell — central cell at full opacity, ghost replicas at 25%, PBC box edges in blue</i>
+</div>
+
+### Simulation Diagnostics
+
+<table>
+<tr>
+<td align="center"><img src="assets/images/fire_convergence.png" width="380"/><br/><b>FIRE Minimization</b><br/>Energy + RMS force convergence · adaptive dt restarts</td>
+<td align="center"><img src="assets/images/md_timeseries.png" width="380"/><br/><b>NVT Langevin MD</b><br/>Temperature, KE, PE time series · 300 K target</td>
+</tr>
+</table>
+
+### Desktop Workstation
+
+<div align="center">
+<img src="assets/images/desktop_workstation.png" width="760"/>
+<br/>
+<i>Qt-based molecular workstation — 3D viewport, object tree, properties inspector, and interactive console</i>
+</div>
 
 ---
 

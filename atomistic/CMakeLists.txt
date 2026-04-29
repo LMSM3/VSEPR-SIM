@@ -83,7 +83,7 @@ message(STATUS "")
 message(STATUS "╔════════════════════════════════════════════════════════════════════════════════╗")
 message(STATUS "║  BUILD CONFIGURATION                                                           ║")
 message(STATUS "╠════════════════════════════════════════════════════════════════════════════════╣")
-message(STATUS "║  Version:         2.5.0-dev (Atomistic Core)                                  ║")
+message(STATUS "║  Version:         3.0.1 (Atomistic Core)                                      ║")
 message(STATUS "║  Build Type:      ${CMAKE_BUILD_TYPE}")
 message(STATUS "║  Compiler:        ${ATOMISTIC_COMPILER}")
 message(STATUS "║  C++ Standard:    C++20                                                        ║")
@@ -198,6 +198,11 @@ add_library(atomistic STATIC
     validation/experiment_match.hpp
     validation/experiment_match.cpp
     validation/nanoparticle_ref.hpp
+    models/wind_particle.hpp
+    models/env_particle.hpp
+    tui/crystal_tui.hpp
+    tui/crystal_tui.cpp
+    tui/flower_health.hpp
 )
 
 message(STATUS "")

@@ -1,0 +1,19 @@
+{
+  "formula": "C4H4O",
+  "seed": 98,
+  "tier": "highn",
+  "num_atoms": 9,
+  "steps_taken": 5559,
+  "max_steps": 10000,
+  "energy_kcal_mol": -1.627979,
+  "energy_per_atom": -0.180887,
+  "rms_force": 0.002084,
+  "max_force": 0.002084,
+  "alpha_final": 0.001559,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "metastable",
+  "wall_time_ms": 2.855800,
+  "timestamp": "2026-03-28T13:04:29",
+  "xyz_file": "benchmark_v2\highn\structures\C4H4O_s98.xyz"
+}

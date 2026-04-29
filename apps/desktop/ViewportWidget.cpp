@@ -4,6 +4,7 @@
 #include <QTextStream>
 #include <QRegularExpression>
 #include <QDebug>
+#include <QImageWriter>
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -208,6 +209,15 @@ GLuint ViewportWidget::compileShader(const char* vert, const char* frag)
     return prog;
 }
 
+void ViewportWidget::cacheUniformLocations()
+{
+    uloc_mvp_     = glGetUniformLocation(shader_prog_, "uMVP");
+    uloc_model_   = glGetUniformLocation(shader_prog_, "uModel");
+    uloc_normal_  = glGetUniformLocation(shader_prog_, "uNormalMat");
+    uloc_color_   = glGetUniformLocation(shader_prog_, "uColor");
+    uloc_cam_pos_ = glGetUniformLocation(shader_prog_, "uCamPos");
+}
+
 // ============================================================================
 // Geometry generation — icosphere + cylinder
 // ============================================================================
@@ -335,6 +345,7 @@ void ViewportWidget::initializeGL()
     glEnable(GL_MULTISAMPLE);
 
     shader_prog_ = compileShader(VERT_SRC, FRAG_SRC);
+    cacheUniformLocations();
     buildSphereMesh(3);     // ~768 tris per sphere (MEDIUM quality)
     buildCylinderMesh(16);
 }
@@ -342,6 +353,7 @@ void ViewportWidget::initializeGL()
 void ViewportWidget::resizeGL(int w, int h)
 {
     glViewport(0, 0, w, h);
+    matrices_dirty_ = true;
 }
 
 // ============================================================================
@@ -369,6 +381,23 @@ static void mat4_translate(float* m, float x, float y, float z) {
 static void mat4_scale(float* m, float sx, float sy, float sz) {
     mat4_identity(m);
     m[0] = sx; m[5] = sy; m[10] = sz;
+}
+
+void ViewportWidget::rebuildMatrices()
+{
+    computeViewMatrix(cached_view_);
+    float aspect = (float)width() / std::max((float)height(), 1.0f);
+    computeProjMatrix(cached_proj_, aspect);
+    mat4_mul(cached_vp_, cached_proj_, cached_view_);
+
+    // Cache eye position
+    float sp = std::sin(cam_phi_), cp = std::cos(cam_phi_);
+    float st = std::sin(cam_theta_), ct = std::cos(cam_theta_);
+    cached_cam_pos_[0] = (float)cam_target_.x + cam_dist_ * cp * st;
+    cached_cam_pos_[1] = (float)cam_target_.y + cam_dist_ * sp;
+    cached_cam_pos_[2] = (float)cam_target_.z + cam_dist_ * cp * ct;
+
+    matrices_dirty_ = false;
 }
 
 void ViewportWidget::computeViewMatrix(float* m) const
@@ -428,41 +457,24 @@ void ViewportWidget::computeProjMatrix(float* m, float aspect) const
 void ViewportWidget::drawSphere(const scene::Vec3d& center, float radius,
                                 float r, float g, float b)
 {
-    float model[16], scale[16], trans[16], mvp[16], view[16], proj[16];
+    float model[16], scale[16], trans[16], mvp[16];
     mat4_translate(trans, (float)center.x, (float)center.y, (float)center.z);
     mat4_scale(scale, radius, radius, radius);
     mat4_mul(model, trans, scale);
+    mat4_mul(mvp, cached_vp_, model);
 
-    computeViewMatrix(view);
-    float aspect = (float)width() / std::max((float)height(), 1.0f);
-    computeProjMatrix(proj, aspect);
-
-    float vp[16];
-    mat4_mul(vp, proj, view);
-    mat4_mul(mvp, vp, model);
-
-    // Normal matrix (upper-left 3×3 of model, assume uniform scale)
+    // Sphere uses uniform scale so upper-left 3×3 of model is the normal matrix
     float nm[9] = {
         model[0], model[1], model[2],
         model[4], model[5], model[6],
         model[8], model[9], model[10]
     };
 
-    // Camera position for specular
-    float sp = std::sin(cam_phi_), cp = std::cos(cam_phi_);
-    float st = std::sin(cam_theta_), ct = std::cos(cam_theta_);
-    float camPos[3] = {
-        (float)cam_target_.x + cam_dist_ * cp * st,
-        (float)cam_target_.y + cam_dist_ * sp,
-        (float)cam_target_.z + cam_dist_ * cp * ct
-    };
-
-    glUseProgram(shader_prog_);
-    glUniformMatrix4fv(glGetUniformLocation(shader_prog_, "uMVP"), 1, GL_FALSE, mvp);
-    glUniformMatrix4fv(glGetUniformLocation(shader_prog_, "uModel"), 1, GL_FALSE, model);
-    glUniformMatrix3fv(glGetUniformLocation(shader_prog_, "uNormalMat"), 1, GL_FALSE, nm);
-    glUniform3f(glGetUniformLocation(shader_prog_, "uColor"), r, g, b);
-    glUniform3fv(glGetUniformLocation(shader_prog_, "uCamPos"), 1, camPos);
+    glUniformMatrix4fv(uloc_mvp_,    1, GL_FALSE, mvp);
+    glUniformMatrix4fv(uloc_model_,  1, GL_FALSE, model);
+    glUniformMatrix3fv(uloc_normal_, 1, GL_FALSE, nm);
+    glUniform3f(uloc_color_, r, g, b);
+    glUniform3fv(uloc_cam_pos_, 1, cached_cam_pos_);
 
     glBindVertexArray(sphere_vao_);
     glDrawElements(GL_TRIANGLES, sphere_idx_count_, GL_UNSIGNED_INT, nullptr);
@@ -476,69 +488,56 @@ void ViewportWidget::drawCylinder(const scene::Vec3d& a, const scene::Vec3d& b,
     float h = (float)scene::distance({0,0,0}, d);
     if (h < 1e-6f) return;
 
-    // Build model matrix: translate to a, rotate Y-axis to d, scale
     float dx = (float)d.x/h, dy = (float)d.y/h, dz = (float)d.z/h;
 
     // Rodrigues: rotate (0,1,0) to (dx,dy,dz)
-    // axis = (0,1,0) × dir, angle = acos(dy)
     float ax = -dz, ay = 0.0f, az = dx;
     float sinA = std::sqrt(ax*ax + az*az);
     float cosA = dy;
 
-    float model[16];
-    mat4_identity(model);
-
+    float rotM[16];
+    mat4_identity(rotM);
     if (sinA > 1e-6f) {
         ax /= sinA; az /= sinA;
         float c = cosA, s = sinA, t2 = 1.0f - c;
-        // Rodrigues rotation matrix
-        model[0] = t2*ax*ax + c;       model[4] = t2*ax*ay - s*az; model[8]  = t2*ax*az + s*ay;
-        model[1] = t2*ay*ax + s*az;    model[5] = t2*ay*ay + c;    model[9]  = t2*ay*az - s*ax;
-        model[2] = t2*az*ax - s*ay;    model[6] = t2*az*ay + s*ax; model[10] = t2*az*az + c;
+        rotM[0] = t2*ax*ax + c;    rotM[4] = t2*ax*ay - s*az; rotM[8]  = t2*ax*az + s*ay;
+        rotM[1] = t2*ay*ax + s*az; rotM[5] = t2*ay*ay + c;    rotM[9]  = t2*ay*az - s*ax;
+        rotM[2] = t2*az*ax - s*ay; rotM[6] = t2*az*ay + s*ax; rotM[10] = t2*az*az + c;
     } else if (dy < 0) {
-        // 180° flip
-        model[5] = -1.0f;
+        rotM[5] = -1.0f;
     }
 
-    // Apply scale (radius, height, radius) then translate to a
-    float scaleModel[16];
-    mat4_identity(scaleModel);
-    scaleModel[0] = radius; scaleModel[5] = h; scaleModel[10] = radius;
+    // Scale: (radius, height, radius) then translate to a
+    float scM[16]; mat4_identity(scM);
+    scM[0] = radius; scM[5] = h; scM[10] = radius;
 
-    float rotScaled[16];
-    mat4_mul(rotScaled, model, scaleModel);
+    float model[16];
+    mat4_mul(model, rotM, scM);
+    model[12] = (float)a.x;
+    model[13] = (float)a.y;
+    model[14] = (float)a.z;
 
-    rotScaled[12] = (float)a.x;
-    rotScaled[13] = (float)a.y;
-    rotScaled[14] = (float)a.z;
+    float mvp[16];
+    mat4_mul(mvp, cached_vp_, model);
 
-    float view[16], proj[16], vp[16], mvp[16];
-    computeViewMatrix(view);
-    float aspect = (float)width() / std::max((float)height(), 1.0f);
-    computeProjMatrix(proj, aspect);
-    mat4_mul(vp, proj, view);
-    mat4_mul(mvp, vp, rotScaled);
-
+    // Normal matrix for non-uniform scale: transpose of inverse of upper 3×3.
+    // For a rotation R applied to non-uniform scale S, the normal matrix is
+    //   N = R · diag(1/sx, 1/sy, 1/sz)
+    // (Rodrigues part is orthonormal so its inverse = its transpose.)
+    float isx = (radius > 1e-6f) ? 1.0f/radius : 1.0f;
+    float isy = (h      > 1e-6f) ? 1.0f/h      : 1.0f;
+    float isz = isx;
     float nm[9] = {
-        rotScaled[0], rotScaled[1], rotScaled[2],
-        rotScaled[4], rotScaled[5], rotScaled[6],
-        rotScaled[8], rotScaled[9], rotScaled[10]
+        rotM[0]*isx, rotM[1]*isx, rotM[2]*isx,
+        rotM[4]*isy, rotM[5]*isy, rotM[6]*isy,
+        rotM[8]*isz, rotM[9]*isz, rotM[10]*isz
     };
 
-    float sp = std::sin(cam_phi_), cp = std::cos(cam_phi_);
-    float st = std::sin(cam_theta_), ct = std::cos(cam_theta_);
-    float camPos[3] = {
-        (float)cam_target_.x + cam_dist_ * cp * st,
-        (float)cam_target_.y + cam_dist_ * sp,
-        (float)cam_target_.z + cam_dist_ * cp * ct
-    };
-
-    glUseProgram(shader_prog_);
-    glUniformMatrix4fv(glGetUniformLocation(shader_prog_, "uMVP"), 1, GL_FALSE, mvp);
-    glUniformMatrix4fv(glGetUniformLocation(shader_prog_, "uModel"), 1, GL_FALSE, rotScaled);
-    glUniformMatrix3fv(glGetUniformLocation(shader_prog_, "uNormalMat"), 1, GL_FALSE, nm);
-    glUniform3f(glGetUniformLocation(shader_prog_, "uColor"), r, g, bl);
-    glUniform3fv(glGetUniformLocation(shader_prog_, "uCamPos"), 1, camPos);
+    glUniformMatrix4fv(uloc_mvp_,    1, GL_FALSE, mvp);
+    glUniformMatrix4fv(uloc_model_,  1, GL_FALSE, model);
+    glUniformMatrix3fv(uloc_normal_, 1, GL_FALSE, nm);
+    glUniform3f(uloc_color_, r, g, bl);
+    glUniform3fv(uloc_cam_pos_, 1, cached_cam_pos_);
 
     glBindVertexArray(cyl_vao_);
     glDrawElements(GL_TRIANGLES, cyl_idx_count_, GL_UNSIGNED_INT, nullptr);
@@ -556,10 +555,12 @@ void ViewportWidget::paintGL()
     const scene::FrameData* f = currentFrame();
     if (!f || f->atoms.empty()) return;
 
-    if (wireframe_)
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // Rebuild view/proj cache if camera moved or window resized
+    if (matrices_dirty_) rebuildMatrices();
+
+    glUseProgram(shader_prog_);
+
+    glPolygonMode(GL_FRONT_AND_BACK, wireframe_ ? GL_LINE : GL_FILL);
 
     // Draw bonds first (behind atoms)
     for (const auto& bond : f->bonds) {
@@ -578,6 +579,7 @@ void ViewportWidget::paintGL()
         drawSphere(atom.pos, rad, r, g, b);
     }
 
+    // Restore fill (other Qt painting may follow)
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 }
 
@@ -603,14 +605,26 @@ void ViewportWidget::mouseMoveEvent(QMouseEvent* e)
     if (drag_button_ == Qt::LeftButton) {
         // Orbit
         cam_theta_ -= dx * 0.005f;
-        cam_phi_   += dy * 0.005f;
+        cam_phi_   -= dy * 0.005f;  // negative: drag-up tilts up (screen convention)
         cam_phi_ = std::clamp(cam_phi_, -1.5f, 1.5f);
     } else if (drag_button_ == Qt::RightButton || drag_button_ == Qt::MiddleButton) {
-        // Pan
-        float scale = cam_dist_ * 0.002f;
-        cam_target_.x -= dx * scale;
-        cam_target_.y += dy * scale;
+        // Pan in camera-space XY plane
+        // right = cam_right vector, up = screen-up
+        float sp = std::sin(cam_phi_), cp = std::cos(cam_phi_);
+        float st = std::sin(cam_theta_), ct = std::cos(cam_theta_);
+        // Camera right vector (perpendicular to forward in XZ plane)
+        float rx = ct, ry = 0.0f, rz = -st;
+        // Camera up vector (cross of right and forward)
+        float fx = -(cp * st), fy = -sp, fz = -(cp * ct);
+        float upx = ry*fz - rz*fy;
+        float upy = rz*fx - rx*fz;
+        float upz = rx*fy - ry*fx;
+        float scale = cam_dist_ * 0.001f;
+        cam_target_.x -= (rx*dx - upx*dy) * scale;
+        cam_target_.y -= (ry*dx - upy*dy) * scale;
+        cam_target_.z -= (rz*dx - upz*dy) * scale;
     }
+    matrices_dirty_ = true;
     update();
 }
 
@@ -619,11 +633,46 @@ void ViewportWidget::mouseReleaseEvent(QMouseEvent*)
     dragging_ = false;
 }
 
+void ViewportWidget::keyPressEvent(QKeyEvent* e)
+{
+    switch (e->key()) {
+    case Qt::Key_F:
+        fitCamera();
+        break;
+    case Qt::Key_R:
+        resetCamera();
+        break;
+    case Qt::Key_W:
+        wireframe_ = !wireframe_;
+        update();
+        break;
+    default:
+        QOpenGLWidget::keyPressEvent(e);
+        break;
+    }
+}
+
 void ViewportWidget::wheelEvent(QWheelEvent* e)
 {
     float delta = (float)e->angleDelta().y() / 120.0f;
-    cam_dist_ *= (1.0f - delta * 0.08f);
-    cam_dist_ = std::clamp(cam_dist_, 1.0f, 200.0f);
+    float factor = 1.0f - delta * 0.08f;
+
+    // Zoom toward the cursor: move target slightly along the view ray
+    // proportional to how much we're zooming.
+    float sp = std::sin(cam_phi_), cp = std::cos(cam_phi_);
+    float st = std::sin(cam_theta_), ct = std::cos(cam_theta_);
+    // Forward vector (eye → target)
+    float fx = -(cp*st), fy = -sp, fz = -(cp*ct);
+    float flen = std::sqrt(fx*fx + fy*fy + fz*fz);
+    if (flen > 1e-6f) { fx /= flen; fy /= flen; fz /= flen; }
+    float shift = cam_dist_ * (1.0f - factor) * 0.25f;
+    cam_target_.x -= fx * shift;
+    cam_target_.y -= fy * shift;
+    cam_target_.z -= fz * shift;
+
+    cam_dist_ *= factor;
+    cam_dist_ = std::clamp(cam_dist_, 0.5f, 500.0f);
+    matrices_dirty_ = true;
     update();
 }
 
@@ -664,16 +713,24 @@ void ViewportWidget::fitCamera()
 
     scene::Vec3d c = f->centroid();
     cam_target_ = c;
-    double r = f->bounding_radius();
-    cam_dist_ = (float)(r * 3.0 + 3.0);
+
+    // Bounding radius + largest atom display radius so nothing is clipped
+    float maxAtomRad = 0.0f;
+    for (const auto& a : f->atoms)
+        maxAtomRad = std::max(maxAtomRad, atomRadius(a.Z) * 0.4f);
+
+    double r = f->bounding_radius() + static_cast<double>(maxAtomRad);
+    cam_dist_ = std::max(2.0f, (float)(r * 3.0 + 3.0));
+    matrices_dirty_ = true;
 }
 
 void ViewportWidget::resetCamera()
 {
     cam_theta_ = 0.4f;
-    cam_phi_ = 0.3f;
-    cam_dist_ = 15.0f;
+    cam_phi_   = 0.3f;
+    cam_dist_  = 15.0f;
     cam_target_ = {0, 0, 0};
+    matrices_dirty_ = true;
     fitCamera();
     update();
 }
@@ -682,4 +739,18 @@ void ViewportWidget::setWireframe(bool on)
 {
     wireframe_ = on;
     update();
+}
+
+bool ViewportWidget::grabScreenshot(const QString& path)
+{
+    // Force a synchronous render into the FBO before grabbing.
+    // repaint() is synchronous within the Qt event loop when called
+    // from the main thread.
+    makeCurrent();
+    repaint();
+    QImage img = grabFramebuffer();
+    doneCurrent();
+
+    if (img.isNull()) return false;
+    return img.save(path);
 }

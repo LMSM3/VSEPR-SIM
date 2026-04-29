@@ -1,5 +1,7 @@
 #include "MainWindow.h"
 #include <QApplication>
+#include <limits>
+#include <cmath>
 
 // ============================================================================
 // Construction
@@ -70,12 +72,29 @@ void MainWindow::createActions()
     // --- View ---
     resetCameraAct_ = new QAction(tr("&Reset Camera"), this);
     resetCameraAct_->setShortcut(tr("R"));
+    resetCameraAct_->setStatusTip(tr("Reset camera to default orbit position"));
     connect(resetCameraAct_, &QAction::triggered, this, &MainWindow::onResetCamera);
+
+    fitCameraAct_ = new QAction(tr("&Fit Camera"), this);
+    fitCameraAct_->setShortcut(tr("F"));
+    fitCameraAct_->setStatusTip(tr("Fit camera to molecule bounding sphere"));
+    connect(fitCameraAct_, &QAction::triggered, this, &MainWindow::onFitCamera);
 
     wireframeAct_ = new QAction(tr("&Wireframe"), this);
     wireframeAct_->setCheckable(true);
     wireframeAct_->setShortcut(tr("W"));
     connect(wireframeAct_, &QAction::triggered, this, &MainWindow::onToggleWireframe);
+
+    // --- Screenshot (quick capture) ---
+    screenshotAct_ = new QAction(tr("&Screenshot"), this);
+    screenshotAct_->setShortcut(tr("Ctrl+Shift+S"));
+    screenshotAct_->setStatusTip(tr("Save viewport screenshot to file"));
+    connect(screenshotAct_, &QAction::triggered, this, &MainWindow::onScreenshot);
+
+    // --- Console ---
+    clearConsoleAct_ = new QAction(tr("&Clear Console"), this);
+    clearConsoleAct_->setShortcut(tr("Ctrl+L"));
+    connect(clearConsoleAct_, &QAction::triggered, this, &MainWindow::onClearConsole);
 }
 
 // ============================================================================
@@ -89,6 +108,7 @@ void MainWindow::createMenus()
     fileMenu->addAction(saveAct_);
     fileMenu->addSeparator();
     fileMenu->addAction(exportImageAct_);
+    fileMenu->addAction(screenshotAct_);
     fileMenu->addSeparator();
     fileMenu->addAction(exitAct_);
 
@@ -99,9 +119,13 @@ void MainWindow::createMenus()
 
     QMenu* viewMenu = menuBar()->addMenu(tr("&View"));
     viewMenu->addAction(resetCameraAct_);
+    viewMenu->addAction(fitCameraAct_);
     viewMenu->addAction(wireframeAct_);
     viewMenu->addSeparator();
     // Dock visibility toggles are added below after docks are created
+
+    QMenu* consoleMenu = menuBar()->addMenu(tr("&Console"));
+    consoleMenu->addAction(clearConsoleAct_);
 }
 
 // ============================================================================
@@ -121,7 +145,10 @@ void MainWindow::createToolBars()
     mainBar->addAction(mdAct_);
     mainBar->addSeparator();
     mainBar->addAction(resetCameraAct_);
+    mainBar->addAction(fitCameraAct_);
     mainBar->addAction(wireframeAct_);
+    mainBar->addSeparator();
+    mainBar->addAction(screenshotAct_);
 }
 
 // ============================================================================
@@ -362,14 +389,33 @@ void MainWindow::onFileExportImage()
     QString path = QFileDialog::getSaveFileName(
         this, tr("Export Image"),
         "screenshot.png",
-        tr("PNG (*.png);;JPEG (*.jpg);;All Files (*)"));
+        tr("PNG (*.png);;JPEG (*.jpg *.jpeg);;All Files (*)"));
 
     if (path.isEmpty()) return;
 
-    QImage img = viewport_->grabFramebuffer();
-    img.save(path);
-    consolePanel_->log("Image exported: " + path);
-    statusBar()->showMessage(tr("Image exported: %1").arg(path));
+    if (viewport_->grabScreenshot(path)) {
+        consolePanel_->logResult(tr("Image exported: %1").arg(path));
+        statusBar()->showMessage(tr("Exported: %1").arg(path));
+    } else {
+        consolePanel_->logError(tr("Failed to write image: %1").arg(path));
+    }
+}
+
+void MainWindow::onScreenshot()
+{
+    QString path = QFileDialog::getSaveFileName(
+        this, tr("Save Screenshot"),
+        "screenshot.png",
+        tr("PNG (*.png);;All Files (*)"));
+
+    if (path.isEmpty()) return;
+
+    if (viewport_->grabScreenshot(path)) {
+        consolePanel_->logResult(tr("Screenshot saved: %1").arg(path));
+        statusBar()->showMessage(tr("Screenshot: %1").arg(path));
+    } else {
+        consolePanel_->logError(tr("Screenshot failed: %1").arg(path));
+    }
 }
 
 void MainWindow::onSinglePoint()
@@ -379,7 +425,8 @@ void MainWindow::onSinglePoint()
         return;
     }
 
-    consolePanel_->log("Running single-point energy evaluation…");
+    consolePanel_->log("Running single-point energy evaluation\xe2\x80\xa6");
+    statusBar()->showMessage(tr("Evaluating\xe2\x80\xa6"));
 
     bridge::KernelRequest req;
     req.op = bridge::KernelOp::SinglePoint;
@@ -390,9 +437,11 @@ void MainWindow::onSinglePoint()
         doc_ = result.output;
         viewport_->setDocument(doc_);
         syncPanels();
-        consolePanel_->log(QString::fromStdString(result.message));
+        consolePanel_->logResult(QString::fromStdString(result.message));
+        statusBar()->showMessage(tr("Single-point complete"));
     } else {
         consolePanel_->logError(QString::fromStdString(result.message));
+        statusBar()->showMessage(tr("Single-point failed"));
     }
 }
 
@@ -417,7 +466,7 @@ void MainWindow::onRunRelax()
         doc_ = result.output;
         viewport_->setDocument(doc_);
         syncPanels();
-        consolePanel_->log(QString::fromStdString(result.message));
+        consolePanel_->logResult(QString::fromStdString(result.message));
         statusBar()->showMessage(tr("Relaxation complete"));
     } else {
         consolePanel_->logError(QString::fromStdString(result.message));
@@ -447,7 +496,7 @@ void MainWindow::onRunMD()
         doc_ = result.output;
         viewport_->setDocument(doc_);
         syncPanels();
-        consolePanel_->log(QString::fromStdString(result.message));
+        consolePanel_->logResult(QString::fromStdString(result.message));
         statusBar()->showMessage(tr("MD complete"));
     } else {
         consolePanel_->logError(QString::fromStdString(result.message));
@@ -460,14 +509,25 @@ void MainWindow::onResetCamera()
     viewport_->resetCamera();
 }
 
+void MainWindow::onFitCamera()
+{
+    viewport_->fitCamera();
+}
+
 void MainWindow::onToggleWireframe()
 {
-    viewport_->setWireframe(wireframeAct_->isChecked());
+    bool wf = wireframeAct_->isChecked();
+    viewport_->setWireframe(wf);
+    statusBar()->showMessage(wf ? tr("Wireframe on") : tr("Wireframe off"), 2000);
+}
+
+void MainWindow::onClearConsole()
+{
+    consolePanel_->clearLog();
 }
 
 void MainWindow::onCommand(const QString& cmd)
 {
-    // Simple command dispatch through the console
     QString c = cmd.trimmed().toLower();
 
     if (c == "relax" || c == "fire") {
@@ -478,8 +538,25 @@ void MainWindow::onCommand(const QString& cmd)
         onSinglePoint();
     } else if (c == "reset") {
         onResetCamera();
+    } else if (c == "fit" || c == "zoom") {
+        onFitCamera();
+    } else if (c == "wireframe" || c == "wire") {
+        wireframeAct_->setChecked(!wireframeAct_->isChecked());
+        onToggleWireframe();
+    } else if (c == "screenshot" || c == "ss") {
+        onScreenshot();
+    } else if (c == "clear" || c == "cls") {
+        onClearConsole();
     } else if (c == "help") {
-        consolePanel_->log("Commands: relax, md, sp, reset, help");
+        consolePanel_->log("Commands:");
+        consolePanel_->log("  relax / fire   — FIRE energy minimization");
+        consolePanel_->log("  md / nvt       — Langevin MD (NVT, 300 K)");
+        consolePanel_->log("  sp / energy    — single-point evaluation");
+        consolePanel_->log("  reset          — reset camera to default");
+        consolePanel_->log("  fit / zoom     — fit camera to molecule");
+        consolePanel_->log("  wireframe/wire — toggle wireframe mode");
+        consolePanel_->log("  screenshot/ss  — save viewport image");
+        consolePanel_->log("  clear / cls    — clear this console");
     } else {
         consolePanel_->logError("Unknown command: " + cmd);
     }
@@ -496,24 +573,46 @@ void MainWindow::syncPanels()
         return;
     }
 
+    const int totalFrames = static_cast<int>(doc_->frames.size());
+    const int frameIdx = totalFrames - 1;
     const auto& f = doc_->current_frame();
 
-    // Properties panel
-    propertiesPanel_->setAtomCount(f.atom_count());
-
-    auto eIt = f.properties.find("energy_total");
-    if (eIt != f.properties.end())
-        propertiesPanel_->setEnergy(eIt->second);
-
-    auto fIt = f.properties.find("force_rms");
-    if (fIt != f.properties.end())
-        propertiesPanel_->setForceRMS(fIt->second);
-
-    // Formula from provenance
+    // --- Identity ---
     if (!doc_->provenance.formula.empty())
-        propertiesPanel_->setFormula(QString::fromStdString(doc_->provenance.formula));
+        propertiesPanel_->setFormula(
+            QString::fromStdString(doc_->provenance.formula));
+    propertiesPanel_->setAtomCount(f.atom_count());
+    propertiesPanel_->setBondCount(f.bond_count());
 
-    // Object tree
+    // --- Frame provenance ---
+    propertiesPanel_->setFrameIndex(frameIdx, totalFrames);
+    propertiesPanel_->setStep(f.step);
+    propertiesPanel_->setTime(f.time);
+
+    // --- Energy decomposition ---
+    auto getE = [&](const std::string& key) -> double {
+        auto it = f.properties.find(key);
+        return (it != f.properties.end()) ? it->second
+                                          : std::numeric_limits<double>::quiet_NaN();
+    };
+    propertiesPanel_->setEnergyTotal(getE("energy_total"));
+    propertiesPanel_->setEnergyBond(getE("energy_bond"));
+    propertiesPanel_->setEnergyAngle(getE("energy_angle"));
+    propertiesPanel_->setEnergyVdW(getE("energy_vdw"));
+    propertiesPanel_->setEnergyCoulomb(getE("energy_coul"));
+    propertiesPanel_->setEnergyPol(getE("energy_pol"));
+
+    // --- Forces ---
+    propertiesPanel_->setForceRMS(getE("force_rms"));
+
+    // --- Status bar: live energy ---
+    double eTot = getE("energy_total");
+    if (!std::isnan(eTot)) {
+        statusBar()->showMessage(
+            tr("E = %1 kcal/mol").arg(eTot, 0, 'f', 4));
+    }
+
+    // --- Object tree ---
     objectTree_->clear();
     QString name = QString::fromStdString(
         doc_->provenance.source_file.empty()

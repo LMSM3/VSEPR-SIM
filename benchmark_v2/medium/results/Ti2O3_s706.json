@@ -1,0 +1,19 @@
+{
+  "formula": "Ti2O3",
+  "seed": 706,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 12.163982,
+  "energy_per_atom": 2.432796,
+  "rms_force": 24.334937,
+  "max_force": 24.334937,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.554300,
+  "timestamp": "2026-03-28T13:06:40",
+  "xyz_file": "benchmark_v2\medium\structures\Ti2O3_s706.xyz"
+}

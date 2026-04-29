@@ -1,0 +1,19 @@
+{
+  "formula": "CH2O",
+  "seed": 70,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1.214788,
+  "energy_per_atom": 0.303697,
+  "rms_force": 4.060155,
+  "max_force": 4.060155,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.550200,
+  "timestamp": "2026-03-28T13:07:04",
+  "xyz_file": "benchmark_v2\medium\structures\CH2O_s70.xyz"
+}

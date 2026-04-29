@@ -1,0 +1,19 @@
+{
+  "formula": "K2SO4",
+  "seed": 216,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 304.624912,
+  "energy_per_atom": 43.517845,
+  "rms_force": 325.264472,
+  "max_force": 325.264472,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.679200,
+  "timestamp": "2026-03-28T12:55:08",
+  "xyz_file": "benchmark_100\medium\structures\K2SO4_s216.xyz"
+}

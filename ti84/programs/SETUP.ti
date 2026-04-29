@@ -1,0 +1,87 @@
+﻿; =========================================================================
+; SETUP.ti - Configuration initializer (Fatigue S-N)
+; =========================================================================
+;
+; Run ONCE to create/update the LCONF persistent defaults list.
+; All other programs READ from LCONF.  Only this program WRITES to it.
+;
+; LCONF layout (Fatigue S-N Calculator):
+;   (1) = Sut   Ultimate tensile strength   [MPa]   default 400 (mild steel)
+;   (2) = Sy    Yield strength              [MPa]   default 300
+;   (3) = Sep   Endurance limit (Se')       [MPa]   default 200
+;   (4) = ka    Marin surface factor         [-]    default 0.70 (machined)
+;   (5) = kb    Marin size factor            [-]    default 0.85 (d~25mm)
+;   (6) = kc    Marin reliability factor     [-]    default 0.897 (90%)
+;   (7) = Kt    Stress concentration factor  [-]    default 1.0 (no notch)
+;   (8) = q     Notch sensitivity            [-]    default 1.0 (full)
+;
+; Se (corrected) = ka * kb * kc * Sep
+; Kf = 1 + q * (Kt - 1)
+;
+; After running, LCONF persists in RAM until manual Mem Clear.
+; =========================================================================
+
+ClrHome
+Disp "=== SETUP ==="
+Disp "FATIGUE DEFAULTS"
+Disp ""
+
+; Initialize with sensible defaults
+{400,300,200,0.70,0.85,0.897,1.0,1.0}->LCONF
+
+Disp "Sut [MPa] (400):"
+Prompt S
+If S!=999
+S->LCONF(1)
+
+Disp "Sy  [MPa] (300):"
+Prompt Y
+If Y!=999
+Y->LCONF(2)
+
+Disp "Se' [MPa] (200):"
+Prompt E
+If E!=999
+E->LCONF(3)
+
+Disp "ka SURFACE (0.70):"
+Prompt A
+If A!=999
+A->LCONF(4)
+
+Disp "kb SIZE   (0.85):"
+Prompt B
+If B!=999
+B->LCONF(5)
+
+Disp "kc RELIAB (0.897):"
+Prompt C
+If C!=999
+C->LCONF(6)
+
+Disp "Kt SCF    (1.0):"
+Prompt T
+If T!=999
+T->LCONF(7)
+
+Disp "q  NOTCH  (1.0):"
+Prompt Q
+If Q!=999
+Q->LCONF(8)
+
+Disp ""
+Disp "CONF SAVED:"
+Disp "Sut Sy Sep ka kb"
+Disp "kc Kt q"
+Disp LCONF
+
+; Pause before exit (canonical pattern)
+Disp ""
+Disp "[ANY KEY]"
+0->K
+While K=0
+ getKey->K
+End
+
+ClrHome
+Disp "SETUP COMPLETE"

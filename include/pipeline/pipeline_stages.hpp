@@ -23,6 +23,8 @@
  */
 
 #include "include/pipeline/pipeline_record.hpp"
+#include "include/pipeline/expression_generators.hpp"
+#include "include/pipeline/animation_generators.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -68,8 +70,20 @@ inline std::string jd(double v, int prec = 6) {
 }
 
 inline std::string jq(const std::string& s) {
-	// Minimal JSON string quoting — no control characters in our strings
-	return "\"" + s + "\"";
+	std::ostringstream out;
+	out << '"';
+	for (char c : s) {
+		switch (c) {
+			case '"':  out << "\\\""; break;
+			case '\\': out << "\\\\"; break;
+			case '\n': out << "\\n";  break;
+			case '\r': out << "\\r";  break;
+			case '\t': out << "\\t";  break;
+			default:   out << c;      break;
+		}
+	}
+	out << '"';
+	return out.str();
 }
 
 } // namespace detail
@@ -133,6 +147,11 @@ inline FingerprintRecord stage_fingerprint(const v4::FormationRecord& f) {
 	if (fp.feature_norm < 1e-12)
 		fp.warnings.push_back(WarningCode::FingerprintDegenerate);
 
+	fp.trace.expressions.push_back(
+		expr::feature_vector_norm(fp.symbol, fp.feature_norm));
+	fp.trace.animations.push_back(
+		anim::feature_vector_bars(fp.symbol, fp.feature_norm));
+
 	return fp;
 }
 
@@ -166,6 +185,9 @@ inline ClusterRecord stage_cluster(const FingerprintRecord& fp,
 
 	if (cr.cluster_size < 2)
 		cr.warnings.push_back(WarningCode::LowPopulation);
+
+	cr.trace.animations.push_back(
+		anim::cluster_assignment_pulse(cr.symbol, cr.cluster_id));
 
 	return cr;
 }
@@ -211,9 +233,11 @@ inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
 	}
 
 	// packing_quality: avg_rho and avg_C; both normalised heuristically
+	double rho_norm = 0.0;
+	double C_norm   = 0.0;
 	{
-		double rho_norm = detail::clamp01(detail::safe(f.avg_rho) / 15.0); // 15 is rough FCC max
-		double C_norm   = detail::clamp01(detail::safe(f.avg_C)   / 50.0); // 50 is rough FCC max
+		rho_norm = detail::clamp01(detail::safe(f.avg_rho) / 15.0);
+		C_norm   = detail::clamp01(detail::safe(f.avg_C)   / 50.0);
 		ar.packing_quality = 0.5 * (rho_norm + C_norm);
 	}
 
@@ -228,12 +252,13 @@ inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
 		0.3 * ar.packing_quality +
 		0.2 * detail::clamp01(1.0 - ar.defect_indicator * 10.0));
 
-	// cluster_label: lattice class + density tier
+	// cluster_label: lattice class + density tier — owned by AnalysisRecord
 	{
 		std::string tier = (ar.packing_quality > 0.5) ? "dense" : "sparse";
 		ar.cluster_label = ar.motif_class + "-" + tier;
 	}
-	const_cast<ClusterRecord&>(cr).cluster_label = ar.cluster_label; // backfill label
+	// Note: ClusterRecord::cluster_label intentionally left empty.
+	// AnalysisRecord is the authority. No backfill. No const_cast.
 
 	// interpretation
 	{
@@ -247,6 +272,28 @@ inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
 		if (ar.defect_indicator > 0.01)
 			s << "  defect=" << ar.defect_indicator;
 		ar.interpretation = s.str();
+	}
+
+	// Symbolic traces
+	ar.trace.expressions.push_back(
+		expr::energy_per_bead(f.final_energy, f.n_beads, ar.energy_per_bead));
+	ar.trace.expressions.push_back(
+		expr::convergence_quality(detail::safe(f.rms_force), ar.convergence_quality));
+	ar.trace.expressions.push_back(
+		expr::packing_quality(f.avg_rho, f.avg_C, rho_norm, C_norm, ar.packing_quality));
+	ar.trace.expressions.push_back(
+		expr::defect_indicator(f.n_l3_domains, f.n_beads, ar.defect_indicator));
+	ar.trace.expressions.push_back(
+		expr::stability_score(
+			ar.convergence_quality, ar.packing_quality,
+			ar.defect_indicator, ar.stability_score));
+
+	// Animation cues
+	ar.trace.animations.push_back(
+		anim::stability_gauge(ar.symbol, ar.stability_score));
+	if (ar.defect_indicator > 0.01) {
+		ar.trace.animations.push_back(
+			anim::defect_warning_flash(ar.symbol, ar.defect_indicator));
 	}
 
 	return ar;
@@ -330,6 +377,24 @@ inline ReportRecord stage_report(const AnalysisRecord& ar) {
 		  << "  " << ar.cluster_label
 		  << (warn_str == "ok" ? "" : "  [" + warn_str + "]");
 		rr.summary_line = s.str();
+	}
+
+	// Forward trace bundle from analysis stage
+	rr.trace = ar.trace;
+
+	// Build symbolic markdown block from trace expressions
+	{
+		std::ostringstream md;
+		md << "## Symbolic Calculation Trace\n\n";
+		for (const auto& tr : ar.trace.expressions) {
+			md << "### " << tr.metric_name << "\n\n";
+			md << "**Equation:** `" << tr.symbolic_expression << "`\n\n";
+			md << "**Substitution:** `" << tr.substituted_expression << "`\n\n";
+			md << "**Result:** `" << tr.result_expression << "`\n\n";
+			md << "**Units:** `" << tr.units << "`\n\n";
+			md << "**Interpretation:** " << tr.interpretation << "\n\n";
+		}
+		rr.symbolic_markdown = md.str();
 	}
 
 	return rr;
@@ -470,6 +535,14 @@ inline DashboardRecord stage_dashboard(const std::vector<ReportRecord>& reports,
 		  << "  warnings=" << dr.n_warnings;
 		dr.run_summary = s.str();
 	}
+
+	// Collect animation cues from all report trace bundles
+	for (const auto& r : reports) {
+		for (const auto& cue : r.trace.animations)
+			dr.trace.animations.push_back(cue);
+	}
+	dr.trace.animations.push_back(
+		anim::dashboard_cluster_growth(dr.n_cases, dr.n_clusters));
 
 	return dr;
 }

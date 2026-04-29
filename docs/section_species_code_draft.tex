@@ -1,0 +1,608 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{array}
+\usepackage{graphicx}
+
+\definecolor{codebg}{RGB}{246,247,249}
+\definecolor{kw}{RGB}{0,80,160}
+\definecolor{cm}{RGB}{55,120,55}
+\definecolor{st}{RGB}{160,40,40}
+\definecolor{nu}{RGB}{130,55,170}
+\definecolor{pp}{RGB}{100,50,0}
+\definecolor{rulecol}{RGB}{185,192,202}
+
+\lstdefinestyle{cpp20}{
+  language=C++,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cm}\itshape,
+  stringstyle=\color{st},
+  numberstyle=\color{nu}\tiny,
+  emphstyle=\color{pp}\bfseries,
+  emph={constexpr,noexcept,nodiscard,string_view,int32_t,size_t,
+        ParticleID,DecayEvent,KineticEventRecord,EventKind,
+        NuclearState,DaughterState,is_reserved,is_transportable,
+        is_bookkeeping_only,is_decay_particle,is_energy_carrier,
+        is_defect_or_virtual,is_ghost,is_atom_species,
+        to_string,species_code_to_label},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{rulecol},
+  framesep=4pt,
+  numbers=left,
+  numbersep=8pt,
+  tabsize=4,
+  showstringspaces=false,
+  xleftmargin=14pt,
+  captionpos=b
+}
+
+\lstdefinestyle{clang}{
+  language=C,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cm}\itshape,
+  stringstyle=\color{st},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{rulecol},
+  framesep=4pt,
+  numbers=left,
+  numbersep=8pt,
+  tabsize=4,
+  showstringspaces=false,
+  xleftmargin=14pt,
+  captionpos=b
+}
+
+\lstdefinestyle{tbl}{
+  language={},
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\scriptsize,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{rulecol},
+  framesep=4pt,
+  numbers=none,
+  showstringspaces=false,
+  captionpos=b
+}
+
+\lstset{style=cpp20}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries Unified Species Code Namespace}\\[4pt]
+  {\large VSEPR-SIM -- Code Draft}\\[2pt]
+  {\small\texttt{include/physics/particle\_id.hpp} \quad
+          \texttt{legacy/c\_api/particle\_ids.h} \quad
+          \texttt{include/physics/decay\_event\_builder.hpp}}\\[6pt]
+  {\small v4.1.0 \quad June 2025}
+\end{center}
+
+\vspace{4pt}\hrule\vspace{8pt}
+\tableofcontents
+\newpage
+
+%% ===================================================================
+\section{Core Idea}
+%% ===================================================================
+
+Every row in the engine geometry table carries a single signed integer
+called \texttt{species\_code}.  The sign tells you immediately what
+kind of entity the coordinate belongs to:
+
+\[
+\texttt{species\_code} \in \mathbb{Z},\quad
+\begin{cases}
+\geq 1  & \text{standard atom template} \quad (Z = 1\ldots 118) \\
+= 0     & \text{placeholder / unresolved} \\
+\leq -1 & \text{reserved engine entity (negative class space)}
+\end{cases}
+\]
+
+The negative range is a \emph{reserved class space}: every nonstandard,
+derived, emitted, virtual, or bookkeeping entity that can appear in the
+coordinate table gets a permanent negative code.  No separate type tag,
+no string parsing, no secondary lookup.
+
+\subsection{Geometry Table Integration}
+
+A geometry table row has the shape:
+
+\begin{lstlisting}[style=tbl,
+  caption={Long-form geometry table with species\_code column}]
+sample_id  bead_id  local_id  species_code  label        x        y        z       state
+17         0        0          6             C            0.000    1.402    0.000   final
+17         0        1          1             H            1.050    2.100    0.000   final
+17         1        0         -1             alpha        2.500    0.300    0.200   emitted
+17         1        1         -3             gamma        2.700    0.300    0.200   emitted
+17         2        0         -4             eta          3.100    0.100    0.050   emitted
+17         3        0         -17            ghost        0.000    0.000    0.000   virtual
+\end{lstlisting}
+
+\texttt{species\_code} is the master numeric identifier.
+Positive or zero means standard atom/object template;
+negative means reserved synthetic class.
+The \texttt{label} column is derived from \texttt{species\_code}
+via \texttt{species\_code\_to\_label()} and is never the source of truth.
+
+%% ===================================================================
+\section{The Reserved Negative Ladder}
+%% ===================================================================
+
+The negative range is partitioned into three consecutive bands:
+
+\[
+\underbrace{[-1,\ -8]}_{\substack{\text{physical emission /}\\\text{decay particles}}}
+\quad
+\underbrace{[-9,\ -14]}_{\substack{\text{energy / field /}\\\text{abstract carriers}}}
+\quad
+\underbrace{[-15,\ -18]}_{\substack{\text{defect / structural /}\\\text{bookkeeping}}}
+\]
+
+\bigskip
+\begin{center}
+\renewcommand{\arraystretch}{1.15}
+\begin{tabular}{rllp{6.2cm}}
+\toprule
+\textbf{Code} & \textbf{Enum name} & \textbf{Label} & \textbf{Description} \\
+\midrule
+\multicolumn{4}{l}{\textit{Physical emission / decay particles}} \\
+$-1$  & \texttt{alpha}            & \texttt{alpha}         & He-4 nucleus (alpha decay) \\
+$-2$  & \texttt{beta\_minus}      & \texttt{beta-}         & Electron (beta-minus decay) \\
+$-3$  & \texttt{gamma}            & \texttt{gamma}         & Gamma photon \\
+$-4$  & \texttt{eta}              & \texttt{eta}           & QMD energy packet -- abstract
+                                                             high-definition energy carrier;
+                                                             extra to the standard kernel
+                                                             energy unit \\
+$-5$  & \texttt{antineutrino}     & \texttt{antineutrino}  & Antineutrino loss token \\
+$-6$  & \texttt{neutrino}         & \texttt{neutrino}      & Neutrino loss token \\
+$-7$  & \texttt{neutron\_free}    & \texttt{neutron}       & Free neutron \\
+$-8$  & \texttt{proton\_free}     & \texttt{proton}        & Free proton \\
+\midrule
+\multicolumn{4}{l}{\textit{Energy / field / abstract carriers}} \\
+$-9$  & \texttt{excitation\_packet}  & \texttt{excitation}    & Electronic excitation carrier \\
+$-10$ & \texttt{ionization\_event}   & \texttt{ionization}    & Ionization bookkeeping token \\
+$-11$ & \texttt{heat\_packet}        & \texttt{heat}          & Phonon / thermal energy packet \\
+$-12$ & \texttt{charge\_cloud}       & \texttt{charge\_cloud} & Distributed charge carrier \\
+$-13$ & \texttt{field\_source}       & \texttt{field\_source} & Field-origin sentinel \\
+$-14$ & \texttt{field\_probe}        & \texttt{field\_probe}  & Field-sampling sentinel \\
+\midrule
+\multicolumn{4}{l}{\textit{Defect / structural / bookkeeping}} \\
+$-15$ & \texttt{vacancy}            & \texttt{vacancy}           & Lattice vacancy defect \\
+$-16$ & \texttt{interstitial}       & \texttt{interstitial}      & Lattice interstitial defect \\
+$-17$ & \texttt{ghost}              & \texttt{ghost}             & Ghost particle -- virtual
+                                                                    massless sentinel for field
+                                                                    evaluation, constraint
+                                                                    anchoring, or higher-order
+                                                                    virtual entities \\
+$-18$ & \texttt{transition\_state}  & \texttt{transition\_state} & Reaction coordinate marker \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Notes on Selected Entries}
+
+\paragraph{$-4$: eta packet.}
+The \texttt{eta} entry is an abstract energy packet that lives above the
+standard kernel energy unit.  It is specifically designed for
+high-definition QMD simulations where sub-particle energy resolution is
+required.  It can appear as an emitted row in the geometry table, carry
+coordinates, and be tracked like any other entity.
+
+\paragraph{$-17$: ghost particle.}
+The ghost particle is massless and exerts no direct force.  Its coordinate
+is meaningful: it marks a point in space used for field evaluation,
+constraint anchoring, reaction coordinate sampling, or as a stand-in for
+higher-order virtual entities.  A ghost row in the geometry table is valid
+geometry; it never contributes to pair interactions.
+
+%% ===================================================================
+\section{\texttt{particle\_id.hpp} -- Full Listing}
+%% ===================================================================
+
+\begin{lstlisting}[style=cpp20,
+  caption={\texttt{include/physics/particle\_id.hpp} -- enum class}]
+namespace vsepr::physics {
+
+enum class ParticleID : std::int32_t {
+    placeholder            =  0,
+
+    // Physical emission / decay particles
+    alpha                  = -1,
+    beta_minus             = -2,
+    gamma                  = -3,
+    eta                    = -4,   // QMD energy packet
+    antineutrino           = -5,
+    neutrino               = -6,
+    neutron_free           = -7,
+    proton_free            = -8,
+
+    // Energy / field / abstract carriers
+    excitation_packet      = -9,
+    ionization_event       = -10,
+    heat_packet            = -11,
+    charge_cloud           = -12,
+    field_source           = -13,
+    field_probe            = -14,
+
+    // Defect / structural / bookkeeping
+    vacancy                = -15,
+    interstitial           = -16,
+    ghost                  = -17,
+    transition_state       = -18
+};
+
+} // namespace vsepr::physics
+\end{lstlisting}
+
+\subsection{Sub-range Predicates}
+
+\begin{lstlisting}[style=cpp20,
+  caption={Constexpr sub-range predicates}]
+// Full engine-reserved range [0, -99]
+[[nodiscard]] constexpr bool is_reserved(ParticleID id) noexcept {
+    const auto v = static_cast<std::int32_t>(id);
+    return (v <= 0 && v >= -99);
+}
+
+// Physical decay / emission particles [-1, -8]
+[[nodiscard]] constexpr bool is_decay_particle(ParticleID id) noexcept {
+    const auto v = static_cast<std::int32_t>(id);
+    return (v >= -8 && v <= -1);
+}
+
+// Physically propagates through matter
+[[nodiscard]] constexpr bool is_transportable(ParticleID id) noexcept {
+    switch (id) {
+        case ParticleID::alpha:
+        case ParticleID::beta_minus:
+        case ParticleID::gamma:
+        case ParticleID::neutron_free:
+        case ParticleID::proton_free:
+            return true;
+        default: return false;
+    }
+}
+
+// Never transported -- accounting token only
+[[nodiscard]] constexpr bool is_bookkeeping_only(ParticleID id) noexcept {
+    switch (id) {
+        case ParticleID::eta:
+        case ParticleID::antineutrino:
+        case ParticleID::neutrino:
+        case ParticleID::excitation_packet:
+        case ParticleID::ionization_event:
+        case ParticleID::heat_packet:
+        case ParticleID::charge_cloud:
+        case ParticleID::field_source:
+        case ParticleID::field_probe:
+        case ParticleID::transition_state:
+            return true;
+        default: return false;
+    }
+}
+
+// Energy / field abstract carriers [-9, -14]
+[[nodiscard]] constexpr bool is_energy_carrier(ParticleID id) noexcept {
+    const auto v = static_cast<std::int32_t>(id);
+    return (v >= -14 && v <= -9);
+}
+
+// Defect / structural / virtual entities [-15, -18]
+[[nodiscard]] constexpr bool is_defect_or_virtual(ParticleID id) noexcept {
+    const auto v = static_cast<std::int32_t>(id);
+    return (v >= -18 && v <= -15);
+}
+
+// Ghost particle specifically
+[[nodiscard]] constexpr bool is_ghost(ParticleID id) noexcept {
+    return id == ParticleID::ghost;
+}
+\end{lstlisting}
+
+\subsection{Label and \texttt{species\_code} Helpers}
+
+\begin{lstlisting}[style=cpp20,
+  caption={Geometry table label generation}]
+[[nodiscard]] constexpr std::string_view to_string(ParticleID id) noexcept {
+    switch (id) {
+        case ParticleID::placeholder:        return "X";
+        case ParticleID::alpha:              return "alpha";
+        case ParticleID::beta_minus:         return "beta-";
+        case ParticleID::gamma:              return "gamma";
+        case ParticleID::eta:                return "eta";
+        case ParticleID::antineutrino:       return "antineutrino";
+        case ParticleID::neutrino:           return "neutrino";
+        case ParticleID::neutron_free:       return "neutron";
+        case ParticleID::proton_free:        return "proton";
+        case ParticleID::excitation_packet:  return "excitation";
+        case ParticleID::ionization_event:   return "ionization";
+        case ParticleID::heat_packet:        return "heat";
+        case ParticleID::charge_cloud:       return "charge_cloud";
+        case ParticleID::field_source:       return "field_source";
+        case ParticleID::field_probe:        return "field_probe";
+        case ParticleID::vacancy:            return "vacancy";
+        case ParticleID::interstitial:       return "interstitial";
+        case ParticleID::ghost:              return "ghost";
+        case ParticleID::transition_state:   return "transition_state";
+        default:                             return "unknown";
+    }
+}
+
+// Raw int32_t interface for geometry table I/O.
+// Positive codes (atom Z) return "?" -- caller resolves via periodic table.
+[[nodiscard]] constexpr std::string_view
+species_code_to_label(std::int32_t code) noexcept {
+    if (code > 0) return "?";
+    return to_string(static_cast<ParticleID>(code));
+}
+
+// True if code is a standard atom template (Z in [1, 118])
+[[nodiscard]] constexpr bool is_atom_species(std::int32_t code) noexcept {
+    return (code >= 1 && code <= 118);
+}
+
+// True if code is a reserved engine entity (code <= 0)
+[[nodiscard]] constexpr bool is_reserved_code(std::int32_t code) noexcept {
+    return (code <= 0 && code >= -99);
+}
+\end{lstlisting}
+
+%% ===================================================================
+\section{Updated Decay Builders}
+%% ===================================================================
+
+The builder factories emit particles using the new enum names.
+Beta-minus decay appends \texttt{antineutrino} (code $-5$) specifically
+rather than a generic loss token.
+
+\begin{lstlisting}[style=cpp20,
+  caption={Alpha, beta-minus, and gamma decay factories}]
+// S(Z,A) -> S(Z-2, A-4) + alpha
+[[nodiscard]] inline DecayEvent make_alpha_decay(
+    std::int32_t parent, std::int32_t daughter,
+    double energy_eV, double time_s, double confidence
+) {
+    DecayEvent ev {};
+    ev.parent_species_id   = parent;
+    ev.daughter_species_id = daughter;
+    ev.released_energy_eV  = energy_eV;
+    ev.event_time_s        = time_s;
+    ev.confidence          = confidence;
+    ev.deposited_energy_fraction   = 0.85;
+    ev.transported_energy_fraction = 0.15;
+    ev.local_damage_score          = 0.90;
+    (void)ev.add_emitted(ParticleID::alpha);         // -1
+    return ev;
+}
+
+// S(Z,A) -> S(Z+1, A) + beta_minus + antineutrino
+[[nodiscard]] inline DecayEvent make_beta_minus_decay(
+    std::int32_t parent, std::int32_t daughter,
+    double energy_eV, double time_s, double confidence
+) {
+    DecayEvent ev {};
+    ev.parent_species_id   = parent;
+    ev.daughter_species_id = daughter;
+    ev.released_energy_eV  = energy_eV;
+    ev.event_time_s        = time_s;
+    ev.confidence          = confidence;
+    ev.deposited_energy_fraction   = 0.35;
+    ev.transported_energy_fraction = 0.65;
+    ev.local_damage_score          = 0.30;
+    (void)ev.add_emitted(ParticleID::beta_minus);    // -2
+    (void)ev.add_emitted(ParticleID::antineutrino);  // -5
+    return ev;
+}
+
+// S*(Z,A) -> S(Z,A) + gamma
+[[nodiscard]] inline DecayEvent make_gamma_decay(
+    std::int32_t parent, std::int32_t daughter,
+    double energy_eV, double time_s, double confidence
+) {
+    DecayEvent ev {};
+    ev.parent_species_id   = parent;
+    ev.daughter_species_id = daughter;
+    ev.released_energy_eV  = energy_eV;
+    ev.event_time_s        = time_s;
+    ev.confidence          = confidence;
+    ev.deposited_energy_fraction   = 0.10;
+    ev.transported_energy_fraction = 0.90;
+    ev.local_damage_score          = 0.05;
+    (void)ev.add_emitted(ParticleID::gamma);         // -3
+    return ev;
+}
+\end{lstlisting}
+
+%% ===================================================================
+\section{Plain C Legacy API}
+%% ===================================================================
+
+\begin{lstlisting}[style=clang,
+  caption={\texttt{legacy/c\_api/particle\_ids.h} -- updated C enum}]
+typedef enum ParticleID {
+    PARTICLE_PLACEHOLDER        =  0,
+
+    /* Physical emission / decay particles */
+    PARTICLE_ALPHA              = -1,
+    PARTICLE_BETA_MINUS         = -2,
+    PARTICLE_GAMMA              = -3,
+    PARTICLE_ETA                = -4,   /* QMD energy packet */
+    PARTICLE_ANTINEUTRINO       = -5,
+    PARTICLE_NEUTRINO           = -6,
+    PARTICLE_NEUTRON_FREE       = -7,
+    PARTICLE_PROTON_FREE        = -8,
+
+    /* Energy / field / abstract carriers */
+    PARTICLE_EXCITATION         = -9,
+    PARTICLE_IONIZATION         = -10,
+    PARTICLE_HEAT_PACKET        = -11,
+    PARTICLE_CHARGE_CLOUD       = -12,
+    PARTICLE_FIELD_SOURCE       = -13,
+    PARTICLE_FIELD_PROBE        = -14,
+
+    /* Defect / structural / virtual */
+    PARTICLE_VACANCY            = -15,
+    PARTICLE_INTERSTITIAL       = -16,
+    PARTICLE_GHOST              = -17,
+    PARTICLE_TRANSITION_STATE   = -18
+} ParticleID;
+
+const char* particle_id_name(int id);
+int particle_id_is_reserved(int id);
+int particle_id_is_transportable(int id);
+int particle_id_is_bookkeeping_only(int id);
+int particle_id_is_atom_species(int id);
+\end{lstlisting}
+
+%% ===================================================================
+\section{Query Classification Table}
+%% ===================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.1}
+\begin{tabular}{rlccccc}
+\toprule
+\textbf{Code} & \textbf{Name} &
+  \rotatebox{70}{\texttt{reserved}} &
+  \rotatebox{70}{\texttt{decay\_particle}} &
+  \rotatebox{70}{\texttt{transportable}} &
+  \rotatebox{70}{\texttt{energy\_carrier}} &
+  \rotatebox{70}{\texttt{defect\_or\_virtual}} \\
+\midrule
+$-1$  & \texttt{alpha}              & $\bullet$ & $\bullet$ & $\bullet$ & & \\
+$-2$  & \texttt{beta\_minus}        & $\bullet$ & $\bullet$ & $\bullet$ & & \\
+$-3$  & \texttt{gamma}              & $\bullet$ & $\bullet$ & $\bullet$ & & \\
+$-4$  & \texttt{eta}                & $\bullet$ & $\bullet$ & & & \\
+$-5$  & \texttt{antineutrino}       & $\bullet$ & $\bullet$ & & & \\
+$-6$  & \texttt{neutrino}           & $\bullet$ & $\bullet$ & & & \\
+$-7$  & \texttt{neutron\_free}      & $\bullet$ & $\bullet$ & $\bullet$ & & \\
+$-8$  & \texttt{proton\_free}       & $\bullet$ & $\bullet$ & $\bullet$ & & \\
+$-9$  & \texttt{excitation\_packet} & $\bullet$ & & & $\bullet$ & \\
+$-10$ & \texttt{ionization\_event}  & $\bullet$ & & & $\bullet$ & \\
+$-11$ & \texttt{heat\_packet}       & $\bullet$ & & & $\bullet$ & \\
+$-12$ & \texttt{charge\_cloud}      & $\bullet$ & & & $\bullet$ & \\
+$-13$ & \texttt{field\_source}      & $\bullet$ & & & $\bullet$ & \\
+$-14$ & \texttt{field\_probe}       & $\bullet$ & & & $\bullet$ & \\
+$-15$ & \texttt{vacancy}            & $\bullet$ & & & & $\bullet$ \\
+$-16$ & \texttt{interstitial}       & $\bullet$ & & & & $\bullet$ \\
+$-17$ & \texttt{ghost}              & $\bullet$ & & & & $\bullet$ \\
+$-18$ & \texttt{transition\_state}  & $\bullet$ & & & & $\bullet$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Note: \texttt{is\_bookkeeping\_only} returns true for all entries where
+\texttt{is\_transportable} is false and \texttt{is\_reserved} is true,
+i.e.\ codes $-4$ through $-6$, codes $-9$ through $-14$, and $-18$.
+
+%% ===================================================================
+\section{Geometry Table Dispatch Pattern}
+%% ===================================================================
+
+\subsection{Writing a Row}
+
+\begin{lstlisting}[style=cpp20,
+  caption={Writing a geometry table row for any species code}]
+void write_row(std::ostream& out,
+               int sample_id, int bead_id, int local_id,
+               std::int32_t species_code,
+               double x, double y, double z,
+               std::string_view state)
+{
+    using namespace vsepr::physics;
+
+    std::string_view label;
+    if (is_atom_species(species_code)) {
+        label = element_symbol(species_code); // periodic table
+    } else {
+        label = species_code_to_label(species_code);
+    }
+
+    out << sample_id    << '\t'
+        << bead_id      << '\t'
+        << local_id     << '\t'
+        << species_code << '\t'
+        << label        << '\t'
+        << x << '\t' << y << '\t' << z << '\t'
+        << state        << '\n';
+}
+
+// Examples:
+write_row(out, 17, 0, 0,  6,  x, y, z, "final");   // Carbon
+write_row(out, 17, 1, 0, -1,  x, y, z, "emitted");  // alpha
+write_row(out, 17, 2, 0, -4,  x, y, z, "emitted");  // eta
+write_row(out, 17, 3, 0, -17, x, y, z, "virtual");  // ghost
+\end{lstlisting}
+
+\subsection{Reading and Dispatching}
+
+\begin{lstlisting}[style=cpp20,
+  caption={Dispatch on species\_code while reading geometry table}]
+void dispatch_row(std::int32_t sc, double x, double y, double z)
+{
+    using namespace vsepr::physics;
+    const auto id = static_cast<ParticleID>(sc);
+
+    if (is_atom_species(sc)) {
+        add_atom(sc, x, y, z);               // force-field
+    }
+    else if (is_decay_particle(id)) {
+        register_emitted(sc, x, y, z);        // transport
+    }
+    else if (is_energy_carrier(id)) {
+        register_energy_token(sc, x, y, z);   // accounting
+    }
+    else if (is_ghost(id)) {
+        register_field_point(x, y, z);        // no force
+    }
+    else if (is_defect_or_virtual(id)) {
+        register_defect(sc, x, y, z);         // structural
+    }
+}
+\end{lstlisting}
+
+%% ===================================================================
+\section{Relation to Existing Infrastructure}
+%% ===================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Location} & \textbf{Role} \\
+\midrule
+\texttt{vsepr::nuclear::DecayMode}       & \texttt{decay\_chains.hpp}      & How a chain step progresses \\
+\texttt{atomistic::nuclear::DecayType}   & \texttt{nuclear\_stability.hpp} & Dominant mode prediction for $Z$ \\
+\texttt{vsepr::physics::ParticleID}      & \texttt{particle\_id.hpp}       & Integer code in the geometry row \\
+\texttt{XYZAtom::atom\_type}             & \texttt{xyz\_format.hpp}        & Force-field type (always positive) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\texttt{DecayMode} and \texttt{DecayType} answer ``what kind of
+transition occurred?''  \texttt{ParticleID} / \texttt{species\_code}
+answers ``what integer code is in this coordinate row?''
+The four components are orthogonal.
+
+\texttt{XYZAtom::atom\_type} carries force-field type codes and is
+always positive.  \texttt{species\_code} is a separate higher-level
+column; negative values there do not conflict with \texttt{atom\_type}.
+
+\end{document}

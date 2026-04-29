@@ -14,6 +14,8 @@
 #include "cli/cmd_build.hpp"
 #include "cli/cmd_viz.hpp"
 #include "cli/cmd_therm.hpp"
+#include "cli/cmd_tui.hpp"
+#include "cli/cmd_ufx.hpp"
 #include <iostream>
 #include <memory>
 #include <map>
@@ -35,6 +37,8 @@ public:
         Register(std::make_unique<BuildCommand>());
         Register(std::make_unique<VizCommand>());
         Register(std::make_unique<ThermCommand>());
+        Register(std::make_unique<TuiCommand>());
+        Register(std::make_unique<UfxCommand>());
     }
     
     void Register(std::unique_ptr<Command> cmd) {

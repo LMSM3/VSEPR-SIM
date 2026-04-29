@@ -1,0 +1,77 @@
+# scripts/demo_03_graphite_stack.vsim
+# VSEPR-SIM 5-layer graphite AB Bernal stacking demo
+# ERB channels: gamma_disp > 0, gamma_elec < 0, gamma_steric > 0
+# Expected: AB registry > 0.70, interlayer spacing ~3.35 A, eta in [0.52, 0.62]
+# vsper validate scripts/demo_03_graphite_stack.vsim
+
+[project]
+name        = demo_03_graphite_stack
+version     = v5.0.0-beta.7.1
+seed_base   = 3008
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+layer_events     = true
+defect_events    = true
+
+[simulation.molecule]
+formula     = C
+count       = 480
+temperature = 300.0
+lattice     = hexagonal
+layer_mode  = AB
+n_layers    = 5
+
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = ceramic
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_xyzfull             = false
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_events_json         = false
+write_symbolic_trace_json = true
+write_report_md           = true
+write_dashboard_json      = false
+write_manifest_json       = true
+
+[export.visual]
+write_energy_trace_svg    = true
+write_rdf_svg             = true
+write_svg_figures         = true
+write_defect_map_svg      = true
+write_cluster_map_svg     = false
+write_packing_heatmap_svg = false
+write_overlay_cycle_gif   = false    # set true to emit animated GIF of overlay cycle
+write_html_dashboard      = true
+write_report_html         = true
+visual_output_dir         = figures/
+
+[visual]
+output_type           = terminal_overlay_cycle
+animation_mode        = overlay
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_audit_table      = true
+overlay_sequence      = density,coordination,memory,orient_order
+gl_overlay_hold_s     = 2.5
+gl_auto_orbit         = true
+gl_window_width       = 1280
+gl_window_height      = 800

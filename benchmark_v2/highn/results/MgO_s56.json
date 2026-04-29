@@ -1,0 +1,19 @@
+{
+  "formula": "MgO",
+  "seed": 56,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 9320,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.081609,
+  "energy_per_atom": -0.040804,
+  "rms_force": 0.000093,
+  "max_force": 0.000093,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 0.868300,
+  "timestamp": "2026-03-28T13:03:53",
+  "xyz_file": "benchmark_v2\highn\structures\MgO_s56.xyz"
+}

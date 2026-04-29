@@ -1,0 +1,570 @@
+﻿\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{multicol}
+
+\geometry{letterpaper, margin=1in}
+
+\definecolor{codeblue}{RGB}{40,100,180}
+\definecolor{codegray}{RGB}{100,100,100}
+\definecolor{codegreen}{RGB}{50,140,60}
+\definecolor{backgray}{RGB}{248,248,248}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegray}\itshape,
+  stringstyle=\color{codegreen},
+  backgroundcolor=\color{backgray},
+  frame=single, framerule=0.4pt, rulecolor=\color{codegray},
+  breaklines=true, columns=fullflexible, keepspaces=true,
+  showstringspaces=false, tabsize=4,
+  xleftmargin=1.5em, framexleftmargin=1em,
+  numbers=left, numberstyle=\tiny\color{codegray}, numbersep=8pt,
+}
+\lstdefinestyle{cpp}{language=C++,
+  morekeywords={inline,constexpr,nullptr,auto,override,uint64_t,uint32_t,
+                struct,class,std,string,vector,deque,mutex,atomic,thread}}
+
+\title{\textbf{Dual-Port Live 3D Rendering Architecture} \\
+\Large Phase 16 Theoretical Foundation Document \\[6pt]
+\large VSEPR-SIM --- Atomistic View (Port 9999) and Analysis View (Port 10001)}
+\author{VSEPR-SIM Development}
+\date{Version 1.0.0 --- Phase 16}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Scope and Purpose}
+% ============================================================================
+
+This document establishes the theoretical and architectural foundation for the
+dual-port live visualisation stream server introduced in Phase~16.
+The system answers two operationally distinct questions simultaneously:
+
+\begin{itemize}[noitemsep]
+  \item \textbf{Port 9999 --- Atomic View:}
+        \emph{``What is the solver doing right now?''}
+        Fast, low-latency, tactical live viewer.
+  \item \textbf{Port 10001 --- Analysis View:}
+        \emph{``What has the solver found, tested, compared, and inferred?''}
+        Heavy interpretive layer: history, candidates, property panels,
+        deeper 3D scenes.
+\end{itemize}
+
+Both views share one simulation engine and communicate via a
+newline-delimited JSON (NDJSON) wire protocol over raw TCP sockets.
+
+% ============================================================================
+\section{Atom Record Definition}
+\label{sec:atomrecord}
+% ============================================================================
+
+The fundamental unit of the Atomic View frame is the per-atom record:
+\begin{equation}
+  \label{eq:atom_record}
+  \mathcal{A}_i(t) =
+  \bigl(\,
+    \mathrm{id}_i,\;
+    Z_i,\;
+    \mathbf{r}_i(t),\;
+    \mathbf{v}_i(t),\;
+    q_i,\;
+    s_i,\;
+    \chi_i
+  \,\bigr)
+\end{equation}
+where:
+\begin{itemize}[noitemsep]
+  \item $\mathrm{id}_i$ --- unique integer atom index
+  \item $Z_i$ --- species or atomic number
+  \item $\mathbf{r}_i(t) = (x_i, y_i, z_i)$ --- position in \AA
+  \item $\mathbf{v}_i(t) = (v_x, v_y, v_z)$ --- velocity in m$\,$s$^{-1}$
+        (Maxwell--Boltzmann sample or pseudo-motion vector)
+  \item $q_i$ --- charge or effective scalar property
+  \item $s_i \in \{0,1,2,3\}$ --- state tag
+        (0 = normal, 1 = active/focus, 2 = defect, 3 = selected)
+  \item $\chi_i \in [0,1]$ --- local fit or confidence score,
+        defined below in \eqref{eq:chi}
+\end{itemize}
+
+The complete live atomistic state at time $t$ is the set:
+\begin{equation}
+  \mathcal{A}(t) = \bigl\{\mathcal{A}_1(t),\,\mathcal{A}_2(t),\,\ldots,\,\mathcal{A}_N(t)\bigr\}
+\end{equation}
+
+\subsection{Confidence / Instability Score}
+
+The local confidence score $\chi_i$ is computed from the ratio of the atom's
+instantaneous kinetic energy to a reference thermal scale:
+\begin{equation}
+  \label{eq:chi}
+  \chi_i = \min\!\left(1,\;
+    \frac{K_i}{3\,K_{\mathrm{avg}}(T)}\right),
+  \qquad
+  K_{\mathrm{avg}}(T) = \frac{3}{2}\,k_B T
+\end{equation}
+where $K_i = \tfrac{1}{2} m\,|\mathbf{v}_i|^2$ (per molecule) and
+$k_B = 1.380649\times10^{-23}$\,J\,K$^{-1}$.
+
+A value near 0 indicates a thermally cold, well-placed atom; near 1 indicates
+a hot, potentially defective or unstable region.
+
+% ============================================================================
+\section{Focus Subset and Active Work Region}
+% ============================================================================
+
+The solver does not treat all atoms equivalently at every iteration.
+A focus subset is defined:
+\begin{equation}
+  \mathcal{F}(t) \subseteq \mathcal{A}(t)
+\end{equation}
+At minimum, $\mathcal{F}(t)$ contains the currently active atom
+$\mathcal{A}_{f(t)}$ where $f(t)$ is the focus index.
+In the gas2 implementation $f(t)$ is taken as
+$f(t) = t \bmod N$, cycling through all atoms once per full sweep.
+
+The viewer renders $\mathcal{F}(t)$ with a distinct highlight:
+a glow ring of radius $r_\mathrm{px} + 4$ pixels around the focus atom,
+coloured with the accent teal $(\mathrm{hex}\;\texttt{\#03dac6})$.
+
+% ============================================================================
+\section{Lattice and Cell Overlay}
+\label{sec:lattice}
+% ============================================================================
+
+When a crystalline interpretation is active, the current working lattice is:
+\begin{equation}
+  \mathcal{L}(t) = \bigl\{\,\mathbf{a}(t),\;\mathbf{b}(t),\;\mathbf{c}(t)\,\bigr\}
+\end{equation}
+This is rendered as a wireframe box with 12 dashed edges,
+one edge per pair of opposite-face corners:
+\begin{equation}
+  \text{vertices} = \bigl\{
+    \mathbf{0},\;\mathbf{a},\;\mathbf{b},\;\mathbf{c},\;
+    \mathbf{a}+\mathbf{b},\;\mathbf{a}+\mathbf{c},\;\mathbf{b}+\mathbf{c},\;
+    \mathbf{a}+\mathbf{b}+\mathbf{c}
+  \bigr\}
+\end{equation}
+
+In the gas2 phase, $\mathcal{L}$ is inactive (\texttt{active = false})
+and the wireframe is suppressed.
+Lattice parameters $a, b, c$ are estimated from the ideal-gas molar volume:
+\begin{equation}
+  a = b = c = \left(\frac{V_m}{N_A}\right)^{1/3} \times 10^{10}\;\text{\AA}
+\end{equation}
+
+% ============================================================================
+\section{Bond and Interaction Layer}
+\label{sec:bonds}
+% ============================================================================
+
+Pairwise interaction records are defined as:
+\begin{equation}
+  \mathcal{B}_{ij}(t) = \bigl(i,\;j,\;w_{ij}(t),\;\tau_{ij}\bigr)
+\end{equation}
+where $w_{ij}$ is the interaction weight and $\tau_{ij}$ the type index:
+
+\begin{center}
+\begin{tabular}{cll}
+\toprule
+$\tau_{ij}$ & Mode & Colour \\
+\midrule
+0 & Chemical bond & \texttt{\#88aacc} (steel blue) \\
+1 & Neighbor graph & \texttt{\#444455} (dim) \\
+2 & Crystal adjacency & \texttt{\#aa66cc} (violet) \\
+3 & Force vector & \texttt{\#cc8844} (amber) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+In the gas2 atomic view, mode 1 (neighbor graph) is used with cutoff:
+\begin{equation}
+  r_\mathrm{cut} = 1.5\,d_{\mathrm{spacing}}
+  \qquad
+  d_{\mathrm{spacing}} = 3.5\;d_{\mathrm{kin}}
+\end{equation}
+and weight:
+\begin{equation}
+  w_{ij} = 1 - \frac{r_{ij}}{r_\mathrm{cut}}, \qquad r_{ij} = |\mathbf{r}_j - \mathbf{r}_i|
+\end{equation}
+
+% ============================================================================
+\section{Live HUD State Vector}
+\label{sec:hud}
+% ============================================================================
+
+The onscreen HUD displays a scalar state vector:
+\begin{equation}
+  \mathcal{R}(t) = \bigl(E(t),\;T(t),\;\phi(t),\;N_d(t),\;\epsilon(t)\bigr)
+\end{equation}
+where:
+\begin{itemize}[noitemsep]
+  \item $E(t)$ --- total kinetic energy in Hartree
+  \item $T(t)$ --- current temperature in K
+  \item $\phi(t)$ --- phase guess (gas, vapor, liquid, supercritical, solid)
+  \item $N_d(t)$ --- defect count
+  \item $\epsilon(t)$ --- convergence residual:
+\end{itemize}
+\begin{equation}
+  \epsilon(t) = \left|\frac{\langle K \rangle / N}{\frac{3}{2}k_B T} - 1\right|
+\end{equation}
+A value of $\epsilon = 0$ indicates perfect equipartition; values above $\sim0.1$
+signal under-thermalised or anomalous regions.
+
+\subsection{Phase Identification from Critical Temperature}
+
+Phase $\phi(t)$ is inferred from the reduced temperature $T^* = T/T_c$:
+\begin{equation}
+  \phi(t) = \begin{cases}
+    \text{gas}          & T^* > 1.20 \\
+    \text{supercritical}& 0.90 < T^* \leq 1.20 \\
+    \text{vapor}        & 0.50 < T^* \leq 0.90 \\
+    \text{liquid}       & T^* \leq 0.50
+  \end{cases}
+\end{equation}
+
+% ============================================================================
+\section{Colour Modes}
+\label{sec:colour}
+% ============================================================================
+
+The Atomic View supports five colour modes:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Index & Mode & Formula \\
+\midrule
+0 & Element (CPK) & RGB from Z-indexed table \\
+1 & Energy & Interpolate (\texttt{\#2244aa}$\to$\texttt{\#ff3300}) by $K_i$ \\
+2 & Velocity & HSV hue: $h = 0.65 - 0.65\,v_i/1000$ \\
+3 & Defect  & \texttt{\#cf6679} if $s_i=2$, else accent \\
+4 & $\chi$ & Interpolate (\texttt{\#224488}$\to$\texttt{\#ffaa00}) by $\chi_i$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Energy tinting also modulates the CPK colour:
+\begin{equation}
+  r \mathrel{+}= 0.4\,\chi_i, \qquad b \mathrel{-}= 0.4\,\chi_i
+\end{equation}
+giving a hot (red-shifted) appearance for high-$\chi$ atoms.
+
+% ============================================================================
+\section{3D Projection Engine}
+\label{sec:projection}
+% ============================================================================
+
+A lightweight Euler-angle perspective projection is used in both Python viewers.
+
+\subsection{Rotation}
+
+Two successive Euler rotations are applied:
+\begin{align}
+  \text{X-rotation:}\quad
+  \mathbf{v}' &= R_x(\theta_x)\,\mathbf{v}, &
+  R_x(\theta) &= \begin{pmatrix} 1 & 0 & 0 \\ 0 & \cos\theta & -\sin\theta \\ 0 & \sin\theta & \cos\theta \end{pmatrix} \\[6pt]
+  \text{Y-rotation:}\quad
+  \mathbf{v}'' &= R_y(\theta_y)\,\mathbf{v}', &
+  R_y(\theta) &= \begin{pmatrix} \cos\theta & 0 & \sin\theta \\ 0 & 1 & 0 \\ -\sin\theta & 0 & \cos\theta \end{pmatrix}
+\end{align}
+
+\subsection{Perspective projection}
+
+Screen coordinates are computed by:
+\begin{equation}
+  \bigl(s_x,\,s_y\bigr) =
+  \left(
+    c_x + \frac{v_x''\,f}{v_z'' + f},\;
+    c_y - \frac{v_y''\,f}{v_z'' + f}
+  \right),
+  \qquad f = 600\;\text{px (focal length)}
+\end{equation}
+where $(c_x, c_y)$ is the canvas centre and depth $z = v_z'' + f$.
+
+\subsection{Depth sorting}
+
+Atoms are sorted back-to-front by $z$ before rendering (painter's algorithm),
+ensuring correct visual occlusion without a depth buffer:
+\begin{equation}
+  \text{draw order} \propto z \;\text{(ascending)}
+\end{equation}
+
+Atom screen radius scales with distance:
+\begin{equation}
+  r_\mathrm{px} = \mathrm{clamp}\!\left(\frac{8\,s_\mathrm{atom} \cdot f}{z},\;3,\;30\right)
+\end{equation}
+where $s_\mathrm{atom}$ is the user-controlled atom scale factor.
+
+% ============================================================================
+\section{Analysis View: Historical Metrics}
+\label{sec:history}
+% ============================================================================
+
+The Analysis View maintains a rolling history buffer of length $H = 300$ for
+the following time-series quantities:
+\begin{equation}
+  \bigl\{E(t_k),\;T(t_k),\;\rho(t_k),\;\epsilon(t_k),\;\Phi(t_k)\bigr\}_{k=1}^{H}
+\end{equation}
+where:
+\begin{itemize}[noitemsep]
+  \item $E(t_k)$ --- translational KE per molecule in Hartree
+  \item $T(t_k)$ --- current temperature K
+  \item $\rho(t_k) = M_\mathrm{mol}\,N_A / V_m\,[\text{g/cm}^3]$ --- density from ideal EOS
+  \item $\epsilon(t_k)$ --- convergence residual (equipartition)
+  \item $\Phi(t_k)$ --- phase score (placeholder for future objective function)
+\end{itemize}
+
+History is accumulated in a \texttt{std::deque<double>} capped at $H$;
+analysis frames are published every fifth atomic cycle,
+keeping the analysis stream at $\sim\tfrac{1}{5}$ the atomic frame rate.
+
+% ============================================================================
+\section{Speed Distribution: Maxwell--Boltzmann Bins}
+\label{sec:mb}
+% ============================================================================
+
+The Analysis View renders the analytical Maxwell--Boltzmann speed distribution
+in $N_b = 64$ equal-width bins over $v \in [0,\,2.5\,v_\mathrm{rms}]$:
+\begin{equation}
+  f(v) = 4\pi \left(\frac{m}{2\pi k_B T}\right)^{3/2}
+         v^2 \exp\!\left(-\frac{m\,v^2}{2\,k_B T}\right)
+\end{equation}
+The three characteristic speeds are marked on the plot:
+\begin{align}
+  v_\mathrm{mp}   &= \sqrt{\frac{2k_B T}{m}} \\[4pt]
+  \bar{v}         &= \sqrt{\frac{8k_B T}{\pi m}} \\[4pt]
+  v_\mathrm{rms}  &= \sqrt{\frac{3k_B T}{m}}
+\end{align}
+
+The co-plotted KE distribution is:
+\begin{equation}
+  g_K(v) = f(v)\;\frac{\frac{1}{2}m v^2}{E_h}
+  \qquad \text{(in Hartree units)}
+\end{equation}
+rendered as an inferno-palette histogram.
+
+% ============================================================================
+\section{Candidate Comparison Panel}
+\label{sec:candidates}
+% ============================================================================
+
+The solver tests $M$ candidate structural interpretations:
+\begin{equation}
+  \mathcal{C} = \{C_1, C_2, \ldots, C_M\}
+\end{equation}
+Each candidate carries:
+\begin{equation}
+  C_j = \bigl(E_j,\;\rho_j,\;Z_j,\;\Pi_j\bigr)
+\end{equation}
+where $E_j$ is the candidate energy (Hartree), $\rho_j$ its density
+(g/cm$^3$), $Z_j$ the compressibility factor from the corresponding EOS,
+and $\Pi_j$ the macro-property vector.
+
+In the gas2 implementation, the three EOS variants serve as the initial
+candidate set:
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+$j$ & Label & EOS \\
+\midrule
+1 & Ideal      & $PV = nRT$ \\
+2 & VdW        & $\bigl(P + a/V_m^2\bigr)(V_m - b) = RT$ \\
+3 & Redlich-K  & $P = RT/(V_m-b) - a/(T^{1/2}V_m(V_m+b))$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+The compressibility deviation $Z_j - 1$ expresses non-ideality; the
+candidate with the smallest $|Z_j - 1|$ is the thermodynamically
+consistent choice.
+
+% ============================================================================
+\section{Macro-Property Panel}
+\label{sec:props}
+% ============================================================================
+
+The property panel exposes the state vector:
+\begin{equation}
+  P(t) = \bigl[\,
+    \rho,\;K_\mathrm{bulk},\;G,\;E_Y,\;\nu,\;
+    \alpha_T,\;\theta_D,\;\sigma_y,\;k_\mathrm{eff},\;c_s
+  \,\bigr]^T
+\end{equation}
+In the gas2 phase, solid-elastic properties ($G, E_Y, \nu, \sigma_y$) are
+zero; the estimated quantities are:
+
+\begin{itemize}[noitemsep]
+  \item $\rho = M_\mathrm{mol}\,N_A / V_m$ (g/cm$^3$)
+  \item $K_\mathrm{bulk} = P$ (GPa, directly from EOS)
+  \item $\alpha_T = 1/T$ (ideal gas thermal expansion, $10^{-6}$\,K$^{-1}$)
+  \item $c_s = \sqrt{\gamma\,R\,T/M}$ (adiabatic sound speed)
+  \item $T_\mathrm{melt} \approx 0.7\,T_c$ (crude liquid--solid estimate)
+  \item $k_\mathrm{eff} = k_\mathrm{kin}$ (species thermal conductivity at 300\,K)
+\end{itemize}
+
+Property bars are coloured with the Inferno palette at normalised value:
+\begin{equation}
+  t_j = \min\!\left(1,\;\frac{|P_j|}{P_j^\mathrm{max}}\right)
+\end{equation}
+where $P_j^\mathrm{max}$ is a display-range ceiling per property.
+
+% ============================================================================
+\section{Wire Protocol and Frame Rate}
+\label{sec:protocol}
+% ============================================================================
+
+Frames are transmitted as newline-delimited JSON (NDJSON) over raw TCP.
+Each frame is a single complete JSON object followed by a newline character
+\texttt{\textbackslash n}; clients read line-by-line.
+
+\subsection{Frame publishing rates}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Port & Frame type & Target rate \\
+\midrule
+9999  & \texttt{AtomicFrame}   & 15 fps (default) \\
+10001 & \texttt{AnalysisFrame} & 2 fps (default) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The downsampled publish rule for analysis frames:
+\begin{equation}
+  t_k \mapsto t_{k+m}, \qquad m = 5
+\end{equation}
+reduces network and render overhead while retaining full historical detail
+in the buffer.
+
+\subsection{Server thread model}
+
+The \texttt{VizServer} class spawns two listener threads:
+one for each port.  Each accepted client runs in a detached thread.
+The latest-frame pattern (mutex-guarded push + poll) decouples the
+simulation loop from client delivery cadence:
+\begin{itemize}[noitemsep]
+  \item Simulation thread: calls \texttt{push\_atomic()} at full solver rate
+  \item Client thread: polls latest frame and sends at target fps interval
+  \item No frame queue: clients always receive the \emph{current} state,
+        never stale frames older than $1/\mathrm{fps}$
+\end{itemize}
+
+\subsection{Socket setup}
+
+\begin{lstlisting}[style=cpp]
+// Pseudocode: server init (POSIX path shown)
+int fd = socket(AF_INET, SOCK_STREAM, 0);
+setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+addr.sin_port = htons(port);           // 9999 or 10001
+bind(fd, &addr, sizeof(addr));
+listen(fd, 8);
+// serve_loop: select() with 200ms timeout -> accept() -> detach thread
+\end{lstlisting}
+
+% ============================================================================
+\section{Continuous Simulation Launcher}
+\label{sec:launcher}
+% ============================================================================
+
+The \texttt{scripts/run\_sims.py} launcher enables scaled-up compute by
+spawning multiple \texttt{vsepr~viz} workers with randomised initial conditions:
+
+\begin{equation}
+  \text{worker}_k \leftarrow \bigl(\text{species}_k,\;T_{0,k},\;T_{1,k},\;N_k,\;\mathrm{seed}_k\bigr),
+  \qquad k = 1,\ldots,W
+\end{equation}
+where $W$ is the worker count (\texttt{--workers} flag, default 2).
+
+Randomisation ranges:
+\begin{itemize}[noitemsep]
+  \item Species: Ar, N$_2$, CO$_2$, H$_2$, O$_2$, Ne, Xe, Kr, CH$_4$, H$_2$O
+  \item Temperature: 5 intervals spanning $[77, 1500]$\,K
+  \item Atom count $N \in \{32, 64, 125\}$ (simple cubic fill volumes)
+  \item Seed: uniform random on $[1, 10^6)$
+\end{itemize}
+
+Failed or completed workers are automatically restarted after a
+configurable delay, providing indefinite compute coverage for Monte Carlo
+structural sampling across the full temperature--species phase space.
+
+% ============================================================================
+\section{Extension to Thermal Pipe, Gas, and Crystalline Codes}
+\label{sec:extension}
+% ============================================================================
+
+The dual-port pattern applies uniformly to all simulation modules.
+Any module that produces an atom-level state and a set of scalar metrics
+can feed both ports by:
+
+\begin{enumerate}[noitemsep]
+  \item Constructing an \texttt{AtomicFrame} from the live atom array
+        (fill \texttt{id, Z, r, v, q, state\_tag, chi})
+  \item Constructing an \texttt{AnalysisFrame} from accumulated history
+        and property estimates
+  \item Calling \texttt{VizServer::push\_atomic()} and
+        \texttt{push\_analysis()} at the appropriate cadence
+\end{enumerate}
+
+For crystalline modules: set \texttt{lattice.active = true} and populate
+$\mathbf{a}, \mathbf{b}, \mathbf{c}$ from the unit cell. Bond type
+$\tau = 2$ (crystal adjacency) should be used for lattice neighbours.
+Defect atoms receive $s_i = 2$ so the Atomic View highlights them in the
+defect colour mode.
+
+For thermal pipe modules: $q_i$ carries the local heat flux or temperature
+deviation; $\chi_i$ encodes the thermal stress fraction.
+The Analysis View property panel naturally exposes $k_\mathrm{eff}$,
+$c_s$, and $\alpha_T$ from the same \texttt{PropertySnapshot} struct.
+
+\bigskip\noindent
+\textbf{Guiding principle:}
+\begin{quote}
+  \textit{From electron to dust, all properties are a must.}
+  Every atom, at every scale, carries the same record.
+  Every property, at every phase, appears in the same panel.
+\end{quote}
+
+% ============================================================================
+\section{Summary}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{lp{9cm}}
+\toprule
+Component & Description \\
+\midrule
+\texttt{include/core/viz\_server.hpp}
+  & Complete API: AtomRecord, BondRecord, LatticeRecord, AtomicFrame,
+    AnalysisFrame, PropertySnapshot, VizServer, generator declarations \\
+\addlinespace
+\texttt{src/core/viz\_server.cpp}
+  & CPK colour table, JSON serialisers, gas2 frame generators (MB sampling,
+    analytic f(v), EOS candidates), TCP socket server, CLI dispatch \\
+\addlinespace
+\texttt{tools/viz\_atomic.py}
+  & Port 9999 viewer: 3D projection, depth sort, 5 colour modes, bonds,
+    lattice wireframe, HUD, mouse/keyboard controls \\
+\addlinespace
+\texttt{tools/viz\_analysis.py}
+  & Port 10001 viewer: 2$\times$3 panel grid (timeline, f(v), 3D crystal,
+    property bars, candidate comparison, KE histogram + crystal metrics) \\
+\addlinespace
+\texttt{scripts/run\_sims.py}
+  & Continuous random sim launcher: randomised species/T/N/seed,
+    auto-restart, $W$ parallel workers \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

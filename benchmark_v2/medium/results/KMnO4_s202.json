@@ -1,0 +1,19 @@
+{
+  "formula": "KMnO4",
+  "seed": 202,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 41.159280,
+  "energy_per_atom": 6.859880,
+  "rms_force": 69.422690,
+  "max_force": 69.422690,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.624800,
+  "timestamp": "2026-03-28T13:04:33",
+  "xyz_file": "benchmark_v2\medium\structures\KMnO4_s202.xyz"
+}

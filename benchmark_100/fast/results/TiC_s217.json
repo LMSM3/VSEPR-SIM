@@ -1,0 +1,19 @@
+{
+  "formula": "TiC",
+  "seed": 217,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 0.552318,
+  "energy_per_atom": 0.276159,
+  "rms_force": 3.125798,
+  "max_force": 3.125798,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.343100,
+  "timestamp": "2026-03-28T12:54:43",
+  "xyz_file": "benchmark_100\fast\structures\TiC_s217.xyz"
+}

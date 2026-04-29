@@ -1,0 +1,19 @@
+{
+  "formula": "NO",
+  "seed": 378,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 7.455453,
+  "energy_per_atom": 3.727727,
+  "rms_force": 37.022606,
+  "max_force": 37.022606,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.569200,
+  "timestamp": "2026-03-28T12:56:02",
+  "xyz_file": "benchmark_100\medium\structures\NO_s378.xyz"
+}

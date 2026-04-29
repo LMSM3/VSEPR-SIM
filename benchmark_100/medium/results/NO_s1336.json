@@ -1,0 +1,19 @@
+{
+  "formula": "NO",
+  "seed": 1336,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 2.874570,
+  "energy_per_atom": 1.437285,
+  "rms_force": 14.175452,
+  "max_force": 14.175452,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.555600,
+  "timestamp": "2026-03-28T12:55:51",
+  "xyz_file": "benchmark_100\medium\structures\NO_s1336.xyz"
+}

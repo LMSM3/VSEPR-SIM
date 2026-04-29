@@ -1,0 +1,19 @@
+{
+  "formula": "C4H8",
+  "seed": 623,
+  "tier": "fast",
+  "num_atoms": 12,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 164429.036318,
+  "energy_per_atom": 13702.419693,
+  "rms_force": 560796.801802,
+  "max_force": 560796.801802,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.602700,
+  "timestamp": "2026-03-28T12:53:16",
+  "xyz_file": "benchmark_100\fast\structures\C4H8_s623.xyz"
+}

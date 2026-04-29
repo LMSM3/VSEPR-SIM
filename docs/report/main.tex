@@ -113,7 +113,7 @@
 
 	\vfill
 
-	\noindent\textbf{Simulation platform:} \vsim{} (v5.0.0-beta-7)\\
+	\noindent\textbf{Simulation platform:} \vsim{} (v5.0.0-beta-8)\\
 	\textbf{Pipeline:} FormationOutput $\to$ FingerprintRecord $\to$ ClusterRecord
 	$\to$ AnalysisRecord $\to$ ReportRecord $\to$ DashboardRecord\\
 	\textbf{Reference dataset:} 12-element metallic validation set (Au, Fe, W, Ti, \ldots)
@@ -327,6 +327,96 @@ $\to$ DashboardRecord
 \end{figure}
 
 \subsection{Scale Registry}
+
+\subsection{Beta-7 Pipeline Export and Audit Chain}
+\label{sec:beta7-export}
+
+Beta-7 finalizes the connection between simulation-exit records, pipeline-stage records,
+and exported release artifacts.
+The central connective type is \texttt{PipelineRecord}, which binds formation,
+fingerprinting, clustering, analysis, reporting, and dashboard generation into a single
+auditable chain.
+
+\subsubsection*{Formation event bridge}
+
+Formation outputs are converted into \texttt{FormationEvent} entries and recorded through
+\texttt{KernelEventLog}.
+These events provide the release-facing audit trail for post-simulation interpretation
+without modifying the raw simulation state.
+The raw \texttt{.xyz}-family files remain ground-truth trajectory and state containers;
+inferred classifications are stored externally in analysis, report, dashboard, and audit
+artifacts.
+
+\subsubsection*{Export path}
+
+The export path is handled through \texttt{ExportSection} and
+\texttt{flush\_pipeline\_artifacts()}, which write Markdown, JSONL, and SVG dashboard
+artifacts to disk.
+After a normal beta-7 simulation run the artifact tree is:
+
+\begin{verbatim}
+<output_dir>/
+  reports/
+    beta7_pipeline_report.md
+    beta7_pipeline_report.json
+  reports/audit/
+    beta7_pipeline_audit.jsonl
+  reports/dashboard/
+    beta7_dashboard.svg
+    beta7_dashboard.png.DEFERRED
+  pipeline_records.json
+  run_manifest.json
+\end{verbatim}
+
+\texttt{ExportSection} owns all artifact paths and write-enable flags
+(\texttt{write\_report\_md}, \texttt{write\_dashboard\_svg},
+\texttt{write\_pipeline\_audit\_jsonl}, \texttt{write\_manifest\_json}).
+The \texttt{.vsim} script declares which flags are active; the runtime interprets and
+executes them.
+
+\subsubsection*{Dashboard export}
+
+The dashboard stage produces \texttt{DashboardRecord} outputs from \texttt{ReportRecord}.
+SVG export is treated as the required deterministic dashboard artifact for beta-7.
+The SVG is text-based, deterministic, and diff-able.
+PNG export is explicitly marked as deferred (\texttt{beta7\_dashboard.png.DEFERRED}) and
+is not considered release-blocking if the \texttt{.DEFERRED} marker is present.
+
+\subsubsection*{JSONL audit chain}
+
+Every major pipeline stage transition emits one JSON object to the audit chain:
+
+\begin{verbatim}
+{"stage":"formation","status":"pass","event_count":N}
+{"stage":"fingerprint","status":"pass","fingerprint_id":"fp_001"}
+{"stage":"cluster","status":"pass","cluster_class":"..."}
+{"stage":"analysis","status":"pass","analysis_id":"an_001"}
+{"stage":"report","status":"pass","path":"reports/beta7_pipeline_report.md"}
+{"stage":"dashboard","status":"pass","svg":"reports/dashboard/beta7_dashboard.svg"}
+\end{verbatim}
+
+Each line is independently parseable JSON.
+No placeholder or speculative status values are permitted in the audit chain.
+
+\subsubsection*{Deprecated: ContinualReportEvent}
+
+The autonomous \texttt{ContinualReportEvent} module is deprecated under the current
+doctrine.
+Rather than continuously reporting speculative macro-state during runtime, beta-7 favors
+deterministic post-run export through the audit chain.
+This preserves the distinction between raw state truth and analysis-derived
+interpretation.
+
+\subsubsection*{State-truth doctrine}
+
+The \texttt{xyz} and \texttt{xyzFull} state files store ground-truth trajectory only:
+particle identity, position, velocity, orientation, timestep, and persistent ID.
+They must not store inferred material class, inferred diffusion label, inferred
+permeability label, or any other analysis-only classification result.
+Inferred properties belong in analysis records, reports, dashboards, and sidecar files
+exclusively.
+
+
 
 \begin{table}[H]
 \centering
@@ -989,115 +1079,999 @@ cluster-size jumps, and packing-fraction changes.
 
 \newpage
 
+% ============================================================
+% Card 08 --- Irradiated Fe-Cr-Ni Alloy (Expanded)
+% ============================================================
 \cardheader{Card~08 --- Irradiated Fe-Cr-Ni Alloy}{Irradiated metallic alloy}%
-{Radiation-tolerant structural alloy for high-temperature or nuclear environments}
+{Radiation-tolerant structural alloy proxy for high-temperature or nuclear environments}
 
-\textbf{Primary tests:} substitutional alloy lattice, vacancy generation,
-interstitial generation, cascade proxy, helium bubble proxy.
+\subsubsection*{Material Overview}
 
-\textbf{Primary metrics:} vacancy fraction, interstitial fraction, swelling proxy,
-defect clustering, recovery rate.
+Fe-Cr-Ni austenitic stainless steels are the workhorses of radiation-tolerant
+structural applications.
+At the composition studied here ($\mathrm{Fe}_{0.70}\mathrm{Cr}_{0.18}\mathrm{Ni}_{0.12}$),
+the FCC lattice provides the baseline ordered state before any irradiation damage
+is introduced.
+The key insight is that the damage is not merely subtracted from perfection ---
+it is \emph{accumulated as history}.
+A material that has survived 12 cascade events is structurally different from a
+material that has survived only 2, even if their instantaneous energy differences
+appear modest.
 
-\textbf{Physical principle:}
-Radiation damage creates Frenkel pairs (vacancy + interstitial).
-In Fe-Cr-Ni the damage accumulates differentially by species:
-Cr tends toward vacancy complexes, Ni toward interstitial loops.
-The alloy composition is not just a chemistry — it is a damage-history
-accumulator.
+\materialsignature{%
+Irradiated Fe-Cr-Ni signature is damage history becoming material history:
+the accumulated state of a cascade-exposed alloy cannot be recovered
+from its chemistry alone.%
+}
 
-The beta-7 pipeline assigns this material to the irradiation-damage
-analysis track.
-FingerprintRecord captures energy and convergence state post-cascade;
-AnalysisRecord computes defect indicator ($= n_{\text{l3 domains}} / n_{\text{beads}}$).
+\subsubsection*{Composition and Lattice}
 
-\materialsignature{Irradiated alloy signature is damage history becoming material history.}
+\begin{table}[H]
+\centering
+\caption{Fe-Cr-Ni alloy composition and initial structure (Card~08).}
+\label{tab:fecrnisub_composition}
+\begin{tabular}{lll}
+\toprule
+\textbf{Element} & \textbf{Atomic fraction} & \textbf{Role} \\
+\midrule
+Fe & 0.70 & FCC host, primary displacement target \\
+Cr & 0.18 & Vacancy-complex former, Cr-rich precipitate precursor \\
+Ni & 0.12 & Interstitial-loop former, segregation-sensitive \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\medskip
-\cardheader{Card~09 --- Hexene}{Organic chain material}%
-{Organic precursor feedstock for bead-state reaction and packing studies}
+The initial lattice is a $12\times12\times12$ FCC supercell with
+substitutional disorder representing the nominal alloy concentration.
+No defects are introduced at initialization; all damage is produced by
+the simulation perturbation protocol.
 
-\textbf{Primary tests:} chain initialization, bond-angle tracking, thermal motion,
-packing, chain folding.
+\subsubsection*{Formation Pipeline}
 
-\textbf{Primary metrics:} end-to-end distance, bond-angle variation, chain flexibility,
-packing fraction.
+\begin{enumerate}[noitemsep]
+	\item Initialize substitutional FCC supercell at nominal composition.
+	\item Relax at 900\,K for 5000 steps (thermal disorder without defects).
+	\item Apply vacancy seeding ($f_v = 0.5\%$) and interstitial seeding ($f_i = 0.5\%$).
+	\item Execute 12 cascade proxy events at medium energy deposition.
+	\item Introduce 8 helium bubble proxy sites.
+	\item Apply thermal recovery protocol (partial annealing).
+	\item Measure post-recovery state against pre-cascade baseline.
+\end{enumerate}
 
-\textbf{Physical principle:}
-Hexene's six-carbon chain is short enough to be fully represented at
-atomistic scale, yet long enough to show chain-flexibility effects
-distinguishable from rigid-molecule behavior.
+\subsubsection*{Damage Mechanisms Modeled}
 
-\materialsignature{Hexene's signature is small-molecule chain flexibility becoming coarse-grained motion.}
+\begin{table}[H]
+\centering
+\caption{Damage mechanisms in the Fe-Cr-Ni irradiation proxy.}
+\label{tab:fecrnisub_damage}
+\begin{tabular}{p{0.22\textwidth}p{0.38\textwidth}p{0.28\textwidth}}
+\toprule
+\textbf{Mechanism} & \textbf{Description} & \textbf{Metric} \\
+\midrule
+Frenkel pair          & Vacancy + interstitial created simultaneously & $f_v$, $f_i$ \\
+Cascade displacement  & Multiple displacements in one event; local disorder spike & defect cluster size \\
+Helium bubble         & He trapping at vacancies; local volume expansion & swelling proxy \\
+Thermal recovery      & Recombination and short-range rearrangement & recovery rate \\
+Cr segregation        & Cr enrichment at vacancy clusters            & local order score \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\medskip
-\cardheader{Card~10 --- Cyclopentadiene}{Organic ring / ligand-like precursor}%
-{Ligand-like precursor for surface or metal-interaction studies}
+\subsubsection*{Simulation Tests}
 
-\textbf{Primary tests:} ring initialization, surface approach, binding orientation,
-thermal distortion.
+\begin{table}[H]
+\centering
+\caption{Simulation tests for Card~08.}
+\label{tab:fecrnisub_tests}
+\begin{tabular}{ll}
+\toprule
+\textbf{Test} & \textbf{Purpose} \\
+\midrule
+Baseline relax, no damage      & Reference packing and energy state \\
+Vacancy seeding only           & Isolate vacancy effect \\
+Interstitial seeding only      & Isolate interstitial effect \\
+Cascade proxy (12 events)      & Combined damage accumulation \\
+He bubble proxy (8 sites)      & Local swelling and trapping \\
+Thermal recovery               & Partial annealing effectiveness \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\textbf{Primary metrics:} ring planarity, surface residence time, binding orientation,
-local deformation.
+\subsubsection*{Metrics}
 
-\textbf{Physical principle:}
-Cyclopentadiene's five-membered ring and diene character make approach
-geometry critical.
-Binding orientation is geometry-dependent; local deformation of the ring
-is a proxy for interaction strength.
+\begin{table}[H]
+\centering
+\caption{Metrics tracked for the irradiated Fe-Cr-Ni proxy.}
+\label{tab:fecrnisub_metrics}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Meaning} \\
+\midrule
+$f_v$                         & Vacancy fraction \\
+$f_i$                         & Interstitial fraction \\
+$\delta_{\mathrm{cluster}}$   & Mean defect cluster size \\
+Swelling proxy                & Volume expansion estimate from vacancy accumulation \\
+He bubble growth              & Increase in He-site local volume over time \\
+Recovery rate                 & Fraction of defects recombined post-annealing \\
+RMSD (post-cascade)           & Overall displacement from initial lattice \\
+Local disorder score          & Short-range order degradation \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-\materialsignature{Cyclopentadiene's signature is geometry-sensitive organic interaction.}
+\subsubsection*{Defect Indicator}
 
-\newpage
+The \vsim{} pipeline computes a scalar defect indicator:
 
-\cardheader{Card~11 --- Graphite / Graphene Stack}{Layered carbon material}%
-{Anisotropic thermal spreader or layered sliding interface}
+\begin{equation}
+	\delta_{\mathrm{ind}} = \frac{n_{\text{l3 domains}}}{n_{\text{beads}}}
+	\label{eq:fecrnisub_defect_indicator}
+\end{equation}
 
-\textbf{Primary tests:} sheet initialization, shear sliding, thermal impulse,
-directional transport.
+\noindent where $n_{\text{l3 domains}}$ counts the number of third-layer structural
+domains detected in the post-cascade state and $n_{\text{beads}}$ is the total
+particle count.
+A value of zero indicates a pristine lattice.
+After 12 cascade events the indicator is expected to rise significantly above
+the as-relaxed baseline.
 
-\textbf{Primary metrics:} in-plane displacement, out-of-plane displacement,
-anisotropy ratio, layer sliding.
+\subsubsection*{Expected Trends}
 
-\textbf{Physical principle:}
-Carbon in graphite has extreme in-plane stiffness (covalent bonds)
-combined with weak interlayer coupling (van der Waals).
-The anisotropy ratio $A = R_\parallel / R_\perp$ is very large ---
-on the order of $10^2$--$10^3$ for the full material.
-The \vsim{} model captures the directional character through
-layer-resolved displacement tracking.
+\begin{table}[H]
+\centering
+\caption{Expected irradiation damage trends (Card~08).}
+\label{tab:fecrnisub_trends}
+\begin{tabular}{p{0.24\textwidth}p{0.32\textwidth}p{0.32\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Expected direction} & \textbf{Physical interpretation} \\
+\midrule
+Defect fraction vs.\ cascade count   & Increases with cascades      & Damage accumulates \\
+RMSD vs.\ cascade count              & Increases with cascades      & Lattice degrades \\
+Recovery rate after anneal           & $>0$, incomplete             & Partial recombination \\
+He-site volume proxy                 & Increases over time          & Bubble growth \\
+Local disorder at He sites           & Higher than bulk             & Trapping-induced distortion \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.65\textwidth]{overview_anisotropy_types.png}
+\includegraphics[width=0.65\textwidth]{sample_placeholder.png}
 \caption{%
-	Anisotropy type map.
-	Graphite occupies the extreme in-plane-dominated region;
-	contrast with metals (near-isotropic) and composites (moderate axial).}
-\label{fig:graphite_aniso}
+	\textbf{[Placeholder — import post-run.]}
+	Defect cluster map of the Fe-Cr-Ni proxy after 12 cascade events.
+	Vacancy clusters (open markers) and interstitial loops (filled markers)
+	are shown; He bubble proxy sites are circled.
+	Generated by the \vsim{} analysis layer from \texttt{xyzFull} trajectory.}
+\label{fig:fecrnisub_defects}
 \end{figure}
 
-\materialsignature{Graphite's signature is anisotropy from layered structure.}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — real micrograph import.]}
+	TEM bright-field image of an irradiated austenitic stainless steel
+	showing black-dot defect clusters and dislocation loops
+	after neutron irradiation at 300\,\si{\degreeCelsius}.
+	Source: to be imported from experimental literature.}
+\label{fig:fecrnisub_tem}
+\end{figure}
 
-\medskip
+\subsubsection*{Geometry Binding}
+
+\begin{verbatim}
+/state/fe_cr_ni_baseline.xyz
+/state/fe_cr_ni_post_cascade.xyz
+/trajectory/fe_cr_ni_cascade.xyzf
+/analysis/fe_cr_ni_defect_report.csv
+/manifests/card_08_manifest.json
+\end{verbatim}
+
+The baseline \xyz{} is the pre-damage reference.
+The post-cascade \xyz{} captures accumulated damage state.
+The \xyzf{} trajectory replays the full cascade sequence.
+No inferred labels are stored in the state files;
+damage classification belongs in the analysis and report layer only.
+
+\newpage
+
+% ============================================================
+% Card 09 --- Hexene / Organic Chain Proxy (Expanded)
+% ============================================================
+\cardheader{Card~09 --- Hexene / Organic Chain Proxy}{Organic chain material}%
+{Organic precursor feedstock for bead-state chain motion and packing studies}
+
+\subsubsection*{Material Overview}
+
+1-Hexene ($\mathrm{C_6H_{12}}$) is a short terminal-alkene.
+Its six-carbon backbone is short enough for near-atomistic fidelity at the
+bead scale, yet long enough to exhibit chain-flexibility signatures
+that are qualitatively distinct from rigid-molecule behavior.
+The terminal double bond introduces an asymmetry between the two chain ends
+and acts as a chemical marker for tracking molecular identity through a
+simulation trajectory.
+
+Hexene is studied here as a proxy for organic precursor feedstocks:
+short mobile chains that pack, fold, and interact with surfaces before
+committing to reaction or polymerization.
+
+\materialsignature{%
+Hexene's signature is small-molecule chain flexibility becoming
+coarse-bead motion: end-to-end distance and radius of gyration
+respond measurably to thermal and compressive loading.%
+}
+
+\subsubsection*{Structural Representation}
+
+\begin{table}[H]
+\centering
+\caption{Hexene structural representation (Card~09).}
+\label{tab:hexene_struct}
+\begin{tabular}{ll}
+\toprule
+\textbf{Property} & \textbf{Value} \\
+\midrule
+Formula               & $\mathrm{C_6H_{12}}$ \\
+Chain count           & 64 molecules \\
+Backbone length       & 6 carbon bead chain \\
+Hydrogen treatment    & Implicit (absorbed into backbone beads) \\
+Terminal double bond  & Explicit marker on C1 bead \\
+Packing box           & Medium periodic box \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Formation Pipeline}
+
+\begin{enumerate}[noitemsep]
+	\item Initialize 64 hexene chains at random positions and orientations.
+	\item Perform random-chain-pack relax at 300\,K for 5000 steps.
+	\item Verify molecular identity preservation (persistent IDs, terminal marker).
+	\item Apply perturbation protocol.
+	\item Track chain conformational metrics throughout.
+\end{enumerate}
+
+\subsubsection*{Chain Geometry Metrics}
+
+The two primary chain-conformation metrics are the end-to-end distance
+$R_e$ and the radius of gyration $R_g$:
+
+\begin{equation}
+	R_e = \left| \mathbf{r}_{\mathrm{C6}} - \mathbf{r}_{\mathrm{C1}} \right|
+	\label{eq:hexene_re}
+\end{equation}
+
+\begin{equation}
+	R_g^2 = \frac{1}{N} \sum_{i=1}^{N} \left| \mathbf{r}_i - \mathbf{r}_{\mathrm{cm}} \right|^2
+	\label{eq:hexene_rg}
+\end{equation}
+
+\noindent where $\mathbf{r}_{\mathrm{C1}}$ and $\mathbf{r}_{\mathrm{C6}}$
+are the terminal bead positions and $\mathbf{r}_{\mathrm{cm}}$ is the
+chain center of mass.
+For a fully extended 6-bead chain, $R_e$ reaches its maximum.
+Under thermal motion or compression it contracts; recovery of $R_e$
+after load release is a chain-stiffness proxy.
+
+\subsubsection*{Simulation Tests}
+
+\begin{table}[H]
+\centering
+\caption{Simulation tests for Card~09.}
+\label{tab:hexene_tests}
+\begin{tabular}{ll}
+\toprule
+\textbf{Test} & \textbf{Purpose} \\
+\midrule
+Thermal motion at 300\,K    & Baseline chain dynamics \\
+Compression                 & Chain folding and packing fraction response \\
+Surface contact             & Surface-chain interaction and residence \\
+Chain folding               & Detect end-to-end distance contraction \\
+Stretch test                & Chain orientation and extension \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Metrics}
+
+\begin{table}[H]
+\centering
+\caption{Metrics tracked for the hexene chain proxy.}
+\label{tab:hexene_metrics}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Meaning} \\
+\midrule
+$R_e$                        & End-to-end distance \\
+$R_g$                        & Radius of gyration \\
+Bond-angle variation         & Angular flexibility measure \\
+Packing fraction             & Occupied volume in the simulation box \\
+Orientation residence        & Fraction of time in extended vs.\ folded state \\
+Identity preservation        & Molecular ID coherence through trajectory \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Expected Trends}
+
+\begin{table}[H]
+\centering
+\caption{Expected hexene chain proxy trends.}
+\label{tab:hexene_trends}
+\begin{tabular}{p{0.22\textwidth}p{0.34\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Perturbation} & \textbf{Expected behavior} & \textbf{Interpretation} \\
+\midrule
+Thermal increase      & $R_g$ increases; bond angles broaden    & Chain softens, samples more configurations \\
+Compression           & $R_e$ decreases; chains fold            & Confinement drives folding \\
+Surface contact       & Reduced orientation freedom             & Surface limits conformational space \\
+Stretch               & $R_e$ approaches max; $R_g$ elongates   & Chain orients along load axis \\
+Release after stretch & $R_e$ partially recovers                & Elastic-like restoring via chain entropy \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — import post-run.]}
+	End-to-end distance $R_e$ distribution for 64 hexene chains
+	at 300\,K (baseline), under compression, and after stretch.
+	Generated by the \vsim{} analysis layer from trajectory data.}
+\label{fig:hexene_re_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — real image import.]}
+	Representative small-angle X-ray scattering (SAXS) pattern
+	of a hexene-based organic chain ensemble showing the characteristic
+	diffuse peak from short-range chain packing.
+	Source: to be imported from experimental literature.}
+\label{fig:hexene_saxs}
+\end{figure}
+
+\subsubsection*{Geometry Binding}
+
+\begin{verbatim}
+/state/hexene_pack_initial.xyz
+/state/hexene_pack_relaxed.xyz
+/trajectory/hexene_compression.xyzf
+/analysis/hexene_chain_metrics.csv
+/manifests/card_09_manifest.json
+\end{verbatim}
+
+Persistent bead IDs track individual chain identity through every
+frame of the \xyzf{} trajectory.
+The terminal-double-bond marker on C1 is preserved as a bead
+attribute, not an inferred label.
+
+\newpage
+
+% ============================================================
+% Card 10 --- Cyclopentadiene / Ring-Ligand Proxy (Expanded)
+% ============================================================
+\cardheader{Card~10 --- Cyclopentadiene / Ring-Ligand Proxy}{Organic ring / ligand-like precursor}%
+{Geometry-sensitive surface interaction model for ring-based ligand behavior}
+
+\subsubsection*{Material Overview}
+
+Cyclopentadiene ($\mathrm{C_5H_6}$) is a five-membered diene ring.
+Its importance here is not as a bulk material but as a geometry-sensitive
+probe: the rigid five-membered ring imposes strict angular constraints
+on approach, binding, and surface interaction.
+Unlike hexene (a flexible chain), cyclopentadiene is dominated by ring
+geometry — the plane of the ring, the normal vector, and the
+diene reactivity at the C1--C4 positions.
+
+At the bead scale, the ring is represented as a five-bead unit with
+preserved ring identity.
+Distortion away from planarity is measurable and physically meaningful:
+it corresponds to strain, surface-induced geometry change, or precursor
+activation.
+
+\materialsignature{%
+Cyclopentadiene's signature is geometry-sensitive organic interaction:
+ring planarity and approach angle determine how the molecule
+interacts with surfaces and other rings.%
+}
+
+\subsubsection*{Structural Representation}
+
+\begin{table}[H]
+\centering
+\caption{Cyclopentadiene structural representation (Card~10).}
+\label{tab:cpd_struct}
+\begin{tabular}{ll}
+\toprule
+\textbf{Property} & \textbf{Value} \\
+\midrule
+Formula              & $\mathrm{C_5H_6}$ \\
+Ring count           & 64 molecules \\
+Representation       & 5-bead ring geometry \\
+Hydrogen treatment   & Implicit \\
+Ring identity        & Preserved via persistent ring-ID \\
+Initial orientation  & Random (uniform sphere distribution) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Formation Pipeline}
+
+\begin{enumerate}[noitemsep]
+	\item Initialize 64 cyclopentadiene rings at random positions and orientations.
+	\item Pack and relax at 300\,K for 5000 steps.
+	\item Verify ring identity preservation.
+	\item Apply perturbation protocol including surface approach.
+	\item Track planarity, normal vector, and surface residence metrics.
+\end{enumerate}
+
+\subsubsection*{Ring Geometry Metrics}
+
+The primary geometric observables for a ring are planarity error and
+the ring normal vector.
+For a five-bead ring, planarity error is defined as:
+
+\begin{equation}
+	\epsilon_{\mathrm{plane}} = \frac{1}{N_r} \sum_{i=1}^{N_r}
+	\left| \mathbf{r}_i \cdot \hat{\mathbf{n}} - d_{\mathrm{plane}} \right|
+	\label{eq:cpd_planarity}
+\end{equation}
+
+\noindent where $\hat{\mathbf{n}}$ is the best-fit ring normal,
+$d_{\mathrm{plane}}$ is the plane offset, and $N_r = 5$ is the ring size.
+A value of $\epsilon_{\mathrm{plane}} = 0$ corresponds to a perfectly flat ring.
+Under thermal strain or surface compression this error grows.
+
+The ring normal vector $\hat{\mathbf{n}}$ tracks orientation:
+
+\begin{equation}
+	\hat{\mathbf{n}} = \frac{(\mathbf{r}_2 - \mathbf{r}_1) \times
+	(\mathbf{r}_3 - \mathbf{r}_1)}{
+	\left| (\mathbf{r}_2 - \mathbf{r}_1) \times (\mathbf{r}_3 - \mathbf{r}_1) \right|}
+	\label{eq:cpd_normal}
+\end{equation}
+
+\noindent The distribution of $\hat{\mathbf{n}}$ over the ensemble
+measures whether rings have developed a preferred orientation (e.g.,
+parallel to a surface) or remain isotropically distributed.
+
+\subsubsection*{Simulation Tests}
+
+\begin{table}[H]
+\centering
+\caption{Simulation tests for Card~10.}
+\label{tab:cpd_tests}
+\begin{tabular}{ll}
+\toprule
+\textbf{Test} & \textbf{Purpose} \\
+\midrule
+Thermal motion         & Baseline planarity and orientation fluctuation \\
+Ring strain            & Forced geometry distortion; planarity error response \\
+Surface approach       & Orientation bias near wall \\
+Binding orientation    & Preferred face vs.\ edge approach \\
+Mild impact            & Non-destructive perturbation of ring geometry \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Metrics}
+
+\begin{table}[H]
+\centering
+\caption{Metrics tracked for the cyclopentadiene ring proxy.}
+\label{tab:cpd_metrics}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Meaning} \\
+\midrule
+$\epsilon_{\mathrm{plane}}$ & Ring planarity error \\
+Bond-angle deviation        & Internal angle spread from ideal $108^\circ$ \\
+Ring RMSD                   & Displacement of ring beads from relaxed reference \\
+$\hat{\mathbf{n}}$ distribution & Orientation order parameter \\
+Surface residence time      & Time fraction spent near wall within cutoff \\
+Identity preservation       & Ring ID coherence through full trajectory \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Expected Trends}
+
+\begin{table}[H]
+\centering
+\caption{Expected cyclopentadiene ring proxy trends.}
+\label{tab:cpd_trends}
+\begin{tabular}{p{0.22\textwidth}p{0.34\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Perturbation} & \textbf{Expected behavior} & \textbf{Interpretation} \\
+\midrule
+Thermal increase   & $\epsilon_{\mathrm{plane}}$ grows; bond angles spread & Ring stiffness threshold visible \\
+Ring strain        & Planarity error spikes; ring ID stable             & Reversible deformation \\
+Surface approach   & $\hat{\mathbf{n}}$ biases toward surface normal     & Face-on orientation preferred \\
+Mild impact        & Temporary planarity error, recovery                & Ring acts as elastic probe \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — import post-run.]}
+	Ring normal vector $\hat{\mathbf{n}}$ distribution for 64
+	cyclopentadiene rings: bulk random state (left) vs.\
+	surface-contacted state (right), showing orientation bias
+	toward the surface normal.
+	Generated from \xyzf{} trajectory by the \vsim{} analysis layer.}
+\label{fig:cpd_normal_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — real image import.]}
+	STM image of cyclopentadienyl rings adsorbed on a metal surface
+	showing preferred flat (face-on) orientation.
+	Source: to be imported from surface science literature.}
+\label{fig:cpd_stm}
+\end{figure}
+
+\subsubsection*{Geometry Binding}
+
+\begin{verbatim}
+/state/cpd_pack_initial.xyz
+/state/cpd_pack_relaxed.xyz
+/trajectory/cpd_surface_approach.xyzf
+/analysis/cpd_ring_metrics.csv
+/manifests/card_10_manifest.json
+\end{verbatim}
+
+Ring persistent IDs are assigned at initialization and are not overwritten
+by any analysis step.
+The planarity error and normal vector are computed in the analysis layer
+and stored in sidecar CSV files, not inside the \xyz{} or \xyzf{} state.
+
+\newpage
+
+% ============================================================
+% Card 11 --- Graphene / Graphite Transition System (Expanded)
+% ============================================================
+\cardheader{Card~11 --- Graphene / Graphite Transition System}{Layered carbon material}%
+{Impurity-sensitive layered carbon: anisotropic thermal spreader, sliding interface, and formation benchmark}
+
+\subsubsection*{Material Overview}
+
+Carbon in its $sp^2$-bonded layered form spans two celebrated states:
+graphene (a single atomically thin sheet) and graphite (a stack of
+weakly coupled sheets).
+These two forms are not merely different thicknesses of the same material.
+They represent qualitatively different physical regimes.
+A graphene monolayer is dominated by in-plane covalent stiffness with
+essentially no interlayer coupling.
+Graphite acquires interlayer van der Waals coupling that enables sliding,
+stacking-registry effects, and out-of-plane thermal resistance.
+
+Card~11 studies this transition explicitly.
+Layer count, stacking mode, cooling rate, and impurity type are
+all varied as independent controls.
+The result is not a single material report but a formation-history map:
+what you get depends critically on \emph{how} the carbon structure was built.
+
+\materialsignature{%
+Carbon organization plus formation history determines behavior:
+the same atoms produce graphene, turbostratic carbon, or graphite
+depending on how they were assembled and annealed.%
+}
+
+\subsubsection*{Structural Parameters}
+
+\begin{table}[H]
+\centering
+\caption{Graphene/graphite structural parameters (Card~11).}
+\label{tab:graphene_struct}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value / range} \\
+\midrule
+Sheet size            & $24 \times 24$ hexagonal lattice \\
+Layer counts studied  & 1, 2, 3, 5 \\
+Initial interlayer spacing & 3.35\,\AA \\
+Stacking modes        & AA (eclipsed), AB (Bernal), turbostratic \\
+Edge condition        & Free edges (no periodic in-plane constraint) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Impurity Matrix}
+
+The impurity sweep is a defining feature of Card~11.
+Four impurity types are varied independently:
+
+\begin{table}[H]
+\centering
+\caption{Impurity types and levels studied in Card~11.}
+\label{tab:graphene_impurities}
+\begin{tabular}{p{0.28\textwidth}p{0.28\textwidth}p{0.28\textwidth}}
+\toprule
+\textbf{Impurity type} & \textbf{Levels} & \textbf{Physical effect} \\
+\midrule
+Vacancy                  & 0\%, 0.5\%, 1.0\%, 2.0\%  & Disrupts hexagonal order; seeds defect domains \\
+Substitutional N         & 0\%, 1.0\%, 3.0\%         & $n$-type doping proxy; local bond distortion \\
+Substitutional B         & 0\%, 1.0\%, 3.0\%         & $p$-type doping proxy; opposite distortion character \\
+Oxygen functional proxy  & none, low, medium          & Interlayer and edge oxidation proxy \\
+Interlayer impurity      & none, low                  & Foreign atom between sheets; spacing change \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Formation Pathways}
+
+Unlike all other cards, Card~11 defines three distinct formation
+\emph{pathways} rather than a single initialization route.
+Each pathway produces a different final state from similar starting chemistry:
+
+\begin{table}[H]
+\centering
+\caption{Carbon formation pathways (Card~11).}
+\label{tab:graphene_pathways}
+\begin{tabular}{p{0.14\textwidth}p{0.38\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Pathway} & \textbf{Description} & \textbf{Target outcome} \\
+\midrule
+A (forward)  & Graphene sheets stacked and compressed into graphite & Tests layer registry acquisition \\
+B (reverse)  & Graphite stack pulled apart (exfoliation proxy)       & Tests interlayer separation energy \\
+C (growth)   & PAH-cluster nucleation growing into a graphene domain & Tests domain-size scaling with temperature \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Cooling Rate and Sheet Angle Effects}
+
+\begin{table}[H]
+\centering
+\caption{Process variables for Card~11 pathway runs.}
+\label{tab:graphene_process}
+\begin{tabular}{lll}
+\toprule
+\textbf{Variable} & \textbf{Levels} & \textbf{Expected effect} \\
+\midrule
+Cooling rate    & slow, medium, fast       & Slower cooling $\to$ larger ordered domains \\
+Sheet angle     & $0^\circ$, $5^\circ$, $15^\circ$, $30^\circ$ & Turbostratic misregistration \\
+Pressure proxy  & none, low, medium        & Interlayer spacing reduction under pressure \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Anisotropy Ratio}
+
+Graphite has extreme in-plane / out-of-plane anisotropy.
+The simulation captures this through directional displacement analysis.
+The anisotropy ratio is defined as:
+
+\begin{equation}
+	A = \frac{\langle \Delta r_{\parallel} \rangle}{\langle \Delta r_{\perp} \rangle}
+	\label{eq:graphene_anisotropy}
+\end{equation}
+
+\noindent where $\Delta r_{\parallel}$ is the mean in-plane displacement
+and $\Delta r_{\perp}$ is the mean out-of-plane displacement after
+an equivalent thermal impulse.
+For perfect graphite $A \gg 1$ (in-plane stiffer than out-of-plane).
+For a disordered turbostratic structure $A$ decreases toward 1.
+
+\subsubsection*{Simulation Tests}
+
+\begin{table}[H]
+\centering
+\caption{Simulation tests for Card~11.}
+\label{tab:graphene_tests}
+\begin{tabular}{ll}
+\toprule
+\textbf{Test} & \textbf{Purpose} \\
+\midrule
+Interlayer shear              & Layer sliding measurement; resistance to shear \\
+Out-of-plane compression      & Interlayer spacing response \\
+Thermal impulse               & Anisotropy ratio from differential displacement \\
+Exfoliation pull              & Interlayer separation energy proxy \\
+Sheet bending                 & Out-of-plane flexibility; planarity error \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Metrics}
+
+\begin{table}[H]
+\centering
+\caption{Metrics tracked for the graphene/graphite transition system.}
+\label{tab:graphene_metrics}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Meaning} \\
+\midrule
+Average carbon domain size       & $sp^2$ ordered region extent \\
+Hexagonal order fraction         & Fraction of atoms in hexagonal local environment \\
+Interlayer spacing               & $d_{002}$ equivalent from position tracking \\
+AB registry score                & Fraction of sites in Bernal stacking \\
+Turbostratic disorder            & Out-of-registry fraction \\
+Anisotropy ratio $A$             & In-plane vs.\ out-of-plane displacement ratio \\
+Layer sliding distance           & Cumulative shear displacement \\
+Impurity segregation score       & Impurity clustering at grain boundaries \\
+Sheet planarity error            & Deviation from ideal flat sheet \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Expected Trends}
+
+\begin{table}[H]
+\centering
+\caption{Expected graphene/graphite trends.}
+\label{tab:graphene_trends}
+\begin{tabular}{p{0.24\textwidth}p{0.34\textwidth}p{0.28\textwidth}}
+\toprule
+\textbf{Variable} & \textbf{Expected direction} & \textbf{Interpretation} \\
+\midrule
+Vacancy fraction $\uparrow$       & Domain size $\downarrow$, disorder $\uparrow$   & Vacancies disrupt hexagonal order \\
+Layer count $\uparrow$            & AB registry, $A$ ratio increase                 & More layers = more graphite-like behavior \\
+Cooling rate faster               & Smaller average domain size                     & Kinetics limit domain growth \\
+Sheet angle $\neq 0$              & Turbostratic disorder $\uparrow$                & Misregistry is frozen in \\
+Interlayer shear                  & Layer slides before in-plane atoms displace      & Weak interlayer coupling evident \\
+N/B substitution                  & Local bond distortion; neighbor order change     & Dopant sites nucleate disorder \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.68\textwidth]{overview_anisotropy_types.png}
+\caption{%
+	Anisotropy type map used in the \vsim{} analysis layer.
+	Graphite (5 layers, AB stacking, no impurities) occupies the extreme
+	in-plane-dominated region.
+	Turbostratic carbon and impurity-doped samples shift toward the
+	isotropic interior.}
+\label{fig:graphene_aniso_map}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — import post-run.]}
+	Carbon domain size distribution for Pathway~C (PAH cluster growth)
+	at slow, medium, and fast cooling rates.
+	Formation history controls final domain size; identical chemistry
+	produces different outcomes.
+	Generated from \xyzf{} trajectory by the \vsim{} analysis layer.}
+\label{fig:graphene_domain_dist}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — real image import.]}
+	High-resolution TEM image of few-layer graphene showing
+	AB (Bernal) stacking and a turbostratic grain boundary
+	with visible Moiré contrast.
+	Source: to be imported from electron microscopy literature.}
+\label{fig:graphene_tem}
+\end{figure}
+
+\subsubsection*{Geometry Binding}
+
+\begin{verbatim}
+/state/graphene_1L_initial.xyz
+/state/graphite_5L_AB_relaxed.xyz
+/trajectory/graphite_shear.xyzf
+/trajectory/pathway_C_growth.xyzf
+/analysis/graphene_domain_metrics.csv
+/analysis/graphite_interlayer_metrics.csv
+/manifests/card_11_manifest.json
+\end{verbatim}
+
+Layer identity, impurity site assignments, and stacking-mode labels
+are \emph{not} stored in the \xyz{} or \xyzf{} state.
+They are assigned in the analysis layer from the formation configuration
+and recorded in sidecar files.
+
+\newpage
+% ============================================================
+% Card 12 --- FLiBe Molten Salt Proxy (Expanded)
+% ============================================================
 \cardheader{Card~12 --- FLiBe Molten Salt Proxy}{Molten ionic material}%
-{High-temperature ionic coolant transport model}
+{High-temperature ionic coolant transport model for molten-salt reactor applications}
 
-\textbf{Primary tests:} ionic mixture initialization, thermal motion, diffusion tracking,
-wall interaction.
+\subsubsection*{Material Overview}
 
-\textbf{Primary metrics:} ionic diffusion proxy, surface residence, phase stability,
-transport directionality.
+FLiBe is the eutectic mixture of lithium fluoride and beryllium fluoride
+($\mathrm{LiF}$--$\mathrm{BeF_2}$, eutectic composition $\approx 66\%$ LiF by mole).
+At operating temperature (600--700\,\si{\degreeCelsius}) it is a fully
+dissociated ionic liquid.
+Its appeal as a reactor coolant comes from its low neutron cross-section,
+high heat capacity, and chemical compatibility with structural alloys
+at high temperature.
 
-\textbf{Physical principle:}
-FLiBe (LiF--BeF$_2$ eutectic) is a candidate coolant for molten salt
-reactors.
-At operating temperature it is a fully ionized liquid.
-Transport properties depend on the short-range ionic structure, which
-changes with temperature.
-The \vsim{} model tracks cation and anion mobility separately,
-enabling charge-separated transport analysis.
+The physical challenge is that FLiBe transport properties depend not on
+a fixed crystal structure but on the \emph{dynamic short-range ionic ordering}:
+how Li$^+$, Be$^{2+}$, and F$^-$ organize transiently around one another
+as the liquid flows.
+This makes it a natural candidate for the \vsim{} bead framework:
+there is no reference lattice to compare against, only trajectory statistics.
 
-\materialsignature{FLiBe's signature is transport as structure.}
+\materialsignature{%
+FLiBe's signature is transport as structure:
+ionic mobility, charge-separated diffusion, and surface residence
+are the relevant observables, not a static lattice.%
+}
+
+\subsubsection*{Ionic Species and Composition}
+
+\begin{table}[H]
+\centering
+\caption{FLiBe ionic species (Card~12).}
+\label{tab:flibe_species}
+\begin{tabular}{llll}
+\toprule
+\textbf{Species} & \textbf{Charge} & \textbf{Mole fraction (eutectic)} & \textbf{Role} \\
+\midrule
+Li$^+$  & $+1$ & $\approx 0.33$ & Light mobile cation \\
+Be$^{2+}$ & $+2$ & $\approx 0.17$ & Network former; higher charge density \\
+F$^-$   & $-1$ & $\approx 0.50$ & Dominant anion \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Formation Pipeline}
+
+\begin{enumerate}[noitemsep]
+	\item Initialize ionic mixture at eutectic composition in a periodic box.
+	\item Relax at 700\,K (above melting point, liquid-like thermal energy).
+	\item Verify no crystalline ordering in the initial state (RDF check).
+	\item Apply perturbation protocol: thermal ramps, wall interaction.
+	\item Track cation and anion mobility separately throughout.
+\end{enumerate}
+
+\subsubsection*{Diffusion Proxy}
+
+In the absence of a crystalline reference, the primary transport observable
+is the mean squared displacement (MSD) as a function of time:
+
+\begin{equation}
+	\mathrm{MSD}(t) = \left\langle \left| \mathbf{r}_i(t) - \mathbf{r}_i(0) \right|^2 \right\rangle
+	\label{eq:flibe_msd}
+\end{equation}
+
+\noindent At long times, diffusive behavior produces a linear MSD:
+
+\begin{equation}
+	\mathrm{MSD}(t) \approx 6 D_{\mathrm{proxy}} \cdot t
+	\label{eq:flibe_diffusion}
+\end{equation}
+
+\noindent where $D_{\mathrm{proxy}}$ is the diffusion proxy coefficient.
+Separate $D_{\mathrm{proxy}}$ values are computed for Li$^+$, Be$^{2+}$,
+and F$^-$ to capture charge-separated transport.
+
+\subsubsection*{Simulation Tests}
+
+\begin{table}[H]
+\centering
+\caption{Simulation tests for Card~12.}
+\label{tab:flibe_tests}
+\begin{tabular}{ll}
+\toprule
+\textbf{Test} & \textbf{Purpose} \\
+\midrule
+Ionic relax at 700\,K          & Baseline MSD and diffusion by species \\
+Thermal ramp (300 to 1800\,K)  & Diffusion temperature dependence \\
+Thermal ramp (1800 to 300\,K)  & Solidification proxy; ordering onset \\
+Wall interaction               & Surface residence and double-layer formation \\
+Phase stability check          & Detect any partial crystallization \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Metrics}
+
+\begin{table}[H]
+\centering
+\caption{Metrics tracked for the FLiBe molten salt proxy.}
+\label{tab:flibe_metrics}
+\begin{tabular}{ll}
+\toprule
+\textbf{Metric} & \textbf{Meaning} \\
+\midrule
+$D_{\mathrm{proxy}}$ (per species)    & Species-resolved diffusion coefficient proxy \\
+Ionic diffusion ratio                 & $D_{\mathrm{Li}^+} / D_{\mathrm{F}^-}$ charge asymmetry \\
+Surface residence time                & Time near wall within cutoff (per species) \\
+Phase stability flag                  & Crystallization detection from local order \\
+Transport directionality              & Anisotropy of MSD under applied gradient \\
+Short-range order score               & Transient coordination number distribution \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection*{Expected Trends}
+
+\begin{table}[H]
+\centering
+\caption{Expected FLiBe molten salt trends.}
+\label{tab:flibe_trends}
+\begin{tabular}{p{0.22\textwidth}p{0.34\textwidth}p{0.30\textwidth}}
+\toprule
+\textbf{Condition} & \textbf{Expected behavior} & \textbf{Interpretation} \\
+\midrule
+Temperature increase        & All $D_{\mathrm{proxy}}$ increase             & Ionic mobility rises \\
+Be$^{2+}$ vs.\ Li$^+$       & $D_{\mathrm{Be}^{2+}} < D_{\mathrm{Li}^+}$   & Higher charge $\to$ stronger cage effect \\
+Wall approach               & F$^-$ residence $>$ cation residence          & Anion affinity for surface \\
+Cooling below melt          & Local order score increases; MSD slope drops  & Pre-crystallization ordering \\
+Charge-separated transport  & $D_{\mathrm{Li}^+} \neq D_{\mathrm{F}^-}$    & Ionic transport is not charge-neutral \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.65\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — import post-run.]}
+	MSD curves for Li$^+$, Be$^{2+}$, and F$^-$ in the FLiBe proxy
+	at 700\,K.
+	Slope of each curve is proportional to $D_{\mathrm{proxy}}$ for
+	that species; charge-separated mobility is visible as slope divergence.
+	Generated by the \vsim{} analysis layer from \xyzf{} trajectory.}
+\label{fig:flibe_msd}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.60\textwidth]{sample_placeholder.png}
+\caption{%
+	\textbf{[Placeholder — real image import.]}
+	Neutron diffraction structure factor $S(Q)$ of molten FLiBe
+	at 650\,\si{\degreeCelsius} showing the broad liquid-state peak
+	characteristic of short-range ionic order.
+	Source: to be imported from nuclear materials literature.}
+\label{fig:flibe_neutron}
+\end{figure}
+
+\subsubsection*{Application Context: Molten Salt Reactors}
+
+FLiBe transport properties directly affect reactor safety margins:
+\begin{itemize}[noitemsep]
+	\item Higher $D_{\mathrm{proxy}}$ means faster heat redistribution.
+	\item Surface residence at structural walls determines corrosion exposure rate.
+	\item Phase stability at lower temperatures determines freeze-plug behavior.
+	\item Charge-separated transport contributes to electrochemical potential
+		  gradients in the primary loop.
+\end{itemize}
+
+None of these conclusions are pre-loaded into the simulation state.
+They emerge from the trajectory statistics computed in the analysis layer.
+
+\subsubsection*{Geometry Binding}
+
+\begin{verbatim}
+/state/flibe_initial_700K.xyz
+/trajectory/flibe_thermal_ramp.xyzf
+/trajectory/flibe_wall_interaction.xyzf
+/analysis/flibe_msd_by_species.csv
+/analysis/flibe_surface_residence.csv
+/manifests/card_12_manifest.json
+\end{verbatim}
+
+Species identity (Li$^+$, Be$^{2+}$, F$^-$) is stored as bead type
+in the \xyz{} state.
+Diffusion coefficients, surface residence times, and phase labels are
+computed in the analysis layer and stored in sidecar files only.
+
+\newpage
 
 \medskip
 \cardheader{Card~13 --- Tungsten Alloy}{Refractory metal}%

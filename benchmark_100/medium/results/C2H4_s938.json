@@ -1,0 +1,19 @@
+{
+  "formula": "C2H4",
+  "seed": 938,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 104.408642,
+  "energy_per_atom": 17.401440,
+  "rms_force": 304.269409,
+  "max_force": 304.269409,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.723700,
+  "timestamp": "2026-03-28T12:53:59",
+  "xyz_file": "benchmark_100\medium\structures\C2H4_s938.xyz"
+}

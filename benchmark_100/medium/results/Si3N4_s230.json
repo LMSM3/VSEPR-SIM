@@ -1,0 +1,19 @@
+{
+  "formula": "Si3N4",
+  "seed": 230,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 2207.132922,
+  "energy_per_atom": 315.304703,
+  "rms_force": 3665.622056,
+  "max_force": 3665.622056,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.716800,
+  "timestamp": "2026-03-28T12:54:35",
+  "xyz_file": "benchmark_100\medium\structures\Si3N4_s230.xyz"
+}

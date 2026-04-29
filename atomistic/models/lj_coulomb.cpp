@@ -6,6 +6,7 @@
 #include <memory>
 #include <iostream>
 #include <unordered_set>
+#include <vector>
 
 namespace atomistic {
 
@@ -130,19 +131,53 @@ struct LJCoulomb : IModel {
         double r_on = 0.9 * p.rc;
         double r_on2 = r_on * r_on;
 
-        // Build 1-2 exclusion set from bond topology.
-        // Bonded pairs must not be evaluated by the nonbonded model:
-        // at covalent distances r ≪ σ the LJ repulsive wall dominates
-        // and produces unphysical megajoule energies.
+        // Build 1-2, 1-3, and 1-4 exclusion sets from bond topology.
+        // 1-2: directly bonded pairs (at covalent distances r ≪ σ the LJ
+        //       repulsive wall dominates and produces unphysical energies).
+        // 1-3: pairs separated by two bonds (angle partners). Standard in
+        //       molecular force fields; these are still inside the LJ wall
+        //       for most small-molecule geometries.
+        // 1-4: pairs separated by three bonds (dihedral end-atoms). These
+        //       are within σ for typical chain/ring geometries. Excluded
+        //       in UFF; scaled in OPLS/AMBER (here: fully excluded).
         std::unordered_set<uint64_t> excluded;
+
+        // Adjacency list for 1-3/1-4 generation
+        std::vector<std::vector<uint32_t>> adj(s.N);
         for (const auto& e : s.B) {
             uint32_t a = std::min(e.i, e.j), b = std::max(e.i, e.j);
-            excluded.insert((uint64_t)a << 32 | b);
+            excluded.insert((uint64_t)a << 32 | b);        // 1-2
+            adj[e.i].push_back(e.j);
+            adj[e.j].push_back(e.i);
+        }
+
+        // 1-3 exclusions: for every atom j, all pairs (i,k) where i-j and j-k
+        for (uint32_t j = 0; j < s.N; ++j) {
+            for (size_t ai = 0; ai < adj[j].size(); ++ai) {
+                for (size_t ak = ai + 1; ak < adj[j].size(); ++ak) {
+                    uint32_t a = std::min(adj[j][ai], adj[j][ak]);
+                    uint32_t b = std::max(adj[j][ai], adj[j][ak]);
+                    excluded.insert((uint64_t)a << 32 | b);
+                }
+            }
+        }
+
+        // 1-4 exclusions: for every bonded pair (j,k), all pairs (i,l)
+        // where i is bonded to j and l is bonded to k (i ≠ k, l ≠ j).
+        for (const auto& e : s.B) {
+            for (uint32_t i : adj[e.i]) {
+                if (i == e.j) continue;
+                for (uint32_t l : adj[e.j]) {
+                    if (l == e.i || l == i) continue;
+                    uint32_t a = std::min(i, l), b = std::max(i, l);
+                    excluded.insert((uint64_t)a << 32 | b);
+                }
+            }
         }
 
         for (uint32_t i = 0; i < s.N; i++) {
             for (uint32_t j = i + 1; j < s.N; j++) {
-                // Skip bonded (1-2) pairs
+                // Skip bonded (1-2), angle (1-3), and dihedral (1-4) pairs
                 uint64_t key = (uint64_t)i << 32 | j;
                 if (excluded.count(key)) continue;
 

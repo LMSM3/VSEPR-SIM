@@ -1,0 +1,19 @@
+{
+  "formula": "CoFe2O4",
+  "seed": 49,
+  "tier": "highn",
+  "num_atoms": 7,
+  "steps_taken": 10000,
+  "max_steps": 10000,
+  "energy_kcal_mol": 15.329996,
+  "energy_per_atom": 2.189999,
+  "rms_force": 25.333033,
+  "max_force": 25.333033,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 3.550600,
+  "timestamp": "2026-03-28T12:56:07",
+  "xyz_file": "benchmark_100\highn\structures\CoFe2O4_s49.xyz"
+}

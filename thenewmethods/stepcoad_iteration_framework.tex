@@ -1,0 +1,344 @@
+% ============================================================================
+%  stepcoad_iteration_framework.tex
+%  VSEPR-SIM / thenewmethods
+%
+%  Document 3 of 3 -- The New Methods
+%  STEP + COAD iterative update framework:
+%  structural, thermal, and chemical iteration tables
+% ============================================================================
+
+\documentclass[11pt, letterpaper]{article}
+
+\usepackage{amsmath, amssymb, bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{hyperref}
+\usepackage{longtable}
+
+\geometry{margin=1.0in}
+
+\definecolor{accent}{RGB}{30, 80, 160}
+\definecolor{tableheader}{RGB}{220, 228, 245}
+
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
+
+\title{\textbf{The New Methods III}\\[0.4em]
+\large Scaling Up: The STEP\,+\,COAD Iterative Update Framework}
+\author{VSEPR-SIM thenewmethods}
+\date{}
+
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}[\vspace{-0.3em}\rule{\linewidth}{0.6pt}]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+% ── macros ──────────────────────────────────────────────────────────────────
+\newcommand{\STEPr}{\mathrm{STEP}_r}
+\newcommand{\COADr}{\mathrm{COAD}_r}
+\newcommand{\STEPn}{\mathrm{STEP}^{(n)}}
+\newcommand{\COADn}{\mathrm{COAD}^{(n)}}
+\newcommand{\bZ}{\mathbf{Z}}
+
+% ============================================================================
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+Each element is a bead with full state.  Everything evolves from that state.
+No shortcuts, no magic constants pretending to be physics.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Bead State and System State}
+% ────────────────────────────────────────────────────────────────────────────
+
+\[
+Z_i =
+\begin{bmatrix}
+\mathbf{x}_i \\ \mathbf{v}_i \\ s_i \\ q_i \\ m_i \\ \varepsilon_i
+\end{bmatrix}
+\qquad
+\bZ = \{Z_1, Z_2, \ldots, Z_N\}
+\]
+
+$\mathbf{x}_i$ = position, $\mathbf{v}_i$ = velocity, $s_i$ = species,
+$q_i$ = charge/electronic state, $m_i$ = mass, $\varepsilon_i$ = internal energy.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Core Update Equation}
+% ────────────────────────────────────────────────────────────────────────────
+
+At iteration $n$, define the state and two driver vectors:
+
+\[
+Z^{(n)} =
+\begin{bmatrix}
+\mathbf{x}^{(n)} \\ \mathbf{v}^{(n)} \\ T^{(n)} \\ P^{(n)} \\ s^{(n)} \\ q^{(n)} \\ \varepsilon^{(n)}
+\end{bmatrix}
+\qquad
+\STEPn =
+\begin{bmatrix} S^{(n)} \\ T^{(n)} \\ E^{(n)} \\ P^{(n)} \end{bmatrix}
+\qquad
+\COADn =
+\begin{bmatrix} C^{(n)} \\ O^{(n)} \\ A^{(n)} \\ D^{(n)} \end{bmatrix}
+\]
+
+\noindent
+Components: $S$ = state descriptor, $T$ = temperature, $E$ = environmental forcing,
+$P$ = pressure; $C$ = charge state, $O$ = orbital/electronic character,
+$A$ = accessibility/reactivity access, $D$ = distribution/arrangement.
+
+General update:
+\[
+\boxed{Z^{(n+1)} = Z^{(n)} + \Delta Z_{\STEPr}^{(n)} + \Delta Z_{\COADr}^{(n)}}
+\]
+
+or compactly:
+\[
+Z^{(n+1)} = Z^{(n)} + F\!\left(\STEPn, \COADn\right)\Delta t
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Reduced Scalar Drivers}
+% ────────────────────────────────────────────────────────────────────────────
+
+\[
+\STEPr = w_S S + w_T T + w_E E + w_P P
+\qquad
+\COADr = w_C C + w_O O + w_A A + w_D D
+\]
+
+Total driver:
+\[
+\Psi = \alpha\,\STEPr + \beta\,\COADr
+\]
+
+Use $\Psi$ to drive mobility, force scaling, energy, conversion, update probability:
+\[
+M^{(n+1)} = M^{(n)} + \eta_M\,\Psi^{(n)}
+\qquad
+\varepsilon^{(n+1)} = \varepsilon^{(n)} + \eta_\varepsilon\,\Psi^{(n)}
+\qquad
+Y_B^{(n+1)} = Y_B^{(n)} + \eta_Y\,\Psi^{(n)}
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{STEP and COAD Contribution Vectors}
+% ────────────────────────────────────────────────────────────────────────────
+
+\[
+\Delta Z_{\STEPr}^{(n)} =
+\begin{bmatrix}
+\alpha_x\,\nabla P \\ \alpha_v\,T^{(n)} \\ \alpha_T\,E^{(n)} \\ \alpha_P \\
+0 \\ 0 \\ \alpha_\varepsilon\,T^{(n)}
+\end{bmatrix}
+\qquad\qquad
+\Delta Z_{\COADr}^{(n)} =
+\begin{bmatrix}
+0 \\ \beta_v\,A^{(n)} \\ 0 \\ 0 \\
+\beta_s\,C^{(n)} \\ \beta_q\,O^{(n)} \\ \beta_\varepsilon\,D^{(n)}
+\end{bmatrix}
+\]
+
+STEP handles macro thermal-pressure-environment forcing;
+COAD handles electronic, accessibility, and distribution corrections.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Table A -- Simple Structural Settling}
+% ────────────────────────────────────────────────────────────────────────────
+
+\noindent
+One species, mild environment, no chemical conversion, no significant thermal change.
+
+\bigskip
+\noindent
+\begin{tabular}{@{}clcccccccll@{}}
+\toprule
+$n$ & $S$ & $T$\,(K) & $E$ & $P$ & $C$ & $O$ & $A$ & $D$ & Trend & Note \\
+\midrule
+0 & initial lattice & 300 & dry & 1.0 & 0.00 & base & 0.20 & 1.00 & stable    & reference \\
+1 & slight shift    & 300 & dry & 1.0 & 0.00 & base & 0.22 & 0.98 & mild relax & reposition \\
+2 & aligned         & 301 & dry & 1.0 & 0.00 & base & 0.21 & 0.97 & damping   & less motion \\
+3 & near stable     & 300 & dry & 1.0 & 0.00 & base & 0.20 & 0.97 & converging & residual small \\
+4 & stable          & 300 & dry & 1.0 & 0.00 & base & 0.20 & 0.97 & converged & stop \\
+\bottomrule
+\end{tabular}
+
+\bigskip\noindent
+\textbf{Scalar settling example.} Let activity metric $R^{(n)}$ evolve as:
+\[
+R^{(n+1)} = R^{(n)} + \alpha\,\STEPr^{(n)} + \beta\,\COADr^{(n)}
+\]
+
+\medskip
+\noindent
+\begin{tabular}{@{}ccccc@{}}
+\toprule
+$n$ & $R^{(n)}$ & STEP contrib. & COAD contrib. & $R^{(n+1)}$ \\
+\midrule
+0 & 1.000 & $-0.050$ & $+0.010$ & 0.960 \\
+1 & 0.960 & $-0.030$ & $+0.005$ & 0.935 \\
+2 & 0.935 & $-0.015$ & $+0.003$ & 0.923 \\
+3 & 0.923 & $-0.006$ & $+0.001$ & 0.918 \\
+\bottomrule
+\end{tabular}
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Table B -- Thermal Iteration}
+% ────────────────────────────────────────────────────────────────────────────
+
+\noindent
+Thermally activated response: vacancy growth, expansion, mobility change.
+
+\medskip\noindent
+Mobility and defect fraction evolve as:
+\[
+M^{(n)} = M_0 + \alpha_T T^{(n)} + \alpha_E E^{(n)} + \beta_A A^{(n)}
+\qquad
+f_v^{(n+1)} = f_v^{(n)} + k_T T^{(n)} + k_P P^{(n)} - k_R R^{(n)}
+\]
+
+\bigskip
+\noindent
+\begin{tabular}{@{}clccccccccc@{}}
+\toprule
+$n$ & State $S$ & $T$\,(K) & $E$ & $P$ & $C$ & $O$ & $A$ & $M$ & $f_v$ & Comment \\
+\midrule
+0 & solid ordered  & 300  & inert & 1.0 & 0.00 & ground      & 0.18 & 0.20 & 0.0010 & baseline \\
+1 & warmed         & 450  & inert & 1.0 & 0.00 & ground      & 0.22 & 0.35 & 0.0030 & defects begin \\
+2 & active         & 650  & inert & 1.0 & 0.00 & excited mix & 0.30 & 0.60 & 0.0080 & mobility up \\
+3 & hot lattice    & 850  & inert & 1.0 & 0.00 & excited     & 0.42 & 0.95 & 0.0180 & rearrangement \\
+4 & near transition& 1000 & inert & 1.0 & 0.00 & excited     & 0.55 & 1.25 & 0.0350 & high disorder \\
+\bottomrule
+\end{tabular}
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Table C -- Chemical Iteration}
+% ────────────────────────────────────────────────────────────────────────────
+
+\noindent
+Conversion / reactive evolution.  Let $Y_A^{(n)}$ = reactant fraction,
+$Y_B^{(n)}$ = product fraction.
+
+\[
+Y_A^{(n+1)} = Y_A^{(n)} - \Delta Y^{(n)}
+\qquad
+Y_B^{(n+1)} = Y_B^{(n)} + \Delta Y^{(n)}
+\qquad
+\Delta Y^{(n)} = k_1\,\STEPr^{(n)} + k_2\,\COADr^{(n)}
+\]
+
+\noindent
+where:
+\[
+\STEPr^{(n)} = w_S S^{(n)} + w_T T^{(n)} + w_E E^{(n)} + w_P P^{(n)}
+\qquad
+\COADr^{(n)} = w_C C^{(n)} + w_O O^{(n)} + w_A A^{(n)} + w_D D^{(n)}
+\]
+
+\bigskip
+\noindent
+\begin{tabular}{@{}clcccccccccc@{}}
+\toprule
+$n$ & $S$ & $T$ & $E$ & $P$ & $C$ & $O$ & $A$ & $Y_A$ & $Y_B$ & Tendency & Note \\
+\midrule
+0 & reactant-rich & 300 & mild      & 1.0 & 0.05 & low & 0.10 & 1.00 & 0.00 & very low & initial \\
+1 & activated     & 450 & mild      & 1.0 & 0.08 & mod & 0.18 & 0.94 & 0.06 & low      & thermal act. \\
+2 & reactive      & 600 & catalytic & 1.1 & 0.12 & mod-high & 0.30 & 0.80 & 0.20 & moderate & onset \\
+3 & progressing   & 750 & catalytic & 1.1 & 0.15 & high & 0.48 & 0.56 & 0.44 & high     & formation \\
+4 & product-rich  & 820 & catalytic & 1.1 & 0.16 & high & 0.60 & 0.32 & 0.68 & high     & late-stage \\
+5 & near complete & 850 & catalytic & 1.1 & 0.15 & high & 0.63 & 0.18 & 0.82 & moderate & depleting \\
+\bottomrule
+\end{tabular}
+
+\medskip\noindent
+\textbf{Compact reaction-rate form.}
+Define reaction score $R_\chi^{(n)} = \alpha\,\STEPr^{(n)} + \beta\,\COADr^{(n)}$, then:
+\[
+Y_A^{(n+1)} = Y_A^{(n)} - \gamma R_\chi^{(n)}
+\qquad
+Y_B^{(n+1)} = Y_B^{(n)} + \gamma R_\chi^{(n)}
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Master Combined Table Template}
+% ────────────────────────────────────────────────────────────────────────────
+
+\noindent
+Use this template for any simulation report or note.
+
+\bigskip
+\noindent
+\begin{tabular}{@{}clccccccccccc@{}}
+\toprule
+$n$ & Phase & $S$ & $T$ & $E$ & $P$ & $C$ & $O$ & $A$ & $D$ & $\Psi$ & $E$ & Conv. \\
+\midrule
+0 & initial   & base      & 300 & dry       & 1.0 & 0.00 & base & 0.10 & 1.00 & -- & 1.00 & 0.00 \\
+1 & warmed    & shift     & 400 & dry       & 1.0 & 0.02 & base & 0.18 & 0.99 & low & 1.10 & 0.03 \\
+2 & active    & reordered & 600 & catalytic & 1.1 & 0.08 & raised & 0.30 & 0.95 & mod & 1.40 & 0.15 \\
+3 & reactive  & mixed     & 750 & catalytic & 1.1 & 0.14 & high & 0.47 & 0.91 & high & 1.85 & 0.38 \\
+4 & evolved   & prod-rich & 850 & catalytic & 1.1 & 0.16 & high & 0.60 & 0.87 & high & 2.05 & 0.67 \\
+\bottomrule
+\end{tabular}
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Worked Mini Example at Iteration 2}
+% ────────────────────────────────────────────────────────────────────────────
+
+Given:
+$T = 600$, $E = 1.0$, $P = 1.1$, $C = 0.12$, $A = 0.30$, $D = 0.95$.
+
+With:
+$\STEPr = 0.001\,T + 0.2\,E + 0.1\,P$ and
+$\COADr = 0.5\,C + 0.4\,A + 0.2\,D$:
+
+\[
+\STEPr = 0.001(600) + 0.2(1.0) + 0.1(1.1) = 0.600 + 0.200 + 0.110 = 0.910
+\]
+\[
+\COADr = 0.5(0.12) + 0.4(0.30) + 0.2(0.95) = 0.060 + 0.120 + 0.190 = 0.370
+\]
+\[
+\Psi = \STEPr + \COADr = 1.280
+\]
+
+With conversion update $Y_B^{(n+1)} = Y_B^{(n)} + 0.05\,\Psi$
+and $Y_B^{(n)} = 0.20$:
+\[
+\Delta Y_B = 0.05 \times 1.280 = 0.064
+\qquad\Longrightarrow\qquad
+Y_B^{(n+1)} = 0.264
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Clean Report-Ready Form}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{align}
+Z^{(n+1)} &= Z^{(n)} + \Delta Z_{\STEPr}^{(n)} + \Delta Z_{\COADr}^{(n)} \\[4pt]
+\STEPr    &= w_S S + w_T T + w_E E + w_P P \\[4pt]
+\COADr    &= w_C C + w_O O + w_A A + w_D D \\[4pt]
+\Psi      &= \alpha\,\STEPr + \beta\,\COADr \\[4pt]
+Y^{(n+1)} &= Y^{(n)} + \eta\,\Psi^{(n)}
+\end{align}
+
+That is the whole engine in compact form.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Table Summary: When to Use Which}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{tabular}{@{}ll@{}}
+\toprule
+Table & Use for \\
+\midrule
+A -- Simple structural & Settling, baseline state evolution, elastic relaxation \\
+B -- Thermal           & Vacancy growth, mobility, phase drift, thermal disorder \\
+C -- Chemical          & Conversion, accessibility-driven reactivity, product growth \\
+\bottomrule
+\end{tabular}
+
+\end{document}

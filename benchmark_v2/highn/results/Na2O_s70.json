@@ -1,0 +1,19 @@
+{
+  "formula": "Na2O",
+  "seed": 70,
+  "tier": "highn",
+  "num_atoms": 3,
+  "steps_taken": 5829,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.090171,
+  "energy_per_atom": -0.030057,
+  "rms_force": 0.022644,
+  "max_force": 0.022644,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 1.121700,
+  "timestamp": "2026-03-28T13:05:15",
+  "xyz_file": "benchmark_v2\highn\structures\Na2O_s70.xyz"
+}

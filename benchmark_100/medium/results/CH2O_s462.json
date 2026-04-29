@@ -1,0 +1,19 @@
+{
+  "formula": "CH2O",
+  "seed": 462,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 8.528905,
+  "energy_per_atom": 2.132226,
+  "rms_force": 23.652019,
+  "max_force": 23.652019,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.562700,
+  "timestamp": "2026-03-28T12:54:40",
+  "xyz_file": "benchmark_100\medium\structures\CH2O_s462.xyz"
+}

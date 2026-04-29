@@ -1,0 +1,19 @@
+{
+  "formula": "MgO",
+  "seed": 328,
+  "tier": "medium",
+  "num_atoms": 2,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 8.479506,
+  "energy_per_atom": 4.239753,
+  "rms_force": 46.116450,
+  "max_force": 46.116450,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.340800,
+  "timestamp": "2026-03-28T12:55:45",
+  "xyz_file": "benchmark_100\medium\structures\MgO_s328.xyz"
+}

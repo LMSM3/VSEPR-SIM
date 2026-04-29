@@ -1,0 +1,19 @@
+{
+  "formula": "C2H5OH",
+  "seed": 692,
+  "tier": "medium",
+  "num_atoms": 9,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1363.200104,
+  "energy_per_atom": 151.466678,
+  "rms_force": 3009.400528,
+  "max_force": 3009.400528,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.003000,
+  "timestamp": "2026-03-28T13:05:41",
+  "xyz_file": "benchmark_v2\medium\structures\C2H5OH_s692.xyz"
+}

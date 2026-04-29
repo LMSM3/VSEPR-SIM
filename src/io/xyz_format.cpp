@@ -5,7 +5,6 @@
 #include "io/xyz_format.hpp"
 #include <cmath>
 #include <algorithm>
-#include <set>
 
 namespace vsepr {
 namespace io {
@@ -441,7 +440,7 @@ std::string XYZAWriter::generate_properties_string() const {
 namespace xyz_utils {
 
 XYZFormat detect_format(const std::string& filename) {
-    // Check extension (C++17 compatible)
+    // Check extension (case-sensitive; .xyzW/.xyzw both recognised)
     if (filename.length() >= 4 && filename.substr(filename.length() - 4) == ".xyz") {
         return XYZFormat::STANDARD_XYZ;
     }
@@ -451,19 +450,24 @@ XYZFormat detect_format(const std::string& filename) {
     if (filename.length() >= 5 && filename.substr(filename.length() - 5) == ".xyzC") {
         return XYZFormat::THERMAL_XYZC;
     }
-    
+    if (filename.length() >= 5 &&
+        (filename.substr(filename.length() - 5) == ".xyzW" ||
+         filename.substr(filename.length() - 5) == ".xyzw")) {
+        return XYZFormat::WIND_XYZW;
+    }
+
     // Check content
     std::ifstream file(filename);
     if (!file.is_open()) return XYZFormat::UNKNOWN;
-    
+
     std::string line;
     std::getline(file, line);  // Skip atom count
     std::getline(file, line);  // Comment line
-    
-    if (line.find("properties=") != std::string::npos) {
-        return XYZFormat::EXTENDED_XYZA;
-    }
-    
+
+    if (line.find("WIND")        != std::string::npos) return XYZFormat::WIND_XYZW;
+    if (line.find("CHECKPOINT")  != std::string::npos) return XYZFormat::THERMAL_XYZC;
+    if (line.find("properties=") != std::string::npos) return XYZFormat::EXTENDED_XYZA;
+
     return XYZFormat::STANDARD_XYZ;
 }
 

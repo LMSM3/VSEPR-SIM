@@ -1,0 +1,29 @@
+{
+  "run_id": "20260328_121047_5446",
+  "timestamp": "20260328_121047",
+  "git_commit": "HEAD",
+  "build_id": "Release-MSVC",
+  "platform": {
+    "os": "Windows",
+    "cpu": "x86_64",
+    "gpu": "N/A"
+  },
+  "config": {
+    "commandline": "vsepr qa goldens",
+    "config_hash": "default",
+    "rng_seed": 42,
+    "rng_algorithm": "mt19937_64",
+    "model_id": "LJ+Coulomb_v1.0",
+    "validation_mode": "PORTABLE"
+  },
+  "tolerances": {
+    "force": 0.0001,
+    "energy": 1e-06
+  },
+  "pbc": {
+    "enabled": false,
+    "cell": "N/A"
+  },
+  "output_artifacts": [
+  ]
+}

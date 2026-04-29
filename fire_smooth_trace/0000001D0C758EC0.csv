@@ -1,0 +1,17 @@
+# seed_hash: 0000001D0C758EC0
+# sample_index: 147
+# arrangement: copper_decomposition_hot_strong_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext_ext
+# equation: 2 Cu(NO3)2 -> 2 CuO(s) + 4 NO2(g) + O2(g)
+# tau_drawn: 63.8708
+# g_steric_drawn: 0.515504
+# g_elec_drawn: -0.142602
+# g_disp_drawn: 1.08602
+# temperature_K: 1059.44
+# dt_drawn: 0.538825
+# N_beads: 24
+# total_mass_amu: 558.228
+#
+step,energy,ke,rms_force,max_force,dt,avg_rho,avg_C,avg_P2,avg_eta,avg_target_f,max_deta,g_steric,g_elec,g_disp,n_inert,n_ionic,n_cov,n_met,n_mix,steady
+0,-0.42719592,93135385892.34217834,2603266.07541881,4299776.43780667,0.269413,0.00000003,1.00000000,0.00000000,0.00000000,0.00000000,0.00000000,1.00000000,1.00000000,1.00000000,0,0,0,0,24,0
+1,-0.04151385,77255499379.29997253,0.03900438,0.07624628,0.269413,0.01730833,0.25000000,0.00000000,0.00000437,0.00103850,0.00001751,1.00000225,0.99999938,1.00000475,0,0,0,0,24,0
+2,-0.00000000,63317867072.85679626,0.00586826,0.01175909,0.269413,0.00000000,0.00000000,0.00000000,0.00000435,0.00000000,0.00000007,1.00000224,0.99999938,1.00000473,0,0,0,0,24,1

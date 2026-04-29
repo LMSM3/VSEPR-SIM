@@ -1,0 +1,19 @@
+{
+  "formula": "KIO3",
+  "seed": 210,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 23.221487,
+  "energy_per_atom": 4.644297,
+  "rms_force": 51.368501,
+  "max_force": 51.368501,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.564300,
+  "timestamp": "2026-03-28T12:54:28",
+  "xyz_file": "benchmark_100\medium\structures\KIO3_s210.xyz"
+}

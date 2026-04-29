@@ -1,0 +1,353 @@
+% ============================================================================
+%  matrix_mechanics.tex
+%  VSEPR-SIM / thenewmethods
+%
+%  Document 2 of 3 -- The New Methods
+%  Matrix mechanics: forces, moments, torsion, stiffness,
+%  least-squares, and the Z-bead extension
+% ============================================================================
+
+\documentclass[11pt, letterpaper]{article}
+
+\usepackage{amsmath, amssymb, bm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{hyperref}
+
+\geometry{margin=1.1in}
+
+\definecolor{accent}{RGB}{30, 80, 160}
+
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
+
+\title{\textbf{The New Methods II}\\[0.4em]
+\large Matrix Mechanics: Forces, Moments, Torsion,\\
+Stiffness, Least Squares, and the $Z$-Bead Extension}
+\author{VSEPR-SIM thenewmethods}
+\date{}
+
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}[\vspace{-0.3em}\rule{\linewidth}{0.6pt}]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+% ── macros ──────────────────────────────────────────────────────────────────
+\newcommand{\uvec}[1]{\hat{\mathbf{#1}}}
+\newcommand{\bL}{\mathbf{L}}
+\newcommand{\bA}{\mathbf{A}}
+\newcommand{\bP}{\mathbf{P}}
+\newcommand{\bK}{\mathbf{K}}
+\newcommand{\bu}{\mathbf{u}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\bv}{\mathbf{v}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bZ}{\mathbf{Z}}
+\newcommand{\bq}{\mathbf{q}}
+\newcommand{\argmin}{\operatorname{arg\,min}}
+
+% ============================================================================
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+Everything below is undergraduate mechanics in different costumes, unified
+by a single observation: write the unknowns as a vector, build a system
+$\bA\bx = \mathbf{b}$, and solve.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Three-Force System}
+% ────────────────────────────────────────────────────────────────────────────
+
+Unknown magnitudes $L_6, L_{12}, L_{18}$ along known unit directions
+$\hat{u}_1, \hat{u}_2, \hat{u}_3$.
+Equilibrium against external load $\mathbf{P}$:
+
+\[
+\underbrace{\begin{bmatrix}
+u_{1x} & u_{2x} & u_{3x}\\
+u_{1y} & u_{2y} & u_{3y}\\
+u_{1z} & u_{2z} & u_{3z}
+\end{bmatrix}}_{\bA}
+\underbrace{\begin{bmatrix} L_6 \\ L_{12} \\ L_{18} \end{bmatrix}}_{\bL}
+=
+\underbrace{\begin{bmatrix} P_x \\ P_y \\ P_z \end{bmatrix}}_{\bP}
+\]
+
+\medskip\noindent
+\textbf{Ideal (exact geometry):}
+\[
+\bL = \bA^{-1}\bP
+\]
+
+\noindent
+\textbf{Real (noisy / overdetermined):}
+\[
+\bL_{\mathrm{real}} = (\bA^T\bA)^{-1}\bA^T\bP
+\]
+
+\noindent
+This covers cable tensions, strut forces, rod loads, ideal joint load sharing.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Add Moments About a Point}
+% ────────────────────────────────────────────────────────────────────────────
+
+Each force $L_k\hat{u}_k$ has position vector $\mathbf{r}_k$ from point $O$.
+Stack force and moment equations:
+
+\[
+\begin{bmatrix}
+  \hat{u}_1 & \hat{u}_2 & \hat{u}_3 \\[4pt]
+  \mathbf{r}_1\times\hat{u}_1 & \mathbf{r}_2\times\hat{u}_2 & \mathbf{r}_3\times\hat{u}_3
+\end{bmatrix}
+\begin{bmatrix} L_6 \\ L_{12} \\ L_{18} \end{bmatrix}
+=
+\begin{bmatrix} \bP \\ \mathbf{M}_{\mathrm{req}} \end{bmatrix}
+\]
+
+\noindent
+(Each row of the upper block is a $3$-vector; the full matrix is $6\times3$.)
+Solve with the pseudo-inverse for a wrench balance.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Coordinate-Aligned Ideal vs.\ Real Example}
+% ────────────────────────────────────────────────────────────────────────────
+
+Assume members aligned with coordinate axes:
+$\hat{u}_1=(1,0,0)^T$, $\hat{u}_2=(0,1,0)^T$, $\hat{u}_3=(0,0,1)^T$, and load
+$\bP=(120,\;80,\;-40)^T$ N. Then $\bA = \mathbf{I}$, so
+
+\[
+\bL_{\mathrm{ideal}} = (120,\;80,\;-40)^T \text{ N}
+\]
+
+\noindent
+Negative sign: member $18$ is in compression.
+
+\medskip\noindent
+\textbf{Real case} -- directions slightly off:
+
+\[
+\bA = \begin{bmatrix}
+0.98 & 0.05 & 0.00\\
+0.04 & 0.99 & 0.10\\
+0.00 & 0.03 & 0.95
+\end{bmatrix}
+\]
+
+Solve $\bA\bL=\bP$ for adjusted internal loads.
+Geometry error changes load sharing: what reality loves to do precisely
+when your design margin is already garbage.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Stiffness Method}
+% ────────────────────────────────────────────────────────────────────────────
+
+Connect force and displacement directly:
+\[
+\bK\bu = \mathbf{f}
+\]
+
+\noindent
+$\bK$ = stiffness matrix, $\bu$ = nodal displacement vector,
+$\mathbf{f}$ = nodal force vector.
+
+For a 1D two-spring system:
+\[
+\begin{bmatrix}
+k_1+k_2 & -k_2 \\
+-k_2    & k_2+k_3
+\end{bmatrix}
+\begin{bmatrix} u_1 \\ u_2 \end{bmatrix}
+=
+\begin{bmatrix} F_1 \\ F_2 \end{bmatrix}
+\]
+
+Gateway to FEA; yields beam deflection, truss extension, support reactions.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Least-Squares / Pseudo-Inverse}
+% ────────────────────────────────────────────────────────────────────────────
+
+Overdetermined or noisy system:
+\[
+\bA\bx \approx \mathbf{b}
+\qquad\Longrightarrow\qquad
+\bx = \bA^+\mathbf{b}
+\]
+
+Residual and residual norm:
+\[
+\mathbf{r} = \mathbf{b} - \bA\bx \qquad \|\mathbf{r}\|
+\]
+
+Useful for force reconstruction from sensor data, best-fit reaction estimates,
+and real-vs-ideal comparison.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Torsional System}
+% ────────────────────────────────────────────────────────────────────────────
+
+Torsion identity:
+\[
+\frac{T}{J} = \frac{\tau}{r} = \frac{G\theta}{L}
+\]
+
+Torsional stiffness of segment $i$:
+\[
+k_i^{(t)} = \frac{G_i J_i}{L_i}
+\]
+
+Element stiffness matrix for a two-node torsional element:
+\[
+k_i^{(t)}\begin{bmatrix}1 & -1\\-1 & 1\end{bmatrix}
+\]
+
+Assembled shaft system:
+\[
+\bK_\theta\,\boldsymbol{\theta} = \mathbf{T}
+\]
+
+Post-solve, shear stress and angle of twist in each segment:
+\[
+\tau_{\max,i} = \frac{T_i c_i}{J_i}
+\qquad\qquad
+\phi_i = \frac{T_i L_i}{G_i J_i}
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Unified Block System}
+% ────────────────────────────────────────────────────────────────────────────
+
+Define the combined unknown vector:
+\[
+\bq =
+\begin{bmatrix} L_6 \\ L_{12} \\ L_{18} \\ \theta_1 \\ \theta_2 \\ \theta_3 \end{bmatrix}
+\]
+
+One block equation:
+\[
+\begin{bmatrix}
+\bA_f & \mathbf{0} \\
+\bA_m & \mathbf{0} \\
+\mathbf{0} & \bK_\theta
+\end{bmatrix}
+\bq
+=
+\begin{bmatrix} \bP \\ \mathbf{M} \\ \mathbf{T} \end{bmatrix}
+\]
+
+$\bA_f$ = force balance, $\bA_m$ = moment balance, $\bK_\theta$ = torsion.
+One framework for force members, moment equilibrium, and rotational response.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Compact $L_{6,12,18}$ Notation Summary}
+% ────────────────────────────────────────────────────────────────────────────
+
+\[
+\bL = \begin{bmatrix} L_6 \\ L_{12} \\ L_{18} \end{bmatrix}
+\qquad
+\bA\bL = \bP
+\]
+
+\[
+\bL_{\mathrm{ideal}} = \bA^{-1}\bP
+\qquad
+\bL_{\mathrm{real}} = (\bA^T\bA)^{-1}\bA^T\bP
+\qquad
+\mathbf{r} = \bP - \bA\bL_{\mathrm{real}}
+\]
+
+Exact solution, best-fit solution, error measure. Neat.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{$Z$-Bead Extension: Forces from First Principles}
+% ────────────────────────────────────────────────────────────────────────────
+
+Each particle $i$ carries state:
+\[
+Z_i =
+\begin{bmatrix} \bx_i \\ \bv_i \\ s_i \\ q_i \\ m_i \\ \varepsilon_i \end{bmatrix}
+\qquad
+\mathbf{Z} = \{Z_1, Z_2, \ldots, Z_N\}
+\]
+
+Force system becomes $Z$-dependent:
+\[
+\bA(\mathbf{Z})\,\bL = \bP(\mathbf{Z})
+\]
+
+Pairwise interaction:
+\[
+\bF_{ij} = f(s_i, s_j, r_{ij}, q_i, q_j, \nabla\Phi)
+\qquad r_{ij} = \|\bx_i - \bx_j\|
+\]
+
+Total force on bead $i$:
+\[
+\bF_i = \sum_{j\neq i} \bF_{ij}
+\]
+
+\subsection*{Macro Property Extraction}
+
+\[
+\rho = \frac{\sum_i m_i}{V(\mathbf{Z})}
+\qquad
+\boldsymbol{\sigma} = \frac{1}{V}\sum_i \bF_i \otimes \bx_i
+\qquad
+E = \sum_i \varepsilon_i + \sum_{i<j} U_{ij}
+\]
+
+\subsection*{Ideal vs.\ Real in $Z$-Language}
+
+\[
+\text{Ideal: } \mathbf{Z}_{\mathrm{ideal}} \;\Rightarrow\; \bA(\mathbf{Z})^{-1}\bP(\mathbf{Z})
+\]
+\[
+\text{Real: } \bL_{\mathrm{real}} = (\bA^T\bA)^{-1}\bA^T\bP(\mathbf{Z}_{\mathrm{real}})
+\qquad
+\mathbf{r} = \bP - \bA(\mathbf{Z})\bL
+\]
+
+\subsection*{Coarse-Grained Force Channels}
+
+Each channel $L_k(\mathbf{Z})$ is a projection of many bead forces:
+\[
+L_k(\mathbf{Z}) = \sum_{i\in\Omega_k} \bF_i \cdot \hat{u}_k
+\]
+
+\subsection*{Unified System}
+
+\[
+\begin{cases}
+\bF(\mathbf{Z}) = \bA(\mathbf{Z})\bL \\[4pt]
+\mathbf{T}(\mathbf{Z}) = \bK_\theta(\mathbf{Z})\,\boldsymbol{\theta} \\[4pt]
+\mathbf{P}(\mathbf{Z}) \to \text{macro properties}
+\end{cases}
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Advanced Methods from the Same Framework}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{tabular}{@{}ll@{}}
+\toprule
+Goal & Method \\
+\midrule
+Natural modes / stability & $\bK\mathbf{v} = \lambda\mathbf{v}$ (eigenvalue problem) \\
+Best-fit load estimate & $\min_{\bx}\|\bA\bx - \mathbf{b}\|^2$ \\
+Design under equilibrium & $\min J(\bx)$ subject to $\bA\bx = \mathbf{b}$ \\
+Numerical stability check & $\kappa(\bA)$ (condition number) \\
+Sensor fusion & $\bL = \bA^+\bP_{\mathrm{sensor}}$ \\
+\bottomrule
+\end{tabular}
+
+\bigskip\noindent
+From force balance through eigenvalue stability through bead dynamics,
+it is the same algebraic skeleton wearing different physics.
+
+\end{document}

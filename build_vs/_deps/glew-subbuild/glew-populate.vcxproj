@@ -1,0 +1,303 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{7078EAD1-5FFC-36D4-B813-9E8F68218A2C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>glew-populate</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDebugLibraries>true</UseDebugLibraries>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-mkdir.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Creating directories for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -Dcfgdir=/Debug -P C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/tmp/glew-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-mkdir</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-download.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Performing download step (git clone) for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/tmp/glew-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\glew-populate-gitinfo.txt;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-mkdir;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-download</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-update.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Performing update step for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/tmp/glew-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\tmp\glew-populate-gitupdate.cmake;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\glew-populate-update-info.txt;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-download;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-update</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-patch.rule">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">No patch step for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\glew-populate-patch-info.txt;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-update;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-patch</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-configure.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">No configure step for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\tmp\glew-populate-cfgcmd.txt;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-patch;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-configure</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-build.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">No build step for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-configure;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-build</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-install.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">No install step for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-build;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-install</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-test.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">No test step for 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-install;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-test</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\73165d79bacb300dc61259b71b7b3e74\glew-populate-complete.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Completed 'glew-populate'</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -E make_directory C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/Debug/glew-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-install;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-mkdir;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-download;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-update;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-patch;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-configure;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-build;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\src\glew-populate-stamp\Debug\glew-populate-test;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\Debug\glew-populate-complete</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\998137d0e9c2f5c928e7793155f1131a\glew-populate.rule">
+      <BuildInParallel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</BuildInParallel>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'"></Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\Debug\glew-populate-complete;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\glew-populate</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <VerifyInputsAndOutputsExist Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</VerifyInputsAndOutputsExist>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM/build_vs/_deps/glew-subbuild -BC:/R/VSPER-SIM/build_vs/_deps/glew-subbuild --check-stamp-file C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\glew-populate-prefix\tmp\glew-populate-mkdirs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\PatchInfo.txt.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\RepositoryInfo.txt.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\UpdateInfo.txt.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\cfgcmd.txt.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\gitclone.cmake.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\gitupdate.cmake.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\mkdirs.cmake.in;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\glew-populate">
+    </None>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\ZERO_CHECK.vcxproj">
+      <Project>{5E70C50A-DCD2-3081-879C-5978E9D9D4BA}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

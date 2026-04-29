@@ -1,0 +1,19 @@
+{
+  "formula": "CO2",
+  "seed": 308,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 7.430745,
+  "energy_per_atom": 2.476915,
+  "rms_force": 29.351388,
+  "max_force": 29.351388,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.588900,
+  "timestamp": "2026-03-28T12:54:23",
+  "xyz_file": "benchmark_100\medium\structures\CO2_s308.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5CH3",
+  "seed": 588,
+  "tier": "medium",
+  "num_atoms": 15,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 255861.126986,
+  "energy_per_atom": 17057.408466,
+  "rms_force": 377670.859043,
+  "max_force": 377670.859043,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.842700,
+  "timestamp": "2026-03-28T13:06:47",
+  "xyz_file": "benchmark_v2\medium\structures\C6H5CH3_s588.xyz"
+}

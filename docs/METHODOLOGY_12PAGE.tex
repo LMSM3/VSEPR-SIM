@@ -17,7 +17,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\textit{Formation Engine Methodology}}
-\fancyhead[R]{\small\textit{Condensed Reference (v0.1)}}
+\fancyhead[R]{\small\textit{Condensed Reference (v3.0.0)}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -44,7 +44,7 @@
 {\LARGE\bfseries Formation Engine}\\[0.3em]
 {\LARGE\bfseries Canonical Simulation Methodology}\\[0.8em]
 {\large Condensed Reference (12 pages)}\\[0.5em]
-{\normalsize Version 0.1 --- January 2025}\\[0.3em]
+{\normalsize Version 3.0.0 --- January 2025}\\[0.3em]
 {\small Covers \S0--\S13 of the full 186-page methodology}
 \end{center}
 
@@ -88,7 +88,7 @@ Admissibility does \emph{not} imply thermodynamic equilibrium, synthetic feasibi
 
 \subsection{Explicit Scope Boundaries}
 
-Excluded by design: full electronic structure, excited states, reaction kinetics prediction, quantum coherence.  Domain of validity: $Z \ge 6$, $T > 50$\,K, $N \le 10{,}000$.  Extension points (quantum corrections, reactive potentials, ML surrogates) are architecturally reserved but not implemented in v0.1.
+Extension points (quantum corrections, reactive potentials, ML surrogates) are architecturally reserved but not implemented in v3.0.0.
 
 
 % ═══════════════════════════════════════════════════════════════════════════
@@ -193,7 +193,7 @@ Parameters from UFF: $\sigma = 2^{5/6} r_\text{vdW}$, $\varepsilon$ from UFF wel
 U_\text{Coul}(r) = \frac{k_e\, q_i\, q_j}{r}, \qquad k_e = 332.0636\;\text{kcal}\cdot\text{\AA}/(\text{mol}\cdot e^2)
 \end{equation}
 
-Same switching function applied.  \textbf{Known limitation:} Coulomb--integrator coupling produces energy drift in MD for ionic systems; use FIRE minimization only for charged systems in v0.1.
+Same switching function applied.  \textbf{Known limitation:} Coulomb--integrator coupling produces energy drift in MD for ionic systems; use FIRE minimization only for charged systems in v3.0.0.
 
 \subsection{Bonded Potentials}
 
@@ -391,7 +391,7 @@ Scale & $N$ & Method \\
 Molecular & 2--50 & Full MM + FIRE \\
 Cluster & 50--500 & MD + quench \\
 Bulk & 500--10k & PBC + supercell replication \\
-Mesoscale & 10k+ & CG placeholder \\
+Coarse-Grained & 10k+ & CG placeholder \\
 \bottomrule
 \end{tabular}
 \end{center}

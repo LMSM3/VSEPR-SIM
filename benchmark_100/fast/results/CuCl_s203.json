@@ -1,0 +1,19 @@
+{
+  "formula": "CuCl",
+  "seed": 203,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 2.791615,
+  "energy_per_atom": 1.395808,
+  "rms_force": 13.250227,
+  "max_force": 13.250227,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.460900,
+  "timestamp": "2026-03-28T12:54:14",
+  "xyz_file": "benchmark_100\fast\structures\CuCl_s203.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "Ca3PO4",
+  "seed": 105,
+  "tier": "fast",
+  "num_atoms": 8,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 1956.304330,
+  "energy_per_atom": 244.538041,
+  "rms_force": 3087.109638,
+  "max_force": 3087.109638,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.445200,
+  "timestamp": "2026-03-28T13:07:08",
+  "xyz_file": "benchmark_v2\fast\structures\Ca3PO4_s105.xyz"
+}

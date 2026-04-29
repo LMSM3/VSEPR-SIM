@@ -1,0 +1,698 @@
+﻿% VSEPR-SIM VERSION REPORT
+% State Vector Audit, Core Implementation Review, and Beta-6 Pre-Repair Manifest
+% Version: v4.0.4.05 (audit) / v5.0.0-beta6 (migration target)
+% Generated: 2026
+
+\documentclass[11pt,a4paper]{article}
+\usepackage{amsmath, amssymb, geometry, booktabs, hyperref, xcolor, enumitem, titlesec, fancyhdr, listings, mdframed}
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{VSEPR-SIM Version Report}
+\lhead{v4.0.4.05 $\to$ v5.0.0-beta6}
+\cfoot{\thepage}
+
+\definecolor{red1}{HTML}{CC0000}
+\definecolor{green1}{HTML}{006600}
+\definecolor{amber}{HTML}{B36200}
+\definecolor{gray1}{HTML}{444444}
+\definecolor{codebg}{HTML}{F5F5F5}
+
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!50}
+}
+
+\title{
+  \textbf{VSEPR-SIM Version Report}\\[0.5em]
+  \large State Vector Audit \textemdash{} Core Implementation Review\\
+  \large F/U Check Analysis \textemdash{} Update Loop Survey \textemdash{} Beta-6 Repair Manifest\\[1em]
+  \normalsize \texttt{v4.0.4.05} $\longrightarrow$ \texttt{v5.0.0-beta6}
+}
+\author{VSEPR-SIM Development \textemdash{} Internal Technical Document}
+\date{2026 \textemdash{} Generated pre-refactor}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ==============================================================================
+\section{Document Purpose}
+% ==============================================================================
+
+This document is the mandatory pre-refactor audit for the \texttt{v5.0.0-beta6} migration.
+It describes:
+
+\begin{enumerate}
+  \item The core-of-core implementation: what the engine actually does right now.
+  \item The full state vectors for both the atomistic and coarse-grained bead layers.
+  \item Force (\textbf{F}) and energy (\textbf{U}) check mechanisms as implemented.
+  \item The update loop structure and ensemble types.
+  \item The macro-solving methods available.
+  \item All detected defects and inconsistencies from the audit.
+  \item The immediate action table with priority classification.
+\end{enumerate}
+
+This document is \textbf{not aspirational}. It describes what exists, not what is planned.
+Planned changes are listed only in Section~\ref{sec:action_table}.
+
+% ==============================================================================
+\section{Core-of-Core: What the Engine Actually Does}
+% ==============================================================================
+
+\subsection{The Fundamental Architecture}
+
+VSEPR-SIM is structured as a layered state-transformation engine:
+
+\[
+S_{n+1} = \mathcal{K}(S_n,\, \Delta t,\, \Lambda)
+\]
+
+where $\mathcal{K}$ is the kernel operator, $\Delta t$ is the timestep, and
+$\Lambda \in \{\text{C-Empirical}, \text{C-Reactive}, \text{C-Polarizable},
+\text{CG-Reduced}, \text{CG-Enriched}, \text{Hybrid-AdRes}\}$ is the model fidelity level.
+
+The layers are:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Layer & Namespace & Role \\
+\midrule
+Primitive math   & \texttt{vsepr::}       & Vec3, geom\_ops, flat coord arrays \\
+Atomistic state  & \texttt{atomistic::}   & State, StateC, integrators, models \\
+Energy kernel    & \texttt{vsepr::pot::}  & Bond, angle, torsion, LJ, VSEPR domain \\
+Optimizer        & \texttt{vsepr::}       & FIRE (geometry minimisation) \\
+Coarse-grain     & \texttt{coarse\_grain::} & Bead, BeadSystem, mapping \\
+V5 transport     & \texttt{v5::}          & BeadDynState, transport shell \\
+Thermodynamics   & \texttt{vsepr::thermo::} & Gibbs, ThermoDatabase \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Two Parallel Engine Tracks}
+
+There are \textbf{two distinct coordinate conventions} operating simultaneously.
+
+\textbf{Track A: \texttt{src/sim} + \texttt{src/pot}} \\
+Coordinates as flat \texttt{std::vector<double>}, stride 3.
+Used by: FIRE optimizer, bond/angle/torsion/LJ/VSEPR energy kernels.
+This is the VSEPR geometry engine.
+
+\textbf{Track B: \texttt{atomistic/}} \\
+Coordinates as \texttt{std::vector<Vec3>}.
+Used by: velocity Verlet, Langevin, FIRE (atomistic variant), LJ+Coulomb MD model.
+This is the molecular dynamics engine.
+
+Both tracks define their own \texttt{Vec3}. They do not interoperate.
+This is the primary structural defect of the current codebase.
+
+% ==============================================================================
+\section{State Vectors}
+% ==============================================================================
+
+\subsection{Atomistic Runtime State: \texttt{atomistic::State}}
+
+The canonical per-step simulation state. Lives in \texttt{atomistic/core/state.hpp}.
+
+\[
+S = (N,\; \mathbf{X},\; \mathbf{V},\; \mathbf{T},\; \mathbf{Q},\; \mathbf{M},\;
+     \mathrm{type},\; B,\; L,\; \mathbf{F},\; E,\; \mathrm{box},\;
+     \boldsymbol{\mu}^{\mathrm{ind}},\; \boldsymbol{\alpha},\; \boldsymbol{\mu}^0)
+\]
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Symbol & Field & Type & Units \\
+\midrule
+$N$           & \texttt{N}                  & \texttt{uint32\_t}      & --- \\
+$\mathbf{X}$  & \texttt{X[N]}               & \texttt{Vec3[]}         & \AA \\
+$\mathbf{V}$  & \texttt{V[N]}               & \texttt{Vec3[]}         & \AA/fs \\
+$\mathbf{T}$  & \texttt{T[N]}               & \texttt{double[]}       & K (proxy, optional) \\
+$\mathbf{Q}$  & \texttt{Q[N]}               & \texttt{double[]}       & $e$ \\
+$\mathbf{M}$  & \texttt{M[N]}               & \texttt{double[]}       & amu \\
+              & \texttt{type[N]}            & \texttt{uint32\_t[]}    & species ID \\
+$B$           & \texttt{B}                  & \texttt{Edge[]}         & bond graph \\
+$L$           & \texttt{L}                  & \texttt{Event[]}        & event log \\
+$\mathbf{F}$  & \texttt{F[N]}               & \texttt{Vec3[]}         & kcal/mol/\AA\; (scratch) \\
+$E$           & \texttt{E}                  & \texttt{EnergyTerms}    & kcal/mol \\
+              & \texttt{box}                & \texttt{BoxPBC}         & \AA \\
+$\boldsymbol{\mu}^{\mathrm{ind}}$ & \texttt{induced\_dipoles[N]}   & \texttt{Vec3[]} & $e\cdot$\AA \\
+$\boldsymbol{\alpha}$ & \texttt{polarizabilities[N]} & \texttt{double[]}  & \AA$^3$ \\
+$\boldsymbol{\mu}^0$  & \texttt{permanent\_dipoles[N]}& \texttt{Vec3[]}  & $e\cdot$\AA \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{EnergyTerms ledger:}
+\[
+E_{\mathrm{total}} = U_{\mathrm{bond}} + U_{\mathrm{angle}} + U_{\mathrm{tors}}
+                   + U_{\mathrm{vdW}} + U_{\mathrm{Coul}} + U_{\mathrm{ext}} + U_{\mathrm{pol}}
+\]
+
+All seven terms are individually tracked. The \texttt{total()} method sums them.
+$U_{\mathrm{pol}}$ is the SCF polarization energy, wired to the induced dipole solver.
+
+\noindent\textbf{BoxPBC:} Orthogonal minimum-image convention.
+$\Delta\mathbf{r}_{ij} \leftarrow \Delta\mathbf{r}_{ij} - \mathbf{L} \cdot \mathrm{round}(\Delta\mathbf{r}_{ij}/\mathbf{L})$,
+component-wise. Cached inverse $\mathbf{L}^{-1}$ avoids repeated division.
+Triclinic cells: not supported.
+
+\subsection{Physics-Informed Summary State: \texttt{atomistic::StateC}}
+
+Formal notation (Dev Day $\sim$42):
+\[
+S_0 = \{m_0,\, E_0,\, \mathbf{x}_0,\, \mathbf{v}_0,\, C,\, \mathcal{E},\, K,\, \Sigma\}
+\]
+\[
+S_f = \{m_f,\, E_f,\, \Phi,\, \mathcal{S},\, \Pi,\, \Omega,\, Q\}
+\]
+\[
+S_f = T(S_0,\, t,\, \Lambda)
+\]
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Symbol & Struct & Content \\
+\midrule
+$C$        & \texttt{Composition}         & Atomistic / Bead / Hybrid / Macro \\
+$\mathcal{E}$ & \texttt{Environment}      & $T$, $P$, $\mathbf{E}$-field, $\mathbf{B}$-field, radiation, shear, flow \\
+$K$        & \texttt{Constraints}         & Frozen atoms, bond break/form, symmetry \\
+$\Sigma$   & \texttt{SourceTag}           & Origin, engine version, SHA-512 hash, parent ID \\
+$\Lambda$  & \texttt{ModelLevel}          & 6-tier fidelity ladder \\
+$\Phi$     & \texttt{StructuralState}     & Geometry class, topology, symmetry score \\
+$\mathcal{S}$ & \texttt{StabilityMetric}  & $E/N$, $F_{\mathrm{RMS}}$, $F_{\mathrm{max}}$, local-minimum flag \\
+$\Pi$      & \texttt{PerformanceProperties} & $D$, $\eta$, $\kappa$, $K_{\mathrm{bulk}}$, $\rho$, $T_m$ \\
+$\Omega$   & \texttt{EventLog}            & Step-tagged events \\
+$Q$        & \texttt{QualityFlags}        & Conservation booleans, drift values \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Coarse-Grained Bead State: \texttt{coarse\_grain::Bead}}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Field & Type & Role \\
+\midrule
+\texttt{position}          & \texttt{Vec3}                    & Bead center (\AA) \\
+\texttt{velocity}          & \texttt{Vec3}                    & Bead velocity (\AA/fs) \\
+\texttt{mass}              & \texttt{double}                  & $\sum m_i^{\mathrm{parent}}$ (amu) \\
+\texttt{charge}            & \texttt{double}                  & $\sum q_i^{\mathrm{parent}}$ ($e$) \\
+\texttt{type\_id}          & \texttt{uint32\_t}               & Index into BeadType table \\
+$\Sigma_i$ & \texttt{StructuralRole}          & Inert / Ionic / Covalent / Metallic / Mixed \\
+$\Lambda_i$ & \texttt{StabilityClass}         & Transient / Metastable / AmbientStable / BulkLattice \\
+\texttt{parent\_atom\_indices} & \texttt{uint32\_t[]}         & Traceback into \texttt{atomistic::State} \\
+\texttt{mapping\_rule\_id} & \texttt{uint32\_t}               & Producing mapping rule \\
+\texttt{com\_position}     & \texttt{Vec3}                    & Center-of-mass reference \\
+\texttt{cog\_position}     & \texttt{Vec3}                    & Center-of-geometry reference \\
+\texttt{mapping\_residual} & \texttt{double}                  & $|\mathrm{COM} - \mathrm{COG}|$ (\AA) \\
+\texttt{surface}           & \texttt{optional<SurfaceDescriptor>}   & Anisotropic shape \\
+\texttt{multi\_channel}    & \texttt{optional<MultiChannelDescriptor>} & Enriched descriptor \\
+\texttt{unified}           & \texttt{optional<UnifiedDescriptor>}  & Adaptive-resolution descriptor \\
+\texttt{orientation}       & \texttt{BeadOrientation}         & Inertia-frame primary axis \\
+\texttt{has\_orientation}  & \texttt{bool}                    & Orientation validity flag \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{V5 Transport Bead State: \texttt{v5::BeadDynState}}
+
+Dynamic state for the V5 transport testbed.
+Equation of motion:
+\[
+\frac{d\mathbf{v}}{dt} = A(\mathbf{u} - \mathbf{v}) + B\,\mathbf{G} + C\,\mathbf{H}
+\]
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Field & Type & Content \\
+\midrule
+\texttt{position}, \texttt{velocity}, \texttt{acceleration} & \texttt{Vec3} & Full kinematic state \\
+\texttt{n\_hat} & \texttt{Vec3} & Orientation axis (static, Phase A/B) \\
+\texttt{env} & \texttt{EnvironmentState} & $(\eta,\, \rho,\, C,\, P_2)$ \\
+\texttt{mass} & \texttt{double} & Reduced mass (default 1.0) \\
+\texttt{a\_drag}, \texttt{a\_body}, \texttt{a\_grad}, \texttt{a\_total} & \texttt{Vec3} & Decomposed acceleration (diagnostics) \\
+\texttt{mod\_report} & \texttt{ModulationReport} & Kernel modulation diagnostics \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ==============================================================================
+\section{F and U Checks}
+% ==============================================================================
+
+\subsection{Force Checks (F)}
+
+\subsubsection{Analytical Gradient Verification}
+Available in \texttt{src/sim/optimizer.hpp} via \texttt{check\_gradients = true}.
+Central finite difference:
+\[
+\nabla_i E \approx \frac{E(\mathbf{x} + h\hat{e}_i) - E(\mathbf{x} - h\hat{e}_i)}{2h}
+\]
+$h = 10^{-6}$ \AA, tolerance $10^{-5}$ kcal/mol/\AA.
+\textbf{Known bug:} the print path on max-error reporting re-calls \texttt{evaluate\_energy(coords)} instead of printing the stored numeric gradient, so the numeric column prints total energy. Diagnostics only --- non-fatal, but misleading.
+
+\subsubsection{NaN / Inf Guard}
+FIRE optimizer checks every iteration:
+\begin{lstlisting}
+if (has_invalid_values(result.coords) ||
+    has_invalid_values(forces) ||
+    !std::isfinite(result.energy))
+    result.termination_reason = "NaN/Inf detected";
+\end{lstlisting}
+Terminates cleanly. Does not repair.
+
+\subsubsection{Force Convergence Criteria}
+Two simultaneous thresholds in \texttt{OptimizerSettings}:
+\[
+F_{\mathrm{RMS}} < 10^{-4}\;\frac{\mathrm{kcal}}{\mathrm{mol}\cdot\text{\AA}}, \quad
+F_{\mathrm{max}} < 10^{-3}\;\frac{\mathrm{kcal}}{\mathrm{mol}\cdot\text{\AA}}
+\]
+Both must be satisfied simultaneously. These are tight relative to many production codes.
+
+\subsubsection{Displacement Clamping}
+Per-atom displacement clamped to \texttt{max\_step} = 0.2 \AA\ per step (vector magnitude, not component-wise). Prevents runaway steps on stiff geometries.
+
+\subsubsection{FIRE Convergence: \texttt{atomistic} Track}
+In \texttt{atomistic/integrators/fire.hpp}:
+\[
+F_{\mathrm{RMS}} < \epsilon_F = 10^{-6}, \quad \Delta U/N < \epsilon_U = 10^{-10}
+\]
+These are significantly tighter than the \texttt{src/sim} FIRE defaults and operate on different coordinate storage (Vec3 arrays vs flat doubles).
+
+\subsection{Energy Checks (U)}
+
+\subsubsection{EnergyBalance Ledger (\texttt{StateC})}
+Enforces:
+\[
+E_0 + E_{\mathrm{in}} - E_{\mathrm{out}} \approx E_f + E_{\mathrm{loss}}, \quad
+m_0 + m_{\mathrm{in}} - m_{\mathrm{out}} \approx m_f
+\]
+Violation sets \texttt{Q.energy\_conserved = false} and increments \texttt{Q.warning\_count}.
+Does \textbf{not} halt simulation --- violation is logged, not fatal.
+
+\subsubsection{EnergyTerms Completeness}
+All seven terms are present in the ledger. \texttt{total()} sums all seven.
+The VSEPR-mode EnergyResult struct also carries the full breakdown: bond, angle, torsion, nonbonded, VSEPR domain, vdW, Coulomb.
+
+\subsubsection{Conservation in Velocity Verlet}
+NVE conserves $E_{\mathrm{total}} = KE + PE$ by construction (symplectic integrator).
+Tracked in \texttt{VelocityVerletStats}: \texttt{E\_drift = E\_final - E\_initial}.
+No per-step assertion --- drift accumulates silently unless the caller inspects stats.
+
+\subsubsection{Bead Conservation Checking}
+\texttt{BeadSystem::check\_conservation()} compares $\sum m_b$ vs $\sum m_i^{\mathrm{atom}}$
+and $\sum q_b$ vs $\sum q_i^{\mathrm{atom}}$ with tolerance $10^{-10}$.
+
+% ==============================================================================
+\section{Update Loop Structure}
+% ==============================================================================
+
+\subsection{Geometry Optimisation (FIRE, \texttt{src} track)}
+
+Used for VSEPR structure generation. Not a dynamics integrator --- minimises $E(\mathbf{x})$.
+
+\begin{enumerate}[label=\arabic*.]
+  \item Compute $E$, $\mathbf{F} = -\nabla E$ at current $\mathbf{x}$.
+  \item Check convergence ($F_{\mathrm{RMS}}$, $F_{\mathrm{max}}$, NaN/Inf, $dt_{\min}$).
+  \item Compute power $P = \mathbf{F} \cdot \mathbf{v}$.
+  \item FIRE velocity mixing: $\mathbf{v} \leftarrow (1-\alpha)\mathbf{v} + \alpha|\mathbf{v}|\hat{\mathbf{F}}$.
+  \item Adaptive $dt$, $\alpha$: if $P > 0$, grow $dt$, decay $\alpha$; if $P \leq 0$, reset $\mathbf{v} = 0$, shrink $dt$, reset $\alpha$.
+  \item Velocity Verlet half-step: $\mathbf{v}(t + \tfrac{\Delta t}{2}) = \mathbf{v}(t) + \mathbf{F}(t)\tfrac{\Delta t}{2}$.
+  \item Position update: $\mathbf{x}(t+\Delta t) = \mathbf{x}(t) + \mathbf{v}(t+\tfrac{\Delta t}{2})\Delta t$. Clamp displacement.
+  \item Evaluate $E$, $\mathbf{F}$ at new $\mathbf{x}$.
+  \item Velocity Verlet second half: $\mathbf{v}(t+\Delta t) = \mathbf{v}(t+\tfrac{\Delta t}{2}) + \mathbf{F}(t+\Delta t)\tfrac{\Delta t}{2}$.
+  \item Return to step 2.
+\end{enumerate}
+
+\subsection{NVE Molecular Dynamics (Velocity Verlet, \texttt{atomistic} track)}
+
+Symplectic, time-reversible, conserves $E_{\mathrm{total}}$ (microcanonical ensemble).
+
+\begin{enumerate}[label=\arabic*.]
+  \item Half-kick: $\mathbf{v}_i \leftarrow \mathbf{v}_i + \dfrac{\mathbf{F}_i}{m_i}\dfrac{\Delta t}{2}$.
+  \item Drift: $\mathbf{x}_i \leftarrow \mathbf{x}_i + \mathbf{v}_i \Delta t$.
+  \item Force evaluation: \texttt{model.eval(state, params)} $\Rightarrow$ fills \texttt{F[N]}, \texttt{E}.
+  \item Half-kick: $\mathbf{v}_i \leftarrow \mathbf{v}_i + \dfrac{\mathbf{F}_i}{m_i}\dfrac{\Delta t}{2}$.
+  \item Diagnostics: $KE = \tfrac{1}{2}\sum m_i |\mathbf{v}_i|^2$, $T = \tfrac{2KE}{3Nk_B}$, log.
+\end{enumerate}
+
+\subsection{NVT Molecular Dynamics (Langevin, \texttt{atomistic} track)}
+
+Stochastic equation of motion (Euler-Maruyama discretisation):
+\[
+m_i\,\frac{d\mathbf{v}_i}{dt} = \mathbf{F}_i - \gamma m_i \mathbf{v}_i
+  + \sqrt{2\gamma m_i k_B T}\;\mathbf{R}(t)
+\]
+\begin{enumerate}[label=\arabic*.]
+  \item Evaluate forces: \texttt{model.eval(state, params)}.
+  \item Update velocity: $\mathbf{v}_i \leftarrow \mathbf{v}_i + [\mathbf{F}_i/m_i - \gamma\mathbf{v}_i]\Delta t
+        + \sqrt{2\gamma k_B T/m_i}\sqrt{\Delta t}\,\mathbf{R}$.
+  \item Update position: $\mathbf{x}_i \leftarrow \mathbf{x}_i + \mathbf{v}_i \Delta t$.
+  \item Accumulate temperature statistics.
+\end{enumerate}
+Not symplectic --- energy is not conserved; temperature is controlled.
+
+\subsection{V5 Transport Loop (\texttt{v5::BeadDynState})}
+
+Mandatory update order (ERB §):
+\begin{enumerate}[label=\arabic*.]
+  \item Integrate poses $(\mathbf{R},\, \hat{\mathbf{n}})$ via velocity Verlet.
+  \item Compute fast observables: $\rho$, $C$, $P_2$.
+  \item Update slow state $\eta$.
+  \item Evaluate modulated kernels $\mathcal{K}_k(\eta)$.
+  \item Compute forces and torques.
+  \item Return to step 1.
+\end{enumerate}
+Torque evolution and orientation dynamics are deferred (Phase A/B: rigid orientation).
+
+\subsection{StateC Transformation Loop (\texttt{state\_c.hpp})}
+
+\textbf{Status: stub.} Framework is complete; integrator is not connected.
+Current loop body:
+\begin{lstlisting}
+// [PLACEHOLDER] In the real engine, force evaluation, integrator,
+// thermostat, PBC, and constraint enforcement happen here.
+\end{lstlisting}
+The energy balance ledger, quality flags, event log, and provenance
+chain are wired and functional. The force and position updates are not.
+
+% ==============================================================================
+\section{Simulation Types and Macro-Solving Methods}
+% ==============================================================================
+
+\subsection{Available Simulation Types}
+
+\begin{center}
+\begin{tabular}{lllll}
+\toprule
+Type & Ensemble & Integrator & Status & Track \\
+\midrule
+VSEPR geometry opt. & --- (minimisation) & FIRE & \textcolor{green1}{Implemented} & \texttt{src/sim} \\
+NVE MD              & Microcanonical     & Velocity Verlet & \textcolor{green1}{Implemented} & \texttt{atomistic} \\
+NVT MD              & Canonical          & Langevin        & \textcolor{green1}{Implemented} & \texttt{atomistic} \\
+Geometry opt. (atomistic) & ---          & FIRE            & \textcolor{green1}{Implemented} & \texttt{atomistic} \\
+V5 transport        & Non-equilibrium    & Velocity Verlet & \textcolor{amber}{Partial}      & \texttt{v5} \\
+StateC evolution    & Configurable       & Stub            & \textcolor{red1}{Not connected} & \texttt{atomistic} \\
+CG bead dynamics    & ---                & Not defined     & \textcolor{red1}{Not implemented} & \texttt{coarse\_grain} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Macro-Solving Methods}
+
+\subsubsection{Gibbs Free Energy}
+\[
+G(T) = H_f - T \cdot S / 1000
+\]
+($H_f$ in kcal/mol, $S$ in cal/mol$\cdot$K.)
+Seeded NIST reference database: 15 molecules, standard state 298.15 K / 1 atm.
+Temperature correction is constant-$C_p$ approximation ($\int C_p\,dT$ not integrated).
+
+\subsubsection{Equilibrium Constant}
+\[
+K_{\mathrm{eq}} = \exp\!\left(-\frac{\Delta G}{RT}\right)
+\]
+
+\subsubsection{SCF Polarization}
+Iterative induced dipole solver:
+\[
+\boldsymbol{\mu}_i = \alpha_i \left(\mathbf{E}^0_i + \sum_{j \neq i} \mathbf{T}_{ij}\boldsymbol{\mu}_j \right)
+\]
+Wired into \texttt{State.Upol} and \texttt{EnergyTerms}.
+
+\subsubsection{V4 Formation Engine}
+Statistical mechanics of metallic formation.
+Polynomial fitting ($11$--$15$ layer), eigen counters.
+Continual formation from candidate central atoms (Au, Ag, Ni, Al, Fe, Cr, Ti, Co).
+Version: \texttt{V4.0.4.04} (current), \texttt{V4.0.4.05} (audit target).
+
+\subsubsection{Gas-Phase Thermodynamics (\texttt{gas2}, \texttt{gas3})}
+Equation of state, kinetic theory, heat, nuclear corrections.
+Sweep engine, polynomial fitting, quality scoring, state records.
+
+% ==============================================================================
+\section{Detected Errors and Inconsistencies}
+\label{sec:errors}
+% ==============================================================================
+
+The following defects were identified during the pre-beta6 audit.
+
+\subsection{E-1 \textemdash{} Two Vec3 Types (BLOCKER)}
+\begin{mdframed}[backgroundcolor=red!8]
+\textbf{Location:} \texttt{src/core/math\_vec3.hpp} (\texttt{vsepr::Vec3}) vs
+\texttt{atomistic/core/state.hpp} (\texttt{atomistic::Vec3}).
+
+\textbf{Problem:} Both types represent $\mathbb{R}^3$ with identical semantics but
+are not interconvertible. Every interface between the energy kernel (Track A)
+and the atomistic integrators (Track B) requires either a copy, a cast, or a
+parallel reimplementation. This is not a latent bug --- it is an active barrier
+to every planned cross-track integration.
+
+\textbf{Impact:}
+\begin{itemize}
+  \item Coarse-grain beads import \texttt{atomistic::Vec3} for position/velocity.
+  \item VSEPR energy kernels use \texttt{vsepr::Vec3} exclusively.
+  \item No conversion path exists.
+  \item Any function taking a bead position and feeding it to an energy kernel
+        requires a full struct copy at the call site.
+\end{itemize}
+
+\textbf{Classification:} Blocker. Fix before refactor.
+\end{mdframed}
+
+\subsection{E-2 \textemdash{} \texttt{evolve()} Placeholder (BLOCKER)}
+\begin{mdframed}[backgroundcolor=red!8]
+\textbf{Location:} \texttt{atomistic/core/state\_c.hpp}, \texttt{evolve()} function.
+
+\textbf{Problem:} The canonical state-transformation operator $T(S_0, t, \Lambda)$
+contains a \texttt{[PLACEHOLDER]} comment where the integrator coupling belongs.
+The loop runs for \texttt{n\_steps} but does not move particles or evaluate forces.
+The energy balance always reports zero drift because the energy never changes.
+
+\textbf{What the stub does correctly:}
+\begin{itemize}
+  \item Validates $S_0$ (mass $> 0$, energy finite).
+  \item Initialises the energy balance ledger.
+  \item Chains provenance on each step.
+  \item Returns a structurally valid \texttt{OutcomeState}.
+\end{itemize}
+
+\textbf{What it does not do:}
+\begin{itemize}
+  \item Evaluate forces.
+  \item Update positions or velocities.
+  \item Advance the simulation by $\Delta t$.
+\end{itemize}
+
+\textbf{Classification:} Blocker. Core transformation is fiction without this.
+\end{mdframed}
+
+\subsection{E-3 \textemdash{} \texttt{sane()} Ignores \texttt{F[N]} Size}
+\begin{mdframed}[backgroundcolor=amber!8]
+\textbf{Location:} \texttt{atomistic/core/state.hpp}, \texttt{sane()} function.
+
+\textbf{Problem:}
+\begin{lstlisting}
+inline bool sane(const State& s) {
+    if (s.N == 0) return false;
+    if (s.X.size() != s.N || s.V.size() != s.N ||
+        s.Q.size() != s.N || s.M.size() != s.N ||
+        s.type.size() != s.N) return false;
+    return true;
+}
+\end{lstlisting}
+\texttt{F[N]} is not checked. The force array can be empty or wrong size
+and \texttt{sane()} returns \texttt{true}. \texttt{model.eval()} writes into
+\texttt{F} --- if the array is undersized, this is undefined behaviour.
+
+\textbf{Classification:} Medium. Cheap fix, prevents silent UB.
+\end{mdframed}
+
+\subsection{E-4 \textemdash{} \texttt{T[N]} Has No Update Rule}
+\begin{mdframed}[backgroundcolor=amber!8]
+\textbf{Location:} \texttt{atomistic/core/state.hpp}, field \texttt{T[N]}.
+
+\textbf{Problem:} The per-particle temperature proxy \texttt{T[N]} is declared
+in \texttt{State} but nothing in the visible codebase populates or updates it.
+The correct system temperature is computed in \texttt{velocity\_verlet.hpp}
+via the equipartition theorem:
+\[
+T = \frac{2KE}{3Nk_B}
+\]
+but is not written back into \texttt{T[N]}.
+
+\textbf{Classification:} Medium. Mark as diagnostic-only until a
+thermostat or local-temperature operator is implemented.
+\end{mdframed}
+
+\subsection{E-5 \textemdash{} Bead Mass Not Bridged to Transport Layer}
+\begin{mdframed}[backgroundcolor=amber!8]
+\textbf{Location:} \texttt{v5/bead\_transport.hpp}, \texttt{BeadDynState::mass}.
+
+\textbf{Problem:} \texttt{BeadDynState.mass = 1.0} (reduced units, default).
+Physical bead mass is:
+\[
+M_b = \sum_{i \in P_b} m_i
+\]
+stored correctly in \texttt{coarse\_grain::Bead::mass} (amu).
+No conversion bridge exists between the physical mass and the reduced mass
+used in the transport testbed. The equation of motion $\mathbf{a} = \mathbf{F}/m$
+in the transport layer uses a mass that is not physically connected to the
+source atomistic data.
+
+\textbf{Classification:} Medium. Reduced units are acceptable; the
+conversion must be explicit and stored.
+\end{mdframed}
+
+\subsection{E-6 \textemdash{} \texttt{StateC::from\_state()} Loses Metadata}
+\begin{mdframed}[backgroundcolor=amber!8]
+\textbf{Location:} \texttt{atomistic/core/state\_c.hpp}, \texttt{StateC::from\_state()}.
+
+\textbf{Problem:} The factory correctly computes $m_0$, $E_0$, COM position,
+COM velocity, and sets \texttt{comp = Atomistic}. It does not transfer:
+\begin{itemize}
+  \item \texttt{env} (Environment: temperature, pressure, fields, flow)
+  \item \texttt{constraints} (Constraints: frozen atoms, bond rules, symmetry)
+  \item \texttt{provenance.engine\_version}, \texttt{.hash}
+\end{itemize}
+The compressed state silently loses physical context. Any downstream
+use of \texttt{StateC.env.temperature} after \texttt{from\_state()} returns 0 K.
+
+\textbf{Classification:} Design gap. Silent omission. Must be flagged at minimum.
+\end{mdframed}
+
+\subsection{E-7 \textemdash{} Bead Orientation Duplicated Across Layers}
+\begin{mdframed}[backgroundcolor=amber!8]
+\textbf{Location:} \texttt{coarse\_grain/core/bead.hpp} (\texttt{Bead::orientation}),
+\texttt{v5/bead\_transport.hpp} (\texttt{BeadDynState::n\_hat}).
+
+\textbf{Problem:} Orientation is stored in two separate structs with no
+defined synchronisation. \texttt{Bead::orientation} is the inertia-frame
+static axis. \texttt{BeadDynState::n\_hat} is the transport-layer orientation
+axis, initialised from the scene bead but thereafter independently tracked.
+After any dynamic step, the two diverge with no update protocol.
+
+\textbf{Classification:} Medium. Two truths = future bug shrine.
+Define one owner.
+\end{mdframed}
+
+\subsection{E-8 \textemdash{} Gradient Verifier Print Bug}
+\begin{mdframed}[backgroundcolor=gray!8]
+\textbf{Location:} \texttt{src/sim/optimizer.hpp}, \texttt{verify\_gradients()}, line 363.
+
+\textbf{Problem:} The numeric gradient diagnostic print re-calls
+\texttt{model.evaluate\_energy(coords)} and prints the total energy,
+not the numeric gradient component at the max-error index.
+Only affects debug output when \texttt{check\_gradients = true}.
+
+\textbf{Classification:} Low. Diagnostics only.
+\end{mdframed}
+
+\subsection{E-9 \textemdash{} TBP Axial/Equatorial Classification is Frame-Dependent}
+\begin{mdframed}[backgroundcolor=gray!8]
+\textbf{Location:} \texttt{src/pot/vsepr\_geometry.hpp}, \texttt{TRIGONAL\_BIPYRAMIDAL} case.
+
+\textbf{Problem:} Classification of axial vs equatorial positions uses
+$|dz_i|/r_i > 0.8$ --- a z-axis alignment test. This breaks for any
+trigonal bipyramidal molecule that is not pre-aligned to the z-axis.
+Since the FIRE optimizer does not enforce frame alignment, the
+equatorial/axial assignment is not invariant under rotation.
+
+\textbf{Classification:} High correctness risk. Fix requires
+frame-independent classification (e.g., via inertia tensor decomposition).
+\end{mdframed}
+
+\subsection{E-10 \textemdash{} VSEPR Domain Gradient Jacobian Approximation}
+\begin{mdframed}[backgroundcolor=gray!8]
+\textbf{Location:} \texttt{src/pot/energy\_vsepr.hpp}, lines 134--141.
+
+\textbf{Problem:} The gradient propagation from domain-repulsion through
+bond-pair directions approximates the full Jacobian
+$\partial\hat{\mathbf{d}}/\partial\mathbf{r} = (I - \hat{\mathbf{d}}\hat{\mathbf{d}}^\top)/|\mathbf{r}|$
+by using only the $1/r$ magnitude scaling. The transverse projection tensor
+$(I - \hat{\mathbf{d}}\hat{\mathbf{d}}^\top)$ is not accumulated.
+This is accurate near equilibrium where bond directions are slowly varying,
+but degrades when bonds are significantly stretched.
+
+\textbf{Classification:} Medium. Document as known approximation.
+\end{mdframed}
+
+% ==============================================================================
+\section{Immediate Action Table}
+\label{sec:action_table}
+% ==============================================================================
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+ID & Issue & Priority & Action \\
+\midrule
+E-1 & Two Vec3 types          & \textcolor{red1}{\textbf{P1 Blocker}} & Unify or bridge before refactor \\
+E-2 & evolve() stub           & \textcolor{red1}{\textbf{P1 Blocker}} & Wire minimal empirical loop \\
+E-3 & sane() ignores F[]      & \textcolor{amber}{\textbf{P2}}        & Add F.size() == N check \\
+E-4 & T[N] undefined update   & \textcolor{amber}{\textbf{P2}}        & Mark diagnostic-only \\
+E-5 & Bead mass = 1.0         & \textcolor{amber}{\textbf{P2}}        & Add conversion bridge metadata \\
+E-6 & StateC metadata silent  & \textcolor{amber}{\textbf{P2}}        & Add completeness flags \\
+E-7 & Orientation duplicated  & \textcolor{amber}{\textbf{P2}}        & Define one owner, freeze other \\
+E-9 & TBP frame-dependent     & \textcolor{amber}{\textbf{P2}}        & Inertia-tensor classification \\
+E-8 & Gradient verifier print & \textcolor{gray1}{\textbf{P3}}        & Fix numeric print path \\
+E-10 & VSEPR Jacobian approx  & \textcolor{gray1}{\textbf{P3}}        & Document; fix post-stability \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ==============================================================================
+\section{Pre-Refactor Checklist}
+% ==============================================================================
+
+Complete this list before touching the architecture:
+
+\begin{itemize}
+  \item[$\square$] Freeze version tag \texttt{v4.0.4.05} with audit notes.
+  \item[$\square$] Choose canonical Vec3 (\texttt{vsepr::Vec3} recommended as base).
+  \item[$\square$] Add \texttt{atomistic::Vec3 = vsepr::Vec3} or explicit bridge.
+  \item[$\square$] Wire minimal \texttt{evolve()} loop: validate $\to$ clear F $\to$ eval F $\to$ VV step $\to$ update ledger $\to$ quality check $\to$ log events.
+  \item[$\square$] Add \texttt{F.size() == N} check in \texttt{sane()}.
+  \item[$\square$] Add \texttt{(T.empty() || T.size() == N)} check in \texttt{sane()}.
+  \item[$\square$] Document \texttt{T[N]} as diagnostic-only (no update rule yet).
+  \item[$\square$] Document \texttt{A[N]} as intentional derived quantity ($\mathbf{a} = \mathbf{F}/m$, not stored).
+  \item[$\square$] Add bead mass conversion bridge: \texttt{BeadDynState::mass\_amu} field + scaling.
+  \item[$\square$] Define orientation ownership: \texttt{Bead} = static/identity, \texttt{BeadDynState} = dynamic.
+  \item[$\square$] Add metadata completeness flags to \texttt{StateC::from\_state()}.
+  \item[$\square$] Fix gradient verifier print (E-8).
+  \item[$\square$] Version tags: \texttt{v4.0.4.05} (kernel audit), \texttt{v5.0.0-beta6} (UFX migration start).
+\end{itemize}
+
+% ==============================================================================
+\section{Version Labels}
+% ==============================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Track & Tag & Description \\
+\midrule
+v4 patch & \texttt{v4.0.4.04} & Current (post last bump) \\
+v4 patch & \texttt{v4.0.4.05} & Kernel audit and UFX migration preparation \\
+v5 beta  & \texttt{v5.0.0-beta6} & Current (post last bump) \\
+v5 beta  & \texttt{v5.0.0-beta7} & Post-repair: P1 blockers resolved, P2 bridges added \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip
+\noindent\textbf{Decision rule:} beta6 is the audit snapshot.
+beta7 opens only after E-1 and E-2 are resolved and the checklist is complete.
+
+\end{document}

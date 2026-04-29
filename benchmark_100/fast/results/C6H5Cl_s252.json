@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5Cl",
+  "seed": 252,
+  "tier": "fast",
+  "num_atoms": 12,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 132884.322205,
+  "energy_per_atom": 11073.693517,
+  "rms_force": 416854.662907,
+  "max_force": 416854.662907,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.717900,
+  "timestamp": "2026-03-28T12:54:21",
+  "xyz_file": "benchmark_100\fast\structures\C6H5Cl_s252.xyz"
+}

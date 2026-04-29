@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VSEPR-SIM // Hardware Allocation Layer — Real System Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0e0e12;
+  --surface:#16161c;
+  --border:#2a2a35;
+  --text:#e0dfe8;
+  --dim:#6b6a7a;
+  --accent:#b8a9f0;
+  --glow:rgba(184,169,240,0.15);
+}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Space Mono',monospace;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+.scanline{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;z-index:9999;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+}
+.grain{
+  position:fixed;top:-50%;left:-50%;right:-50%;bottom:-50%;
+  width:200%;height:200%;pointer-events:none;z-index:9998;opacity:0.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+header{
+  padding:30px 40px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:10px;
+}
+header h1{
+  font-family:'Outfit',sans-serif;font-weight:700;font-size:28px;letter-spacing:-0.5px;
+  background:linear-gradient(135deg,#f0c6d0,#c6d0f0,#c6f0d8,#f0e0c6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+header .meta{font-size:11px;color:var(--dim);text-align:right;line-height:1.6}
+header .meta .live{color:#8cf0a8;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.container{padding:20px 40px 60px;max-width:1700px;margin:0 auto}
+
+/* ─── Hardware Stats Bar ─── */
+.hw-bar{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+  gap:12px;margin-bottom:24px;
+}
+.hw-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:14px 18px;position:relative;overflow:hidden;
+  animation:cardIn 0.6s ease both;
+}
+.hw-card::before{
+  content:'';position:absolute;top:0;left:0;height:2px;border-radius:2px;
+  animation:barFill 2.5s ease forwards;
+}
+@keyframes barFill{from{width:0}to{width:var(--fill)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.hw-card .label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1.5px}
+.hw-card .value{font-family:'Outfit',sans-serif;font-size:22px;font-weight:700;margin-top:4px}
+.hw-card .sub{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* ─── Section Cards ─── */
+.section-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:20px 24px;margin-bottom:20px;
+  animation:cardIn 0.8s ease both;
+}
+.section-card h2{
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;
+  color:var(--dim);margin-bottom:16px;letter-spacing:1px;text-transform:uppercase;
+}
+
+/* ─── CPU Core Grid ─── */
+.core-grid{
+  display:grid;grid-template-columns:repeat(16,1fr);gap:4px;margin-bottom:12px;
+}
+.core-cell{
+  aspect-ratio:1;border-radius:4px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:8px;color:var(--text);cursor:crosshair;
+  transition:transform 0.2s,box-shadow 0.2s;
+}
+.core-cell:hover{transform:scale(1.8);z-index:10;box-shadow:0 4px 20px rgba(0,0,0,0.6)}
+.core-cell .core-id{font-weight:700;font-size:9px}
+.core-cell .core-type{font-size:7px;opacity:0.7}
+.core-fill{
+  position:absolute;bottom:0;left:0;right:0;border-radius:0 0 4px 4px;
+  transition:height 0.5s ease;
+}
+
+/* ─── GPU Task Partitions ─── */
+.gpu-grid{
+  display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-bottom:12px;
+}
+.gpu-sm{
+  aspect-ratio:2/1;border-radius:3px;position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;color:var(--text);cursor:crosshair;
+  transition:transform 0.2s;
+}
+.gpu-sm:hover{transform:scale(1.6);z-index:10;box-shadow:0 4px 20px rgba(0,0,0,0.5)}
+.gpu-sm.active{animation:smPulse 3s ease-in-out infinite}
+@keyframes smPulse{0%,100%{opacity:0.6;filter:brightness(0.9)}50%{opacity:1;filter:brightness(1.3)}}
+.gpu-wave{
+  position:absolute;bottom:0;left:0;right:0;border-radius:3px 3px 0 0;
+  animation:waveRise 2s ease both;
+}
+@keyframes waveRise{from{height:0}to{height:var(--wh,40%)}}
+
+/* ─── Memory Map ─── */
+.mem-bar-outer{height:24px;background:rgba(255,255,255,0.04);border-radius:4px;overflow:hidden;position:relative;margin-bottom:8px}
+.mem-segment{position:absolute;top:0;bottom:0;border-radius:2px;transition:width 1s ease}
+.mem-legend{display:flex;gap:16px;flex-wrap:wrap;font-size:10px;color:var(--dim)}
+.mem-legend .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+
+/* ─── Loading Bars ─── */
+.load-bars{display:flex;flex-direction:column;gap:10px}
+.load-row{display:flex;align-items:center;gap:14px}
+.load-label{width:160px;font-size:11px;color:var(--dim);text-align:right;flex-shrink:0}
+.load-track{flex:1;height:6px;background:rgba(255,255,255,0.04);border-radius:3px;overflow:hidden;position:relative}
+.load-fill{height:100%;border-radius:3px;animation:loadAnim var(--dur) var(--delay) ease both;position:relative}
+.load-fill::after{content:'';position:absolute;right:0;top:-2px;bottom:-2px;width:10px;border-radius:3px;background:inherit;filter:blur(6px);opacity:0.7}
+@keyframes loadAnim{0%{width:0;opacity:0.3}20%{opacity:1}100%{width:var(--w);opacity:1}}
+.load-pct{width:60px;font-size:11px;color:var(--accent);text-align:right}
+
+/* ─── Cache Hierarchy ─── */
+.cache-viz{display:flex;gap:12px;align-items:flex-end;height:100px;margin-top:8px}
+.cache-block{
+  flex:1;border-radius:4px 4px 0 0;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:6px;font-size:9px;transition:height 1s ease;
+  animation:cacheGrow 1.5s ease both;
+}
+@keyframes cacheGrow{from{height:0}to{height:var(--ch)}}
+.cache-block .cache-label{font-size:8px;color:var(--dim);margin-top:auto;padding-top:4px}
+.cache-block .cache-size{font-weight:700;font-size:11px}
+
+/* ─── Shimmer ─── */
+.shimmer{position:relative;overflow:hidden}
+.shimmer::after{
+  content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.04),transparent);
+  animation:shimmer 3s infinite;
+}
+@keyframes shimmer{0%{left:-100%}100%{left:200%}}
+
+/* ─── Tooltip ─── */
+.tooltip{
+  position:fixed;padding:10px 14px;background:#1a1a24;border:1px solid var(--border);
+  border-radius:6px;pointer-events:none;font-size:11px;z-index:100;
+  opacity:0;transition:opacity 0.15s;box-shadow:0 8px 30px rgba(0,0,0,0.4);
+  max-width:280px;line-height:1.5;
+}
+.tooltip.show{opacity:1}
+.tooltip .tt-title{font-weight:700;color:var(--accent);margin-bottom:4px}
+.tooltip .tt-row{display:flex;justify-content:space-between;gap:12px}
+.tooltip .tt-dim{color:var(--dim)}
+
+/* ─── Status Bar ─── */
+.status-bar{
+  margin-top:24px;display:flex;justify-content:space-between;
+  font-size:10px;color:var(--dim);flex-wrap:wrap;gap:6px;
+}
+.status-bar .blink{animation:pulse 1.5s infinite}
+
+/* ─── Responsive ─── */
+@media(max-width:1100px){.core-grid{grid-template-columns:repeat(8,1fr)}.gpu-grid{grid-template-columns:repeat(6,1fr)}}
+@media(max-width:600px){.core-grid{grid-template-columns:repeat(4,1fr)}.gpu-grid{grid-template-columns:repeat(4,1fr)}header,.container{padding-left:16px;padding-right:16px}}
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="grain"></div>
+
+<header>
+  <h1>VSEPR-SIM // HW ALLOC LAYER</h1>
+  <div class="meta">
+    <div><span class="live">&#9679;</span> REAL SYSTEM ANALYSIS</div>
+    <div>i9-13900K · 24C/32T · RTX 4070 12GB · 48GB DDR5</div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Hardware Stats -->
+  <div class="hw-bar" id="hwBar"></div>
+
+  <!-- CPU Core Map -->
+  <div class="section-card shimmer">
+    <h2>CPU Core Allocation Map — i9-13900K (8P + 16E = 24C / 32T)</h2>
+    <div class="core-grid" id="coreGrid"></div>
+    <div class="mem-legend" style="margin-top:8px">
+      <span><span class="dot" style="background:#f0c6d0"></span>P-Core (Raptor Cove)</span>
+      <span><span class="dot" style="background:#c6d0f0"></span>P-Core HT Shadow</span>
+      <span><span class="dot" style="background:#c6f0d8"></span>E-Core (Gracemont)</span>
+      <span style="color:var(--accent)">Fill height = simulated load</span>
+    </div>
+  </div>
+
+  <!-- GPU Task Partitions -->
+  <div class="section-card shimmer">
+    <h2>GPU SM Partition Map — RTX 4070 (46 SMs · 5888 CUDA Cores · AD104)</h2>
+    <div class="gpu-grid" id="gpuGrid"></div>
+    <div class="mem-legend" style="margin-top:8px">
+      <span><span class="dot" style="background:#f0e0c6"></span>Compute (Matrix Ops)</span>
+      <span><span class="dot" style="background:#e0c6f0"></span>Render (Viz Pipeline)</span>
+      <span><span class="dot" style="background:#c6f0f0"></span>Transfer (NDJSON Stream)</span>
+      <span><span class="dot" style="background:rgba(255,255,255,0.1)"></span>Idle</span>
+    </div>
+  </div>
+
+  <!-- Memory Layout -->
+  <div class="section-card">
+    <h2>System Memory Layout — 48 GB DDR5</h2>
+    <div class="mem-bar-outer" id="sysMemBar"></div>
+    <div class="mem-legend" id="sysMemLegend"></div>
+    <div style="height:16px"></div>
+    <h2 style="margin-top:12px">GPU VRAM Layout — 12,282 MiB GDDR6X</h2>
+    <div class="mem-bar-outer" id="gpuMemBar"></div>
+    <div class="mem-legend" id="gpuMemLegend"></div>
+  </div>
+
+  <!-- Cache Hierarchy -->
+  <div class="section-card">
+    <h2>Cache Hierarchy</h2>
+    <div class="cache-viz" id="cacheViz"></div>
+  </div>
+
+  <!-- Subsystem Init -->
+  <div class="section-card shimmer">
+    <h2>VSEPR-SIM Subsystem Initialization</h2>
+    <div class="load-bars" id="loadBars"></div>
+  </div>
+
+  <div class="status-bar">
+    <span>VSEPR-SIM HW ALLOC v16.0 // PHASE 16 DUAL-PORT ARCHITECTURE</span>
+    <span>CORES: 32 MAPPED · SMs: 46 PARTITIONED · MEM: 48+12 GB</span>
+    <span class="blink">&#9679; ALLOC ACTIVE</span>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tip"></div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// REAL HARDWARE DATA — i9-13900K + RTX 4070
+// ════════════════════════════════════════════════════════════════════════════
+
+const CPU = {
+  name: '13th Gen Intel Core i9-13900K',
+  pCores: 8,          // Raptor Cove (HT → 16 threads)
+  eCores: 16,         // Gracemont (no HT → 16 threads)
+  threads: 32,
+  baseMHz: 3000,
+  boostMHz: 5800,     // P-core turbo
+  eBoostMHz: 4300,    // E-core turbo
+  l1d_KiB: 768,       // 48 KiB × 16
+  l1i_KiB: 512,       // 32 KiB × 16
+  l2_MiB: 32,
+  l3_MiB: 36,
+};
+
+const GPU = {
+  name: 'NVIDIA GeForce RTX 4070',
+  arch: 'Ada Lovelace (AD104)',
+  sms: 46,
+  cudaCores: 5888,    // 128 per SM × 46
+  rtCores: 46,        // 1 per SM
+  tensorCores: 184,   // 4 per SM
+  vramMiB: 12282,
+  vramUsedMiB: 2657,
+  memBusWidth: 192,   // bits
+  memBandwidth: 504,  // GB/s
+  smClockMHz: 2475,
+  memClockMHz: 10251, // effective
+  maxSmMHz: 3105,
+  tempC: 39,
+  powerW: 27.3,
+  tdpW: 200,
+  utilGpu: 1,
+  utilMem: 0,
+};
+
+const SYS = {
+  ramGB: 48,
+  ramType: 'DDR5',
+};
+
+// ════════════════════════════════════════════════════════════════════════════
+// HARDWARE STATS BAR
+// ════════════════════════════════════════════════════════════════════════════
+
+const hwData = [
+  { label: 'CPU', value: 'i9-13900K', sub: `${CPU.pCores}P+${CPU.eCores}E / ${CPU.threads}T`, fill: 100, color:'#f0c6d0,#e89aaa' },
+  { label: 'GPU', value: 'RTX 4070', sub: `${GPU.sms} SMs · ${GPU.cudaCores} CUDA`, fill: 100, color:'#c6d0f0,#9aaae8' },
+  { label: 'VRAM', value: `${(GPU.vramUsedMiB/1024).toFixed(1)} / ${(GPU.vramMiB/1024).toFixed(1)} GB`, sub: `${Math.round(GPU.vramUsedMiB/GPU.vramMiB*100)}% used · GDDR6X`, fill: Math.round(GPU.vramUsedMiB/GPU.vramMiB*100), color:'#c6f0d8,#8ce0aa' },
+  { label: 'SYSTEM RAM', value: `${SYS.ramGB} GB`, sub: SYS.ramType, fill: 65, color:'#f0e0c6,#e0c08a' },
+  { label: 'GPU TEMP', value: `${GPU.tempC} °C`, sub: `${GPU.powerW}W / ${GPU.tdpW}W TDP`, fill: Math.round(GPU.tempC/90*100), color:'#e0c6f0,#c89ae8' },
+  { label: 'SM CLOCK', value: `${GPU.smClockMHz} MHz`, sub: `max ${GPU.maxSmMHz} MHz`, fill: Math.round(GPU.smClockMHz/GPU.maxSmMHz*100), color:'#c6f0f0,#8ae0e0' },
+  { label: 'L3 CACHE', value: `${CPU.l3_MiB} MB`, sub: 'Shared ring bus', fill: 80, color:'#f0c6e0,#e89acc' },
+  { label: 'MEM B/W', value: `${GPU.memBandwidth} GB/s`, sub: `${GPU.memBusWidth}-bit bus`, fill: 72, color:'#d0f0c6,#aae08a' },
+];
+
+const hwBar = document.getElementById('hwBar');
+hwData.forEach((d, i) => {
+  const card = document.createElement('div');
+  card.className = 'hw-card';
+  card.style.animationDelay = (i * 0.08) + 's';
+  card.style.setProperty('--fill', d.fill + '%');
+  card.querySelector?.remove;
+  card.innerHTML = `<div class="label">${d.label}</div><div class="value">${d.value}</div><div class="sub">${d.sub}</div>`;
+  // Set gradient on ::before via style
+  const style = document.createElement('style');
+  style.textContent = `.hw-card:nth-child(${i+1})::before{background:linear-gradient(90deg,${d.color})}`;
+  document.head.appendChild(style);
+  hwBar.appendChild(card);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// CPU CORE MAP — 32 threads: 16 P-core threads + 16 E-core threads
+// ════════════════════════════════════════════════════════════════════════════
+
+const coreGrid = document.getElementById('coreGrid');
+
+function coreInfo(idx) {
+  if (idx < 8)  return { type: 'P', label: `P${idx}`, color: '#f0c6d0', boost: CPU.boostMHz };
+  if (idx < 16) return { type: 'HT', label: `P${idx-8}t`, color: '#c6d0f0', boost: CPU.boostMHz };
+  return { type: 'E', label: `E${idx-16}`, color: '#c6f0d8', boost: CPU.eBoostMHz };
+}
+
+// Simulated per-core loads (vsepr-sim workload pattern)
+const coreTasks = [
+  'viz server','MB sample','EOS calc','JSON ser',
+  'bond scan','lattice','HUD gen','socket I/O',
+  'MB sample','EOS calc','defect scan','prop est',
+  'idle','idle','analysis','frame push',
+  'viz backup','MB dist','norm calc','mat mul',
+  'transpose','scale','neighbor','phase det',
+  'idle','hist deque','JSON ser','socket I/O',
+  'idle','idle','idle','idle'
+];
+
+for (let i = 0; i < 32; i++) {
+  const info = coreInfo(i);
+  const cell = document.createElement('div');
+  const load = coreTasks[i] === 'idle' ? 5 + Math.random()*10 : 30 + Math.random()*65;
+  cell.className = 'core-cell';
+  cell.style.background = info.color + '22';
+  cell.style.animation = `cardIn ${0.3 + i*0.02}s ease both`;
+  cell.dataset.coreIdx = i;
+  cell.dataset.coreType = info.type;
+  cell.dataset.coreLabel = info.label;
+  cell.dataset.coreLoad = Math.round(load);
+  cell.dataset.coreTask = coreTasks[i];
+  cell.dataset.coreBoost = info.boost;
+  cell.innerHTML = `
+    <span class="core-id">${info.label}</span>
+    <span class="core-type">${info.type}</span>
+    <div class="core-fill" style="background:${info.color}88;height:${load}%"></div>
+  `;
+  coreGrid.appendChild(cell);
+}
+
+// CPU core tooltip
+const tip = document.getElementById('tip');
+coreGrid.addEventListener('mousemove', e => {
+  const cell = e.target.closest('.core-cell');
+  if (!cell) { tip.classList.remove('show'); return; }
+  tip.classList.add('show');
+  tip.innerHTML = `
+    <div class="tt-title">Thread ${cell.dataset.coreIdx} — ${cell.dataset.coreLabel}</div>
+    <div class="tt-row"><span class="tt-dim">Type:</span><span>${cell.dataset.coreType === 'P' ? 'P-Core (Raptor Cove)' : cell.dataset.coreType === 'HT' ? 'P-Core HyperThread' : 'E-Core (Gracemont)'}</span></div>
+    <div class="tt-row"><span class="tt-dim">Boost:</span><span>${cell.dataset.coreBoost} MHz</span></div>
+    <div class="tt-row"><span class="tt-dim">Load:</span><span>${cell.dataset.coreLoad}%</span></div>
+    <div class="tt-row"><span class="tt-dim">Task:</span><span>${cell.dataset.coreTask}</span></div>
+  `;
+  tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 300) + 'px';
+  tip.style.top = (e.clientY - 80) + 'px';
+});
+coreGrid.addEventListener('mouseleave', () => tip.classList.remove('show'));
+
+// Animate core loads
+setInterval(() => {
+  const cells = coreGrid.children;
+  for (let i = 0; i < cells.length; i++) {
+    const fill = cells[i].querySelector('.core-fill');
+    if (!fill) continue;
+    const base = coreTasks[i] === 'idle' ? 5 : 30;
+    const range = coreTasks[i] === 'idle' ? 15 : 60;
+    const newLoad = base + Math.random() * range;
+    fill.style.height = newLoad + '%';
+    cells[i].dataset.coreLoad = Math.round(newLoad);
+  }
+}, 1500);
+
+// ════════════════════════════════════════════════════════════════════════════
+// GPU SM PARTITION MAP — 46 Streaming Multiprocessors
+// ════════════════════════════════════════════════════════════════════════════
+
+const gpuGrid = document.getElementById('gpuGrid');
+
+const smTasks = ['compute','render','transfer','idle'];
+const smColors = {
+  compute:  { bg: '#f0e0c6', fill: '#f0e0c688' },
+  render:   { bg: '#e0c6f0', fill: '#e0c6f088' },
+  transfer: { bg: '#c6f0f0', fill: '#c6f0f088' },
+  idle:     { bg: '#ffffff', fill: 'rgba(255,255,255,0.05)' },
+};
+
+// Task distribution: mostly idle at 1% util, some compute from viz
+const smAssignment = [];
+for (let i = 0; i < GPU.sms; i++) {
+  if (i < 4)       smAssignment.push('compute');
+  else if (i < 6)  smAssignment.push('render');
+  else if (i < 7)  smAssignment.push('transfer');
+  else              smAssignment.push(Math.random() < 0.08 ? 'compute' : 'idle');
+}
+
+for (let i = 0; i < GPU.sms; i++) {
+  const task = smAssignment[i];
+  const colors = smColors[task];
+  const active = task !== 'idle';
+  const cell = document.createElement('div');
+  const load = active ? 20 + Math.random() * 75 : 2 + Math.random() * 8;
+  cell.className = 'gpu-sm' + (active ? ' active' : '');
+  cell.style.background = colors.bg + '18';
+  cell.style.animation = `cardIn ${0.15 + i*0.02}s ease both`;
+  cell.dataset.smIdx = i;
+  cell.dataset.smTask = task;
+  cell.dataset.smLoad = Math.round(load);
+  cell.innerHTML = `
+    <span style="z-index:1;font-size:7px">${i}</span>
+    <div class="gpu-wave" style="background:${colors.fill};--wh:${load}%"></div>
+  `;
+  cell.style.setProperty('--pd', (Math.random() * 2) + 's');
+  gpuGrid.appendChild(cell);
+}
+
+// GPU SM tooltip
+gpuGrid.addEventListener('mousemove', e => {
+  const cell = e.target.closest('.gpu-sm');
+  if (!cell) { tip.classList.remove('show'); return; }
+  tip.classList.add('show');
+  const idx = parseInt(cell.dataset.smIdx);
+  tip.innerHTML = `
+    <div class="tt-title">SM ${idx} — ${GPU.arch}</div>
+    <div class="tt-row"><span class="tt-dim">CUDA Cores:</span><span>128</span></div>
+    <div class="tt-row"><span class="tt-dim">RT Cores:</span><span>1 (3rd Gen)</span></div>
+    <div class="tt-row"><span class="tt-dim">Tensor:</span><span>4 (4th Gen)</span></div>
+    <div class="tt-row"><span class="tt-dim">Task:</span><span>${cell.dataset.smTask}</span></div>
+    <div class="tt-row"><span class="tt-dim">Load:</span><span>${cell.dataset.smLoad}%</span></div>
+    <div class="tt-row"><span class="tt-dim">Clock:</span><span>${GPU.smClockMHz} MHz</span></div>
+  `;
+  tip.style.left = Math.min(e.clientX + 16, window.innerWidth - 300) + 'px';
+  tip.style.top = (e.clientY - 100) + 'px';
+});
+gpuGrid.addEventListener('mouseleave', () => tip.classList.remove('show'));
+
+// Animate SM loads
+setInterval(() => {
+  const cells = gpuGrid.children;
+  for (let i = 0; i < cells.length; i++) {
+    const wave = cells[i].querySelector('.gpu-wave');
+    if (!wave) continue;
+    const task = smAssignment[i];
+    const base = task === 'idle' ? 2 : 20;
+    const range = task === 'idle' ? 10 : 70;
+    const newH = base + Math.random() * range;
+    wave.style.height = newH + '%';
+    cells[i].dataset.smLoad = Math.round(newH);
+  }
+}, 2000);
+
+// ════════════════════════════════════════════════════════════════════════════
+// MEMORY LAYOUT
+// ════════════════════════════════════════════════════════════════════════════
+
+// System RAM: 48 GB
+const sysSegments = [
+  { label: 'OS + Kernel', gb: 4.2, color: '#f0c6d0' },
+  { label: 'WSL2 VM', gb: 1.8, color: '#c6d0f0' },
+  { label: 'vsepr viz', gb: 0.4, color: '#c6f0d8' },
+  { label: 'Python viewers', gb: 0.3, color: '#f0e0c6' },
+  { label: 'VS2022 + Copilot', gb: 3.5, color: '#e0c6f0' },
+  { label: 'Available', gb: 37.8, color: 'rgba(255,255,255,0.06)' },
+];
+
+function buildMemBar(container, legendContainer, segments, totalLabel) {
+  let offset = 0;
+  const total = segments.reduce((s,x) => s + x.gb, 0);
+  segments.forEach(seg => {
+    const pct = (seg.gb / total) * 100;
+    const div = document.createElement('div');
+    div.className = 'mem-segment';
+    div.style.left = offset + '%';
+    div.style.width = pct + '%';
+    div.style.background = seg.color;
+    div.style.animation = `loadAnim 1.5s ease both`;
+    div.style.setProperty('--w', pct + '%');
+    div.style.setProperty('--dur', '1.5s');
+    div.style.setProperty('--delay', (offset/100*0.5) + 's');
+    container.appendChild(div);
+    offset += pct;
+  });
+  segments.forEach(seg => {
+    const span = document.createElement('span');
+    span.innerHTML = `<span class="dot" style="background:${seg.color}"></span>${seg.label} (${seg.gb.toFixed(1)} GB)`;
+    legendContainer.appendChild(span);
+  });
+}
+
+buildMemBar(
+  document.getElementById('sysMemBar'),
+  document.getElementById('sysMemLegend'),
+  sysSegments
+);
+
+// GPU VRAM: 12282 MiB
+const vramSegments = [
+  { label: 'Display FB', gb: 0.8, color: '#e0c6f0' },
+  { label: 'CUDA Context', gb: 0.5, color: '#f0e0c6' },
+  { label: 'Driver Reserve', gb: 1.3, color: '#c6d0f0' },
+  { label: 'Available', gb: 9.4, color: 'rgba(255,255,255,0.06)' },
+];
+
+buildMemBar(
+  document.getElementById('gpuMemBar'),
+  document.getElementById('gpuMemLegend'),
+  vramSegments
+);
+
+// ════════════════════════════════════════════════════════════════════════════
+// CACHE HIERARCHY
+// ════════════════════════════════════════════════════════════════════════════
+
+const cacheViz = document.getElementById('cacheViz');
+const caches = [
+  { label: 'L1d', size: '768 KiB', instances: '16×48K', height: 20, color: '#f0c6d0' },
+  { label: 'L1i', size: '512 KiB', instances: '16×32K', height: 16, color: '#c6d0f0' },
+  { label: 'L2',  size: '32 MiB',  instances: '16×2M',  height: 55, color: '#c6f0d8' },
+  { label: 'L3',  size: '36 MiB',  instances: '1 shared', height: 100, color: '#f0e0c6' },
+];
+
+caches.forEach((c, i) => {
+  const block = document.createElement('div');
+  block.className = 'cache-block';
+  block.style.background = c.color + '33';
+  block.style.setProperty('--ch', c.height + '%');
+  block.style.animationDelay = (i * 0.3) + 's';
+  block.style.height = c.height + '%';
+  block.innerHTML = `
+    <div class="cache-size">${c.size}</div>
+    <div class="cache-label">${c.label} · ${c.instances}</div>
+  `;
+  cacheViz.appendChild(block);
+});
+
+// ════════════════════════════════════════════════════════════════════════════
+// SUBSYSTEM INITIALIZATION BARS
+// ════════════════════════════════════════════════════════════════════════════
+
+const loadData = [
+  { label: 'Gas2 Engine',        pct: 100, color: '#f0c6d0', dur: '1.8s', delay: '0.1s' },
+  { label: 'Viz Server (9999)',  pct: 100, color: '#c6d0f0', dur: '2.0s', delay: '0.3s' },
+  { label: 'Viz Server (10001)',pct: 100, color: '#c6f0d8', dur: '2.2s', delay: '0.5s' },
+  { label: 'MB Sampler',        pct: 100, color: '#f0e0c6', dur: '1.4s', delay: '0.4s' },
+  { label: 'EOS Candidates',    pct: 100, color: '#e0c6f0', dur: '2.5s', delay: '0.2s' },
+  { label: 'Property Estimator',pct: 100, color: '#c6f0f0', dur: '2.8s', delay: '0.6s' },
+  { label: 'JSON Serialiser',   pct: 100, color: '#d0f0c6', dur: '1.6s', delay: '0.3s' },
+  { label: 'Socket Listeners',  pct: 100, color: '#f0c6e0', dur: '2.0s', delay: '0.7s' },
+  { label: 'Matrix Ops (C++26)',pct: 100, color: '#d0c6f0', dur: '1.2s', delay: '0.2s' },
+  { label: 'Contracts Engine',  pct: 100, color: '#c6e0f0', dur: '3.0s', delay: '0.8s' },
+  { label: 'Frame History (300)',pct: 100,color: '#f0d0c6', dur: '2.4s', delay: '0.5s' },
+  { label: 'Atomic Viewer',     pct: 100, color: '#c6f0e0', dur: '2.6s', delay: '0.9s' },
+];
+
+const loadBars = document.getElementById('loadBars');
+loadData.forEach(d => {
+  const row = document.createElement('div');
+  row.className = 'load-row';
+  row.innerHTML = `
+    <div class="load-label">${d.label}</div>
+    <div class="load-track">
+      <div class="load-fill" style="background:${d.color};--w:${d.pct}%;--dur:${d.dur};--delay:${d.delay}"></div>
+    </div>
+    <div class="load-pct">${d.pct}%</div>
+  `;
+  loadBars.appendChild(row);
+});
+
+</script>
+</body>
+</html>

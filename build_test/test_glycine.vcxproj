@@ -1,0 +1,411 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5F83E698-E9FC-3ABB-A7FD-C09B4F223D16}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>test_glycine</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.2.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_test\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">test_glycine.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">test_glycine</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\R\VSPER-SIM\build_test\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">test_glycine.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">test_glycine</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\R\VSPER-SIM\build_test\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">test_glycine.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">test_glycine</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\R\VSPER-SIM\build_test\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">test_glycine.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">test_glycine</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;_USE_MATH_DEFINES;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;_USE_MATH_DEFINES;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>Debug\vsepr_chem.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/R/VSPER-SIM/build_test/Debug/test_glycine.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/R/VSPER-SIM/build_test/Debug/test_glycine.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <CudaLink>
+      <AdditionalOptions>-forward-unknown-to-host-compiler -Wno-deprecated-gpu-targets </AdditionalOptions>
+      <PerformDeviceLink>false</PerformDeviceLink>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_USE_MATH_DEFINES;CMAKE_INTDIR="Release"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_USE_MATH_DEFINES;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>Release\vsepr_chem.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/R/VSPER-SIM/build_test/Release/test_glycine.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/R/VSPER-SIM/build_test/Release/test_glycine.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <CudaLink>
+      <AdditionalOptions>-forward-unknown-to-host-compiler -Wno-deprecated-gpu-targets </AdditionalOptions>
+      <PerformDeviceLink>false</PerformDeviceLink>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_USE_MATH_DEFINES;CMAKE_INTDIR="MinSizeRel"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_USE_MATH_DEFINES;CMAKE_INTDIR=\"MinSizeRel\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>MinSizeRel\vsepr_chem.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/R/VSPER-SIM/build_test/MinSizeRel/test_glycine.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/R/VSPER-SIM/build_test/MinSizeRel/test_glycine.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <CudaLink>
+      <AdditionalOptions>-forward-unknown-to-host-compiler -Wno-deprecated-gpu-targets </AdditionalOptions>
+      <PerformDeviceLink>false</PerformDeviceLink>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <BufferSecurityCheck></BufferSecurityCheck>
+      <CallingConvention></CallingConvention>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <FloatingPointModel></FloatingPointModel>
+      <ForceConformanceInForLoopScope></ForceConformanceInForLoopScope>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <MinimalRebuild></MinimalRebuild>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RemoveUnreferencedCodeData></RemoveUnreferencedCodeData>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <SupportJustMyCode></SupportJustMyCode>
+      <TreatWChar_tAsBuiltInType></TreatWChar_tAsBuiltInType>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level4</WarningLevel>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_USE_MATH_DEFINES;CMAKE_INTDIR="RelWithDebInfo"</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <ScanSourceForModuleDependencies>false</ScanSourceForModuleDependencies>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;_USE_MATH_DEFINES;CMAKE_INTDIR=\"RelWithDebInfo\"</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;C:\R\VSPER-SIM\chem;C:\R\VSPER-SIM;C:\R\VSPER-SIM\src\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>RelWithDebInfo\vsepr_chem.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <DataExecutionPrevention></DataExecutionPrevention>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImageHasSafeExceptionHandlers></ImageHasSafeExceptionHandlers>
+      <ImportLibrary>C:/R/VSPER-SIM/build_test/RelWithDebInfo/test_glycine.lib</ImportLibrary>
+      <LinkErrorReporting></LinkErrorReporting>
+      <ProgramDataBaseFile>C:/R/VSPER-SIM/build_test/RelWithDebInfo/test_glycine.pdb</ProgramDataBaseFile>
+      <RandomizedBaseAddress></RandomizedBaseAddress>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <CudaLink>
+      <AdditionalOptions>-forward-unknown-to-host-compiler -Wno-deprecated-gpu-targets </AdditionalOptions>
+      <PerformDeviceLink>false</PerformDeviceLink>
+    </CudaLink>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="C:\R\VSPER-SIM\chem\tests\test_glycine.cpp" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\ZERO_CHECK.vcxproj">
+      <Project>{F62A861E-F8A7-3607-BCA0-2D16E2ED9A10}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_chem.vcxproj">
+      <Project>{DE8D9FA5-CB0C-37E6-8488-D35B4B8AAEA0}</Project>
+      <Name>vsepr_chem</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.2.targets" />
+  </ImportGroup>
+</Project>

@@ -1,0 +1,19 @@
+{
+  "formula": "BF3",
+  "seed": 364,
+  "tier": "fast",
+  "num_atoms": 4,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 15.501914,
+  "energy_per_atom": 3.875478,
+  "rms_force": 51.978207,
+  "max_force": 51.978207,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.463700,
+  "timestamp": "2026-03-28T13:05:13",
+  "xyz_file": "benchmark_v2\fast\structures\BF3_s364.xyz"
+}

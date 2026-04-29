@@ -1,0 +1,19 @@
+{
+  "formula": "C14H10",
+  "seed": 462,
+  "tier": "fast",
+  "num_atoms": 24,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 2360409.670787,
+  "energy_per_atom": 98350.402949,
+  "rms_force": 3252868.470098,
+  "max_force": 3252868.470098,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.629200,
+  "timestamp": "2026-03-28T13:06:18",
+  "xyz_file": "benchmark_v2\fast\structures\C14H10_s462.xyz"
+}

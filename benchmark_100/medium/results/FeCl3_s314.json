@@ -1,0 +1,19 @@
+{
+  "formula": "FeCl3",
+  "seed": 314,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 45.415523,
+  "energy_per_atom": 11.353881,
+  "rms_force": 141.348517,
+  "max_force": 141.348517,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.588200,
+  "timestamp": "2026-03-28T12:53:48",
+  "xyz_file": "benchmark_100\medium\structures\FeCl3_s314.xyz"
+}

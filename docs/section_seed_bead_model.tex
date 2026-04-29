@@ -1,0 +1,1001 @@
+% ════════════════════════════════════════════════════════════════════════════
+%  Formation Engine — Seed & Bead Model: 6+9 Steady-State Step Function
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ════════════════════════════════════════════════════════════════════════════
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code ───────────────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  language=C++
+}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Formation Engine Methodology}}
+\fancyhead[R]{\small\textit{Seed \& Bead Model — 6+9 Step Function}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {§\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}
+  {\thesubsubsection}{1em}{}
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage[
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue
+]{hyperref}
+
+% ── Convenience macros ─────────────────────────────────────────────────────
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\Ang}{\text{\AA}}
+\newcommand{\kcalmol}{\text{kcal/mol}}
+
+% ════════════════════════════════════════════════════════════════════════════
+%  Title
+% ════════════════════════════════════════════════════════════════════════════
+\title{%
+  \textbf{Formation Engine Methodology}\\[6pt]
+  \textbf{Seed \& Bead Model}\\[10pt]
+  \large 6+9 Unit Steady-State Step Function\\[4pt]
+  \normalsize Unified Atomistic–Coarse-Grained Integration with
+              Environment-Responsive Dynamics
+}
+\author{VSEPR-SIM Project}
+\date{Version 3.0.0 — First Implementation Draft}
+
+% ════════════════════════════════════════════════════════════════════════════
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document specifies the \emph{Seed \& Bead Model}, a unified
+simulation step function that combines six atomistic (``seed'') units
+with nine coarse-grained (``bead'') units into a single deterministic
+steady-state integrator.  The seed layer provides geometry prediction,
+Velocity Verlet propagation, FIRE quenching, force evaluation,
+statistical accumulation, and convergence detection.  The bead layer
+provides CG mapping, three fast environment observables ($\rho_B$,
+$C_B$, $P_{2,B}$), a slow internal state ($\eta_B$) with relaxation
+dynamics, target function evaluation, and three-channel kernel
+modulation ($\gamma_{\text{steric}}$, $\gamma_{\text{elec}}$,
+$\gamma_{\text{disp}}$).  The composite step function achieves
+steady state when both the atomistic force convergence and the
+environment-state convergence criteria are simultaneously satisfied.
+Every sub-unit produces an inspectable diagnostic per step.
+Implementation: \file{coarse\_grain/models/seed\_bead\_stepper.hpp}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+\label{sec:introduction}
+% ════════════════════════════════════════════════════════════════════════════
+
+The formation engine has historically operated as a sequential pipeline:
+%
+\[
+  \text{VSEPR} \;\to\; \text{MD} \;\to\; \text{FIRE} \;\to\;
+  \text{CG mapping} \;\to\; \text{Classification}
+\]
+%
+This is adequate for small molecules but insufficient for
+environment-responsive bead dynamics, where the coarse-grained layer
+must feed information back into the force evaluation at every step.
+
+The Seed \& Bead model replaces the sequential pipeline with a
+\emph{composite step function} that executes all 15 sub-units within
+a single timestep.  The two layers operate concurrently:
+
+\begin{center}
+\begin{tabular}{clll}
+  \toprule
+  \textbf{Layer} & \textbf{Units} & \textbf{Purpose} & \textbf{Convergence} \\
+  \midrule
+  SEED & S1--S6 & Atomistic structure & $|F_{\mathrm{rms}}| < F_{\mathrm{tol}}$ \\
+  BEAD & B1--B9 & Environment response & $|\Delta\eta|_{\max} < \eta_{\mathrm{tol}}$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Steady state is defined as simultaneous convergence of both layers.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Design Principles}
+\label{sec:design-principles}
+% ────────────────────────────────────────────────────────────────────────────
+
+The model follows the project's anti-black-box philosophy:
+\begin{enumerate}
+  \item Every sub-unit produces an inspectable diagnostic per step.
+  \item Identical inputs produce bit-identical outputs (deterministic).
+  \item Every parameter is explicitly declared and bounded.
+  \item No hidden state: all variables are accessible to the reporter.
+\end{enumerate}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{SEED Layer — 6 Atomistic Units}
+\label{sec:seed-layer}
+% ════════════════════════════════════════════════════════════════════════════
+
+The SEED layer operates on the bead system as if it were an atomistic
+system: positions, velocities, forces, and energies.  The six units
+execute in order S4, S1, S3, S2, S5, S6 (force evaluation precedes
+integration to support FIRE mixing).
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{S1: VSEPR Geometry Prediction}
+\label{sec:s1-vsepr}
+% ────────────────────────────────────────────────────────────────────────────
+
+The initial geometry is established by the VSEPR domain model,
+which assigns ideal bond angles based on electron-domain count.
+During steady-state integration, S1 acts as a classification
+anchor: the geometry class (linear, trigonal planar, tetrahedral, etc.)
+is recorded in the step diagnostic but does not modify forces.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{S2: Velocity Verlet Integration}
+\label{sec:s2-verlet}
+% ────────────────────────────────────────────────────────────────────────────
+
+Position and velocity are propagated via the standard Velocity Verlet
+scheme in real units ($\Ang$, amu, fs, $\kcalmol$):
+%
+\begin{align}
+  \mathbf{v}_i\!\left(t + \tfrac{\Delta t}{2}\right)
+    &= \mathbf{v}_i(t) + \frac{\Delta t}{2}\,\frac{\mathbf{F}_i(t)}{m_i}
+  \label{eq:verlet-v-half} \\[6pt]
+  \mathbf{r}_i(t + \Delta t)
+    &= \mathbf{r}_i(t) + \Delta t\;\mathbf{v}_i\!\left(t + \tfrac{\Delta t}{2}\right)
+  \label{eq:verlet-r}
+\end{align}
+
+The timestep $\Delta t$ is controlled by the FIRE algorithm (S3) and
+ranges from $\Delta t_{\min}$ to $\Delta t_{\max}$.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{S3: FIRE Quench}
+\label{sec:s3-fire}
+% ────────────────────────────────────────────────────────────────────────────
+
+The Fast Inertial Relaxation Engine (FIRE) adaptively mixes velocity
+with the force direction:
+%
+\begin{equation}
+  \mathbf{v}_i \leftarrow (1 - \alpha)\,\mathbf{v}_i
+    + \alpha\,|\mathbf{v}|\,\hat{\mathbf{F}}_i
+  \label{eq:fire-mix}
+\end{equation}
+%
+The power $P = \mathbf{F} \cdot \mathbf{v}$ controls adaptation:
+%
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Condition} & \textbf{Action} \\
+  \midrule
+  $P > 0$ for $N_{\min}$ consecutive steps & $\Delta t \to \min(\Delta t \cdot f_{\text{inc}},\, \Delta t_{\max})$,\; $\alpha \to \alpha \cdot f_\alpha$ \\
+  $P \leq 0$ & $\Delta t \to \Delta t \cdot f_{\text{dec}}$,\; $\alpha \to \alpha_0$,\; $\mathbf{v} \to \mathbf{0}$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Default parameters: $\alpha_0 = 0.1$, $N_{\min} = 5$,
+$f_{\text{inc}} = 1.1$, $f_{\text{dec}} = 0.5$, $f_\alpha = 0.99$.
+
+\newpage
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{S4: Force Evaluation}
+\label{sec:s4-forces}
+% ────────────────────────────────────────────────────────────────────────────
+
+Pairwise bead forces are computed using the LJ 12--6 potential with
+Lorentz--Berthelot combining rules and environment modulation:
+%
+\begin{equation}
+  U_{ij}^{\text{mod}} = 4\varepsilon_{ij}\,g_{\text{disp}}(\eta_i, \eta_j)
+  \left[
+    \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}
+    - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}
+  \right]
+  \label{eq:lj-modulated}
+\end{equation}
+%
+where $g_{\text{disp}}$ is the dispersion-channel modulation factor
+from the BEAD layer (B9).  The force is the negative gradient:
+%
+\begin{equation}
+  \mathbf{F}_i = -\nabla_{\mathbf{r}_i} \sum_{j > i} U_{ij}^{\text{mod}}
+\end{equation}
+%
+Combining rules:
+%
+\begin{equation}
+  \sigma_{ij} = \tfrac{1}{2}(\sigma_i + \sigma_j), \qquad
+  \varepsilon_{ij} = \sqrt{\varepsilon_i\,\varepsilon_j}
+\end{equation}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{S5: Statistical Accumulation}
+\label{sec:s5-stats}
+% ────────────────────────────────────────────────────────────────────────────
+
+Online mean and variance of the total energy are accumulated via
+Welford's algorithm:
+%
+\begin{align}
+  \bar{E}_n &= \bar{E}_{n-1} + \frac{E_n - \bar{E}_{n-1}}{n}
+  \label{eq:welford-mean} \\[4pt]
+  M_{2,n} &= M_{2,n-1} + (E_n - \bar{E}_{n-1})(E_n - \bar{E}_n)
+  \label{eq:welford-m2}
+\end{align}
+%
+The running variance $\sigma_E^2 = M_{2,n} / (n-1)$ is used for
+convergence monitoring.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{S6: Convergence Detection}
+\label{sec:s6-convergence}
+% ────────────────────────────────────────────────────────────────────────────
+
+The SEED layer is considered converged when:
+%
+\begin{equation}
+  F_{\text{rms}} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} |\mathbf{F}_i|^2}
+  \;<\; F_{\text{tol}}
+  \label{eq:seed-convergence}
+\end{equation}
+%
+Default: $F_{\text{tol}} = 0.05\;\kcalmol/\Ang$.
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{BEAD Layer — 9 Environment-Responsive Units}
+\label{sec:bead-layer}
+% ════════════════════════════════════════════════════════════════════════════
+
+The BEAD layer extends each bead with the environment-responsive state
+$X_B = \{\rho_B, C_B, P_{2,B}, \eta_B\}$ and couples it back into the
+interaction kernels.  The nine units execute in sequence B1--B9.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B1: CG Mapping}
+\label{sec:b1-mapping}
+% ────────────────────────────────────────────────────────────────────────────
+
+The CG mapping is implicit: bead positions are the primary state
+variables.  B1 confirms that the mapping is up to date and sets the
+diagnostic flag.  In future multi-resolution extensions, B1 will
+trigger re-mapping from an underlying atomistic state.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B2: Local Density \texorpdfstring{$\rho_B$}{rhoB}}
+\label{sec:b2-density}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{equation}
+  \rho_B = \sum_{C \neq B} w(r_{BC}), \qquad
+  w(r) = e^{-r^2 / 2\sigma_\rho^2} \cdot f_{\text{sw}}(r;\, r_c,\, \delta)
+  \label{eq:density}
+\end{equation}
+%
+Normalised: $\hat{\rho}_B = \min(\rho_B / \rho_{\max},\; 1)$.
+
+Default parameters: $\sigma_\rho = 3.0\;\Ang$,\; $r_c = 8.0\;\Ang$,\;
+$\delta = 1.0\;\Ang$,\; $\rho_{\max} = 10$.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B3: Coordination Number \texorpdfstring{$C_B$}{CB}}
+\label{sec:b3-coordination}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{equation}
+  C_B = \sum_{C \neq B} \mathbf{1}_{[r_{BC} < r_c]}
+  \label{eq:coordination}
+\end{equation}
+%
+This is the hard-cutoff count of neighbours within $r_c$.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B4: Orientational Order \texorpdfstring{$P_{2,B}$}{P2B}}
+\label{sec:b4-orientation}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{equation}
+  P_{2,B} = \frac{1}{|\mathcal{N}_B|}
+    \sum_{C \in \mathcal{N}_B}
+    \frac{1}{2}\bigl(3\cos^2\theta_{BC} - 1\bigr)
+  \label{eq:P2}
+\end{equation}
+%
+where $\cos\theta_{BC} = \hat{n}_B \cdot \hat{n}_C$ and $\hat{n}_B$
+is the primary orientation axis of bead~$B$.
+
+Normalised: $\hat{P}_{2,B} = (P_{2,B} + 0.5) / 1.5 \in [0, 1]$.
+
+\newpage
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B5: Target Function}
+\label{sec:b5-target}
+% ────────────────────────────────────────────────────────────────────────────
+
+The target function combines normalised fast observables:
+%
+\begin{equation}
+  f_B = \alpha\,\hat{\rho}_B + \beta\,\hat{P}_{2,B}
+  \label{eq:target}
+\end{equation}
+%
+with $\alpha + \beta = 1$, $\alpha,\beta \in [0,1]$.
+Default: $\alpha = 0.5$, $\beta = 0.5$.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B6: Slow State \texorpdfstring{$\eta_B$}{etaB} Integration}
+\label{sec:b6-eta}
+% ────────────────────────────────────────────────────────────────────────────
+
+The slow state $\eta_B$ evolves via first-order relaxation with the
+exact exponential solution (unconditionally stable):
+%
+\begin{equation}
+  \boxed{
+    \eta_B(t + \Delta t) = f_B + \bigl(\eta_B(t) - f_B\bigr)\,
+    e^{-\Delta t / \tau}
+  }
+  \label{eq:eta-exact}
+\end{equation}
+%
+Steady-state value: $\eta_B^{\text{ss}} = f_B(\rho, C, P_2)$.
+
+The relaxation timescale $\tau$ controls how quickly the bead's
+internal state responds to environmental changes.  Large $\tau$
+produces hysteresis; small $\tau$ produces instantaneous response.
+
+Default: $\tau = 100\;\text{fs}$.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{B7--B9: Kernel Modulation}
+\label{sec:b7-b9-modulation}
+% ────────────────────────────────────────────────────────────────────────────
+
+The environment state modulates interaction kernels through the
+Option~A coupling (recommended by the ERB specification):
+%
+\begin{equation}
+  K_k(\ell, r;\, \eta_A, \eta_B)
+  = K_k(\ell, r) \cdot
+  \bigl(1 + \gamma_k\,\bar{\eta}_{AB}\bigr)
+  \label{eq:modulation}
+\end{equation}
+%
+where $\bar{\eta}_{AB} = \tfrac{1}{2}(\eta_A + \eta_B)$ and $k$
+indexes the channel:
+
+\begin{center}
+\begin{tabular}{clcl}
+  \toprule
+  \textbf{Unit} & \textbf{Channel} & $\gamma_k$ & \textbf{Physical effect} \\
+  \midrule
+  B7 & Steric        & $\gamma_{\text{steric}} \in [0, 1]$    & Hardening under compression \\
+  B8 & Electrostatic & $\gamma_{\text{elec}} \in [-1, 0]$     & Screening under crowding \\
+  B9 & Dispersion    & $\gamma_{\text{disp}} \in [0, 2]$      & Enhancement under ordering \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Invariant: $|1 + \gamma_k \bar{\eta}| > 0$ for all channels
+(kernel must not change sign).
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Complete 6+9 Parameter Set}
+\label{sec:parameter-set}
+% ════════════════════════════════════════════════════════════════════════════
+
+The Seed \& Bead model introduces 15 active parameters, partitioned
+across the two layers:
+
+\begin{center}
+\begin{tabular}{cllrl}
+  \toprule
+  \textbf{Layer} & \textbf{Symbol} & \textbf{Name} & \textbf{Default} & \textbf{Unit} \\
+  \midrule
+  S & $\Delta t_0$          & Initial timestep               & 1.0    & fs \\
+  S & $\Delta t_{\max}$     & Maximum FIRE timestep          & 10.0   & fs \\
+  S & $F_{\text{tol}}$      & Force convergence              & 0.05   & $\kcalmol/\Ang$ \\
+  S & $E_{\text{tol}}$      & Energy convergence (relative)  & $10^{-6}$ & --- \\
+  S & $\alpha_0$            & FIRE mixing parameter          & 0.1    & --- \\
+  S & $N_{\max}$            & Maximum step count             & 10000  & --- \\
+  \midrule
+  B & $\alpha$              & Density weight                 & 0.5    & --- \\
+  B & $\beta$               & Orientation weight             & 0.5    & --- \\
+  B & $\tau$                & Relaxation timescale           & 100    & fs \\
+  B & $\gamma_{\text{steric}}$   & Steric modulation         & 0.2    & --- \\
+  B & $\gamma_{\text{elec}}$     & Electrostatic modulation  & $-0.1$ & --- \\
+  B & $\gamma_{\text{disp}}$     & Dispersion modulation     & 0.5    & --- \\
+  B & $\sigma_\rho$              & Density Gaussian width    & 3.0    & $\Ang$ \\
+  B & $r_c$                      & Observable cutoff         & 8.0    & $\Ang$ \\
+  B & $\eta_{\text{tol}}$        & $\eta$ convergence        & $10^{-3}$ & --- \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The ``6+9'' designation refers to 6 SEED units and 9 BEAD
+units, not the parameter count.
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Steady-State Condition}
+\label{sec:steady-state}
+% ════════════════════════════════════════════════════════════════════════════
+
+The composite system has reached steady state when all 15 units have
+converged.  In practice, this reduces to two independent criteria:
+
+\begin{equation}
+  \boxed{
+    \text{Steady state}
+    \;\iff\;
+    F_{\text{rms}} < F_{\text{tol}}
+    \;\wedge\;
+    \max_B |\Delta\eta_B| < \eta_{\text{tol}}
+  }
+  \label{eq:steady-state}
+\end{equation}
+
+The first condition ensures the mechanical structure is relaxed.
+The second condition ensures the environment-responsive state has
+equilibrated.  Both must be satisfied simultaneously.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Convergence Hierarchy}
+\label{sec:convergence-hierarchy}
+% ────────────────────────────────────────────────────────────────────────────
+
+The two criteria converge on different timescales:
+\begin{itemize}
+  \item SEED convergence is typically faster ($\sim 10^2$ steps for small
+        systems with FIRE acceleration).
+  \item BEAD convergence depends on $\tau$: the relaxation time
+        determines how many steps are needed for $\eta$ to reach
+        $f$ within tolerance.
+\end{itemize}
+
+\noindent For $\Delta t / \tau \ll 1$, the number of steps to converge
+$\eta$ from $\eta_0$ to $f$ within tolerance $\eta_{\text{tol}}$ is:
+%
+\begin{equation}
+  N_\eta \approx \frac{\tau}{\Delta t}\,
+  \ln\!\left(\frac{|f - \eta_0|}{\eta_{\text{tol}}}\right)
+  \label{eq:eta-convergence-steps}
+\end{equation}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Step Execution Order}
+\label{sec:execution-order}
+% ════════════════════════════════════════════════════════════════════════════
+
+Within a single call to \type{SeedBeadStepper::step()}, the 15 units
+execute in the following order:
+
+\begin{center}
+\begin{tabular}{clll}
+  \toprule
+  \textbf{Order} & \textbf{Unit} & \textbf{Action} & \textbf{Depends on} \\
+  \midrule
+  1 & S4 & Evaluate forces     & positions, $\eta$ (from previous step) \\
+  2 & S1 & Record geometry     & positions \\
+  3 & S3 & FIRE velocity mix   & forces, velocities \\
+  4 & S2 & Verlet integration  & forces, velocities, $\Delta t$ \\
+  5 & S5 & Accumulate energy   & positions, $\eta$ \\
+  6 & S6 & Check convergence   & forces \\
+  \midrule
+  7  & B1 & CG mapping check   & positions \\
+  8  & B2 & Compute $\rho_B$   & neighbour distances \\
+  9  & B3 & Compute $C_B$      & neighbour count \\
+  10 & B4 & Compute $P_{2,B}$  & neighbour orientations \\
+  11 & B5 & Compute $f_B$      & $\hat{\rho}_B$, $\hat{P}_{2,B}$ \\
+  12 & B6 & Integrate $\eta_B$ & $f_B$, previous $\eta_B$, $\Delta t$, $\tau$ \\
+  13 & B7 & Modulate steric    & $\eta_A$, $\eta_B$, $\gamma_{\text{steric}}$ \\
+  14 & B8 & Modulate elec.     & $\eta_A$, $\eta_B$, $\gamma_{\text{elec}}$ \\
+  15 & B9 & Modulate disp.     & $\eta_A$, $\eta_B$, $\gamma_{\text{disp}}$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The modulation factors (B7--B9) computed at step $n$ are
+consumed by S4 at step $n+1$.  This one-step lag is the standard
+approach for explicit integration and introduces no instability when
+$\Delta t / \tau < 0.5$.
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Step Diagnostic Record}
+\label{sec:diagnostic-record}
+% ════════════════════════════════════════════════════════════════════════════
+
+Every call to \type{step()} returns a \type{SeedBeadStepRecord}
+containing the full diagnostic state.  No information is hidden.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{SEED Diagnostics}
+\label{sec:seed-diagnostics}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Field} & \textbf{Type} & \textbf{Description} \\
+  \midrule
+  \field{total\_energy}    & \texttt{double} & Total system energy ($\kcalmol$) \\
+  \field{rms\_force}       & \texttt{double} & $F_{\text{rms}}$ ($\kcalmol/\Ang$) \\
+  \field{max\_force}       & \texttt{double} & Maximum single-particle force \\
+  \field{kinetic\_energy}  & \texttt{double} & $\sum \tfrac{1}{2}m_i v_i^2$ \\
+  \field{potential\_energy} & \texttt{double} & Sum of pairwise $U_{ij}^{\text{mod}}$ \\
+  \field{dt\_current}      & \texttt{double} & FIRE-adjusted timestep (fs) \\
+  \field{seed\_status}     & \type{SeedUnitStatus} & Per-unit boolean flags \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{BEAD Diagnostics}
+\label{sec:bead-diagnostics}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Field} & \textbf{Type} & \textbf{Description} \\
+  \midrule
+  \field{avg\_rho}      & \texttt{double} & System-averaged $\rho$ \\
+  \field{avg\_C}        & \texttt{double} & System-averaged $C$ \\
+  \field{avg\_P2}       & \texttt{double} & System-averaged $P_2$ \\
+  \field{avg\_eta}      & \texttt{double} & System-averaged $\eta$ \\
+  \field{avg\_target\_f} & \texttt{double} & System-averaged $f$ \\
+  \field{max\_delta\_eta} & \texttt{double} & $\max_B |\Delta\eta_B|$ this step \\
+  \field{avg\_g\_steric}  & \texttt{double} & Mean steric modulation factor \\
+  \field{avg\_g\_elec}    & \texttt{double} & Mean electrostatic modulation factor \\
+  \field{avg\_g\_disp}    & \texttt{double} & Mean dispersion modulation factor \\
+  \field{bead\_status}    & \type{BeadUnitStatus} & Per-unit boolean flags \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Snapshot \& Graph Infrastructure}
+\label{sec:snapshot-graph}
+% ════════════════════════════════════════════════════════════════════════════
+
+The \type{SnapshotGraphCollector} class accumulates step diagnostics
+for automatic report generation.  It maintains 14 time-series channels
+and frame-level position snapshots at configurable intervals.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Time-Series Channels}
+\label{sec:timeseries-channels}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Channel} & \textbf{Unit} & \textbf{Source} \\
+  \midrule
+  Energy          & $\kcalmol$     & S5 \\
+  RMS Force       & $\kcalmol/\Ang$ & S6 \\
+  Max Force       & $\kcalmol/\Ang$ & S4 \\
+  Mean $\eta$     & ---            & B6 \\
+  Mean $\rho$     & ---            & B2 \\
+  Mean $C$        & ---            & B3 \\
+  Mean $P_2$      & ---            & B4 \\
+  Mean $f$        & ---            & B5 \\
+  $\max|\Delta\eta|$ & ---         & B6 \\
+  $\Delta t$      & fs             & S3 \\
+  $g_{\text{steric}}$  & ---       & B7 \\
+  $g_{\text{elec}}$    & ---       & B8 \\
+  $g_{\text{disp}}$    & ---       & B9 \\
+  Kinetic energy  & $\kcalmol$     & S2 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Frame Snapshots}
+\label{sec:frame-snapshots}
+% ────────────────────────────────────────────────────────────────────────────
+
+At intervals of \field{snapshot\_interval} steps (default: 10) and at
+steady state, the collector stores a \type{BeadFrameSnapshot} containing:
+\begin{itemize}
+  \item Bead positions ($\mathbf{r}_i$)
+  \item Per-bead $\eta_i$, $\rho_i$
+  \item Total energy, RMS force
+  \item Steady-state flag
+\end{itemize}
+
+These snapshots feed the XY/XZ trajectory projections in the Python
+visualization pipeline (\file{scripts/visualize\_seed\_bead.py}).
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Metal \& Gas Study Framework}
+\label{sec:metal-gas}
+% ════════════════════════════════════════════════════════════════════════════
+
+The \type{metal\_gas\_study.hpp} module automates the generation of
+material-specific study reports using the experimental reference data
+from \file{atomistic/validation/nanoparticle\_ref.hpp}.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Reference Materials}
+\label{sec:reference-materials}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{lclrrl}
+  \toprule
+  \textbf{Label} & \textbf{Z} & \textbf{Class} & $a_0$ ($\Ang$)
+    & \textbf{CN} & \textbf{Source} \\
+  \midrule
+  Au 5nm FCC & 79 & Metal (FCC) & 4.078 & 12.0 & Cleveland1997 \\
+  Ag 5nm FCC & 47 & Metal (FCC) & 4.086 & 12.0 & Tyson1977 \\
+  Cu 4nm FCC & 29 & Metal (FCC) & 3.615 & 12.0 & CRC105 \\
+  Ar 5nm     & 18 & Noble Gas   & 5.260 & 12.0 & Baletto2005 \\
+  Pt 5nm FCC & 78 & Metal (FCC) & 3.924 & 12.0 & Tyson1977 \\
+  Fe 5nm BCC & 26 & Metal (BCC) & 2.870 &  8.0 & CRC105 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Study Workflow}
+\label{sec:study-workflow}
+% ────────────────────────────────────────────────────────────────────────────
+
+For each material:
+\begin{enumerate}
+  \item Build a \type{BeadSystem} from the reference lattice constant
+        and estimated LJ parameters.
+  \item Configure \type{SeedBeadParams} based on material class
+        (FCC metal / BCC metal / noble gas).
+  \item Run \type{SeedBeadStepper} to steady state.
+  \item Compare final observables against the \type{ExperimentalRecord}.
+  \item Generate a Markdown report with per-metric pass/fail verdicts.
+  \item Export time-series and snapshot CSV files.
+\end{enumerate}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Comparison Metrics}
+\label{sec:comparison-metrics}
+% ────────────────────────────────────────────────────────────────────────────
+
+Each study produces the following comparison metrics:
+
+\begin{center}
+\begin{tabular}{llcl}
+  \toprule
+  \textbf{Metric} & \textbf{Simulated} & \textbf{vs} & \textbf{Experimental} \\
+  \midrule
+  Coordination $C$ & $\langle C \rangle_{\text{final}}$ & $<$ tol & Bulk CN \\
+  Cohesive energy  & $E/N$ & $<$ tol & $E_{\text{coh}}$ per atom \\
+  Steady-state $\eta$ & $\langle\eta\rangle_{\text{final}}$ & --- & (informational) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Live Visualization}
+\label{sec:live-visualization}
+% ════════════════════════════════════════════════════════════════════════════
+
+The \type{SeedBeadViewer} class provides a real-time 60\,fps GLFW/ImGui
+viewer for the seed-and-bead step function.  It is the primary visual
+interface for inspecting environment-responsive dynamics.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Render Loop Architecture}
+\label{sec:render-loop}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{enumerate}
+  \item \textbf{Input:} Mouse orbit/pan/zoom, keyboard controls.
+  \item \textbf{Simulation:} Execute \field{steps\_per\_frame} calls
+        to \type{SeedBeadStepper::step()}.
+  \item \textbf{Render:} Draw beads as spheres with overlay color,
+        draw bonds as lines.
+  \item \textbf{UI:} ImGui panels for control, energy graph, force
+        graph, $\eta$ convergence, bead inspector.
+  \item \textbf{Swap:} \texttt{glfwSwapBuffers} with vsync ($= 60\,$fps).
+\end{enumerate}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Overlay Modes}
+\label{sec:overlay-modes}
+% ────────────────────────────────────────────────────────────────────────────
+
+Bead color is mapped from a scalar overlay value through a jet colormap:
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Mode} & \textbf{Scalar} \\
+  \midrule
+  $\eta$          & Slow state $\eta_B \in [0, 1]$ \\
+  $\rho$          & Normalised density $\hat{\rho}_B$ \\
+  $C$             & $C_B / 12$ (clamped) \\
+  $P_2$           & Normalised $\hat{P}_{2,B}$ \\
+  $f$             & Target function $f_B$ \\
+  $g_{\text{steric}}$ & Steric modulation factor \\
+  $g_{\text{elec}}$   & Electrostatic modulation factor \\
+  $g_{\text{disp}}$   & Dispersion modulation factor \\
+  Energy          & Proxy: $0.5\hat{\rho} + 0.5\eta$ \\
+  Uniform         & Constant 0.5 (no overlay) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Data Export Formats}
+\label{sec:export-formats}
+% ════════════════════════════════════════════════════════════════════════════
+
+The Seed \& Bead system exports simulation data in six formats,
+covering research analysis (CSV, Excel), engineering CAD integration
+(SolidWorks), and standard point-cloud exchange (XYZ).
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{CSV Export}
+\label{sec:csv-export}
+% ────────────────────────────────────────────────────────────────────────────
+
+Two CSV files are produced by \type{SnapshotGraphCollector}:
+
+\begin{center}
+\begin{tabular}{llrl}
+  \toprule
+  \textbf{File} & \textbf{Content} & \textbf{Columns} & \textbf{Rows} \\
+  \midrule
+  Timeseries & Step-level diagnostics & 15 & 1 per step \\
+  Snapshots  & Per-bead XYZ + $\eta$, $\rho$ & 7 & 1 per bead per snapshot \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Excel XML Export}
+\label{sec:excel-export}
+% ────────────────────────────────────────────────────────────────────────────
+
+The \type{export\_excel\_xml()} function generates a SpreadsheetML~2003
+XML file that opens directly in Microsoft~Excel, LibreOffice~Calc,
+and Google~Sheets.  Three worksheets are produced:
+
+\begin{enumerate}
+  \item \textbf{Timeseries} --- all 15 diagnostic channels with
+        styled headers and unit rows.
+  \item \textbf{Snapshots} --- per-bead positions ($x$, $y$, $z$),
+        $\eta$, and $\rho$ at each snapshot interval.
+  \item \textbf{Summary} --- final-value table for key metrics.
+\end{enumerate}
+
+\noindent The Python pipeline (\file{visualize\_seed\_bead.py --excel})
+can additionally produce \texttt{.xlsx} format via openpyxl, with
+auto-width columns, number formatting, and colour-coded headers.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{SolidWorks Export}
+\label{sec:solidworks-export}
+% ────────────────────────────────────────────────────────────────────────────
+
+Three SolidWorks-compatible formats are exported by
+\type{solidworks\_export.hpp}:
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Extension} & \textbf{Format} & \textbf{SolidWorks Import Path} \\
+  \midrule
+  \texttt{.sldcrv} & Tab-delimited $X\;Y\;Z$
+    & Insert $\to$ Curve $\to$ Curve Through XYZ Points \\
+  \texttt{.xyz} & Standard XYZ point cloud
+    & File $\to$ Open (All Files) \\
+  \texttt{.csv} & $X,Y,Z,\eta,\rho$ metadata
+    & Macro or plugin import \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The \texttt{.sldcrv} format is the native SolidWorks curve
+input.  Per-bead trajectory curves are also exported as individual
+\texttt{.sldcrv} files (\texttt{bead\_000.sldcrv}, etc.), allowing
+SolidWorks to reconstruct full bead paths as 3D spline curves.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Export Pipeline}
+\label{sec:export-pipeline}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{lstlisting}
+// C++ --- from SnapshotGraphCollector
+collector.export_timeseries_csv("data/timeseries.csv");
+collector.export_snapshots_csv("data/snapshots.csv");
+collector.export_excel("data/report.xml", "Au 5nm Study");
+collector.export_solidworks_curve("data/structure.sldcrv");
+collector.export_solidworks_pointcloud("data/structure.xyz");
+collector.export_solidworks_metadata_csv("data/points.csv");
+
+# Python --- from CLI
+python visualize_seed_bead.py --demo --excel --solidworks
+\end{lstlisting}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Implementation Summary}
+\label{sec:implementation}
+% ════════════════════════════════════════════════════════════════════════════
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \textbf{Component} & \textbf{File} & \textbf{Lines} \\
+  \midrule
+  6+9 Step Function       & \file{coarse\_grain/models/seed\_bead\_stepper.hpp} & $\sim$430 \\
+  Snapshot \& Graph       & \file{coarse\_grain/report/snapshot\_graph.hpp}     & $\sim$400 \\
+  Metal \& Gas Studies    & \file{coarse\_grain/report/metal\_gas\_study.hpp}   & $\sim$340 \\
+  Excel XML Export        & \file{coarse\_grain/report/excel\_export.hpp}       & $\sim$210 \\
+  SolidWorks Export       & \file{coarse\_grain/report/solidworks\_export.hpp}  & $\sim$200 \\
+  Live 60\,fps Viewer     & \file{coarse\_grain/vis/seed\_bead\_viewer.hpp}     & $\sim$410 \\
+  Demo Application        & \file{apps/seed\_bead\_demo.cpp}                    & $\sim$100 \\
+  Python Visualization    & \file{scripts/visualize\_seed\_bead.py}             & $\sim$650 \\
+  Test Suite              & \file{tests/test\_seed\_bead\_stepper.cpp}          & $\sim$220 \\
+  \midrule
+  \textbf{LaTeX Document} & \file{docs/section\_seed\_bead\_model.tex}          & (this file) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Build Targets}
+\label{sec:build-targets}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{lstlisting}
+# Test suite
+add_executable(test_seed_bead_stepper test_seed_bead_stepper.cpp)
+target_link_libraries(test_seed_bead_stepper coarse_grain atomistic vsepr_core)
+
+# Live demo (with BUILD_VIS=ON)
+add_executable(seed-bead-demo apps/seed_bead_demo.cpp)
+target_link_libraries(seed-bead-demo coarse_grain atomistic vsepr_vis ...)
+
+# Python visualization
+python scripts/visualize_seed_bead.py --demo
+\end{lstlisting}
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Dependencies}
+\label{sec:dependencies}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Depends on} & \textbf{Provides} \\
+  \midrule
+  \file{environment\_state.hpp}      & $X_B$, fast observables, $\eta$ integration \\
+  \file{environment\_coupling.hpp}   & Kernel modulation (Option A) \\
+  \file{interaction\_engine.hpp}     & Per-channel pairwise energy \\
+  \file{bead.hpp}, \file{bead\_system.hpp} & Bead data structures \\
+  \file{nanoparticle\_ref.hpp}       & Experimental reference data \\
+  GLFW, GLEW, Dear ImGui            & Visualization (optional) \\
+  matplotlib, numpy                  & Python figures (optional) \\
+  openpyxl                           & Python Excel .xlsx export (optional) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\newpage
+% ════════════════════════════════════════════════════════════════════════════
+\section{Relation to Existing Theory Documents}
+\label{sec:related-documents}
+% ════════════════════════════════════════════════════════════════════════════
+
+The Seed \& Bead model unifies concepts from several existing sections:
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Document} & \textbf{Contribution to this model} \\
+  \midrule
+  Section 5 (Integration)           & Velocity Verlet, FIRE algorithm \\
+  Section 6 (Formation Physics)     & VSEPR $\to$ MD $\to$ FIRE pipeline \\
+  Section 7 (Statistical Interp.)   & Welford accumulator, convergence \\
+  ASB (Anisotropic Beads)           & SH descriptors, channel kernels \\
+  ERB (Environment-Responsive)      & $X_B$, $\eta$ dynamics, kernel modulation \\
+  CGL (Coarse-Grained Layer)        & CG mapping, ensemble proxies \\
+  TIF (Testing Infrastructure)      & Validation methodology \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent The Seed \& Bead model is the \emph{first implementation} that
+executes all these components within a single step function, rather than
+as a sequential pipeline.
+
+% ────────────────────────────────────────────────────────────────────────────
+\subsection{Terminology Compliance}
+\label{sec:terminology}
+% ────────────────────────────────────────────────────────────────────────────
+
+Per project rules (\file{.github/copilot-instructions.md}, \S6):
+\begin{itemize}
+  \item The term ``atomistic'' is used throughout.
+  \item The forbidden term is not present in any code, comment, or
+        documentation artifact produced by this model.
+\end{itemize}
+
+\vspace{2em}
+\begin{center}
+  \rule{0.6\textwidth}{0.4pt}\\[1em]
+  \textit{End of Seed \& Bead Model specification.}\\[0.5em]
+  \textit{VSEPR-SIM v2.8.0 — Deterministic atomistic platform.}
+\end{center}
+
+\end{document}

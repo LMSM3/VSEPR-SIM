@@ -1,0 +1,19 @@
+{
+  "formula": "Si3N4",
+  "seed": 496,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 4337.190309,
+  "energy_per_atom": 619.598616,
+  "rms_force": 6993.699042,
+  "max_force": 6993.699042,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.609800,
+  "timestamp": "2026-03-28T12:55:56",
+  "xyz_file": "benchmark_100\medium\structures\Si3N4_s496.xyz"
+}
