@@ -558,6 +558,211 @@ Controls human-readable report content.
 
 ________________________________________
 
+## `[material]` — WO-VSIM-03B
+
+Declares material identity and structural intent. Replaces manual `[simulation.molecule]` for intent-driven authoring.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `formula` | string | `""` | Chemical formula: `"NaCl"`, `"Si"`, `"Fe2O3"` |
+| `prototype` | string | `""` | Deterministic generator key: `"B1_NaCl"`, `"A4_Si"` |
+| `structure` | string | `""` | Casual alias — auto-resolved to prototype (see alias table below) |
+| `space_group` | string | `""` | Crystallographic space group: `"Fm-3m"`, `"Fd-3m"` |
+| `lattice` | string | `""` | Lattice type hint: `"fcc_ionic"`, `"bcc"`, `"hexagonal"` |
+| `basis` | string | `""` | Atomic basis: `"Na:0,0,0; Cl:0.5,0.5,0.5"` |
+| `cell` | string | `""` | Supercell spec: `"4x4x4"`, `"2x2x1"` |
+| `phase` | string | `""` | `"solid"`, `"liquid"`, `"gas"`, `"amorphous"` |
+
+**Resolution hierarchy** (highest wins): explicit `basis` + `space_group` → `prototype` → `structure` alias.
+
+**Structure alias map** (`structure` key → resolved `prototype`):
+
+_Ionic / salts:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"rocksalt"`, `"halite"`, `"nacl"` | `"B1_NaCl"` |
+| `"cesium_chloride"`, `"cscl"` | `"B2_CsCl"` |
+| `"fluorite"` | `"C1_CaF2"` |
+| `"antifluorite"` | `"Anti_C1_Li2O"` |
+| `"zincblende"`, `"sphalerite"`, `"zinc_blende"` | `"B3_ZnS"` |
+| `"wurtzite"` | `"B4_ZnS"` |
+| `"rutile"` | `"C4_TiO2"` |
+| `"perovskite"` | `"ABO3_perovskite"` |
+| `"spinel"` | `"AB2O4_spinel"` |
+
+_Elemental metals / simple crystals:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"simple_cubic"`, `"sc"` | `"A_cP1"` |
+| `"bcc"`, `"body_centered_cubic"` | `"A2_bcc"` |
+| `"fcc"`, `"face_centered_cubic"` | `"A1_fcc"` |
+| `"hcp"`, `"hexagonal_close_packed"` | `"A3_hcp"` |
+| `"diamond"`, `"diamond_cubic"`, `"silicon"`, `"germanium"` | `"A4_diamond"` |
+| `"graphite"` | `"A9_graphite"` |
+| `"graphene"` | `"A9_graphene_2D"` |
+
+_Covalent / semiconductor:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"zinc_sulfide"` | `"B3_ZnS"` |
+| `"cadmium_sulfide"` | `"B4_CdS"` |
+
+_Oxides / ceramics:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"alpha_alumina"`, `"corundum"` | `"D5_Al2O3_corundum"` |
+| `"magnesia"` | `"B1_MgO"` |
+| `"ceria"` | `"C1_CeO2_fluorite"` |
+| `"zirconia"` | `"C1_ZrO2_fluorite_like"` |
+| `"uraninite"` | `"C1_UO2_fluorite"` |
+| `"thoria"` | `"C1_ThO2_fluorite"` |
+
+_Molecular geometry:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"linear"` | `"geom_linear"` |
+| `"bent"` | `"geom_bent"` |
+| `"trigonal_planar"` | `"geom_trigonal_planar"` |
+| `"tetrahedral"` | `"geom_tetrahedral"` |
+| `"trigonal_pyramidal"` | `"geom_trigonal_pyramidal"` |
+| `"octahedral"` | `"geom_octahedral"` |
+| `"square_planar"` | `"geom_square_planar"` |
+| `"see_saw"` | `"geom_seesaw"` |
+| `"t_shaped"` | `"geom_t_shaped"` |
+
+_Polymers / organics:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"linear_chain"` | `"polymer_linear_chain"` |
+| `"branched_chain"` | `"polymer_branched"` |
+| `"aromatic_ring"` | `"organic_aromatic_ring"` |
+| `"benzene_ring"` | `"organic_benzene"` |
+| `"alkane_chain"` | `"organic_alkane_chain"` |
+| `"cycloalkane"` | `"organic_cycloalkane"` |
+
+_Porous / framework materials:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"zeolite"` | `"framework_zeolite"` |
+| `"mof"` | `"framework_mof"` |
+| `"cof"` | `"framework_cof"` |
+| `"pba"` | `"framework_prussian_blue_analog"` |
+| `"prussian_blue"` | `"framework_prussian_blue"` |
+
+_Bead / premacro:_
+
+| Alias | Resolved prototype |
+|---|---|
+| `"bead_chain"` | `"bead_linear_chain"` |
+| `"bead_cluster"` | `"bead_cluster_random"` |
+| `"powder_bed"` | `"premacro_powder_bed"` |
+| `"packed_bed"` | `"premacro_packed_bed"` |
+| `"granular_column"` | `"premacro_granular_column"` |
+| `"fiber_bundle"` | `"premacro_fiber_bundle"` |
+| `"pipe_flow"` | `"premacro_pipe_flow"` |
+
+_Anything not in this table is passed through verbatim (forward-compatible)._
+
+
+________________________________________
+
+## `[run]` — WO-VSIM-03B
+
+Declares the run mode and top-level execution controls.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `mode` | string | `""` | Required: `"relax"`, `"md"`, `"npt"`, `"nvt"`, `"nve"`, `"scan"`, `"single_point"` |
+| `max_steps` | int | `500` | Step / iteration limit |
+| `dt_fs` | float | `1.0` | Timestep in femtoseconds (ignored for `"relax"`) |
+| `temperature` / `temperature_K` | float | `300.0` | K |
+| `pressure` / `pressure_GPa` | float | `0.0` | GPa (for NPT) |
+| `converge` | bool | `true` | Stop early on convergence criterion |
+| `output_level` | string | `"standard"` | `"minimal"`, `"standard"`, `"verbose"` |
+
+________________________________________
+
+## `[environment]` — WO-VSIM-03B
+
+Describes the physical environment surrounding the simulation cell.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `periodic` | bool | `false` | Enable periodic boundary conditions |
+| `temperature` | float | `300.0` | K |
+| `pressure` | float | `0.0` | GPa |
+| `medium` | string | `""` | `"vacuum"`, `"water"`, `"argon_gas"`, … |
+| `humidity` | float | `0.0` | 0–1 fraction |
+| `field_x` / `field_y` / `field_z` | float | `0.0` | External electric field components (V/Å) |
+
+________________________________________
+
+## `[excite.<type>]` — WO-VSIM-03B
+
+Named excitation subsection. `<type>` is the excitation kind (e.g., `laser`, `xray`, `electron_beam`, `thermal_spike`). Multiple `[excite.*]` blocks may appear; each is stored in `ExciteSection::entries` keyed by type name.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `axis` | string | `""` | Propagation axis: `"x"`, `"y"`, `"z"` |
+| `polarization` | string | `""` | `"x"`, `"y"`, `"z"`, `"circular"` |
+| `intensity` | float | `1.0` | Arbitrary units (type-dependent) |
+| `pulse_width_fs` | float | `100.0` | Pulse duration (fs) |
+| `photon_energy_eV` | float | `0.0` | Photon energy for xray / e-beam |
+| `fluence` | float | `0.0` | J/cm² |
+| `profile` | string | `""` | `"gaussian"`, `"flat"`, `"sech2"` |
+
+________________________________________
+
+## `[observe]` — WO-VSIM-03B
+
+Declares which physical observables to measure and how to emit them.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `metrics` | list of strings | `[]` | e.g. `["energy_map", "interference", "spectral_response"]` |
+| `output_format` | string | `"auto"` | `"csv"`, `"json"`, `"svg"`, `"auto"` |
+| `every_n_steps` | int | `1` | Observation cadence (steps) |
+
+________________________________________
+
+## `[[override.particle]]` — WO-VSIM-03B
+
+Array-of-tables. Each block selectively mutates one particle before or during a run. Double-bracket `[[…]]` syntax; multiple blocks allowed.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `id` | int | `-1` | 1-indexed particle ID (required) |
+| `velocity` | `[x, y, z]` | — | Override velocity components (Å/fs) |
+| `position` | `[x, y, z]` | — | Override position (Å) |
+| `charge` | float | `0.0` | Override charge (e) |
+| `mass_scale` | float | `1.0` | Multiplicative mass modifier |
+| `fixed` | bool | `false` | Freeze particle position |
+
+________________________________________
+
+## `[[raw.object]]` — WO-VSIM-03B
+
+Array-of-tables. Explicit particle injection for tests, importers, file bridges, and debugging. **Not the main experience.** Double-bracket `[[…]]` syntax; multiple blocks allowed.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `id` | string | `""` | Arbitrary label: `"debug_particle_001"` |
+| `species` | string | `""` | Element symbol or reserved label: `"C"`, `"alpha"`, `"ghost"` |
+| `position` | `[x, y, z]` | `[0,0,0]` | Position (Å) |
+| `velocity` | `[x, y, z]` | `[0,0,0]` | Velocity (Å/fs) |
+| `charge` | float | `0.0` | Charge (e) |
+| `mass` | float | `0.0` | Mass (amu); 0 = derive from species |
+| `label` | string | `""` | Optional display label |
+
+________________________________________
+
 ## Planned features — no kernel wiring yet
 
 The following are parsed and stored (or defined in the schema) but have no runtime effect in the current build.
@@ -582,7 +787,7 @@ The following are parsed and stored (or defined in the schema) but have no runti
 | `[report]` script section | `raw_sections` | 🔶 No dedicated struct; stored in raw |
 | `export_each` in `[batch.job]` | `BatchJob` | 🔶 Parsed; per-run export not enforced |
 | `aggregate` in `[batch.job]` | `BatchJob` | 🔶 Parsed; aggregate report not implemented |
-| `[material.*]` sub-sections (demo_07 style) | `raw_sections` | 🔶 Captured; full wiring pending |
+| `[material.*]` sub-sections (demo_07 style) | `raw_sections` | 🔶 Captured; runtime generation wiring pending (WO-VSIM-03B schema done) |
 | `[sweep]` top-level declarative sweep | `raw_sections` | 🔶 Parsed; runtime wiring pending |
 | `"triclinic"` cell type | `CellSection` | ❌ Reserved; not implemented |
 | `"reflective"` / `"absorbing"` boundary | `BoundarySection` | ❌ Reserved; not implemented |
@@ -590,3 +795,21 @@ The following are parsed and stored (or defined in the schema) but have no runti
 | STEP B-Rep solid geometry | `ExportSection::write_step_file` | 🔶 Point-cloud only; B-Rep deferred to beta-8.1 |
 | PNG raster dashboard | pipeline | 🔶 stb fallback active; PPM if stb not linked |
 | Live continual reporting | — | ❌ Deprecated as autonomous engine. Use `[while]` + `[export]`. |
+
+---
+
+## Beta-9 owned items (registry resolution — not yet implemented)
+
+The following are schema/parser-complete but require the **beta-9 registry resolution engine** (WO-VSIM-03C) before they have runtime effect.
+
+| Feature | Schema / parser | Runtime |
+|---|---|---|
+| `structure` alias → full prototype expansion | ✅ `resolve_structure_alias()` | ⬜ beta-9 `RegistryResolver` |
+| `[material]` → particle positions + masses + charges | ✅ `MaterialSection` parsed | ⬜ beta-9 generator wiring |
+| `[run]` → simulation execution | ✅ `RunSection` parsed | ⬜ beta-9 runtime bridge |
+| `[environment]` → boundary / PBC / temperature | ✅ `EnvironmentSection` parsed | ⬜ beta-9 runtime bridge |
+| `[excite.*]` → excitation dispatch | ✅ `ExciteSection` parsed | ⬜ beta-9 |
+| `[observe]` → metric collection | ✅ `ObserveSection` parsed | ⬜ beta-9 |
+| `[[override.particle]]` → particle mutation | ✅ `ParticleOverrideEntry` parsed | ⬜ beta-9 |
+| `[[raw.object]]` → explicit particle injection | ✅ `RawObjectEntry` parsed | ⬜ beta-9 |
+| `[REGISTRY]` field resolution logging | — | ⬜ beta-9 |

@@ -882,3 +882,19 @@ target_include_directories(test_render_interval PRIVATE
     ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME RenderIntervalTest TARGET test_render_interval
     LABELS vsim visual render_interval scripting beta8 quick)
+
+# ============================================================================
+# Group 36: WO-VSIM-03B — Intent-based structure authoring (Level 0–4)
+# ============================================================================
+# test_wo_03b — MaterialSection, RunSection, EnvironmentSection, ExciteSection,
+#               ObserveSection, ParticleOverrideEntry, RawObjectEntry.
+#               Covers: L0A L0B L1A L1B L2A L2B L2C L3A L4A L4B ALIAS
+
+add_executable(test_wo_03b test_wo_03b.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_wo_03b PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_wo_03b PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME IntentAuthoringTest TARGET test_wo_03b
+    LABELS vsim material run environment excite observe override raw scripting beta8 quick)

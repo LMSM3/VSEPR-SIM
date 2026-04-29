@@ -58,6 +58,184 @@ Unsupported TOML features (captured in `raw_sections` for forward compatibility)
 
 ## 3. Section Reference
 
+---
+
+### `[material]` — WO-VSIM-03B _(Level 0–1 intent authoring)_
+
+Declares material identity and structural intent. This is the **primary entry point for beta-8 authoring**, replacing manual `[simulation.molecule]` for intent-driven workflows.
+
+**Resolution hierarchy** (highest wins): `space_group + basis` > `prototype` > `structure` alias.
+
+```toml
+# Level 0 — casual
+[material]
+formula   = "NaCl"
+structure = "rocksalt"   # alias resolved to prototype "B1_NaCl"
+cell      = "4x4x4"
+```
+
+```toml
+# Level 1 — deterministic prototype key
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+```
+
+```toml
+# Level 1 — crystallographic truth
+[material]
+formula     = "NaCl"
+space_group = "Fm-3m"
+lattice     = "fcc_ionic"
+basis       = "Na:0,0,0; Cl:0.5,0.5,0.5"
+cell        = "4x4x4"
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `formula` | string | `""` | Chemical formula |
+| `prototype` | string | `""` | Deterministic generator key: `"B1_NaCl"`, `"A4_Si"` |
+| `structure` | string | `""` | Casual alias — auto-resolved (see `VSIM_REFERENCE.md` alias table) |
+| `space_group` | string | `""` | Crystallographic space group: `"Fm-3m"`, `"Fd-3m"` |
+| `lattice` | string | `""` | Lattice type hint: `"fcc_ionic"`, `"bcc"` |
+| `basis` | string | `""` | Atomic basis: `"Na:0,0,0; Cl:0.5,0.5,0.5"` |
+| `cell` | string | `""` | Supercell spec: `"4x4x4"`, `"2x2x1"` |
+| `phase` | string | `""` | `"solid"`, `"liquid"`, `"gas"`, `"amorphous"` |
+
+---
+
+### `[run]` — WO-VSIM-03B _(Level 0 intent authoring)_
+
+Declares the run mode and top-level execution controls.
+
+```toml
+[run]
+mode      = "relax"   # required
+max_steps = 500
+converge  = true
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `mode` | string | — | Required: `"relax"`, `"md"`, `"npt"`, `"nvt"`, `"nve"`, `"scan"`, `"single_point"` |
+| `max_steps` | int | `500` | Step / iteration limit |
+| `dt_fs` | float | `1.0` | Timestep (fs) — ignored for `"relax"` |
+| `temperature` / `temperature_K` | float | `300.0` | K |
+| `pressure` / `pressure_GPa` | float | `0.0` | GPa (NPT) |
+| `converge` | bool | `true` | Stop early on convergence |
+| `output_level` | string | `"standard"` | `"minimal"`, `"standard"`, `"verbose"` |
+
+---
+
+### `[environment]` — WO-VSIM-03B _(Level 2)_
+
+Describes the physical environment surrounding the simulation cell.
+
+```toml
+[environment]
+periodic    = true
+temperature = 300
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `periodic` | bool | `false` | Enable PBC |
+| `temperature` | float | `300.0` | K |
+| `pressure` | float | `0.0` | GPa |
+| `medium` | string | `""` | `"vacuum"`, `"water"`, `"argon_gas"`, … |
+| `humidity` | float | `0.0` | 0–1 fraction |
+| `field_x` / `field_y` / `field_z` | float | `0.0` | External E-field components (V/Å) |
+
+---
+
+### `[excite.<type>]` — WO-VSIM-03B _(Level 2)_
+
+Named excitation subsection. Multiple `[excite.*]` blocks may appear in one script.
+
+```toml
+[excite.laser]
+axis           = "z"
+polarization   = "x"
+intensity      = 1.0
+pulse_width_fs = 100
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `axis` | string | `""` | `"x"`, `"y"`, `"z"` |
+| `polarization` | string | `""` | `"x"`, `"y"`, `"z"`, `"circular"` |
+| `intensity` | float | `1.0` | Arbitrary units (type-dependent) |
+| `pulse_width_fs` | float | `100.0` | Pulse duration (fs) |
+| `photon_energy_eV` | float | `0.0` | Photon energy for xray / e-beam |
+| `fluence` | float | `0.0` | J/cm² |
+| `profile` | string | `""` | `"gaussian"`, `"flat"`, `"sech2"` |
+
+---
+
+### `[observe]` — WO-VSIM-03B _(Level 2)_
+
+Declares which physical observables to measure during the run.
+
+```toml
+[observe]
+metrics = ["energy_map", "interference", "spectral_response"]
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `metrics` | list of strings | `[]` | Observable names |
+| `output_format` | string | `"auto"` | `"csv"`, `"json"`, `"svg"`, `"auto"` |
+| `every_n_steps` | int | `1` | Observation cadence (steps) |
+
+---
+
+### `[[override.particle]]` — WO-VSIM-03B _(Level 3)_
+
+Array-of-tables. Each block selectively mutates one particle before or during a run.
+
+```toml
+[[override.particle]]
+id       = 14
+velocity = [0.0, 0.0, 3.0]
+charge   = -1.0
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `id` | int | `-1` | 1-indexed particle ID (required) |
+| `velocity` | `[x, y, z]` | — | Override velocity (Å/fs) |
+| `position` | `[x, y, z]` | — | Override position (Å) |
+| `charge` | float | `0.0` | Override charge (e) |
+| `mass_scale` | float | `1.0` | Multiplicative mass modifier |
+| `fixed` | bool | `false` | Freeze particle position |
+
+---
+
+### `[[raw.object]]` — WO-VSIM-03B _(Level 4 — debug / import only)_
+
+Explicit particle injection. **Not the main experience** — reserved for tests, importers, file bridges, and debugging.
+
+```toml
+[[raw.object]]
+id       = "debug_particle_001"
+species  = "C"
+position = [0, 0, 0]
+velocity = [0, 0, 1]
+```
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `id` | string | `""` | Arbitrary label |
+| `species` | string | `""` | Element symbol or reserved token: `"C"`, `"alpha"` |
+| `position` | `[x, y, z]` | `[0,0,0]` | Position (Å) |
+| `velocity` | `[x, y, z]` | `[0,0,0]` | Velocity (Å/fs) |
+| `charge` | float | `0.0` | Charge (e) |
+| `mass` | float | `0.0` | Mass (amu); 0 = derive from species |
+| `label` | string | `""` | Optional display label |
+
+---
+
 ### `[project]`
 
 Required. Identifies the script.
@@ -422,9 +600,9 @@ Exit codes:
 | Feature | Status |
 |---|---|
 | Inline tables `{}` | Not parsed — captured in `raw_sections` |
-| Array of tables `[[table]]` for multi-molecule inline | Partial — `[[simulation.molecule]]` supported |
+| Array of tables `[[table]]` for multi-molecule inline | Partial — `[[simulation.molecule]]`, `[[override.particle]]`, `[[raw.object]]` supported (WO-VSIM-03B) |
 | `[sweep]` top-level declarative sweep | Parsed by parser; runtime wiring pending |
-| `[material.*]` sub-sections (demo_07 style) | Captured in `raw_sections`; full wiring pending |
+| `[material.*]` runtime generation | Schema and parser done (WO-VSIM-03B); structure generator wiring pending |
 | `render_targets` list execution in `[visual.external]` | Parsed; dispatch wiring pending |
 | Live continual reporting | Deprecated as autonomous engine. Use `[while]` + `[export]`. |
 
@@ -439,6 +617,78 @@ Exit codes:
 | `scripts/demo_03_graphite_stack.vsim` | C (480 atoms) | 5-layer AB Bernal graphite, ERB modulation |
 | `scripts/beta7_pipeline_smoke.vsim` | multi | Full pipeline gate test |
 | `scripts/demo_07_crystal_defects.vsim` | Fe, Al₂O₃, NaCl, SiC | Solid-state defect and transport demo (scenarios 14–17) |
+
+**WO-VSIM-03B intent authoring — quick reference examples:**
+
+Level 0 — ultra-minimal:
+```toml
+[project]
+name = "nacl_relax"
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+
+[run]
+mode = "relax"
+```
+
+Level 1 — deterministic prototype:
+```toml
+[project]
+name = "nacl_lab"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[run]
+mode = "relax"
+```
+
+Level 2 — laser supercell:
+```toml
+[project]
+name = "laser_supercell"
+
+[material]
+formula = "Si"
+cell    = "6x6x6"
+
+[environment]
+periodic    = true
+temperature = 300
+
+[excite.laser]
+axis           = "z"
+polarization   = "x"
+intensity      = 1.0
+pulse_width_fs = 100
+
+[observe]
+metrics = ["energy_map", "interference", "spectral_response"]
+
+[run]
+mode = "md"
+```
+
+Level 3 — selective override:
+```toml
+[[override.particle]]
+id       = 14
+velocity = [0.0, 0.0, 3.0]
+charge   = -1.0
+```
+
+Level 4 — raw explicit object (debug/import only):
+```toml
+[[raw.object]]
+id       = "debug_particle_001"
+species  = "C"
+position = [0, 0, 0]
+velocity = [0, 0, 1]
+```
 
 ---
 

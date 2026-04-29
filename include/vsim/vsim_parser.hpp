@@ -21,6 +21,13 @@
  *   [project]             → ProjectSection
  *   [simulation]          → SimulationSection + MoleculeEntry sub-blocks
  *   [export]              → ExportSection
+ *   [material]            → MaterialSection          (WO-VSIM-03B)
+ *   [run]                 → RunSection               (WO-VSIM-03B)
+ *   [environment]         → EnvironmentSection       (WO-VSIM-03B)
+ *   [excite.<type>]       → ExciteSection registry   (WO-VSIM-03B)
+ *   [observe]             → ObserveSection           (WO-VSIM-03B)
+ *   [[override.particle]] → vector<ParticleOverrideEntry> (WO-VSIM-03B)
+ *   [[raw.object]]        → vector<RawObjectEntry>   (WO-VSIM-03B)
  *   [defaults.run]        → GoldenDefaultsSection::run
  *   [defaults.analysis]   → GoldenDefaultsSection::analysis
  *   [test.<name>]         → GoldenTestEntry (appended to golden_tests)
@@ -33,7 +40,7 @@
  *
  * Unknown sections are captured in VsimDocument::raw_sections.
  *
- * WO-56C  |  v5.0.0-beta.7
+ * WO-56C  |  v5.0.0-beta.7  |  WO-VSIM-03B  |  beta-8
  */
 
 #include "vsim_document.hpp"
@@ -98,6 +105,15 @@ private:
 	void apply_boundary_key(const std::string& key, const Value& val, int line_no);
 	void apply_pbc_key(const std::string& key, const Value& val, int line_no);
 
+	// WO-VSIM-03B: intent-based authoring appliers
+	void apply_material_key(const std::string& key, const Value& val, int line_no);
+	void apply_run_key(const std::string& key, const Value& val, int line_no);
+	void apply_environment_key(const std::string& key, const Value& val, int line_no);
+	void apply_excite_key(const std::string& key, const Value& val, int line_no);
+	void apply_observe_key(const std::string& key, const Value& val, int line_no);
+	void apply_override_particle_key(const std::string& key, const Value& val, int line_no);
+	void apply_raw_object_key(const std::string& key, const Value& val, int line_no);
+
 	// Golden suite section appliers
 	void apply_golden_run_config(GoldenTestRunConfig& cfg,
 								 const std::string& key, const Value& val);
@@ -120,6 +136,11 @@ private:
 	VsimDocument  doc_;
 	std::string   current_section_;
 	bool          in_molecule_block_ = false;  // inside [[simulation.molecule]] sub-block
+
+	// WO-VSIM-03B parse state
+	std::string   current_excite_type_;        // active [excite.<type>] subtype (empty = none)
+	bool          in_override_particle_ = false; // inside [[override.particle]] block
+	bool          in_raw_object_        = false; // inside [[raw.object]] block
 
 	// Golden suite parse state
 	std::string   current_test_name_;          // active [test.<name>] key (empty = none)
