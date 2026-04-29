@@ -1,6 +1,6 @@
 # Copilot Instructions
 
-Version: 2026-04-25
+Version: 2026-05-07
 Status: Research-oriented active development  
 Scope: High-level project direction, scientific framing, system philosophy, development priorities, and intended utilization context  
 
@@ -82,6 +82,17 @@ A completed beta-7 run should produce:
 
 **Beta-7 is not the time to invent five new ornamental subsystems because the dopamine goblin demanded more complexity.**
 
+**Beta-7 progress (as of Day 57):**
+
+- WO-56C closed: central kernel pass-through consolidation complete
+- WO-57D closed: `render_interval` step-count cadence added to `[visual]` and `[visual.external]`
+- Group 35 acceptance tests live (`tests/test_render_interval.cpp`)
+- Developer documentation infrastructure established:
+  - `docs/VSIM_LANGUAGE.md` — canonical .vsim language guide
+  - `VSIM_REFERENCE.md` — field reference adjacent to README (update with every schema change)
+  - `VSIM_DEVELOPMENT.md` — 5-step add/wire/test/document checklist
+- Commit: `142fb5e4` on branch `v5.0.0-beta.7-step-attempt`
+
 ---
 
 ## 3. Permanent Core Architectural Rule
@@ -131,7 +142,24 @@ Engineering geometry truth: include CAD/export artifacts (.step) as required wor
 
 ---
 
-## 4. Permanent Terminology Rule
+## 4. render_interval Doctrine
+
+`render_interval` is a **step-count integer cadence** controlling how often render and export emission is triggered during simulation. It is **orthogonal to `display_fps`**.
+
+| Field | Scope | Meaning |
+|---|---|---|
+| `render_interval` | `[visual]`, `[visual.external]` | Emit render/export every N simulation steps (default: 1) |
+| `display_fps` | `[visual]` | UI/console refresh rate — unrelated to emission cadence |
+
+- `render_interval = 1` means emit every step (default behavior, no skipping)
+- `render_interval = 0` is treated as 1 (guard against zero division)
+- External backends may inherit or override the parent `[visual]` interval
+- Gate render dispatch via `VisualSection::should_render(int step)` and `VisualExternalSection::should_render(int step, int visual_interval)`
+- **Never conflate display refresh with emission cadence**
+
+---
+
+## 5. Permanent Terminology Rule
 
 The following terms are **forbidden**:
 
@@ -169,7 +197,7 @@ Use these instead:
 
 ---
 
-## 5. System Layers
+## 6. System Layers
 
 The project is organized around scientific workflow layers:
 
@@ -183,5 +211,35 @@ The project is organized around scientific workflow layers:
 | Classification | fingerprints, structure clustering, polymorph grouping, isomorph grouping, defect grouping |
 | Reporting      | tables, figures, dashboards, SVG/PNG, technical summaries, validation warnings |
 | Export         | xyz, xyzFull, CSV, JSON, XLSX, SVG, report documents, .step (engineering geometry truth), future SolidWorks outputs |
+
+---
+
+## 7. Developer Procedure (add / wire / document)
+
+Every new VSIM feature follows this sequence. No exceptions.
+
+1. **Define** — Add field with default to the correct struct in `include/vsim/vsim_document.hpp`
+2. **Parse** — Wire the key in `src/vsim/vsim_parser.cpp` (`apply_*_key()` function)
+3. **Wire** — Apply the field in runtime/demo apps; gate behavior with the field value
+4. **Test** — Create or extend a test group in `tests/`; register in `tests/CMakeLists.txt`
+5. **Document** — Update `VSIM_REFERENCE.md`, `docs/VSIM_LANGUAGE.md`, and `VSIM_DEVELOPMENT.md`
+
+`VSIM_REFERENCE.md` **must be updated with every schema change**, no exceptions. It is the living field-reference adjacent to the README.
+
+---
+
+## 8. Key Reference Files
+
+| File | Purpose |
+|---|---|
+| `include/vsim/vsim_document.hpp` | Schema structs and authoritative defaults |
+| `src/vsim/vsim_parser.cpp` | `.vsim` key-to-field wiring |
+| `apps/beta10_demo.cpp` | Phase pipeline demo with auto render layer |
+| `apps/kernel_demo.cpp` | Kernel demo with scenario/interactive render paths |
+| `VSIM_REFERENCE.md` | Living field reference — update with every change |
+| `docs/VSIM_LANGUAGE.md` | Canonical .vsim language and section guide |
+| `VSIM_DEVELOPMENT.md` | 5-step add/wire/test/document checklist |
+| `STAGE.md` | Master development stage and gate ledger |
+| `docs/wo/` | Per-work-order implementation records |
 
 **Architecture flow:**
