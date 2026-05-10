@@ -1,0 +1,35 @@
+# T1 — Field Projection Conservation
+# synthetic:dense_64_static | field projection only, no RVE, no emergence
+# Expected: total_binned = 64, all cell volumes finite, mass conserved
+
+[system]
+schema_version = 2
+name = "T1_field_projection_conservation"
+source = "synthetic:dense_64_static"
+source_format = "synthetic"
+seed = 61061
+
+[analysis.structure]
+enabled = true
+
+[analysis.sampling]
+enabled = true
+compute_rdf = false
+compute_msd = false
+
+[analysis.scale_sampling]
+enabled = true
+compute_field_projection = true
+compute_rve_sampling = false
+compute_emergence_metrics = false
+field_grid = [4, 4, 4]
+min_particles_for_scale_sampling = 64
+
+[analysis.inference]
+enabled = false
+
+[output]
+output_dir = "runs/T1_field_projection_conservation"
+output_prefix = "T1"
+write_scale_sampling_json = true
+write_sampling_manifest = true

@@ -1,0 +1,50 @@
+# T2 — RVE Convergence on Uniform Sample
+# synthetic:uniform_512_trajectory | Full pipeline
+# Expected: rve_candidate = true at larger windows, spatial_cv decreases with window size
+
+[system]
+schema_version = 2
+name = "T2_rve_uniform_convergence"
+source = "synthetic:uniform_512_trajectory"
+source_format = "synthetic"
+seed = 61062
+
+[analysis.structure]
+enabled = true
+
+[analysis.sampling]
+enabled = true
+compute_rdf = true
+compute_msd = true
+min_frames_for_motion = 2
+min_frames_for_msd = 10
+
+[analysis.scale_sampling]
+enabled = true
+compute_field_projection = true
+compute_rve_sampling = true
+compute_emergence_metrics = true
+field_grid = [8, 8, 8]
+min_particles_for_scale_sampling = 64
+rve_window_lengths_A = [8.0, 12.0, 16.0]
+rve_windows_per_level = 16
+rve_window_placement = "stratified"
+temporal_drift_metric = "block_difference"
+scale_drift_metric = "successive_window_difference"
+spatial_cv_threshold = 0.20
+temporal_drift_threshold = 0.10
+scale_drift_threshold = 0.15
+
+[analysis.inference]
+enabled = true
+mode = "rule_based_61d"
+infer_macro_readiness = true
+
+[output]
+output_dir = "runs/T2_rve_uniform_convergence"
+output_prefix = "T2"
+write_structure_json = true
+write_sampling_json = true
+write_scale_sampling_json = true
+write_inference_json = true
+write_sampling_manifest = true

@@ -1,0 +1,115 @@
+# scripts/validation/val_03_rutile_tio2.vsim
+# Priority 3 — Rutile TiO₂
+# Geometry: tetragonal (P4₂/mnm), distorted octahedral coordination
+# Main modules: PBC + Ewald + RDF + coordination analysis
+# External target: Ti-O bond lengths, coordination number, structure
+# Experimental: a = b = 4.5937 Å, c = 2.9581 Å
+# Ti at (0,0,0) and (1/2,1/2,1/2); O at (u,u,0) u ≈ 0.3048
+# vsper validate scripts/validation/val_03_rutile_tio2.vsim
+
+[project]
+name        = val_03_rutile_tio2
+version     = v5.0.0-beta.8
+seed_base   = 8003
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[cell]
+# Tetragonal cell: a = b ≠ c
+# Confirm: VSIM orthorhombic cell supports a=b≠c without triclinic
+type    = orthorhombic
+lengths = 4.5937, 4.5937, 2.9581
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = false
+
+[species.Ti]
+charge = +4.0
+mass   = 47.867
+# Formal charge for Madelung reference
+# Confirm: partial charge model if shell model is implemented
+
+[species.O]
+charge = -2.0
+mass   = 15.999
+
+[material]
+id      = rutile_tio2
+formula = TiO2
+classes = ionic_crystal,tetragonal,rutile_structure
+
+[material.structure]
+type    = rutile_lattice
+# Ti: (0,0,0), (1/2,1/2,1/2)
+# O:  (u,u,0), (-u,-u,0), (1/2+u,1/2-u,1/2), (1/2-u,1/2+u,1/2)
+# u ≈ 0.3048
+elements = Ti,O
+a0       = 4.5937
+c0       = 2.9581
+u_param  = 0.3048
+
+[electrostatics]
+method      = ewald
+ewald_alpha = 0.3
+ewald_kmax  = 8
+ewald_rcut  = 8.0
+units       = angstrom
+
+[formation]
+mode        = fixed_lattice
+relax_steps = 0
+
+[analysis]
+coordination      = true
+coordination_Ti   = true
+coordination_O    = true
+rdf               = true
+rdf_pairs         = Ti-O,Ti-Ti,O-O
+rdf_rmax          = 8.0
+rdf_bins          = 200
+bond_lengths      = true
+bond_angle        = true
+# Rutile Ti is octahedrally coordinated: 4 equatorial + 2 apical O
+# Equatorial Ti-O ≈ 1.946 Å, apical Ti-O ≈ 1.984 Å
+madelung_energy   = true
+charge_neutrality = true
+
+[expected]
+coordination_Ti       = 6
+coordination_O        = 3
+bond_length_Ti_O_eq   = 1.946
+bond_length_Ti_O_ap   = 1.984
+bond_length_tol       = 0.05
+# Tolerance acknowledges fixed-lattice vs. relaxed geometry
+charge_sum            = 0.0
+charge_sum_tol        = 1e-10
+# O-Ti-O equatorial angle ≈ 90°, apical ≈ 90°, distortion from ideal octahedron
+angle_O_Ti_O_eq       = 90.0
+angle_tol             = 5.0
+
+[run]
+mode  = static
+steps = 0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                   = val_03_rutile_tio2
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true

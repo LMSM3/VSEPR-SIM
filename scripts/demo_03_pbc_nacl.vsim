@@ -1,0 +1,110 @@
+# scripts/demo_03_pbc_nacl.vsim
+# =============================================================================
+# Beta-9  Level 1 + PBC — Ionic crystal with full periodic boundary controls
+#
+# What changed from beta-8:
+#   beta-8: [simulation] periodic = true was the only PBC switch.
+#           [cell], [boundary], and [pbc] blocks did not exist.
+#   beta-9/57B: Three new sections give fine-grained PBC control:
+#     [cell]     — explicit orthorhombic box dimensions
+#     [boundary] — per-axis mode: periodic | open
+#     [pbc]      — wrap policy, image tracking, diffusion unwrapping
+#
+#   [material] now gives the registry a full ionic description:
+#     prototype = "B1_NaCl"  →  generator = "ionic_rocksalt"
+#                              coordination = 6
+#                              default_charge_model = "formal"
+#                              is_periodic = true
+#
+#   Ewald summation is exposed through [simulation] use_ewald / ewald_* fields.
+#
+# Run: vsper validate scripts/demo_03_pbc_nacl.vsim
+# =============================================================================
+
+[project]
+name        = demo_03_pbc_nacl
+version     = v5.0.0-beta.9
+seed_base   = 3001
+determinism = true
+
+# ── Material (Level 1 deterministic prototype) ────────────────────────────────
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"     # ionic rocksalt; Fm-3m; 6-fold coordination
+cell      = "4x4x4"
+phase     = "solid"
+
+# ── Run controls ─────────────────────────────────────────────────────────────
+[run]
+mode            = "relax"
+max_steps       = 1000
+converge        = true
+temperature_K   = 300.0
+output_level    = "standard"
+
+# ── Explicit simulation box (beta-9 [cell] section) ──────────────────────────
+# NaCl lattice parameter ~5.64 Å, 4×4×4 supercell ≈ 22.6 Å
+[cell]
+type    = "orthorhombic"
+lx      = 22.6
+ly      = 22.6
+lz      = 22.6
+
+# ── Per-axis boundary conditions (beta-9 [boundary] section) ─────────────────
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+# ── PBC runtime options (beta-9 [pbc] section) ───────────────────────────────
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"   # AfterStep — remap after every integration step
+track_images         = true           # enables pbc.image_count / pbc.unwrap
+unwrap_for_diffusion = true
+
+# ── Simulation: Ewald summation for ionic long-range electrostatics ───────────
+[simulation]
+fire_max_steps   = 1000
+fire_dt_fs       = 0.5
+periodic         = true
+formation_preset = "ceramic"
+use_ewald        = true
+ewald_alpha      = 0.3
+ewald_rcut       = 11.0
+ewald_kmax       = 5
+
+# ── Kernel tracing ────────────────────────────────────────────────────────────
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events  = true
+transport_events  = true
+dynamic_energy    = true
+
+# ── Output ────────────────────────────────────────────────────────────────────
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_jsonl  = true
+output_dir          = "out/demo_03"
+
+[visual]
+output_type              = "terminal_rdf"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_rdf_plot            = true
+
+[visual.external]
+enabled           = true
+render_interval   = 100
+export_format     = "auto"
+show_progress     = true

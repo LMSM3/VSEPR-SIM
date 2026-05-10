@@ -305,4 +305,28 @@ Done!
 
 ---
 
-*Last updated: WO-57D (Day #57). Process validated through `render_interval` implementation.*
+---
+
+## Work Order Naming Convention
+
+Use the correct prefix for every new WO — permanently.
+
+**`WO-VSEPR-SIM-##`** — whole-platform work:
+- physics engine
+- analysis pipeline (structure, sampling, scale sampling, inference)
+- macro sampling and empirical verification kernel
+- material inference, export, reporting
+- runtime architecture
+
+**`WO-VSIM-##`** — scripting-language work:
+- parser and `.vsim` schema (`vsim_document.hpp` additions)
+- `[study]`, `[batch.*]`, `[formation.library.*]`, `[seed]`
+- script validation, resolved-run generation
+- language documentation (`docs/VSIM_LANGUAGE.md`, `VSIM_REFERENCE.md` schema sections)
+
+Older documents use mixed identifiers (`WO-VSIM-61`, `WO-VSEPR-SIM-61`).
+These are valid for historical continuity. The bifurcation is enforced from Day 62 onward.
+
+---
+
+*Last updated: WO-VSEPR-SIM-62A (Day #62). Naming bifurcation enforced from Day 62.*

@@ -1,0 +1,127 @@
+# scripts/demo_05_variance_while.vsim
+# =============================================================================
+# Beta-10 control flow — [variance] + [N_evolution] + [while]
+#
+# What changed from beta-8 / early beta-10 drafts:
+#   beta-8:       [variance] and [while] used block syntax:
+#                   probe energy_var
+#                     field     = energy.total
+#                     window    = all
+#                     threshold = 0.10
+#                   end
+#                   guard equilibrate
+#                     condition = "energy_var > 0.05"
+#                     ...
+#                   end
+#
+#   beta-10 final: Inline key = "value  window  [threshold]" syntax for probes.
+#                  [while] guards also collapsed to inline:
+#                    equilibrate = "variance energy_var > 0.05"
+#                    body_steps  = 100
+#
+#   [N_evolution] is entirely new in beta-10 (did not exist in beta-8).
+#   It tracks discrete population growth rates (dN/dt) alongside variance.
+#
+# Doctrine: reporting is script-declared. No autonomous background reporter.
+#           The [while] loop body re-evaluates probes, then checks guards.
+#
+# System: Au/Fe metallic cluster — equilibration example
+# Run: vsper validate scripts/demo_05_variance_while.vsim
+# =============================================================================
+
+[project]
+name        = demo_05_variance_while
+version     = v5.0.0-beta.10
+seed_base   = 5001
+determinism = true
+
+# ── Material ──────────────────────────────────────────────────────────────────
+[material]
+formula   = "Au"
+structure = "fcc"       # alias → A1_fcc → generator=metallic_fcc
+cell      = "3x3x3"
+phase     = "solid"
+
+# ── Run ───────────────────────────────────────────────────────────────────────
+[run]
+mode         = "nvt"
+max_steps    = 3000
+temperature  = 900.0
+converge     = false
+output_level = "standard"
+
+# ── Simulation block (for legacy molecule slot) ───────────────────────────────
+[simulation]
+fire_max_steps   = 3000
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "metal"
+
+[[simulation.molecule]]
+formula     = "Au"
+count       = 27
+temperature = 900.0
+
+# ── Variance probes (beta-10 inline syntax) ───────────────────────────────────
+# Syntax: probe_name = "field  window  [threshold]"
+# beta-8 used probe…end block syntax — that form is deprecated.
+[variance]
+print_results    = true
+energy_var       = "energy.total  last 50  0.05"
+displacement_var = "displacement  all  0.02"
+eta_spread       = "eta  last 30"
+
+# ── N_evolution probes (new in beta-10, no beta-8 equivalent) ─────────────────
+[N_evolution]
+print_results  = true
+cluster_growth = "cluster_count  last 20  0.05"
+event_rate     = "event_count    last 10  0.0"
+
+# ── While guards (beta-10 inline syntax) ──────────────────────────────────────
+# beta-8 used guard…end block syntax — that form is deprecated.
+# body_steps / max_iters / iter_delay_ms apply to the immediately preceding guard.
+[while]
+equilibrate    = "variance energy_var > 0.05"
+body_steps     = 200
+max_iters      = 10
+iter_delay_ms  = 100
+measure        = energy_var
+
+cluster_stable = "N_evolution cluster_growth > 0.05"
+body_steps     = 150
+max_iters      = 6
+iter_delay_ms  = 80
+
+# ── Kernel ────────────────────────────────────────────────────────────────────
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+# ── Output ────────────────────────────────────────────────────────────────────
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_jsonl  = true
+write_manifest_json = true
+output_dir          = "out/demo_05"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_bar_chart           = true
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = ["density", "coordination", "memory", "orient_order"]

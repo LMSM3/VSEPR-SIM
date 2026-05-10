@@ -52,7 +52,7 @@ void VsimParser::parse_content(const std::string& content) {
 		clean = trim(clean);
 		if (clean.empty()) continue;
 
-		// Section header: [name] or [[name]]
+			// Section header: [name] or [[name]]
 		if (clean.front() == '[') {
 			// Strip outer brackets (handle [[molecule]] as [simulation.molecule])
 			bool double_bracket = (clean.size() >= 2 && clean[1] == '[');
@@ -61,6 +61,7 @@ void VsimParser::parse_content(const std::string& content) {
 			if (end == std::string::npos)
 				throw ParseError(line_no, "unclosed section bracket");
 			std::string sec = trim(clean.substr(start, end - start));
+			in_double_bracket_ = double_bracket;
 			handle_section(sec, line_no);
 			continue;
 		}
@@ -126,6 +127,10 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 	if (sec == "suite.limits") { in_suite_limits_ = true; return; }
 	if (sec == "suite.smoke")  { in_suite_smoke_  = true; return; }
 
+	// WO-VSIM-61C: [analysis.structure] / [analysis.sampling] are routed here;
+	// [inference] and [output] sections are plain names handled by handle_key_value.
+	// No extra state flags needed — current_section_ already carries "analysis.structure" etc.
+
 	// WO-VSIM-03B: [excite.<type>]
 	if (sec.rfind("excite.", 0) == 0) {
 		current_excite_type_ = sec.substr(7);
@@ -133,8 +138,14 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 		if (!doc_.excite.has(current_excite_type_)) { ExciteEntry e; e.type = current_excite_type_; doc_.excite.entries[current_excite_type_] = e; }
 		return;
 	}
-	if (sec == "override.particle") { in_override_particle_=true; in_raw_object_=false; doc_.overrides.emplace_back(); return; }
-	if (sec == "raw.object")        { in_raw_object_=true; in_override_particle_=false; doc_.raw_objects.emplace_back(); return; }
+	if (sec == "override.particle") {
+		if (!in_double_bracket_) { in_override_particle_=false; in_raw_object_=false; doc_.raw_sections[sec]; return; }
+		in_override_particle_=true; in_raw_object_=false; doc_.overrides.emplace_back(); return;
+	}
+	if (sec == "raw.object") {
+		if (!in_double_bracket_) { in_override_particle_=false; in_raw_object_=false; doc_.raw_sections[sec]; return; }
+		in_raw_object_=true; in_override_particle_=false; doc_.raw_objects.emplace_back(); return;
+	}
 	in_override_particle_=false; in_raw_object_=false; current_excite_type_.clear();
 
 	// Normalise dotted sub-sections to their root for dispatch:
@@ -160,8 +171,40 @@ void VsimParser::handle_key_value(const std::string& key,
 	} else if (current_section_ == "material")    { apply_material_key(key, val, line_no);
 	} else if (current_section_ == "run")         { apply_run_key(key, val, line_no);
 	} else if (current_section_ == "environment") { apply_environment_key(key, val, line_no);
+	} else if (current_section_ == "chemistry" || current_section_ == "system") {
+		apply_chemistry_key(key, val, line_no);
+		// WO-VSIM-61C: also populate pipeline_system for analysis-script use
+		apply_pipeline_system_key(key, val, line_no);
 	} else if (current_section_ == "excite")      { apply_excite_key(key, val, line_no);
 	} else if (current_section_ == "observe")     { apply_observe_key(key, val, line_no);
+	} else if (current_section_ == "analysis.isomers") {
+		apply_isomer_analysis_key(key, val, line_no);
+	} else if (current_section_ == "generator.isomers") {
+		apply_isomer_generator_key(key, val, line_no);
+	} else if (current_section_ == "analysis.isomer_tracking") {
+		apply_isomer_tracking_key(key, val, line_no);
+	} else if (current_section_ == "analysis.structure") {
+		apply_pipeline_structure_key(key, val, line_no);
+	} else if (current_section_ == "analysis.sampling") {
+		apply_pipeline_sampling_key(key, val, line_no);
+	} else if (current_section_ == "analysis.scale_sampling") {  // WO-61D
+		apply_pipeline_scale_sampling_key(key, val, line_no);
+	} else if (current_section_ == "analysis.inference") {       // WO-61D v2
+		apply_pipeline_inference_key(key, val, line_no);
+	} else if (current_section_ == "inference") {                 // v1 deprecated alias
+		apply_pipeline_inference_key(key, val, line_no);
+	} else if (current_section_ == "output") {
+		apply_pipeline_output_key(key, val, line_no);
+	} else if (current_section_ == "verify") {                    // WO-62A
+		apply_pipeline_verify_key(key, val, line_no);
+	} else if (current_section_ == "verify.structure") {          // WO-62A
+		apply_pipeline_verify_structure_key(key, val, line_no);
+	} else if (current_section_ == "verify.rdf") {                // WO-62A
+		apply_pipeline_verify_rdf_key(key, val, line_no);
+	} else if (current_section_ == "verify.msd") {                // WO-62A
+		apply_pipeline_verify_msd_key(key, val, line_no);
+	} else if (current_section_ == "verify.mass") {               // WO-62A
+		apply_pipeline_verify_mass_key(key, val, line_no);
 	} else if (in_override_particle_)              { apply_override_particle_key(key, val, line_no);
 	} else if (in_raw_object_)                     { apply_raw_object_key(key, val, line_no);
 	} else if (current_section_ == "export") {
@@ -172,6 +215,10 @@ void VsimParser::handle_key_value(const std::string& key,
 		apply_visual_key(key, val, line_no);
 	} else if (current_section_ == "visual.external" || current_section_ == "visual external") {
 		apply_visual_external_key(key, val, line_no);
+	} else if (current_section_ == "open") {
+		apply_open_key(key, val, line_no);
+	} else if (current_section_ == "open.advanced") {
+		apply_open_advanced_key(key, val, line_no);
 	} else if (current_section_ == "variance") {
 		apply_variance_key(key, val, line_no);
 	} else if (current_section_ == "N_evolution" || current_section_ == "n_evolution") {
@@ -363,6 +410,9 @@ void VsimParser::apply_visual_key(const std::string& key, const Value& val, int 
 	else if (key == "show_energy_heatmap")      doc_.visual.show_energy_heatmap      = as_flag();
 	else if (key == "show_defect_map")          doc_.visual.show_defect_map          = as_flag();
 	else if (key == "show_phase_field")         doc_.visual.show_phase_field         = as_flag();
+	else if (key == "show_bond_events")         doc_.visual.show_bond_events         = as_flag();
+	else if (key == "show_charge_overlay")      doc_.visual.show_charge_overlay      = as_flag();
+	else if (key == "show_velocity_vectors")    doc_.visual.show_velocity_vectors    = as_flag();
 	else if (key == "gl_show_axes")             doc_.visual.gl_show_axes             = as_flag();
 	else if (key == "gl_show_neighbours")       doc_.visual.gl_show_neighbours       = as_flag();
 	else if (key == "gl_overlay_hold_s")        doc_.visual.gl_overlay_hold_s        = static_cast<float>(as_num());
@@ -420,6 +470,46 @@ void VsimParser::apply_visual_external_key(const std::string& key, const Value& 
 		}
 	}
 	else doc_.raw_sections["visual.external"][key] = val;
+}
+
+// ============================================================================
+// [open] applier
+// ============================================================================
+
+void VsimParser::apply_open_key(const std::string& key, const Value& val, int /*line_no*/) {
+	auto as_flag = [&]() -> bool {
+		return value_is_bool(val) ? as_bool(val) : (to_string(val) == "true");
+	};
+	auto as_str  = [&]() -> std::string {
+		return value_is_string(val) ? as_string(val) : to_string(val);
+	};
+
+	if      (key == "enabled")  doc_.open.enabled  = as_flag();
+	else if (key == "command")  doc_.open.command   = as_str();
+	else if (key == "file")     doc_.open.file      = as_str();
+	else if (key == "mode")     doc_.open.mode      = as_str();
+	else doc_.raw_sections["open"][key] = val;
+}
+
+// ============================================================================
+// [open.advanced] applier
+// ============================================================================
+
+void VsimParser::apply_open_advanced_key(const std::string& key, const Value& val, int /*line_no*/) {
+	auto as_flag = [&]() -> bool {
+		return value_is_bool(val) ? as_bool(val) : (to_string(val) == "true");
+	};
+	auto as_num  = [&]() -> double { return numeric(val); };
+
+	if      (key == "data_inspector")      doc_.open.advanced.data_inspector      = as_flag();
+	else if (key == "trajectory_controls") doc_.open.advanced.trajectory_controls = as_flag();
+	else if (key == "event_overlay")       doc_.open.advanced.event_overlay       = as_flag();
+	else if (key == "bond_overlay")        doc_.open.advanced.bond_overlay        = as_flag();
+	else if (key == "charge_overlay")      doc_.open.advanced.charge_overlay      = as_flag();
+	else if (key == "velocity_overlay")    doc_.open.advanced.velocity_overlay    = as_flag();
+	else if (key == "start_paused")        doc_.open.advanced.start_paused        = as_flag();
+	else if (key == "default_frame")       doc_.open.advanced.default_frame       = static_cast<int>(as_num());
+	else doc_.raw_sections["open.advanced"][key] = val;
 }
 
 // ============================================================================
@@ -1073,6 +1163,20 @@ void VsimParser::apply_environment_key(const std::string& key, const Value& val,
 	else                         doc_.raw_sections["environment"][key]=val;
 }
 
+void VsimParser::apply_chemistry_key(const std::string& key, const Value& val, int /*lno*/) {
+	// [chemistry] block — also handles keys forwarded from [system].
+	// Keys mirror ChemistrySection fields.
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	if      (key=="chemistry")              doc_.chemistry.chemistry=s();
+	else if (key=="heat")                   doc_.chemistry.heat=static_cast<int>(numeric(val));
+	else if (key=="reaction_events")        doc_.chemistry.reaction_events=value_is_bool(val)?as_bool(val):true;
+	else if (key=="track_species_state")    doc_.chemistry.track_species_state=value_is_bool(val)?as_bool(val):true;
+	else if (key=="event_registry")         doc_.chemistry.event_registry=value_is_bool(val)?as_bool(val):true;
+	else if (key=="min_score_threshold")    doc_.chemistry.min_score_threshold=numeric(val);
+	else if (key=="max_reactions_per_step") doc_.chemistry.max_reactions_per_step=static_cast<int>(numeric(val));
+	else                                    doc_.raw_sections["chemistry"][key]=val;
+}
+
 void VsimParser::apply_excite_key(const std::string& key, const Value& val, int /*lno*/) {
 	if (current_excite_type_.empty()) return;
 	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
@@ -1127,6 +1231,281 @@ void VsimParser::apply_raw_object_key(const std::string& key, const Value& val, 
 	} else if (key=="charge") { ro.charge=numeric(val);
 	} else if (key=="mass")   { ro.mass=numeric(val);
 	} else if (key=="label")  { ro.label=s(); }
+}
+
+// ============================================================================
+// WO-VSIM-04A: Isomer analysis / generator / tracking appliers
+// ============================================================================
+
+void VsimParser::apply_isomer_analysis_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& ia = doc_.isomer_analysis;
+	auto  s  = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+
+	if      (key == "enabled")               { ia.enabled               = b(); }
+	else if (key == "mode")                  { ia.mode                  = s(); }
+	else if (key == "formula_guard")         { ia.formula_guard         = b(); }
+	else if (key == "graph_validation")      { ia.graph_validation      = b(); }
+	else if (key == "valence_check")         { ia.valence_check         = b(); }
+	else if (key == "connectivity_check")    { ia.connectivity_check    = b(); }
+	else if (key == "formal_charge_check")   { ia.formal_charge_check   = b(); }
+	else if (key == "radical_check")         { ia.radical_check         = b(); }
+	else if (key == "canonical_hash")        { ia.canonical_hash        = b(); }
+	else if (key == "geometry_rmsd")         { ia.geometry_rmsd         = b(); }
+	else if (key == "relaxation_check")      { ia.relaxation_check      = b(); }
+	else if (key == "known_database_check")  { ia.known_database_check  = b(); }
+	else if (key == "allow_fragments")       { ia.allow_fragments       = b(); }
+	else if (key == "allow_charged")         { ia.allow_charged         = b(); }
+	else if (key == "allow_radicals")        { ia.allow_radicals        = b(); }
+	else if (key == "allow_strained")        { ia.allow_strained        = b(); }
+	else if (key == "max_bond_order")        { ia.max_bond_order        = static_cast<int>(n()); }
+	else if (key == "bond_tolerance_scale")  { ia.bond_tolerance_scale  = n(); }
+	else if (key == "rmsd_tolerance")        { ia.rmsd_tolerance        = n(); }
+	else if (key == "angle_tolerance_deg")   { ia.angle_tolerance_deg   = n(); }
+	else if (key == "bond_source")           { ia.bond_source           = s(); }
+	else if (key == "geometry_build")        { ia.geometry_build        = s(); }
+	else if (key == "report_level")          { ia.report_level          = s(); }
+	else { doc_.raw_sections["analysis.isomers"][key] = val; }
+}
+
+void VsimParser::apply_isomer_generator_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& ig = doc_.isomer_generator;
+	auto  s  = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+
+	if      (key == "enabled")       { ig.enabled       = b(); }
+	else if (key == "formula")       { ig.formula       = s(); }
+	else if (key == "allow_fragments") { ig.allow_fragments = b(); }
+	else if (key == "allow_charged") { ig.allow_charged = b(); }
+	else if (key == "allow_radicals") { ig.allow_radicals = b(); }
+	else if (key == "allow_strained") { ig.allow_strained = b(); }
+	else if (key == "max_bond_order") { ig.max_bond_order = static_cast<int>(n()); }
+	else if (key == "deduplicate")   { ig.deduplicate   = s(); }
+	else { doc_.raw_sections["generator.isomers"][key] = val; }
+}
+
+void VsimParser::apply_isomer_tracking_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& it = doc_.isomer_tracking;
+	auto  s  = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+
+	if      (key == "enabled")              { it.enabled              = b(); }
+	else if (key == "source")               { it.source               = s(); }
+	else if (key == "sample_every")         { it.sample_every         = static_cast<int>(n()); }
+	else if (key == "detect_bond_changes")  { it.detect_bond_changes  = b(); }
+	else if (key == "detect_hash_changes")  { it.detect_hash_changes  = b(); }
+	else if (key == "write_transition_log") { it.write_transition_log = b(); }
+	else { doc_.raw_sections["analysis.isomer_tracking"][key] = val; }
+}
+
+// ============================================================================
+// WO-VSIM-61C — analysis pipeline section appliers
+// ============================================================================
+
+void VsimParser::apply_pipeline_system_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& ps = doc_.pipeline_system;
+	if      (key == "schema_version") { ps.schema_version = static_cast<int>(numeric(val)); }
+	else if (key == "name")           { ps.name           = value_is_string(val) ? as_string(val) : to_string(val); }
+	else if (key == "source")         { ps.source         = value_is_string(val) ? as_string(val) : to_string(val); }
+	else if (key == "source_format")  { ps.source_format  = value_is_string(val) ? as_string(val) : to_string(val); }
+	else if (key == "seed")           { ps.seed           = static_cast<int>(numeric(val)); }
+	// Other keys fall through to chemistry or raw_sections via the dual-dispatch in handle_key_value.
+}
+
+void VsimParser::apply_pipeline_structure_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& st = doc_.pipeline_structure;
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+
+	if      (key == "enabled")              { st.enabled              = b(); }
+	else if (key == "compute_coordination") { st.compute_coordination = b(); }
+	else if (key == "compute_packing")      { st.compute_packing      = b(); }
+	else if (key == "compute_displacement") { st.compute_displacement = b(); }
+	else if (key == "compute_anisotropy")   { st.compute_anisotropy   = b(); }
+	else if (key == "neighbor_cutoff_A")    { st.neighbor_cutoff_A    = n(); }
+	else if (key == "contact_cutoff_A")     { st.contact_cutoff_A     = n(); }
+	else { doc_.raw_sections["analysis.structure"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_sampling_key(const std::string& key, const Value& val, int /*line_no*/) {
+	auto& sa = doc_.pipeline_sampling;
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+
+	if      (key == "enabled")               { sa.enabled               = b(); }
+	else if (key == "compute_rdf")           { sa.compute_rdf           = b(); }
+	else if (key == "compute_msd")           { sa.compute_msd           = b(); }
+	else if (key == "min_frames_for_motion") { sa.min_frames_for_motion  = static_cast<int>(n()); }
+	else if (key == "min_frames_for_msd")    { sa.min_frames_for_msd    = static_cast<int>(n()); }
+	else if (key == "unwrap_pbc")            { sa.unwrap_pbc            = b(); }
+	// WO-61D: field_grid, compute_fields, min_particles_for_fields moved to [analysis.scale_sampling]
+	else { doc_.raw_sections["analysis.sampling"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_inference_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& inf = doc_.pipeline_inference;
+	auto  b   = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  s   = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	auto  i   = [&](){ return static_cast<int>(numeric(val)); };
+
+	if      (key == "enabled")                               { inf.enabled                               = b(); }
+	else if (key == "mode")                                  { inf.mode                                  = s(); }
+	else if (key == "infer_packing_regime")                  { inf.infer_packing_regime                  = b(); }
+	else if (key == "infer_mobility_regime")                 { inf.infer_mobility_regime                 = b(); }
+	else if (key == "infer_anisotropy_regime")               { inf.infer_anisotropy_regime               = b(); }
+	else if (key == "infer_structural_stability")            { inf.infer_structural_stability            = b(); }
+	else if (key == "infer_macro_readiness")                 { inf.infer_macro_readiness                 = b(); }
+	else if (key == "min_particles_macro_candidate")         { inf.min_particles_macro_candidate         = i(); }
+	else if (key == "min_frames_macro_candidate")            { inf.min_frames_macro_candidate            = i(); }
+	else if (key == "minimum_available_metrics_for_macro_ready") {
+		inf.minimum_available_metrics_for_macro_ready = i();
+	}
+	else { doc_.raw_sections["inference"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_output_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& out = doc_.pipeline_output;
+	auto  b   = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  s   = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+
+	if      (key == "output_dir")              { out.output_dir              = s(); }
+	else if (key == "output_prefix")           { out.output_prefix           = s(); }
+	else if (key == "write_structure_json")    { out.write_structure_json    = b(); }
+	else if (key == "write_sampling_json")     { out.write_sampling_json     = b(); }
+	else if (key == "write_scale_sampling_json") { out.write_scale_sampling_json = b(); } // WO-61D
+	else if (key == "write_inference_json")    { out.write_inference_json    = b(); }
+	else if (key == "write_sampling_manifest") { out.write_sampling_manifest = b(); }
+	else { doc_.raw_sections["output"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_scale_sampling_key(
+		const std::string& key, const Value& val, int line_no) {
+	auto& sc = doc_.pipeline_scale_sampling;
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+	auto  s  = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	auto  i  = [&](){ return static_cast<int>(n()); };
+
+	if      (key == "enabled")                        { sc.enabled                          = b(); }
+	else if (key == "compute_field_projection")       { sc.compute_field_projection         = b(); }
+	else if (key == "compute_rve_sampling")           { sc.compute_rve_sampling             = b(); }
+	else if (key == "compute_emergence_metrics")      { sc.compute_emergence_metrics        = b(); }
+	else if (key == "min_particles_for_scale_sampling") { sc.min_particles_for_scale_sampling = i(); }
+	else if (key == "rve_windows_per_level")          { sc.rve_windows_per_level            = i(); }
+	else if (key == "rve_window_placement")           { sc.rve_window_placement             = s(); }
+	else if (key == "temporal_drift_metric")          { sc.temporal_drift_metric            = s(); }
+	else if (key == "scale_drift_metric")             { sc.scale_drift_metric               = s(); }
+	else if (key == "spatial_cv_threshold")           { sc.spatial_cv_threshold             = n(); }
+	else if (key == "temporal_drift_threshold")       { sc.temporal_drift_threshold         = n(); }
+	else if (key == "scale_drift_threshold")          { sc.scale_drift_threshold            = n(); }
+	else if (key == "field_grid") {
+		if (value_is_list(val)) {
+			const auto& lst = as_list(val);
+			if (lst.size() != 3)
+				throw ParseError(line_no, "[analysis.scale_sampling] field_grid must have exactly 3 values");
+			try {
+				sc.field_grid[0] = std::stoi(lst[0]);
+				sc.field_grid[1] = std::stoi(lst[1]);
+				sc.field_grid[2] = std::stoi(lst[2]);
+			} catch (...) {
+				throw ParseError(line_no, "[analysis.scale_sampling] field_grid: non-integer value");
+			}
+		} else {
+			doc_.raw_sections["analysis.scale_sampling"][key] = val;
+		}
+	} else if (key == "rve_window_lengths_A") {
+		if (value_is_list(val)) {
+			sc.rve_window_lengths_A.clear();
+			for (const auto& item : as_list(val)) {
+				try { sc.rve_window_lengths_A.push_back(std::stod(item)); }
+				catch (...) {
+					throw ParseError(line_no, "[analysis.scale_sampling] rve_window_lengths_A: non-numeric value");
+				}
+			}
+		} else {
+			doc_.raw_sections["analysis.scale_sampling"][key] = val;
+		}
+	} else {
+		doc_.raw_sections["analysis.scale_sampling"][key] = val;
+	}
+}
+
+// ── WO-62A: Empirical Verification appliers ──────────────────────────────────
+
+void VsimParser::apply_pipeline_verify_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& v = doc_.pipeline_verify;
+	auto  b = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  s = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	if      (key == "enabled")             { v.enabled             = b(); }
+	else if (key == "profile")             { v.profile             = s(); }
+	else if (key == "write_verify_report") { v.write_verify_report = b(); }
+	else if (key == "write_verify_tsv")    { v.write_verify_tsv    = b(); }
+	else { doc_.raw_sections["verify"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_verify_structure_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& vs = doc_.pipeline_verify.structure;
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+	auto  s  = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	auto  i  = [&](){ return static_cast<int>(n()); };
+	if      (key == "enabled")                         { vs.enabled                        = b(); }
+	else if (key == "expected_prototype")              { vs.expected_prototype              = s(); }
+	else if (key == "expected_coordination")           { vs.expected_coordination           = i(); }
+	else if (key == "coordination_tolerance")          { vs.coordination_tolerance          = i(); }
+	else if (key == "expected_nearest_neighbor_A")     { vs.expected_nearest_neighbor_A     = n(); }
+	else if (key == "nearest_neighbor_tolerance_A")    { vs.nearest_neighbor_tolerance_A    = n(); }
+	else if (key == "expected_density_relation")       { vs.expected_density_relation       = s(); }
+	else { doc_.raw_sections["verify.structure"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_verify_rdf_key(const std::string& key, const Value& val, int line_no) {
+	auto& vr = doc_.pipeline_verify.rdf;
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+	if      (key == "enabled")                  { vr.enabled                  = b(); }
+	else if (key == "expected_first_peak_A")    { vr.expected_first_peak_A    = n(); }
+	else if (key == "first_peak_tolerance_A")   { vr.first_peak_tolerance_A   = n(); }
+	else if (key == "expected_second_peak_A")   { vr.expected_second_peak_A   = n(); }
+	else if (key == "second_peak_tolerance_A")  { vr.second_peak_tolerance_A  = n(); }
+	else if (key == "peak_tolerance_A")         { vr.peak_tolerance_A         = n(); }
+	else if (key == "require_peak_order")       { vr.require_peak_order       = b(); }
+	else if (key == "expected_peaks_A") {
+		if (value_is_list(val)) {
+			vr.expected_peaks_A.clear();
+			for (const auto& item : as_list(val)) {
+				try { vr.expected_peaks_A.push_back(std::stod(item)); }
+				catch (...) {
+					throw ParseError(line_no, "[verify.rdf] expected_peaks_A: non-numeric value");
+				}
+			}
+		} else { doc_.raw_sections["verify.rdf"][key] = val; }
+	} else { doc_.raw_sections["verify.rdf"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_verify_msd_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& vm = doc_.pipeline_verify.msd;
+	auto  b  = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n  = [&](){ return numeric(val); };
+	auto  s  = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
+	if      (key == "enabled")              { vm.enabled              = b(); }
+	else if (key == "expect_bounded_solid") { vm.expect_bounded_solid = b(); }
+	else if (key == "max_msd_A2")           { vm.max_msd_A2           = n(); }
+	else if (key == "max_slope_late")       { vm.max_slope_late       = n(); }
+	else if (key == "expect_regime")        { vm.expect_regime        = s(); }
+	else { doc_.raw_sections["verify.msd"][key] = val; }
+}
+
+void VsimParser::apply_pipeline_verify_mass_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto& vmm = doc_.pipeline_verify.mass;
+	auto  b   = [&](){ return value_is_bool(val) ? as_bool(val) : (numeric(val) != 0.0); };
+	auto  n   = [&](){ return numeric(val); };
+	if      (key == "enabled")             { vmm.enabled             = b(); }
+	else if (key == "relative_tolerance")  { vmm.relative_tolerance  = n(); }
+	else { doc_.raw_sections["verify.mass"][key] = val; }
 }
 
 } // namespace vsim

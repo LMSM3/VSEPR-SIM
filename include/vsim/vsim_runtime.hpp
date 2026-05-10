@@ -28,8 +28,10 @@
  */
 
 #include "vsim_document.hpp"
+#include "vsim_registry.hpp"
 #include "kernel/kernel_event_log.hpp"
 #include "include/pipeline/pipeline_stages.hpp"
+#include "reaction_bridge.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -57,6 +59,7 @@ struct EvalResult {
 	double      value      = 0.0;
 	double      threshold  = 0.0;
 	bool        above_threshold = false;
+	std::string warning;   // Non-empty if metric name is unknown or result is flagged
 };
 
 // ============================================================================
@@ -157,7 +160,42 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// 2. Variance evaluator
+	// 2. Reaction chemistry pass
+	// -----------------------------------------------------------------------
+	//
+	// Call once per simulation step (or every N steps via observe.every_n_steps).
+	// Evaluates ambient reaction physics for all molecule pairs in the document,
+	// gates through the heat activation function, and records ReactionEvent /
+	// ChemicalStateEvent entries into the global KernelEventLog.
+	//
+	// Always safe to call even when chemistry.reaction_events = false — the
+	// bridge degrades gracefully to a no-op.
+	//
+	// Returns a brief summary (reactions evaluated / emitted) for display.
+	static ReactionPassResult run_chemistry_pass(
+			const VsimDocument& doc,
+			uint64_t            frame_id,
+			bool                verbose = false)
+	{
+		auto result = ReactionBridge::run_pass(doc, frame_id);
+
+		if (verbose && result.reactions_emitted > 0) {
+			std::printf("%s  [chem] step %-6llu  evaluated=%-4d  emitted=%-4d  "
+						"best_score=%.3f  %s%s\n",
+				rt_ansi::cyan,
+				static_cast<unsigned long long>(frame_id),
+				result.reactions_evaluated,
+				result.reactions_emitted,
+				result.best_score,
+				result.any_exothermic ? "(exothermic)" : "",
+				rt_ansi::rst);
+		}
+
+		return result;
+	}
+
+	// -----------------------------------------------------------------------
+	// 3. Variance evaluator
 	// -----------------------------------------------------------------------
 
 	static std::vector<EvalResult> eval_variance(
@@ -184,6 +222,78 @@ public:
 		if (cfg.print_results) print_eval_results("variance", results, "σ²");
 		return results;
 	}
+
+	// -----------------------------------------------------------------------
+	// Observe metrics — evaluate named metrics from [observe] block.
+	//
+	// Supported metric names:
+	//   "reaction_events"  — count of Reaction events in the log
+	//   "chemical_state"   — count of ChemicalState events in the log
+	//   "exothermic_count" — count of exothermic reaction events
+	//   "avg_delta_E"      — mean reaction energy (kcal/mol)
+	//   "formation"        — count of Formation events
+	//   "transport"        — count of Transport events
+	//   "defect"           — count of Defect events
+	//
+	// Returns one EvalResult per metric name requested.
+	// -----------------------------------------------------------------------
+	static std::vector<EvalResult> eval_observe_metrics(
+			const ObserveSection& cfg,
+			const vsepr::kernel::KernelEventLog& log,
+			bool verbose = false)
+	{
+		std::vector<EvalResult> results;
+		if (cfg.metrics.empty()) return results;
+
+		auto events = log.snapshot();
+
+		auto count_kind = [&](vsepr::kernel::KernelEventKind k) -> double {
+			return static_cast<double>(std::count_if(events.begin(), events.end(),
+				[k](const vsepr::kernel::KernelEvent& e){ return e.kind == k; }));
+		};
+
+		for (const auto& metric : cfg.metrics) {
+			EvalResult r;
+			r.probe_name = metric;
+			r.field      = metric;
+			r.window     = "cumulative";
+
+			if (metric == "reaction_events") {
+				r.value = count_kind(vsepr::kernel::KernelEventKind::Reaction);
+			} else if (metric == "chemical_state") {
+				r.value = count_kind(vsepr::kernel::KernelEventKind::ChemicalState);
+			} else if (metric == "exothermic_count") {
+				r.value = static_cast<double>(std::count_if(events.begin(), events.end(),
+					[](const vsepr::kernel::KernelEvent& e){
+						return e.kind == vsepr::kernel::KernelEventKind::Reaction
+							&& e.result_value < 0.0;
+					}));
+			} else if (metric == "avg_delta_E") {
+				std::vector<double> dE;
+				for (const auto& e : events)
+					if (e.kind == vsepr::kernel::KernelEventKind::Reaction)
+						dE.push_back(e.result_value);
+				r.value = dE.empty() ? 0.0
+						: std::accumulate(dE.begin(), dE.end(), 0.0) / dE.size();
+			} else if (metric == "formation") {
+				r.value = count_kind(vsepr::kernel::KernelEventKind::Formation);
+			} else if (metric == "transport") {
+				r.value = count_kind(vsepr::kernel::KernelEventKind::Transport);
+			} else if (metric == "defect") {
+				r.value = count_kind(vsepr::kernel::KernelEventKind::Defect);
+			} else {
+				// Unknown metric — pass through as zero (forward-compatible)
+				r.value   = 0.0;
+				r.warning = "unknown metric: " + metric;
+			}
+
+			results.push_back(r);
+		}
+
+		if (verbose) print_eval_results("observe", results, "count");
+		return results;
+	}
+
 
 	// -----------------------------------------------------------------------
 	// 3. N_evolution tracker
@@ -419,6 +529,174 @@ public:
 					rt_ansi::yel, path.c_str(), rt_ansi::rst);
 			}
 		}
+	}
+
+	// -----------------------------------------------------------------------
+	// 6.5. Registry resolution — WO-VSIM-03C
+	//
+	// Call after parsing a VsimDocument that contains a [material] section.
+	// Expands the resolved prototype key into a RegistryBundle and logs every
+	// resolved field with the [REGISTRY] prefix to stdout.
+	//
+	// Returns the bundle so the caller can inspect/apply fields (e.g. inject
+	// space_group into SimulationSection or seed the structure generator).
+	// -----------------------------------------------------------------------
+
+	static RegistryBundle resolve_material(const VsimDocument& doc,
+										   std::ostream& log = std::cout)
+	{
+		const MaterialSection& mat = doc.material;
+		if (!mat.has_formula() && !mat.has_prototype() && mat.structure.empty()) {
+			// No [material] section present — nothing to resolve
+			return RegistryBundle{};
+		}
+
+		std::printf("[REGISTRY] resolving material — formula=%s  prototype=%s  structure=%s\n",
+			mat.formula.c_str(),
+			mat.prototype.c_str(),
+			mat.structure.c_str());
+		std::fflush(stdout);
+
+		RegistryBundle bundle = RegistryResolver::resolve(mat, log);
+
+		if (!bundle.populated) {
+			std::printf("[REGISTRY] ⚠ no registry entry for prototype '%s' — pass-through\n",
+				mat.resolved_prototype().c_str());
+			std::fflush(stdout);
+		}
+
+		return bundle;
+	}
+
+	// -----------------------------------------------------------------------
+	// 6.6. apply_registry_defaults — WO-VSIM-03C  B9-12
+	//
+	// Merges RegistryBundle defaults into a VsimDocument.
+	// Explicit user values in the document are NEVER overwritten.
+	//
+	// Merge policy for each field:
+	//   - RunSection.mode       : apply if empty
+	//   - RunSection.dt_fs      : apply if still at compile-default (1.0)
+	//   - EnvironmentSection.medium      : apply if empty
+	//   - EnvironmentSection.temperature : apply if still at default (300.0)
+	//   - EnvironmentSection.periodic    : apply if false and bundle is periodic
+	//
+	// Returns the number of fields that were merged (0 = all explicit, user wins).
+	// -----------------------------------------------------------------------
+
+	static int apply_registry_defaults(const RegistryBundle& b, VsimDocument& doc)
+	{
+		if (!b.populated) return 0;
+
+		int applied = 0;
+
+		auto log_apply = [&](const char* section, const char* field, const std::string& val) {
+			std::printf("[REGISTRY] default applied: [%s].%s = %s\n", section, field, val.c_str());
+			++applied;
+		};
+
+		// [run] mode
+		if (!b.default_run_mode.empty() && doc.run.mode.empty()) {
+			doc.run.mode = b.default_run_mode;
+			log_apply("run", "mode", b.default_run_mode);
+		}
+
+		// [environment] medium
+		if (!b.default_medium.empty() && doc.environment.medium.empty()) {
+			doc.environment.medium = b.default_medium;
+			log_apply("environment", "medium", b.default_medium);
+		}
+
+		// [environment] temperature — only apply if doc.environment was not
+		// explicitly set (still at EnvironmentSection default of 300.0)
+		if (doc.environment.temperature == 300.0
+				&& b.default_temperature != 300.0) {
+			doc.environment.temperature = b.default_temperature;
+			log_apply("environment", "temperature", std::to_string(b.default_temperature));
+		}
+
+		// [environment] periodic — only set true from registry if user left it false
+		if (!doc.environment.periodic && b.is_periodic) {
+			doc.environment.periodic = true;
+			log_apply("environment", "periodic", "true");
+		}
+
+		// [material] resolved_prototype back-fill (informational; does not change physics)
+		if (doc.material.prototype.empty() && !b.prototype.empty()
+				&& b.prototype != doc.material.structure) {
+			doc.material.prototype = b.prototype;
+			log_apply("material", "prototype", b.prototype);
+		}
+
+		return applied;
+	}
+
+	// -----------------------------------------------------------------------
+	// 6.7. resolve_export_profile — WO-VSIM-03C  B9-16
+	//
+	// Maps a named export profile to a set of ExportSection flags.
+	// Profiles:
+	//   "minimal"         — xyz only
+	//   "standard"        — xyz + analysis_json + metrics_tsv + report_md
+	//   "research_report" — all standard + events_jsonl + manifest + dashboard_svg
+	//   "publication"     — research_report + symbolic_trace + pipeline_audit
+	//
+	// Returns the number of flags set.
+	// -----------------------------------------------------------------------
+
+	static int resolve_export_profile(const std::string& profile,
+									  ExportSection& exp,
+									  std::ostream& log = std::cout)
+	{
+		if (profile.empty()) return 0;
+
+		auto emit = [&](const char* flag, const std::string& val) {
+			log << "[REGISTRY] export_profile." << flag << " = " << val << "\n";
+		};
+
+		int set = 0;
+		auto set_flag = [&](bool& field, const char* name) {
+			if (!field) { field = true; emit(name, "true"); ++set; }
+		};
+
+		if (profile == "minimal") {
+			set_flag(exp.write_xyz, "write_xyz");
+
+		} else if (profile == "standard") {
+			set_flag(exp.write_xyz,            "write_xyz");
+			set_flag(exp.write_analysis_json,  "write_analysis_json");
+			set_flag(exp.write_metrics_tsv,    "write_metrics_tsv");
+			set_flag(exp.write_report_md,      "write_report_md");
+
+		} else if (profile == "research_report") {
+			set_flag(exp.write_xyz,               "write_xyz");
+			set_flag(exp.write_analysis_json,     "write_analysis_json");
+			set_flag(exp.write_metrics_tsv,       "write_metrics_tsv");
+			set_flag(exp.write_report_md,         "write_report_md");
+			set_flag(exp.write_events_json,       "write_events_json");
+			set_flag(exp.write_manifest_json,     "write_manifest_json");
+			set_flag(exp.write_dashboard_svg,     "write_dashboard_svg");
+
+		} else if (profile == "publication") {
+			set_flag(exp.write_xyz,                    "write_xyz");
+			set_flag(exp.write_analysis_json,          "write_analysis_json");
+			set_flag(exp.write_metrics_tsv,            "write_metrics_tsv");
+			set_flag(exp.write_report_md,              "write_report_md");
+			set_flag(exp.write_events_json,            "write_events_json");
+			set_flag(exp.write_manifest_json,          "write_manifest_json");
+			set_flag(exp.write_dashboard_svg,          "write_dashboard_svg");
+			set_flag(exp.write_symbolic_trace_json,    "write_symbolic_trace_json");
+			set_flag(exp.write_pipeline_audit_jsonl,   "write_pipeline_audit_jsonl");
+
+		} else {
+			log << "[REGISTRY] ⚠ unknown export_profile '" << profile << "' — skipped\n";
+		}
+
+		if (set > 0)
+			log << "[REGISTRY] export_profile '" << profile << "' resolved "
+				<< set << " flags\n";
+
+		return set;
 	}
 
 	// -----------------------------------------------------------------------
@@ -796,6 +1074,7 @@ private:
 	}
 
 	static std::string generate_dashboard_svg(
+		const vsepr::pipeline::DashboardRecord& dash,
 		const std::string& run_label)
 	{
 		// Gate rows: stage → pass/fail/pending

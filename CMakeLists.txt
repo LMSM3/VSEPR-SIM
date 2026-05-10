@@ -1,5 +1,7 @@
-﻿cmake_minimum_required(VERSION 3.15)
+﻿cmake_minimum_required(VERSION 3.15...4.2)
 project(vsepr-sim VERSION 5.0.0 LANGUAGES C CXX)
+
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
 
 # ============================================================================
 # VSEPR-SIM  Two-Part Build System (Orchestrator)
@@ -46,7 +48,24 @@ endif()
 option(BUILD_TESTS "Build test suite" ON)
 option(BUILD_APPS  "Build applications" ON)
 option(BUILD_VIS   "Build visualization tools (vsepr-view, vsepr_vis)" ON)
+option(BUILD_ADVANCED_RENDER "Build advanced 3D molecular renderer + data window (requires BUILD_VIS=ON)" OFF)
 option(BUILD_DEMOS "Build demo targets" OFF)
+
+# ── VSEPR Feature flags ───────────────────────────────────────────────────────
+option(VSEPR_ENABLE_ATOMISTIC     "Enable atomistic molecular simulation layer" ON)
+option(VSEPR_ENABLE_COARSE_GRAIN  "Enable coarse-grain reduced representation layer" ON)
+option(VSEPR_ENABLE_XYZ_IO        "Enable XYZ/XYZFull parsing and validation" ON)
+option(VSEPR_ENABLE_FIRE          "Enable FIRE minimization" ON)
+option(VSEPR_ENABLE_THERMO        "Enable thermodynamics module" ON)
+option(VSEPR_ENABLE_REACTION      "Enable reaction discovery module" ON)
+option(VSEPR_ENABLE_CRYSTAL_LIB   "Enable crystal benchmark library" ON)
+option(VSEPR_ENABLE_REGISTRY_CORE "Enable VSIM registry/default resolver" ON)
+option(VSEPR_ENABLE_INSTALL_TOOLS "Enable install/doctor/path tools" ON)
+
+# ── Generate vsepr_build_config.hpp ──────────────────────────────────────────
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+include(VSEPRBuildInfo)
+vsepr_generate_build_config(OUTPUT_DIR "${CMAKE_BINARY_DIR}/generated")
 
 # ============================================================================
 # Compiler Settings
@@ -75,6 +94,19 @@ endif()
 
 include(cmake/CoreBuild.cmake)
 
+# ── Feature compile definitions (propagate to all targets via vsepr_core) ────
+target_compile_definitions(vsepr_core INTERFACE
+    VSEPR_ENABLE_ATOMISTIC=$<BOOL:${VSEPR_ENABLE_ATOMISTIC}>
+    VSEPR_ENABLE_COARSE_GRAIN=$<BOOL:${VSEPR_ENABLE_COARSE_GRAIN}>
+    VSEPR_ENABLE_XYZ_IO=$<BOOL:${VSEPR_ENABLE_XYZ_IO}>
+    VSEPR_ENABLE_FIRE=$<BOOL:${VSEPR_ENABLE_FIRE}>
+    VSEPR_ENABLE_THERMO=$<BOOL:${VSEPR_ENABLE_THERMO}>
+    VSEPR_ENABLE_REACTION=$<BOOL:${VSEPR_ENABLE_REACTION}>
+    VSEPR_ENABLE_CRYSTAL_LIB=$<BOOL:${VSEPR_ENABLE_CRYSTAL_LIB}>
+    VSEPR_ENABLE_REGISTRY_CORE=$<BOOL:${VSEPR_ENABLE_REGISTRY_CORE}>
+    VSEPR_ENABLE_INSTALL_TOOLS=$<BOOL:${VSEPR_ENABLE_INSTALL_TOOLS}>
+)
+
 # ============================================================================
 # Part 2: Visualization and GUI Build
 #         OpenGL / GLFW / GLEW / ImGui / Qt6
@@ -82,6 +114,13 @@ include(cmake/CoreBuild.cmake)
 # ============================================================================
 
 include(cmake/VisBuild.cmake)
+
+# ============================================================================
+# Part 3: Advanced Renderer (optional — requires BUILD_VIS=ON)
+#         3D molecular window + ImGui data panel
+# ============================================================================
+
+include(cmake/AdvancedRender.cmake)
 
 # ============================================================================
 # Tests (after both parts so VIS targets are visible to test helpers)
@@ -102,56 +141,35 @@ add_subdirectory(bridge_beta)
 # ============================================================================
 
 message(STATUS "")
-message(STATUS "=== VSEPR-SIM v${PROJECT_VERSION} Build Summary ===")
-message(STATUS "Added VSPER top-down implementation direct pathway for support of the VSEPR workspace.")
+message(STATUS "VSEPR-SIM v${PROJECT_VERSION} -- Build Configuration")
+message(STATUS "  Compiler:    ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(STATUS "  Standard:    C++${CMAKE_CXX_STANDARD}")
+message(STATUS "  Build type:  ${CMAKE_BUILD_TYPE}")
+message(STATUS "  CUDA:        ${VSEPR_HAS_CUDA}")
 message(STATUS "")
-message(STATUS "Build tests:         ${BUILD_TESTS}")
-message(STATUS "Build apps:          ${BUILD_APPS}")
-message(STATUS "Build visualization: ${BUILD_VIS}")
-message(STATUS "Build GUI:           ${BUILD_GUI}")
-message(STATUS "Build desktop:       ${BUILD_DESKTOP}")
-message(STATUS "CUDA:                ${VSEPR_HAS_CUDA}")
+message(STATUS "  Build targets:")
+message(STATUS "    tests:          ${BUILD_TESTS}")
+message(STATUS "    apps:           ${BUILD_APPS}")
+message(STATUS "    vis:            ${BUILD_VIS}")
+message(STATUS "    demos:          ${BUILD_DEMOS}")
 message(STATUS "")
-message(STATUS "Core Libraries (Part 1):")
-message(STATUS "  vsepr_core        (INTERFACE)")
-message(STATUS "  vsepr_tracker     (STATIC â€” particle identity + random picker)")
-message(STATUS "  vsepr_infra       (STATIC â€” bootstrap probe, MOTD, NVIDIA TUI)")
-message(STATUS "  vsepr_periodic    (STATIC Z=1-102)")
-message(STATUS "  vsepr_sim         (STATIC)")
-message(STATUS "  vsepr_pot         (INTERFACE)")
-message(STATUS "  vsepr_box         (INTERFACE)")
-message(STATUS "  vsepr_nl          (INTERFACE)")
-message(STATUS "  vsepr_int         (INTERFACE)")
-message(STATUS "  vsepr_glass       (STATIC -- molecule prerender pipeline)")
-message(STATUS "  vsepr_build       (INTERFACE)")
-message(STATUS "  vsepr_dynamic     (STATIC)")
-message(STATUS "  vsepr_gpu         (STATIC)")
-message(STATUS "  vsepr_io          (STATIC)")
-message(STATUS "  vsepr_thermal     (STATIC)")
-message(STATUS "  vsepr_api         (STATIC)")
-message(STATUS "  spec_parser       (STATIC)")
-message(STATUS "  vsepr_demo        (STATIC)")
-message(STATUS "  atomistic         (STATIC + TUI active)")
-message(STATUS "  coarse_grain      (INTERFACE)")
-message(STATUS "  vsepr_dnf_sim    (STATIC -- mock dependency resolver)")
-message(STATUS "  vsepr_cg3d_new   (STATIC -- CG bead -> glass 3D bridge)")
-message(STATUS "  xyz_make          (C standalone -- XYZ Make target browser)")
-message(STATUS "  vsepr-entry       (C standalone -- MOTD precursor renderer)")
-message(STATUS "  vsepr_ehd         (INTERFACE â€” Electrohydrodynamic Multiphysics)")
+message(STATUS "  Runtime modules:")
+message(STATUS "    atomistic:      ${VSEPR_ENABLE_ATOMISTIC}")
+message(STATUS "    coarse_grain:   ${VSEPR_ENABLE_COARSE_GRAIN}")
+message(STATUS "    xyz_io:         ${VSEPR_ENABLE_XYZ_IO}")
+message(STATUS "    fire:           ${VSEPR_ENABLE_FIRE}")
+message(STATUS "    thermodynamics: ${VSEPR_ENABLE_THERMO}")
+message(STATUS "    reaction:       ${VSEPR_ENABLE_REACTION}")
+message(STATUS "    crystal_lib:    ${VSEPR_ENABLE_CRYSTAL_LIB}")
+message(STATUS "    registry_core:  ${VSEPR_ENABLE_REGISTRY_CORE}")
+message(STATUS "    install_tools:  ${VSEPR_ENABLE_INSTALL_TOOLS}")
+message(STATUS "")
 if(VSEPR_VIS_READY)
-    message(STATUS "")
-    message(STATUS "VIS/GUI Libraries (Part 2 active):")
-    message(STATUS "  vsepr_gui_utils   (STATIC)")
-    message(STATUS "  vsepr_render      (STATIC)")
-    message(STATUS "  vsepr_vis         (STATIC)")
-    if(BUILD_GUI)
-        message(STATUS "  vsepr_gui         (STATIC)")
-    endif()
+    message(STATUS "  VIS/GUI: active")
 else()
-    message(STATUS "")
-    message(STATUS "VIS/GUI Libraries: OFF (deps not available)")
+    message(STATUS "  VIS/GUI: off (deps not available)")
 endif()
 message(STATUS "")
-
-
-
+message(STATUS "  vsepr-sim --version    -> VSEPR-SIM ${PROJECT_VERSION}")
+message(STATUS "  vsepr-sim --build-info -> full compiler/git/module report")
+message(STATUS "")

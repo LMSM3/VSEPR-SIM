@@ -1,4 +1,4 @@
-# VSIM Script Reference
+﻿# VSIM Script Reference
 
 > **Status:** Living document — updated with every `.vsim` language change.  
 > **Source of truth:** `include/vsim/vsim_document.hpp`  
@@ -16,7 +16,7 @@ For each field: **name**, **type**, **default**, and what it does.
 | Symbol | Meaning |
 |---|---|
 | ✅ | Parsed and wired to kernel |
-| 🔶 | Parsed, stored, not yet wired |
+| * | Parsed, stored, not yet wired |
 | ❌ | Not yet parsed (planned) |
 
 ---
@@ -32,7 +32,7 @@ For each field: **name**, **type**, **default**, and what it does.
 | `version` | string | `""` | ✅ | Informational. Stored, not validated against runtime version. |
 | `seed_base` | uint64 | `0` | ✅ | Base RNG seed. Same seed + same script = same run. |
 | `determinism` | bool | `true` | ✅ | Always true in current implementation. Field kept for schema completeness. |
-| `description` | string | `""` | 🔶 | Stored in `ProjectSection::description`. Not emitted to reports yet. |
+| `description` | string | `""` | * | Stored in `ProjectSection::description`. Not emitted to reports yet. |
 
 ```toml
 [project]
@@ -166,7 +166,7 @@ Controls which output files are written after a run.
 | `write_xyz` | bool | `true` | ✅ | Final particle positions (XYZ format). Ground-truth state. |
 | `write_xyzf` | bool | `false` | ✅ | Multi-frame trajectory (XYZF format). |
 | `write_xyzfull` | bool | `false` | ✅ | Full state history. Doctrine: stores *what happened*, not inferred labels. |
-| `write_pdb` | bool | `false` | 🔶 | PDB format for external viewers (VESTA, VMD). Parser wired; writer pending. |
+| `write_pdb` | bool | `false` | * | PDB format for external viewers (VESTA, VMD). Parser wired; writer pending. |
 
 ### Analysis layer
 
@@ -174,8 +174,8 @@ Controls which output files are written after a run.
 |---|---|---|---|---|
 | `write_analysis_json` | bool | `false` | ✅ | Derived metrics (AnalysisRecord). |
 | `write_metrics_tsv` | bool | `false` | ✅ | Tab-separated per-run metric table. |
-| `write_cluster_json` | bool | `false` | 🔶 | ClusterRecord assignments. |
-| `write_fingerprint_json` | bool | `false` | 🔶 | FingerprintRecord feature vectors. |
+| `write_cluster_json` | bool | `false` | * | ClusterRecord assignments. |
+| `write_fingerprint_json` | bool | `false` | * | FingerprintRecord feature vectors. |
 
 ### Kernel event spine
 
@@ -189,7 +189,7 @@ Controls which output files are written after a run.
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
 | `write_report_md` | bool | `false` | ✅ | Human-readable Markdown summary. |
-| `write_summary_csv` | bool | `false` | 🔶 | Per-run summary CSV. |
+| `write_summary_csv` | bool | `false` | * | Per-run summary CSV. |
 | `write_dashboard_json` | bool | `false` | ✅ | DashboardRecord (beta-7 pipeline). |
 | `write_manifest_json` | bool | `false` | ✅ | Run manifest with artifact registry. |
 | `write_dashboard_svg` | bool | `false` | ✅ | Pipeline dashboard (SVG — text, diffable). |
@@ -232,7 +232,7 @@ Rendered visual artifact outputs. These are sidecar files rendered FROM simulati
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
 | `write_svg_figures` | bool | `false` | ✅ | Per-material SVG metric figures. |
-| `write_png_snapshots` | bool | `false` | 🔶 | PNG molecular snapshot (requires GL or OSMesa). |
+| `write_png_snapshots` | bool | `false` | * | PNG molecular snapshot (requires GL or OSMesa). |
 | `write_rdf_svg` | bool | `false` | ✅ | Radial distribution function plot (SVG). |
 | `write_energy_trace_svg` | bool | `false` | ✅ | Energy-per-step trace figure (SVG). |
 | `write_packing_heatmap_svg` | bool | `false` | ✅ | 2D packing fraction heatmap (SVG). |
@@ -243,19 +243,19 @@ Rendered visual artifact outputs. These are sidecar files rendered FROM simulati
 
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
-| `write_trajectory_gif` | bool | `false` | 🔶 | Animated GIF of trajectory playback. |
-| `write_overlay_cycle_gif` | bool | `false` | 🔶 | Animated GIF of overlay cycle. |
-| `gif_frame_skip` | int | `10` | 🔶 | Emit every Nth frame into GIF. |
-| `gif_delay_cs` | int | `8` | 🔶 | GIF frame delay (centiseconds). |
+| `write_trajectory_gif` | bool | `false` | * | Animated GIF of trajectory playback. |
+| `write_overlay_cycle_gif` | bool | `false` | * | Animated GIF of overlay cycle. |
+| `gif_frame_skip` | int | `10` | * | Emit every Nth frame into GIF. |
+| `gif_delay_cs` | int | `8` | * | GIF frame delay (centiseconds). |
 
 ### Web / streaming
 
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
 | `write_html_dashboard` | bool | `false` | ✅ | Self-contained HTML dashboard. |
-| `write_webgl_bundle` | bool | `false` | 🔶 | WebGL viewer bundle. |
-| `write_sse_descriptor` | bool | `false` | 🔶 | SSE stream config for live viewer. |
-| `sse_port` | int | `99998` | 🔶 | Port for SSE / HTTP server. |
+| `write_webgl_bundle` | bool | `false` | * | WebGL viewer bundle. |
+| `write_sse_descriptor` | bool | `false` | * | SSE stream config for live viewer. |
+| `sse_port` | int | `99998` | * | Port for SSE / HTTP server. |
 
 ### Composite documents
 
@@ -350,7 +350,7 @@ Optional override for external visual backends. Requests rendered output artifac
 | `render` | list / string | `[]` | ✅ | Ordered render requests. See values below. |
 | `export_format` | string | `"auto"` | ✅ | `"svg"`, `"png"`, `"html"`, `"auto"`. |
 | `export_frame_png` | bool | `false` | ✅ | Shorthand: write PNG snapshot of current frame. |
-| `export_trajectory` | bool | `false` | 🔶 | Shorthand: write trajectory GIF. |
+| `export_trajectory` | bool | `false` | * | Shorthand: write trajectory GIF. |
 | `show_progress` | bool | `true` | ✅ | Print `[render]` lines to terminal. |
 | `render_interval` | int | `1` | ✅ | Steps per external render frame. Overrides `[visual].render_interval`. `0` falls back to `[visual].render_interval`. |
 
@@ -378,19 +378,19 @@ Enables the central kernel pass-through and event registry.
 
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
-| `pass_through` | bool | `false` | 🔶 | Route all calculations through kernel spine. |
-| `symbolic_trace` | bool | `false` | 🔶 | Emit symbolic equation trace per event. |
-| `event_registry` | bool | `false` | 🔶 | Populate `KernelEventLog`. |
-| `continual_reporting` | bool | `false` | 🔶 | Emit `ContinualReportEvent` per declared interval. |
+| `pass_through` | bool | `false` | * | Route all calculations through kernel spine. |
+| `symbolic_trace` | bool | `false` | * | Emit symbolic equation trace per event. |
+| `event_registry` | bool | `false` | * | Populate `KernelEventLog`. |
+| `continual_reporting` | bool | `false` | * | Emit `ContinualReportEvent` per declared interval. |
 
 ### `[kernel.trace]`
 
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
-| `formation_events` | bool | `false` | 🔶 | Trace `FormationEvent` entries. |
-| `defect_events` | bool | `false` | 🔶 | Trace `DefectEvent` entries. |
-| `transport_events` | bool | `false` | 🔶 | Trace `TransportEvent` entries. |
-| `dynamic_energy` | bool | `false` | 🔶 | Trace dynamic energy events. |
+| `formation_events` | bool | `false` | * | Trace `FormationEvent` entries. |
+| `defect_events` | bool | `false` | * | Trace `DefectEvent` entries. |
+| `transport_events` | bool | `false` | * | Trace `TransportEvent` entries. |
+| `dynamic_energy` | bool | `false` | * | Trace dynamic energy events. |
 
 ---
 
@@ -475,8 +475,8 @@ Parameter sweeps and queued job sets. Executed by `VsimRuntime::run_batch()`.
 |---|---|---|---|---|
 | `name` | string | `""` | ✅ | Job label. |
 | `seed_count` | int | `1` | ✅ | Seeds per parameter combination. |
-| `export_each` | bool | `false` | 🔶 | Export artifacts for every run. |
-| `aggregate` | bool | `true` | 🔶 | Produce aggregate report across sweep. |
+| `export_each` | bool | `false` | * | Export artifacts for every run. |
+| `aggregate` | bool | `true` | * | Produce aggregate report across sweep. |
 | `per_run_actions` | list | `[]` | ✅ | Actions after each run: `"analyze.variance"`, `"analyze.N_evolution"`, `"analyze.rmsd"`, `"export"`. |
 
 #### Sweep parameters (`[batch.job.sweep]`)
@@ -486,7 +486,130 @@ Values: space-separated or list.
 
 ---
 
-## `[post_step]`
+## Batch Manifest Runner — `batch_manifest.json`
+
+**WO-B9-001.** File-system-aware manifest runner that expands parameter sweeps,
+creates isolated per-run folders, and emits ranked summary artefacts.
+
+**Structs:** `BatchManifestSection`, `BatchManifestSweepAxis`, `BatchRunRecord`  
+**Loader:** `src/batch/manifest_loader.hpp` / `.cpp`  
+**Runner:** `src/batch/manifest_runner.hpp` / `.cpp`  
+**CLI:** `apps/batch_runner.cpp`
+
+### Manifest schema (`batch_manifest.json`)
+
+```json
+{
+  "batch_id":    "B9_REACTOR_CHANNEL_001",
+  "description": "Human-readable description",
+  "base_vsim":   "scripts/reactor_channel_steady.vsim",
+  "sweep": [
+    { "param": "temperature_K", "values": ["300", "600", "900"] },
+    { "param": "pressure_GPa",  "values": ["0.0", "1.0"] }
+  ],
+  "seeds":              3,
+  "score_by":           "composite",
+  "output_root":        "runs",
+  "abort_on_fail":      false,
+  "write_per_run_meta":    true,
+  "write_per_run_metrics": true
+}
+```
+
+### `BatchManifestSection` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `batch_id` | string | `""` | **Required.** Folder name under `output_root/`. |
+| `description` | string | `""` | Human-readable label (informational). |
+| `base_vsim` | string | `""` | Source `.vsim` path (informational; not executed by runner). |
+| `score_by` | string | `"composite"` | `"energy"` \| `"convergence"` \| `"composite"` |
+| `output_root` | string | `"runs"` | Root directory for the output tree. |
+| `seeds` | int | `1` | Seeds per parameter combination. |
+| `abort_on_fail` | bool | `false` | Stop on first non-converged run. |
+| `write_per_run_meta` | bool | `true` | Write `run_meta.json` in each run folder. |
+| `write_per_run_metrics` | bool | `true` | Write `metrics.tsv` in each run folder. |
+| `sweep` | array | `[]` | List of `{param, values}` sweep axes. Total runs = product × seeds. |
+
+### `BatchRunRecord` fields
+
+| Field | Type | Notes |
+|---|---|---|
+| `run_id` | string | e.g. `"run_0001"` |
+| `run_index` | int | 1-based |
+| `params` | map | Active sweep params for this run |
+| `seed` | int | Seed index (0-based) |
+| `converged` | bool | FIRE convergence outcome |
+| `final_energy` | double | kcal/mol |
+| `rms_force` | double | Convergence residual |
+| `steps_taken` | int | |
+| `wall_ms` | double | Wall time (ms) |
+| `score_energy` | double | Soft-max score: lower energy = higher |
+| `score_convergence` | double | Budget + quality composite |
+| `score_composite` | double | 0.4·energy + 0.4·convergence + 0.2·steady |
+| `steady_pass` | bool | Gate result (WO-B9-002; stub = converged) |
+| `rank` | int | 1 = best composite score |
+| `failure_reason` | string | Non-empty on gate failure |
+
+### Scoring helpers (`batch_score` namespace)
+
+| Function | Notes |
+|---|---|
+| `energy_score(E, ref)` | 1/(1 + exp(ΔE/100)) — lower energy → higher score |
+| `convergence_score(steps, max, rms, tol)` | 0.4·budget + 0.6·quality |
+| `composite(es, cs, steady)` | 0.4·es + 0.4·cs + 0.2·(steady?1:0) |
+
+### Output tree
+
+```
+runs/
+└── B9_REACTOR_CHANNEL_001/
+    ├── run_0001/
+    │   ├── run_meta.json       ← provenance (params, seed, energy, timing)
+    │   └── metrics.tsv         ← per-step energy / force trace
+    ├── run_0002/ ... run_NNNN/
+    ├── batch_summary.tsv       ← all runs, execution order
+    ├── ranked_candidates.tsv   ← sorted by score_composite (desc)
+    └── batch_report.md         ← Markdown summary + gate notes
+```
+
+### CLI usage
+
+```
+batch_runner <manifest.json> [options]
+
+Options:
+  --dry-run          Parse + validate + print plan; no execution.
+  --quiet            Suppress per-run progress lines.
+  --abort-on-fail    Stop on first non-converged run.
+  --max-steps N      Override FIRE step limit (default 500).
+  --output-root PATH Override manifest output_root field.
+```
+
+Exit codes: `0` = complete, `1` = manifest error, `2` = no results (abort triggered).
+
+### Gate placeholders (WO-B9-002)
+
+`steady_pass` is set to `converged` in the WO-B9-001 stub.
+WO-B9-002 will wire real gates:
+
+| Gate | Field | Notes |
+|---|---|---|
+| `energy_slope_gate` | slope of energy trace in final window | |
+| `flux_balance_gate` | inward vs outward flux ratio | |
+| `residence_time_stability_gate` | CV of per-species residence times | |
+| `energy_drift_gate` | drift rate over final N steps | |
+| `wall_residence_gate` | fraction of time at wall boundary | |
+
+### Discovery ranking (WO-B9-003)
+
+Will add `candidate_id`, `valid_energy`, `steady_pass`, `failure_reason` filter pass to
+`ranked_candidates.tsv`. Supports workflows: `discover-material`, `discover-coolant`,
+`defect-survival`, `phase-regime-map`.
+
+---
+
+
 
 **Struct:** `PostStepSection`  
 **WO-57E.** Script block executed after each simulation step.
@@ -521,11 +644,11 @@ Controls human-readable report content.
 
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
-| `title` | string | `""` | 🔶 | Report title. |
-| `include_material_cards` | bool | `false` | 🔶 | Include per-material property cards. |
-| `include_metric_tables` | bool | `false` | 🔶 | Include quantitative metric tables. |
-| `include_expected_trends` | bool | `false` | 🔶 | Include expected trend annotations. |
-| `include_symbolic_trace` | bool | `false` | 🔶 | Include full symbolic equation trace. |
+| `title` | string | `""` | * | Report title. |
+| `include_material_cards` | bool | `false` | * | Include per-material property cards. |
+| `include_metric_tables` | bool | `false` | * | Include quantitative metric tables. |
+| `include_expected_trends` | bool | `false` | * | Include expected trend annotations. |
+| `include_symbolic_trace` | bool | `false` | * | Include full symbolic equation trace. |
 
 ---
 
@@ -720,6 +843,61 @@ Named excitation subsection. `<type>` is the excitation kind (e.g., `laser`, `xr
 
 ________________________________________
 
+## `[chemistry]` / `[system]` — Ambient Reaction Physics
+
+Declares ambient reaction rules for the simulation. Chemistry is **always evaluated** whenever two or more molecule species are present. This block controls which rule family is active, the heat-gate level, scoring thresholds, and event verbosity. `[system]` is a legacy alias for the same block.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `chemistry` | string | `""` | Rule-family registry alias. See registry values below. |
+| `heat` | int | `-1` | Heat-gate integer `[0–999]`. `-1` = derive from `environment.temperature`. |
+| `reaction_events` | bool | `true` | Emit `ReactionEvent` into `KernelEventLog`. |
+| `track_species_state` | bool | `true` | Emit `ChemicalStateEvent` per species change. |
+| `event_registry` | bool | `true` | Build per-step event registry (enables `reaction_scan` observe metric). |
+| `min_score_threshold` | float | `0.25` | `overall_score` must exceed this to emit an event. |
+| `max_reactions_per_step` | int | `8` | Cap on reaction events per step. `0` = unlimited. |
+
+**Chemistry registry aliases** (§VSIM_LANGUAGE_REFERENCE §chemistry):
+
+| Alias | Activates |
+|---|---|
+| `"oxidation"` | Metal/non-metal oxidation templates |
+| `"hydration"` | Water-addition and hydration templates |
+| `"corrosion"` | Surface corrosion / electrochemical templates |
+| `"pyrolysis"` | High-temperature bond-cleavage templates |
+| `"reduction"` | Electron-transfer reduction templates |
+| `"hydrolysis"` | Hydrolysis (acid/base) templates |
+| `"polymerization"` | Chain-growth and step-growth templates |
+| `"salt_exchange"` | Double-displacement templates |
+| `"fluorination"` | Electrophilic fluorination templates |
+| `"isomer_scan"` | Conformer / isomer search templates |
+| `"none"` | No template family active; heat gate still applied |
+
+**Heat gate calibration:**  `T ≤ 0 K → h = 0`,  `T ≥ 3000 K → h = 999`,  otherwise `h = round((T / 3000) × 999)`.
+
+**Architecture note:**  All reaction events are written to `KernelEventLog`, never directly to `.xyz` / `.xyzFull`. Observe metrics `"reaction_events"`, `"chemical_state"`, `"exothermic_count"`, and `"avg_delta_E"` read from the same log.
+
+**Example:**
+
+```vsim
+[environment]
+temperature = 800.0
+
+[chemistry]
+chemistry              = "oxidation"
+heat                   = -1       # auto-derive from 800 K → h ≈ 266
+reaction_events        = true
+track_species_state    = true
+min_score_threshold    = 0.30
+max_reactions_per_step = 4
+
+[observe]
+metrics       = ["reaction_events", "exothermic_count", "avg_delta_E"]
+every_n_steps = 10
+```
+
+________________________________________
+
 ## `[observe]` — WO-VSIM-03B
 
 Declares which physical observables to measure and how to emit them.
@@ -729,6 +907,18 @@ Declares which physical observables to measure and how to emit them.
 | `metrics` | list of strings | `[]` | e.g. `["energy_map", "interference", "spectral_response"]` |
 | `output_format` | string | `"auto"` | `"csv"`, `"json"`, `"svg"`, `"auto"` |
 | `every_n_steps` | int | `1` | Observation cadence (steps) |
+
+**Reaction-aware metrics** (evaluated from `KernelEventLog`):
+
+| Metric name | Returns |
+|---|---|
+| `"reaction_events"` | Count of `Reaction` events in the log |
+| `"chemical_state"` | Count of `ChemicalState` events |
+| `"exothermic_count"` | Count of events where `delta_E < 0` |
+| `"avg_delta_E"` | Mean `delta_E` (kcal/mol) over all reaction events |
+| `"formation"` | Count of `Formation` events |
+| `"transport"` | Count of `Transport` events |
+| `"defect"` | Count of `Defect` events |
 
 ________________________________________
 
@@ -769,47 +959,678 @@ The following are parsed and stored (or defined in the schema) but have no runti
 
 | Feature | Section | Status |
 |---|---|---|
-| `description` in `[project]` | `ProjectSection::description` | 🔶 Stored, not emitted to reports |
-| `write_pdb` | `ExportSection` | 🔶 Parsed; PDB writer not implemented |
-| `write_cluster_json` | `ExportSection` | 🔶 Parsed; ClusterRecord writer pending |
-| `write_fingerprint_json` | `ExportSection` | 🔶 Parsed; FingerprintRecord writer pending |
-| `write_summary_csv` | `ExportSection` | 🔶 Parsed; CSV writer pending |
+| `description` in `[project]` | `ProjectSection::description` | * Stored, not emitted to reports |
+| `write_pdb` | `ExportSection` | * Parsed; PDB writer not implemented |
+| `write_cluster_json` | `ExportSection` | * Parsed; ClusterRecord writer pending |
+| `write_fingerprint_json` | `ExportSection` | * Parsed; FingerprintRecord writer pending |
+| `write_summary_csv` | `ExportSection` | * Parsed; CSV writer pending |
 | `write_vtp_mesh` | `ExportSection` | ❌ Not yet parsed or implemented |
-| `write_png_snapshots` | `ExportVisualSection` | 🔶 Parsed; requires GL or OSMesa |
-| `write_trajectory_gif` | `ExportVisualSection` | 🔶 Parsed; requires gifenc or ffmpeg |
-| `write_overlay_cycle_gif` | `ExportVisualSection` | 🔶 Parsed; requires gifenc or ffmpeg |
-| `write_webgl_bundle` | `ExportVisualSection` | 🔶 Parsed; webgl_streamer not wired |
-| `write_sse_descriptor` | `ExportVisualSection` | 🔶 Parsed; vsepr_live not wired |
+| `write_png_snapshots` | `ExportVisualSection` | * Parsed; requires GL or OSMesa |
+| `write_trajectory_gif` | `ExportVisualSection` | * Parsed; requires gifenc or ffmpeg |
+| `write_overlay_cycle_gif` | `ExportVisualSection` | * Parsed; requires gifenc or ffmpeg |
+| `write_webgl_bundle` | `ExportVisualSection` | * Parsed; webgl_streamer not wired |
+| `write_sse_descriptor` | `ExportVisualSection` | * Parsed; vsepr_live not wired |
 | `write_report_pdf` | `ExportVisualSection` | ❌ Not implemented; requires LaTeX / pandoc |
-| `export_trajectory` in `[visual.external]` | `VisualExternalSection` | 🔶 Parsed; GIF writer not wired |
-| `render_targets` dispatch | `VisualExternalSection` | 🔶 Parsed; full dispatch table pending |
-| `[kernel]` and `[kernel.trace]` | `raw_sections` | 🔶 No dedicated struct; all stored in raw |
-| `[report]` script section | `raw_sections` | 🔶 No dedicated struct; stored in raw |
-| `export_each` in `[batch.job]` | `BatchJob` | 🔶 Parsed; per-run export not enforced |
-| `aggregate` in `[batch.job]` | `BatchJob` | 🔶 Parsed; aggregate report not implemented |
-| `[material.*]` sub-sections (demo_07 style) | `raw_sections` | 🔶 Captured; runtime generation wiring pending (WO-VSIM-03B schema done) |
-| `[sweep]` top-level declarative sweep | `raw_sections` | 🔶 Parsed; runtime wiring pending |
+| `export_trajectory` in `[visual.external]` | `VisualExternalSection` | * Parsed; GIF writer not wired |
+| `render_targets` dispatch | `VisualExternalSection` | * Parsed; full dispatch table pending |
+| `[kernel]` and `[kernel.trace]` | `raw_sections` | * No dedicated struct; all stored in raw |
+| `[report]` script section | `raw_sections` | * No dedicated struct; stored in raw |
+| `export_each` in `[batch.job]` | `BatchJob` | * Parsed; per-run export not enforced |
+| `aggregate` in `[batch.job]` | `BatchJob` | * Parsed; aggregate report not implemented |
+| `[material.*]` sub-sections (demo_07 style) | `raw_sections` | * Captured; runtime generation wiring pending (WO-VSIM-03B schema done) |
+| `[sweep]` top-level declarative sweep | `raw_sections` | * Parsed; runtime wiring pending |
 | `"triclinic"` cell type | `CellSection` | ❌ Reserved; not implemented |
 | `"reflective"` / `"absorbing"` boundary | `BoundarySection` | ❌ Reserved; not implemented |
 | `"nm"` cell units | `CellSection` | ❌ Reserved; not implemented |
-| STEP B-Rep solid geometry | `ExportSection::write_step_file` | 🔶 Point-cloud only; B-Rep deferred to beta-8.1 |
-| PNG raster dashboard | pipeline | 🔶 stb fallback active; PPM if stb not linked |
+| STEP B-Rep solid geometry | `ExportSection::write_step_file` | * Point-cloud only; B-Rep deferred to beta-8.1 |
+| PNG raster dashboard | pipeline | * stb fallback active; PPM if stb not linked |
 | Live continual reporting | — | ❌ Deprecated as autonomous engine. Use `[while]` + `[export]`. |
 
 ---
 
-## Beta-9 owned items (registry resolution — not yet implemented)
+## Beta-9 owned items (registry resolution — WO-VSIM-03C)
 
-The following are schema/parser-complete but require the **beta-9 registry resolution engine** (WO-VSIM-03C) before they have runtime effect.
+The following were schema/parser-complete in beta-8 and are now **implemented** in beta-9 via `RegistryResolver` (WO-VSIM-03C).
 
 | Feature | Schema / parser | Runtime |
 |---|---|---|
-| `structure` alias → full prototype expansion | ✅ `resolve_structure_alias()` | ⬜ beta-9 `RegistryResolver` |
-| `[material]` → particle positions + masses + charges | ✅ `MaterialSection` parsed | ⬜ beta-9 generator wiring |
-| `[run]` → simulation execution | ✅ `RunSection` parsed | ⬜ beta-9 runtime bridge |
-| `[environment]` → boundary / PBC / temperature | ✅ `EnvironmentSection` parsed | ⬜ beta-9 runtime bridge |
-| `[excite.*]` → excitation dispatch | ✅ `ExciteSection` parsed | ⬜ beta-9 |
-| `[observe]` → metric collection | ✅ `ObserveSection` parsed | ⬜ beta-9 |
-| `[[override.particle]]` → particle mutation | ✅ `ParticleOverrideEntry` parsed | ⬜ beta-9 |
-| `[[raw.object]]` → explicit particle injection | ✅ `RawObjectEntry` parsed | ⬜ beta-9 |
-| `[REGISTRY]` field resolution logging | — | ⬜ beta-9 |
+| `structure` alias → full prototype expansion | ✅ `resolve_structure_alias()` | ✅ `RegistryResolver` |
+| `RegistryBundle` crystallographic expansion | ✅ `RegistryBundle` struct | ✅ beta-9 |
+| `[REGISTRY]` field resolution logging | ✅ `RegistryResolver::resolve()` | ✅ beta-9 |
+| `VsimRuntime::resolve_material()` | ✅ section 6.5 | ✅ beta-9 |
+| `[material]` → particle positions + masses + charges | ✅ `MaterialSection` parsed | ⬜ generator wiring (beta-10) |
+| `[run]` → simulation execution | ✅ `RunSection` parsed | ⬜ runtime bridge (beta-10) |
+| `[environment]` → boundary / PBC / temperature | ✅ `EnvironmentSection` parsed | ⬜ runtime bridge (beta-10) |
+| `[chemistry]` / `[system]` → ambient reactions | ✅ `ChemistrySection` parsed | ✅ `ReactionBridge` + `run_chemistry_pass()` |
+| `[excite.*]` → excitation dispatch | ✅ `ExciteSection` parsed | ⬜ beta-10 |
+| `[observe]` → metric collection | ✅ `ObserveSection` parsed | ✅ reaction metrics via `eval_observe_metrics()` |
+| `[[override.particle]]` → particle mutation | ✅ `ParticleOverrideEntry` parsed | ⬜ beta-10 |
+| `[[raw.object]]` → explicit particle injection | ✅ `RawObjectEntry` parsed | ⬜ beta-10 |
+
+---
+
+## `RegistryBundle` — WO-VSIM-03C
+
+Produced by `RegistryResolver::resolve(MaterialSection&, std::ostream&)`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `prototype` | `string` | Canonical key resolved from alias or set directly |
+| `space_group` | `string` | Hermann-Mauguin space group (empty for 0-D structures) |
+| `basis` | `string` | Fractional coordinates: `"A:x,y,z; B:x,y,z"` |
+| `generator` | `string` | Tag passed to the structure-builder backend |
+| `coordination` | `int` | Typical coordination number (0 = unset) |
+| `default_charge_model` | `string` | `"formal"`, `"neutral"`, `"bader"`, or `""` |
+| `is_periodic` | `bool` | `false` for molecules and 0-D geometry |
+| `populated` | `bool` | `true` when at least one field was resolved |
+
+### Registry groups
+
+| Group | Aliases | Prototype key family | Generator family |
+|---|---|---|---|
+| Ionic salts | `rocksalt`, `cesium_chloride`, `fluorite`, `antifluorite`, `zincblende`, `wurtzite`, `rutile`, `perovskite`, `spinel` | `B1_NaCl`, `B2_CsCl`, `C1_CaF2`, … | `ionic_*` |
+| Oxides / ceramics | `alpha_alumina`, `magnesia`, `ceria`, `zirconia`, `uraninite`, `thoria` | `D5_Al2O3_corundum`, `B1_MgO`, `C1_*_fluorite` | `ionic_corundum`, `ionic_rocksalt`, `ionic_fluorite` |
+| Elemental metals | `simple_cubic`, `bcc`, `fcc`, `hcp`, `diamond`, `graphite`, `graphene` | `A_cP1`, `A2_bcc`, `A1_fcc`, `A3_hcp`, `A4_diamond`, `A9_graphite`, `A9_graphene_2D` | `simple_cubic`, `bcc_metal`, `fcc_metal`, … |
+| Molecular geometry | `linear`, `bent`, `trigonal_planar`, `tetrahedral`, `trigonal_pyramidal`, `octahedral`, `square_planar`, `see_saw`, `t_shaped` | `geom_*` | `geom_*` |
+| Polymers / organics | `linear_chain`, `branched_chain`, `aromatic_ring`, `benzene_ring`, `alkane_chain`, `cycloalkane` | `polymer_*`, `organic_*` | same |
+| Porous / framework | `zeolite`, `mof`, `cof`, `prussian_blue`, `pba` | `framework_*` | same |
+| Bead / premacro | `bead_chain`, `bead_cluster`, `powder_bed`, `packed_bed`, `granular_column`, `fiber_bundle`, `pipe_flow` | `bead_*`, `premacro_*` | same |
+
+### Usage
+
+```vsim
+[material]
+formula   = "NaCl"
+structure = "rocksalt"   # resolves to B1_NaCl
+
+[run]
+mode      = "relax"
+```
+
+In code:
+
+```cpp
+VsimDocument doc = VsimParser::parse_file("run.vsim");
+RegistryBundle bundle = VsimRuntime::resolve_material(doc);
+// [REGISTRY] material.prototype <- B1_NaCl  (from alias rocksalt)
+// [REGISTRY] material.space_group <- Fm-3m  (from alias rocksalt)
+// ...
+```
+
+---
+
+## WO-VSIM-04A — Isomer Detection Revival
+
+Schema version: **beta-7** • Work order: **WO-VSIM-04A**
+
+### Overview
+
+Three new VSIM language blocks expose the graph-validity isomer analysis pipeline:
+
+```
+formula → graph → connectivity → valence → charge/radical gate →
+canonical hash → geometry/RMSD → relaxation/strain → validity class → report
+```
+
+> **Stage-order note (dev day 4 fix):** Connectivity check must run **before** valence
+> validation. A disconnected graph (e.g. two isolated `C=O` fragments) must be classified
+> `DisconnectedInvalid` before per-atom valence rules are applied. If valence ran first, the
+> carbon atoms in an isolated `C=O` pair (valence 2, expected 4) would produce a false
+> `InvalidValence` verdict. This ordering is enforced in `classify()` in
+> `src/analysis/valence_rules.cpp`. Fix verified by `test_isomer_detection` Test 4.
+
+### Validity classes (ordered by confidence)
+
+| Class | Meaning |
+|---|---|
+| `InvalidFormula` | Atom composition does not match expected formula |
+| `InvalidValence` | Bond orders violate neutral valence rules |
+| `DisconnectedInvalid` | Graph is fragmented and `allow_fragments = false` |
+| `ChargedValid` | Valid but requires formal charge |
+| `RadicalValid` | Valid but requires unpaired electron |
+| `NeutralValid` | Graph-valid, neutral, connected. Elevated to `UnknownPlausible` in batch mode when `known_database_check = false`. |
+| `StrainedButValid` | Valid graph; relaxation flags high strain |
+| `UnknownPlausible` | Valid graph + geometry; no known-DB confirmation. Not silently discarded — surfaced for review. |
+| `KnownStable` | Valid + confirmed in known-compound database |
+
+`is_graph_valid(v)` returns `true` for all classes except `InvalidFormula`, `InvalidValence`, and `DisconnectedInvalid`.
+
+`UnknownPlausible ≠ InvalidFormula`. Novelty is not penalised.
+
+---
+
+### `[analysis.isomers]` — Static Isomer Analysis
+
+Runs the full isomer detection pipeline over the `[[molecule]]` candidates declared in the same `.vsim` file.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Enable static isomer analysis |
+| `mode` | string | `"graph_geometry"` | `"graph_only"` or `"graph_geometry"` |
+| `formula_guard` | bool | `true` | Reject candidates whose derived formula does not match |
+| `graph_validation` | bool | `true` | Enable graph-level checks |
+| `valence_check` | bool | `true` | Check neutral valence rules per atom |
+| `connectivity_check` | bool | `true` | Require connected graph unless `allow_fragments = true` |
+| `formal_charge_check` | bool | `true` | Gate on formal charge presence |
+| `radical_check` | bool | `false` | Gate on radical (unpaired electron) presence |
+| `canonical_hash` | bool | `true` | Compute canonical graph hash for deduplication |
+| `geometry_rmsd` | bool | `true` | Compute RMSD between candidates for conformer detection |
+| `relaxation_check` | bool | `true` | Flag high-strain candidates after relaxation |
+| `known_database_check` | bool | `false` | Query known-compound database for `KnownStable` promotion |
+| `allow_fragments` | bool | `false` | Allow disconnected molecular graphs |
+| `allow_charged` | bool | `false` | Allow formal-charge structures |
+| `allow_radicals` | bool | `false` | Allow radical structures |
+| `allow_strained` | bool | `true` | Allow strained candidates (do not discard) |
+| `max_bond_order` | int | `3` | Cap inferred bond orders at this value |
+| `bond_tolerance_scale` | double | `1.20` | Multiply covalent radius sum by this to set bond detection threshold |
+| `rmsd_tolerance` | double | `0.05` | RMSD threshold (Å) below which two geometries are `SameStructure` |
+| `angle_tolerance_deg` | double | `3.0` | Angle tolerance for geometry comparison |
+| `bond_source` | string | `"hybrid"` | `"explicit"` / `"infer"` / `"hybrid"` |
+| `geometry_build` | string | `"vsepr"` | Geometry builder for candidates without coordinates |
+| `report_level` | string | `"detailed"` | `"minimal"` / `"standard"` / `"detailed"` |
+
+**Example:**
+
+```toml
+[analysis.isomers]
+enabled              = true
+mode                 = "graph_geometry"
+formula_guard        = true
+bond_source          = "hybrid"
+canonical_hash       = true
+geometry_rmsd        = true
+allow_strained       = true
+report_level         = "detailed"
+```
+
+---
+
+### `[generator.isomers]` — Isomer Generator
+
+Generates constitutional isomer candidates from a molecular formula.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Enable isomer generation |
+| `formula` | string | `""` | Target molecular formula (Hill system, e.g. `"C2H2O2"`) |
+| `allow_fragments` | bool | `false` | Allow disconnected products |
+| `allow_charged` | bool | `false` | Allow formal-charge candidates |
+| `allow_radicals` | bool | `false` | Allow radical candidates |
+| `allow_strained` | bool | `true` | Include strained candidates |
+| `max_bond_order` | int | `3` | Maximum bond order in generated graphs |
+| `deduplicate` | string | `"canonical_graph_hash"` | Deduplication strategy |
+
+**Example:**
+
+```toml
+[generator.isomers]
+enabled        = true
+formula        = "C2H2O2"
+allow_strained = true
+max_bond_order = 3
+deduplicate    = "canonical_graph_hash"
+```
+
+---
+
+### `[analysis.isomer_tracking]` — Trajectory Isomer Tracking
+
+Detects isomer transitions in a `.xyzf` / `.xyzFull` trajectory by computing the molecular graph hash at each sampled frame and comparing across frames.
+
+Bond changes, hash changes, and validity transitions are logged as events. They are **never** written back into the raw trajectory files.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Enable trajectory isomer tracking |
+| `source` | string | `""` | Path to `.xyzf` / `.xyzFull` trajectory file |
+| `sample_every` | int | `10` | Sample one frame every N steps |
+| `detect_bond_changes` | bool | `true` | Log when bond topology changes between sampled frames |
+| `detect_hash_changes` | bool | `true` | Log when canonical hash changes between sampled frames |
+| `write_transition_log` | bool | `true` | Write `reports/isomer_transitions.jsonl` |
+
+**Example:**
+
+```toml
+[analysis.isomer_tracking]
+enabled              = true
+source               = "state/reactive_run.xyzf"
+sample_every         = 10
+detect_bond_changes  = true
+detect_hash_changes  = true
+write_transition_log = true
+```
+
+---
+
+### Output files
+
+| File | Format | Description |
+|---|---|---|
+| `reports/isomer_report.md` | Markdown | Human-readable summary + per-candidate detail |
+| `reports/isomer_table.csv` | CSV | Tabular candidate list (sortable, importable) |
+| `reports/isomer_graphs.json` | JSON | Graph topology + fingerprint data |
+| `reports/isomer_transitions.jsonl` | JSON Lines | Per-frame hash transition log (trajectory mode) |
+
+### C++ module layout
+
+```
+include/analysis/
+  molecular_graph.hpp      — MolecularGraph, ValidityClass, IsomerRelation, IsomerRecord
+  bond_inference.hpp        — BondInferenceConfig, infer_bonds(), build_graph()
+  valence_rules.hpp         — check_valence(), check_connectivity(), classify()
+  canonical_hash.hpp        — compute_fingerprint(), compare_fingerprints()
+  isomer_analysis.hpp       — analyse_candidates(), analyse_pair()
+  isomer_report.hpp         — write_reports(), write_markdown(), write_csv(), write_json()
+
+src/analysis/
+  bond_inference.cpp
+  valence_rules.cpp
+  canonical_hash.cpp        — wraps atomistic::classify::weisfeiler_lehman_hash()
+  isomer_analysis.cpp
+  isomer_report.cpp
+```
+
+### Implementation status
+
+| Feature | Schema | Parser | Runtime |
+|---|---|---|---|
+| `[analysis.isomers]` | ✅ `IsomerAnalysisSection` | ✅ `apply_isomer_analysis_key()` | ✅ `analyse_candidates()` |
+| `[generator.isomers]` | ✅ `IsomerGeneratorSection` | ✅ `apply_isomer_generator_key()` | ⬜ generator wiring pending |
+| `[analysis.isomer_tracking]` | ✅ `IsomerTrackingSection` | ✅ `apply_isomer_tracking_key()` | ⬜ trajectory walker pending |
+| Canonical hash | — | — | ✅ WL + Morgan via fingerprints.hpp |
+| Valence validation | — | — | ✅ full neutral-valence table |
+| Connectivity check | — | — | ✅ BFS; runs **before** valence (stage-order fix, dev day 4) |
+| RMSD / Kabsch alignment | — | — | ✅ via kabsch.hpp |
+| Report generation | — | — | ✅ MD + CSV + JSON |
+| Geometric / chirality detection | — | — | ⬜ `GeometricVariant` / `StereoVariant` enum reserved, detection pending |
+
+---
+
+## WO-VSEPR-SIM-61D/61E — Analysis pipeline reference (schema v2)
+
+### Canonical section names
+
+| Section | Scope | Notes |
+|---|---|---|
+| `[analysis.structure]` | Structural analysis of representative frame | Required by sampling and scale-sampling |
+| `[analysis.sampling]` | Scalar trajectory sampling: RDF, MSD | Canonical — replaces `[analysis.property_sampling]` (deprecated) |
+| `[analysis.scale_sampling]` | Field projection, RVE, emergence metrics | WO-VSEPR-SIM-61D |
+| `[analysis.inference]` | Property inference | Alias `[inference]` accepted in v2 with warning |
+| `[output]` | Output paths and file switches | `output_dir` / `output_prefix` added WO-VSEPR-SIM-61D |
+
+### `[analysis.scale_sampling]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `enabled` | bool | `false` | |
+| `compute_field_projection` | bool | `false` | Bins mass into field grid |
+| `compute_rve_sampling` | bool | `false` | RVE window sweep |
+| `compute_emergence_metrics` | bool | `false` | Temporal + scale drift |
+| `field_grid` | [int,int,int] | `[8,8,8]` | |
+| `rve_window_lengths_A` | float[] | `[]` | Must be nonempty, strictly increasing, max ≤ min_extent/2 |
+| `rve_windows_per_level` | int | `8` | Must be ≥ 4 |
+| `rve_window_placement` | string | `"grid"` | `grid` \| `stratified` \| `random` |
+| `min_particles_for_scale_sampling` | int | `64` | |
+| `spatial_cv_threshold` | float | `0.3` | [0, 1] |
+| `temporal_drift_threshold` | float | `0.3` | [0, 1] |
+| `scale_drift_threshold` | float | `0.3` | [0, 1] |
+| `temporal_drift_metric` | string | `"block_difference"` | enum |
+| `scale_drift_metric` | string | `"successive_window_difference"` | enum |
+
+### `[analysis.inference]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `enabled` | bool | `false` | |
+| `mode` | string | `"rule_based_61b"` | `rule_based_61b` \| `rule_based_61d` |
+
+### Inference modes
+
+| Mode | `ScaleSampleRecord` consumed | `macro_ready` hard-blocked by scale |
+|---|---|---|
+| `rule_based_61b` | No | No |
+| `rule_based_61d` | Yes | Yes — invalid projection, non-conserved mass, missing RVE/emergence |
+
+### Readiness field
+
+| Field | Replaces | Status |
+|---|---|---|
+| `macro_ready` (bool) | `macro_proxy_ready` | **Canonical** |
+| `macro_proxy_ready` | — | **Deprecated** — replaced by `macro_ready` in WO-VSEPR-SIM-61E |
+
+### Implementation mapping (Appendix F)
+
+| Operator | Header | Record |
+|---|---|---|
+| S_op — structure inference | `structure_inference.hpp` | `StructureInferenceResult` |
+| P_op — scalar property sampling | `property_sampling.hpp` | `PropertySampleRecord` |
+| M_op — scale sampling / field / RVE | `scale_sampling.hpp` | `ScaleSampleRecord` |
+| I_op — property inference | `property_inference.hpp` | `PropertyInferenceRecord` |
+
+### Manifest schema (WO-VSEPR-SIM-61E)
+
+```json
+{
+  "wo": "WO-VSEPR-SIM-61E",
+  "schema_version": 2,
+  "sections": { "analysis.structure": true, "analysis.sampling": true, ... },
+  "auto_enabled": ["analysis.structure", "analysis.sampling"],
+  "warnings": ["analysis.structure auto-enabled because ..."],
+  "ok": true
+}
+```
+
+### Group 38 status (WO-VSEPR-SIM-61E verification)
+
+All 19 tests passing: T1–T17 covering `macro_ready`, mass conservation failure,
+invalid RVE windows, inference mode separation, schema compatibility, output naming,
+seed determinism, auto-enable manifest, and enum/bounds validation.
+
+---
+
+## WO-VSEPR-SIM-62A — Empirical Verification Layer (`[verify]`)
+
+**Added Day 61 / beta-11.**
+Verification is a separate layer from analysis. Analysis computes; verification judges.
+
+### Pipeline position
+
+```
+S_op (structure) → P_op (sampling) → M_op (scale_sampling) → I_op (inference)
+                                                                     ↓
+                                                          run_verification()
+                                                                     ↓
+                                                          verify_report.json
+                                                          verify_summary.tsv
+```
+
+### Section table
+
+| Section | Purpose |
+|---|---|
+| `[verify]` | Top-level enable/disable, profile label, output switches |
+| `[verify.structure]` | Coordination number, nearest-neighbor distance, prototype label |
+| `[verify.rdf]` | First and second RDF peak positions; ordered multi-peak list |
+| `[verify.msd]` | Bounded-solid MSD check, slope proxy limit |
+| `[verify.mass]` | Mass conservation relative tolerance |
+
+### `[verify]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| enabled | bool | false | Master switch |
+| profile | string | `""` | Informational label written to `verify_report.json` |
+| write_verify_report | bool | true | Write `{prefix}.verify_report.json` |
+| write_verify_tsv | bool | true | Write `{prefix}.verify_summary.tsv` |
+
+### `[verify.structure]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| enabled | bool | false | — |
+| expected_prototype | string | `""` | Informational only (e.g. `"B1_NaCl"`) |
+| expected_coordination | int | -1 | -1 = not checked |
+| coordination_tolerance | int | 0 | plus/minus tolerance on rounded mean_coordination |
+| expected_nearest_neighbor_A | double | -1 | -1 = not checked |
+| nearest_neighbor_tolerance_A | double | 0.15 | — |
+| expected_density_relation | string | `""` | Informational only |
+
+### `[verify.rdf]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| enabled | bool | false | — |
+| expected_first_peak_A | double | -1 | Used when expected_peaks_A is empty |
+| first_peak_tolerance_A | double | 0.20 | — |
+| expected_second_peak_A | double | -1 | Used when expected_peaks_A is empty |
+| second_peak_tolerance_A | double | 0.25 | — |
+| expected_peaks_A | list | `[]` | Ordered list; overrides first/second fields |
+| peak_tolerance_A | double | 0.25 | Tolerance applied to each entry in expected_peaks_A |
+| require_peak_order | bool | true | Assert expected_peaks_A is strictly increasing |
+
+### `[verify.msd]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| enabled | bool | false | — |
+| expect_bounded_solid | bool | false | Assert msd_proxy_A2 <= max_msd_A2 |
+| max_msd_A2 | double | 5.0 | Angstrom^2 |
+| max_slope_late | double | 0.01 | Assert diffusion_proxy_A2_per_frame <= max_slope_late |
+| expect_regime | string | `""` | Informational label (e.g. `"solid_bounded"`) |
+
+### `[verify.mass]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| enabled | bool | false | — |
+| relative_tolerance | double | 1e-10 | Assert mass_drift_fraction <= relative_tolerance |
+
+### Output schema (`verify_report.json`)
+
+```json
+{
+  "verification_schema": 1,
+  "empirical_profile": "nacl_rocksalt_short_md",
+  "empirical_pass": true,
+  "checks": {
+    "structure.coordination":       { "status": "pass", "detail": "expected=6 measured=6 tolerance=0" },
+    "structure.nearest_neighbor_A": { "status": "pass", "detail": "expected=2.8 measured=2.81 tolerance=0.15" },
+    "rdf.first_peak_A":             { "status": "pass", "detail": "expected=2.8 measured=2.8 tolerance=0.2" },
+    "msd.bounded_solid":            { "status": "pass", "detail": "msd=0.12 max=2.0" },
+    "mass.conservation":            { "status": "pass", "detail": "mass_conserved=1 drift=0 tolerance=1e-10" }
+  }
+}
+```
+
+### Group 39 status (WO-VSEPR-SIM-62A)
+
+All 19 tests passing (T1–T19): structure coordination, RDF peak pass/fail,
+multi-peak ordered checks, MSD bounded-solid pass/fail, mass conservation pass/fail,
+full-pipeline integration, negative paths (missing scale, mass leak, invalid RVE),
+parser round-trips for all `[verify.*]` sections, and disabled-verify behavior.
+
+---
+## WO-VSEPR-SIM-62B — Batch Verification Aggregation
+
+**Added Day 62 / beta-12.**  
+Aggregates per-run `verify_report.json` files across all runs of a batch study
+into pass-rate tables, failure-mode matrices, and gate evaluation.
+
+### `failure_modes.hpp` — canonical failure mode codes
+
+| Code string                   | Meaning |
+|-------------------------------|---------|
+| `FAIL_MASS_DRIFT`             | Mass conservation outside tolerance |
+| `FAIL_STRUCTURE_COORDINATION` | Mean coordination outside expected ± tolerance |
+| `FAIL_NEAREST_NEIGHBOR`       | Nearest-neighbor distance outside tolerance |
+| `FAIL_RDF_FIRST_PEAK`         | First RDF peak outside tolerance |
+| `FAIL_RDF_SECOND_PEAK`        | Second RDF peak outside tolerance |
+| `FAIL_MSD_BOUNDED_SOLID`      | MSD proxy exceeded max for solid regime |
+| `FAIL_OUTPUT_MISSING`         | Required output file not found |
+| `FAIL_CHECK_MISSING`          | Required check name absent from verify_report.json |
+| `FAIL_RUN_CRASH`              | Run did not produce any verify output |
+
+### `[batch.aggregate.verify]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| enabled | bool | false | Enable cross-run aggregation |
+| group_by | list | [] | Axis names to group runs by (required when enabled) |
+| statistics | list | [] | Stats to compute: mean, std, cv, min, max, median |
+| emit_matrix | bool | false | Write failure_mode_matrix.tsv |
+| emit_failure_modes | bool | false | Write per-group failure mode breakdown |
+
+### `[batch.aggregate.verify.gates]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| min_overall_pass_rate | double | 0.0 | Fraction [0,1]; 0 = no gate |
+| min_mass_pass_rate | double | 0.0 | |
+| min_structure_pass_rate | double | 0.0 | |
+| min_rdf_pass_rate | double | 0.0 | |
+| min_msd_pass_rate | double | 0.0 | |
+
+### Group 40 status (WO-VSEPR-SIM-62B)
+
+All 20 tests passing (Groups 41–43 below inherit this infrastructure).
+
+---
+
+## WO-VSIM-62C — Batch Layer Parser & Static-Axis Runtime
+
+**Added Day 62 / beta-12.**  
+Study files (`.vsim` with a `[study]` block) define factorial axis sweeps.
+The batch layer parses, expands, seeds, mutates, checkpoints, and aggregates.
+
+### File layout
+
+```
+include/batch/batch_document.hpp      — BatchDocument top-level struct
+include/batch/batch_parser.hpp        — BatchParser API
+include/batch/batch_expander.hpp      — BatchExpander + SeedResolver API
+include/batch/batch_merger.hpp        — Template load + dot-path mutation
+include/batch/batch_checkpoint.hpp    — Checkpoint persistence
+include/batch/batch_require_checker.hpp — [batch.require] enforcement
+include/batch/batch_aggregator.hpp    — Post-run aggregation + writers
+include/batch/resolved_writer.hpp     — run.vsim.resolved emitter
+src/batch/batch_parser.cpp
+src/batch/batch_expander.cpp
+src/batch/seed_resolver.cpp
+src/batch/batch_merger.cpp
+src/batch/batch_checkpoint.cpp
+src/batch/batch_require_checker.cpp
+src/batch/batch_aggregator.cpp
+src/batch/resolved_writer.cpp
+```
+
+### `[study]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| name | string | **Required** | Study identifier; used as root output directory |
+| type | string | `"parameter_sweep"` | `parameter_sweep` \| `empirical_validation` \| `formation_study` \| `sensitivity_analysis` |
+| goal | string | `""` | Informational |
+| version | string | `""` | Informational |
+
+### `[batch.base]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| mode | string | **Required** | `"inline"` — study file is the base script; `"template"` — load external script |
+| script | string | `""` | Path to `.vsim` template (required when mode = `"template"`) |
+
+### `[batch.design]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| type | string | `"factorial"` | `factorial` \| `single` \| `grid` \| `latin_hypercube` (v5.1.0) \| `random` (v5.1.0) |
+| replicates_per_case | int | `1` | Replicate runs per combination |
+| seed_policy | string | `"split"` | `"split"` — unique seeds per replicate; `"shift"` — shared + offset |
+| abort_on_fail | bool | `false` | Stop expansion on first validation error |
+| rank_by | string | `"composite"` | Metric key used for `ranked_candidates.tsv` |
+| max_parallel | int | `1` | Max concurrent runs (runtime; not yet wired) |
+| checkpoint | bool | `true` | Enable checkpoint/resume |
+| n_samples | int | `0` | Required for `latin_hypercube` / `random` design types |
+
+### `[[batch.axis]]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| name | string | **Required** | Human label for axis (used in plan headers) |
+| target | string | **Required** | Dot-path into VsimDocument (e.g. `"environment.temperature"`) |
+| kind | string | `"static"` | `"static"` (wired) \| `"stochastic"` (v5.1.0) \| `"formation"` (v5.2.0) |
+| values | list | `[]` | Values for `kind = "static"` |
+| units | string | `""` | Informational |
+| seed_source | string | `""` | Required for `kind = "stochastic"` |
+| distribution | string | `"uniform"` | `"uniform"` \| `"normal"` (stochastic) |
+| mean / std | double | `0 / 1` | Normal distribution parameters |
+| min / max | double | `0 / 1` | Uniform distribution bounds |
+
+### `[[batch.case]]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| name | string | **Required** | Case label (used in plan TSV and output paths) |
+| `<dot.path>` | string | — | Any dot-path key overrides the base doc for this case |
+
+### `[batch.expand]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| cases | bool | `false` | Cross-expand cases × axis combos |
+| axes | list | `[]` | Subset of axis names to include (empty = all static) |
+
+### `[batch.verify_policy]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| on_run_fail | string | `"continue"` | `"continue"` \| `"abort"` |
+| on_check_fail | string | `"continue"` | `"continue"` \| `"abort"` \| `"warn"` |
+| save_resolved_scripts | bool | `false` | Save `run.vsim.resolved` per run |
+
+### `[batch.override.verify]` fields
+
+Override global `[verify.*]` tolerance values across all runs.
+
+| Field | Type | Notes |
+|---|---|---|
+| tolerance_A | double | Override `nearest_neighbor_tolerance_A` globally |
+| relative_tolerance | double | Override `relative_tolerance` for mass |
+| max_msd_A2 | double | Override `max_msd_A2` |
+| coordination_tolerance | int | Override `coordination_tolerance` |
+
+### `[batch.score]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| rank_by | string | `"composite"` | Metric key for ranked output |
+
+### `[batch.require]` fields
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| fail_if_missing | bool | `false` | Treat missing outputs as hard failures |
+| files | list | `[]` | Output filenames that must exist per run dir |
+| checks | list | `[]` | Check names that must appear in `verify_report.json` |
+
+### `[seed]` fields (batch study context)
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| foundation | uint64 | `0` | Base seed; 0 = random |
+| defect | uint64 | `0` | 0 = derive: foundation + 3000 |
+| formation | uint64 | `0` | 0 = derive: foundation + 6000 |
+| thermal | uint64 | `0` | 0 = derive: foundation + 8000 |
+| placement | uint64 | `0` | 0 = derive: foundation + 11000 |
+
+### Dot-path mutation table (`batch_merger.cpp`)
+
+| Dot-path prefix | Mapped struct |
+|---|---|
+| `environment.*` | `EnvironmentSection` |
+| `run.*` | `RunSection` |
+| `material.*` | `MaterialSection` |
+| `simulation.*` | `SimulationSection` |
+| `pbc.*` | `PBCSection` |
+| `cell.*` | `CellSection` |
+| `observe.*` | `ObserveSection` |
+| `analysis.structure.*` | `VsimStructureAnalysisSection` |
+| `analysis.sampling.*` | `VsimSamplingSection` |
+| `analysis.scale_sampling.*` | `VsimScaleSamplingSection` |
+| `analysis.inference.*` | `VsimAnalysisInferenceSection` |
+
+### Runtime-deferred axes
+
+| kind | Wired | Notes |
+|------|-------|-------|
+| `"static"` | ✅ beta-12 | Factorial cartesian product |
+| `"stochastic"` | ⏳ v5.1.0 | Distribution sampling; seed_source required |
+| `"formation"` | ⏳ v5.2.0 | Draws from `[formation.library.*]` |
+
+### Groups 41–43 status (WO-VSIM-62C)
+
+| Group | Target | Tests | Status |
+|-------|--------|-------|--------|
+| 41 | `test_batch_parser` | P1–P18 (18) | PASS |
+| 42 | `test_batch_expander` | E1–E10 (10) | PASS |
+| 43 | `test_batch_runner_static` | R1–R12 (12) | PASS |

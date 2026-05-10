@@ -38,15 +38,6 @@
  *   [suite.smoke]         → SuiteSection smoke subset
  *   [report]              → GoldenReportSection
  *
- * WO-VSIM-61C/61D analysis pipeline sections (analysis-only .vsim scripts):
- *   [system]                  → VsimDocument::pipeline_system
- *   [analysis.structure]      → VsimDocument::pipeline_structure
- *   [analysis.sampling]       → VsimDocument::pipeline_sampling
- *   [analysis.scale_sampling] → VsimDocument::pipeline_scale_sampling  (WO-61D)
- *   [analysis.inference]      → VsimDocument::pipeline_inference        (WO-61D v2)
- *   [inference]               → VsimDocument::pipeline_inference        (v1 deprecated alias)
- *   [output]                  → VsimDocument::pipeline_output
- *
  * Unknown sections are captured in VsimDocument::raw_sections.
  *
  * WO-56C  |  v5.0.0-beta.7  |  WO-VSIM-03B  |  beta-8
@@ -94,7 +85,7 @@ private:
 
 	void parse_content(const std::string& content);
 
-	void handle_section(const std::string& section_name, int line_no);
+	void handle_section(const std::string& section_name, int line_no, bool double_bracket = false);
 	void handle_key_value(const std::string& key, const std::string& raw_value, int line_no);
 
 	void apply_project_key(const std::string& key, const Value& val, int line_no);
@@ -104,8 +95,6 @@ private:
 	void apply_export_visual_key(const std::string& key, const Value& val, int line_no);
 	void apply_visual_key(const std::string& key, const Value& val, int line_no);
 	void apply_visual_external_key(const std::string& key, const Value& val, int line_no);
-	void apply_open_key(const std::string& key, const Value& val, int line_no);
-	void apply_open_advanced_key(const std::string& key, const Value& val, int line_no);
 	void apply_variance_key(const std::string& key, const Value& val, int line_no);
 	void apply_n_evolution_key(const std::string& key, const Value& val, int line_no);
 	void apply_while_key(const std::string& key, const Value& val, int line_no);
@@ -120,33 +109,10 @@ private:
 	void apply_material_key(const std::string& key, const Value& val, int line_no);
 	void apply_run_key(const std::string& key, const Value& val, int line_no);
 	void apply_environment_key(const std::string& key, const Value& val, int line_no);
-	void apply_chemistry_key(const std::string& key, const Value& val, int line_no);
 	void apply_excite_key(const std::string& key, const Value& val, int line_no);
 	void apply_observe_key(const std::string& key, const Value& val, int line_no);
 	void apply_override_particle_key(const std::string& key, const Value& val, int line_no);
 	void apply_raw_object_key(const std::string& key, const Value& val, int line_no);
-
-	// WO-VSIM-04A: isomer analysis appliers
-	void apply_isomer_analysis_key(const std::string& key, const Value& val, int line_no);
-	void apply_isomer_generator_key(const std::string& key, const Value& val, int line_no);
-	void apply_isomer_tracking_key(const std::string& key, const Value& val, int line_no);
-
-	// WO-VSIM-61C: analysis pipeline section appliers
-	void apply_pipeline_system_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_structure_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_sampling_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_inference_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_output_key(const std::string& key, const Value& val, int line_no);
-
-	// WO-VSIM-61D: scale sampling applier
-	void apply_pipeline_scale_sampling_key(const std::string& key, const Value& val, int line_no);
-
-	// WO-VSIM-62A: empirical verification appliers
-	void apply_pipeline_verify_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_verify_structure_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_verify_rdf_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_verify_msd_key(const std::string& key, const Value& val, int line_no);
-	void apply_pipeline_verify_mass_key(const std::string& key, const Value& val, int line_no);
 
 	// Golden suite section appliers
 	void apply_golden_run_config(GoldenTestRunConfig& cfg,
@@ -170,7 +136,6 @@ private:
 	VsimDocument  doc_;
 	std::string   current_section_;
 	bool          in_molecule_block_ = false;  // inside [[simulation.molecule]] sub-block
-	bool          in_double_bracket_ = false;  // true when section header was [[ ]] not [ ]
 
 	// WO-VSIM-03B parse state
 	std::string   current_excite_type_;        // active [excite.<type>] subtype (empty = none)

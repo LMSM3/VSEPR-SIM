@@ -1,0 +1,193 @@
+# scripts/validation/val_08_benzene_dimer_s22.vsim
+# Priority 8 — Benzene dimer, S22 benchmark set
+# Geometry: non-periodic molecular pair (open boundary)
+# Main modules: dispersion sanity check
+# External target: CCSD(T)/CBS binding energy
+# S22 #14 (benzene dimer, T-shaped): -2.73 kcal/mol = -0.1184 eV
+# S22 #15 (benzene dimer, parallel displaced): -2.78 kcal/mol = -0.1206 eV
+# Geometry from Jurecka et al. PCCP 2006, DOI: 10.1039/b600027d
+# This is a non-periodic test — no [cell] or [boundary] block
+# vsper validate scripts/validation/val_08_benzene_dimer_s22.vsim
+
+[project]
+name        = val_08_benzene_dimer_s22
+version     = v5.0.0-beta.8
+seed_base   = 8008
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+# No [cell] block — open boundary
+# No [boundary] block — open boundary
+# No [pbc] block — not periodic
+
+[species.C]
+charge = 0.0
+mass   = 12.011
+
+[species.H]
+charge = 0.0
+mass   = 1.008
+
+[dispersion]
+method = d3_bj
+cutoff = 20.0
+units  = angstrom
+# Long cutoff required for molecular pair — no periodic image assistance
+
+[electrostatics]
+method = none
+# Benzene dimer binding is dispersion-dominated
+# Electrostatics: SAPT decomposition shows small induction/electrostatic component
+# For dispersion-only sanity check, electrostatics = none is correct
+# Confirm: if partial charges are needed for full energy decomposition, revisit
+
+# ── T-shaped geometry ─────────────────────────────────────────────────────────
+
+[test.BENZENE_T_SHAPED]
+type    = molecular_pair
+formula = C6H6:C6H6
+
+[test.BENZENE_T_SHAPED.structure]
+type   = xyz_geometry
+# Geometry from S22 set, Jurecka et al. 2006
+# Confirm: xyz_geometry block reads inline or from external file
+# T-shaped: one benzene flat, one perpendicular, CH pointing at ring centroid
+# Center-of-mass separation ≈ 5.0 Å
+
+source = external/s22/benzene_dimer_t.xyz
+# Fallback: inline geometry below if external import absent
+
+[test.BENZENE_T_SHAPED.structure.inline]
+# Monomer A — flat benzene (z=0 plane)
+C   0.0000  1.3970  0.0000
+C   1.2094  0.6985  0.0000
+C   1.2094 -0.6985  0.0000
+C   0.0000 -1.3970  0.0000
+C  -1.2094 -0.6985  0.0000
+C  -1.2094  0.6985  0.0000
+H   0.0000  2.4810  0.0000
+H   2.1485  1.2405  0.0000
+H   2.1485 -1.2405  0.0000
+H   0.0000 -2.4810  0.0000
+H  -2.1485 -1.2405  0.0000
+H  -2.1485  1.2405  0.0000
+# Monomer B — perpendicular benzene, CH pointing down at monomer A centroid
+# COM at (0, 0, 5.0); ring plane perpendicular to z
+C   0.0000  0.0000  5.0000
+C   0.0000  1.3970  5.0000
+C   0.0000  0.6985  6.2094
+C   0.0000 -0.6985  6.2094
+C   0.0000 -1.3970  5.0000
+C   0.0000 -0.6985  3.7906
+H   0.0000  2.4810  5.0000
+H   0.0000  1.2405  7.1485
+H   0.0000 -1.2405  7.1485
+H   0.0000 -2.4810  5.0000
+H   0.0000 -1.2405  2.8515
+H   0.0000  0.0000  3.9190
+# Note: H pointing toward monomer A centroid is at (0, 0, 3.919) approx
+
+[test.BENZENE_T_SHAPED.formation]
+mode        = fixed_geometry
+relax_steps = 0
+# Fixed geometry: CCSD(T) reference uses S22 geometry
+# Do not relax — geometry shift would invalidate energy comparison
+
+[test.BENZENE_T_SHAPED.analysis]
+interaction_energy    = true
+interaction_energy_decomposition = false
+# Full SAPT decomposition not in scope
+dispersion_energy     = true
+geometry_check        = true
+intermolecular_distance = true
+
+[test.BENZENE_T_SHAPED.expected]
+binding_energy_eV     = -0.1184
+binding_energy_tol    = 0.015
+# ±0.015 eV = ±0.35 kcal/mol tolerance from D3(BJ) vs CCSD(T)/CBS
+# D3(BJ) typically within ±0.2 kcal/mol for S22
+# Tolerance is generous to account for dispersion parameterization differences
+intermolecular_distance = 5.0
+distance_tol            = 0.3
+
+# ── Parallel displaced geometry ───────────────────────────────────────────────
+
+[test.BENZENE_PD]
+type    = molecular_pair
+formula = C6H6:C6H6
+
+[test.BENZENE_PD.structure]
+type   = xyz_geometry
+source = external/s22/benzene_dimer_pd.xyz
+
+[test.BENZENE_PD.structure.inline]
+# Monomer A — flat benzene at z=0
+C   0.0000  1.3970  0.0000
+C   1.2094  0.6985  0.0000
+C   1.2094 -0.6985  0.0000
+C   0.0000 -1.3970  0.0000
+C  -1.2094 -0.6985  0.0000
+C  -1.2094  0.6985  0.0000
+H   0.0000  2.4810  0.0000
+H   2.1485  1.2405  0.0000
+H   2.1485 -1.2405  0.0000
+H   0.0000 -2.4810  0.0000
+H  -2.1485 -1.2405  0.0000
+H  -2.1485  1.2405  0.0000
+# Monomer B — parallel, displaced by ~1.4 Å in x, 3.5 Å in z
+C   1.4000  1.3970  3.5000
+C   2.6094  0.6985  3.5000
+C   2.6094 -0.6985  3.5000
+C   1.4000 -1.3970  3.5000
+C   0.1906 -0.6985  3.5000
+C   0.1906  0.6985  3.5000
+H   1.4000  2.4810  3.5000
+H   3.5485  1.2405  3.5000
+H   3.5485 -1.2405  3.5000
+H   1.4000 -2.4810  3.5000
+H  -0.7485 -1.2405  3.5000
+H  -0.7485  1.2405  3.5000
+
+[test.BENZENE_PD.formation]
+mode        = fixed_geometry
+relax_steps = 0
+
+[test.BENZENE_PD.analysis]
+interaction_energy      = true
+dispersion_energy       = true
+geometry_check          = true
+intermolecular_distance = true
+
+[test.BENZENE_PD.expected]
+binding_energy_eV       = -0.1206
+binding_energy_tol      = 0.015
+intermolecular_distance = 3.5
+distance_tol            = 0.3
+
+# ── Suite-level comparison ─────────────────────────────────────────────────────
+
+[comparison]
+systems             = BENZENE_T_SHAPED,BENZENE_PD
+expect_similar_binding = true
+binding_ratio_tolerance = 0.15
+# T-shaped and parallel-displaced have nearly equal binding energies in S22
+# This comparison confirms the dispersion model is not strongly geometry-biased
+
+[run]
+mode  = static
+steps = 0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                   = val_08_benzene_dimer_s22
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true

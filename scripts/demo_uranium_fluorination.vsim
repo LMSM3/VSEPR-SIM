@@ -1,0 +1,81 @@
+[project]
+name        = "dynamic_uranium_fluorination"
+version     = "0.1"
+description = "Reactive high-temperature MD model of uranium fluorination with dynamic U-F bonding."
+author      = "VSIM"
+
+[cell]
+type = "orthorhombic"
+lx = 28.0
+ly = 28.0
+lz = 28.0
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+mode        = "reactive_md"
+module      = "langevin_reactive"
+integrator  = "velocity_verlet"
+steps       = 25000
+dt_fs       = 0.05
+temperature_K = 1500.0
+friction       = 0.02
+periodic = true
+
+[export]
+profile = "reactive_md_report"
+output_dir = "out/demo_uranium_fluorination"
+write_xyz            = true
+write_xyzf           = true
+write_xyzfull        = true
+write_analysis_json  = true
+write_metrics_tsv    = true
+write_report_md      = true
+write_events_json    = true
+write_manifest_json  = true
+write_dashboard_svg  = true
+xyz_output      = "out/demo_uranium_fluorination/initial_state.xyz"
+xyzfull_output  = "out/demo_uranium_fluorination/uranium_fluorination.xyzfull"
+metrics_output  = "out/demo_uranium_fluorination/metrics.tsv"
+events_output   = "out/demo_uranium_fluorination/events.json"
+report_output   = "out/demo_uranium_fluorination/report.md"
+manifest_output = "out/demo_uranium_fluorination/manifest.json"
+snapshot_interval = 10
+event_interval    = 1
+metrics_interval  = 10
+
+[visual]
+output_type              = "advanced_render"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = false
+show_rdf_plot            = true
+show_bond_events         = true
+show_charge_overlay      = true
+show_velocity_vectors    = true
+
+[open]
+enabled = true
+command = "vsepr-sim open"
+file    = "out/demo_uranium_fluorination/uranium_fluorination.xyzf"
+mode    = "advanced"
+
+[open.advanced]
+data_inspector = true
+trajectory_controls = true
+event_overlay = true
+bond_overlay = true
+charge_overlay = true
+velocity_overlay = true
+start_paused = true
+default_frame = 0

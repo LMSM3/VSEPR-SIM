@@ -94,8 +94,8 @@ target_link_libraries(basic_molecule_validation vsepr_sim vsepr_pot vsepr_core)
 vsepr_add_test(NAME BasicMoleculeValidation TARGET basic_molecule_validation LABELS core quick)
 
 add_executable(basic_isomer_validation basic_isomer_validation.cpp)
-target_link_libraries(basic_isomer_validation vsepr_sim vsepr_pot vsepr_core)
-vsepr_add_test(NAME BasicIsomerValidation TARGET basic_isomer_validation LABELS core)
+target_link_libraries(basic_isomer_validation vsepr_sim vsepr_pot vsepr_core vsepr_analysis)
+vsepr_add_test(NAME BasicIsomerValidation TARGET basic_isomer_validation LABELS core isomer)
 
 add_executable(test_ethane_torsion test_ethane_torsion.cpp)
 target_link_libraries(test_ethane_torsion vsepr_sim vsepr_pot vsepr_core)
@@ -898,3 +898,332 @@ target_include_directories(test_wo_03b PRIVATE
 target_compile_options(test_wo_03b PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
 vsepr_add_test(NAME IntentAuthoringTest TARGET test_wo_03b
     LABELS vsim material run environment excite observe override raw scripting beta8 quick)
+
+# ============================================================================
+# Group 37: WO-VSIM-03B Stress / Failure-Mapping
+# ============================================================================
+# test_wo_03b_stress — adversarial parse inputs for all WO-VSIM-03B sections:
+#   [material], [run], [environment], [excite.*], [observe],
+#   [[override.particle]], [[raw.object]], and general structural errors.
+# Verifies that every known bad input produces a soft ParseError or
+# ValidationResult warning rather than an uncaught exception or silent corruption.
+
+add_executable(test_wo_03b_stress test_wo_03b_stress.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_wo_03b_stress PRIVATE
+    ${PROJECT_SOURCE_DIR}/include/vsim_override
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_wo_03b_stress PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME IntentAuthoringStressTest TARGET test_wo_03b_stress
+    LABELS vsim material run environment excite observe override raw stress beta9 quick)
+
+# ============================================================================
+# Group 38: WO-VSIM-03C — Registry Resolution Engine
+# ============================================================================
+# test_wo_03c — RegistryBundle + RegistryResolver + VsimRuntime::resolve_material.
+#   R1  RegistryBundle default-constructed is empty
+#   R2  resolve_proto("B1_NaCl") returns correct fields
+#   R3  alias "rocksalt" → B1_NaCl via MaterialSection
+#   R4  prototype set directly resolves correctly
+#   R5  [REGISTRY] log lines emitted for all fields
+#   R6  unknown prototype — no crash, unpopulated bundle
+#   R7  ionic family coverage (~11 aliases)
+#   R8  elemental metals + graphene (is_periodic=false for graphene)
+#   R9  molecular geometry aliases — is_periodic=false for all
+#   R10 polymers / organics — populated, is_periodic=false
+#   R11 porous / framework — is_periodic=true
+#   R12 bead / premacro coverage
+#   R13 VsimRuntime::resolve_material() with [material] section
+#   R14 VsimRuntime::resolve_material() without [material] section
+#   R15 Level 0 end-to-end gate: parse + resolve
+#   R16 UO2 fluorite end-to-end + sub-registry fields (B9-15)
+#   R17 resolve_export_profile — research_report / minimal / publication (B9-16)
+#   R18 apply_registry_defaults — explicit user values not overwritten (B9-12)
+
+add_executable(test_wo_03c test_wo_03c.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_wo_03c PRIVATE
+    ${PROJECT_SOURCE_DIR}/include/vsim_override
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_wo_03c PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME RegistryResolutionTest TARGET test_wo_03c
+    LABELS vsim material registry resolver beta9 quick RegistryCore)
+
+# ============================================================================
+# Group 39: Demo Script Suite — file-based parse + validate + resolve
+# ============================================================================
+# test_demo_scripts — Parses all beta-9/10 demo .vsim scripts from disk.
+#   D1  demo_01_nacl_level0     — Level 0 casual alias (rocksalt → B1_NaCl)
+#   D2  demo_02_silicon_diamond — Level 1 prototype key (A4_Si → diamond_cubic)
+#   D3  demo_03_pbc_nacl        — [cell]+[boundary]+[pbc]+Ewald fields
+#   D4  demo_04_md_laser        — [run]=md, [excite.laser], [observe]
+#   D5  demo_05_variance_while  — beta-10 inline [variance]/[N_evolution]/[while]
+#   D6  demo_06_batch_sweep     — [batch] two-job parameter sweep
+
+add_executable(test_demo_scripts test_demo_scripts.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_demo_scripts PRIVATE
+    ${PROJECT_SOURCE_DIR}/include/vsim_override
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_demo_scripts PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+target_compile_definitions(test_demo_scripts PRIVATE
+    SCRIPTS_DIR="${PROJECT_SOURCE_DIR}/scripts")
+vsepr_add_test(NAME DemoScriptSuiteTest TARGET test_demo_scripts
+    LABELS vsim demo material registry pbc excite observe variance while batch beta9 beta10 quick RegistryCore)
+
+# ============================================================================
+# Group 40: Beta-10 Smoke Tests — install layout, CLI commands, run folders
+# ============================================================================
+# test_b10_core — Exercises beta-10 operational layer:
+#   T1  AppDataPaths resolves config/bin/logs paths
+#   T2  create_run_folder creates run_001/run_002 with manifest
+#   T3  next_run_number increments past existing folders
+#   T4  DoctorCommand instantiates and prints header/status
+#   T5  InspectCommand summarises a .vsim file
+#   T6  InspectCommand summarises a .xyz file
+#   T7  InspectCommand summarises a project folder with run_001
+#   T8  AssocCommand compiles and has correct names
+#   T9  OpenCommand returns error for missing file
+#   T10 RunCommand --safe validates and resolves minimal NaCl script
+
+add_executable(test_b10_core test_b10_core.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_doctor.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_run.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_open.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_inspect.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_assoc.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_validate.cpp
+    ${PROJECT_SOURCE_DIR}/src/cli/cmd_version.cpp)
+target_include_directories(test_b10_core PRIVATE
+    ${PROJECT_SOURCE_DIR}/include/vsim_override
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_b10_core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME Beta10SmokeTest TARGET test_b10_core
+    LABELS beta10 install cli run inspect doctor assoc output_layout FinalBetaCore InstallCore)
+
+# ============================================================================
+# Group 35b: Ambient Chemistry Integration Tests
+# ============================================================================
+# test_chemistry_vsim — Parser, bridge, runtime, and observe-metric coverage
+#   C1  [chemistry] block parses all keys
+#   C2  [system] legacy alias routes to ChemistrySection
+#   C3  heat = -1 derives from environment.temperature
+#   C4  explicit heat overrides temperature derivation
+#   C5  ChemistrySection defaults correct
+#   C6  min_score_threshold default = 0.25
+#   C7  chemistry = "none" → is_active() == false
+#   C8  chemistry = "oxidation" → is_active() / has_chemistry() true
+#   C9  ReactionBridge::run_pass non-negative evaluated count
+#   C10 single-molecule doc → 0 pairs evaluated
+#   C11 VsimRuntime::run_chemistry_pass proxies bridge
+#   C12 eval_observe_metrics "reaction_events" counts log entries
+#   C13 eval_observe_metrics empty-log → no crash, non-negative value
+#   C14 unknown metric produces non-empty warning
+#   C15 KernelEventLog count non-decreasing after run_pass
+
+add_executable(test_chemistry_vsim test_chemistry_vsim.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_chemistry_vsim PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_chemistry_vsim PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME AmbientChemistryTest TARGET test_chemistry_vsim
+    LABELS vsim chemistry reaction heat_gate observe kernel_events ambient beta9 quick ChemistryCore)
+
+# ============================================================================
+# Group 38b: WO-VSIM-04A — Isomer Detection Revival
+# ============================================================================
+# test_isomer_detection — 9 unit tests for the graph-validity pipeline:
+#   T1  Formula extraction from MolecularGraph
+#   T2  Valence pass  — H-O-O-H → NeutralValid
+#   T3  Valence fail  — H with 2 bonds → InvalidValence
+#   T4  Disconnected fail — allow_fragments=false → DisconnectedInvalid
+#   T5  Disconnected allowed — allow_fragments=true → NeutralValid
+#   T6  Duplicate removal — same graph, different atom ordering → same hash
+#   T7  Constitutional isomer — same formula, different graph hash
+#   T8  Conformer — same graph hash, RMSD > tolerance
+#   T9  Ring count via Euler formula
+
+add_executable(test_isomer_detection test_isomer_detection.cpp)
+target_link_libraries(test_isomer_detection vsepr_analysis vsepr_core)
+target_include_directories(test_isomer_detection PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_isomer_detection PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME IsomerDetectionTest TARGET test_isomer_detection
+    LABELS isomer graph valence canonical_hash wo04a quick IsomerCore)
+
+# test_isomer_vsim_parser — VSIM parser integration for new isomer blocks:
+#   P1  [analysis.isomers] parses all keys
+#   P2  [generator.isomers] parses all keys
+#   P3  [analysis.isomer_tracking] parses all keys
+#   P4  Unknown keys fall through to raw_sections
+
+add_executable(test_isomer_vsim_parser test_isomer_vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_isomer_vsim_parser PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_isomer_vsim_parser PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME IsomerVsimParserTest TARGET test_isomer_vsim_parser
+    LABELS isomer vsim parser wo04a quick IsomerParser)
+
+# stress_isomer_pipeline — thousands of candidates through the full pipeline
+#   Sections:
+#     A  Validity sweep: N_PERM_REPEAT permutations × all base graphs
+#     B  Hash permutation-invariance
+#     C  Constitutional isomer family sweep (C2H4O2)
+#     D  Conformer RMSD sweep
+#     E  Known-invalid gate tests
+#     F  Markdown/CSV/JSON report generation
+
+add_executable(stress_isomer_pipeline stress_isomer_pipeline.cpp)
+target_link_libraries(stress_isomer_pipeline vsepr_analysis vsepr_core)
+target_include_directories(stress_isomer_pipeline PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(stress_isomer_pipeline PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME IsomerPipelineStress TARGET stress_isomer_pipeline
+    LABELS isomer stress pipeline wo04a perf IsomerStress)
+
+# isomer_demo — narrated end-to-end demo for WO-VSIM-04A:
+#   Run 1  C2H6O constitutional isomers (ethanol vs DME)
+#   Run 2  C2H4O2 five-member family (4 valid, 1 disconnected)
+#   Run 3  Valence traps (H-overbonded, C-pentavalent, O-trivalent)
+#   Run 4  Disconnected CO+CO: DisconnectedInvalid vs allow_fragments=true
+#   Run 5  Permutation-invariance: ethanol over 20 shuffles (0 failures)
+#   Run 6  RMSD conformer sweep: SameStructure vs Conformer boundary
+#   Run 7  Full batch: 6 valid + 2 invalid candidates, 3 report files
+
+add_executable(isomer_demo
+    ${PROJECT_SOURCE_DIR}/apps/isomer_demo.cpp)
+target_link_libraries(isomer_demo vsepr_analysis vsepr_core)
+target_include_directories(isomer_demo PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(isomer_demo PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME IsomerDemo TARGET isomer_demo
+    LABELS isomer demo wo04a quick IsomerDemo)
+
+# =============================================================================
+# WO-B9-001 — Batch Manifest Runner
+#
+# Targets:
+#   batch_runner      — CLI entry point (manifest.json → run tree)
+#
+# New source files introduced:
+#   apps/batch_runner.cpp
+#   src/batch/manifest_loader.cpp
+#   src/batch/manifest_runner.cpp
+#
+# Demo manifest:
+#   scripts/b9_reactor_channel_001_manifest.json
+#   (4 temperatures × 3 pressures × 3 seeds = 36 runs)
+# =============================================================================
+
+add_executable(batch_runner
+    ${PROJECT_SOURCE_DIR}/apps/batch_runner.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/manifest_loader.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/manifest_runner.cpp)
+target_include_directories(batch_runner PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(batch_runner PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME BatchManifestRunner TARGET batch_runner
+    LABELS batch manifest wo-b9-001 beta9 quick BatchRunner)
+
+# =============================================================================
+# WO-VSEPR-SIM-62B — Batch Verification Aggregation (Group 40 / Day 62 / beta-12)
+#
+# Tests: 20 assertions covering VerificationRunRecord aggregation,
+#        pass-rate calculation, gate evaluation, failure mode classification,
+#        TSV/markdown writers, and BatchRunRecord verify field wiring.
+#
+# New files introduced:
+#   include/batch/failure_modes.hpp         (header — failure mode codes)
+#   include/batch/batch_verification.hpp    (header — public API)
+#   src/batch/batch_verification_kernel.hpp (header — internal kernel impl)
+#   src/batch/batch_verification.cpp        (source — verification engine)
+# =============================================================================
+
+add_executable(test_batch_verification
+    ${PROJECT_SOURCE_DIR}/tests/test_batch_verification.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_verification.cpp)
+target_include_directories(test_batch_verification PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_batch_verification PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME BatchVerificationAggregation TARGET test_batch_verification
+    LABELS batch verify aggregation wo-vsepr-sim-62b beta12 quick BatchVerification)
+
+# =============================================================================
+# WO-VSIM-62C — Batch Layer Parser & Static Axis Runtime (Groups 41 & 42)
+#
+# Group 41 — Batch parser tests (P1–P18)
+#   Parser struct population, validate() error contracts,
+#   [study], [batch.base/design/axis/case/expand], [seed], [formation.library.*]
+#
+# Group 42 — Batch expander tests (E1–E10)
+#   Cartesian product, replicates, seed_policy split/shift,
+#   SeedResolver derivation, cases × axes cross-product,
+#   case/axis override precedence, batch_plan.tsv writer
+#
+# New source files introduced:
+#   include/batch/batch_document.hpp
+#   include/batch/batch_parser.hpp       src/batch/batch_parser.cpp
+#   include/batch/batch_expander.hpp     src/batch/batch_expander.cpp
+#   include/batch/seed_resolver.hpp      src/batch/seed_resolver.cpp
+#   include/batch/batch_merger.hpp       src/batch/batch_merger.cpp
+#   include/batch/batch_checkpoint.hpp   src/batch/batch_checkpoint.cpp
+#   include/batch/batch_require_checker.hpp  src/batch/batch_require_checker.cpp
+#   include/batch/batch_aggregator.hpp   src/batch/batch_aggregator.cpp
+#   include/batch/resolved_writer.hpp    src/batch/resolved_writer.cpp
+# =============================================================================
+
+add_executable(test_batch_parser
+    ${PROJECT_SOURCE_DIR}/tests/test_batch_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/seed_resolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_batch_parser PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_batch_parser PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME BatchParserGroup41 TARGET test_batch_parser
+    LABELS batch parser wo-vsim-62c beta12 quick BatchParser)
+
+add_executable(test_batch_expander
+    ${PROJECT_SOURCE_DIR}/tests/test_batch_expander.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_expander.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/seed_resolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_batch_expander PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_batch_expander PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME BatchExpanderGroup42 TARGET test_batch_expander
+    LABELS batch expander wo-vsim-62c beta12 quick BatchExpander)
+
+add_executable(test_batch_runner_static
+    ${PROJECT_SOURCE_DIR}/tests/test_batch_runner_static.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_expander.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/seed_resolver.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_merger.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_checkpoint.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_require_checker.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/batch_aggregator.cpp
+    ${PROJECT_SOURCE_DIR}/src/batch/resolved_writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+target_include_directories(test_batch_runner_static PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_compile_options(test_batch_runner_static PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+vsepr_add_test(NAME BatchRunnerStaticGroup43 TARGET test_batch_runner_static
+    LABELS batch runner static wo-vsim-62c beta12 BatchRunnerStatic)

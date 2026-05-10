@@ -1,0 +1,109 @@
+# scripts/validation/val_01_caf2_fluorite.vsim
+# Priority 1 — CaF₂ fluorite structure
+# Geometry: cubic, AB₂
+# Main modules: PBC + Ewald + charge scaling
+# External target: Madelung energy
+# M(fluorite) = 5.03879...  E_Mad = -M * e² / (4πε₀ * a)
+# Experimental a₀ = 5.4626 Å
+# vsper validate scripts/validation/val_01_caf2_fluorite.vsim
+
+[project]
+name        = val_01_caf2_fluorite
+version     = v5.0.0-beta.8
+seed_base   = 8001
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[cell]
+type    = orthorhombic
+lengths = 5.4626, 5.4626, 5.4626
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = true
+unwrap_for_diffusion = false
+
+[material]
+id      = caf2_fluorite
+formula = CaF2
+classes = ionic_crystal,cubic,fluorite_structure
+
+[material.structure]
+type     = fluorite_lattice
+# Ca at FCC sites: (0,0,0) + FCC translations
+# F  at tetrahedral holes: (1/4,1/4,1/4) and (3/4,3/4,3/4) + FCC translations
+elements = Ca,F
+a0       = 5.4626
+units    = angstrom
+
+[species.Ca]
+charge    = +2.0
+mass      = 40.078
+# Confirm: partial charge model or formal charge
+# Formal charge used here for Madelung validation
+
+[species.F]
+charge    = -1.0
+mass      = 18.998
+
+[electrostatics]
+method          = ewald
+# Confirm: Ewald parameters below against codebase defaults
+ewald_alpha     = 0.3
+ewald_kmax      = 8
+ewald_rcut      = 9.0
+units           = angstrom
+
+[formation]
+mode        = fixed_lattice
+relax_steps = 0
+# Do not relax — Madelung validation is geometry-sensitive
+# Relaxation with approximate potentials will shift a₀ and invalidate the reference
+
+[analysis]
+madelung_energy       = true
+madelung_constant     = true
+coordination_Ca       = true
+coordination_F        = true
+rdf                   = true
+rdf_pairs             = Ca-F,Ca-Ca,F-F
+rdf_rmax              = 8.0
+rdf_bins              = 200
+charge_neutrality     = true
+
+[expected]
+madelung_constant     = 5.03879
+madelung_constant_tol = 0.001
+# E_Madelung = -5.03879 * (2 * 1) * e² / (4πε₀ * 2.365 Å)
+# nearest-neighbour Ca-F distance = a₀/4 * sqrt(3) ≈ 2.365 Å
+coordination_Ca       = 8
+coordination_F        = 4
+charge_sum            = 0.0
+charge_sum_tol        = 1e-10
+
+[run]
+mode  = static
+steps = 0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                  = val_01_caf2_fluorite
+include_material_cards = true
+include_metric_tables  = true
+include_expected_trends = true
