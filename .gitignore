@@ -187,3 +187,7 @@ verification/downloaded_refs.json
 # Backup files
 *.bak
 *.backup
+
+# Runtime output artefacts
+out/
+
