@@ -1,21 +1,20 @@
-﻿# scripts/demo_approach2_formation_path.vsim
+# scripts/demo_approach2_formation_path.vsim
 # =============================================================================
-# Approach 2 — Formation-path dependence
+# Approach 2 -- Formation-path dependence
 #
-# Composition is fixed (NaCl). Thermal history is the independent variable.
-# Final structure is the dependent response.
+# Five thermal protocols applied to NaCl, all sharing the same melt origin
+# (1400 K equilibrated state). Independent variable: thermal history.
+# Primary observables: total energy, RDF peak sharpness (FWHM proxy),
+#                      coordination at endpoint, order parameter
+# Ranking target: total energy lower = more ordered -> Section 4 table
 #
-# One melt starting point branches into five thermal protocols:
-#   slow_cool       — continuous cool from 1400 K to 300 K over 20 000 steps
-#   rapid_quench    — drop from 1400 K to 300 K in 500 steps
-#   stepped_cool    — isothermal holds at 1200, 900, 600, 300 K (3000 steps each)
-#   reheat_cycle    — quench to 400 K, anneal, reheat to 900 K, cool to 300 K
-#   isothermal_anneal — hold at 700 K for 15 000 steps from disordered start
+# Seeds: 4 per job.  Output: out/approach2_formation_path/
+# Graph: dashboard SVG via export.profile = research_report
 #
-# Each protocol runs 4 seeds. Endpoint observables: total energy, RDF,
-# coordination number, local disorder score.
+# [visual] overlay_sequence includes "memory" -- this is most informative at
+# the isothermal_anneal endpoint (job 5) where ordering nucleates from scratch.
 #
-# vsper validate scripts/demo_approach2_formation_path.vsim
+# vsper run scripts/demo_approach2_formation_path.vsim
 # =============================================================================
 
 [project]
@@ -23,6 +22,17 @@ name        = demo_approach2_formation_path
 version     = v5.0.0-beta.12
 seed_base   = 9201
 determinism = false
+description = "Approach 2: five NaCl thermal protocols ranked by endpoint total energy"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "5x5x5"
+phase     = "solid"
+
+[run]
+mode         = "md_nvt"
+output_level = "standard"
 
 [kernel]
 pass_through        = true
@@ -35,205 +45,102 @@ formation_events = true
 dynamic_energy   = true
 phase_events     = true
 
-[universal_controls]
-dt               = 0.001
-steps_form       = 3000
-save_every       = 100
-temperature_melt = 1400
-temperature_low  = 300
-
-# Shared composition — all protocols start from the same melt
-[material.nacl_melt]
-id      = nacl_melt
-classes = ionic_crystal,molten_phase,formation_path_base
-formula = NaCl
-
-[material.nacl_melt.structure]
-type     = fcc_ionic_lattice
-elements = Na,Cl
-size     = 5x5x5
-
-[material.nacl_melt.formation]
-mode        = melt_and_hold
-temperature = 1400
-relax_steps = 3000
-# Melt and hold at 1400 K until energy variance stabilises.
-# This common liquid state is the fork point for all protocols below.
-
-# Protocol 1: slow continuous cool (1400 → 300 K, 20 000 steps)
-[material.slow_cool]
-id      = slow_cool
-classes = ionic_crystal,crystallisation_slow
-formula = NaCl
-rule    = cool_from_melt
-parent  = nacl_melt
-
-[material.slow_cool.formation]
-mode           = continuous_cool
-temp_start     = 1400
-temp_end       = 300
-cool_steps     = 20000
-# Cooling rate: (1400-300)/20000 = 0.055 K/step
-
-[material.slow_cool.analysis]
-rdf            = true
-coordination   = true
-local_disorder = true
-total_energy   = true
-order_param    = true
-
-[material.slow_cool.expected_signature]
-primary = well_ordered_rocksalt_at_300K
-trend_1 = sharp_rdf_peaks_indicating_crystallinity
-trend_2 = coordination_6_fully_recovered
-
-# Protocol 2: rapid quench (1400 → 300 K in 500 steps)
-[material.rapid_quench]
-id      = rapid_quench
-classes = ionic_crystal,amorphisation,glass_formation
-formula = NaCl
-rule    = cool_from_melt
-parent  = nacl_melt
-
-[material.rapid_quench.formation]
-mode           = continuous_cool
-temp_start     = 1400
-temp_end       = 300
-cool_steps     = 500
-# Cooling rate: (1400-300)/500 = 2.2 K/step — rapid quench
-
-[material.rapid_quench.analysis]
-rdf            = true
-coordination   = true
-local_disorder = true
-total_energy   = true
-order_param    = true
-
-[material.rapid_quench.expected_signature]
-primary = disordered_or_amorphous_endpoint
-trend_1 = broad_rdf_peaks_relative_to_slow_cool
-trend_2 = higher_total_energy_than_slow_cool
-trend_3 = coordination_spread_around_6
-
-# Protocol 3: stepped cool with isothermal holds
-[material.stepped_cool]
-id      = stepped_cool
-classes = ionic_crystal,staged_crystallisation
-formula = NaCl
-rule    = step_cool_from_melt
-parent  = nacl_melt
-
-[material.stepped_cool.formation]
-mode        = stepped_cool
-steps       = [1200, 900, 600, 300]
-hold_steps  = 3000
-# Four isothermal holds: 3000 steps each at 1200, 900, 600, 300 K.
-# Total: 12 000 steps. Each hold allows local equilibration before next step.
-
-[material.stepped_cool.analysis]
-rdf            = true
-coordination   = true
-local_disorder = true
-total_energy   = true
-order_param    = true
-
-[material.stepped_cool.expected_signature]
-primary = partially_ordered_intermediate_endpoint
-trend_1 = rdf_quality_between_slow_and_rapid
-trend_2 = energy_between_slow_cool_and_rapid_quench
-
-# Protocol 4: melt-quench-reheat cycle
-[material.reheat_cycle]
-id      = reheat_cycle
-classes = ionic_crystal,annealing_cycle
-formula = NaCl
-rule    = melt_quench_reheat
-parent  = nacl_melt
-
-[material.reheat_cycle.formation]
-mode           = reheat_cycle
-quench_temp    = 400
-quench_steps   = 800
-anneal_temp    = 400
-anneal_steps   = 4000
-reheat_temp    = 900
-reheat_steps   = 2000
-final_cool_temp = 300
-final_cool_steps = 3000
-# Trajectory: 1400 K → quench to 400 K → anneal 4000 steps →
-#             reheat to 900 K → cool to 300 K.
-
-[material.reheat_cycle.analysis]
-rdf            = true
-coordination   = true
-local_disorder = true
-total_energy   = true
-order_param    = true
-
-[material.reheat_cycle.expected_signature]
-primary = annealing_recovers_partial_order_from_quenched_state
-trend_1 = energy_lower_than_rapid_quench
-trend_2 = rdf_sharpened_by_reheat_step
-
-# Protocol 5: isothermal anneal from disordered start
-[material.isothermal_anneal]
-id      = isothermal_anneal
-classes = ionic_crystal,isothermal_ordering
-formula = NaCl
-rule    = anneal_disordered
-
-[material.isothermal_anneal.structure]
-type     = fcc_ionic_lattice
-elements = Na,Cl
-size     = 5x5x5
-start    = disordered
-# start = disordered: ions placed at lattice sites but with randomised
-# occupancy — equivalent to a high-temperature configuration.
-
-[material.isothermal_anneal.formation]
-mode        = nvt_hold
-temperature = 700
-hold_steps  = 15000
-# Hold at 700 K for 15 000 steps; observe whether order nucleates.
-
-[material.isothermal_anneal.analysis]
-rdf            = true
-coordination   = true
-local_disorder = true
-total_energy   = true
-order_param    = true
-
-[material.isothermal_anneal.expected_signature]
-primary = order_nucleation_at_700K_timescale
-trend_1 = rdf_sharpens_during_run
-trend_2 = energy_decreases_monotonically_as_order_grows
-
-# 4 seeds per protocol
-[batch]
-print_plan    = true
-abort_on_fail = false
-job           = formation_path_comparison
-temperature   = ["1400"]
-seed_count    = 4
-aggregate     = true
-analyze       = rdf
-analyze       = coordination
-analyze       = variance energy.total
-measure       = energy_var
-
 [variance]
 print_results = true
 energy_var    = "energy.total  last 100  0.02"
 
+# ---------------------------------------------------------------------------
+# Five batch jobs -- one per thermal protocol
+# ---------------------------------------------------------------------------
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: slow continuous cool (1400 -> 300 K, 20 000 steps)
+job           = slow_cool
+temperature   = ["1400"]
+cool_rate     = ["0.055"]
+max_steps     = 20000
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# Job 2: rapid quench (1400 -> 300 K in 500 steps, rate 2.2 K/step)
+job           = rapid_quench
+temperature   = ["1400"]
+cool_rate     = ["2.2"]
+max_steps     = 500
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# Job 3: stepped cool with isothermal holds at 1200/900/600/300 K
+job           = stepped_cool
+temperature   = ["1400"]
+cool_schedule = ["1200,900,600,300"]
+hold_steps    = ["3000"]
+max_steps     = 12000
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# Job 4: melt-quench-reheat cycle
+job               = reheat_cycle
+temperature       = ["1400"]
+quench_temp       = ["400"]
+anneal_steps      = ["4000"]
+reheat_temp       = ["900"]
+final_cool_temp   = ["300"]
+max_steps         = 9800
+seed_count        = 4
+aggregate         = true
+analyze           = rdf
+analyze           = coordination
+analyze           = order_param
+analyze           = variance energy.total
+measure           = energy_var
+
+# Job 5: isothermal anneal from disordered start at 700 K
+# (memory overlay is most informative here -- nucleation from scratch)
+job           = isothermal_anneal
+temperature   = ["700"]
+start_config  = ["disordered"]
+max_steps     = 15000
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
 [export]
-write_xyz           = true
-write_analysis_json = true
+profile             = research_report
 write_metrics_tsv   = true
 write_report_md     = true
-write_events_jsonl  = true
 write_manifest_json = true
 output_dir          = "out/approach2_formation_path"
 
+# ---------------------------------------------------------------------------
+# Visual
+# memory overlay tracks where order has nucleated vs. where disorder persists.
+# At the isothermal_anneal endpoint it shows nucleation front geometry.
+# ---------------------------------------------------------------------------
 [visual]
 output_type            = "terminal_overlay_cycle"
 animation_mode         = "overlay"
@@ -245,4 +152,12 @@ show_bar_chart         = true
 overlay_sequence       = ["density", "coordination", "orient_order", "memory"]
 
 [visual.external]
-enabled = true
+enabled          = true
+render           = energy_trace
+render           = rdf
+render           = coordination_change
+render           = order_param_trace
+render           = memory_overlay
+render           = dashboard
+export_format    = svg
+show_progress    = true

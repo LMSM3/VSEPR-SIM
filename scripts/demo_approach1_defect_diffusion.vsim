@@ -1,17 +1,17 @@
-﻿# scripts/demo_approach1_defect_diffusion.vsim
+# scripts/demo_approach1_defect_diffusion.vsim
 # =============================================================================
-# Approach 1 — Defect-seeded diffusion comparison
+# Approach 1 -- Defect-seeded diffusion comparison
 #
-# Defect class: categorical independent variable (vacancy_Na, vacancy_Cl,
-#               schottky_pair, frenkel_Na).
-# Defect concentration: fixed at 1 % for this demonstration run.
-# Dependent response: MSD, displacement variance, coordination change.
+# Four NaCl defect scenarios run under matched NVT conditions (800 K).
+# Independent variable : defect type (4 batch jobs, one per type)
+# Primary observables  : MSD per species, displacement variance,
+#                        coordination change, hop event counts
+# Ranking target       : Na MSD ascending -> Section 4 cross-scenario table
 #
-# Four NaCl 6x6x6 supercell scenarios run under matched NVT conditions
-# (800 K, 5000 steps) for 3 seeds each.
-# Batch engine aggregates results across seeds into a single report.
+# Seeds: 3 per job.  Output: out/approach1_defect_diffusion/
+# Graph: dashboard SVG via export.profile = research_report
 #
-# vsper validate scripts/demo_approach1_defect_diffusion.vsim
+# vsper run scripts/demo_approach1_defect_diffusion.vsim
 # =============================================================================
 
 [project]
@@ -19,6 +19,19 @@ name        = demo_approach1_defect_diffusion
 version     = v5.0.0-beta.12
 seed_base   = 9101
 determinism = false
+description = "Approach 1: four NaCl point-defect types compared by Na MSD"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "6x6x6"
+phase     = "solid"
+
+[run]
+mode         = "md_nvt"
+temperature  = 800
+max_steps    = 5000
+output_level = "standard"
 
 [kernel]
 pass_through        = true
@@ -27,175 +40,80 @@ event_registry      = true
 continual_reporting = true
 
 [kernel.trace]
-formation_events = true
 defect_events    = true
 transport_events = true
 dynamic_energy   = true
-
-[universal_controls]
-dt               = 0.001
-steps_form       = 2000
-steps_relax      = 5000
-save_every       = 50
-temperature_mid  = 800
-
-# Scenario A: Na vacancy at 1 %
-[material.nacl_vacancy_na]
-id      = nacl_vacancy_na
-classes = ionic_crystal,point_defect_migration
-formula = NaCl
-rule    = vacancy_hop
-
-[material.nacl_vacancy_na.structure]
-type            = fcc_ionic_lattice
-elements        = Na,Cl
-size            = 6x6x6
-defects_initial = vacancy
-defect_species  = Na
-defect_fraction = 0.01
-
-[material.nacl_vacancy_na.formation]
-mode        = relax_from_ordered_lattice
-temperature = 800
-relax_steps = 2000
-
-[material.nacl_vacancy_na.analysis]
-vacancy_migration = true
-diffusion_proxy   = true
-mean_displacement = true
-local_disorder    = true
-msd_by_species    = true
-coordination      = true
-
-[material.nacl_vacancy_na.expected_signature]
-primary = na_vacancy_hop_coordination_drop
-trend_1 = cation_vacancy_mobility_exceeds_anion
-trend_2 = msd_na_greater_than_msd_cl
-
-# Scenario B: Cl vacancy at 1 %
-[material.nacl_vacancy_cl]
-id      = nacl_vacancy_cl
-classes = ionic_crystal,point_defect_migration
-formula = NaCl
-rule    = vacancy_hop
-
-[material.nacl_vacancy_cl.structure]
-type            = fcc_ionic_lattice
-elements        = Na,Cl
-size            = 6x6x6
-defects_initial = vacancy
-defect_species  = Cl
-defect_fraction = 0.01
-
-[material.nacl_vacancy_cl.formation]
-mode        = relax_from_ordered_lattice
-temperature = 800
-relax_steps = 2000
-
-[material.nacl_vacancy_cl.analysis]
-vacancy_migration = true
-diffusion_proxy   = true
-mean_displacement = true
-local_disorder    = true
-msd_by_species    = true
-coordination      = true
-
-[material.nacl_vacancy_cl.expected_signature]
-primary = cl_vacancy_hop_coordination_drop
-trend_1 = anion_mobility_lower_than_cation
-trend_2 = msd_cl_elevated_relative_to_pristine
-
-# Scenario C: Schottky pair (Na + Cl vacancy, charge-neutral) at 1 %
-[material.nacl_schottky_pair]
-id      = nacl_schottky_pair
-classes = ionic_crystal,paired_defect_migration
-formula = NaCl
-rule    = schottky_pair_hop
-
-[material.nacl_schottky_pair.structure]
-type            = fcc_ionic_lattice
-elements        = Na,Cl
-size            = 6x6x6
-defects_initial = schottky_pair
-defect_fraction = 0.01
-
-[material.nacl_schottky_pair.formation]
-mode        = relax_from_ordered_lattice
-temperature = 800
-relax_steps = 2000
-
-[material.nacl_schottky_pair.analysis]
-vacancy_migration = true
-diffusion_proxy   = true
-mean_displacement = true
-local_disorder    = true
-msd_by_species    = true
-coordination      = true
-
-[material.nacl_schottky_pair.expected_signature]
-primary = correlated_na_cl_displacement
-trend_1 = pair_migration_slower_than_single_vacancy
-trend_2 = both_species_msd_elevated_equally
-
-# Scenario D: Na Frenkel interstitial at 1 %
-[material.nacl_frenkel_na]
-id      = nacl_frenkel_na
-classes = ionic_crystal,interstitial_migration
-formula = NaCl
-rule    = frenkel_interstitial_hop
-
-[material.nacl_frenkel_na.structure]
-type              = fcc_ionic_lattice
-elements          = Na,Cl
-size              = 6x6x6
-defects_initial   = frenkel_interstitial
-defect_species    = Na
-defect_fraction   = 0.01
-
-[material.nacl_frenkel_na.formation]
-mode        = relax_from_ordered_lattice
-temperature = 800
-relax_steps = 2000
-
-[material.nacl_frenkel_na.analysis]
-vacancy_migration = true
-diffusion_proxy   = true
-mean_displacement = true
-local_disorder    = true
-msd_by_species    = true
-coordination      = true
-
-[material.nacl_frenkel_na.expected_signature]
-primary = interstitial_na_high_displacement
-trend_1 = frenkel_msd_exceeds_schottky
-trend_2 = cl_sublattice_relatively_immobile
-
-# 3 seeds per scenario via batch
-[batch]
-print_plan    = true
-abort_on_fail = false
-job           = defect_comparison
-temperature   = ["800"]
-seed_count    = 3
-aggregate     = true
-analyze       = msd
-analyze       = variance displacement
-measure       = energy_var
 
 [variance]
 print_results    = true
 energy_var       = "energy.total  last 100  0.03"
 displacement_var = "displacement  all  0.05"
 
+# ---------------------------------------------------------------------------
+# Four batch jobs -- one per defect type
+# ---------------------------------------------------------------------------
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: Na vacancy
+job           = vacancy_na
+defect        = ["vacancy_Na"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# Job 2: Cl vacancy
+job           = vacancy_cl
+defect        = ["vacancy_Cl"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# Job 3: Schottky pair (charge-neutral Na+Cl vacancy)
+job           = schottky_pair
+defect        = ["schottky_pair"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# Job 4: Na Frenkel interstitial
+job           = frenkel_na
+defect        = ["frenkel_Na"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# ---------------------------------------------------------------------------
+# Export  (research_report = XYZ + analysis + metrics TSV + report MD +
+#          events JSONL + manifest JSON + dashboard SVG)
+# ---------------------------------------------------------------------------
 [export]
-write_xyz           = true
-write_analysis_json = true
+profile             = research_report
 write_metrics_tsv   = true
 write_report_md     = true
-write_events_jsonl  = true
 write_manifest_json = true
 output_dir          = "out/approach1_defect_diffusion"
 
+# ---------------------------------------------------------------------------
+# Visual  (terminal overlay + external render for SVG graphs)
+# ---------------------------------------------------------------------------
 [visual]
 output_type            = "terminal_overlay_cycle"
 animation_mode         = "overlay"
@@ -207,4 +125,11 @@ show_bar_chart         = true
 overlay_sequence       = ["displacement", "coordination", "density"]
 
 [visual.external]
-enabled = true
+enabled          = true
+render           = msd_trace
+render           = hop_event_timeline
+render           = coordination_change
+render           = defect_bar_chart
+render           = dashboard
+export_format    = svg
+show_progress    = true
