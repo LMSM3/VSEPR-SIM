@@ -1,0 +1,281 @@
+﻿# scripts/demo_approach3_powder_sintering.vsim
+# =============================================================================
+# Approach 3 — Powder packing and sintering-readiness
+#
+# Initial-condition protocol is the categorical independent variable.
+# Applied stress, vibration amplitude, and size ratio are continuous parameters.
+# Dependent variables: packing density, coordination, void distribution,
+# contact geometry, sintering-readiness proxy score.
+#
+# Five packing protocols:
+#   loose_drop        — particles settled by gravity from random positions
+#   compressed        — uniaxial compression applied after loose drop
+#   vibration_settled — sinusoidal vibration during settling
+#   bimodal           — two particle sizes (size_ratio = 0.4) mixed 60:40
+#   contaminated      — 5 % foreign species (Al2O3 in an MgO bed)
+#
+# Each protocol runs 4 seeds. Analysis is geometric: Voronoi local density,
+# coordination number distribution, contact statistics, void distribution,
+# compaction curve (stress sweep for compressed protocol).
+#
+# vsper validate scripts/demo_approach3_powder_sintering.vsim
+# =============================================================================
+
+[project]
+name        = demo_approach3_powder_sintering
+version     = v5.0.0-beta.12
+seed_base   = 9301
+determinism = false
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events  = true
+contact_events    = true
+dynamic_energy    = true
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 5000
+steps_relax      = 3000
+save_every       = 100
+temperature_low  = 300
+
+# Protocol 1: loose drop — particles settle under gravity, no applied load
+[material.mgo_loose_drop]
+id      = mgo_loose_drop
+classes = ceramic_powder,granular_packing,loose_settled
+formula = MgO
+rule    = gravity_drop_packing
+
+[material.mgo_loose_drop.structure]
+type            = powder_bed
+particle_shape  = sphere
+particle_radius = 2.5
+particle_count  = 200
+box_size        = 40.0
+units           = angstrom
+fill_method     = random_drop
+# fill_method = random_drop: particles placed at random (x,y) positions at
+# the top of the box and allowed to settle under a gravity-like z-force.
+
+[material.mgo_loose_drop.formation]
+mode        = settle_under_gravity
+gravity_z   = -0.01
+relax_steps = 5000
+
+[material.mgo_loose_drop.analysis]
+voronoi_density    = true
+coordination       = true
+contact_statistics = true
+void_distribution  = true
+packing_fraction   = true
+rdf                = true
+
+[material.mgo_loose_drop.expected_signature]
+primary = random_loose_packing_fraction_0p60
+trend_1 = broad_coordination_distribution_4_to_8
+trend_2 = large_void_tail_in_distribution
+
+# Protocol 2: compressed — uniaxial stress applied along z after loose drop
+[material.mgo_compressed]
+id      = mgo_compressed
+classes = ceramic_powder,granular_packing,uniaxial_compressed
+formula = MgO
+rule    = gravity_drop_then_compress
+parent  = mgo_loose_drop
+
+[material.mgo_compressed.formation]
+mode              = uniaxial_compress
+compress_axis     = z
+applied_stress    = 0.5
+# applied_stress in GPa-equivalent reduced units.
+# Compaction curve: stress swept from 0 to applied_stress over relax_steps.
+compress_steps    = 3000
+hold_steps        = 2000
+
+[material.mgo_compressed.analysis]
+voronoi_density    = true
+coordination       = true
+contact_statistics = true
+void_distribution  = true
+packing_fraction   = true
+compaction_curve   = true
+# compaction_curve: records density vs. incremental stress during compression.
+rdf                = true
+
+[material.mgo_compressed.expected_signature]
+primary = higher_packing_fraction_than_loose
+trend_1 = coordination_peak_shifted_toward_6
+trend_2 = void_tail_reduced_versus_loose_drop
+trend_3 = compaction_curve_shows_densification_knee
+
+# Protocol 3: vibration-settled — sinusoidal vibration during settling
+[material.mgo_vibrated]
+id      = mgo_vibrated
+classes = ceramic_powder,granular_packing,vibration_settled
+formula = MgO
+rule    = vibration_settling
+
+[material.mgo_vibrated.structure]
+type            = powder_bed
+particle_shape  = sphere
+particle_radius = 2.5
+particle_count  = 200
+box_size        = 40.0
+units           = angstrom
+fill_method     = random_drop
+
+[material.mgo_vibrated.formation]
+mode              = vibration_settle
+vibration_axis    = z
+vibration_amp     = 0.5
+vibration_freq    = 0.05
+vibration_steps   = 4000
+settle_steps      = 2000
+# Vibration drives particles past local metastable packings;
+# typically yields packing fraction between loose and compressed.
+
+[material.mgo_vibrated.analysis]
+voronoi_density    = true
+coordination       = true
+contact_statistics = true
+void_distribution  = true
+packing_fraction   = true
+rdf                = true
+
+[material.mgo_vibrated.expected_signature]
+primary = packing_fraction_between_loose_and_compressed
+trend_1 = more_uniform_coordination_than_loose_drop
+trend_2 = void_distribution_intermediate
+
+# Protocol 4: bimodal — 60 % large (r=2.5) + 40 % small (r=1.0) particles
+[material.mgo_bimodal]
+id      = mgo_bimodal
+classes = ceramic_powder,granular_packing,bimodal_size
+formula = MgO
+rule    = bimodal_packing
+
+[material.mgo_bimodal.structure]
+type              = powder_bed
+particle_shape    = sphere
+particle_count    = 200
+box_size          = 40.0
+units             = angstrom
+fill_method       = random_drop
+size_distribution = bimodal
+radius_large      = 2.5
+radius_small      = 1.0
+# size_ratio = 0.4, which sits in the Apollonian region where small
+# particles pack efficiently into the voids between large ones.
+fraction_large    = 0.60
+fraction_small    = 0.40
+
+[material.mgo_bimodal.formation]
+mode        = settle_under_gravity
+gravity_z   = -0.01
+relax_steps = 5000
+
+[material.mgo_bimodal.analysis]
+voronoi_density     = true
+coordination        = true
+contact_statistics  = true
+void_distribution   = true
+packing_fraction    = true
+rdf                 = true
+size_resolved_stats = true
+# size_resolved_stats: reports coordination and void statistics separately
+# for large and small particles.
+
+[material.mgo_bimodal.expected_signature]
+primary = packing_fraction_exceeds_monodisperse
+trend_1 = small_particles_fill_tetrahedral_voids
+trend_2 = large_particle_coordination_unchanged
+trend_3 = void_tail_significantly_reduced
+
+# Protocol 5: contaminated — 5 % Al2O3 foreign species in MgO bed
+[material.mgo_contaminated]
+id      = mgo_contaminated
+classes = ceramic_powder,granular_packing,surface_contamination
+formula = MgO
+rule    = gravity_drop_packing
+
+[material.mgo_contaminated.structure]
+type              = powder_bed
+particle_shape    = sphere
+particle_radius   = 2.5
+particle_count    = 200
+box_size          = 40.0
+units             = angstrom
+fill_method       = random_drop
+contaminant       = Al2O3
+contaminant_type  = foreign_species
+contaminant_fraction = 0.05
+# 5 % of particles replaced by Al2O3; radius kept equal to MgO particles.
+# Al2O3 particles have different surface energy → different contact angle.
+
+[material.mgo_contaminated.formation]
+mode        = settle_under_gravity
+gravity_z   = -0.01
+relax_steps = 5000
+
+[material.mgo_contaminated.analysis]
+voronoi_density       = true
+coordination          = true
+contact_statistics    = true
+void_distribution     = true
+packing_fraction      = true
+species_resolved_contacts = true
+# species_resolved_contacts: counts MgO-MgO, MgO-Al2O3, Al2O3-Al2O3
+# contacts separately. Contaminant clustering is visible here.
+rdf                   = true
+
+[material.mgo_contaminated.expected_signature]
+primary = packing_fraction_near_baseline_loose
+trend_1 = contaminant_particles_cluster_at_boundaries
+trend_2 = mgo_al2o3_contacts_reduce_local_coordination
+trend_3 = larger_voids_near_contaminant_clusters
+
+# 4 seeds per protocol
+[batch]
+print_plan    = true
+abort_on_fail = false
+job           = powder_packing_comparison
+temperature   = ["300"]
+seed_count    = 4
+aggregate     = true
+analyze       = packing_fraction
+analyze       = coordination
+analyze       = void_distribution
+analyze       = contact_statistics
+measure       = energy_var
+
+[variance]
+print_results = true
+energy_var    = "energy.total  last 100  0.05"
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_jsonl  = true
+write_manifest_json = true
+output_dir          = "out/approach3_powder_sintering"
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+animation_mode         = "overlay"
+render_interval        = 100
+show_proxy_table       = true
+show_convergence_trace = true
+show_event_timeline    = true
+show_bar_chart         = true
+overlay_sequence       = ["density", "coordination", "contact_age", "void_map"]
+
+[visual.external]
+enabled = true
