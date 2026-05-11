@@ -1,17 +1,21 @@
 """
 vsepr_xyz_popup.pyw
 -------------------
-GUI-only popup launcher for .vsxyz files (VSEPR-SIM XYZ format).
+GUI-only popup launcher for .xyz and .vsxyz files.
 
-Double-click a .vsxyz file → this shows a Tk inspection window with:
+Double-click a .xyz or .vsxyz file → shows a Tk inspection window with:
   - atom count, comment line, coordinate preview
+  - element composition badges (CPK colours)
+  - VSEPR metadata parsed from the comment line (if present)
   - Run Test → invokes qa_random_tests or qa_golden_tests
   - Open Folder → reveals file in Explorer
+  - Save as .xyz → strips .vsxyz metadata prefix
   - Close
 
-Uses pythonw.exe so no console window appears.
+Invoked via installer/bin/open_xyz.cmd (installed) or directly via pythonw.exe.
+No console window — uses pythonw.exe.
 
-VSEPR-SIM research platform — deterministic atomistic simulation.
+VSEPR-SIM v5 research platform — deterministic atomistic simulation.
 """
 
 from __future__ import annotations
@@ -28,17 +32,35 @@ from tkinter import ttk, messagebox, scrolledtext
 # ---------------------------------------------------------------------------
 
 def find_project_root() -> Path:
-    """Walk up from this script to find the VSEPR-SIM root (has CMakeLists.txt)."""
-    p = Path(__file__).resolve().parent
+    """Locate the VSEPR-SIM root in both dev-tree and installed layouts.
+
+    Dev layout  : …/VSEPR-SIM/tools/vsepr_xyz_popup.pyw  (CMakeLists.txt sibling)
+    Installed   : {app}/bin/vsepr_xyz_popup.pyw            (bin/ sibling of data/)
+    """
+    here = Path(__file__).resolve()
+
+    # Installed layout: script lives in {app}/bin/ — project root is {app}
+    installed_root = here.parent.parent
+    if (installed_root / "data").exists() and (installed_root / "bin").exists():
+        return installed_root
+
+    # Dev layout: walk up looking for CMakeLists.txt + atomistic/
+    p = here.parent
     for _ in range(6):
         if (p / "CMakeLists.txt").exists() and (p / "atomistic").exists():
             return p
         p = p.parent
-    return Path(__file__).resolve().parent.parent  # fallback
+
+    return here.parent.parent  # last-resort fallback
 
 
 PROJECT_ROOT = find_project_root()
-BUILD_DIR = PROJECT_ROOT / "build"
+# Installed: executables live in {app}/bin; dev: build/
+BUILD_DIR = (
+    PROJECT_ROOT / "bin"
+    if (PROJECT_ROOT / "bin" / "qa_random_tests.exe").exists()
+    else PROJECT_ROOT / "build"
+)
 
 
 # ---------------------------------------------------------------------------
