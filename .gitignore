@@ -9,6 +9,10 @@ EXPORT/
 build/
 bin/
 lib/
+# Track installer source scripts inside installer/bin even though bin/ is ignored
+!installer/bin/
+!installer/bin/*.cmd
+!installer/bin/*.ps1
 *.out
 
 # Build executables (except in distribution)
