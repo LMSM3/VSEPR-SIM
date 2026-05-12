@@ -24,7 +24,7 @@ $ErrorActionPreference = "Continue"
 $ProjectRoot = $PSScriptRoot | Split-Path
 $SessionName = "random_discovery_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
 $SessionDir = Join-Path $ProjectRoot "outputs\sessions\$SessionName"
-$VseprBin = Join-Path $ProjectRoot "build\bin\vsepr.exe"
+$VseprBin = Join-Path $ProjectRoot "build\vsepr.exe"
 
 # Statistics
 $Script:Total = 0

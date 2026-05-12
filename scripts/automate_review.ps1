@@ -11,9 +11,9 @@ $ErrorActionPreference = "Continue"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectRoot = Split-Path -Parent $ScriptDir
 
-$VseprBin = Join-Path $ProjectRoot "build\bin\vsepr.exe"
+$VseprBin = Join-Path $ProjectRoot "build\vsepr.exe"
 if (-not (Test-Path $VseprBin)) {
-    $VseprBin = Join-Path $ProjectRoot "build\bin\vsepr"
+    $VseprBin = Join-Path $ProjectRoot "build\vsepr"
 }
 
 $ReviewOutput = Join-Path $ProjectRoot "outputs\reviews"

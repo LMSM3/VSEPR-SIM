@@ -10,12 +10,16 @@
 ; Build Installer:
 ;   iscc installer\setup.iss
 ;
-; What this installs:
-;   - VSEPR-SIM kernel (vsepr.exe, vsepr-cli.exe, vsepr_batch.exe)
-;   - VSIM parser + runtime headers (include\vsim\*)
-;   - XYZ popup viewer (tools\vsepr_xyz_popup.pyw + open_xyz.cmd wrapper)
-;   - .xyz and .vsxyz file associations → popup 3-D coordinate viewer
-;   - Optional PATH entry for CLI use
+; Architecture:
+;   File associations are owned by a single canonical script:
+;     installer\register-file-associations.ps1
+;   This installer packages that script and runs it post-install.
+;   The [Registry] section is intentionally empty — the PS script
+;   writes all HKCU entries so no admin rights are needed.
+;
+;   Universal file opener (all VSIM/XYZ types):
+;     installer\bin\open_vsim_file.cmd
+;   Priority: vsepr-sim.exe -> vsepr.exe -> pythonw vsepr_xyz_popup.pyw
 ;
 ; ============================================================================
 
@@ -74,35 +78,38 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [Tasks]
 Name: "desktopicon";  Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 Name: "addtopath";    Description: "Add {#MyAppName} bin to PATH"; GroupDescription: "System Integration:"; Flags: unchecked
-Name: "assoc_xyz";    Description: "Associate .xyz files with VSEPR-SIM viewer"; GroupDescription: "File Associations:"; Flags: unchecked
-Name: "assoc_vsxyz";  Description: "Associate .vsxyz files with VSEPR-SIM viewer"; GroupDescription: "File Associations:"; Flags: unchecked
-Name: "assoc_vsim";   Description: "Associate .vsim scripts with VSEPR-SIM"; GroupDescription: "File Associations:"; Flags: unchecked
+Name: "fileassoc";    Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; GroupDescription: "System Integration:"; Flags: unchecked
 
 [Files]
 ; --- Kernel executables ---
-Source: "build\{#MyAppExeName}";      DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "build\vsepr-cli.exe";        DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "build\vsepr_batch.exe";      DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "build\{#MyAppExeName}";       DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "build\vsepr-sim.exe";         DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\vsepr-cli.exe";         DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "build\vsepr_batch.exe";       DestDir: "{app}\bin"; Flags: ignoreversion
 
-; --- XYZ popup viewer ---
-; The .pyw is launched via open_xyz.cmd which resolves pythonw.exe from PATH.
-Source: "tools\vsepr_xyz_popup.pyw";  DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "installer\bin\open_xyz.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion
+; --- Universal file opener + Python popup viewer ---
+; open_vsim_file.cmd: priority-ordered handler for all VSIM/XYZ types
+;   1. vsepr-sim.exe open (3-D viewer)  2. vsepr.exe open (CLI)  3. pythonw popup
+Source: "tools\vsepr_xyz_popup.pyw";   DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "installer\bin\open_vsim_file.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion
 
-; --- VSIM parser + runtime headers (for developers building against the SDK) ---
+; --- File association script (canonical registry writer — HKCU, no admin) ---
+Source: "installer\register-file-associations.ps1"; DestDir: "{app}\installer"; Flags: ignoreversion
+
+; --- VSIM parser + runtime headers (SDK) ---
 Source: "include\vsim\*"; DestDir: "{app}\include\vsim"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; --- Data / registry files ---
+; --- Data ---
 Source: "data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; --- Scripts ---
 Source: "scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; --- Documentation ---
-Source: "README.md";      DestDir: "{app}"; Flags: ignoreversion isreadme
-Source: "LICENSE";        DestDir: "{app}"; Flags: ignoreversion
+Source: "README.md";         DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "LICENSE";           DestDir: "{app}"; Flags: ignoreversion
 Source: "VSIM_REFERENCE.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "docs\*";         DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "docs\*";            DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; --- Resources ---
 Source: "resources\vsepr.ico"; DestDir: "{app}\resources"; Flags: ignoreversion
@@ -115,25 +122,16 @@ Name: "{autodesktop}\{#MyAppName}";                       Filename: "{app}\bin\{
 
 [Run]
 Filename: "{app}\bin\{#MyAppExeName}"; Parameters: "--version"; Description: "Verify installation (--version)"; Flags: postinstall nowait skipifsilent unchecked
+; Run the canonical association script post-install (HKCU, no admin needed)
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -BinaryPath ""{app}\bin\vsepr-sim.exe"""; Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; Flags: postinstall nowait skipifsilent unchecked; Tasks: fileassoc
 
+[UninstallRun]
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -Unregister"; Flags: nowait
+
+; [Registry] block intentionally empty.
+; All file-type registry entries are written by register-file-associations.ps1
+; under HKCU — no admin rights required, clean uninstall guaranteed.
 [Registry]
-; --- .vsxyz file association (VSEPR native XYZ format) ---
-Root: HKA; Subkey: "Software\Classes\.vsxyz";                        ValueType: string; ValueName: "";       ValueData: "VSEPRSim.VSXYZFile"; Flags: uninsdeletevalue; Tasks: assoc_vsxyz
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.VSXYZFile";            ValueType: string; ValueName: "";       ValueData: "VSEPR-SIM Coordinate File"; Flags: uninsdeletekey; Tasks: assoc_vsxyz
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.VSXYZFile\DefaultIcon"; ValueType: string; ValueName: "";      ValueData: "{app}\resources\vsepr.ico,0"; Tasks: assoc_vsxyz
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.VSXYZFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\open_xyz.cmd"" ""%1"""; Tasks: assoc_vsxyz
-
-; --- .xyz file association (plain XYZ, open with VSEPR-SIM viewer) ---
-Root: HKA; Subkey: "Software\Classes\.xyz\OpenWithProgids";           ValueType: string; ValueName: "VSEPRSim.XYZFile"; ValueData: ""; Flags: uninsdeletevalue; Tasks: assoc_xyz
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.XYZFile";              ValueType: string; ValueName: "";       ValueData: "XYZ Molecule File"; Flags: uninsdeletekey; Tasks: assoc_xyz
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.XYZFile\DefaultIcon";  ValueType: string; ValueName: "";       ValueData: "{app}\resources\vsepr.ico,0"; Tasks: assoc_xyz
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.XYZFile\shell\open\command"; ValueType: string; ValueName: "";  ValueData: """{app}\bin\open_xyz.cmd"" ""%1"""; Tasks: assoc_xyz
-
-; --- .vsim script association ---
-Root: HKA; Subkey: "Software\Classes\.vsim";                         ValueType: string; ValueName: "";       ValueData: "VSEPRSim.VSIMScript"; Flags: uninsdeletevalue; Tasks: assoc_vsim
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.VSIMScript";           ValueType: string; ValueName: "";       ValueData: "VSEPR-SIM Script"; Flags: uninsdeletekey; Tasks: assoc_vsim
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.VSIMScript\DefaultIcon"; ValueType: string; ValueName: "";     ValueData: "{app}\resources\vsepr.ico,0"; Tasks: assoc_vsim
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.VSIMScript\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\vsepr-cli.exe"" ""%1"""; Tasks: assoc_vsim
 
 [Code]
 const
