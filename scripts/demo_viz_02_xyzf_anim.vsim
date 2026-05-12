@@ -1,0 +1,86 @@
+# =============================================================================
+# demo_viz_02_xyzf_anim.vsim
+#
+# Bare-bones multi-frame XYZ trajectory demo.
+# NVT molecular dynamics: OsO4 in vacuum, 300 K, 5 trajectory frames.
+# Demonstrates the xyzf animation player.
+#
+# Run via:
+#   vsepr-sim run scripts/demo_viz_02_xyzf_anim.vsim
+#
+# Or double-click the output osmium_tetroxide.xyzf in Explorer.
+# =============================================================================
+
+[project]
+name        = "demo_viz_02_xyzf_anim"
+version     = "v5.0.0"
+seed_base   = 202
+determinism = true
+description = "Multi-frame NVT MD trajectory — OsO4 at 300 K (xyzf animation demo)"
+
+[material]
+formula   = "OsO4"
+phase     = "gas"
+
+[simulation]
+fire_max_steps    = 100
+fire_dt_fs        = 1.0
+box_size_ang      = 20.0
+periodic          = false
+formation_preset  = "metal"
+
+[[simulation.molecule]]
+formula     = "OsO4"
+count       = 90
+temperature = 300.0
+lattice     = "none"
+
+[environment]
+periodic    = false
+temperature = 300.0
+pressure    = 0.0
+medium      = "vacuum"
+
+[run]
+mode         = "md"
+max_steps    = 500
+dt_fs        = 1.0
+temperature  = 300.0
+converge     = false
+output_level = "normal"
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = false
+write_report_md     = false
+output_dir          = "out/demo_viz_02"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 100
+
+# Advanced-renderer overlays
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_rdf_plot            = true
+show_energy_heatmap      = true
+show_bond_events         = true
+show_charge_overlay      = true
+show_velocity_vectors    = true
+
+# GL window config
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = true
+gl_window_width          = 1280
+gl_window_height         = 800
+
+[visual.external]
+enabled             = true
+render_interval     = 100
+export_format       = "auto"
+export_trajectory   = true
+render              = ["trajectory_last", "energy_trace", "rdf"]
+show_progress       = true
