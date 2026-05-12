@@ -1,4 +1,4 @@
-# VSEPR-Sim -- Project Tour
+# VSEPR-SIM — Project Tour
 
 > A fast orientation to the build system and directory layout.
 > Read top-to-bottom for first-timers; use headings as a map for daily navigation.
@@ -10,18 +10,18 @@
     CMakeLists.txt          -- root orchestrator (start here)
     cmake/
       CoreBuild.cmake       -- Part 1: headless C++ libraries and apps
-      VisBuild.cmake        -- Part 2: OpenGL / GLFW / ImGui / Qt6
+      VisBuild.cmake        -- Part 2: Qt6 / OpenGL / GLFW / ImGui
 
-### Root CMakeLists.txt -- three things it does
+### Root CMakeLists.txt — what it does
 
 | Order | What happens |
 |-------|-------------|
 | 1 | Project identity, C++23, optional CUDA probe, build flags |
-| 2 | include(cmake/CoreBuild.cmake) -- headless stack |
-| 3 | include(cmake/VisBuild.cmake) -- graphics stack |
+| 2 | include(cmake/CoreBuild.cmake) — headless stack |
+| 3 | include(cmake/VisBuild.cmake) — graphics stack |
 | 4 | Tests wired up (both parts must be defined first) |
 
-### cmake/CoreBuild.cmake -- headless libraries (dependency order)
+### cmake/CoreBuild.cmake — headless libraries (dependency order)
 
     vsepr_core       -- header-only interface, src/core/
     vsepr_tracker    -- element identity, random picker, alias resolver
@@ -37,21 +37,21 @@
 
 Apps live in apps/ and are gated by BUILD_APPS=ON.
 
-### cmake/VisBuild.cmake -- graphics (gated by BUILD_VIS=ON)
+### cmake/VisBuild.cmake — graphics (gated by BUILD_VIS=ON)
 
+    Qt6  (system, required for vsepr-desktop)
     OpenGL (system) --> GLFW (system or FetchContent 3.4)
                     --> GLEW (system or FetchContent)
                     --> GLM  (system or FetchContent)
                     --> ImGui (FetchContent)
-                    --> Qt6  (system, optional)
 
-If OpenGL is missing the entire Part 2 is skipped gracefully.
+If Qt6 or OpenGL is missing the entire Part 2 is skipped gracefully.
 
 ### Build options
 
     BUILD_TESTS   ON   -- CTest suite under tests/
     BUILD_APPS    ON   -- CLI apps in apps/
-    BUILD_VIS     ON   -- OpenGL/GUI targets
+    BUILD_VIS     ON   -- Qt6/OpenGL targets
     BUILD_DEMOS   OFF  -- demo targets (opt-in)
 
 Quick build from PowerShell:
@@ -64,62 +64,71 @@ Quick build from PowerShell:
 
 ## 2. Directory Tree (annotated)
 
-    VSPER-SIM/
+    VSEPR-SIM/
     |-- CMakeLists.txt          Root build orchestrator
-    |-- TOUR.md                 This file -- start here
+    |-- TOUR.md                 This file
+    |-- README.md               Project overview and quick start
     |-- cmake/
     |   |-- CoreBuild.cmake     Headless libraries + apps
-    |    -- VisBuild.cmake      OpenGL/ImGui/Qt6 targets
+    |    -- VisBuild.cmake      Qt6/OpenGL targets
     |-- src/
-    |   |-- core/               Core kernel (tracker, trail, units, gas, report)
-    |   |-- gas2/               Advanced EOS engine
-    |    -- gas3/               Quality pipeline + export engine
-    |-- include/                Public C++ headers
-    |-- apps/                   CLI and GUI entry-points
-    |   |-- atomistic*.cpp          Atomistic simulation suite
-    |   |-- report_generator.cpp    Autonomous report runner
-    |   |-- nuclear_core_runner.cpp Nuclear core simulation
-    |   |-- phase*.cpp              Phase-by-phase verification apps
-    |    -- desktop/                Qt6 desktop GUI
-    |-- tests/                  CTest test suite (35 tests, 5 levels)
-    |-- pykernel/               Python physics kernel
-    |   |-- gas.py                  Ideal/real gas EOS and pipe-flow
-    |   |-- gas3_plant_helper.py    RS-0001 plant gas-side analysis
-    |   |-- pipe.py                 Typed synchronous data pipeline
-    |   |-- pipe3_plant_helper.py   RS-0001 plant pipe-network analysis
-    |   |-- helium_tables.py        Helium property tables (ambient to reactor)
-    |   |-- room_sim.py             3D thermal diffusion solver
-    |    -- thermo_pipe.py          Batch thermal runner
-    |-- scripts/                Developer shell and automation
-    |   |-- doc_shell.py            Interactive docs/reports REPL  <-- MAIN ENTRY
-    |   |-- demos/                  Visual demo scripts (VisPy / 3D)
-    |    -- build_*.sh / *.ps1      Build helpers
-    |-- reporting/              Automatic report generation
-    |   |-- generate_report.py          Python report generator
-    |    -- report.tex / report.md      Output templates
-    |-- docs/                   Formal documentation corpus (186-page PDF)
-    |-- out/                    Generated artifacts (PDFs, CSVs, PNGs)
-    |-- reports/                Simulation run reports
-    |-- pipeline/               FastAPI + SSE continual reaction stream
-    |-- data/                   Reference datasets
-     -- .venv/                  Python virtual environment
+    |   |-- cli/                VSIM command handlers (run, validate, doctor)
+    |   |-- vsim/               VSIM parser, document, registry, runtime
+    |   |-- sim/                Molecule builder, VSEPR topology, integrators
+    |   |-- core/               State, force evaluation, energy ledger
+    |   |-- pot/                Potentials (LJ, Coulomb, bonded MM, UFF)
+    |   |-- io/                 XYZ / xyzf / xyzFull / xyzA readers + writers
+    |   |-- thermal/            Thermal runner and xyzC format
+    |    -- dynamic/            Real molecule generator, analysis pipeline
+    |-- include/
+    |   |-- vsim/               VSIM document, parser, runtime headers
+    |   |-- io/                 XYZ format headers
+    |    -- vsepr/              Formula parser, shared interfaces
+    |-- apps/
+    |   |-- vsper/              v5 launcher (vsper run / validate / doctor)
+    |    -- desktop/            Qt 3D workstation
+    |       |-- MainWindow.*    Main window and dock layout
+    |       |-- ViewportWidget.*    3D OpenGL viewport
+    |       |-- bridge/         EngineAdapter: sim data -> SceneDocument
+    |        -- main.cpp        Qt entry point
+    |-- examples/               Sample .vsim scripts and demo trajectories
+    |-- tests/                  Validation suite and beta gate tests
+    |-- docs/
+    |   |-- section*.tex        Methodology (11 files, 186 pages)
+    |   |-- VSIM_LANGUAGE.md    VSIM language specification
+    |    -- VSIM_REFERENCE.md   VSIM schema reference
+    |-- assets/
+    |    -- images/             Verified screenshots and generated visuals
+    |-- dist/
+    |    -- VSEPR-SIM-5.0.0-local/   Installer + packaged binaries
+     -- data/                   Reference datasets (PeriodicTableJSON.json, UFF)
 
 ---
 
 ## 3. Data Flow
 
-    C++ kernel (src/core)
-      gas/gas2/gas3 libs    --> physical property computation
-      vsepr_report          --> collate results, write CSV/JSON to out/
-
-    Python (pykernel)
-      pipe.py               --> stream typed records
-      thermo_pipe.py        --> batch thermal analysis
-      gas3_plant_helper.py  --> plant-cycle RS-0001 analysis
-      reporting/            --> render Markdown and LaTeX from results
-
-    Interactive
-      scripts/doc_shell.py  --> browse, edit, compile, export anything
+    VSIM script (.vsim)
+      vsper run script.vsim
+        |
+        v
+      VsimDocument (parsed, validated)
+        |
+        v
+      Formation engine        --> initial geometry, force-field params
+      Integrator (FIRE/NVT)   --> trajectory steps
+      KernelEventLog          --> per-step events
+        |
+        v
+      ClusterRecord
+      AnalysisRecord          --> Welford stats, Kabsch, RDF, transport
+      DashboardRecord         --> structured pipeline record
+        |
+        v
+      Export (.xyz, .xyzf, .jsonl, .md, .tsv, .svg)
+        |
+        v
+      Qt 3D workstation       --> auto-launched when gl_auto_orbit = true
+        ViewportWidget        --> trajectory playback from .xyzf
 
 ---
 
@@ -127,9 +136,9 @@ Quick build from PowerShell:
 
 | Goal | Command |
 |------|---------|
-| Build everything | cmake -B build -S . and cmake --build build --parallel |
-| Run tests | ctest --test-dir build -V |
-| Interactive docs shell | .venv/Scripts/python scripts/doc_shell.py |
-| Generate a report | python reporting/generate_report.py |
-| 3D helium room demo | python scripts/demos/demo_helium_room_3d.py |
-| Plant gas analysis | python -m pykernel.gas3_plant_helper |
+| Build everything | `cmake -B build -S . -DBUILD_VIS=ON` then `cmake --build build --parallel` |
+| Run tests | `ctest --test-dir build -V` |
+| Run a VSIM script | `vsper run examples/gas_mixing_demo.vsim` |
+| Validate a script | `vsper validate examples/gas_mixing_demo.vsim` |
+| Check installation | `vsper doctor` |
+| Install (adds vsper to PATH) | `.\\dist\\VSEPR-SIM-5.0.0-local\\install-vsepr.ps1` |

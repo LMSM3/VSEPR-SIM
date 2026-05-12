@@ -7,7 +7,7 @@
 int main() {
     using namespace vsepr::infra;
 
-    print_motd_banner("TUI Smoke Test", "v3.0.1");
+    print_motd_banner("TUI Smoke Test", "v5.0.0");
 
     HardwareReport   hw   = run_hardware_check(false, false);
     BootstrapReport  boot = initialize_infrastructure();

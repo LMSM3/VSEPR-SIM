@@ -19,6 +19,7 @@
  */
 
 #include <QApplication>
+#include <QTimer>
 #include "MainWindow.h"
 #include "infra/bootstrap_probe.hpp"
 #include "infra/motd.hpp"
@@ -29,7 +30,7 @@ int main(int argc, char* argv[])
     using namespace vsepr::infra;
 
     const std::string mode    = "Desktop";
-    const std::string version = "v3.0.1";
+    const std::string version = "v5.0.0";
 
     // --- VSEPR-MOTD bootstrap probe ---
     print_motd_banner(mode, version);
@@ -67,6 +68,22 @@ int main(int argc, char* argv[])
 
     MainWindow w;
     w.show();
+
+    // ── Parse --vsim <path> or bare positional .vsim argument ────────────────
+    // Allows: vsepr-desktop --vsim script.vsim
+    //         vsepr-desktop script.vsim
+    QString vsimPath;
+    for (int i = 1; i < argc; ++i) {
+        QString a = QString::fromLocal8Bit(argv[i]);
+        if ((a == "--vsim" || a == "-vsim") && i + 1 < argc) {
+            vsimPath = QString::fromLocal8Bit(argv[++i]);
+        } else if (a.endsWith(".vsim", Qt::CaseInsensitive)) {
+            vsimPath = a;
+        }
+    }
+    if (!vsimPath.isEmpty()) {
+        QTimer::singleShot(0, [&w, vsimPath]() { w.openVsimPath(vsimPath); });
+    }
 
     return app.exec();
 }

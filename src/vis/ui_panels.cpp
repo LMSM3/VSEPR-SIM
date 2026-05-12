@@ -879,9 +879,6 @@ void UIManager::render_gpu_status_panel(Renderer* renderer) {
 
 // Removed legacy handlers - command console now uses simple ParseResult
 
-} // namespace vsepr
-
-
 // ============================================================================
 // Auto-Pilot Panel (auto-spin + auto-capture)
 // ============================================================================
@@ -938,4 +935,7 @@ void UIManager::render_auto_pilot_panel(AutoPilot& pilot) {
 
     ImGui::End();
 }
+
+
+} // namespace vsepr
 

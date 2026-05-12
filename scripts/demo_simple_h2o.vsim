@@ -1,0 +1,45 @@
+# scripts/demo_simple_h2o.vsim
+# ============================================================
+# Minimal H2O relaxation demo  --  single-molecule, no PBC
+# Run: beta10_demo.exe --script scripts/demo_simple_h2o.vsim --headless
+# ============================================================
+
+[project]
+name        = demo_simple_h2o
+version     = v5.0.0-main
+seed_base   = 42
+determinism = true
+description = "Simplest possible vsim demo: relax one water molecule"
+
+[simulation]
+fire_max_steps   = 200
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = organic
+
+step_delay_ms  = 0
+resim_delay_ms = 0
+smooth_resim   = false
+
+[simulation.molecule]
+formula     = H2O
+count       = 1
+temperature = 300.0
+lattice     = none
+
+[export]
+write_xyz           = true
+write_xyzf          = false
+write_analysis_json = false
+write_report_md     = false
+output_dir          = out/demo_simple_h2o
+
+[visual]
+output_type              = terminal_chart
+animation_mode           = spark
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_snapshot_chart      = true
+show_proxy_table         = false
+render_interval          = 20

@@ -136,6 +136,18 @@ struct MoleculeEntry {
 	std::string lattice;        // Optional lattice hint: "hexagonal", "BCC", "FCC", "none"
 	std::string layer_mode;     // Optional stacking mode: "AB", "AA", "turbostratic"
 	int         n_layers = 1;   // Layer count (graphene/graphite stacks)
+
+	// ── Directed injection ───────────────────────────────────────────────────
+	// region: named placement zone within the simulation box.
+	//   Supported values: "corner_xpyp" | "corner_xpyn" | "corner_xnyp" | "corner_xnyn"
+	//   (x+/x- = positive/negative X half; y+/y- = positive/negative Y half)
+	//   Empty string = auto-placement (default, legacy behaviour).
+	std::string region;
+
+	// velocity_drift: inward-directed speed (Å/fs) added to each atom's
+	//   Maxwell-Boltzmann velocity so the gas jet points toward the box centre.
+	//   0.0 = no drift (default).
+	double      velocity_drift = 0.0;
 };
 
 struct SimulationSection {
@@ -916,6 +928,44 @@ struct OpenSection {
 };
 
 // ============================================================================
+// [visual.workspace] — workspace host settings (WO-VSIM-VIS-OVERHAUL-01)
+// Ignored in headless / pure CLI runs. Parsed unconditionally so scripts are
+// portable between workspace and non-workspace environments.
+// ============================================================================
+
+struct VisualWorkspaceSection {
+	bool        enabled          = false;   // auto-open declared `show` directives on load
+	std::string default_layout   = "tabs";  // "tabs" | "detached"
+	bool        auto_open_tree   = false;   // expand object tree on load
+	bool        live             = false;   // subscribe windows to live kernel updates (stretch)
+};
+
+// ============================================================================
+// [room] — room heat-field simulation block (WO-VSIM-VIS-OVERHAUL-01)
+// Drives the room.solver viewable node. Physics is handled by RoomSimulation
+// (ported from pykernel/room_sim.py); this struct carries the parsed config.
+// ============================================================================
+
+struct RoomSection {
+	std::string preset          = "";    // "ambient"|"cold"|"hot"|"lab"|"reactor"|"large_volume"
+	int         n_steps         = 200;   // solver steps before snapshot
+	int         record_interval = 50;    // steps between recorded snapshots
+
+	bool is_active() const { return !preset.empty(); }
+};
+
+// ============================================================================
+// ViewDirective — parsed from `show "<kind>" target = "<path>"` directives
+// Stored on VsimDocument::view_directives (WO-VSIM-VIS-OVERHAUL-01)
+// ============================================================================
+
+struct ViewDirective {
+	std::string kind;      // e.g. "calibration.helix", "data.events.table"
+	std::string target;    // dot-path node: "run.history", "kernel.events", ...
+	std::string options_raw; // raw JSON string from options = { ... } clause (may be empty)
+};
+
+// ============================================================================
 // Golden test document types
 // Populated by [defaults.*], [test.*], [suite], [report] sections
 // ============================================================================
@@ -1242,9 +1292,27 @@ struct ChemistrySection {
 	double min_score_threshold  = 0.25; // overall_score must exceed this to emit
 	int    max_reactions_per_step = 8;  // Cap per simulation step (0 = unlimited)
 
+	// ── Domain layer (organic formula parser integration) ─────────────────
+	// When domain = "peptide" and sequence is non-empty, vsim_parser expands
+	// the sequence into a canonical molecular formula and stores it in
+	// material.formula.  Other domain values are reserved for future modules.
+	//
+	// Supported domain values:
+	//   "peptide"      — amino acid one-letter sequence (e.g. "ACDEFG")
+	//   "small_molecule" — trivial name or condensed formula
+	//   ""             — not set; no organic expansion performed
+	std::string domain;    // "peptide" | "small_molecule" | "" (not set)
+	std::string sequence;  // for domain="peptide": one-letter AA sequence
+
+	// Computed during parse: the canonical formula produced by the organic
+	// formula parser.  Empty if domain/sequence were not set.
+	std::string expanded_formula;
+
 	// ── Helpers ──────────────────────────────────────────────────────────
 	bool is_active()    const { return chemistry != "none"; }
 	bool has_chemistry() const { return !chemistry.empty() && chemistry != "none"; }
+	bool has_domain()    const { return !domain.empty(); }
+	bool has_sequence()  const { return !sequence.empty(); }
 
 	// Derive a 0–999 heat integer from a temperature in Kelvin.
 	// Calibration: 300 K → h≈100; 1000 K → h≈333; 3000 K → h≈999
@@ -1540,6 +1608,9 @@ struct VsimDocument {
 	ExportVisualSection export_visual;
 	VisualSection       visual;
 	VisualExternalSection visual_external;
+	VisualWorkspaceSection visual_workspace;        // [visual.workspace]
+	RoomSection            room;                    // [room]
+	std::vector<ViewDirective> view_directives;     // `show` top-level directives
 	OpenSection         open;                 // [open] / [open.advanced]
 	VarianceSection     variance_cfg;
 	NEvolutionSection   n_evolution_cfg;

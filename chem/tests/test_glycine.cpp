@@ -43,7 +43,7 @@ static std::vector<Atom> make_glycine_atoms(int base_id = 1) {
         .atom_id = id++, .atomic_number = 7, .isotope = 14,
         .atom_name = "N", .element_symbol = "N",
         .position = {0.0, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_BACKBONE_N,
+        .chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N,
         .covalent_radius_pm = 71.0, .vdw_radius_pm = 155.0, .mass_u = 14.007
     });
     // CA (alpha carbon)
@@ -51,7 +51,7 @@ static std::vector<Atom> make_glycine_atoms(int base_id = 1) {
         .atom_id = id++, .atomic_number = 6, .isotope = 12,
         .atom_name = "CA", .element_symbol = "C",
         .position = {1.47, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_ALPHA_C,
+        .chem_role = VSEPR_PEPTIDE_ROLE_ALPHA_C,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
     });
     // C (carbonyl carbon)
@@ -59,7 +59,7 @@ static std::vector<Atom> make_glycine_atoms(int base_id = 1) {
         .atom_id = id++, .atomic_number = 6, .isotope = 12,
         .atom_name = "C", .element_symbol = "C",
         .position = {2.99, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_C,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_C,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
     });
     // O (carbonyl oxygen)
@@ -67,7 +67,7 @@ static std::vector<Atom> make_glycine_atoms(int base_id = 1) {
         .atom_id = id++, .atomic_number = 8, .isotope = 16,
         .atom_name = "O", .element_symbol = "O",
         .position = {2.99, 1.23, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_O,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O,
         .covalent_radius_pm = 66.0, .vdw_radius_pm = 152.0, .mass_u = 15.999
     });
 
@@ -145,7 +145,7 @@ static void test_single_residue_pipeline() {
 
     auto solve_result = pipeline.solve(std::move(*graph_result));
     CHECK(solve_result.has_value(), "solve should succeed");
-    CHECK(solve_result->formation_class == VSEPR_FORM_PEPTIDE, "Formation class should be peptide");
+    CHECK(solve_result->formation_class == VSEPR_FORM_CHAIN, "Formation class should be chain");
     CHECK(solve_result->atom_count == 4, "Summary atom count should be 4");
     CHECK(solve_result->residue_count == 1, "Summary residue count should be 1");
     CHECK(solve_result->bond_count == 0, "No bonds for single residue");

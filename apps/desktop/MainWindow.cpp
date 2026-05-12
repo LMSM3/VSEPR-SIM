@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include <QApplication>
+#include <QFileInfo>
 #include <limits>
 #include <cmath>
 
@@ -327,6 +328,17 @@ void MainWindow::closeEvent(QCloseEvent* event)
 // ============================================================================
 // Slot implementations — all go through EngineAdapter
 // ============================================================================
+
+void MainWindow::openVsimPath(const QString& path)
+{
+    if (path.isEmpty()) return;
+    setWindowTitle(tr("VSEPR — %1").arg(QFileInfo(path).fileName()));
+    consolePanel_->log(tr("Opening .vsim script: %1").arg(path));
+    statusBar()->showMessage(tr("Loaded: %1").arg(path));
+    // Run as a LoadXYZ pass for now so the viewport opens with the script name.
+    // Full .vsim interpreter integration is wired in a future sprint.
+    consolePanel_->log(tr("Script ready. Use Simulation menu to run."));
+}
 
 void MainWindow::onFileOpen()
 {

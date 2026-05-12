@@ -47,28 +47,28 @@ static std::vector<Atom> make_backbone_atoms(int base_id, const char* res_name,
         .atom_id = id++, .atomic_number = 7, .isotope = 14,
         .atom_name = prefix + "_N", .element_symbol = "N",
         .position = {x_offset, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_BACKBONE_N,
+        .chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N,
         .covalent_radius_pm = 71.0, .vdw_radius_pm = 155.0, .mass_u = 14.007
     });
     atoms.push_back(Atom{
         .atom_id = id++, .atomic_number = 6, .isotope = 12,
         .atom_name = prefix + "_CA", .element_symbol = "C",
         .position = {x_offset + 1.47, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_ALPHA_C,
+        .chem_role = VSEPR_PEPTIDE_ROLE_ALPHA_C,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
     });
     atoms.push_back(Atom{
         .atom_id = id++, .atomic_number = 6, .isotope = 12,
         .atom_name = prefix + "_C", .element_symbol = "C",
         .position = {x_offset + 2.99, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_C,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_C,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
     });
     atoms.push_back(Atom{
         .atom_id = id++, .atomic_number = 8, .isotope = 16,
         .atom_name = prefix + "_O", .element_symbol = "O",
         .position = {x_offset + 2.99, 1.23, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_O,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O,
         .covalent_radius_pm = 66.0, .vdw_radius_pm = 152.0, .mass_u = 15.999
     });
 
@@ -81,14 +81,14 @@ static Atom make_sidechain_atom(int id, const char* name, double x, double y, do
         .atom_id = id, .atomic_number = Z,
         .atom_name = name, .element_symbol = (Z == 6 ? "C" : (Z == 8 ? "O" : "X")),
         .position = {x, y, z},
-        .chem_role = VSEPR_ROLE_SIDECHAIN,
+        .chem_role = VSEPR_PEPTIDE_ROLE_SIDECHAIN,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = mass
     };
 }
 
 static Residue make_residue(int res_id, const char* name, int base_id,
                              int sidechain_root = -1,
-                             VSEPR_SidechainClass sc_class = VSEPR_SIDECHAIN_NONE) {
+                             VSEPR_PeptideSidechainClass sc_class = VSEPR_SIDECHAIN_UNKNOWN) {
     Residue r {
         .residue_id = res_id,
         .residue_name = name,
@@ -152,10 +152,10 @@ static void test_gly_ala_bond() {
 
     std::vector<Residue> residues = {
         make_residue(1, "GLY", 1),
-        make_residue(2, "ALA", 5, 9, VSEPR_SIDECHAIN_HYDROPHOBIC),
+        make_residue(2, "ALA", 5, 9, VSEPR_SIDECHAIN_NONPOLAR),
     };
 
-    PeptideFormationPipeline pipeline{VSEPR_ENV_POLAR_SOLVENT};
+    PeptideFormationPipeline pipeline{VSEPR_ENV_POLAR_MEDIUM};
     auto result = pipeline.build_from_residues(residues, all_atoms);
     CHECK(result.has_value(), "build should succeed");
 
@@ -234,7 +234,7 @@ static void test_energy_polar_solvent() {
     };
 
     PeptideFormationPipeline pipeline_vac{VSEPR_ENV_VACUUM};
-    PeptideFormationPipeline pipeline_sol{VSEPR_ENV_POLAR_SOLVENT};
+    PeptideFormationPipeline pipeline_sol{VSEPR_ENV_POLAR_MEDIUM};
 
     auto result_v = pipeline_vac.build_from_residues(residues, all_atoms);
     auto result_s = pipeline_sol.build_from_residues(residues, all_atoms);
@@ -265,7 +265,7 @@ static void test_formation_report() {
         make_residue(2, "ALA", 5),
     };
 
-    PeptideFormationPipeline pipeline{VSEPR_ENV_POLAR_SOLVENT};
+    PeptideFormationPipeline pipeline{VSEPR_ENV_POLAR_MEDIUM};
     auto result = pipeline.build_from_residues(residues, all_atoms);
     CHECK(result.has_value(), "build should succeed");
 
@@ -279,7 +279,7 @@ static void test_formation_report() {
     CHECK(std::isfinite(summary->score.confidence_score), "Confidence finite");
 
     // Check formation state
-    CHECK(summary->formation_state == VSEPR_STATE_LOCAL_FOLDED, "State should be LOCAL_FOLDED");
+    CHECK(summary->peptide_state == VSEPR_PEPTIDE_STATE_LOCAL_FOLDED, "State should be LOCAL_FOLDED");
     CHECK(summary->chemical_validity_pass, "Chemical validity should pass");
     PASS();
 }
@@ -305,7 +305,7 @@ static void test_gly_ala_ser() {
         all_atoms.insert(all_atoms.end(), a.begin(), a.end());
         int cb_id = atom_id + 4;
         all_atoms.push_back(make_sidechain_atom(cb_id, "ALA_CB", 5.79 + 1.54, -1.0, 0.0));
-        residues.push_back(make_residue(2, "ALA", atom_id, cb_id, VSEPR_SIDECHAIN_HYDROPHOBIC));
+        residues.push_back(make_residue(2, "ALA", atom_id, cb_id, VSEPR_SIDECHAIN_NONPOLAR));
         atom_id += 5;
     }
     // SER (with OG sidechain)
@@ -318,7 +318,7 @@ static void test_gly_ala_ser() {
         atom_id += 5;
     }
 
-    PeptideFormationPipeline pipeline{VSEPR_ENV_POLAR_SOLVENT};
+    PeptideFormationPipeline pipeline{VSEPR_ENV_POLAR_MEDIUM};
     auto result = pipeline.build_from_residues(residues, all_atoms);
     CHECK(result.has_value(), "build should succeed");
 

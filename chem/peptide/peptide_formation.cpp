@@ -228,9 +228,9 @@ auto PeptideBondEngine::form_peptide_bond(MolecularGraph& graph,
 
     graph.add_bond(peptide_bond);
 
-    // Set the amide nitrogen role
+    // Set the backbone nitrogen role
     if (auto* n_atom = graph.find_atom(rhs.backbone_N)) {
-        n_atom->chem_role = VSEPR_ROLE_AMIDE_N;
+        n_atom->chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N;
     }
 
     return peptide_bond;
@@ -250,21 +250,21 @@ auto BackboneGeometryEngine::initialize_backbone_geometry(MolecularGraph& graph)
 
         if (auto* n = graph.find_atom(residue.backbone_N)) {
             n->position = {x, 0.0, 0.0};
-            n->chem_role = VSEPR_ROLE_BACKBONE_N;
+            n->chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N;
             x += N_CA_BOND_LENGTH_A;
         }
         if (auto* ca = graph.find_atom(residue.backbone_CA)) {
             ca->position = {x, 0.0, 0.0};
-            ca->chem_role = VSEPR_ROLE_ALPHA_C;
+            ca->chem_role = VSEPR_PEPTIDE_ROLE_ALPHA_C;
             x += CA_C_BOND_LENGTH_A;
         }
         if (auto* c = graph.find_atom(residue.backbone_C)) {
             c->position = {x, 0.0, 0.0};
-            c->chem_role = VSEPR_ROLE_CARBONYL_C;
+            c->chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_C;
         }
         if (auto* o = graph.find_atom(residue.backbone_O)) {
             o->position = {x, C_O_BOND_LENGTH_A, 0.0};
-            o->chem_role = VSEPR_ROLE_CARBONYL_O;
+            o->chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O;
         }
 
         x += PEPTIDE_BOND_LENGTH_A;
@@ -324,13 +324,10 @@ auto HydrogenBondEngine::detect_hbonds(const MolecularGraph& graph) const -> std
     std::vector<std::int32_t> acceptors;
 
     for (const auto& atom : graph.atoms()) {
-        if (atom.chem_role == VSEPR_ROLE_HYDROGEN_DONOR ||
-            atom.chem_role == VSEPR_ROLE_BACKBONE_N ||
-            atom.chem_role == VSEPR_ROLE_AMIDE_N) {
+        if (atom.chem_role == VSEPR_PEPTIDE_ROLE_BACKBONE_N) {
             donors.push_back(atom.atom_id);
         }
-        if (atom.chem_role == VSEPR_ROLE_HYDROGEN_ACCEPTOR ||
-            atom.chem_role == VSEPR_ROLE_CARBONYL_O) {
+        if (atom.chem_role == VSEPR_PEPTIDE_ROLE_CARBONYL_O) {
             acceptors.push_back(atom.atom_id);
         }
     }
@@ -414,8 +411,8 @@ auto EnergyModel::evaluate(const MolecularGraph& graph,
 
     // Coulomb energy (simplified, vacuum permittivity)
     constexpr double coulomb_factor = 1389.354; // kJ*A/(mol*e^2) in vacuum
-    double dielectric = (environment == VSEPR_ENV_POLAR_SOLVENT) ? 80.0 :
-                        (environment == VSEPR_ENV_NONPOLAR_SOLVENT) ? 4.0 : 1.0;
+    double dielectric = (environment == VSEPR_ENV_POLAR_MEDIUM)  ? 80.0 :
+                        (environment == VSEPR_ENV_APOLAR_MEDIUM) ?  4.0 : 1.0;
     for (std::size_t i = 0; i < graph.atoms().size(); ++i) {
         for (std::size_t j = i + 1; j < graph.atoms().size(); ++j) {
             const auto& ai = graph.atoms()[i];
@@ -432,7 +429,7 @@ auto EnergyModel::evaluate(const MolecularGraph& graph,
     }
 
     // Solvation energy (simplified Born model)
-    if (environment == VSEPR_ENV_POLAR_SOLVENT) {
+    if (environment == VSEPR_ENV_POLAR_MEDIUM) {
         constexpr double born_factor = -69.5; // kJ/mol per charge in water
         for (const auto& atom : graph.atoms()) {
             if (std::abs(atom.partial_charge) > 0.1) {
@@ -451,8 +448,8 @@ auto EnergyModel::evaluate(const MolecularGraph& graph,
         const auto* a = graph.find_atom(bond.a);
         const auto* b = graph.find_atom(bond.b);
         if (!a || !b) continue;
-        if ((a->chem_role == VSEPR_ROLE_CARBONYL_C && b->chem_role == VSEPR_ROLE_AMIDE_N) ||
-            (b->chem_role == VSEPR_ROLE_CARBONYL_C && a->chem_role == VSEPR_ROLE_AMIDE_N)) {
+        if ((a->chem_role == VSEPR_PEPTIDE_ROLE_CARBONYL_C && b->chem_role == VSEPR_PEPTIDE_ROLE_BACKBONE_N) ||
+            (b->chem_role == VSEPR_PEPTIDE_ROLE_CARBONYL_C && a->chem_role == VSEPR_PEPTIDE_ROLE_BACKBONE_N)) {
             ++n_peptide_bonds;
         }
     }
@@ -484,7 +481,7 @@ auto ScoringEngine::score(const MolecularGraph& graph,
     int total_res = 0;
     for (const auto& res : graph.residues()) {
         ++total_res;
-        if (res.sidechain_class == VSEPR_SIDECHAIN_HYDROPHOBIC ||
+        if (res.sidechain_class == VSEPR_SIDECHAIN_NONPOLAR ||
             res.sidechain_class == VSEPR_SIDECHAIN_AROMATIC) {
             ++hydrophobic;
         }
@@ -583,8 +580,8 @@ auto PeptideFormationPipeline::solve(MolecularGraph graph) const -> Result<Forma
     auto func_groups = organic_rules_.detect_functional_groups(g);
 
     FormationSummary summary {};
-    summary.formation_class = VSEPR_FORM_PEPTIDE;
-    summary.formation_state = VSEPR_STATE_LOCAL_FOLDED;
+    summary.formation_class = VSEPR_FORM_CHAIN;
+    summary.peptide_state   = VSEPR_PEPTIDE_STATE_LOCAL_FOLDED;
     summary.energy = *energy_result;
     summary.score = *score_result;
     summary.chemical_validity_pass = true;

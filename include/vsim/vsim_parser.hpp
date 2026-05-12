@@ -104,6 +104,9 @@ private:
 	void apply_export_visual_key(const std::string& key, const Value& val, int line_no);
 	void apply_visual_key(const std::string& key, const Value& val, int line_no);
 	void apply_visual_external_key(const std::string& key, const Value& val, int line_no);
+	void apply_visual_workspace_key(const std::string& key, const Value& val, int line_no);
+	void apply_room_key(const std::string& key, const Value& val, int line_no);
+	void parse_show_directive(const std::string& line, int line_no);
 	void apply_open_key(const std::string& key, const Value& val, int line_no);
 	void apply_open_advanced_key(const std::string& key, const Value& val, int line_no);
 	void apply_variance_key(const std::string& key, const Value& val, int line_no);

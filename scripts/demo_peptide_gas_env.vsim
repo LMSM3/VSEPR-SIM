@@ -1,0 +1,62 @@
+# scripts/demo_peptide_gas_env.vsim
+# Domain audit script — complex organic (peptide) + simple gas species.
+#
+# [chemistry] block uses domain = "peptide" + sequence shorthand.
+# The parser expands the sequence into a canonical Hill formula and injects
+# a MoleculeEntry automatically.  Two additional gas-phase species (N2, H2O)
+# are declared explicitly via [[simulation.molecule]] blocks.
+#
+# Verification targets (C++ audit test):
+#   chemistry.domain           == "peptide"
+#   chemistry.sequence         == "ACDEFG"
+#   chemistry.expanded_formula starts with "C"         (Hill order)
+#   simulation.molecules[0].formula != ""              (auto-injected peptide)
+#   simulation.molecules[1].formula == "N2"
+#   simulation.molecules[2].formula == "H2O"
+
+[project]
+name        = demo_peptide_gas_env
+version     = v5.0.0-beta.7.2
+seed_base   = 7201
+determinism = true
+description = "Mixed peptide + gas-phase environment domain audit"
+
+[chemistry]
+domain   = peptide
+sequence = ACDEFG
+
+[environment]
+temperature = 310.0
+medium      = aqueous
+periodic    = false
+
+[simulation]
+fire_max_steps   = 400
+fire_dt_fs       = 1.0
+box_size_ang     = 50.0
+periodic         = false
+formation_preset = organic
+
+[[simulation.molecule]]
+formula     = N2
+count       = 12
+temperature = 310.0
+
+[[simulation.molecule]]
+formula     = H2O
+count       = 50
+temperature = 310.0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = false
+output_dir          = out/demo_peptide_gas_env
+
+[visual]
+output_type              = terminal_chart
+animation_mode           = spark
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_snapshot_chart      = true
+render_interval          = 25

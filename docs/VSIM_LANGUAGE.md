@@ -554,6 +554,50 @@ If set to `0` or omitted, falls back to `[visual].render_interval`.
 
 ---
 
+### `[visual.workspace]`
+
+Controls the Qt workspace host (launched via `vsper workspace`). Silently ignored in headless runs.
+
+```vsim
+[visual.workspace]
+enabled        = true    # auto-open show directives on load
+default_layout = "tabs"  # "tabs" | "detached"
+auto_open_tree = true    # expand object tree to active run
+live           = false   # stretch: live-update open windows
+```
+
+#### `show` directive
+
+Declares a view to summon when the script runs in the workspace. Any number of `show` statements may appear at script root or inside `[visual.workspace]`.
+
+```vsim
+show "calibration.helix"    target = "run.history"
+show "data.events.timeline" target = "kernel.events"
+show "data.scalar.panel"    target = "run.summary"
+show "room.heatfield"       target = "room.solver" options = { "subsample": 80000 }
+```
+
+`target` is a dot-path node produced by the runtime. `options` is an optional inline JSON object. In headless runs or without `enabled = true`, `show` directives are parsed but have no effect.
+
+See `VSIM_REFERENCE.md § [visual.workspace]` for the full view-kind catalogue.
+
+---
+
+### `[room]`
+
+Drives the room heat-field simulation. Exposes `room.solver` as a viewable node.
+
+```vsim
+[room]
+preset          = "reactor"  # ambient | cold | hot | lab | reactor | large_volume
+n_steps         = 200
+record_interval = 50
+```
+
+See `VSIM_REFERENCE.md § [room]` for field details and `scripts/gallery/room_reactor.vsim` for an example.
+
+---
+
 ### `[kernel]`
 
 Enables the central kernel pass-through and event registry.
@@ -1022,3 +1066,91 @@ or ield_projection.mass_conserved = false.
 | {prefix}.verify_summary.tsv | Tab-separated: check / status / detail |
 
 empirical_pass = false if any enabled check fails.
+
+---
+
+## Organic Domain Shorthand (`[chemistry]` — domain / sequence)
+
+The `[chemistry]` block supports a `domain` + `sequence` shorthand that lets you
+describe complex molecules without writing a Hill formula by hand. The VSIM parser
+expands the input through `expand_organic_formula()` and injects the result into
+`simulation.molecules` as the primary species (index 0).
+
+### Supported domains
+
+| `domain` value | `sequence` input | Expansion strategy |
+|---|---|---|
+| `"peptide"` | One-letter amino acid codes, all uppercase (e.g. `"ACDEFG"`) | 20-residue backbone table; each residue contributes its backbone-subtracted Hill formula; one H2O added for terminal caps |
+| *(any)* | Trivial/common name, lowercase (e.g. `"caffeine"`, `"glucose"`) | Trivial-name lookup table |
+| *(any)* | Condensed formula (e.g. `"C6H12O6"`, `"CH4"`) | Hill-order canonicalization |
+
+If only `sequence` is set and `domain` is omitted, the parser auto-infers
+`domain = "peptide"` when every character in `sequence` is a valid one-letter
+amino acid code (uppercase).
+
+### Molecule injection rules
+
+1. The expanded Hill formula is stored in `chemistry.expanded_formula` (read-only).
+2. `material.formula` is back-filled with the expanded formula **only** if the script
+   did not set it explicitly — so registry-resolver lookups still work.
+3. A `MoleculeEntry` with `count = 1` and `temperature_K` from `[environment]` is
+   **prepended** to `simulation.molecules` unless a molecule with the same formula
+   is already declared in the script.
+4. Explicit `[[simulation.molecule]]` blocks are always preserved in declaration order
+   after the injected primary species.
+
+### Residue table (peptide domain)
+
+Each amino acid contributes its residue formula (free amino acid ? H2O):
+
+| Code | Name | Residue formula |
+|---|---|---|
+| A | Alanine | C3H5NO |
+| C | Cysteine | C3H5NOS |
+| D | Aspartic acid | C4H5NO3 |
+| E | Glutamic acid | C5H7NO3 |
+| F | Phenylalanine | C9H9NO |
+| G | Glycine | C2H3NO |
+| H | Histidine | C6H7N3O |
+| I | Isoleucine | C6H11NO |
+| K | Lysine | C6H12N2O |
+| L | Leucine | C6H11NO |
+| M | Methionine | C5H9NOS |
+| N | Asparagine | C4H6N2O2 |
+| P | Proline | C5H7NO |
+| Q | Glutamine | C5H8N2O2 |
+| R | Arginine | C6H12N4O |
+| S | Serine | C3H5NO2 |
+| T | Threonine | C4H7NO2 |
+| V | Valine | C5H9NO |
+| W | Tryptophan | C11H10N2O |
+| Y | Tyrosine | C9H9NO2 |
+
+Terminal cap adds H2O to the total.
+
+### Full example
+
+```vsim
+[chemistry]
+domain   = peptide
+sequence = ACDEFG   # -> C26H36N6O10S (Ala-Cys-Asp-Glu-Phe-Gly hexapeptide)
+
+[environment]
+temperature = 310.0
+
+[[simulation.molecule]]
+formula = N2
+count   = 12
+
+[[simulation.molecule]]
+formula = H2O
+count   = 50
+```
+
+Resulting `simulation.molecules` after parsing:
+
+| Index | Formula | Count | Source |
+|---|---|---|---|
+| 0 | C26H36N6O10S | 1 | auto-injected from domain expansion |
+| 1 | N2 | 12 | explicit script block |
+| 2 | H2O | 50 | explicit script block |

@@ -345,10 +345,15 @@ add_subdirectory(sim/ehd)
 # --- Organic / Peptide Formation Core (Day 48A — C ABI + C++23 engine) ---
 add_library(vsepr_chem STATIC
     chem/peptide/peptide_formation.cpp
+    chem/organic/organic_formula_parser.cpp
+    src/vsim/node_accessor.cpp
+    src/vsim/vsim_parser.cpp
 )
 target_include_directories(vsepr_chem PUBLIC
     ${PROJECT_SOURCE_DIR}/chem
     ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
 )
 target_link_libraries(vsepr_chem PUBLIC vsepr_core)
 
@@ -376,12 +381,6 @@ target_link_libraries(vsepr_uff PUBLIC vsepr_core)
 # ============================================================================
 
 if(BUILD_APPS)
-    # CLI Tool (legacy)
-    add_executable(vsepr-cli apps/vsepr-cli/main.cpp)
-    target_link_libraries(vsepr-cli vsepr_sim vsepr_pot vsepr_box vsepr_nl)
-    target_include_directories(vsepr-cli PRIVATE ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/include)
-    install(TARGETS vsepr-cli DESTINATION bin)
-
     # Unified CLI library (domain-aware grammar)
     add_library(vsepr_cli STATIC
         src/cli/parse.cpp
@@ -401,6 +400,8 @@ if(BUILD_APPS)
         src/cli/cmd_therm.cpp
         src/cli/cmd_tui.cpp
         src/cli/cmd_ufx.cpp
+        src/cli/cmd_validate.cpp
+        src/cli/cmd_run_vsim.cpp
         src/v4/uff/ufx_schema.cpp
     )
     target_include_directories(vsepr_cli PUBLIC include/ ${PROJECT_SOURCE_DIR})
@@ -410,7 +411,7 @@ if(BUILD_APPS)
         target_include_directories(sqlite3_bundled PUBLIC ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
         set_target_properties(sqlite3_bundled PROPERTIES POSITION_INDEPENDENT_CODE ON)
     endif()
-    target_link_libraries(vsepr_cli PUBLIC vsepr_core vsepr_tracker atomistic vsepr_io coarse_grain sqlite3_bundled)
+    target_link_libraries(vsepr_cli PUBLIC vsepr_core vsepr_chem vsepr_tracker atomistic vsepr_io coarse_grain sqlite3_bundled)
     target_include_directories(vsepr_cli PUBLIC ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
 
     # Unified CLI executable
@@ -857,5 +858,31 @@ target_link_libraries(test_backbone_planarity vsepr_chem vsepr_core)
 target_include_directories(test_backbone_planarity PRIVATE ${PROJECT_SOURCE_DIR}/chem ${PROJECT_SOURCE_DIR})
 add_test(NAME PeptideBackbonePlanarityTest COMMAND test_backbone_planarity)
 set_tests_properties(PeptideBackbonePlanarityTest PROPERTIES LABELS "core;chem;peptide;quick")
+
+# --- Organic formula parser (sequence / trivial name / condensed formula, 8 tests) ---
+add_executable(test_organic_formula_parser chem/tests/test_organic_formula_parser.cpp)
+target_link_libraries(test_organic_formula_parser vsepr_chem vsepr_core)
+target_include_directories(test_organic_formula_parser PRIVATE ${PROJECT_SOURCE_DIR}/chem ${PROJECT_SOURCE_DIR})
+add_test(NAME OrganicFormulaParserTest COMMAND test_organic_formula_parser)
+set_tests_properties(OrganicFormulaParserTest PROPERTIES LABELS "core;chem;organic;quick")
+
+# --- Domain audit: peptide + gas mixed-script parser path (DA1-DA14) ---
+add_executable(test_domain_audit tests/test_domain_audit.cpp)
+target_link_libraries(test_domain_audit vsepr_chem vsepr_core)
+target_include_directories(test_domain_audit PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR})
+add_test(NAME DomainAuditTest COMMAND test_domain_audit)
+set_tests_properties(DomainAuditTest PROPERTIES LABELS "core;vsim;domain;organic;peptide;gas;quick")
+
+# --- Gallery parse smoke: all 5 gallery scripts round-trip (GP1-GP21) ---
+add_executable(test_gallery_parse tests/test_gallery_parse.cpp)
+target_link_libraries(test_gallery_parse vsepr_chem vsepr_core)
+target_include_directories(test_gallery_parse PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR})
+target_compile_options(test_gallery_parse PRIVATE -Wno-unused-parameter)
+add_test(NAME GalleryParseTest COMMAND test_gallery_parse)
+set_tests_properties(GalleryParseTest PROPERTIES LABELS "core;vsim;gallery;visual;quick")
 
 

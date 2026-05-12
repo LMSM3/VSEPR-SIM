@@ -1,0 +1,26 @@
+# @category Environment
+# @title    Reactor hall — helium room sim
+# Ported from scripts/demos/demo_helium_room_3d.py preset=reactor (archived).
+# Obstacle voxels grey; heat dust cloud blue->white->red; alpha = 0.05 + 0.6*|n-0.5|*2.
+# Subsample cap: 80 000 points. Green wireframe bounding box. T_min/mean/max overlay.
+
+[project]
+name = "room_reactor"
+
+[material]
+formula = "He"
+
+[environment]
+temperature = 600.0
+medium      = "helium_gas"
+
+[room]
+preset          = "reactor"
+n_steps         = 200
+record_interval = 50
+
+[visual.workspace]
+enabled = true
+
+show "room.heatfield"    target = "room.solver" options = { "subsample": 80000 }
+show "data.scalar.panel" target = "room.solver"

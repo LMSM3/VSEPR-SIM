@@ -42,28 +42,28 @@ static std::vector<Atom> make_backbone_atoms(int base_id, double x_offset) {
         .atom_id = id++, .atomic_number = 7, .isotope = 14,
         .atom_name = "N", .element_symbol = "N",
         .position = {x_offset, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_BACKBONE_N,
+        .chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N,
         .covalent_radius_pm = 71.0, .vdw_radius_pm = 155.0, .mass_u = 14.007
     });
     atoms.push_back(Atom{
         .atom_id = id++, .atomic_number = 6, .isotope = 12,
         .atom_name = "CA", .element_symbol = "C",
         .position = {x_offset + 1.47, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_ALPHA_C,
+        .chem_role = VSEPR_PEPTIDE_ROLE_ALPHA_C,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
     });
     atoms.push_back(Atom{
         .atom_id = id++, .atomic_number = 6, .isotope = 12,
         .atom_name = "C", .element_symbol = "C",
         .position = {x_offset + 2.99, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_C,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_C,
         .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
     });
     atoms.push_back(Atom{
         .atom_id = id++, .atomic_number = 8, .isotope = 16,
         .atom_name = "O", .element_symbol = "O",
         .position = {x_offset + 2.99, 1.23, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_O,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O,
         .covalent_radius_pm = 66.0, .vdw_radius_pm = 152.0, .mass_u = 15.999
     });
     return atoms;
@@ -211,21 +211,21 @@ static void test_hbond_boundaries() {
         .atom_id = 1, .atomic_number = 7,
         .atom_name = "D_N", .element_symbol = "N",
         .position = {0.0, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_BACKBONE_N,
+        .chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N,
     });
     // Acceptor at 2.8 A (optimal H-bond distance)
     graph.add_atom(Atom{
         .atom_id = 2, .atomic_number = 8,
         .atom_name = "A_O", .element_symbol = "O",
         .position = {2.8, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_O,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O,
     });
     // Acceptor at 4.0 A (too far)
     graph.add_atom(Atom{
         .atom_id = 3, .atomic_number = 8,
         .atom_name = "FAR_O", .element_symbol = "O",
         .position = {4.0, 0.0, 0.0},
-        .chem_role = VSEPR_ROLE_CARBONYL_O,
+        .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O,
     });
 
     HydrogenBondEngine hb;

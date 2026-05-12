@@ -1,70 +1,148 @@
 <div align="center">
 
-# VSEPR-Sim  
-**Classical Atomistic Formation Engine**
+# VSEPR-SIM
 
-[![C++20](https://img.shields.io/badge/C%2B%2B-20-blue.svg)](https://isocpp.org/)
-[![CMake](https://img.shields.io/badge/CMake-3.15+-blue.svg)](https://cmake.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-28%2F35_PASS-yellow.svg)](docs/VALIDATION_REPORT.md)
-[![Docs](https://img.shields.io/badge/Methodology-186_pages-blue.svg)](docs/INDEX.md)
+**Deterministic Molecular and Materials Simulation**
 
-**Deterministic structure generation from elemental identity + thermodynamic boundary conditions**
+Script-driven simulation pipelines via the VSIM language. Reproducible by design.
 
-[Documentation](docs/INDEX.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [Validation](docs/VALIDATION_REPORT.md) • [Quick Start](#quick-start)
+[VSIM Reference](docs/VSIM_LANGUAGE_REFERENCE.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [File Formats](docs/XYZ_FORMAT_REFERENCE.md) • [Validation](docs/VALIDATION_REPORT.md) • [Tour](TOUR.md)
 
 </div>
+
+---
+
+> VSEPR-SIM v5.0.0 is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
 
 ---
 
 ## Start Here
 
 | Where you want to go | Jump to |
-|----------------------|---------|
+|---|---|
+| Run a simulation script | [Quick Start](#quick-start) |
+| Write or understand VSIM scripts | [docs/VSIM_LANGUAGE_REFERENCE.md](docs/VSIM_LANGUAGE_REFERENCE.md) |
 | Understand the build system and folder layout | [TOUR.md](TOUR.md) |
-| Day-to-day shell — browse, edit, compile, export | [scripts/doc_shell.py](scripts/doc_shell.py) — run `python scripts/doc_shell.py` |
-| Shell command reference | [scripts/README.md](scripts/README.md) |
-| Generate or compile reports | [reporting/README.md](reporting/README.md) |
-| Formal 186-page methodology | [docs/ALPHA_MODEL_BOOKLET.tex](docs/ALPHA_MODEL_BOOKLET.tex) |
-| Validation report | [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md) |
-| Python physics kernel | [pykernel/](pykernel/) |
-
-```powershell
-# Activate the Python environment (once per session)
-.venv\Scripts\Activate.ps1
-
-# Open the interactive maintenance shell
-python scripts\doc_shell.py
-
-# Or build the C++ engine directly
-cmake -B build -S . && cmake --build build --parallel
-```
+| File format reference | [docs/XYZ_FORMAT_REFERENCE.md](docs/XYZ_FORMAT_REFERENCE.md) |
+| Validation status | [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md) |
+| Formal methodology | [docs/METHODOLOGY_12PAGE.tex](docs/METHODOLOGY_12PAGE.tex) |
 
 ---
 
+## What's New in v5.0.0
+
+v5.0.0 marks the transition from disconnected simulation modules into an integrated scripted simulation environment.
+
+- **VSIM scripting language** — declarative setup, execution, analysis, and reporting in a single `.vsim` file
+- **`vsper` launcher** — canonical command-line entry point for running `.vsim` scripts post-install
+- **Qt 3D workstation** — interactive viewport for structure inspection and trajectory playback, opened automatically at end-of-run when `gl_auto_orbit = true`
+- **Beta-7 pipeline integration** — `FormationOutput` flows through `KernelEventLog` into `DashboardRecord` and downstream reporting artifacts
+- **`.xyzf` trajectory playback** — multi-frame trajectory files written during simulation and replayed in the Qt workstation
+- **Gas-mixing MD demonstration** — four-corner directed injection of N₂, O₂, H₂O, and Ar converging to a mixed system at 1200 K, N > 1200 atoms
+- **Material-property inference workflow** — trajectory history → structural metrics → macro-property analysis → structured reports
 
 ---
 
 ## Overview
 
-Long-term development targets reaction modeling and structured multiscale coupling while preserving reproducibility and auditability. Long-term development targets expanding reaction modeling, and creating multiscale coupling while preserving reproducibility and auditability.
+VSEPR-SIM generates atomistic structures deterministically from elemental identity and thermodynamic boundary conditions. It requires no external molecular databases and no pre-supplied input geometries — structure is a primary simulation output, not an assumption.
 
-**Included in this release:**
-- **Formal methodology**: 13 LaTeX sections (186 pages) documenting every equation, parameter, and design decision
-- **Validation-first**: 35 hierarchical tests across 5 levels (80% pass rate)
-- **Production certified**: Approved for noble gases, hydrocarbons, and small organic molecules
-- **Deterministic by design**: Same inputs → bit-identical output across platforms
-- **Hash-based provenance**: Every structure carries full generation history (SHA-256)
-- **Self-audit infrastructure**: Autonomous failure classification, gap targeting, regression detection
+The VSIM scripting language lets you author a complete simulation pipeline — build a system, relax it, run MD, analyze the trajectory, and export results — in a single `.vsim` file that produces identical output on every run.
 
-> **Guiding principle:**  
+**Core properties:**
+
+- **Deterministic** — same inputs produce bit-identical outputs across platforms (seeded RNG, no floating-point non-determinism)
+- **Reproducible** — every script execution produces a provenance record alongside output files
+- **Traceable** — hash-based provenance carried through the full pipeline from script input to final report
+- **Analysis-only inference** — derived quantities computed post-hoc from trajectory data, not baked into the integrator
+
 > *Every state is reproducible. Every result is traceable. Structure is a primary simulation output, not an input assumption.*
+
+---
+
+## VSIM Scripting Language
+
+A `.vsim` script replaces a sequence of CLI calls with a single, readable, version-controllable file.
+
+```vsim
+[project]
+name    = "water_nvt"
+version = "v5.0.0"
+
+[simulation]
+box_size_ang = 30.0
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 64
+temperature_K = 300.0
+
+[run]
+mode      = "md_nvt"
+max_steps = 5000
+dt_fs     = 0.5
+
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+output_dir          = "out/water_nvt"
+
+[visual]
+gl_auto_orbit   = true
+render_interval = 100
+```
+
+Run it:
+
+```sh
+vsper run water_nvt.vsim
+```
+
+Scripts are deterministic, hash-stamped, and fully logged. Every execution produces a provenance record and a set of output artifacts declared in `[export]`.
+
+**Full language reference:** [docs/VSIM_LANGUAGE_REFERENCE.md](docs/VSIM_LANGUAGE_REFERENCE.md)
+
+---
+
+## Key Capabilities
+
+### Physics Engine
+
+- Lennard-Jones 12-6 + Coulomb + bonded MM (UFF parameterization)
+- Velocity Verlet (NVE), Langevin (NVT), FIRE minimization
+- Periodic boundary conditions (orthogonal boxes)
+- Supercell replication with bond re-inference
+- Explicit units throughout (Å, fs, kcal/mol, amu, K)
+
+### File Format Pipeline
+
+```
+.vsim    → VSIM simulation script — build, relax, simulate, export in one file
+.vsxyz   → VSEPR-native XYZ wrapper with embedded metadata
+.xyzf    → Frame sequence for trajectory playback
+.xyzfull → Full replay and render state artifact
+.xyzc    → Checkpointed MD state (positions + velocities + thermodynamics + SHA-256 hash)
+.xyza    → Animated trajectory (sequential frames)
+.xyz     → Static geometry (element + Cartesian coordinates)
+```
+
+The XYZ family is documented in detail in [docs/XYZ_FORMAT_REFERENCE.md](docs/XYZ_FORMAT_REFERENCE.md).
+
+### Tools
+
+| Tool | Purpose |
+|---|---|
+| `vsper run` | Execute a `.vsim` script |
+| `vsper validate` | Parse and validate a script without running |
+| `vsper doctor` | Check installation health |
+| `vsepr-desktop` | Qt 3D workstation (launched automatically by `vsper run`) |
 
 ---
 
 ## 3D Output Gallery
 
-Deterministic atomistic structures generated and rendered by the VSEPR-Sim engine. All outputs use CPK coloring, Phong shading, and automatic bond detection from covalent radii.
+Structures generated and rendered by the VSEPR-SIM engine. CPK colouring, Phong shading, automatic bond detection from covalent radii.
 
 ### Ball-and-Stick — VSEPR Geometries
 
@@ -167,41 +245,19 @@ Same molecule rendered in all three styles side-by-side.
 
 ---
 
-## Key Capabilities
-
-### Physics Engine
-- Lennard-Jones 12-6 + Coulomb + bonded MM (UFF parameterization)
-- Velocity Verlet (NVE), Langevin (NVT), FIRE minimization
-- Periodic boundary conditions (orthogonal boxes)
-- Supercell replication with bond re-inference
-- Explicit units throughout (Å, fs, kcal/mol, amu, K)
-
-### File Format Pipeline
-```
-.xyz  → Static geometry (element + Cartesian coordinates)
-.xyza → Animated trajectory (sequential frames)
-.xyzc → Checkpointed MD (positions + velocities + thermodynamics + SHA-256 hash)
-```
-
-### Tools
-- **Interactive CLI**: Molecular construction and manipulation
-- **Simulation engine**: MD/minimization with FIRE, Verlet, and Langevin integrators
-- **OpenGL viewer**: 3D visualization with atom tooltips
-- **Self-audit suite**: Python tools for failure analysis and regression detection
-
----
-
 ## Methodology (LaTeX)
 
 The scientific foundation lives in **11 standalone LaTeX files** (186 pages total).
 
 ### Condensed Versions
+
 | Document | Pages | Purpose |
 |----------|-------|---------|
 | [`METHODOLOGY_2PAGE.tex`](docs/METHODOLOGY_2PAGE.tex) | 2 | Conference handout (two-column summary) |
 | [`METHODOLOGY_12PAGE.tex`](docs/METHODOLOGY_12PAGE.tex) | 12 | Quick reference with equations |
 
 ### Full Sections
+
 | File | Sections | Content |
 |------|----------|---------|
 | [`section0_identity_state_decomposition.tex`](docs/section0_identity_state_decomposition.tex) | §0 | Particle identity vectors, cell/world container ontology |
@@ -217,6 +273,7 @@ The scientific foundation lives in **11 standalone LaTeX files** (186 pages tota
 | [`section11_self_audit.tex`](docs/section11_self_audit.tex) | §11 | Failure classifier, gap targeter, regression detector |
 
 **Compile with:**
+
 ```bash
 cd docs && for f in section*.tex; do pdflatex "$f"; done
 ```
@@ -227,119 +284,130 @@ cd docs && for f in section*.tex; do pdflatex "$f"; done
 
 ## Quick Start
 
-### Automated Build & Test (Recommended)
+Build from source:
 
-**Linux/macOS/WSL:**
-```bash
-./build_automated.sh                  # Build + run all tests
-./build_automated.sh --clean          # Clean build + tests
-./build_automated.sh --heat-only      # Test heat-gated reactions only (Item #7)
+```powershell
+cmake -B build -S . -DBUILD_VIS=ON
+cmake --build build --parallel
 ```
 
-**Windows:**
-```cmd
-build_automated.bat                   # Build + run all tests
-build_automated.bat --clean           # Clean build + tests
-build_automated.bat --heat-only       # Test heat-gated reactions only (Item #7)
+Install (makes `vsper` available on PATH):
+
+```powershell
+.\dist\VSEPR-SIM-5.0.0-local\install-vsepr.ps1
 ```
 
-### WSL / Linux (Interactive CLI)
-```bash
-chmod +x vseprw
-./vseprw H2O relax                    # First run: configure + build + minimize
-./vseprw molecule.xyz sim --temp 300  # MD simulation at 300 K
-./vseprw molecule.xyz view            # 3D visualization
+Run a VSIM script:
+
+```sh
+vsper run examples/gas_mixing_demo.vsim
 ```
 
-### Manual Build
-```bash
-cmake -B build && cmake --build build -j8
+The Qt 3D workstation opens automatically when the script requests visual output (`gl_auto_orbit = true`).
 
-# Interactive molecular builder (formula pipeline)
-./build/atomistic-build
->> build H2O
->> info
->> save H2O.xyz
->> exit
+Run any of the included examples:
 
-# Energy minimization
-./build/atomistic-relax H2O.xyz
-
-# Molecular dynamics
-./build/atomistic-sim simulate H2O.xyz --temp 300 --steps 10000
-
-# 3D viewer
-./build/interactive-viewer H2O.xyz
+```sh
+vsper run examples/demo_01_nacl_level0.vsim
+vsper run examples/gas_mixing_demo.vsim
+vsper run examples/beta7_pipeline_smoke.vsim
 ```
+
+Validate a script without running it:
+
+```sh
+vsper validate examples/gas_mixing_demo.vsim
+```
+
+Check your installation:
+
+```sh
+vsper doctor
+```
+
+> **Legacy binaries** such as `vseprw`, `atomistic-build`, and `atomistic-relax` may exist in older branches. v5 documentation and all new workflows use `vsper` as the primary entry point.
+
+---
+
+## Validation Status
+
+Validation in v5 is tracked through explicit beta release gates rather than a single static pass-rate figure.
+
+| Category | Status |
+|---|---|
+| Script parsing and document validation | PASS |
+| State and trajectory generation | PASS |
+| `.xyz` / `.xyzf` file output | PASS |
+| Formation pipeline and `KernelEventLog` | PASS |
+| `ClusterRecord` → `AnalysisRecord` → `DashboardRecord` | PASS |
+| Report and artifact export | PASS |
+| SVG dashboard export | PASS |
+| Qt 3D workstation and trajectory playback | PASS |
+| Periodic boundary conditions (crystal MD) | DEFERRED |
+| PNG dashboard raster export | DEFERRED |
+
+Each beta release records items as `PASS`, `DEFERRED`, or `BLOCKED`, keeping active-development features visible and separate from validated components.
+
+**Approved for:** noble gas systems, small organic molecules, hydrocarbons, molecular clusters, gas-phase mixing simulations.
+
+**Known limitations:** ionic MD (use FIRE only until Coulomb-integrator coupling is complete), transition metal complexes (classical approximation insufficient).
+
+Full report: [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md)
 
 ---
 
 ## Repository Structure
 
+```plaintext
+VSEPR-SIM/
+├── apps/
+│   ├── desktop/          Qt 3D workstation (viewport, object tree, console)
+│   └── vsper/            v5 launcher and command entry points
+├── src/
+│   ├── cli/              VSIM command handlers (run, validate, doctor)
+│   ├── vsim/             VSIM parser, document, registry, runtime
+│   ├── sim/              Molecule builder, VSEPR topology, integrators
+│   ├── core/             State, force evaluation, energy ledger
+│   ├── pot/              Potentials (LJ, Coulomb, bonded MM, UFF)
+│   ├── io/               XYZ / xyzf / xyzFull / xyzA readers and writers
+│   ├── thermal/          Thermal runner and xyzC format
+│   └── dynamic/          Real molecule generator, analysis pipeline
+├── include/
+│   ├── vsim/             VSIM document, parser, runtime headers
+│   ├── io/               XYZ format headers
+│   └── vsepr/            Formula parser, shared interfaces
+├── examples/             Sample .vsim scripts and demo trajectories
+├── docs/
+│   ├── section*.tex      Methodology sections (11 files, 186 pages)
+│   ├── VSIM_LANGUAGE.md  VSIM language specification
+│   └── VSIM_REFERENCE.md VSIM schema reference
+├── assets/
+│   └── images/           Screenshots and generated visuals
+├── tests/                Validation suite and beta gate tests
+├── dist/
+│   └── VSEPR-SIM-5.0.0-local/   Installer and packaged binaries
+└── data/                 Reference datasets (PeriodicTableJSON.json, UFF)
 ```
-vsepr-sim/
-├── src/              Core C++ engine (170 files)
-│   ├── core/         State, force evaluation, energy ledger
-│   ├── sim/          Integrators (Verlet, Langevin, FIRE)
-│   ├── pot/          Potentials (LJ, Coulomb, bonded MM)
-│   ├── box/          Periodic boundaries
-│   ├── io/           XYZ/XYZA/XYZC parsers
-│   └── cli/          Command-line interface
-├── include/          Public headers (51 files)
-├── apps/             Entry points (35 applications)
-│   ├── cli.cpp           # Interactive builder
-│   ├── relax.cpp         # Energy minimization
-│   ├── simulate.cpp      # MD engine
-│   └── viewer.cpp        # OpenGL visualization
-├── tests/            Validation suite (56 files)
-│   ├── energy_tests.cpp
-│   ├── ensemble_consistency_test.cpp
-│   └── basic_molecule_validation.cpp
-├── docs/             LaTeX methodology + notebooks
-│   ├── section*.tex  (11 files, 186 pages)
-│   ├── METHODOLOGY_2PAGE.tex
-│   ├── METHODOLOGY_12PAGE.tex
-│   └── VALIDATION_REPORT.md
-├── tools/            Self-audit Python scripts
-│   ├── failure_classifier.py
-│   ├── gap_targeter.py
-│   └── regression_detector.py
-├── data/             Reference geometries
-├── examples/         Demo molecules (.xyz)
-└── third_party/      ImGui (vendored)
-```
-
-**✅ Approved for:**
-- Noble gas systems (Ar, Xe, Kr)
-- Hydrocarbon molecules (CH₄, benzene, alkanes)
-- Small organics (H₂O, NH₃, CH₃OH)
-- Molecular clusters
-
-**❌ Known limitations:**
-- Ionic MD (NaCl, MgO) — Use FIRE only until Coulomb-integrator coupling is fixed
-- Transition metal complexes — Classical approximation insufficient
-
-**Full report:** [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md)
 
 ---
 
 ## Design Principles
 
-1. **Explicit units everywhere** — Positions in Å, energies in kcal/mol. No reduced units.
-2. **No silent domain switching** — Force field, integrator, and BC declared upfront.
-3. **Deterministic core** — Identical inputs produce bit-identical outputs (seeded RNG).
-4. **Periodic table as sole authority** — No molecular databases. Parameters from UFF.
-5. **Extension without replacement** — Validated core remains intact.
+1. **Explicit units everywhere** — positions in Å, energies in kcal/mol, time in fs. No reduced units.
+2. **No silent domain switching** — force field, integrator, and boundary conditions declared upfront in the script.
+3. **Deterministic core** — identical inputs produce bit-identical outputs (seeded RNG).
+4. **Periodic table as sole authority** — element data comes from `PeriodicTableJSON.json`. No hardcoded element arrays.
+5. **Analysis-only inference** — derived properties computed post-hoc from trajectory data, never baked into the integrator.
+6. **Extension without replacement** — validated core remains intact as new pipeline stages are added.
 
 ---
 
 ## System Requirements
 
-- **Compiler:** GCC 7+, Clang 10+, or MSVC 2019+ (C++20 support)
-- **Build System:** CMake 3.15+
-- **Graphics (optional):** OpenGL 3.3+, GLFW, GLEW
-- **GPU (optional):** CUDA toolkit (graceful CPU fallback)
-- **OS:** Linux, Windows (WSL recommended), macOS
+- **Compiler:** GCC 12+, Clang 15+, or MSVC 2022+ (C++23)
+- **Build system:** CMake 3.20+
+- **Graphics:** Qt 6.4+ with OpenGL 3.3+ (for `vsepr-desktop`)
+- **OS:** Windows 10/11 (MSYS2/MinGW or MSVC), Linux, macOS
 
 ---
 
@@ -360,8 +428,8 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 <div align="center">
 
-**[Documentation](docs/INDEX.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [Validation](docs/VALIDATION_REPORT.md) • [GitHub](https://github.com/LMSM3/VSEPR-SIM)**
+[VSIM Reference](docs/VSIM_LANGUAGE_REFERENCE.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [Validation](docs/VALIDATION_REPORT.md) • [Tour](TOUR.md) • [GitHub](https://github.com/LMSM3/VSEPR-SIM)
 
-*This is not a theoretical proposal. This is a documented, validated, production-ready scientific instrument.*
+*VSEPR-SIM v5.0.0 is a documented scientific simulation environment built around deterministic state files, reproducible workflows, scripted execution, trajectory analysis, and material-property inference. It is under active development, with each beta release expanding the validated pipeline.*
 
 </div>

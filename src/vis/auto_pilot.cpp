@@ -2,6 +2,7 @@
 #include "vis/renderer.hpp"
 
 #include <cmath>
+#include <cstring>
 #include <filesystem>
 #include <iostream>
 #include <vector>

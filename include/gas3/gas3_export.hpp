@@ -289,7 +289,7 @@ inline bool write_html_report(
     f << "<h1>VSEPR-SIM Gas3 Thermodynamic Report</h1>\n";
     f << "<p style=\"color:var(--muted)\">Run: <strong style=\"color:var(--fg)\">"
       << manifest.run_id << "</strong> &middot; " << manifest.timestamp
-      << " &middot; " << manifest.total_records << " states &middot; v4.0.1 Beta</p>\n";
+      << " &middot; " << manifest.total_records << " states &middot; v5.0.0</p>\n";
 
     // --- Tab bar ---
     f << "<div class=\"tab-bar\">\n";
@@ -860,7 +860,7 @@ inline bool write_html_report(
     // ========================================================================
     detail::emit_tab_js(f);
 
-    f << "<div class=\"footer\">VSEPR-SIM Gas3 v4.0.1 Beta &middot; "
+    f << "<div class=\"footer\">VSEPR-SIM Gas3 v5.0.0 &middot; "
       << manifest.timestamp << " &middot; " << manifest.total_records << " states"
       << " &middot; Deterministic. Inspectable. Anti-black-box.</div>\n";
     f << "</body>\n</html>\n";

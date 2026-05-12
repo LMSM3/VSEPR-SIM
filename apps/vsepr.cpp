@@ -1,20 +1,16 @@
 /**
- * vsepr.cpp - Unified CLI Entry Point
- * 
- * Grammar: vsepr <SPEC> <ACTION> [DOMAIN_PARAMS] [GLOBAL_FLAGS]
- * 
- * SPEC:
- *   - Formula: H2O, NaCl, C6H6
- *   - Mode hint: @gas, @crystal, @bulk, @molecule
- * 
- * ACTIONS:
- *   - emit: Generate structure without optimization
- *   - relax: Energy minimization
- *   - test: Validate against known expectations
- * 
- * DOMAIN RULES:
- *   - @crystal/@bulk → PBC mandatory, requires --cell
- *   - @gas/@molecule → PBC optional, requires --box if --pbc enabled
+ * vsepr.cpp - Unified CLI Entry Point  (v5.0.0)
+ *
+ * v5 VSIM commands (primary):
+ *   vsepr run    <script.vsim>  — parse, validate, and run a .vsim script
+ *   vsepr validate <script.vsim> — validate a .vsim script without running
+ *   vsepr doctor                — print installation health summary
+ *   vsepr --version             — print version string
+ *   vsepr --build-info          — print compiler / module build information
+ *
+ * Legacy v4 commands (fallback — still functional):
+ *   vsepr <SPEC> <ACTION> [DOMAIN_PARAMS] [GLOBAL_FLAGS]
+ *   vsepr therm / cg / gas / gas2 / gas3 / viz / serve / tui / modules
  */
 
 #include "cli/parse.hpp"
@@ -23,6 +19,8 @@
 #include "cli/cg_commands.hpp"
 #include "cli/cmd_therm.hpp"
 #include "cli/cmd_tui.hpp"
+#include "cli/cmd_validate.hpp"
+#include "cli/cmd_run_vsim.hpp"
 #include "core/gas_module.hpp"
 #include "gas2/gas2_engine.hpp"
 #include "gas3/gas3_engine.hpp"
@@ -35,14 +33,26 @@
 #endif
 #include <iostream>
 #include <exception>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <fstream>
+#include <cstdlib>
 
 using namespace vsepr::cli;
 
 void show_help() {
     std::cout << R"(
-VSEPR-SIM v4.0.1 Beta - Atomistic Simulation and Analysis Platform
+VSEPR-SIM v5.0.0 - Atomistic Simulation and Analysis Platform
 
 USAGE:
+    vsepr run    <script.vsim>     Run a .vsim simulation script
+    vsepr validate <script.vsim>   Validate a .vsim script (no run)
+    vsepr doctor                   Print installation health summary
+    vsepr --version                Print version
+    vsepr --build-info             Print compiler / module build info
+
+LEGACY USAGE (v4 grammar, still supported):
     vsepr <SPEC> <ACTION> [DOMAIN_PARAMS] [GLOBAL_FLAGS]
     vsepr therm <input.xyz> [OPTIONS]
     vsepr cg <COMMAND> [OPTIONS]
@@ -285,58 +295,260 @@ int main(int argc, char** argv) {
             return 0;
         }
 
+        const std::string cmd = argv[1];
+
+        // ── v5 VSIM commands ───────────────────────────────────────────────
+
         // Version flag
-        if (std::string(argv[1]) == "--version" || std::string(argv[1]) == "-v") {
-            std::cout << "VSEPR-SIM v4.0.1 Beta\n";
+        if (cmd == "--version" || cmd == "-v" || cmd == "version") {
+            std::cout << "VSEPR-SIM v5.0.0\n";
             return 0;
         }
 
+        // Build-info flag
+        if (cmd == "--build-info" || cmd == "build-info") {
+            std::cout << "VSEPR-SIM v5.0.0  |  C++23  |  branch: v5.0.0-beta.7-step-attempt\n";
+            std::cout << "  Compiler: " << __VERSION__ << "\n";
+            return 0;
+        }
+
+        // run <script.vsim>
+        if (cmd == "run") {
+            std::vector<std::string> rest;
+            for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
+            return vsepr::cli::cmd_run_vsim(rest);
+        }
+
+        // validate <script.vsim>
+        if (cmd == "validate") {
+            std::vector<std::string> rest;
+            for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
+            return vsepr::cli::cmd_validate(rest);
+        }
+
+        // doctor — real installation health check
+        if (cmd == "doctor") {
+            namespace fs = std::filesystem;
+
+            const std::string SEP  = std::string(54, '-');
+            const std::string PASS = "  [ok]   ";
+            const std::string FAIL = "  [FAIL] ";
+            const std::string WARN = "  [warn] ";
+
+            std::cout << "VSEPR-SIM v5.0.0  installation health\n" << SEP << "\n\n";
+
+            int failures = 0;
+            int warnings = 0;
+
+            // ── 1. Locate install root ────────────────────────────────────
+            // Prefer %LOCALAPPDATA%\VSEPR-SIM, fall back to working directory
+            std::string localAppData;
+            if (const char* p = std::getenv("LOCALAPPDATA")) localAppData = p;
+            fs::path installRoot = localAppData.empty()
+                ? fs::current_path()
+                : fs::path(localAppData) / "VSEPR-SIM";
+
+            // Also check dev-local layout (repo root next to exe)
+            fs::path exeDir = fs::path(argv[0]).parent_path();
+            fs::path repoRoot; // repo-local data (build tree)
+            // Walk up from exe until we find CMakeLists.txt
+            for (fs::path p = exeDir; p != p.parent_path(); p = p.parent_path()) {
+                if (fs::exists(p / "CMakeLists.txt")) { repoRoot = p; break; }
+            }
+
+            bool isDevBuild = !repoRoot.empty();
+            fs::path dataDir    = isDevBuild ? repoRoot / "data"
+                                              : installRoot / "runtime" / "data" / "data";
+            fs::path scriptsDir = isDevBuild ? repoRoot / "scripts"
+                                              : installRoot / "examples";
+
+            std::cout << "  binary      : " << fs::weakly_canonical(argv[0]).string() << "\n";
+            std::cout << "  install root: " << installRoot.string() << "\n";
+            std::cout << "  data dir    : " << dataDir.string() << "\n";
+            std::cout << "  scripts dir : " << scriptsDir.string() << "\n";
+            if (isDevBuild)
+                std::cout << "  mode        : dev-build (repo at " << repoRoot.string() << ")\n";
+            else
+                std::cout << "  mode        : installed\n";
+            std::cout << "\n";
+
+            // ── 2. Install manifest ───────────────────────────────────────
+            std::cout << "Install manifest:\n";
+            fs::path manifest = installRoot / "install_manifest.json";
+            if (fs::exists(manifest)) {
+                std::cout << PASS << "install_manifest.json found\n";
+            } else if (isDevBuild) {
+                std::cout << WARN << "install_manifest.json not found (dev-build — expected)\n";
+                ++warnings;
+            } else {
+                std::cout << FAIL << "install_manifest.json missing — run install-vsepr.ps1\n";
+                ++failures;
+            }
+
+            // ── 3. Required runtime data files ───────────────────────────
+            std::cout << "\nRuntime data files:\n";
+            const std::vector<std::string> requiredData = {
+                "PeriodicTableJSON.json",
+                "elements.physics.json",
+                "elements.vsepr.json",
+                "element_weights.json",
+                "periodic_table_102.json",
+                "isotopes.vsepr.json",
+                "polarizability_ref.csv",
+                "states_db.csv",
+            };
+            for (const auto& f : requiredData) {
+                fs::path p = dataDir / f;
+                if (fs::exists(p)) {
+                    std::cout << PASS << f << "\n";
+                } else {
+                    std::cout << FAIL << f << "  (expected: " << p.string() << ")\n";
+                    ++failures;
+                }
+            }
+
+            // ── 4. Demo / example scripts ─────────────────────────────────
+            std::cout << "\nExample scripts:\n";
+            const std::vector<std::string> demoScripts = {
+                "demo_01_nacl_level0.vsim",
+                "demo_02_silicon_diamond.vsim",
+                "demo_03_pbc_nacl.vsim",
+                "golden_tests.vsim",
+            };
+            int scriptsMissing = 0;
+            for (const auto& f : demoScripts) {
+                fs::path p = scriptsDir / f;
+                if (fs::exists(p)) {
+                    std::cout << PASS << f << "\n";
+                } else {
+                    std::cout << WARN << f << " not found\n";
+                    ++scriptsMissing;
+                }
+            }
+            if (scriptsMissing > 0) {
+                std::cout << WARN << scriptsMissing
+                          << " example script(s) missing — reinstall with examples enabled\n";
+                ++warnings;
+            }
+
+            // ── 5. v5 feature checks ──────────────────────────────────────
+            std::cout << "\nv5 pipeline features:\n";
+            // Validate: run cmd_validate against a known demo script if available
+            fs::path nacl = scriptsDir / "demo_01_nacl_level0.vsim";
+            if (fs::exists(nacl)) {
+                // Suppress sub-command output during doctor probe
+                std::streambuf* coutBuf = std::cout.rdbuf(nullptr);
+                std::vector<std::string> vargs = { nacl.string() };
+                int rc = vsepr::cli::cmd_validate(vargs);
+                std::cout.rdbuf(coutBuf);
+                if (rc == 0) {
+                    std::cout << PASS << "validate pipeline (demo_01_nacl_level0.vsim)\n";
+                } else {
+                    std::cout << FAIL << "validate pipeline returned error " << rc << "\n";
+                    ++failures;
+                }
+            } else {
+                std::cout << WARN << "validate pipeline — no demo script to probe\n";
+                ++warnings;
+            }
+
+            // Run: same file
+            if (fs::exists(nacl)) {
+                std::streambuf* coutBuf = std::cout.rdbuf(nullptr);
+                std::vector<std::string> rargs = { nacl.string() };
+                int rc = vsepr::cli::cmd_run_vsim(rargs);
+                std::cout.rdbuf(coutBuf);
+                if (rc == 0) {
+                    std::cout << PASS << "run pipeline (demo_01_nacl_level0.vsim)\n";
+                } else {
+                    std::cout << FAIL << "run pipeline returned error " << rc << "\n";
+                    ++failures;
+                }
+            } else {
+                std::cout << WARN << "run pipeline — no demo script to probe\n";
+                ++warnings;
+            }
+
+            // ── 6. PATH check ─────────────────────────────────────────────
+            std::cout << "\nPATH:\n";
+            fs::path installedBin = installRoot / "bin";
+            std::string pathEnv;
+            if (const char* p = std::getenv("PATH")) pathEnv = p;
+            if (!localAppData.empty() && pathEnv.find(installedBin.string()) != std::string::npos) {
+                std::cout << PASS << "installed bin is in PATH\n";
+            } else if (isDevBuild) {
+                std::cout << WARN << "installed bin not in PATH (dev-build — use build/ directly)\n";
+                ++warnings;
+            } else {
+                std::cout << FAIL << "installed bin not in PATH — re-run install-vsepr.ps1\n";
+                ++failures;
+            }
+
+            // ── Summary ───────────────────────────────────────────────────
+            std::cout << "\n" << SEP << "\n";
+            if (failures == 0 && warnings == 0) {
+                std::cout << "  PASS — installation is complete and healthy.\n";
+                return 0;
+            } else if (failures == 0) {
+                std::cout << "  PASS with warnings — " << warnings
+                          << " warning(s), 0 failure(s).\n";
+                return 0;
+            } else {
+                std::cout << "  INCOMPLETE — " << failures << " failure(s), "
+                          << warnings << " warning(s).\n";
+                std::cout << "  Run: dist\\VSEPR-SIM-5.0.0-local\\install-vsepr.ps1\n";
+                return 2;
+            }
+        }
+
+        // ── Legacy v4 routing ─────────────────────────────────────────────
+
         // Route to module registry listing
-        if (std::string(argv[1]) == "modules") {
+        if (cmd == "modules") {
             vsepr::modules::register_builtin_modules();
             vsepr::ModuleRegistry::instance().print_table();
             return 0;
         }
 
         // Route to per-module help: vsepr help <module>
-        if (std::string(argv[1]) == "help" && argc >= 3) {
+        if (cmd == "help" && argc >= 3) {
             vsepr::modules::register_builtin_modules();
             vsepr::ModuleRegistry::instance().print_help(argv[2]);
             return 0;
         }
 
         // Route to gas module when argv[1] == "gas"
-        if (std::string(argv[1]) == "gas") {
+        if (cmd == "gas") {
             return vsepr::gas::gas_dispatch(argc, argv);
         }
 
         // Route to gas2 module (advanced heat + gas analysis)
-        if (std::string(argv[1]) == "gas2") {
+        if (cmd == "gas2") {
             return vsepr::gas2::gas2_dispatch(argc, argv);
         }
 
         // Route to gas3 module (quality pipeline, fitting, reporting)
-        if (std::string(argv[1]) == "gas3") {
+        if (cmd == "gas3") {
             return vsepr::gas3::gas3_dispatch(argc, argv);
         }
 
         // Route to dual-port viz stream server when argv[1] == "viz"
-        if (std::string(argv[1]) == "viz") {
+        if (cmd == "viz") {
             return vsepr::viz::viz_dispatch(argc, argv);
         }
 
         // Route to live analysis server when argv[1] == "serve"
-        if (std::string(argv[1]) == "serve") {
+        if (cmd == "serve") {
             return vsepr::live::serve_dispatch(argc, argv);
         }
 
         // Route to coarse-grained console when argv[1] == "cg"
-        if (std::string(argv[1]) == "cg") {
+        if (cmd == "cg") {
             return vsepr::cli::cg_dispatch(argc, argv);
         }
 
         // Route to TUI terminal XYZ viewer when argv[1] == "tui"
-        if (std::string(argv[1]) == "tui") {
+        if (cmd == "tui") {
             vsepr::cli::TuiCommand tui;
             std::vector<std::string> tui_args;
             for (int i = 2; i < argc; ++i) {
@@ -346,7 +558,7 @@ int main(int argc, char** argv) {
         }
 
         // Route to thermal analysis when argv[1] == "therm"
-        if (std::string(argv[1]) == "therm") {
+        if (cmd == "therm") {
             vsepr::cli::ThermCommand therm;
             std::vector<std::string> therm_args;
             for (int i = 2; i < argc; ++i) {
@@ -356,7 +568,7 @@ int main(int argc, char** argv) {
         }
 
         // Route to lightweight visualization when argv[1] == "--viz"
-        if (std::string(argv[1]) == "--viz") {
+        if (cmd == "--viz") {
 #ifdef BUILD_VISUALIZATION
             // Parse optional arguments: --viz [--preset X] [--overlay Y] ...
             // Reuse CG system state for scene construction
@@ -392,26 +604,26 @@ int main(int argc, char** argv) {
 #endif
         }
 
-        // Parse command
+        // Parse command (legacy v4 grammar fallback)
         CommandParser parser;
-        ParsedCommand cmd = parser.parse(argc, argv);
-        
+        ParsedCommand parsed_cmd = parser.parse(argc, argv);
+
         // Build run context (validates domain rules)
-        RunContext ctx = RunContext::from_parsed(cmd);
-        
+        RunContext ctx = RunContext::from_parsed(parsed_cmd);
+
         // Dispatch to action handler
-        switch (cmd.action) {
+        switch (parsed_cmd.action) {
             case Action::Emit:
-                return action_emit(cmd, ctx);
+                return action_emit(parsed_cmd, ctx);
 
             case Action::Relax:
-                return action_relax(cmd, ctx);
+                return action_relax(parsed_cmd, ctx);
 
             case Action::Form:
-                return action_form(cmd, ctx);
+                return action_form(parsed_cmd, ctx);
 
             case Action::Test:
-                return action_test(cmd, ctx);
+                return action_test(parsed_cmd, ctx);
 
             default:
                 std::cerr << "ERROR: Unknown action\n";

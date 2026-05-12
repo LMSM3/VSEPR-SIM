@@ -371,6 +371,69 @@ Optional override for external visual backends. Requests rendered output artifac
 
 ---
 
+## `[visual.workspace]` — WO-VSIM-VIS-OVERHAUL-01
+
+**Struct:** `VisualWorkspaceSection`  
+Controls workspace host behavior when a script is opened in the `vsper workspace` Qt application. Silently ignored in headless / pure CLI runs — no parse error, no warnings.
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `enabled` | bool | `false` | ✅ | Auto-open declared `show` windows when the script is loaded in the workspace. |
+| `default_layout` | string | `"tabs"` | ✅ | `"tabs"` (windows as tabs in the central area) or `"detached"` (separate top-level windows). |
+| `auto_open_tree` | bool | `false` | ✅ | Expand the object tree to the active run on load. |
+| `live` | bool | `false` | ⏳ | Subscribe summoned windows to live kernel updates (stretch goal, v1 is snapshot). |
+
+### `show` directive
+
+Top-level statement; any number of occurrences allowed at script root or inside `[visual.workspace]`.
+
+```vsim
+show "<kind>" target = "<dot.path>" [options = { ... }]
+```
+
+Parsed into `VsimDocument::view_directives` as a `ViewDirective`. Unknown kinds produce a parse error with a list of valid kinds in the diagnostic. `options` is an optional JSON object of per-kind knobs (camera, colormap, subsample cap, etc.). In headless runs or when `[visual.workspace] enabled = false`, the directives are no-ops (no error, no warning).
+
+#### Known view kinds (v1)
+
+| Category | Kind | Source target | Notes |
+|---|---|---|---|
+| 3D scene | `scene.molecule` | `material.<i>`, `run.final_state` | Ball-and-stick. |
+| 3D scene | `scene.cg_bead` | `run.cg_state` | Wraps CGVizViewer / SeedBeadViewer. |
+| 3D scene | `scene.crystal_grid` | `material.<i>` when periodic | |
+| 3D scene | `scene.trajectory` | `run.history` | Requires `write_xyzf` or `write_xyzfull`. |
+| 3D scene | `overlay.cycle` | `run.history` + overlay fields | |
+| Calibration | `calibration.helix` | `run.history` | Helix+bars+markers; visual constants ported from `demo_calibration_3d.py`. |
+| Environment | `room.heatfield` | `room.solver` | Heat dust cloud; ported from `demo_helium_room_3d.py`. |
+| Data | `data.history.table` | `run.history` | Sortable QTableView. |
+| Data | `data.history.timeseries` | `run.history` numeric columns | QtCharts multi-series. |
+| Data | `data.scalar.panel` | any scalar node | Read-only labeled values. |
+| Data | `data.events.table` | `kernel.events` | Filterable by event kind. |
+| Data | `data.events.timeline` | `kernel.events` | Horizontal ruler colored by kind. |
+| Data | `data.events.bar_chart` | `kernel.events` | Per-kind count bar chart. |
+| Data | `data.rdf` | `analysis.rdf` | |
+| Data | `data.energy_trace` | `run.history.energy` | |
+| Data | `data.defect_map` | `analysis.defects` | |
+| Data | `data.cluster_scatter` | `analysis.clusters` | |
+| Data | `data.batch.plan` | resolved `[batch.*]` plan | |
+| Data | `data.batch.ranked` | `ranked_candidates.tsv` | |
+| Data | `data.verify.matrix` | `failure_mode_matrix.tsv` | |
+
+---
+
+## `[room]` — WO-VSIM-VIS-OVERHAUL-01
+
+**Struct:** `RoomSection`  
+Drives the room heat-field simulation and exposes `room.solver` as a viewable node (target for `room.heatfield` and `data.scalar.panel`).  
+Corresponds to the physics formerly exercised by `scripts/demos/demo_helium_room_3d.py` (now archived).
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `preset` | string | `""` | ✅ | `"ambient"` \| `"cold"` \| `"hot"` \| `"lab"` \| `"reactor"` \| `"large_volume"`. Empty = inactive. |
+| `n_steps` | int | `200` | ✅ | Solver steps before snapshot. |
+| `record_interval` | int | `50` | ✅ | Steps between recorded snapshots (exposed to `room.solver`). |
+
+---
+
 ## `[kernel]`
 
 **Struct:** parsed into `raw_sections` — no dedicated struct yet.  
@@ -856,6 +919,9 @@ Declares ambient reaction rules for the simulation. Chemistry is **always evalua
 | `event_registry` | bool | `true` | Build per-step event registry (enables `reaction_scan` observe metric). |
 | `min_score_threshold` | float | `0.25` | `overall_score` must exceed this to emit an event. |
 | `max_reactions_per_step` | int | `8` | Cap on reaction events per step. `0` = unlimited. |
+| `domain` | string | `""` | Organic shorthand domain. `"peptide"` enables sequence expansion. When set, the parser expands `sequence` into a canonical Hill formula and injects it as `molecules[0]`. |
+| `sequence` | string | `""` | Domain-specific shorthand input. For `domain = "peptide"`: one-letter amino acid codes (e.g. `"ACDEFG"`). For other domains: trivial name or condensed formula passed to `expand_organic_formula()`. |
+| `expanded_formula` | string | *(read-only)* | Hill-order formula produced by the organic parser after expansion. Populated automatically; also back-fills `material.formula` if that field is not explicitly set. Do not set this key manually. |
 
 **Chemistry registry aliases** (§VSIM_LANGUAGE_REFERENCE §chemistry):
 
@@ -877,7 +943,7 @@ Declares ambient reaction rules for the simulation. Chemistry is **always evalua
 
 **Architecture note:**  All reaction events are written to `KernelEventLog`, never directly to `.xyz` / `.xyzFull`. Observe metrics `"reaction_events"`, `"chemical_state"`, `"exothermic_count"`, and `"avg_delta_E"` read from the same log.
 
-**Example:**
+**Example — ambient reaction chemistry:**
 
 ```vsim
 [environment]
@@ -885,7 +951,7 @@ temperature = 800.0
 
 [chemistry]
 chemistry              = "oxidation"
-heat                   = -1       # auto-derive from 800 K → h ≈ 266
+heat                   = -1       # auto-derive from 800 K -> h ~266
 reaction_events        = true
 track_species_state    = true
 min_score_threshold    = 0.30
@@ -895,6 +961,24 @@ max_reactions_per_step = 4
 metrics       = ["reaction_events", "exothermic_count", "avg_delta_E"]
 every_n_steps = 10
 ```
+
+**Example — organic domain (peptide + gas environment):**
+
+```vsim
+[chemistry]
+domain   = peptide
+sequence = ACDEFG         # expands -> C26H36N6O10S; injected as molecules[0]
+
+[[simulation.molecule]]
+formula = N2
+count   = 12
+
+[[simulation.molecule]]
+formula = H2O
+count   = 50
+```
+
+The parser resolves `sequence` using the 20-residue table (backbone-subtracted Hill formulas + H2O terminal cap), then prepends the result to `simulation.molecules` so the runner sees it as the primary species. Explicit `[[simulation.molecule]]` blocks are preserved in declaration order after it.
 
 ________________________________________
 

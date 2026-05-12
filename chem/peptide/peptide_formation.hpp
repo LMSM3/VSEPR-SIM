@@ -27,7 +27,8 @@
 #include <utility>
 #include <vector>
 
-#include "../c_api/vsepr_peptide_core.h"
+#include "../c_api/vsepr_chem_core.h"
+#include "../peptide/vsepr_peptide_types.h"
 #include "../organic/valence_tables.hpp"
 #include "../organic/functional_groups.hpp"
 #include "core/math_vec3.hpp"
@@ -86,7 +87,7 @@ struct Atom {
     Vec3 velocity {};
 
     VSEPR_Hybridization hybridization {VSEPR_HYB_UNKNOWN};
-    VSEPR_ChemRole chem_role {VSEPR_ROLE_NONE};
+    VSEPR_PeptideRole   chem_role      {VSEPR_PEPTIDE_ROLE_UNKNOWN};
 
     double partial_charge {};
     double covalent_radius_pm {};
@@ -123,7 +124,7 @@ struct Residue {
     std::int32_t sidechain_root {-1};
 
     std::int32_t charge_state {};
-    VSEPR_SidechainClass sidechain_class {VSEPR_SIDECHAIN_NONE};
+    VSEPR_PeptideSidechainClass sidechain_class {VSEPR_SIDECHAIN_UNKNOWN};
 
     double phi_deg {};
     double psi_deg {};
@@ -186,8 +187,9 @@ struct ScoreCard {
 // ============================================================================
 
 struct FormationSummary {
-    VSEPR_FormationClass formation_class {VSEPR_FORM_UNKNOWN};
-    VSEPR_FormationState formation_state {VSEPR_STATE_PREFORM};
+    VSEPR_FormationClass  formation_class  {VSEPR_FORM_UNKNOWN};
+    VSEPR_FormationState  formation_state  {VSEPR_STATE_PREFORM};
+    VSEPR_PeptideState    peptide_state    {VSEPR_PEPTIDE_STATE_UNKNOWN};
     EnergyBreakdown energy {};
     ScoreCard score {};
     bool chemical_validity_pass {};
@@ -334,7 +336,7 @@ public:
 
 class PeptideFormationPipeline {
 public:
-    explicit PeptideFormationPipeline(VSEPR_EnvironmentClass environment = VSEPR_ENV_POLAR_SOLVENT)
+    explicit PeptideFormationPipeline(VSEPR_EnvironmentClass environment = VSEPR_ENV_POLAR_MEDIUM)
         : environment_(environment) {}
 
     [[nodiscard]] auto build_from_residues(std::span<const Residue> residues,
@@ -353,7 +355,7 @@ private:
     HydrogenBondEngine hbonds_ {};
     EnergyModel energy_ {};
     ScoringEngine scoring_ {};
-    VSEPR_EnvironmentClass environment_ {VSEPR_ENV_POLAR_SOLVENT};
+    VSEPR_EnvironmentClass environment_ {VSEPR_ENV_POLAR_MEDIUM};
 };
 
 } // namespace vsepr::chem

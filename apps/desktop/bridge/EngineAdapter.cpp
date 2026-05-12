@@ -16,6 +16,7 @@
 #include <random>
 #include <cmath>
 #include <map>
+#include <unordered_map>
 #include <sstream>
 #include <iomanip>
 
@@ -23,7 +24,32 @@ namespace bridge {
 
 namespace detail {
 
-// doc_to_state: SceneDocument frame -> atomistic::State + element names.
+// symbol_to_Z: symbol string -> atomic number (0 = unknown).
+// Self-contained so the bridge has no dependency on the global chemistry DB state.
+static int symbol_to_Z(const std::string& sym)
+{
+    static const std::unordered_map<std::string, int> tbl = {
+        {"H",1},{"He",2},{"Li",3},{"Be",4},{"B",5},{"C",6},{"N",7},{"O",8},{"F",9},{"Ne",10},
+        {"Na",11},{"Mg",12},{"Al",13},{"Si",14},{"P",15},{"S",16},{"Cl",17},{"Ar",18},
+        {"K",19},{"Ca",20},{"Sc",21},{"Ti",22},{"V",23},{"Cr",24},{"Mn",25},{"Fe",26},
+        {"Co",27},{"Ni",28},{"Cu",29},{"Zn",30},{"Ga",31},{"Ge",32},{"As",33},{"Se",34},
+        {"Br",35},{"Kr",36},{"Rb",37},{"Sr",38},{"Y",39},{"Zr",40},{"Nb",41},{"Mo",42},
+        {"Tc",43},{"Ru",44},{"Rh",45},{"Pd",46},{"Ag",47},{"Cd",48},{"In",49},{"Sn",50},
+        {"Sb",51},{"Te",52},{"I",53},{"Xe",54},{"Cs",55},{"Ba",56},{"La",57},{"Ce",58},
+        {"Pr",59},{"Nd",60},{"Pm",61},{"Sm",62},{"Eu",63},{"Gd",64},{"Tb",65},{"Dy",66},
+        {"Ho",67},{"Er",68},{"Tm",69},{"Yb",70},{"Lu",71},{"Hf",72},{"Ta",73},{"W",74},
+        {"Re",75},{"Os",76},{"Ir",77},{"Pt",78},{"Au",79},{"Hg",80},{"Tl",81},{"Pb",82},
+        {"Bi",83},{"Po",84},{"At",85},{"Rn",86},{"Fr",87},{"Ra",88},{"Ac",89},{"Th",90},
+        {"Pa",91},{"U",92},{"Np",93},{"Pu",94},{"Am",95},{"Cm",96},{"Bk",97},{"Cf",98},
+        {"Es",99},{"Fm",100},{"Md",101},{"No",102},{"Lr",103},{"Rf",104},{"Db",105},
+        {"Sg",106},{"Bh",107},{"Hs",108},{"Mt",109},{"Ds",110},{"Rg",111},{"Cn",112},
+        {"Nh",113},{"Fl",114},{"Mc",115},{"Lv",116},{"Ts",117},{"Og",118}
+    };
+    auto it = tbl.find(sym);
+    return it != tbl.end() ? it->second : 0;
+}
+
+
 // Routes through parsers::from_xyz so mass/type-map logic lives in one place.
 // Existing velocities are restored so an MD trajectory can be continued.
 static std::pair<atomistic::State, std::vector<std::string>>
@@ -61,7 +87,7 @@ state_to_frame(const atomistic::State& s, const std::vector<std::string>& names,
     for (uint32_t i = 0; i < s.N; ++i) {
         scene::AtomRecord a;
         a.symbol = (i < names.size()) ? names[i] : "C";
-        a.Z      = 0;
+        a.Z      = symbol_to_Z(a.symbol);
         a.pos    = {s.X[i].x, s.X[i].y, s.X[i].z};
         f.atoms.push_back(a);
     }
@@ -122,22 +148,88 @@ KernelResult EngineAdapter::run(const KernelRequest& req, ProgressFn /*progress*
         switch (req.op) {
 
         case KernelOp::LoadXYZ: {
-            vsepr::io::IOOptions opts;
-            opts.detect_bonds = true;
-            auto result = vsepr::io::load_structure(req.file_path, opts);
-            if (!result.is_ok()) { res.message = "Read failed: " + result.error().to_string(); return res; }
-            auto& mol = result.value();
-            atomistic::State s = atomistic::parsers::from_xyz(mol);
-            std::vector<std::string> names;
-            names.reserve(mol.atoms.size());
-            for (const auto& a : mol.atoms) names.push_back(a.element);
-            auto doc = std::make_shared<scene::SceneDocument>();
-            doc->provenance.mode        = "import";
-            doc->provenance.source_file = req.file_path;
-            doc->provenance.formula     = mol.formula;
-            doc->frames.push_back(detail::state_to_frame(s, names, "import"));
-            res.output = doc; res.success = true;
-            res.message = "Loaded " + std::to_string(mol.atoms.size()) + " atoms, " + std::to_string(mol.bonds.size()) + " bonds";
+            // .xyzf (and any multi-frame .xyz) — read all frames into the document
+            // so the viewport can play them back as an animation.
+            {
+                std::ifstream probe(req.file_path);
+                bool is_multi = false;
+                if (probe.is_open()) {
+                    // A file is multi-frame when the atom-count line appears more
+                    // than once: read the first count then seek past that block and
+                    // check whether a second integer-only line follows.
+                    int n_atoms = 0;
+                    if (probe >> n_atoms && n_atoms > 0) {
+                        std::string line;
+                        std::getline(probe, line); // rest of count line
+                        std::getline(probe, line); // comment line
+                        for (int i = 0; i < n_atoms; ++i)
+                            std::getline(probe, line);
+                        // Skip any blank lines between frames
+                        while (std::getline(probe, line)) {
+                            if (line.find_first_not_of(" \t\r\n") == std::string::npos) continue;
+                            // If a bare integer follows, this is a multi-frame file
+                            try { std::stoi(line); is_multi = true; } catch (...) {}
+                            break;
+                        }
+                    }
+                    probe.close();
+                }
+
+                if (is_multi) {
+                    std::ifstream f(req.file_path);
+                    if (!f.is_open()) { res.message = "Cannot open " + req.file_path; return res; }
+                    auto doc = std::make_shared<scene::SceneDocument>();
+                    doc->provenance.mode        = "import";
+                    doc->provenance.source_file = req.file_path;
+                    int frame_idx = 0;
+                    vsepr::io::XYZAReader rdr;
+                    while (f.peek() != std::char_traits<char>::eof()) {
+                        vsepr::io::XYZMolecule mol;
+                        vsepr::io::XYZReader plain_rdr;
+                        if (!plain_rdr.read_stream(f, mol)) break;
+                        if (doc->provenance.formula.empty()) doc->provenance.formula = mol.formula;
+                        atomistic::State s = atomistic::parsers::from_xyz(mol);
+                        std::vector<std::string> names;
+                        names.reserve(mol.atoms.size());
+                        for (const auto& a : mol.atoms) names.push_back(a.element);
+                        auto frame = detail::state_to_frame(s, names, "trajectory");
+                        frame.step = frame_idx;
+                        // Parse step/time from comment if present
+                        if (!mol.comment.empty()) {
+                            auto sp = mol.comment.find("step ");
+                            if (sp != std::string::npos) {
+                                try { frame.step = std::stoi(mol.comment.substr(sp + 5)); } catch (...) {}
+                            }
+                        }
+                        doc->frames.push_back(std::move(frame));
+                        ++frame_idx;
+                    }
+                    if (doc->frames.empty()) { res.message = "No frames read from " + req.file_path; return res; }
+                    res.output = doc; res.success = true;
+                    res.message = "Loaded trajectory: " + std::to_string(doc->frames.size()) + " frames, "
+                                  + std::to_string(doc->frames.front().atom_count()) + " atoms/frame";
+                    break;
+                }
+            }
+            // Single-frame path (original)
+            {
+                vsepr::io::IOOptions opts;
+                opts.detect_bonds = true;
+                auto result = vsepr::io::load_structure(req.file_path, opts);
+                if (!result.is_ok()) { res.message = "Read failed: " + result.error().to_string(); return res; }
+                auto& mol = result.value();
+                atomistic::State s = atomistic::parsers::from_xyz(mol);
+                std::vector<std::string> names;
+                names.reserve(mol.atoms.size());
+                for (const auto& a : mol.atoms) names.push_back(a.element);
+                auto doc = std::make_shared<scene::SceneDocument>();
+                doc->provenance.mode        = "import";
+                doc->provenance.source_file = req.file_path;
+                doc->provenance.formula     = mol.formula;
+                doc->frames.push_back(detail::state_to_frame(s, names, "import"));
+                res.output = doc; res.success = true;
+                res.message = "Loaded " + std::to_string(mol.atoms.size()) + " atoms, " + std::to_string(mol.bonds.size()) + " bonds";
+            }
             break;
         }
 

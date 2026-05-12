@@ -55,6 +55,9 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
+    // Open a .vsim script on startup (called from main after w.show())
+    void openVsimPath(const QString& path);
+
 protected:
     void closeEvent(QCloseEvent* event) override;
 

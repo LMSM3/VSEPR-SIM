@@ -19,7 +19,7 @@
 ;
 ;   Universal file opener (all VSIM/XYZ types):
 ;     installer\bin\open_vsim_file.cmd
-;   Priority: vsepr-sim.exe -> vsepr.exe -> pythonw vsepr_xyz_popup.pyw
+;   Priority: live-xyza-viewer.exe -> vsepr.exe open -> pythonw vsepr_xyz_popup.pyw
 ;
 ; ============================================================================
 
@@ -87,9 +87,12 @@ Source: "build\vsepr-sim.exe";         DestDir: "{app}\bin"; Flags: ignoreversio
 Source: "build\vsepr-cli.exe";         DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "build\vsepr_batch.exe";       DestDir: "{app}\bin"; Flags: ignoreversion
 
-; --- Universal file opener + Python popup viewer ---
-; open_vsim_file.cmd: priority-ordered handler for all VSIM/XYZ types
-;   1. vsepr-sim.exe open (3-D viewer)  2. vsepr.exe open (CLI)  3. pythonw popup
+; --- OpenGL 3-D visualization renderer (primary viewer) ---
+; CMD opener routes here first; other paths activate only when this is absent.
+Source: "build\live-xyza-viewer.exe";  DestDir: "{app}\bin"; Flags: ignoreversion
+
+; --- Universal file opener + Python popup viewer (fallback chain) ---
+; open_vsim_file.cmd priority: 1. live-xyza-viewer.exe  2. vsepr.exe open  3. pythonw popup
 Source: "tools\vsepr_xyz_popup.pyw";   DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "installer\bin\open_vsim_file.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion
 

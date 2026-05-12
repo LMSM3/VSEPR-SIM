@@ -30,9 +30,9 @@ bool ContinuousRunDisplay::open(int width, int height) {
 	cfg_.win_height = height;
 
 	try {
-		auto win = std::make_unique<Window>(
-			width, height,
+		auto raw = new Window(width, height,
 			"VSEPR-SIM  |  " + cfg_.run_label + "  [BATCH]");
+		std::unique_ptr<Window, WindowDeleter> win(raw);
 
 		if (!win->initialize()) {
 			std::cerr << "[ContinuousRunDisplay] GL window init failed — "
@@ -51,17 +51,6 @@ bool ContinuousRunDisplay::open(int width, int height) {
 }
 
 // ---------------------------------------------------------------------------
-// ContinuousRunDisplay::run_event_loop()
-// ---------------------------------------------------------------------------
-void ContinuousRunDisplay::run_event_loop() {
-	if (window_) {
-		run_gl_loop();
-	} else {
-		run_console_loop();
-	}
-}
-
-// ---------------------------------------------------------------------------
 // GL loop — delegates to Window::run_batch()
 // ---------------------------------------------------------------------------
 void ContinuousRunDisplay::run_gl_loop() {
@@ -70,30 +59,6 @@ void ContinuousRunDisplay::run_gl_loop() {
 
 	if (cfg_.auto_close_on_done) {
 		window_->close();
-	}
-}
-
-// ---------------------------------------------------------------------------
-// Console fallback loop
-// ---------------------------------------------------------------------------
-void ContinuousRunDisplay::run_console_loop() {
-	using clock = std::chrono::steady_clock;
-	const double tick_s = 1.0 / std::max(cfg_.display_fps, 0.5f);
-
-	while (!close_requested_.load()) {
-		auto t0 = clock::now();
-
-		console_bar_.print(bridge_.status_snapshot());
-
-		if (bridge_.is_done()) {
-			console_bar_.done(bridge_.status_snapshot());
-			break;
-		}
-
-		double elapsed = std::chrono::duration<double>(clock::now() - t0).count();
-		double sleep_s = tick_s - elapsed;
-		if (sleep_s > 0.0)
-			std::this_thread::sleep_for(std::chrono::duration<double>(sleep_s));
 	}
 }
 

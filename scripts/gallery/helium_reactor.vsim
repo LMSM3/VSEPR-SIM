@@ -1,0 +1,88 @@
+# @category Environment
+# @title    Helium reactor — room heat field + HTGR calibration helix
+#
+# Stress test: two 3D rendering windows in the same workspace.
+# Exercises room.heatfield (QPainter heat map) and calibration.helix
+# (orthographic helix) back-to-back, both reading from NodeAccessor.
+#
+# Ported from TEMP/initial tests/helium_reactor.vsim.
+# Python demos retired: demo_helium_room_3d.py, demo_calibration_3d.py.
+
+[project]
+name        = "gallery_helium_reactor"
+version     = "v5.1.0"
+seed_base   = 6001
+determinism = true
+description = "Helium reactor: room heat dispersion + HTGR calibration"
+
+[material]
+formula = "He"
+phase   = "gas"
+
+[environment]
+temperature = 873.0
+pressure    = 5.066
+medium      = "helium_gas"
+
+[room]
+preset          = "reactor"
+n_steps         = 200
+record_interval = 50
+
+[excite.thermal_spike]
+axis           = "z"
+intensity      = 1.0
+pulse_width_fs = 100.0
+profile        = "gaussian"
+
+[simulation]
+fire_max_steps = 500
+fire_dt_fs     = 1.0
+
+[run]
+mode      = "relax"
+max_steps = 500
+converge  = true
+
+[observe]
+metrics       = ["energy.total", "rms_force", "regime_transition", "loop_boundary", "severity"]
+every_n_steps = 1
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_events_json   = true
+write_report_md     = true
+write_dashboard_svg = true
+output_dir          = "out/gallery_helium_reactor"
+
+[export.visual]
+write_svg_figures      = true
+write_rdf_svg          = true
+write_energy_trace_svg = true
+visual_output_dir      = "figures/"
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+
+show "room.heatfield" target = "room.solver" options = {
+	"colormap": "blue_white_red",
+	"subsample": 80000,
+	"show_obstacles": true,
+	"show_bounding_box": true
+}
+
+show "calibration.helix" target = "run.history" options = {
+	"turns": 3,
+	"radius": 4.0,
+	"pitch": 6.0,
+	"colormap": "blue_red_on_T_C",
+	"severity_scale": 3.0,
+	"show_regimes": true,
+	"show_loops": true
+}
+
+show "data.rdf"          target = "analysis.rdf"
+show "data.scalar.panel" target = "room.solver"

@@ -5,6 +5,7 @@
  */
 
 #include "vsim/vsim_parser.hpp"
+#include "chem/organic/organic_formula_parser.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -34,6 +35,53 @@ VsimDocument VsimParser::parse_string(const std::string& content,
 	p.doc_.source_path = source_path;
 	p.doc_.exports.write_xyz = true;  // default on
 	p.parse_content(content);
+
+	// Organic formula expansion: if domain + sequence are set, expand into
+	// a canonical formula and propagate it to material.formula and, when no
+	// explicit [simulation.molecule] blocks were declared, inject a MoleculeEntry
+	// so the runner actually sees the molecule rather than an empty species list.
+	{
+		auto& chem = p.doc_.chemistry;
+		auto try_inject = [&](const std::string& formula, double temp_K) {
+			// Insert domain molecule at position 0 (primary species) only if
+			// no molecule with this formula is already declared in the script.
+			bool already_present = false;
+			for (const auto& m : p.doc_.simulation.molecules)
+				if (m.formula == formula) { already_present = true; break; }
+			if (!already_present) {
+				MoleculeEntry mol;
+				mol.formula       = formula;
+				mol.count         = 1;
+				mol.temperature_K = temp_K > 0.0 ? temp_K : 300.0;
+				p.doc_.simulation.molecules.insert(
+					p.doc_.simulation.molecules.begin(), std::move(mol));
+			}
+		};
+
+		if (chem.has_domain() && chem.has_sequence()) {
+			using namespace vsepr::chem::organic;
+			FormulaResult fr = expand_organic_formula(chem.sequence);
+			if (fr.ok) {
+				chem.expanded_formula = fr.formula;
+				// Populate material.formula only if not explicitly set by the script.
+				if (p.doc_.material.formula.empty())
+					p.doc_.material.formula = fr.formula;
+				// Ensure runner molecule list has an entry for this species.
+				try_inject(fr.formula, p.doc_.environment.temperature);
+			}
+		} else if (!chem.sequence.empty() && chem.domain.empty()) {
+			// Sequence set without explicit domain — infer peptide if all valid AA codes.
+			using namespace vsepr::chem::organic;
+			if (auto fr = parse_amino_acid_sequence(chem.sequence)) {
+				chem.domain           = "peptide";
+				chem.expanded_formula = fr->formula;
+				if (p.doc_.material.formula.empty())
+					p.doc_.material.formula = fr->formula;
+				try_inject(fr->formula, p.doc_.environment.temperature);
+			}
+		}
+	}
+
 	return p.doc_;
 }
 
@@ -63,6 +111,28 @@ void VsimParser::parse_content(const std::string& content) {
 			std::string sec = trim(clean.substr(start, end - start));
 			in_double_bracket_ = double_bracket;
 			handle_section(sec, line_no);
+			continue;
+		}
+
+		// `show "<kind>" target = "<path>" [options = { ... }]` directive
+		// Top-level only; allowed at script root and inside [visual.workspace].
+		// options = { ... } may span multiple lines — accumulate until balanced.
+		if (clean.size() > 5 && clean.substr(0, 5) == "show ") {
+			// Count brace depth on the first line
+			int depth = 0;
+			for (char c : clean) { if (c == '{') ++depth; else if (c == '}') --depth; }
+			// If depth > 0 the options block is still open — gather continuation lines.
+			while (depth > 0) {
+				std::string cont;
+				if (!std::getline(stream, cont)) break;
+				++line_no;
+				cont = strip_comment(cont);
+				// Append with a space so the tokeniser has room.
+				clean += ' ';
+				clean += trim(cont);
+				for (char c : cont) { if (c == '{') ++depth; else if (c == '}') --depth; }
+			}
+			parse_show_directive(clean, line_no);
 			continue;
 		}
 
@@ -215,6 +285,10 @@ void VsimParser::handle_key_value(const std::string& key,
 		apply_visual_key(key, val, line_no);
 	} else if (current_section_ == "visual.external" || current_section_ == "visual external") {
 		apply_visual_external_key(key, val, line_no);
+	} else if (current_section_ == "visual.workspace") {
+		apply_visual_workspace_key(key, val, line_no);
+	} else if (current_section_ == "room") {
+		apply_room_key(key, val, line_no);
 	} else if (current_section_ == "open") {
 		apply_open_key(key, val, line_no);
 	} else if (current_section_ == "open.advanced") {
@@ -326,6 +400,10 @@ void VsimParser::apply_molecule_key(const std::string& key, const Value& val, in
 		m.layer_mode = value_is_string(val) ? as_string(val) : to_string(val);
 	} else if (key == "n_layers") {
 		m.n_layers = static_cast<int>(numeric(val));
+	} else if (key == "region") {
+		m.region = value_is_string(val) ? as_string(val) : to_string(val);
+	} else if (key == "velocity_drift") {
+		m.velocity_drift = numeric(val);
 	}
 	// Unknown molecule keys silently ignored (forward-compatible)
 }
@@ -470,6 +548,112 @@ void VsimParser::apply_visual_external_key(const std::string& key, const Value& 
 		}
 	}
 	else doc_.raw_sections["visual.external"][key] = val;
+}
+
+// ============================================================================
+// `show` directive parser  (WO-VSIM-VIS-OVERHAUL-01)
+// Syntax: show "<kind>" target = "<dot.path>" [options = { ... }]
+// Unknown kinds are recorded (validate against registry post-parse if needed).
+// ============================================================================
+
+void VsimParser::parse_show_directive(const std::string& line, int line_no) {
+	// Expect: show "<kind>" target = "<path>" [options = { ... }]
+	// Extract the quoted kind first.
+	auto q1 = line.find('"');
+	if (q1 == std::string::npos)
+		throw ParseError(line_no, "show directive requires a quoted kind: " + line);
+	auto q2 = line.find('"', q1 + 1);
+	if (q2 == std::string::npos)
+		throw ParseError(line_no, "show directive: unclosed quote in kind: " + line);
+
+	ViewDirective vd;
+	vd.kind = line.substr(q1 + 1, q2 - q1 - 1);
+	if (vd.kind.empty())
+		throw ParseError(line_no, "show directive: empty kind");
+
+	// Remainder after the closing kind quote
+	std::string rest = trim(line.substr(q2 + 1));
+
+	// Parse key = value pairs from the remainder.
+	// We expect `target = "<path>"` and optionally `options = { ... }`.
+	// Simple tokeniser: split on first `=`, respecting quoted strings.
+	while (!rest.empty()) {
+		// Find next `=`
+		auto eq = rest.find('=');
+		if (eq == std::string::npos) break;
+		std::string attr = trim(rest.substr(0, eq));
+		rest = trim(rest.substr(eq + 1));
+
+		if (attr == "target") {
+			auto tq1 = rest.find('"');
+			if (tq1 == std::string::npos)
+				throw ParseError(line_no, "show directive: target value must be quoted");
+			auto tq2 = rest.find('"', tq1 + 1);
+			if (tq2 == std::string::npos)
+				throw ParseError(line_no, "show directive: unclosed quote in target");
+			vd.target = rest.substr(tq1 + 1, tq2 - tq1 - 1);
+			rest = trim(rest.substr(tq2 + 1));
+		} else if (attr == "options") {
+			// Collect everything from `{` to matching `}`
+			auto ob = rest.find('{');
+			if (ob == std::string::npos)
+				throw ParseError(line_no, "show directive: options value must be a JSON object");
+			int depth = 0;
+			size_t i = ob;
+			for (; i < rest.size(); ++i) {
+				if (rest[i] == '{') ++depth;
+				else if (rest[i] == '}') { --depth; if (depth == 0) break; }
+			}
+			if (depth != 0)
+				throw ParseError(line_no, "show directive: unclosed options object");
+			vd.options_raw = rest.substr(ob, i - ob + 1);
+			rest = trim(rest.substr(i + 1));
+		} else {
+			// Unknown attribute — skip to next word boundary
+			auto sp = rest.find_first_of(" \t");
+			rest = (sp == std::string::npos) ? "" : trim(rest.substr(sp));
+		}
+	}
+
+	if (vd.target.empty())
+		throw ParseError(line_no, "show directive for \"" + vd.kind + "\" requires a target");
+
+	doc_.view_directives.push_back(std::move(vd));
+}
+
+// ============================================================================
+// [visual.workspace] applier  (WO-VSIM-VIS-OVERHAUL-01)
+// ============================================================================
+
+void VsimParser::apply_visual_workspace_key(const std::string& key, const Value& val, int /*line_no*/) {
+	auto as_flag = [&]() -> bool {
+		return value_is_bool(val) ? as_bool(val) : (to_string(val) == "true");
+	};
+	auto as_str = [&]() -> std::string {
+		return value_is_string(val) ? as_string(val) : to_string(val);
+	};
+
+	if      (key == "enabled")        doc_.visual_workspace.enabled        = as_flag();
+	else if (key == "default_layout") doc_.visual_workspace.default_layout = as_str();
+	else if (key == "auto_open_tree") doc_.visual_workspace.auto_open_tree = as_flag();
+	else if (key == "live")           doc_.visual_workspace.live           = as_flag();
+	else doc_.raw_sections["visual.workspace"][key] = val;
+}
+
+// ============================================================================
+// [room] applier  (WO-VSIM-VIS-OVERHAUL-01)
+// ============================================================================
+
+void VsimParser::apply_room_key(const std::string& key, const Value& val, int /*line_no*/) {
+	auto as_str = [&]() -> std::string {
+		return value_is_string(val) ? as_string(val) : to_string(val);
+	};
+	auto as_num = [&]() -> double { return numeric(val); };
+
+	if      (key == "preset")          doc_.room.preset          = as_str();
+	else if (key == "n_steps")         doc_.room.n_steps         = static_cast<int>(as_num());
+	else if (key == "record_interval") doc_.room.record_interval = static_cast<int>(as_num());
+	else doc_.raw_sections["room"][key] = val;
 }
 
 // ============================================================================
@@ -1174,6 +1358,8 @@ void VsimParser::apply_chemistry_key(const std::string& key, const Value& val, i
 	else if (key=="event_registry")         doc_.chemistry.event_registry=value_is_bool(val)?as_bool(val):true;
 	else if (key=="min_score_threshold")    doc_.chemistry.min_score_threshold=numeric(val);
 	else if (key=="max_reactions_per_step") doc_.chemistry.max_reactions_per_step=static_cast<int>(numeric(val));
+	else if (key=="domain")                 doc_.chemistry.domain=s();
+	else if (key=="sequence")               doc_.chemistry.sequence=s();
 	else                                    doc_.raw_sections["chemistry"][key]=val;
 }
 

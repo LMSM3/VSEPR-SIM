@@ -16,6 +16,7 @@
 #include "cli/cmd_therm.hpp"
 #include "cli/cmd_tui.hpp"
 #include "cli/cmd_ufx.hpp"
+#include "cli/cmd_workspace.hpp"
 #include <iostream>
 #include <memory>
 #include <map>
@@ -39,6 +40,7 @@ public:
         Register(std::make_unique<ThermCommand>());
         Register(std::make_unique<TuiCommand>());
         Register(std::make_unique<UfxCommand>());
+        Register(std::make_unique<WorkspaceCommand>());
     }
     
     void Register(std::unique_ptr<Command> cmd) {

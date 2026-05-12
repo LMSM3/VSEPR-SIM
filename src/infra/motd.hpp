@@ -20,7 +20,7 @@ namespace infra {
  *    VSEPR-SIM :: MOTD
  *    Deterministic formation engine bootstrap
  *    Mode: Desktop
- *    Version: v3.0.1
+ Version: v5.0.0
  *   ========================================================
  */
 void print_motd_banner(const std::string& mode, const std::string& version);

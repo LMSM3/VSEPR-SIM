@@ -21,14 +21,14 @@ out vec3 frag_Color;
 // Compute rotation matrix to align Z-axis cylinder with bond direction
 mat4 compute_cylinder_transform(vec3 start, vec3 end, float radius) {
     vec3 direction = end - start;
-    float length = length(direction);
-    
-    if (length < 1e-6) {
+    float bond_len = length(direction);
+
+    if (bond_len < 1e-6) {
         // Degenerate bond (zero length) - return identity
         return mat4(1.0);
     }
-    
-    vec3 axis = direction / length;  // Normalized bond direction
+
+    vec3 axis = direction / bond_len;  // Normalized bond direction
     
     // Rodrigues' rotation formula to align Z-axis with bond direction
     vec3 z_axis = vec3(0.0, 0.0, 1.0);
@@ -73,7 +73,7 @@ mat4 compute_cylinder_transform(vec3 start, vec3 end, float radius) {
     mat4 scale = mat4(
         radius, 0.0,    0.0,    0.0,
         0.0,    radius, 0.0,    0.0,
-        0.0,    0.0,    length, 0.0,
+        0.0,    0.0,    bond_len, 0.0,
         0.0,    0.0,    0.0,    1.0
     );
     

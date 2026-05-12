@@ -1,0 +1,17 @@
+{
+  "source"          : "osmium_tetroxide.xyzf",
+  "kind"            : "XYZF multi-frame trajectory",
+  "atom_count"      : 450,
+  "frame_count"     : 5,
+  "title"          : "OsO4 | E = -44119.5448 kcal/mol | T = 300.0 K | step 0 properties="charge:velocity:force:energy" Lattice="0.000000 0.000000 0.000000  0.000000 0.000000 0.000000  0.000000 0.000000 0.000000" pbc="T T T"",
+  "has_charge"      : false,
+  "has_velocity"    : false,
+  "has_force"       : false,
+  "has_energy_col"  : false,
+  "bounds"         : {
+    "min": [3.012,3.012,3.012],
+    "max": [36.988,36.988,28.988]
+  },
+  "preview_mode"    : "static_3d",
+  "artifact_generated": true
+}

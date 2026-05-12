@@ -1,0 +1,23 @@
+{
+  "timestamp_ms": 1778547547939,
+  "symbol": "Ar",
+  "name": "Ar",
+  "Z": 0,
+  "lattice": "FCC",
+  "a0_angstrom": null,
+  "Tmelt_K": null,
+  "Ecoh_eV": null,
+  "gamma": null,
+  "q_data": null,
+  "compact": null,
+  "render_mode": "2D",
+  "complexity_label": "3\u00d73",
+  "supercell_dims": [
+    3,
+    3,
+    2
+  ],
+  "view_azimuth_deg": 29.999999999999996,
+  "view_elevation_deg": 22.0,
+  "pid": 72588
+}

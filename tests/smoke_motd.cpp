@@ -9,7 +9,7 @@
 int main() {
     using namespace vsepr::infra;
 
-    print_motd_banner("Smoke Test", "v3.0.1");
+    print_motd_banner("Smoke Test", "v5.0.0");
 
     HardwareReport   hw   = run_hardware_check(/*need_gui=*/false, /*need_cuda=*/false);
     BootstrapReport  boot = initialize_infrastructure();

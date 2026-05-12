@@ -18,6 +18,7 @@
 //     peptide-stochastic-viz --seed 42              (reproducible)
 
 #include "../chem/peptide/peptide_formation.hpp"
+#include "../chem/peptide/vsepr_peptide_types.h"
 
 #include <algorithm>
 #include <chrono>
@@ -57,32 +58,32 @@ using namespace vsepr::chem;
 struct AminoAcidDef {
     const char* three_letter;
     const char* one_letter;
-    VSEPR_SidechainClass sidechain_class;
+    VSEPR_PeptideSidechainClass sidechain_class;
     int sidechain_heavy_atoms;   // non-H heavy atoms in sidechain
     double sidechain_mass_u;     // approximate sidechain mass
 };
 
 static constexpr AminoAcidDef AMINO_ACIDS[] = {
-    {"GLY", "G", VSEPR_SIDECHAIN_NONE,        0,   1.008},
-    {"ALA", "A", VSEPR_SIDECHAIN_HYDROPHOBIC,  1,  15.035},
-    {"VAL", "V", VSEPR_SIDECHAIN_HYDROPHOBIC,  3,  43.089},
-    {"LEU", "L", VSEPR_SIDECHAIN_HYDROPHOBIC,  4,  57.116},
-    {"ILE", "I", VSEPR_SIDECHAIN_HYDROPHOBIC,  4,  57.116},
-    {"PRO", "P", VSEPR_SIDECHAIN_HYDROPHOBIC,  3,  42.081},
-    {"PHE", "F", VSEPR_SIDECHAIN_AROMATIC,     7,  91.132},
-    {"TRP", "W", VSEPR_SIDECHAIN_AROMATIC,    10, 130.170},
-    {"MET", "M", VSEPR_SIDECHAIN_SULFUR,       4,  75.154},
-    {"CYS", "C", VSEPR_SIDECHAIN_SULFUR,       2,  47.099},
-    {"SER", "S", VSEPR_SIDECHAIN_POLAR,        2,  31.034},
-    {"THR", "T", VSEPR_SIDECHAIN_POLAR,        3,  45.061},
-    {"ASN", "N", VSEPR_SIDECHAIN_POLAR,        4,  58.060},
-    {"GLN", "Q", VSEPR_SIDECHAIN_POLAR,        5,  72.087},
-    {"TYR", "Y", VSEPR_SIDECHAIN_AROMATIC,     8, 107.131},
-    {"ASP", "D", VSEPR_SIDECHAIN_ACIDIC,       4,  59.044},
-    {"GLU", "E", VSEPR_SIDECHAIN_ACIDIC,       5,  73.071},
-    {"LYS", "K", VSEPR_SIDECHAIN_BASIC,        5,  72.130},
-    {"ARG", "R", VSEPR_SIDECHAIN_BASIC,        7, 100.144},
-    {"HIS", "H", VSEPR_SIDECHAIN_BASIC,        6,  81.097},
+    {"GLY", "G", VSEPR_SIDECHAIN_SPECIAL,      0,   1.008},
+    {"ALA", "A", VSEPR_SIDECHAIN_NONPOLAR,      1,  15.035},
+    {"VAL", "V", VSEPR_SIDECHAIN_NONPOLAR,      3,  43.089},
+    {"LEU", "L", VSEPR_SIDECHAIN_NONPOLAR,      4,  57.116},
+    {"ILE", "I", VSEPR_SIDECHAIN_NONPOLAR,      4,  57.116},
+    {"PRO", "P", VSEPR_SIDECHAIN_SPECIAL,       3,  42.081},
+    {"PHE", "F", VSEPR_SIDECHAIN_AROMATIC,      7,  91.132},
+    {"TRP", "W", VSEPR_SIDECHAIN_AROMATIC,     10, 130.170},
+    {"MET", "M", VSEPR_SIDECHAIN_NONPOLAR,      4,  75.154},
+    {"CYS", "C", VSEPR_SIDECHAIN_POLAR,         2,  47.099},
+    {"SER", "S", VSEPR_SIDECHAIN_POLAR,         2,  31.034},
+    {"THR", "T", VSEPR_SIDECHAIN_POLAR,         3,  45.061},
+    {"ASN", "N", VSEPR_SIDECHAIN_POLAR,         4,  58.060},
+    {"GLN", "Q", VSEPR_SIDECHAIN_POLAR,         5,  72.087},
+    {"TYR", "Y", VSEPR_SIDECHAIN_AROMATIC,      8, 107.131},
+    {"ASP", "D", VSEPR_SIDECHAIN_NEGATIVE,      4,  59.044},
+    {"GLU", "E", VSEPR_SIDECHAIN_NEGATIVE,      5,  73.071},
+    {"LYS", "K", VSEPR_SIDECHAIN_POSITIVE,      5,  72.130},
+    {"ARG", "R", VSEPR_SIDECHAIN_POSITIVE,      7, 100.144},
+    {"HIS", "H", VSEPR_SIDECHAIN_AROMATIC,      6,  81.097},
 };
 static constexpr int N_AMINO_ACIDS = sizeof(AMINO_ACIDS) / sizeof(AMINO_ACIDS[0]);
 
@@ -212,11 +213,12 @@ static StochasticRun generate_random_chain(int run_id, std::mt19937& rng,
             for (int s = 0; s < aa.sidechain_heavy_atoms; ++s) {
                 int sc_Z = 6; // default carbon
                 double sc_mass = 12.011;
-                if (aa.sidechain_class == VSEPR_SIDECHAIN_SULFUR && s == aa.sidechain_heavy_atoms - 1) {
+                if (aa.sidechain_class == VSEPR_SIDECHAIN_NONPOLAR && s == aa.sidechain_heavy_atoms - 1
+                    && std::string(aa.three_letter) == "MET") {
                     sc_Z = 16; sc_mass = 32.06;
                 } else if (aa.sidechain_class == VSEPR_SIDECHAIN_POLAR && s == aa.sidechain_heavy_atoms - 1) {
                     sc_Z = 8; sc_mass = 15.999;
-                } else if (aa.sidechain_class == VSEPR_SIDECHAIN_ACIDIC && s >= aa.sidechain_heavy_atoms - 2) {
+                } else if (aa.sidechain_class == VSEPR_SIDECHAIN_NEGATIVE && s >= aa.sidechain_heavy_atoms - 2) {
                     sc_Z = 8; sc_mass = 15.999;
                 }
 

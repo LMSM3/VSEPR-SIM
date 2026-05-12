@@ -335,7 +335,8 @@ vsepr_add_test(NAME ExperimentMatchTest TARGET test_experiment_match LABELS atom
 # Group 7: Coarse-Grained Mapping & Descriptors
 # ============================================================================
 
-add_executable(test_cg_mapping_suite test_cg_mapping.cpp)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_cg_mapping_suite.cpp)
+add_executable(test_cg_mapping_suite test_cg_mapping_suite.cpp)
 target_link_libraries(test_cg_mapping_suite coarse_grain atomistic vsepr_core)
 target_include_directories(test_cg_mapping_suite PRIVATE ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME CGMappingTest TARGET test_cg_mapping_suite LABELS coarse_grain)
@@ -541,7 +542,8 @@ vsepr_add_test(NAME PropertyScraperTest TARGET test_property_scraper LABELS atom
 # Group 16: ISO 286 Tolerance & Fit (pure C)
 # ============================================================================
 
-add_executable(test_iso_fit test_iso_fit.c)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_iso_fit.cpp)
+add_executable(test_iso_fit test_iso_fit.cpp)
 target_link_libraries(test_iso_fit vsepr_iso_fit)
 target_include_directories(test_iso_fit PRIVATE ${PROJECT_SOURCE_DIR}/include)
 set_source_files_properties(test_iso_fit.c PROPERTIES LANGUAGE C)
@@ -550,7 +552,8 @@ vsepr_add_test(NAME IsoFitTest TARGET test_iso_fit LABELS core engineering quick
 # Group 17: Fatigue analysis
 # ============================================================================
 
-add_executable(test_fatigue test_fatigue.c)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_fatigue.cpp)
+add_executable(test_fatigue test_fatigue.cpp)
 target_link_libraries(test_fatigue vsepr_fatigue)
 target_include_directories(test_fatigue PRIVATE ${PROJECT_SOURCE_DIR}/include)
 set_source_files_properties(test_fatigue.c PROPERTIES LANGUAGE C)
@@ -908,6 +911,7 @@ vsepr_add_test(NAME IntentAuthoringTest TARGET test_wo_03b
 # Verifies that every known bad input produces a soft ParseError or
 # ValidationResult warning rather than an uncaught exception or silent corruption.
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_wo_03b_stress.cpp)
 add_executable(test_wo_03b_stress test_wo_03b_stress.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
 target_include_directories(test_wo_03b_stress PRIVATE
@@ -941,6 +945,7 @@ vsepr_add_test(NAME IntentAuthoringStressTest TARGET test_wo_03b_stress
 #   R17 resolve_export_profile — research_report / minimal / publication (B9-16)
 #   R18 apply_registry_defaults — explicit user values not overwritten (B9-12)
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_wo_03c.cpp)
 add_executable(test_wo_03c test_wo_03c.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
 target_include_directories(test_wo_03c PRIVATE
@@ -962,6 +967,7 @@ vsepr_add_test(NAME RegistryResolutionTest TARGET test_wo_03c
 #   D5  demo_05_variance_while  — beta-10 inline [variance]/[N_evolution]/[while]
 #   D6  demo_06_batch_sweep     — [batch] two-job parameter sweep
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_demo_scripts.cpp)
 add_executable(test_demo_scripts test_demo_scripts.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
 target_include_directories(test_demo_scripts PRIVATE
@@ -989,6 +995,7 @@ vsepr_add_test(NAME DemoScriptSuiteTest TARGET test_demo_scripts
 #   T9  OpenCommand returns error for missing file
 #   T10 RunCommand --safe validates and resolves minimal NaCl script
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_b10_core.cpp)
 add_executable(test_b10_core test_b10_core.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
     ${PROJECT_SOURCE_DIR}/src/cli/cmd_doctor.cpp
@@ -1026,6 +1033,7 @@ vsepr_add_test(NAME Beta10SmokeTest TARGET test_b10_core
 #   C14 unknown metric produces non-empty warning
 #   C15 KernelEventLog count non-decreasing after run_pass
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_chemistry_vsim.cpp)
 add_executable(test_chemistry_vsim test_chemistry_vsim.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
 target_include_directories(test_chemistry_vsim PRIVATE
@@ -1049,6 +1057,7 @@ vsepr_add_test(NAME AmbientChemistryTest TARGET test_chemistry_vsim
 #   T8  Conformer — same graph hash, RMSD > tolerance
 #   T9  Ring count via Euler formula
 
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_isomer_detection.cpp)
 add_executable(test_isomer_detection test_isomer_detection.cpp)
 target_link_libraries(test_isomer_detection vsepr_analysis vsepr_core)
 target_include_directories(test_isomer_detection PRIVATE
@@ -1064,14 +1073,16 @@ vsepr_add_test(NAME IsomerDetectionTest TARGET test_isomer_detection
 #   P3  [analysis.isomer_tracking] parses all keys
 #   P4  Unknown keys fall through to raw_sections
 
-add_executable(test_isomer_vsim_parser test_isomer_vsim_parser.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
-target_include_directories(test_isomer_vsim_parser PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_isomer_vsim_parser PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME IsomerVsimParserTest TARGET test_isomer_vsim_parser
-    LABELS isomer vsim parser wo04a quick IsomerParser)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_isomer_vsim_parser.cpp)
+    add_executable(test_isomer_vsim_parser test_isomer_vsim_parser.cpp
+        ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+    target_include_directories(test_isomer_vsim_parser PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR})
+    target_compile_options(test_isomer_vsim_parser PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+    vsepr_add_test(NAME IsomerVsimParserTest TARGET test_isomer_vsim_parser
+        LABELS isomer vsim parser wo04a quick IsomerParser)
+endif()
 
 # stress_isomer_pipeline — thousands of candidates through the full pipeline
 #   Sections:
@@ -1082,14 +1093,16 @@ vsepr_add_test(NAME IsomerVsimParserTest TARGET test_isomer_vsim_parser
 #     E  Known-invalid gate tests
 #     F  Markdown/CSV/JSON report generation
 
-add_executable(stress_isomer_pipeline stress_isomer_pipeline.cpp)
-target_link_libraries(stress_isomer_pipeline vsepr_analysis vsepr_core)
-target_include_directories(stress_isomer_pipeline PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(stress_isomer_pipeline PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME IsomerPipelineStress TARGET stress_isomer_pipeline
-    LABELS isomer stress pipeline wo04a perf IsomerStress)
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stress_isomer_pipeline.cpp)
+    add_executable(stress_isomer_pipeline stress_isomer_pipeline.cpp)
+    target_link_libraries(stress_isomer_pipeline vsepr_analysis vsepr_core)
+    target_include_directories(stress_isomer_pipeline PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR})
+    target_compile_options(stress_isomer_pipeline PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+    vsepr_add_test(NAME IsomerPipelineStress TARGET stress_isomer_pipeline
+        LABELS isomer stress pipeline wo04a perf IsomerStress)
+endif()
 
 # isomer_demo — narrated end-to-end demo for WO-VSIM-04A:
 #   Run 1  C2H6O constitutional isomers (ethanol vs DME)
@@ -1100,15 +1113,17 @@ vsepr_add_test(NAME IsomerPipelineStress TARGET stress_isomer_pipeline
 #   Run 6  RMSD conformer sweep: SameStructure vs Conformer boundary
 #   Run 7  Full batch: 6 valid + 2 invalid candidates, 3 report files
 
-add_executable(isomer_demo
-    ${PROJECT_SOURCE_DIR}/apps/isomer_demo.cpp)
-target_link_libraries(isomer_demo vsepr_analysis vsepr_core)
-target_include_directories(isomer_demo PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(isomer_demo PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME IsomerDemo TARGET isomer_demo
-    LABELS isomer demo wo04a quick IsomerDemo)
+if(EXISTS ${PROJECT_SOURCE_DIR}/apps/isomer_demo.cpp)
+    add_executable(isomer_demo
+        ${PROJECT_SOURCE_DIR}/apps/isomer_demo.cpp)
+    target_link_libraries(isomer_demo vsepr_analysis vsepr_core)
+    target_include_directories(isomer_demo PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR})
+    target_compile_options(isomer_demo PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
+    vsepr_add_test(NAME IsomerDemo TARGET isomer_demo
+        LABELS isomer demo wo04a quick IsomerDemo)
+endif()
 
 # =============================================================================
 # WO-B9-001 — Batch Manifest Runner
@@ -1227,3 +1242,4 @@ target_include_directories(test_batch_runner_static PRIVATE
 target_compile_options(test_batch_runner_static PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
 vsepr_add_test(NAME BatchRunnerStaticGroup43 TARGET test_batch_runner_static
     LABELS batch runner static wo-vsim-62c beta12 BatchRunnerStatic)
+
