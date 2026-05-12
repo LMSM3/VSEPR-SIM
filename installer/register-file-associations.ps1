@@ -23,7 +23,7 @@
     This routing is implemented in open_vsim_file.cmd.
 
 .PARAMETER BinaryPath
-    Full path to the installed vsepr.exe or vsepr-sim.exe.
+    Full path to the installed vsepr.exe.
     Default: %LOCALAPPDATA%\VSEPR-SIM\bin\vsepr.exe
 
 .PARAMETER Unregister
@@ -47,7 +47,7 @@ if (-not $BinaryPath) {
 }
 
 if (-not $Unregister -and -not (Test-Path $BinaryPath)) {
-    throw "vsepr-sim.exe not found at: $BinaryPath`n  Install first, or pass -BinaryPath explicitly."
+    throw "vsepr.exe not found at: $BinaryPath`n  Install first, or pass -BinaryPath explicitly."
 }
 
 $ExeQ = "`"$BinaryPath`""   # quoted for registry command values

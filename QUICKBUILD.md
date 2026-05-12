@@ -1,157 +1,190 @@
 # VSEPR-Sim Quick Build Guide
 
-**Version:** 2.4.0 - Day 11 Release  
-**Last Updated:** January 30, 2026  
+**Version:** 5.0.0  
+**Last Updated:** 2026  
 
 ---
 
 ## Prerequisites
 
-- **C++ Compiler:** GCC 7+, Clang 10+, or MSVC 2019+
-- **CMake:** 3.15+
-- **For 3D Visualization:** OpenGL 3.3+, GLFW3, GLEW
+| Requirement | Minimum |
+|-------------|---------|
+| C++ Compiler | GCC 9+, Clang 12+, or MSVC 2019+ (C++20) |
+| CMake | 3.15+ |
+| Python | 3.8+ (for `vsepr_xyz_popup.pyw` fallback viewer) |
+| Inno Setup | 6+ (Windows installer only) |
 
 ---
 
-## Quick Build (WSL/Linux - Recommended)
+## Build (WSL / Linux — Recommended)
 
 ```bash
-# 1. Navigate to project
-cd /mnt/c/Users/Liam/Desktop/vsepr-sim  # Or your path
+# 1. Clone and enter the repo
+git clone https://github.com/LMSM3/VSEPR-SIM
+cd VSEPR-SIM
 
-# 2. Create build directory
-mkdir -p build && cd build
+# 2. Configure (Release)
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 
-# 3. Configure
-cmake ..
+# 3. Build the kernel + CLI tools
+cmake --build build --parallel
 
-# 4. Build core tools (fastest)
-make meso-build meso-sim -j8
-
-# 5. Optional: Build 3D viewers
-make interactive-viewer simple-viewer -j8
+# 4. Verify
+./build/vsepr.exe --version
 ```
 
-**Build time:** ~2 minutes  
-**Result:** Executables in `build/` directory
+**Result:** Executables land in `build/`.
 
 ---
 
-## Test the Build
+## Installed Directory Layout
 
-```bash
-# Test molecular builder
-./meso-build
-⚛ list
-⚛ build water
-⚛ info
-⚛ save test.xyz
-⚛ exit
+After running the Windows installer (`installer/output/vsepr-sim-5.0.0-setup.exe`),
+the install root (`%ProgramFiles%\VSEPR-SIM` or user-chosen location) contains:
 
-# Verify file created
-cat test.xyz
-
-# Test 3D viewer (if built)
-./interactive-viewer test.xyz
 ```
-
----
-
-## Available Applications
-
-### Core CLI Tools (No GUI Required)
-
-| Tool | Build Command | Purpose |
-|------|---------------|---------|
-| **meso-build** | `make meso-build` | Create molecules interactively |
-| **meso-sim** | `make meso-sim` | Run simulations |
-| **meso-relax** | `make meso-relax` | Energy minimization |
-| **meso-align** | `make meso-align` | Structure alignment |
-| **meso-discover** | `make meso-discover` | Reaction discovery |
-
-### Visualization Tools (Require OpenGL)
-
-| Tool | Build Command | Purpose |
-|------|---------------|---------|
-| **interactive-viewer** | `make interactive-viewer` | Full 3D viewer with UI |
-| **simple-viewer** | `make simple-viewer` | Lightweight viewer |
-
-### Build Everything
-
-```bash
-cmake .. -DBUILD_APPS=ON -DBUILD_VIS=ON
-make -j8
+VSEPR-SIM\
+├── bin\
+│   ├── vsepr.exe              ← main kernel entry point
+│   ├── vsepr-cli.exe          ← command-line interface
+│   ├── vsepr_batch.exe        ← batch / scripted runs
+│   ├── vsepr_live.exe         ← live-session runner
+│   ├── vsepr-entry.exe        ← lightweight entry-point launcher
+│   ├── vsepr-ufx.exe          ← UFX/UFF forcefield driver
+│   ├── atomistic-sim.exe      ← atomistic simulation engine
+│   ├── atomistic-relax.exe    ← energy relaxation
+│   ├── atomistic-align.exe    ← structure alignment
+│   ├── atomistic-discover.exe ← reaction discovery
+│   ├── open_vsim_file.cmd     ← universal file-type opener (shell target)
+│   └── vsepr_xyz_popup.pyw    ← Python coordinate popup (fallback viewer)
+├── include\vsim\              ← VSIM parser + SDK headers
+├── data\                      ← built-in reference data
+├── scripts\                   ← utility scripts
+├── docs\                      ← documentation
+├── resources\
+│   └── vsepr.ico
+├── installer\
+│   └── register-file-associations.ps1
+├── README.md
+├── VSIM_REFERENCE.md
+└── LICENSE
 ```
 
 ---
 
-## Windows-Specific Setup
+## Available Binaries
 
-### Using WSL (Recommended)
+### Kernel / Simulation
 
-```powershell
-# 1. Install WSL
-wsl --install
+| Binary | Purpose |
+|--------|---------|
+| `vsepr.exe` | Primary kernel entry point — run, inspect, validate |
+| `vsepr-cli.exe` | Interactive CLI interface |
+| `vsepr_batch.exe` | Scripted / batch simulation runner |
+| `vsepr_live.exe` | Live/streaming session mode |
+| `vsepr-entry.exe` | Lightweight entry-point launcher |
+| `vsepr-ufx.exe` | UFF/UFX forcefield driver |
+| `atomistic-sim.exe` | Atomistic simulation engine |
+| `atomistic-relax.exe` | Energy minimization / relaxation |
+| `atomistic-align.exe` | Structure alignment |
+| `atomistic-discover.exe` | Reaction pathway discovery |
 
-# 2. Inside WSL, follow Linux build steps above
+### File Integration (Shell / Viewer)
 
-# 3. Access Windows files
-cd /mnt/c/Users/YourName/Desktop/vsepr-sim
+| File | Purpose |
+|------|---------|
+| `open_vsim_file.cmd` | Universal opener — priority: `vsepr.exe open` → `vsepr-cli.exe open` → Python popup |
+| `vsepr_xyz_popup.pyw` | Python coordinate popup (fallback when no GPU binary available) |
+
+---
+
+## File Associations (Windows)
+
+The installer registers VSIM/XYZ file types via:
+
+```
+installer\register-file-associations.ps1
 ```
 
-### Native Windows Build
+This runs post-install under HKCU (no admin required).
 
-**Option A: PowerShell with WSL** (Easiest)
-```powershell
-wsl bash -c "cd /mnt/c/Users/Liam/Desktop/vsepr-sim/build && make meso-build -j8"
-```
+| Extension | Behavior |
+|-----------|----------|
+| `.vsim` | Double-click → `vsepr.exe run` |
+| `.xyzFull` / `.xyzfull` | Double-click → priority opener (replay viewer) |
+| `.vsxyz` | Double-click → priority opener (coordinate viewer) |
+| `.xyza` / `.xyzA` | Double-click → priority opener |
+| `.xyzc` | Double-click → priority opener (checkpoint) |
+| `.xyzf` / `.xyzF` | Double-click → priority opener (trajectory) |
+| `.xyz` | Right-click context menu only — **default handler unchanged** |
 
-**Option B: Visual Studio** (GUI Development)
+To register manually (or re-register after repair):
+
 ```powershell
-mkdir build
-cd build
-cmake .. -G "Visual Studio 17 2022" -A x64
-cmake --build . --config Release -j 8
+# From the install root:
+powershell -ExecutionPolicy Bypass -File installer\register-file-associations.ps1 -BinaryPath bin\vsepr.exe
+
+# To unregister:
+powershell -ExecutionPolicy Bypass -File installer\register-file-associations.ps1 -Unregister
 ```
 
 ---
 
-## Double-Click XYZ Files (Windows)
-
-### Setup (One-Time)
+## Building the Windows Installer
 
 ```powershell
-# Run as Administrator
-.\install_xyz_association.ps1
+# 1. Build the project in Release mode first
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
 
-# Or all-in-one
-.\setup_xyz_doubleclick.ps1
+# 2. Compile the installer (requires Inno Setup 6+)
+iscc installer\setup.iss
+
+# Output: installer\output\vsepr-sim-5.0.0-setup.exe
 ```
 
-### Test
+---
 
-Double-click any `.xyz` file in Windows Explorer → Interactive viewer opens!
+## Quick Commands
 
-**See:** `DOUBLE_CLICK_QUICKREF.md` for details
+```powershell
+# Run the kernel
+.\build\vsepr.exe --version
+
+# Inspect a VSIM file
+.\build\vsepr.exe inspect path\to\structure.vsim
+
+# Run a VSIM script
+.\build\vsepr.exe run path\to\script.vsim
+
+# Open an XYZ coordinate file
+.\build\vsepr.exe open path\to\structure.xyz
+
+# Batch simulation
+.\build\vsepr_batch.exe --input runs.vsim --output results\
+
+# Clean rebuild
+Remove-Item -Recurse -Force build; cmake -B build -S .; cmake --build build --parallel
+```
 
 ---
 
 ## Troubleshooting
 
-### "make: command not found"
+### Binary not found after install
 
-**Solution:** Use WSL or install MinGW/MSYS2
+Check that `%ProgramFiles%\VSEPR-SIM\bin` (or your custom install path) is in PATH,
+or use the full path explicitly.
 
+### File associations not working
+
+Re-run the association script from the install root:
 ```powershell
-# WSL
-wsl --install
-
-# Or install MSYS2 from msys2.org
+powershell -ExecutionPolicy Bypass -File installer\register-file-associations.ps1 -BinaryPath bin\vsepr.exe
 ```
+Then log out / log in, or run `ie4uinit.exe -show` to refresh the shell.
 
-### "CMake Error: Could not find CMAKE_C_COMPILER"
-
-**Solution:** Install build tools
+### CMake can't find compiler
 
 ```bash
 # Ubuntu/Debian
@@ -161,126 +194,35 @@ sudo apt-get install build-essential cmake
 pacman -S mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake
 ```
 
-### "GL/glew.h: No such file"
+### Python popup doesn't open
 
-**Only needed for visualization tools.**
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install libglfw3-dev libglew-dev
-
-# Skip visualization if not needed:
-make meso-build meso-sim -j8  # CLI tools only
-```
-
-### Build is Slow
-
-```bash
-# Use more parallel jobs
-make -j16  # Or your CPU core count
-
-# Build only what you need
-make meso-build  # Just the builder
-```
-
----
-
-## Build Options
-
-```bash
-# Minimal (CLI tools only, no graphics)
-cmake .. -DBUILD_APPS=ON -DBUILD_VIS=OFF
-make meso-build meso-sim -j8
-
-# With visualization
-cmake .. -DBUILD_APPS=ON -DBUILD_VIS=ON
-make interactive-viewer -j8
-
-# Everything (tests, GUI, etc.)
-cmake .. -DBUILD_ALL=ON
-make -j8
-```
-
----
-
-## Quick Commands Reference
-
-```bash
-# Clean rebuild
-rm -rf build && mkdir build && cd build && cmake .. && make meso-build -j8
-
-# Rebuild after code changes
-cd build && make -j8
-
-# Test build
-./meso-build <<< "build water\nsave test.xyz\nexit" && cat test.xyz
-
-# Check what was built
-ls -lh meso-* interactive-viewer simple-viewer 2>/dev/null
-```
-
----
-
-## Performance Notes
-
-- **Release builds:** 3-5x faster than Debug
-- **Parallel build:** Use `-j` with your CPU core count
-- **Build time:** 
-  - Core tools (CLI): ~1-2 minutes
-  - With visualization: ~3-5 minutes
-  - Full project: ~10-15 minutes
+Ensure `pythonw.exe` is on PATH (standard Python 3 install includes it).  
+`vsepr_xyz_popup.pyw` is a fallback only — if `vsepr.exe` is installed, it takes priority.
 
 ---
 
 ## Platform Notes
 
-### Linux
-- ✅ Recommended for development
-- ✅ Best performance
-- ✅ Easy dependency management
-
-### Windows WSL
-- ✅ Best of both worlds
-- ✅ Access Windows files via `/mnt/c/`
-- ✅ Linux build tools + Windows GUI integration
-
-### Windows Native
-- ⚠️ More complex setup
-- ⚠️ Visual Studio recommended for GUI work
-- ✅ PowerShell + WSL works for CLI tools
-
-### macOS
-- ✅ Works with Homebrew dependencies
-- ⚠️ OpenGL 3.3 deprecated (use MoltenVK for Vulkan)
+| Platform | Status | Notes |
+|----------|--------|-------|
+| Windows 10/11 x64 | ✅ Primary | Full installer + file associations |
+| WSL (Ubuntu) | ✅ Supported | Build + CLI; no installer integration |
+| Linux native | ✅ Supported | Build + CLI; no installer |
+| macOS | ⚠️ Partial | Build works; no installer; OpenGL deprecated |
 
 ---
 
-## Next Steps
+## Legacy / Experimental Directories
 
-After building:
+The following directories exist for historical reference and are **not part of the active build**:
 
-1. **Try meso-build:**
-   ```bash
-   ./build/meso-build
-   ⚛ help
-   ```
+| Directory | Status |
+|-----------|--------|
+| `legacy/` | Pre-v4 C API — superseded by C++ kernel |
+| `archive/` | Build system snapshots — frozen reference |
+| `bridge_beta/` | Next-gen bridge scaffold — experimental, not wired |
+| `v4/` | v4 scoring/formation era — absorbed into v5 |
+| `v5/` | Early v5 prototype demos — production kernel is in `src/` |
 
-2. **Create a molecule:**
-   ```bash
-   ⚛ build cisplatin
-   ⚛ save cisplatin.xyz
-   ```
-
-3. **View in 3D:**
-   ```bash
-   ./build/interactive-viewer cisplatin.xyz
-   ```
-
-4. **Set up double-click** (Windows):
-   ```powershell
-   .\install_xyz_association.ps1
-   ```
-
----
-
-**Build successful?** Start with `./build/meso-build` and type `help`! 🚀
+Each directory has a `README.md` explaining its status.  
+See `CONTRIBUTING-DEPRECATION.md` for the full deprecation policy.

@@ -123,7 +123,7 @@ Name: "{autodesktop}\{#MyAppName}";                       Filename: "{app}\bin\{
 [Run]
 Filename: "{app}\bin\{#MyAppExeName}"; Parameters: "--version"; Description: "Verify installation (--version)"; Flags: postinstall nowait skipifsilent unchecked
 ; Run the canonical association script post-install (HKCU, no admin needed)
-Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -BinaryPath ""{app}\bin\vsepr-sim.exe"""; Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; Flags: postinstall nowait skipifsilent unchecked; Tasks: fileassoc
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -BinaryPath ""{app}\bin\vsepr.exe"""; Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; Flags: postinstall nowait skipifsilent unchecked; Tasks: fileassoc
 
 [UninstallRun]
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -Unregister"; Flags: nowait
