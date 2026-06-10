@@ -30,14 +30,15 @@ For each field: **name**, **type**, **default**, and what it does.
 |---|---|---|---|---|
 | `name` | string | `""` | ✅ | Required. Used in report filenames and dashboard labels. |
 | `version` | string | `""` | ✅ | Informational. Stored, not validated against runtime version. |
-| `seed_base` | uint64 | `0` | ✅ | Base RNG seed. Same seed + same script = same run. |
+| `seed_base` | uint64 | `0` | ✅ | Base RNG seed (low 64 bits). Same seed + same script = same run. |
+| `world_seed` | Seed256 | `0` (unset) | ✅ | 256-bit world constant for dual-seed mode. See `[seed]` section. |
 | `determinism` | bool | `true` | ✅ | Always true in current implementation. Field kept for schema completeness. |
 | `description` | string | `""` | * | Stored in `ProjectSection::description`. Not emitted to reports yet. |
 
 ```toml
 [project]
 name        = "demo_03_graphite_stack"
-version     = "v5.0.0-beta.8"
+version     = "v5.0.14"
 seed_base   = 3008
 determinism = true
 description = "5-layer AB Bernal graphite ERB modulation test"
@@ -256,6 +257,8 @@ Rendered visual artifact outputs. These are sidecar files rendered FROM simulati
 | `write_webgl_bundle` | bool | `false` | * | WebGL viewer bundle. |
 | `write_sse_descriptor` | bool | `false` | * | SSE stream config for live viewer. |
 | `sse_port` | int | `99998` | * | Port for SSE / HTTP server. |
+| `show_bond_graph` | bool | `false` | ✅ | Open bond graph viewer (`/graph` via `viz_web.py`). |
+| `bond_graph_port` | int | `8899` | ✅ | `viz_web.py` HTTP port for the `/graph` route. |
 
 ### Composite documents
 
@@ -279,6 +282,7 @@ Controls interactive display during and after the simulation run. Separated from
 | `output_type` | string | `"none"` | ✅ | See output type catalog below. |
 | `animation_mode` | string | `"none"` | ✅ | `"none"`, `"spark"`, `"bar"`, `"overlay"`. Terminal paths only. |
 | `render_interval` | int | `1` | ✅ | **Emit a render / export frame every N simulation steps.** Orthogonal to `display_fps`. `0` treated as `1`. |
+| `live_switch` | bool | `false` | ✅ | **Live-switch feed.** Derived from the element carousel pattern. When `true`, the viewer window is refreshed in-place (cursor-up overwrite / GL content swap / SSE data push) instead of being torn down and reopened between simulation phases or data-source changes. Eliminates flash and preserves scroll context. |
 
 #### `output_type` values
 
@@ -326,9 +330,20 @@ Controls interactive display during and after the simulation run. Separated from
 | `gl_show_neighbours` | bool | `true` | ✅ | Show neighbour bonds. |
 | `gl_overlay_hold_s` | float | `2.5` | ✅ | Seconds per overlay pane. |
 | `gl_auto_orbit` | bool | `true` | ✅ | Orbit camera between overlays. |
+| `gl_spin` | bool | `false` | ✅ | Continuously spin the scene around `gl_spin_axis` at `gl_spin_deg_per_s`. Overrides `gl_auto_orbit` when `true`. |
+| `gl_spin_axis` | string | `"y"` | ✅ | Rotation axis for scene spin. Accepts `"x"`, `"y"`, or `"z"`. |
+| `gl_spin_deg_per_s` | float | `30.0` | ✅ | Spin rate in degrees per second. Negative values reverse direction. |
 | `gl_window_width` | int | `1280` | ✅ | GL window width (px). |
 | `gl_window_height` | int | `800` | ✅ | GL window height (px). |
 | `overlay_sequence` | list | `[density, coordination, memory, orient_order]` | ✅ | Overlay pane order. |
+
+### Internal / hidden renderer options
+
+> **Note:** These fields are intentionally absent from user-facing quick-start guides. They are documented here for renderer developers and power users. They have **no effect on physics, formation, or analysis correctness**.
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `shadow_type` | int | `0` | ✅ | **Depth-shading model** for ASCII and GL terminal renderers. `0` = off (flat, legacy). `1` = `ambient_soft` — soft ambient-occlusion gradient (`shade = 0.30 + 0.70 * sat((z+depth)/range)`); good for small molecules. `2` = `depth_fade` — linear perspective cue (`shade = 1.0 - 0.55 * sat((maxZ-z)/range)`); good for crystals. `3` = `contact` — proximity darkening (darkens atoms close to neighbours). |
 
 ### Web options
 
@@ -1054,6 +1069,8 @@ The following are parsed and stored (or defined in the schema) but have no runti
 | `write_overlay_cycle_gif` | `ExportVisualSection` | * Parsed; requires gifenc or ffmpeg |
 | `write_webgl_bundle` | `ExportVisualSection` | * Parsed; webgl_streamer not wired |
 | `write_sse_descriptor` | `ExportVisualSection` | * Parsed; vsepr_live not wired |
+| `show_bond_graph` | `ExportVisualSection` | ✅ Parsed; opens `viz_bond_graph.html` via `viz_web.py /graph` |
+| `bond_graph_port` | `ExportVisualSection` | ✅ Parsed; controls `viz_web.py` HTTP port |
 | `write_report_pdf` | `ExportVisualSection` | ❌ Not implemented; requires LaTeX / pandoc |
 | `export_trajectory` in `[visual.external]` | `VisualExternalSection` | * Parsed; GIF writer not wired |
 | `render_targets` dispatch | `VisualExternalSection` | * Parsed; full dispatch table pending |
@@ -1677,15 +1694,60 @@ Override global `[verify.*]` tolerance values across all runs.
 | files | list | `[]` | Output filenames that must exist per run dir |
 | checks | list | `[]` | Check names that must appear in `verify_report.json` |
 
-### `[seed]` fields (batch study context)
+### `[seed]` fields — WO-66K-AUDIT Dual-Seed Assignment
+
+The `[seed]` section controls all simulation RNG seeds. When `world_seed` is
+provided alongside `foundation`, **dual-seed mode** is active: every particle
+birth hash is computed in two FNV-1a passes — once with the instance context
+(`foundation`) and once with the world constant (`world_seed`). This enables
+deterministic uncertainty resolution in atomic bonding process evolution
+equations that require a shared environmental constant.
+
+**Single-seed mode** (backward compatible, default):
+```toml
+[seed]
+foundation = 4201
+```
+
+**Dual-seed mode:**
+```toml
+[seed]
+foundation = 4201
+world_seed = 99887766
+```
 
 | Field | Type | Default | Notes |
 |---|---|---|---|
-| foundation | uint64 | `0` | Base seed; 0 = random |
-| defect | uint64 | `0` | 0 = derive: foundation + 3000 |
-| formation | uint64 | `0` | 0 = derive: foundation + 6000 |
-| thermal | uint64 | `0` | 0 = derive: foundation + 8000 |
-| placement | uint64 | `0` | 0 = derive: foundation + 11000 |
+| `foundation` | uint64 | `0` | Base seed; 0 = random |
+| `defect` | uint64 | `0` | 0 = derive: foundation + 3000 |
+| `formation` | uint64 | `0` | 0 = derive: foundation + 6000 |
+| `thermal` | uint64 | `0` | 0 = derive: foundation + 8000 |
+| `placement` | uint64 | `0` | 0 = derive: foundation + 11000 |
+| `world_seed` | Seed256 | `0` (unset) | 256-bit world constant; enables dual-seed mode when nonzero |
+
+**Seed256 accepted formats for `world_seed`:**
+
+| Format | Example |
+|---|---|
+| Decimal integer | `world_seed = 4201` |
+| Hex string (0x) | `world_seed = "0xdeadbeef"` |
+| Hex string (64 chars, max) | `world_seed = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"` |
+| Base64 (44 chars, max) | `world_seed = "//////////////////////////////////////////8="` |
+| Binary string (256 chars, max) | `world_seed = "1111...1111"` |
+
+The canonical 256-bit maximum (2²⁵⁶ − 1) in all three full-width formats:
+- **Hex**: `ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff`
+- **Base64**: `//////////////////////////////////////////8=`
+- **Binary**: 256 consecutive `1` characters
+
+**Dual-seed mode acceptance rules:**
+- If only `foundation` is set → single-seed mode; birth hash assigned once.
+- If both `foundation` and `world_seed` are set → dual-seed mode; birth hash computed via two FNV-1a passes. Both must complete for birth_hash to be valid.
+- `world_seed` may also be specified in `[project]` as `world_seed = ...` (applies globally before `[seed]` refinement).
+
+See `include/vsim/seed256.hpp` for the `Seed256` type and `fnv1a_mix_seed256()`.
+See `include/identity/particle_identity_seeder.hpp` for the two-pass hash contract.
+See `docs/theory/extreme_identity_matrix_layer.md` Appendix C for full theory.
 
 ### Dot-path mutation table (`batch_merger.cpp`)
 
@@ -1718,3 +1780,1213 @@ Override global `[verify.*]` tolerance values across all runs.
 | 41 | `test_batch_parser` | P1–P18 (18) | PASS |
 | 42 | `test_batch_expander` | E1–E10 (10) | PASS |
 | 43 | `test_batch_runner_static` | R1–R12 (12) | PASS |
+
+---
+
+## WO-XSUITE-02B — Live Persistent Instance + Batch Presolve Layer
+
+### Overview
+
+Extends the `.X` / XSuite runtime with a persistent session object that
+survives across rendering, checkpointing, replay, batch sweeps, and
+eigen-basis presolve.  Seven new optional `.X` sections are supported.
+
+### New `.X` Sections
+
+| Section | Struct fields | Description |
+|---|---|---|
+| `[live]` | `live_enabled`, `live_persistent_instance`, `live_state_flush_interval`, `live_health_flush_interval` | Keep a `LiveXSuiteInstance` alive across command cycles |
+| `[render]` | `render_enabled`, `render_atomic_stream`, `render_analysis_stream`, `render_fps_atomic`, `render_fps_analysis` | NDJSON stream outputs for live atom and analysis state.  **Render state must not mutate truth state.** |
+| `[checkpoint]` | `checkpoint_enabled`, `checkpoint_format`, `checkpoint_directory`, `checkpoint_interval`, `checkpoint_keep_last`, `checkpoint_write_hash` | Periodic `.xyzc` snapshots with optional hash records |
+| `[presolve]` | `presolve_enabled`, `presolve_mode`, `presolve_batch_count`, `presolve_seed_start`, `presolve_seed_stride`, `presolve_max_steps`, `presolve_extract_matrix`, `presolve_extract_eigen`, `presolve_write_basis`, `presolve_write_summary` | Batch eigen presolve; seeds run short simulations |
+| `[eigenmine]` | `eigenmine_enabled`, `eigenmine_target_solves`, `eigenmine_batch_count`, `eigenmine_seeds_per_batch`, `eigenmine_systems_per_seed`, `eigenmine_matrix_source`, `eigenmine_mode_rank_limit`, `eigenmine_min_recurrence`, `eigenmine_max_recon_error`, `eigenmine_write_modes`, `eigenmine_write_basis`, `eigenmine_write_summary` | Large-scale recurrent eigen-mode mining (up to 10 M solves) |
+| `[curvefit]` | `curvefit_enabled`, `curvefit_source`, `curvefit_target`, `curvefit_model`, `curvefit_max_order`, `curvefit_regularization`, `curvefit_train_fraction`, `curvefit_val_fraction`, `curvefit_write_model`, `curvefit_write_coefficients`, `curvefit_write_report` | Poly/log/eigen-hybrid surrogate model with physics penalty |
+| `[release_gate]` | `release_gate_enabled`, `release_gate_baseline`, `release_gate_candidate`, `release_gate_require_hash`, `release_gate_require_curvefit`, `release_gate_require_eigen`, `release_gate_max_failure`, `release_gate_write_report`, `release_gate_write_comparison` | Release readiness gate; emits PASS or BLOCKED verdict |
+
+### New Headers
+
+| Header | Purpose |
+|---|---|
+| `include/vsim/eigenmine.hpp` | EigenMineConfig, ModeRecord, EigenMineResult, eigenmine_run() |
+| `include/vsim/solve_batch.hpp` | LiveXSuiteInstance, BatchSolveConfig, batch_solve_run(), live flush helpers |
+| `include/vsim/curvefit_presolve.hpp` | CurvefitConfig, CurvefitModel, curvefit_run(), physics penalty |
+| `include/vsim/release_gate.hpp` | ReleaseGateConfig, VersionMetrics, release_gate_evaluate() |
+| `include/vsim/basis_archive.hpp` | NDJSON / binary / TSV eigen-basis serialisation |
+
+### New Library
+
+`vsepr_presolve` — `src/presolve/*.cpp` — linked by all presolve test targets.
+
+### Example `.X` Files
+
+| File | Demonstrates |
+|---|---|
+| `examples/xsuite/eigenmine_10m.X` | 10 M solve eigen-mining campaign |
+| `examples/xsuite/curvefit_presolve.X` | Surrogate model fitting from presolve archive |
+| `examples/xsuite/release_gate_presolve.X` | PASS/BLOCKED release gate check |
+
+### Acceptance Gates
+
+| Gate | Test | Description |
+|---|---|---|
+| EIG-1 | `test_eigenmine_small` | `[eigenmine]` block parses from `.X` |
+| EIG-2 | `test_eigenmine_small` | `target_solves = 10,000,000` as int64 metadata |
+| EIG-3 | `test_eigenmine_small` | 1,000-solve small run succeeds |
+| EIG-4 | `test_eigenmine_small` | Batch records carry seed index |
+| EIG-5 | `test_eigenmine_small` | Retained modes non-empty after gate |
+| EIG-6 | `test_eigenmine_small` | Recurrence score exported to ndjson |
+| EIG-7 | `test_curvefit_presolve` | Curvefit module accepts eigenmine/batch input |
+| EIG-8 | `test_curvefit_presolve` | Coefficients TSV and validation report written |
+| EIG-9 | `test_release_gate` | PASS and BLOCKED scenarios evaluated correctly |
+| EIG-10 | `test_release_gate` | Final report declares PASS or BLOCKED in file |
+
+### Test Groups
+
+| Group | Target | Tests | Status |
+|-------|--------|-------|--------|
+| 44 | `test_eigenmine_small` | EIG-1..6 (6) | added v5.1.3 |
+| 45 | `test_curvefit_presolve` | EIG-7..8 (3) | added v5.1.3 |
+| 46 | `test_release_gate` | EIG-9..10 (4) | added v5.1.3 |
+| 47 | `test_basis_archive` | BA-1..5 (5) | added v5.1.3 |
+| 53 | `test_view_67b` | VIEW-67B-01..08 + BONUS (9) | added WO-67-B; guarded: `BUILD_VIS=ON` required |
+
+---
+
+## Lightweight Viewer — WO-67-A / WO-67-B
+
+### Build gates
+
+| CMake option | Default | Effect |
+|---|---|---|
+| `BUILD_VIS` | `ON` | Required parent gate for all viewer targets |
+| `BUILD_VIEWER` | `ON` | Builds `vsepr-light-view` and `vsepr_view_lib` |
+| `BUILD_VIEWER_DAEMON` | `OFF` | Builds `vsepr-viewd` daemon (WO-67-A2, gated) |
+
+### Canonical viewer data model (`include/vsim/view/viewer_types.hpp`)
+
+The viewer is a **dumb renderer**. It consumes `ViewFrame` and only `ViewFrame`. It never invents bonds, particle identity, or physics. That belongs in the simulation kernel.
+
+```
+file parser / runtime stream
+    |
+canonical decoded state
+    |
+ViewFrame
+    |
+render only
+```
+
+#### ViewParticle
+
+| Field | Type | Notes |
+|---|---|---|
+| `id` | `int64_t` | Sequential 1-based id assigned by loader |
+| `identity_id` | `int64_t` | 0 = no sidecar; >0 = links to `ViewIdentity` |
+| `type` | `string` | Element symbol or bead tag |
+| `x y z` | `double` | Position in Å |
+| `vx vy vz` | `double` | Velocity in Å/fs |
+| `radius` | `double` | CPK radius in Å (filled by loader) |
+| `charge` | `double` | Charge in e |
+| `energy` | `double` | Energy in eV |
+| `state_code` | `int` | 0=normal, 1=checkpoint, 2=defect |
+| `type_code` | `uint32_t` | `ViewParticleType`: Atom/Bead/CoarseBead/Virtual |
+| `flags` | `uint32_t` | `ViewFlags` bitmask (Selected, Hidden, IdentityLinked, …) |
+
+#### ViewBond
+
+| Field | Type | Notes |
+|---|---|---|
+| `a b` | `int64_t` | Particle ids |
+| `order` | `double` | Bond order |
+| `strength` | `double` | Normalized bond strength |
+| `fx fy fz` | `double` | Bond-force vector in eV/Å |
+| `lifetime` | `double` | -1 = permanent |
+| `active` | `bool` | |
+| `flags` | `uint32_t` | `ViewFlags` bitmask |
+
+#### ViewIdentity — .z / .ee overlay (WO-67-B)
+
+| Field | Type | Notes |
+|---|---|---|
+| `identity_id` | `int64_t` | Must match `ViewParticle::identity_id` |
+| `Z2[4]` | `double[4]` | 2×2 identity matrix, row-major |
+| `Y` | `double` | Yield / occupancy scalar |
+| `loss` | `double` | Dissipation / entropy loss proxy |
+| `flags` | `uint32_t` | `ViewFlags` bitmask (e.g. `IdentityUnlinked`) |
+
+`ViewIdentity` is a **display overlay only**. The viewer links records from `.z`/`.ee` sidecars to particles by `identity_id`, sets flags, and pushes warnings for unlinked ids. It never evolves identity state.
+
+#### ViewFrame
+
+| Field | Type | Notes |
+|---|---|---|
+| `frame_index` | `int64_t` | |
+| `time` | `double` | fs |
+| `dt` | `double` | fs |
+| `particles` | `vector<ViewParticle>` | |
+| `bonds` | `vector<ViewBond>` | |
+| `identities` | `vector<ViewIdentity>` | Populated by sidecar loader |
+| `warnings` | `vector<string>` | Loader warnings surfaced to UI |
+| `observables` | `map<string,double>` | energy, T, P, etc. |
+
+#### ViewSession
+
+`ViewSession` is the full loaded session (one file, all frames). It carries `source_path`, `file_type`, `hash` (SHA-256 of source), and `frames`.
+
+`ViewSession::deterministic_hash()` — stable FNV-1a 64-bit hash over:
+- `source_path`, `file_type`
+- Per frame: `frame_index`, `time`, particle `id`/`identity_id`/`x`/`y`/`z`, identity `identity_id`
+
+The same file must always produce the same hash. If it doesn't, the loader or parser is non-deterministic.
+
+### File-type data contract (`include/vsim/view/view_contract.hpp`)
+
+| Format | Role | Particles | Multi-frame | Overlay only | Bundle |
+|---|---|---|---|---|---|
+| `.xyz` | static positions | ✓ required | — | — | — |
+| `.xyza` | enriched state | ✓ required | — | — | — |
+| `.xyzf` | trajectory | ✓ required | ✓ | — | — |
+| `.xyzFull` | rich replay + metadata | ✓ required | ✓ | — | — |
+| `.xyzc` | checkpoint | ✓ required | ✓ | — | — |
+| `.dynx` | visual/session archive | ✓ required | ✓ | — | — |
+| `.z` | identity matrix overlay | — | — | ✓ | — |
+| `.ee` | electron/subatomic overlay | — | — | ✓ | — |
+| `.X` | bundled run/session | — | — | — | ✓ |
+
+All types: `must_not_mutate_state = true`. The viewer never modifies particle positions, velocities, charges, energies, or identity matrix values.
+
+### Identity sidecar format (`.z` / `.ee`)
+
+Text file. Lines starting with `#` are comments; blank lines are ignored.
+Data lines are space- or tab-separated:
+
+```
+identity_id  Z2_a  Z2_b  Z2_c  Z2_d  Y  loss
+```
+
+Lines with fewer than 7 fields are skipped with a warning. Duplicate `identity_id` rows: last wins with a warning.
+
+Unlinked ids (particle has `identity_id > 0` but no matching sidecar record) produce a `frame.warnings` entry and set `ViewFlags::IdentityUnlinked` on the particle. This is non-fatal — the session remains viewable.
+
+### Runtime bridge interface (`include/vsim/view/view_runtime_bridge.hpp`)
+
+`IViewRuntimeBridge` — abstract interface for connecting the viewer to a live simulation stream:
+
+| Method | Notes |
+|---|---|
+| `push_frame(ViewFrame)` | Returns false if bridge cannot accept |
+| `pop_frame()` | Returns `nullopt` if no frame pending |
+| `is_connected()` | Bridge health check |
+| `description()` | Human-readable status for UI |
+| `disconnect()` | Graceful teardown |
+
+`NullViewBridge` — no-op implementation for headless / offline / test mode.
+
+Transport implementations (`NdjsonViewBridge`, etc.) are gated by `BUILD_VIEWER_DAEMON` and belong to WO-67-A2.
+
+### WO-67-B test suite (Group 53)
+
+| Test | Description |
+|---|---|
+| VIEW-67B-01 | Load simple `.xyz` into `ViewFrame` |
+| VIEW-67B-02 | Load `.xyzf` multi-frame trajectory |
+| VIEW-67B-03 | Load `.xyzFull` with metadata |
+| VIEW-67B-04 | Reject malformed frame with clear error |
+| VIEW-67B-05 | Link `identity_id` from particle to `.z` state |
+| VIEW-67B-06 | Handle missing identity sidecar as warning, not crash |
+| VIEW-67B-07 | Confirm viewer does not mutate physical state |
+| VIEW-67B-08 | Confirm deterministic same-file same-`ViewFrame` hash |
+| BONUS | `contract_for()` covers all file types; mutation guard verified |
+
+All tests passed (direct binary execution against `build_vview` viewer libs).
+
+
+
+---
+
+## WO-66K / WO-66L / WO-66M / WO-66J  —  Day 65-66 Bridge Layer
+
+> Bridge paper: `docs/theory/v5114_bridge_paper.md`
+> Notation reference: `docs/theory/identity_matrix_notation_reference.md`
+> Version: v5.0.14  |  Branch: v5.0.0-main
+
+---
+
+### ParticleIdentity schema extension (WO-66K)
+
+File: `include/identity/particle_identity.hpp`
+
+New fields added:
+
+| Field | Type | Description |
+|---|---|---|
+| `birth_hash` | `uint64_t` | Deterministic birth hash h_p = H(id, f, g, Q, B, L, J, m, tau, xi_p). Set at spawn; never updated during trajectory. |
+| `birth_x` | `double` | Snapped birth position x at spawn. |
+| `birth_y` | `double` | Snapped birth position y at spawn. |
+| `birth_z` | `double` | Snapped birth position z at spawn. |
+
+New method:
+
+`apply_birth_record(birth_hash, bx, by, bz)` - copies the birth hash and snapped position from a BirthRecord produced by the seeder.
+
+Distinct from `identity_hash`: `identity_hash` refreshes on quantum-number mutations; `birth_hash` is frozen at spawn for lifetime tracing and anti-partner identification.
+
+---
+
+### ParticleIdentitySeeder (WO-66K)
+
+File: `include/identity/particle_identity_seeder.hpp`
+
+One seeder per simulation run. Not a singleton.
+
+**BirthRecord** fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `birth_hash` | `uint64_t` | Deterministic FNV-1a 64-bit hash |
+| `birth_index` | `uint64_t` | Monotonic counter value at spawn |
+| `birth_x/y/z/w` | `double` | Snapped birth position (1e-6 grid) |
+| `type_code` | `int32_t` | Flavor / type |
+| `charge` | `double` | Electric charge |
+| `mass` | `double` | Rest mass |
+| `spin_proxy` | `SpinProxy` | Half / Integer / Zero |
+| `lepton_family` | `int8_t` | 0=none, 1=e, 2=mu, 3=tau |
+| `baryon_number` | `int8_t` | +1=baryon, -1=antibaryon |
+| `isospin_proxy` | `int8_t` | +1=up-type, -1=down-type |
+
+**Key methods:**
+
+`spawn(...)` - assign deterministic birth record, increment counter.
+
+`build(record)` - fill a ParticleIdentity from a BirthRecord.
+
+`spawn_and_build(...)` - one-shot convenience.
+
+`are_anti_partners(a, b)` - returns true if A and B are a valid annihilation pair (identity gate C_id from bridge paper sec 13.3).
+
+`anti_partner_type_hash(p)` - compute the type-level hash of the expected anti-partner without requiring a spawned instance.
+
+Hash input: run_seed + birth_index + type_code + charge + mass + spin + lepton_family + baryon_number + isospin_proxy + snapped position (1e-6 grid as int64).
+
+---
+
+### AnnihilationEvent channel (WO-66J)
+
+File: `include/vsim/bridge65/annihilation_event.hpp`
+
+Separate event channel from ChemistryBondEvent, ChemistryNonBondEvent, DecayEvent, ParticleParticleEvent.
+
+**AnnihilationGateResult** - diagnostic from the three-gate trigger:
+
+| Field | Description |
+|---|---|
+| `passed_identity_gate` | C_id(i,j): are_anti_partners() |
+| `passed_distance_gate` | r_ij < r_capture |
+| `passed_energy_gate` | E_rel > energy_threshold |
+| `r_ij` | Computed pair distance |
+| `E_rel` | Relative kinetic energy (half-mu * dv^2) |
+| `mu` | Reduced mass |
+
+`triggered()` - true if all three gates pass.
+
+`pp_line(step, t, id_a, id_b)` - emits `[PP]` live-print line.
+
+**AnnihilationEvent** fields (E_ann from bridge paper sec 13.1):
+
+| Field | Description |
+|---|---|
+| `step`, `time_s` | Simulation context |
+| `id_i`, `id_j` | Particle ids |
+| `hash_i`, `hash_j` | Birth hashes |
+| `label_i`, `label_j` | Human labels |
+| `xc_x/y/z` | Collision center |
+| `E_in`, `E_out` | Energy in / out |
+| `residual_E`, `residual_p` | Conservation residuals |
+| `products` | Vector of AnnihilationProduct |
+| `delta_S`, `delta_I` | Entropy / information change proxies |
+| `gate` | Gate diagnostic |
+
+`ann_line()` - emits `[ANN]` live-print line.
+
+**Free functions:**
+
+`check_annihilation_gate(pi, pj, xi..., vxi..., r_capture, energy_threshold)` - evaluate all three gates.
+
+`build_annihilation_event(...)` - construct the event record from triggered gate; products appended by caller.
+
+**v5.1.4 policy: M_ij^X = 0** - subatomic sampling disabled; annihilation channel defined but not enabled at the force level.
+
+---
+
+### .x Bundle manifest (WO-66M)
+
+File: `include/vsim/bundle/x_bundle.hpp`
+
+| Type | Description |
+|---|---|
+| `XBundleSlot` | One execution unit (script / inline / pykernel / validation / benchmark) |
+| `XBundleManifest` | Full bundle descriptor with slots, seed, version, outputs |
+| `XBundleSlotStatus` | Per-slot result (pending / running / passed / failed / skipped) |
+| `XBundleSummary` | Aggregate result; `one_line()` for CI output |
+
+Role: bundled suite execution container. Distinct from .vsim (source), .dynx (visual archive), .xyz/.xyzFull (scientific state).
+
+Factory: `make_annihilation_test_bundle(seed, script_dir)` - builds the ANN-01..10 ladder manifest with dependency ordering.
+
+**XBundleSlot** key fields:
+
+| Field | Description |
+|---|---|
+| `id` | Unique slot id (e.g. "ANN-01") |
+| `kind` | Script / InlineScript / PyKernel / ValidationCheck / Benchmark |
+| `script_path` | External .vsim or .py path |
+| `depends_on` | Slot ids that must pass before this runs |
+| `expected_outputs` | Files that must exist after the slot |
+| `allow_failure` | If true, failure does not abort bundle |
+| `script_hash_sha1` | Integrity check at run time |
+
+---
+
+### Annihilation test ladder (ANN-01..10)
+
+| Slot | Purpose |
+|---|---|
+| ANN-01 | Identity gate - only valid anti-pairs annihilate |
+| ANN-02 | Distance gate - r_ij < r_c |
+| ANN-03 | Energy gate - E_rel > E_c |
+| ANN-04 | Product record creation |
+| ANN-05 | Energy / momentum residual logging |
+| ANN-06 | Live print integration ([ANN] stream) |
+| ANN-07 | Glue-field disturbance response |
+| ANN-08 | Eigen trend capture |
+| ANN-09 | Batch sweep |
+| ANN-10 | Heavy proxy annihilation (alpha + anti-alpha) |
+
+Defined in bridge paper sec 14 and instantiated by `make_annihilation_test_bundle()`.
+
+---
+
+### Event channel separation policy
+
+| Channel | Class | File |
+|---|---|---|
+| Classical MD collision | AtomEvent (Collision) | bridge65/atom_event.hpp |
+| Chemistry bond create / break | ChemistryBondEvent | (existing) |
+| Chemistry non-bond | ChemistryNonBondEvent | (existing) |
+| Single-particle decay | DecayEvent | (planned) |
+| Anti-pair annihilation | AnnihilationEvent | bridge65/annihilation_event.hpp |
+| Glue-field disturbance | GlueFieldEvent | (planned) |
+| Product emission | EmissionEvent | (planned) |
+
+Annihilation is NOT stored as a bond break or chemistry event.
+
+---
+
+### Live print streams
+
+| Prefix | Stream | Trigger |
+|---|---|---|
+| `[PP]` | Particle-particle interaction | Any pair interaction; ANNIHILATE action on gate pass |
+| `[CHEM]` | Chemistry bond / nonbond | Bond or nonbond pair event |
+| `[DECAY]` | Single-particle decay | Decay event |
+| `[ANN]` | Annihilation | Triggered AnnihilationEvent |
+
+All four streams are grep-able, console-visible, and archived in JSONL. Console may be sampled under event-limiter pressure; JSONL archive is never sampled (bridge paper sec 6).
+
+---
+
+## WO-66N / WO-66O / WO-66P / WO-66Q  —  Constructor Objects, Diagnostics, Crystal, XBIT
+
+*v5.0.14 | branch: v5.0.0-main*
+
+### Constructor objects — WO-66N
+
+Functional constructor expressions in `[objects]`:
+
+```vsim
+[objects]
+system.geometry.pipe = PipeGeometry(radius = 0.05, length = 2.0, material = steel)
+system.surface.wall  = WallSurface(geometry = system.geometry.pipe)
+dem.pipe_packing     = DEMBridge(from = system.surface.wall, geometry = system.geometry.pipe)
+```
+
+- `ConstructorObjectKind` enumeration covers geometry, surface, source, sink, ambient, DEM/FEA bridges, crystal
+- `ConstructorObjectRegistry` stored in `VsimDocument::objects`
+- Batch form: `[objects.batch]` with `base`, `count`, `constructor`
+- Upper-block object-path references validated via `ObjectPathRef`
+
+See: `include/vsim/objects/constructor_object.hpp`, `docs/wo/WO-66N-Constructor-Objects.md`
+
+---
+
+### Non-molecular object types — WO-66Q
+
+| Type | Constructor | Document field |
+|---|---|---|
+| `GeometryObject` | `PipeGeometry`, `BoxGeometry`, `SphereGeometry`, `GenericGeometry` | `nm_objects.geometries` |
+| `SurfaceObject` | `WallSurface` | `nm_objects.surfaces` |
+| `SourceObject` | `InletSource` | `nm_objects.sources` |
+| `SinkObject` | `OutletSink` | `nm_objects.sinks` |
+| `AmbientObject` | `AmbientEnv` | `nm_objects.ambients` |
+
+Bridge objects:
+
+| Type | Constructor | Document field |
+|---|---|---|
+| `DEMBridgeObject` | `DEMBridge` | `bridge_objects.dem_bridges` |
+| `FEABridgeObject` | `FEABridge` | `bridge_objects.fea_bridges` |
+
+The `SurfaceObject` field contract (`pressure`, `shear`, `velocity`, `temperature`, `cavitation`, `flux`) is **frozen** — required by WO-67N/67O.
+
+See: `include/vsim/objects/non_molecular_objects.hpp`, `include/vsim/objects/bridge_objects.hpp`, `docs/wo/WO-66Q-NonMolecular-Objects-XBIT.md`
+
+---
+
+### Organic/peptide diagnostics — WO-66O
+
+Section: `[diagnostics.organic]`
+
+| Key | Default | Purpose |
+|---|---|---|
+| `enabled` | `false` | Activate diagnostics |
+| `run_on_peptide` | `true` | Run peptide checks |
+| `run_on_small_molecule` | `true` | Run small-molecule checks |
+| `sample_every_n_steps` | `100` | Sampling cadence |
+| `violation_severity` | `warn` | `warn` or `error` |
+| `peptide.check_phi_psi` | `true` | Ramachandran audit |
+| `peptide.check_chirality` | `true` | L→D epimerisation detection |
+| `peptide.check_hbonds` | `true` | H-bond geometry |
+| `peptide.compute_rg` | `true` | Radius of gyration |
+| `small_molecule.check_bond_lengths` | `true` | Bond length audit |
+| `small_molecule.check_aromatic_planarity` | `true` | Ring planarity |
+
+See: `include/vsim/diagnostics/organic_diagnostics.hpp`, `docs/wo/WO-66O-Organic-Diagnostics.md`
+
+---
+
+### Crystal/PBC functional constructor — WO-66P
+
+Functional form (preferred):
+
+```vsim
+[objects]
+system.crystal = CrystalModule(lattice = fcc, a = 3.52, species = [Ni], supercell = [4,4,4], relax = true)
+```
+
+Legacy `[cell]` and `[pbc]` keys continue to work and route to the same `CrystalConstructorSection`.
+
+| Key | Purpose |
+|---|---|
+| `lattice` | Bravais type: `sc`, `bcc`, `fcc`, `diamond`, `hcp`, `hexagonal`, `tetragonal`, `bct`, `orthorhombic`, `monoclinic`, `triclinic`, `zincblende`, `wurtzite`, `custom` |
+| `a`, `b`, `c` | Lattice parameters (Å) |
+| `alpha`, `beta`, `gamma` | Angles (deg) |
+| `supercell` | `[nx, ny, nz]` or `nx`/`ny`/`nz` separately |
+| `pbc_x`, `pbc_y`, `pbc_z` | Periodic boundary toggles |
+| `relax` | FIRE relaxation after construction |
+| `species` | Element list |
+| `vacancy_fraction` | Fraction of vacancies |
+| `translate_to_xyz` | Emit CELL comment in xyz output |
+| `translate_to_cif_summary` | Emit CIF summary block |
+| `translate_to_json` | Emit JSON crystal manifest |
+
+See: `include/vsim/crystal/crystal_constructor.hpp`, `docs/wo/WO-66P-Crystal-PBC-Constructor.md`
+
+---
+
+### XBIT — Extended Binary Identity Tag
+
+32-byte deterministic identity tag for any simulation entity.
+
+```
+Bits 255-224  tier_tag     XbitTier enum
+Bits 223-192  kind_tag     ConstructorObjectKind or particle Z
+Bits 191-128  lineage_id   64-bit lineage hash
+Bits 127-64   instance_id  64-bit instance hash
+Bits  63-32   batch_tag    batch index + base hash
+Bits  31-0    checksum     CRC-32
+```
+
+Serialisation: `XBIT:<64-char lowercase hex>`
+
+See: `include/vsim/xbit/xbit.hpp`, `docs/wo/WO-66Q-NonMolecular-Objects-XBIT.md`
+
+
+---
+
+## VSIM Live Scripting State — WO-XSUITE-02B
+
+Live scripting state governs how a running `.X` suite persists, streams, and checkpoints simulation progress without stopping the interpreter. All keys live in a `.X` file (not a `.vsim` file). The struct is `vsepr::xsuite::XSuiteFile`.
+
+### `[live]` section — persistent instance control
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Activate the live instance subsystem |
+| `persistent_instance` | bool | `false` | Keep the interpreter alive between script reloads (hot-reload mode) |
+| `state_flush_interval` | int | `25` | Flush interpreter state snapshot every N simulation steps |
+| `health_flush_interval` | int | `10` | Flush health/diagnostics packet every N simulation steps |
+
+**Hot-reload pattern** — set `persistent_instance = true` to keep all particle positions, velocity fields, and derived state in memory when the entry `.vsim` is re-executed. Only changed sections are re-applied. Useful for iterative scripting without restarting formation.
+
+### `[render]` section — live streaming output
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Activate streaming output |
+| `atomic_stream` | string | `""` | Named stream target for atomic frames (connects to viz_server port 9999) |
+| `analysis_stream` | string | `""` | Named stream target for analysis frames (connects to viz_server port 10001) |
+| `fps_atomic` | int | `15` | Atomic frame rate (frames per second) |
+| `fps_analysis` | int | `2` | Analysis frame rate (frames per second) |
+
+The C++ streaming backend is `src/core/viz_server.cpp` (`vsepr::viz::VizServer`). Frames are pushed as NDJSON over TCP. Python viewers (`tools/viz_atomic.py`, `tools/viz_analysis.py`) are thin display consumers only.
+
+### `[checkpoint]` section — periodic state save
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Enable periodic checkpointing |
+| `format` | string | `"xyzc"` | Checkpoint file format (`xyzc`, `xyz`, `json`) |
+| `directory` | string | `"checkpoints/"` | Output directory |
+| `interval` | int | `500` | Checkpoint every N simulation steps |
+| `keep_last` | int | `5` | Retain only the most recent N checkpoints |
+| `write_hash` | bool | `true` | Embed SHA-256 hash in checkpoint for integrity validation |
+
+### `[presolve]` section — batch eigen precomputation
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Run batch presolve before main simulation |
+| `mode` | string | `"batch_eigen"` | Presolve strategy |
+| `batch_count` | int | `16` | Number of parallel presolve batches |
+| `seed_start` | int | `1000` | First seed for presolve ensemble |
+| `seed_stride` | int | `1` | Seed increment between batches |
+| `max_steps` | int | `2000` | Steps per presolve trajectory |
+| `extract_matrix` | bool | `true` | Write force/Hessian matrices |
+| `extract_eigen` | bool | `true` | Compute and store eigenvalues |
+| `write_basis` | string | `""` | Path for basis archive output |
+| `write_summary` | string | `""` | Path for presolve summary JSON |
+
+### `[eigenmine]` section — large-scale eigen search
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Activate eigenmine pass |
+| `target_solves` | int64 | `10000000` | Total eigen solve target |
+| `batch_count` | int | `1000` | Batches per mining cycle |
+| `seeds_per_batch` | int | `100` | Seeds explored per batch |
+| `systems_per_seed` | int | `100` | Systems per seed |
+| `matrix_source` | string | `"state_force_event"` | Source matrix type |
+| `mode_rank_limit` | int | `256` | Maximum eigen mode rank stored |
+| `min_recurrence` | double | `0.70` | Minimum mode recurrence frequency to retain |
+| `max_recon_error` | double | `0.05` | Maximum reconstruction error |
+| `write_modes` | string | `""` | Path for eigen modes archive |
+| `write_basis` | string | `""` | Path for basis output |
+| `write_summary` | string | `""` | Path for eigenmine summary |
+
+### `[curvefit]` section — empirical model fitting
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Activate curve fitting pass |
+| `source` | string | `""` | Input data path (JSONL or CSV) |
+| `target` | string | `""` | Target field/quantity |
+| `model` | string | `"poly_log_eigen_hybrid"` | Fitting model family |
+| `max_order` | int | `3` | Maximum polynomial order |
+| `regularization` | double | `1.0e-4` | L2 regularization weight |
+| `train_fraction` | double | `0.80` | Training split fraction |
+| `val_fraction` | double | `0.20` | Validation split fraction |
+| `write_model` | string | `""` | Path for fitted model |
+| `write_coefficients` | string | `""` | Path for coefficient output |
+| `write_report` | string | `""` | Path for fit report |
+
+### `[release_gate]` section — automated regression guard
+
+| Key | Type | Default | Purpose |
+|---|---|---|---|
+| `enabled` | bool | `false` | Activate release gate validation |
+| `baseline` | string | `""` | Path to baseline result archive |
+| `candidate` | string | `""` | Path to candidate result archive |
+| `require_hash` | double | `0.999` | Minimum hash similarity (0-1) |
+| `require_curvefit` | double | `0.85` | Minimum curve-fit score |
+| `require_eigen` | double | `0.80` | Minimum eigen overlap |
+| `max_failure` | double | `0.01` | Maximum allowed failure fraction |
+| `write_report` | string | `""` | Path for gate report |
+| `write_comparison` | string | `""` | Path for baseline/candidate diff |
+
+See: `include/vsim/xsuite.hpp`, `include/vsim/vsim_document.hpp`
+
+---
+
+## Bond Graph Web Viewer — WO-AUTO-01
+
+### Activation (`.vsim` script)
+
+```vsim
+[export.visual]
+show_bond_graph = true
+bond_graph_port = 8899
+```
+
+When `show_bond_graph = true`, `vsepr run <script.vsim>` will after the simulation loop:
+
+1. Locate `tools/viz_web.py` relative to the binary
+2. Launch it on `bond_graph_port` via C++ `vsepr::bond_graph::launch_viz_web`
+3. Wait up to 8 s for the server to answer
+4. Open `http://localhost:<bond_graph_port>/graph` in the default browser
+
+All molecule logic (random generation, bond detection, JSON frames) is handled in C++ (`src/core/bond_graph_gen.cpp`). Python is the HTTP transport layer only.
+
+### C++ backend — `vsepr::bond_graph`
+
+| Symbol | Purpose |
+|---|---|
+| `BondAtom` | Element symbol, Z, x/y/z position (Angstrom) |
+| `BondEdge` | Atom index pair, distance, bond order (heuristic) |
+| `BondGraphFrame` | Full frame: atoms + bonds + formula + provenance |
+| `BondGraphFrame::to_json()` | Serialise to `/api/bond-graph` JSON format |
+| `BondGraphGenerator` | xorshift64 RNG, random frames, XYZ parsing, bond detection |
+| `BondGraphGenerator::detect_bonds()` | Covalent-radius sum x tolerance (default 1.2) |
+| `BondGraphGenerator::derive_formula()` | Hill notation from atom list |
+| `launch_viz_web(tools_dir, port)` | Spawn `viz_web.py`; returns PID |
+| `open_graph_browser(host, port, timeout_ms)` | Open `/graph` in default browser |
+
+### Python tools (dev/fallback only)
+
+| File | Role |
+|---|---|
+| `tools/bond_graph_randomizer.py` | Dev convenience: stream random frames via UDP |
+| `tools/bond_graph_auto.py` | Dev convenience: one-command stack launcher |
+
+These files are NOT on the primary execution path. All automation logic lives in C++.
+
+See: `include/core/bond_graph_gen.hpp`, `src/core/bond_graph_gen.cpp`, `tools/viz_web.py`, `tools/viz_bond_graph.html`
+
+---
+
+## WO-VSIM-CTL — Modernized VSIM Control Pipeline  (v5.1.x)
+
+Replaces the flat ad-hoc command model with a typed namespace-qualified control language.
+
+### Pipeline
+
+```
+.vsim
+  ↓  Declarative parser
+  ↓  VSIM-CTL script parser
+  ↓  Semantic validator
+  ↓  Typed execution graph (ExecGraph)
+  ↓  Approved C++ wrapper dispatch (CtlDispatcher)
+  ↓  Deterministic SMF-MD / legacy MD kernel
+  ↓  Artifact registry
+  ↓  Dynx / XBIT / report / manifest
+  ↓  Gate validation
+```
+
+### Doctrine
+
+> VSIM-CTL may schedule, configure, gate, and export. Only the C++ kernel may evolve physical state.
+
+Scripts may NOT directly mutate particle arrays, forces, fields, or S-state.
+
+### Namespaces
+
+| Namespace | Purpose |
+|---|---|
+| `runtime.*` | execution, stepping, relaxation, reset, checkpoint |
+| `kernel.*` | kernel configuration, force-channel toggles, trace profiles |
+| `artifact.*` | XBIT, Dynx, reports, manifests, resolved configs |
+| `metrics.*` | captured observables and validation quantities |
+| `gate.*` | pass/fail validation gates and acceptance logic |
+| control | `const` / `let` / `for` / `if` / `match` / `set` / `require` / `assert` |
+
+### Command surface
+
+```
+const / let / for / if / match / set / require / assert
+
+runtime.run_case(name)        runtime.step(n)
+runtime.relax()               runtime.reset(scope)    runtime.checkpoint()
+
+kernel.channel.enable(name, weight)    kernel.channel.disable(name)
+kernel.channel.reset()                 kernel.trace.enable(profile)
+kernel.set(name, value)
+
+artifact.xbit.create(mode)    artifact.xbit.validate()    artifact.xbit.export(path)
+artifact.dynx.enable(profile) artifact.dynx.include(payload)
+artifact.dynx.validate()      artifact.dynx.export(path)
+artifact.report.write(path)   artifact.manifest.write(path)
+
+metrics.capture()             metrics.assert(expression)
+
+gate.begin(name)              gate.assert(expression)
+gate.pass()                   gate.fail()               gate.end()
+```
+
+### Key types
+
+| Type | File | Description |
+|---|---|---|
+| `CtlNamespace` | `ctl_types.hpp` | enum: Runtime/Kernel/Artifact/Metrics/Gate/Control |
+| `CtlArg` | `ctl_types.hpp` | variant(string, double, bool, int64) typed argument |
+| `CtlCommand` | `ctl_types.hpp` | one resolved instruction: ns + op + sub_op + CtlArgMap |
+| `ExecGraph` | `ctl_types.hpp` | ordered, immutable compiled command sequence |
+| `CtlParser` | `ctl_parser.hpp` | script text → ExecGraph; const/let symbol table; ${var} expansion |
+| `CtlValidator` | `ctl_validator.hpp` | semantic validation before dispatch (8 checks) |
+| `MetricsStore` | `ctl_metrics.hpp` | observable store; throws `CtlMetricsError` before capture |
+| `GateState` | `ctl_gate.hpp` | begin/gate_assert/explicit_fail/end lifecycle |
+| `GateRegistry` | `ctl_gate.hpp` | session-level gate accumulator |
+| `ExecPlan` | `ctl_plan.hpp` | compiled plan; `to_json()`, `artifact_manifest_json()`, `gate_manifest_json()` |
+| `CtlRuntimeHooks` | `ctl_dispatcher.hpp` | interface for approved C++ runtime wrappers (no-op defaults) |
+| `CtlDispatcher` | `ctl_dispatcher.hpp` | dispatch loop; populates MetricsStore/GateRegistry |
+
+### Plan outputs
+
+| File | Description |
+|---|---|
+| `script_plan.json` | typed namespace-qualified command list |
+| `artifact_manifest.json` | artifact export ops extracted from graph |
+| `gate_manifest.json` | gate names extracted from graph |
+
+### Deterministic plan hash
+
+`plan_hash = FNV-1a-64(script_text + "|" + kernel_version + "|" + seed)`
+
+Same script + same seed + same kernel_version → same `plan_hash`.
+
+### Validation rules enforced before dispatch
+
+1. Unknown namespace fails  
+2. Unknown command in namespace fails  
+3. Unknown kernel channel name fails  
+4. `artifact.dynx.*` before `artifact.dynx.enable` fails  
+5. `artifact.xbit.*` before `artifact.xbit.create` fails  
+6. `metrics.*` before `metrics.capture()` or `runtime.run_case()` fails  
+7. `gate.end` without `gate.begin` fails  
+8. `gate.begin` without `gate.end` fails  
+
+### Known kernel channels
+
+`repulsion` `dispersion` `coulomb` `bond` `field` `state` `lj` `ewald` `wall` `angle` `dihedral`
+
+### Test groups — unit layer (Groups 58–64)
+
+| Group | Target | Coverage |
+|---|---|---|
+| 58 | `CtlNamespaceRegistryGroup58` | Namespace enum, op registry, channel registry, CtlArg |
+| 59 | `CtlParserExecGraphGroup59` | Parser, const/let, ${var} expansion, positional args |
+| 60 | `CtlDispatchValidatorGroup60` | Validator + dispatcher integration |
+| 61 | `CtlKernelChannelBindingsGroup61` | kernel.channel.* and kernel.trace.* hooks |
+| 62 | `CtlArtifactBindingsGroup62` | artifact.dynx.* and artifact.xbit.* hooks |
+| 63 | `CtlMetricsGateSystemGroup63` | MetricsStore capture guard, assert_expr, GateState |
+| 64 | `CtlPlanHashManifestGroup64` | ExecPlan compile, plan_hash determinism, JSON output |
+
+---
+
+## WO-VSIM-CTL-TEST — CTL Integration Testing Phase  (v5.1.x)
+
+Verifies CTL as a real workflow control layer, not just isolated parsing.
+
+**The test question:** Does CTL actually control a run without touching physics directly?
+
+### Test groups — integration layer (Groups 65–69)
+
+| Group | Target | Purpose |
+|---|---|---|
+| 65 | `CtlEndToEndSmokeGroup65` | Parse → validate → dispatch → emit JSON/manifests → hash |
+| 66 | `CtlRuntimeHookIntegrationGroup66` | Commands map to runtime hooks with correct args |
+| 67 | `CtlNegativeValidationGroup67` | All failure modes fire before runtime |
+| 68 | `CtlDeterminismGroup68` | CTL injects no nondeterminism |
+| 69 | `CtlWorkflowCompatGroup69` | CTL headers do not break existing v5.1.x APIs |
+
+### Group 65 — End-to-End Smoke (`test_ctl_smoke.cpp`)
+
+Full pipeline: source text → parser → validator → ExecPlan → dispatcher → artifacts.
+
+| Test | Assertion |
+|---|---|
+| SMOKE-01 | parse minimal CTL script succeeds |
+| SMOKE-02 | validate minimal CTL script passes |
+| SMOKE-03 | dispatch `runtime.run_case()` returns all-ok |
+| SMOKE-04 | `to_json()` contains `"commands"` array |
+| SMOKE-05 | `artifact_manifest_json()` is valid JSON structure |
+| SMOKE-06 | `gate_manifest_json()` lists all gate names |
+| SMOKE-07 | unknown namespace rejected before dispatch |
+| SMOKE-08 | unknown command rejected before dispatch |
+| SMOKE-09 | same script + same seed → same plan hash |
+| SMOKE-10 | same script with changed `const` → same hash (const is text, not semantic hash) |
+
+### Group 66 — Runtime Hook Integration (`test_ctl_hooks.cpp`)
+
+Recording hooks verify every command routes to the correct method with correct args.
+
+| Test | Assertion |
+|---|---|
+| HOOK-01 | `runtime.run_case()` calls hook exactly once |
+| HOOK-02 | `runtime.step(n)` calls hook with correct `n` |
+| HOOK-03 | `runtime.reset(scope)` calls hook with correct scope |
+| HOOK-04 | `kernel.channel.enable()` calls hook with channel name + weight |
+| HOOK-05 | `kernel.channel.disable()` calls hook with channel name |
+| HOOK-06 | `kernel.channel.reset()` calls hook |
+| HOOK-07 | `artifact.dynx.enable()` calls artifact hook |
+| HOOK-08 | `artifact.xbit.create()` then `artifact.xbit.export()` calls export hook |
+| HOOK-09 | `metrics.capture()` sets `MetricsStore::captured = true` |
+| HOOK-10 | gate begin→assert→end lifecycle dispatches and produces `GateResult` |
+
+### Group 67 — Negative Validation (`test_ctl_negative.cpp`)
+
+All error paths fire at validation time, before any hook is called.
+
+| Test | Assertion |
+|---|---|
+| NEG-01 | unknown namespace → validation error |
+| NEG-02 | unknown command → validation error |
+| NEG-03 | unknown kernel channel → validation error |
+| NEG-04 | `artifact.dynx.export()` before `enable` → validation error |
+| NEG-05 | `artifact.xbit.export()` before `create` → validation error |
+| NEG-06 | `metrics.assert()` before capture/run → validation error |
+| NEG-07 | `gate.assert()` outside a gate is flagged (gate depth = 0 when end is missing) |
+| NEG-08 | `gate.end()` without `gate.begin()` → validation error |
+| NEG-09 | invalid script does not produce a dispatch session |
+| NEG-10 | invalid `${var}` expands to sentinel literal (not crash) |
+
+### Group 68 — Determinism (`test_ctl_determinism.cpp`)
+
+CTL must not inject nondeterminism into the pipeline.
+
+| Test | Assertion |
+|---|---|
+| DET-01 | same script + same seed → same `plan_hash` across two compilations |
+| DET-02 | same script + different seed → different `plan_hash` |
+| DET-03 | `ExecGraph` command ordering matches source order |
+| DET-04 | `const` expansion order is deterministic |
+| DET-05 | artifact manifest ordering matches command order in graph |
+| DET-06 | gate manifest ordering matches `gate.begin` order in graph |
+| DET-07 | FNV-1a-64 hash produces identical output on repeated calls |
+| DET-08 | `script_hash` is stable across repeated `compile()` calls |
+| DET-09 | `ExecPlan` command count matches `ExecGraph` command count |
+| DET-10 | rejected script (invalid validation) produces no `ExecPlan` output |
+
+### Group 69 — Existing Workflow Compatibility (`test_ctl_compat.cpp`)
+
+CTL headers must not pollute or break existing v5.1.x APIs.
+
+| Test | Assertion |
+|---|---|
+| COMPAT-01 | `ctl_types.hpp` can be included alongside `vsim_document.hpp` |
+| COMPAT-02 | `CtlNamespace` enum does not collide with existing VSIM enums |
+| COMPAT-03 | `MetricsStore` does not conflict with existing metric names |
+| COMPAT-04 | `ExecGraph` default constructor produces empty graph |
+| COMPAT-05 | `CtlDispatcher` with null hooks falls back to default no-op hooks |
+| COMPAT-06 | CTL headers are `#pragma once` safe (double-include is silent) |
+| COMPAT-07 | `CtlParser::parse("")` returns ok=true, empty graph |
+| COMPAT-08 | `CtlValidator::validate({})` returns ok=true on empty graph |
+| COMPAT-09 | `ExecPlan::compile({}, "dev", 0)` does not crash on empty graph |
+| COMPAT-10 | `CtlDispatcher::dispatch(empty_plan)` returns all-ok session |
+
+### Invariants
+
+- Scripts must not directly mutate particle state — all mutations route through `CtlRuntimeHooks`
+- A validation failure must prevent `CtlDispatcher::dispatch()` from being called
+- Partial artifacts from failed validation must not be emitted
+- `plan_hash` is an identity commitment: same inputs, same hash, always
+
+---
+
+## Phase 6–9  |  v5.1.x Runtime Bridges & Dynx Archive  (WO-VSIM-INTENT-BRIDGE-A / WO-VSIM-FORMATION-FIELDRAMP / WO-VSIM-ISOMER-WIRE-A / WO-VSIM-DYNX-V1-A/B)
+
+### Phase 6 — Intent Runtime Bridge A  (`include/vsim/intent/intent_bridge.hpp`)
+
+Transforms parsed VSIM document sections into concrete runtime objects.
+
+| Section bridged | Runtime type | Notes |
+|---|---|---|
+| `[material]` | `IntentParticle` × N | Basis → particles; mass from element table; formal charge for ionic prototypes |
+| `[environment]` | `IntentEnvironment` | Temperature, PBC flag, boundary strings, E-field vector |
+| `[run]` | `IntentRunConfig` | mode, max_steps, dt_fs, converge, output_level |
+
+**Key types:** `IntentParticle`, `IntentEnvironment`, `IntentRunConfig`, `IntentSystem`, `IntentBridge`.
+
+`IntentBridge::apply(doc)` — single-call bridge; returns `IntentSystem`.
+
+Deferred to BRIDGE-B/C: `[[raw.object]]`, `[[override.particle]]`, `[excite.*]`.
+
+**Test group:** Group 54 — `IntentBridgeBasicGroup54` (IB-A-01..09).
+
+---
+
+### Phase 7 — Formation FieldRamp  (`include/vsim/intent/field_ramp.hpp`)
+
+Linear electric field ramp over a `FormationStage` of kind `field_ramp`.
+
+```
+E(t) = E0 + (E1 − E0) × (t / t_stage)
+```
+
+| Field | Source | Notes |
+|---|---|---|
+| E0 | `FormationStage::from_field_V_A` | Start value (V/Å) |
+| E1 | `FormationStage::to_field_V_A` | End value (V/Å) |
+| axis | `FormationStage::field_axis` | "x" / "y" / "z" (default "z") |
+| t_stage | `FormationStage::duration_ps` | 0 → clamp to E0; negative → ok=false |
+
+**Key types:** `FieldRampResult`, `FieldRampEvaluator`.
+
+`FieldRampEvaluator::evaluate(stage, t_ps)` — returns `FieldRampResult` with field vector and progress fraction.
+
+Formation libraries live in `BatchDocument::formation_library`; runtime execution deferred to v5.2.0.
+
+**Test group:** Group 55 — `FormationFieldRampGroup55` (FR-01..07).
+
+---
+
+### Phase 8 — Isomer Pipeline Wiring A  (`include/vsim/intent/isomer_bridge.hpp`)
+
+Drives `[generator.isomers]` to produce geometric isomer candidate sets.
+
+| Output field | Description |
+|---|---|
+| `candidate_count` | Number of deduplicated candidates |
+| `candidates` | `IsomerCandidate` list with descriptor, hash, geometry, CN |
+| `deterministic` | Always true; same seed → same ordered list |
+
+**Key types:** `IsomerCandidate`, `IsomerCandidateSet`, `IsomerBridge`.
+
+`IsomerBridge::generate(cfg, seed)` — returns `IsomerCandidateSet`.  
+`IsomerBridge::manifest_lines(set)` — returns TSV header + data rows.
+
+Deferred to WIRE-B: `[analysis.isomer_tracking]`, chirality detection, GeometricVariant.
+
+**Test group:** Group 56 — `IsomerWireAGroup56` (ISO-A-01..06).
+
+---
+
+### Phase 9 — Dynx v1 Session Archive  (`include/vsim/io/dynx_writer.hpp`)
+
+Post-compiled dynamic session archive format for visual replay and provenance.
+
+**Format (line-oriented text):**
+
+```
+#dynx v1
+#source <path>
+#source_hash <sha256-hex | "none">
+#kernel_version <string>
+#frame_count <N>
+#frame_interval <dt_fs>
+#particle_count <N>
+#timestamp <ISO-8601-UTC>
+FRAME <index> <time_fs>
+<symbol> <x> <y> <z> [<vx> <vy> <vz>] [<energy>]
+...
+FORCE <particle_idx> <fx> <fy> <fz>          (optional per-particle)
+BOND_FORCE <i> <j> <fx> <fy> <fz>            (optional per-bond)
+FIELD <label> <fx> <fy> <fz>                 (optional field vector)
+EVENT <kind> <event_id> <source> <value>      (optional KernelEvent packet)
+RENDER <particle_idx> <r> <g> <b> <tag> <vis> (optional render metadata)
+CAMERA <label> <x> <y> <z> <pitch> <yaw> <zoom> (optional camera state)
+END_FRAME
+#END_DYNX
+```
+
+| API | Description |
+|---|---|
+| `DynxWriter::open(path, hdr)` | Open file, write header block (frame_count placeholder) |
+| `DynxWriter::write_frame(frame)` | Emit one FRAME block (v1 positions/velocities/energy only) |
+| `DynxWriter::write_rich_frame(frame)` | Emit one rich FRAME block including forces, events, render, camera |
+| `DynxWriter::close()` | Finalize: patch frame_count in header, close |
+| `dynx_inspect(path)` | Read metadata header without frame parse |
+| `dynx_validate(path)` | Full structural validation (monotonic time, particle count, hash presence) |
+
+**WO-72B — `.dynx` Pipeline Emitter** (`include/vsim/io/dynx_emitter.hpp`):
+
+| API | Description |
+|---|---|
+| `DynxEmitter::open(path, hdr)` | Open archive file; live cache always available |
+| `DynxEmitter::emit_step(ctx)` | Post-step hook: harvests KernelEventLog, writes rich frame to archive, pushes to live cache |
+| `DynxEmitter::close()` | Finalize archive; live cache unaffected |
+| `DynxEmitter::live_cache()` | Access the `DynxLiveCache` for viewer polling |
+| `DynxLiveCache::push(frame)` | Replace cached frame slot |
+| `DynxLiveCache::poll()` | Get-and-clear: returns `optional<DynxRichFrame>`, empties slot |
+| `DynxLiveCache::has_frame()` | True if a fresh frame is waiting |
+
+**CLI:** `vsepr dynx inspect <file.dynx>` / `vsepr dynx validate <file.dynx>`  
+**Source:** `src/vsim/io/dynx_writer.cpp`, `src/vsim/io/dynx_emitter.cpp`, `src/cli/cmd_dynx.cpp`
+
+**Test groups:** Group 57 — `DynxV1SessionArchiveGroup57` (DYNX-V1-01..07) | Group 71 — `DynxEmitterGroup71` (71-A..71-O).
+---
+
+## .X Bundle Format  (WO-72A)
+
+The `.X` format is a **suite execution container** - a single text archive that packages one or more `.vsim` scripts (and optional asset files) for unified execution by the `vsepr` CLI.
+
+### Role separation
+
+| Format | Role |
+|--------|------|
+| `.vsim` | Single simulation script |
+| `.X`   | Bundled suite execution container |
+| `.dynx` | Post-compiled live visual / session archive |
+
+### File layout (text-based, line-oriented)
+
+    XBUNDLE <version>
+    [manifest]
+      name = <string>
+      entry_point = <member_name>
+    [[member]]
+      name = <logical-name>
+      kind = vsim | asset
+      size = <byte count>
+      >>>
+      <verbatim file content>
+      <<<
+
+### Validation rules (V-01..V-08)
+
+V-01 manifest present; V-02 name non-empty; V-03 >= 1 entry; V-04 entry names non-empty; V-05 unique names; V-06 vsim content non-empty; V-07 entry_point names existing member; V-08 declared size matches content.
+
+### API
+
+`XBundleReader::read_file/read_string`, `XBundleWriter::write_file/write_string`, `XBundleValidator::validate`, `XBundle::entry_point()`, `XBundle::find(name)`  
+**Library:** `vsepr_xbundle` | **Test group:** Group 70 - `XBundleSmokeGroup70` (XB-01..XB-10)
+
+---
+
+## WO-72V — Precomputed Cache Subsystem
+
+**Headers:** `include/vsim/cache/cache.hpp` (umbrella)
+**Library:** `vsepr_cache`
+**CLI verb:** `vsepr cache <sub>`
+
+### Sub-commands
+
+| Sub-command | Args | Description |
+|---|---|---|
+| `list-presets` | `[formula]` | Show material preset(s) from built-in table |
+| `list-routes` | `<formula>` | Formation routes for a product formula |
+| `list-props` | `[formula]` | Physical property table entry/entries |
+| `index-status` | — | Trajectory index file location and entry count |
+
+### Components
+
+| Header | Class | Purpose |
+|---|---|---|
+| `material_preset_cache.hpp` | `MaterialPresetCache` | Crystal-structure presets (lattice, density, Tm) |
+| `formation_lut.hpp` | `FormationLUT` | Formation route records per product |
+| `property_table.hpp` | `PropertyTable` | Density / thermal / electrical / bandgap table |
+| `trajectory_index.hpp` | `TrajectoryIndex` | Hash-indexed run summary; save/load JSON |
+
+### Built-in coverage
+
+8 material presets (NaCl, Si, Fe, Al, Cu, MgO, TiO2, C, SiO2, Al2O3),
+7 formation routes (NIST/standard), 10 property rows. Extended via `load(json_path)`.
+
+---
+
+## WO-72W — Material-Property ML / Pretraining Layer
+
+**Headers:** `include/vsim/ml/ml.hpp` (umbrella)
+**Library:** `vsepr_ml`
+**CLI verb:** `vsepr mlprop <sub>`
+
+### Sub-commands
+
+| Sub-command | Args | Description |
+|---|---|---|
+| `recommend` | `<property> <value>` | Rank seed candidates near target property/value |
+| `trends` | `<property>` | Print Pearson-r / slope / RMSE for each feature |
+| `list` | — | List all seed candidates |
+
+### Components
+
+| Header | Class | Purpose |
+|---|---|---|
+| `material_candidate.hpp` | `MaterialCandidate` | Full candidate record (formula, property, route, confidence) |
+| `property_trend.hpp` | `PropertyTrendFinder` | Pearson-r linear trend finder across elemental features |
+| `route_recommender.hpp` | `RouteRecommender` | Confidence-scored recommendation engine |
+
+### Seed set
+
+8 validated bandgap candidates (Si, GaAs, GaN, ZnO, TiO2, CdS, InP, AlN).
+Features computed: `electronegativity_mean`, `atomic_mass_mean`, `valence_mean`, `n_elements`.
+
+---
+
+## `[dissolution]` — WO-56D Surface Dissolution Module
+
+**Struct:** `DissolutionSection`  
+**Header:** `include/vsim/vsim_document.hpp`  
+**Engine:** `atomistic/reaction/dissolution.hpp`
+
+Models multi-step acid dissolution of solid oxide surfaces. Implements the protonation ladder pathway:  
+M-O-M → M-OH → M-OH₂⁺ → M^n+(aq) → M(H₂O)ₓ^n+ → M-L (ligand-bound)
+
+### Fields
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `enabled` | bool | `false` | ✅ | Enable dissolution pathway tracking |
+| `engine` | string | `"protonation_ladder"` | ✅ | Engine type: `"protonation_ladder"` |
+| `dG_first_protonation` | double | `-12.0` | ✅ | ΔG for M-O⁻ + H⁺ → M-OH (kcal/mol) |
+| `dG_second_protonation` | double | `-8.0` | ✅ | ΔG for M-OH + H⁺ → M-OH₂⁺ (kcal/mol) |
+| `Ea_bridging_cleavage` | double | `25.0` | ✅ | Activation energy for M-O-M cleavage (kcal/mol) |
+| `Ea_terminal_release` | double | `15.0` | ✅ | Activation energy for terminal oxide release (kcal/mol) |
+| `dG_hydration_Fe3` | double | `-105.0` | ✅ | ΔG hydration for Fe³⁺ hexaaquo (kcal/mol) |
+| `dG_hydration_Fe2` | double | `-85.0` | ✅ | ΔG hydration for Fe²⁺ hexaaquo (kcal/mol) |
+| `dG_hydration_Al3` | double | `-115.0` | ✅ | ΔG hydration for Al³⁺ hexaaquo (kcal/mol) |
+| `dG_hydration_generic` | double | `-80.0` | ✅ | Default ΔG for other metals (kcal/mol) |
+| `dG_sulfate_mono` | double | `-3.5` | ✅ | ΔG for monodentate sulfate binding (kcal/mol) |
+| `dG_sulfate_bi` | double | `-6.0` | ✅ | ΔG for bidentate sulfate binding (kcal/mol) |
+| `dG_sulfate_bridge` | double | `-8.5` | ✅ | ΔG for bridging sulfate formation (kcal/mol) |
+| `pH_reference` | double | `1.0` | ✅ | Reference pH for rate constants |
+| `pH_slope` | double | `-0.5` | ✅ | d(log rate)/d(pH) slope |
+| `T_reference` | double | `298.15` | ✅ | Reference temperature (K) |
+| `Ea_apparent` | double | `15.0` | ✅ | Apparent activation energy (kcal/mol) |
+| `site_density_per_nm2` | double | `5.0` | ✅ | Reactive surface site density (sites/nm²) |
+
+### Example
+
+```toml
+[dissolution]
+enabled = true
+engine  = "protonation_ladder"
+
+# Protonation energetics (kcal/mol)
+dG_first_protonation  = -12.0
+dG_second_protonation = -8.0
+
+# Lattice cleavage barriers (kcal/mol)
+Ea_bridging_cleavage  = 25.0
+Ea_terminal_release   = 15.0
+
+# Hydration shell formation (kcal/mol)
+dG_hydration_Fe3      = -105.0
+
+# Ligand exchange thermodynamics (kcal/mol)
+dG_sulfate_mono       = -3.5
+dG_sulfate_bi         = -6.0
+dG_sulfate_bridge     = -8.5
+
+# Surface parameters
+site_density_per_nm2  = 5.0
+```
+
+### Bond-Pattern Vocabulary (Chem+)
+
+| Pattern | Description |
+|---|---|
+| `[M-O-M]^{bridging oxide}_{s}` | Lattice bridging oxygen |
+| `[M-O-]^{terminal oxide}_{surface}` | Surface terminal oxide |
+| `[M-OH]^{hydroxyl}_{surface}` | Singly protonated surface site |
+| `[M-OH2+]^{leaving group}_{surface}` | Doubly protonated, labile site |
+| `[M(H2O)n^m+]^{aquo complex}_{aq}` | Hydrated metal ion |
+| `[M-O-SO3]^{monodentate}_{aq}` | Inner-sphere sulfate |
+| `[M-(O)2-SO2]^{bidentate}_{aq}` | Chelating sulfate |
+| `[M-O-SO2-O-M]^{bridging}_{aq}` | Bridging sulfate between metals |
+
+### Related Components
+
+- **Engine:** `atomistic::reaction::DissolutionEngine`
+- **Bridge:** `vsim::DissolutionBridge`
+- **Test:** `test_dissolution` (Group 4: Chemistry)
+Scoring: 70% proximity to target (Gaussian, σ=20% of target) + 30% stored confidence.

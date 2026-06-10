@@ -12,7 +12,7 @@ Script-driven simulation pipelines via the VSIM language. Reproducible by design
 
 ---
 
-> VSEPR-SIM v5.0.0 is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
+> VSEPR-SIM v5.0.14 is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
 
 ---
 
@@ -29,9 +29,9 @@ Script-driven simulation pipelines via the VSIM language. Reproducible by design
 
 ---
 
-## What's New in v5.0.0
+## What's New in v5.0.14
 
-v5.0.0 marks the transition from disconnected simulation modules into an integrated scripted simulation environment.
+v5.0.14 marks the transition from disconnected simulation modules into an integrated scripted simulation environment.
 
 - **VSIM scripting language** — declarative setup, execution, analysis, and reporting in a single `.vsim` file
 - **`vsper` launcher** — canonical command-line entry point for running `.vsim` scripts post-install
@@ -67,7 +67,7 @@ A `.vsim` script replaces a sequence of CLI calls with a single, readable, versi
 ```vsim
 [project]
 name    = "water_nvt"
-version = "v5.0.0"
+version = "v5.0.14"
 
 [simulation]
 box_size_ang = 30.0
@@ -430,6 +430,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 [VSIM Reference](docs/VSIM_LANGUAGE_REFERENCE.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [Validation](docs/VALIDATION_REPORT.md) • [Tour](TOUR.md) • [GitHub](https://github.com/LMSM3/VSEPR-SIM)
 
-*VSEPR-SIM v5.0.0 is a documented scientific simulation environment built around deterministic state files, reproducible workflows, scripted execution, trajectory analysis, and material-property inference. It is under active development, with each beta release expanding the validated pipeline.*
+*VSEPR-SIM v5.0.14 is a documented scientific simulation environment built around deterministic state files, reproducible workflows, scripted execution, trajectory analysis, and material-property inference. It is under active development, with each beta release expanding the validated pipeline.*
 
 </div>

@@ -1,5 +1,18 @@
 ﻿cmake_minimum_required(VERSION 3.15...4.2)
-project(vsepr-sim VERSION 5.0.0 LANGUAGES C CXX)
+
+# ── Generator enforcement ─────────────────────────────────────────────────────
+# VSEPR-SIM exclusively uses Ninja.  CMakePresets.json declares this for every
+# preset; the guard below catches bare `cmake -S . -B build` invocations that
+# bypass presets so they never silently fall back to Make or Visual Studio.
+if(NOT CMAKE_GENERATOR MATCHES "Ninja")
+    message(FATAL_ERROR
+        "VSEPR-SIM requires the Ninja generator.\n"
+        "Configure with a preset:  cmake --preset release\n"
+        "Or pass explicitly:       cmake -G Ninja -S . -B build\n"
+        "Ninja is at: C:/msys64/ucrt64/bin/ninja.exe")
+endif()
+
+project(vsepr-sim VERSION 5.0.14.0 LANGUAGES C CXX)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
 
@@ -50,6 +63,8 @@ option(BUILD_APPS  "Build applications" ON)
 option(BUILD_VIS   "Build visualization tools (vsepr-view, vsepr_vis)" ON)
 option(BUILD_ADVANCED_RENDER "Build advanced 3D molecular renderer + data window (requires BUILD_VIS=ON)" OFF)
 option(BUILD_DEMOS "Build demo targets" OFF)
+option(BUILD_VIEWER        "Build lightweight one-shot file viewer (WO-67-A1, requires BUILD_VIS=ON)" ON)
+option(BUILD_VIEWER_DAEMON "Build persistent viewer daemon (WO-67-A2, requires BUILD_VIS=ON)" OFF)
 
 # ── VSEPR Feature flags ───────────────────────────────────────────────────────
 option(VSEPR_ENABLE_ATOMISTIC     "Enable atomistic molecular simulation layer" ON)
@@ -152,6 +167,8 @@ message(STATUS "    tests:          ${BUILD_TESTS}")
 message(STATUS "    apps:           ${BUILD_APPS}")
 message(STATUS "    vis:            ${BUILD_VIS}")
 message(STATUS "    demos:          ${BUILD_DEMOS}")
+message(STATUS "    viewer (A1):    ${BUILD_VIEWER}")
+message(STATUS "    viewd  (A2):    ${BUILD_VIEWER_DAEMON}")
 message(STATUS "")
 message(STATUS "  Runtime modules:")
 message(STATUS "    atomistic:      ${VSEPR_ENABLE_ATOMISTIC}")

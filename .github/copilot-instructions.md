@@ -1,245 +1,207 @@
-# Copilot Instructions
+﻿# VSEPR-SIM Copilot Instructions
+<!-- v5.0.14 | branch: v5.0.0-main -->
 
-Version: 2026-05-07
-Status: Research-oriented active development  
-Scope: High-level project direction, scientific framing, system philosophy, development priorities, and intended utilization context  
+## Project identity
 
----
+VSEPR-SIM is a deterministic atomistic simulation, analysis, and reporting platform.
+Current release: **v5.0.14**. Active branch: `v5.0.0-main`.
+Goal: research-grade digital-twin pipeline — formation → fingerprint → cluster → analysis → report → dashboard.
 
-## 1. Identity
-
-**VSEPR-SIM** is a deterministic atomistic simulation, analysis, and reporting platform for molecular, material, bead-based, and premacro systems.
-
-It is a long-term research platform under active construction.
-
-It is **not**:
-
-- a finished product  
-- a visualization toy  
-- a chemistry gimmick  
-- a static educational demo  
-- a folder full of heroic but suspiciously undocumented experiments  
-
-The final direction is:
-
-- Digital twin support  
-- Predictive modeling  
-- Candidate evaluation  
-- Report generation  
-- Discovery-oriented workflows grounded in deterministic modeling and empirical comparison  
-
-The project should be developed as a serious scientific software environment. Every module should make the research kernel stronger, not just add another shiny lever for future regret.
+Not a toy. Not a demo. Every module must strengthen the research kernel.
 
 ---
 
-## 2. Current Stage: **beta-7**
+## Toolchain (non-negotiable)
 
-**Beta-6 is closed.**
+| Tool | Path |
+|---|---|
+| Compiler | `C:/msys64/ucrt64/bin/g++.exe` (GCC 15.2, UCRT64) |
+| Build | `C:/msys64/ucrt64/bin/ninja.exe` — sole generator, no Make, no MSVC |
+| CMake | `C:/msys64/ucrt64/bin/cmake.exe` — always via preset (`cmake --preset release`) |
+| Git/GitHub | GitHub CLI only: `C:\Program Files\GitHub CLI\gh.exe` — no git.exe, no WSL for commits |
+| Shell | PowerShell: use `;` not `&&`. No `head` — use `Select-Object -First N` |
+| Bash | `C:\msys64\usr\bin\bash.exe -l` — available for build/test scripting |
+| Standard | C++23 (`-std=c++23`). C++26 features tracked but not yet required |
 
-**Beta-6 established:**
-
-- isolated Eigen bridge through `vsepr::eigen_bridge`  
-- preservation of native `vsepr::Vec3`  
-- production-ready Kabsch alignment  
-- production-ready RMSD analysis  
-- stationarity backbone  
-- crystal imperfection emergence tests  
-- surface interaction analysis  
-- diffusion analysis  
-- transport inference  
-- packing analysis  
-- macro property inference  
-- report output  
-- xyzFull audit  
-
-**Beta-7 goal:**
-
-Wire existing modules into a coherent research pipeline:
-
-
-FormationOutput
-→ FingerprintRecord
-→ ClusterRecord
-→ AnalysisRecord
-→ ReportRecord
-→ DashboardRecord
-
-
-A completed beta-7 run should produce:
-
-- formation log  
-- final structure  
-- trajectory  
-- energy trace  
-- stationarity result  
-- fingerprint  
-- cluster assignment  
-- defect or surface interpretation  
-- diffusion or packing analysis  
-- validity warnings  
-- report tables  
-- dashboard export  
-
-**Beta-7 is not the time to invent five new ornamental subsystems because the dopamine goblin demanded more complexity.**
-
-**Beta-7 progress (as of Day 57):**
-
-- WO-56C closed: central kernel pass-through consolidation complete
-- WO-57D closed: `render_interval` step-count cadence added to `[visual]` and `[visual.external]`
-- Group 35 acceptance tests live (`tests/test_render_interval.cpp`)
-- Developer documentation infrastructure established:
-  - `docs/VSIM_LANGUAGE.md` — canonical .vsim language guide
-  - `VSIM_REFERENCE.md` — field reference adjacent to README (update with every schema change)
-  - `VSIM_DEVELOPMENT.md` — 5-step add/wire/test/document checklist
-- Commit: `142fb5e4` on branch `v5.0.0-beta.7-step-attempt`
+CMakePresets.json is the single source of truth for configure/build. `build/` is the canonical output dir.
 
 ---
 
-## 3. Permanent Core Architectural Rule
+## Developer procedure — every new VSIM feature
 
-`xyz` and `xyzFull` store **ground-truth state and trajectory only**.
+1. **Define** — add field + default to `include/vsim/vsim_document.hpp`
+2. **Parse** — wire key in `src/vsim/vsim_parser.cpp` (`apply_*_key()`)
+3. **Wire** — apply in runtime/demo apps; gate on field value
+4. **Test** — create/extend group in `tests/`; register in `tests/CMakeLists.txt`
+5. **Document** — update `VSIM_REFERENCE.md`, `docs/VSIM_LANGUAGE.md`, `VSIM_DEVELOPMENT.md`
 
-They may store:
-
-- particle identity  
-- position  
-- position history  
-- timestep  
-- orientation  
-- velocity  
-- persistent ID  
-- lineage ID  
-- decay seed  
-- energy-layer trace  
-- simulation metadata needed to reconstruct the state  
-
-They must **not** store:
-
-- inferred material class  
-- inferred diffusion label  
-- inferred permeability label  
-- inferred packing label  
-- inferred macro property  
-- analysis-only classification result  
-
-**Permanent doctrine:**
-
-- `xyzFull` stores **what happened**  
-- Analysis determines **what it means**  
-
-Inferred properties belong in:
-
-- analysis records  
-- reports  
-- dashboards  
-- sidecar files  
-
-They do **not** belong inside State, `xyz`, or `xyzFull`.
-
-> Encoding conclusions into state and then “discovering” them later is not emergence. It is a magic trick for people who clap when Excel opens.
-
-Engineering geometry truth: include CAD/export artifacts (.step) as required workflow artifacts representing engineering geometry truth. Treat .step files as export/sidecar artifacts that document intended engineering geometry; do not conflate them with inferred analysis results or embed analysis conclusions into these files.
+`VSIM_REFERENCE.md` must be updated with every schema change. No exceptions.
 
 ---
 
-## 4. render_interval Doctrine
+## Encoding cleanup standard
 
-`render_interval` is a **step-count integer cadence** controlling how often render and export emission is triggered during simulation. It is **orthogonal to `display_fps`**.
+Three-class triage before any bulk replace:
+1. Box-drawing / typography Unicode → ASCII-safe equivalents via replacement map
+2. Double-encoded CP1252→UTF-8 symbols (Greek, math) → ASCII names (`rho`, `alpha`, `~`)
+3. Hard `U+FFFD` / `U+0081` corruption → contextual replacement (`-`, `A`, `""`)
 
-| Field | Scope | Meaning |
-|---|---|---|
-| `render_interval` | `[visual]`, `[visual.external]` | Emit render/export every N simulation steps (default: 1) |
-| `display_fps` | `[visual]` | UI/console refresh rate — unrelated to emission cadence |
-
-- `render_interval = 1` means emit every step (default behavior, no skipping)
-- `render_interval = 0` is treated as 1 (guard against zero division)
-- External backends may inherit or override the parent `[visual]` interval
-- Gate render dispatch via `VisualSection::should_render(int step)` and `VisualExternalSection::should_render(int step, int visual_interval)`
-- **Never conflate display refresh with emission cadence**
+Always use `[System.IO.File]::ReadAllText/WriteAllText` with explicit UTF-8. Use string `Replace` overloads, not char overloads (empty replacement throws). Final verification scan must confirm zero hits before closing.
 
 ---
 
-## 5. Permanent Terminology Rule
+## Forbidden terminology
 
-The following terms are **forbidden**:
+Never use: `meso`, `mesoscopic`, `meso-scale`, `meso renderer`, `meso model`
 
-- meso  
-- mesoscopic  
-- meso-scale  
-- meso renderer  
-- meso model  
-- meso visualization  
-
-Use these instead:
-
-- atomistic  
-- bead  
-- coarse bead  
-- premacro  
-- macro  
-- formation  
-- trajectory  
-- state history  
-- analysis layer  
-- inference layer  
-- reporting layer  
-
-**Correct examples:**
-
-- atomistic model  
-- atomistic structure  
-- atomistic visualization  
-- atomistic generator  
-- atomistic analysis  
-- bead dynamics  
-- premacro inference  
-- macro transport inference  
+Use instead: `atomistic`, `bead`, `coarse bead`, `premacro`, `macro`, `formation`, `trajectory`, `analysis layer`
 
 ---
 
-## 6. System Layers
+## System layers
 
-The project is organized around scientific workflow layers:
-
-| Layer           | Contents |
-|----------------|----------|
-| Input          | names, formulas, aliases, scripted runs, presets, seed structures |
-| Identity       | canonical identity, particle identity, molecular identity, material identity, persistent IDs, lineage IDs |
-| Formation      | structure generation, priors, relaxation, dynamics, temperature schedules, energy tracking |
-| State          | positions, velocities, orientations, time history, event history, decay events, energy traces |
-| Analysis       | Kabsch, RMSD, stationarity, defect emergence, surface interaction, diffusion, packing, transport inference, macro inference |
-| Classification | fingerprints, structure clustering, polymorph grouping, isomorph grouping, defect grouping |
-| Reporting      | tables, figures, dashboards, SVG/PNG, technical summaries, validation warnings |
-| Export         | xyz, xyzFull, CSV, JSON, XLSX, SVG, report documents, .step (engineering geometry truth), future SolidWorks outputs |
+| Layer | Contents |
+|---|---|
+| Input | names, formulas, aliases, scripts, presets, seed structures |
+| Identity | canonical/particle/molecular/material identity, persistent IDs, lineage IDs |
+| Formation | structure gen, priors, relaxation, dynamics, energy tracking |
+| State | positions, velocities, orientations, time/event history, energy traces |
+| Analysis | Kabsch, RMSD, stationarity, defect emergence, diffusion, packing, transport, macro inference |
+| Classification | fingerprints, clustering, polymorph/isomorph/defect grouping |
+| Reporting | tables, figures, dashboards, SVG/PNG, validation warnings |
+| Export | xyz, xyzFull, CSV, JSON, XLSX, SVG, report documents |
 
 ---
 
-## 7. Developer Procedure (add / wire / document)
-
-Every new VSIM feature follows this sequence. No exceptions.
-
-1. **Define** — Add field with default to the correct struct in `include/vsim/vsim_document.hpp`
-2. **Parse** — Wire the key in `src/vsim/vsim_parser.cpp` (`apply_*_key()` function)
-3. **Wire** — Apply the field in runtime/demo apps; gate behavior with the field value
-4. **Test** — Create or extend a test group in `tests/`; register in `tests/CMakeLists.txt`
-5. **Document** — Update `VSIM_REFERENCE.md`, `docs/VSIM_LANGUAGE.md`, and `VSIM_DEVELOPMENT.md`
-
-`VSIM_REFERENCE.md` **must be updated with every schema change**, no exceptions. It is the living field-reference adjacent to the README.
-
----
-
-## 8. Key Reference Files
+## Key files
 
 | File | Purpose |
 |---|---|
 | `include/vsim/vsim_document.hpp` | Schema structs and authoritative defaults |
 | `src/vsim/vsim_parser.cpp` | `.vsim` key-to-field wiring |
-| `apps/beta10_demo.cpp` | Phase pipeline demo with auto render layer |
-| `apps/kernel_demo.cpp` | Kernel demo with scenario/interactive render paths |
 | `VSIM_REFERENCE.md` | Living field reference — update with every change |
-| `docs/VSIM_LANGUAGE.md` | Canonical .vsim language and section guide |
+| `docs/VSIM_LANGUAGE.md` | Canonical `.vsim` language and section guide |
 | `VSIM_DEVELOPMENT.md` | 5-step add/wire/test/document checklist |
-| `STAGE.md` | Master development stage and gate ledger |
-| `docs/wo/` | Per-work-order implementation records |
+| `STAGE.md` | Master stage and gate ledger |
+| `CMakePresets.json` | Authoritative Ninja build presets |
+| `build.ps1` | Top-level build wrapper (delegates to CMakePresets) |
+| `.github/copilot-instructions.md` | This file |
 
-**Architecture flow:**
+---
+
+## Do not
+
+- Hardcode element/Z arrays — the data files exist; use them
+- Invent subsystems outside the current pipeline arc
+- Use WSL for git operations
+- Use any CMake generator other than Ninja
+- Leave `VSIM_REFERENCE.md` out of date after a schema change
+
+---
+
+## Viewer / window rules
+
+Every `.vsim` script execution must open **at least one, ideally two** popup/viewer windows (e.g. the lightweight viewer + a status or report window). Silent headless-only runs are not acceptable as the default behaviour for `.vsim` scripts.
+
+### Visualizer user guide
+
+The visualizer is the interactive 3D display layer. It is activated by the `[visual]` block in any `.vsim` script. Key concepts:
+
+**Output types** (`output_type` field)
+
+| Value | When to use |
+|---|---|
+| `"none"` | Headless batch runs — no display |
+| `"terminal_chart"` | Default for all interactive runs — live convergence trace |
+| `"gl_interactive"` | Full 3D interactive viewer with ImGui controls (requires `BUILD_VISUALIZATION`) |
+| `"gl_live_60fps"` | Smooth 60 fps 3D view; ideal for presentations and spinning demos |
+| `"gl_crystal_grid"` | Periodic crystal structures — shows unit cell and repeats |
+| `"gl_overlay_cycle"` | Cycling overlay panels (density, coordination, energy) |
+
+**Camera / spin controls**
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `gl_auto_orbit` | bool | `false` | Camera orbits the scene between overlay panels |
+| `gl_spin` | bool | `false` | Continuously spin the scene at a fixed rate |
+| `gl_spin_axis` | string | `"y"` | Spin axis: `"x"`, `"y"`, or `"z"` |
+| `gl_spin_deg_per_s` | float | `30.0` | Spin rate in degrees/second; negative = reverse |
+| `gl_show_axes` | bool | `true` | Show XYZ coordinate axes in the GL window |
+| `gl_window_width` | int | `1280` | GL window width in pixels |
+| `gl_window_height` | int | `800` | GL window height in pixels |
+
+**Writing a static-scene visualizer script**
+
+For a scene that is physically frozen (no force integration) but visually spinning:
+1. Set `[run] mode = "md"` with `max_steps = 1` and `converge = false` — one step only; no dynamics.
+2. Set `[visual] gl_spin = true` and choose `gl_spin_deg_per_s`.
+3. Use `output_type = "gl_live_60fps"` for the smoothest spin.
+4. Set `[export] write_xyz = true` so the static geometry is saved for replay.
+
+**Minimal hydrogen atom template**
+
+```vsim
+[project]
+name    = "h_atom_spin"
+version = "v5.0.0"
+
+[material]
+formula   = "H"
+prototype = "noble_gas"
+phase     = "gas"
+
+[run]
+mode      = "md"
+max_steps = 1
+dt_fs     = 1.0
+converge  = false
+
+[[simulation.molecule]]
+formula     = "H"
+count       = 1
+temperature = 0.0
+lattice     = "none"
+
+[export]
+write_xyz  = true
+output_dir = "out/h_atom"
+
+[visual]
+output_type      = "gl_live_60fps"
+gl_spin          = true
+gl_spin_axis     = "y"
+gl_spin_deg_per_s = 45.0
+gl_show_axes     = true
+gl_window_width  = 960
+gl_window_height = 720
+```
+
+**Rules for all visualizer scripts**
+- `gl_spin = true` disables `gl_auto_orbit` for that run (the two are mutually exclusive).
+- `gl_spin_deg_per_s = 0.0` is valid and produces a static frozen view.
+- The spin is a **viewer-side** transform only — particle positions in the output `.xyz` are not rotated.
+- `render_interval` controls how often the display is refreshed relative to simulation steps. For a 1-step static scene, it has no effect.
+
+---
+
+## .dynx format rules
+
+`.dynx` is a **post-compiled artifact** — it must be emitted by the simulation pipeline as a compiled output file. It is never hand-authored source.
+
+Required contents of every `.dynx` file:
+
+- Particle positions, velocities, orientations
+- Force vectors and bond-force vectors
+- Field vectors (flux, stress, etc.)
+- Event packets (reaction events, checkpoints, phase transitions)
+- Render metadata (color overrides, bead tags, visibility flags)
+- Camera states (saved view angles / zoom levels)
+- Simulation provenance (source `.vsim` path, hash, timestamps, seed)
+
+Role separation (non-negotiable):
+
+| Format | Role |
+|---|---|
+| `.xyz` / `.xyzFull` | Scientific state / replay truth |
+| `.dynx` | Live visual / session archive (post-compiled) |
+| `.X` | Bundled suite execution container |

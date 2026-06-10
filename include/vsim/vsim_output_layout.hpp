@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * vsim_output_layout.hpp
  * ----------------------
@@ -36,7 +36,7 @@ namespace fs = std::filesystem;
 namespace vsim {
 
 // ============================================================================
-// RunPaths — resolved paths for a single numbered run
+// RunPaths  -  resolved paths for a single numbered run
 // ============================================================================
 
 struct RunPaths {
@@ -49,7 +49,7 @@ struct RunPaths {
 };
 
 // ============================================================================
-// AppDataPaths — standardised AppData layout (B10-15)
+// AppDataPaths  -  standardised AppData layout (B10-15)
 // ============================================================================
 
 struct AppDataPaths {
@@ -62,7 +62,7 @@ struct AppDataPaths {
 };
 
 // ============================================================================
-// OutputLayout — utilities for creating and resolving project output structure
+// OutputLayout  -  utilities for creating and resolving project output structure
 // ============================================================================
 
 class OutputLayout {
@@ -153,7 +153,7 @@ private:
 		std::strftime(tbuf, sizeof(tbuf), "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&t));
 
 		f << "{\n"
-		  << "  \"vsepr_sim_version\": \"5.0.0-beta.10\",\n"
+		  << "  \"vsepr_sim_version\": \"5.0.14\",\n"
 		  << "  \"run_number\": " << rp.run_number << ",\n"
 		  << "  \"created_utc\": \"" << tbuf << "\",\n"
 		  << "  \"project_dir\": " << "\"" << project_dir.string() << "\",\n"
