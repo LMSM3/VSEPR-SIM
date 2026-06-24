@@ -254,6 +254,28 @@ add_executable(test_element_db_phase1_simple test_element_db_phase1_simple.cpp)
 target_link_libraries(test_element_db_phase1_simple vsepr_core)
 vsepr_add_test(NAME ElementDBPhase1Simple TARGET test_element_db_phase1_simple LABELS core chemistry)
 
+# --- Chemistry tests re-enabled after API-mismatch fix (2026-06-18) ---
+add_executable(test_element_db_phase1 test_element_db_phase1.cpp)
+set_target_properties(test_element_db_phase1 PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(test_element_db_phase1 vsepr_core)
+vsepr_add_test(NAME ElementDBPhase1Full TARGET test_element_db_phase1 LABELS core chemistry)
+
+add_executable(chemistry_validation_test chemistry_validation_test.cpp)
+set_target_properties(chemistry_validation_test PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(chemistry_validation_test vsepr_core vsepr_pot)
+vsepr_add_test(NAME ChemistryValidation TARGET chemistry_validation_test LABELS core chemistry)
+
+add_executable(chemistry_universal_test chemistry_universal_test.cpp)
+set_target_properties(chemistry_universal_test PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(chemistry_universal_test vsepr_core)
+vsepr_add_test(NAME ChemistryUniversal TARGET chemistry_universal_test LABELS core chemistry)
+
+add_executable(test_reaction_engine test_reaction_engine.cpp)
+set_target_properties(test_reaction_engine PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(test_reaction_engine coarse_grain atomistic vsepr_core)
+target_include_directories(test_reaction_engine PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ReactionEngineAudit TARGET test_reaction_engine LABELS coarse_grain chemistry reaction)
+
 
 
 # ============================================================================

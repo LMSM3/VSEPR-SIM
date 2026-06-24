@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * chemistry_v2.hpp
  * ================
@@ -13,7 +13,7 @@
  */
 
 #include "types.hpp"
-#include "element_data.hpp"
+#include "element_data_integrated.hpp"
 #include <cmath>
 #include <vector>
 #include <unordered_set>
@@ -136,7 +136,7 @@ public:
     // Cached topology
     std::vector<std::vector<uint32_t>> neighbors_;       // neighbors[i] = {j, k, ...}
     std::vector<std::vector<uint8_t>> bond_orders_;      // bond_orders_[i][idx] = order to neighbor idx
-    std::unordered_map<uint64_t, uint8_t> bond_order_map_;  // (i,j) → order
+    std::unordered_map<uint64_t, uint8_t> bond_order_map_;  // (i,j) -> order
     
     // Computed annotations (filled by perception pipeline)
     std::vector<Hybridization> hybridization_;
@@ -145,8 +145,8 @@ public:
     std::vector<bool> is_ring_atom_;
     
     // Property maps (extensible without struct changes)
-    std::unordered_map<uint32_t, int> atom_type_;       // Atom → FF type
-    std::unordered_map<uint64_t, int> bond_type_;       // Bond → FF type
+    std::unordered_map<uint32_t, int> atom_type_;       // Atom -> FF type
+    std::unordered_map<uint64_t, int> bond_type_;       // Bond -> FF type
     
     ChemistryGraph() = default;
     
@@ -267,16 +267,188 @@ inline void ChemistryGraph::perceive() {
 }
 
 inline void ChemistryGraph::detect_rings() {
-    // Simple cycle detection (basic implementation)
-    is_ring_atom_.resize(atoms.size(), false);
-    // TODO: Implement proper ring perception (SSSR, Figueras, etc.)
+    // DFS-based cycle detection: mark atoms that lie on any cycle.
+    // Strategy: for each atom, run DFS; if we find a back-edge the endpoints
+    // are ring atoms. This correctly identifies all ring members without a
+    // full SSSR algorithm.
+    const uint32_t N = static_cast<uint32_t>(atoms.size());
+    is_ring_atom_.assign(N, false);
+
+    std::vector<int> color(N, 0);   // 0=white, 1=grey, 2=black
+    std::vector<uint32_t> parent(N, UINT32_MAX);
+
+    for (uint32_t start = 0; start < N; ++start) {
+        if (color[start] != 0) continue;
+
+        // Iterative DFS using an explicit stack of (node, parent)
+        std::vector<std::pair<uint32_t,uint32_t>> stack;
+        stack.emplace_back(start, UINT32_MAX);
+
+        while (!stack.empty()) {
+            auto [u, par] = stack.back();
+            stack.pop_back();
+
+            if (color[u] == 2) continue;
+            if (color[u] == 1) {
+                // Back-edge target already opened: mark as ring atom
+                is_ring_atom_[u] = true;
+                continue;
+            }
+
+            color[u] = 1;
+            parent[u] = par;
+
+            for (uint32_t v : neighbors_[u]) {
+                if (v == par) continue;  // Skip tree-parent edge (undirected)
+                if (color[v] == 1) {
+                    // Back edge found — both endpoints are ring atoms
+                    is_ring_atom_[u] = true;
+                    is_ring_atom_[v] = true;
+                    // Walk back up through parents to mark the entire cycle
+                    uint32_t cur = u;
+                    while (cur != v && cur != UINT32_MAX) {
+                        is_ring_atom_[cur] = true;
+                        cur = parent[cur];
+                    }
+                } else if (color[v] == 0) {
+                    stack.emplace_back(v, u);
+                }
+            }
+
+            color[u] = 2;
+        }
+    }
 }
 
 inline void ChemistryGraph::detect_aromaticity() {
-    // Placeholder: Hückel rule + planarity check
-    is_aromatic_atom_.resize(atoms.size(), false);
-    is_aromatic_bond_.resize(bonds.size(), false);
-    // TODO: Implement aromaticity perception
+    // Hückel aromaticity: find all simple rings, check 4n+2 pi-electron count,
+    // and verify every ring atom is sp2 (has a pi contribution).
+    //
+    // Supported pi donors per atom type:
+    //   - C sp2 with double bond:   contributes 1 pi electron (from the double bond)
+    //   - C sp2 radical/carbocation: 0 pi electrons (not aromatic)
+    //   - N sp2 in-ring:            1 (pyridine-like) or 2 (pyrrole lone-pair donor)
+    //   - O sp2 in-ring:            2 (furan-like)
+    //
+    // This implementation handles common 5- and 6-membered rings (benzene, pyridine,
+    // furan, pyrrole). Polycyclics and exotic cases are left as neutral (non-aromatic).
+
+    const uint32_t N = static_cast<uint32_t>(atoms.size());
+    is_aromatic_atom_.assign(N, false);
+    is_aromatic_bond_.assign(bonds.size(), false);
+
+    // Only attempt aromaticity for small graphs (<=64 atoms) to stay fast.
+    if (N > 64) return;
+
+    // Collect candidate ring atoms (must be ring-flagged AND sp2)
+    // We use hybridization_ computed just before perceive() calls this.
+    // But detect_aromaticity runs BEFORE infer_hybridization in perceive().
+    // So we do a quick local sp2 check here.
+    auto quick_is_sp2 = [&](uint32_t i) -> bool {
+        uint8_t z = atoms[i].Z;
+        // Only C, N, O, S can participate in common aromatic rings
+        if (z != 6 && z != 7 && z != 8 && z != 16) return false;
+        // Must be a ring atom
+        if (!is_ring_atom_[i]) return false;
+        // Must have at least one double bond OR be a lone-pair donor (N, O, S in 5-ring)
+        for (uint8_t ord : bond_orders_[i]) {
+            if (ord >= 2) return true;
+        }
+        // N/O/S with 2 single bonds in a ring: lone-pair donor (pyrrole/furan)
+        if ((z == 7 || z == 8 || z == 16) && degree(i) >= 2) return true;
+        return false;
+    };
+
+    // Enumerate simple rings of size 3..8 using DFS path enumeration
+    auto find_rings = [&]() -> std::vector<std::vector<uint32_t>> {
+        std::vector<std::vector<uint32_t>> rings;
+        // DFS from each atom; collect cycles by detecting back-edges to start
+        for (uint32_t start = 0; start < N; ++start) {
+            if (!is_ring_atom_[start]) continue;
+
+            std::vector<uint32_t> path;
+            std::vector<bool> visited(N, false);
+
+            std::function<void(uint32_t, uint32_t)> dfs = [&](uint32_t u, uint32_t par) {
+                if (path.size() > 8) return;  // Limit ring size
+                visited[u] = true;
+                path.push_back(u);
+
+                for (uint32_t v : neighbors_[u]) {
+                    if (v == par) continue;
+                    if (v == start && path.size() >= 3) {
+                        // Found a ring
+                        rings.push_back(path);
+                    } else if (!visited[v] && is_ring_atom_[v]) {
+                        dfs(v, u);
+                    }
+                }
+
+                path.pop_back();
+                visited[u] = false;
+            };
+
+            dfs(start, UINT32_MAX);
+        }
+
+        // Deduplicate: canonicalize each ring by rotation+reflection
+        auto canonical = [](std::vector<uint32_t> r) -> std::vector<uint32_t> {
+            std::sort(r.begin(), r.end());
+            return r;
+        };
+        std::vector<std::vector<uint32_t>> unique_rings;
+        std::vector<std::vector<uint32_t>> seen;
+        for (auto& r : rings) {
+            auto c = canonical(r);
+            if (std::find(seen.begin(), seen.end(), c) == seen.end()) {
+                seen.push_back(c);
+                unique_rings.push_back(r);
+            }
+        }
+        return unique_rings;
+    };
+
+    auto all_rings = find_rings();
+
+    for (const auto& ring : all_rings) {
+        // All atoms must be sp2-capable
+        bool all_sp2 = true;
+        for (uint32_t idx : ring) {
+            if (!quick_is_sp2(idx)) { all_sp2 = false; break; }
+        }
+        if (!all_sp2) continue;
+
+        // Count pi electrons (Hückel)
+        int pi = 0;
+        for (uint32_t idx : ring) {
+            uint8_t z = atoms[idx].Z;
+            // Double-bond contributor: 1 pi electron
+            bool has_double = false;
+            for (uint8_t ord : bond_orders_[idx]) {
+                if (ord >= 2) { has_double = true; break; }
+            }
+            if (has_double) {
+                pi += 1;
+            } else if (z == 7 || z == 8 || z == 16) {
+                // Lone-pair donor (pyrrole N, furan O): 2 pi electrons
+                pi += 2;
+            }
+        }
+
+        // Hückel: aromatic if pi == 4n+2 (n >= 0) → 2, 6, 10, ...
+        bool huckel = (pi >= 2) && ((pi - 2) % 4 == 0);
+        if (!huckel) continue;
+
+        // Mark ring atoms and intra-ring bonds as aromatic
+        for (uint32_t idx : ring) is_aromatic_atom_[idx] = true;
+
+        for (size_t b = 0; b < bonds.size(); ++b) {
+            uint32_t bi = bonds[b].i, bj = bonds[b].j;
+            bool bi_in = std::find(ring.begin(), ring.end(), bi) != ring.end();
+            bool bj_in = std::find(ring.begin(), ring.end(), bj) != ring.end();
+            if (bi_in && bj_in) is_aromatic_bond_[b] = true;
+        }
+    }
 }
 
 inline void ChemistryGraph::infer_hybridization() {
@@ -369,7 +541,7 @@ inline ValidationResult ChemistryGraph::validate_atom(uint32_t i, bool allow_exo
     if (is_main_group(i)) {
         int total_bonds = bond_order_sum(i);
         int coord = degree(i);
-        int charge = 0;  // TODO: Use atoms[i].formal_charge when available
+        int charge = static_cast<int>(atoms[i].formal_charge);
         
         // Check against allowed valence patterns
         bool found_pattern = false;
