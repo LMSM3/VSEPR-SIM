@@ -1,4 +1,4 @@
-/**
+﻿/**
  * isomer_test.cpp
  * ---------------
  * Comprehensive test for isomer enumeration and identification system.
@@ -259,16 +259,20 @@ void test_signature_uniqueness() {
 
 int main() {
     std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║                                                                ║\n";
-    std::cout << "║          ISOMER ENUMERATION & IDENTIFICATION TESTS             ║\n";
-    std::cout << "║                                                                ║\n";
-    std::cout << "║  Testing systematic isomer generation, canonical signatures,  ║\n";
-    std::cout << "║  symmetry-aware deduplication, and conformational search.     ║\n";
-    std::cout << "║                                                                ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+================================================================+\n";
+    std::cout << "|                                                                |\n";
+    std::cout << "|          ISOMER ENUMERATION & IDENTIFICATION TESTS             |\n";
+    std::cout << "|                                                                |\n";
+    std::cout << "|  Testing systematic isomer generation, canonical signatures,  |\n";
+    std::cout << "|  symmetry-aware deduplication, and conformational search.     |\n";
+    std::cout << "|                                                                |\n";
+    std::cout << "+================================================================+\n";
     
     try {
+        // Initialise element database (required by isomer_generator / isomer_signature)
+        static auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+        vsepr::init_chemistry_db(&s_pt);
+
         test_cis_trans_isomers();
         test_fac_mer_isomers();
         test_conformers();

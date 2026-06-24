@@ -1,28 +1,28 @@
-#pragma once
+﻿#pragma once
 /**
  * include/vsim/vsim_runtime.hpp
  * ================================
- * VSIM scripting runtime — interprets the five beta-10 scripting features
+ * VSIM scripting runtime  -  interprets the five beta-10 scripting features
  * against a live KernelEventLog:
  *
- *   1. UX Pacing         — artificial step delay + smooth resim animation
- *   2. variance          — statistical spread evaluator over event traces
- *   3. N_evolution       — population growth-rate tracker (dN/dt)
- *   4. while loops       — conditional simulation continuation
- *   5. batch tasks       — parameter sweep executor
+ *   1. UX Pacing          -  artificial step delay + smooth resim animation
+ *   2. variance           -  statistical spread evaluator over event traces
+ *   3. N_evolution        -  population growth-rate tracker (dN/dt)
+ *   4. while loops        -  conditional simulation continuation
+ *   5. batch tasks        -  parameter sweep executor
  *
  * All output is ANSI terminal. No external dependencies.
  *
  * Architecture position:
  *
  *   VsimDocument (parsed .vsim)
- *         ↓
+ *         v
  *   VsimRuntime::run(doc, emit_fn)
- *         ├── pace_step()             ← UX delay per FIRE step
- *         ├── eval_variance()         ← compute + print variance probes
- *         ├── eval_n_evolution()      ← compute + print N_evolution probes
- *         ├── run_while_guards()      ← interpret while blocks
- *         └── run_batch()             ← interpret batch jobs
+ *         +-- pace_step()             <- UX delay per FIRE step
+ *         +-- eval_variance()         <- compute + print variance probes
+ *         +-- eval_n_evolution()      <- compute + print N_evolution probes
+ *         +-- run_while_guards()      <- interpret while blocks
+ *         +-- run_batch()             <- interpret batch jobs
  *
  * WO-56C  |  v5.0.0-beta.7.1  |  beta-10 milestone
  */
@@ -32,6 +32,19 @@
 #include "kernel/kernel_event_log.hpp"
 #include "include/pipeline/pipeline_stages.hpp"
 #include "reaction_bridge.hpp"
+
+// Forward declarations: analysis helpers (implemented in vsepr_analysis_helpers)
+namespace vsim::analysis {
+    double run_bond_angle_analysis(
+        const vsepr::kernel::KernelEventLog& log,
+        const VsimDocument& doc);
+    double run_spectral_response_analysis(
+        const vsepr::kernel::KernelEventLog& log,
+        const VsimDocument& doc);
+    double run_interference_analysis(
+        const vsepr::kernel::KernelEventLog& log,
+        const VsimDocument& doc);
+}
 
 #include <algorithm>
 #include <chrono>
@@ -49,7 +62,7 @@
 namespace vsim {
 
 // ============================================================================
-// EvalResult — output of a probe evaluation
+// EvalResult  -  output of a probe evaluation
 // ============================================================================
 
 struct EvalResult {
@@ -88,7 +101,7 @@ public:
 
 	// Callback type for "run N simulation steps and return new event count"
 	// Called by while/batch loops to advance the simulation.
-	// Signature: (n_steps, seed_offset) → number of new events emitted
+	// Signature: (n_steps, seed_offset) -> number of new events emitted
 	using EmitFn = std::function<int(int n_steps, int seed_offset)>;
 
 	// -----------------------------------------------------------------------
@@ -105,7 +118,7 @@ public:
 	{
 		if (sim.step_delay_ms > 0) {
 			if (show_bar) {
-				// Live progress character — energy convergence bar
+				// Live progress character  -  energy convergence bar
 				char c;
 				if      (energy < -150.0) c = '#';
 				else if (energy < -80.0)  c = '+';
@@ -132,9 +145,9 @@ public:
 			std::printf("\n%s", rt_ansi::dim);
 			// Fade-out bar: dims from solid to dotted
 			const char* frames[] = {
-				"════════════════════════════════════════════════════",
-				"────────────────────────────────────────────────────",
-				"╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌",
+				"====================================================",
+				"----------------------------------------------------",
+				"----------------------------------------------------",
 				"············································",
 			};
 			for (const char* f : frames) {
@@ -146,7 +159,7 @@ public:
 			std::printf("\n");
 		}
 
-		std::printf("\n%s%s  ── Resim %d%s%s\n%s",
+		std::printf("\n%s%s  -- Resim %d%s%s\n%s",
 			rt_ansi::bold, rt_ansi::cyan,
 			resim_index,
 			reason.empty() ? "" : ("  [" + reason + "]").c_str(),
@@ -168,7 +181,7 @@ public:
 	// gates through the heat activation function, and records ReactionEvent /
 	// ChemicalStateEvent entries into the global KernelEventLog.
 	//
-	// Always safe to call even when chemistry.reaction_events = false — the
+	// Always safe to call even when chemistry.reaction_events = false  -  the
 	// bridge degrades gracefully to a no-op.
 	//
 	// Returns a brief summary (reactions evaluated / emitted) for display.
@@ -224,20 +237,30 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// Observe metrics — evaluate named metrics from [observe] block.
+	// Observe metrics  -  evaluate named metrics from [observe] block.
 	//
 	// Supported metric names:
-	//   "reaction_events"  — count of Reaction events in the log
-	//   "chemical_state"   — count of ChemicalState events in the log
-	//   "exothermic_count" — count of exothermic reaction events
-	//   "avg_delta_E"      — mean reaction energy (kcal/mol)
-	//   "formation"        — count of Formation events
-	//   "transport"        — count of Transport events
-	//   "defect"           — count of Defect events
+	//   "reaction_events"   -  count of Reaction events in the log
+	//   "chemical_state"    -  count of ChemicalState events in the log
+	//   "exothermic_count"  -  count of exothermic reaction events
+	//   "avg_delta_E"       -  mean reaction energy (kcal/mol)
+	//   "formation"         -  count of Formation events
+	//   "transport"         -  count of Transport events
+	//   "defect"            -  count of Defect events
 	//
 	// Returns one EvalResult per metric name requested.
 	// -----------------------------------------------------------------------
 	static std::vector<EvalResult> eval_observe_metrics(
+			const ObserveSection& cfg,
+			const vsepr::kernel::KernelEventLog& log,
+			bool verbose = false)
+	{
+		VsimDocument stub_doc;
+		return eval_observe_metrics(stub_doc, cfg, log, verbose);
+	}
+
+	static std::vector<EvalResult> eval_observe_metrics(
+			const VsimDocument& doc,
 			const ObserveSection& cfg,
 			const vsepr::kernel::KernelEventLog& log,
 			bool verbose = false)
@@ -281,8 +304,20 @@ public:
 				r.value = count_kind(vsepr::kernel::KernelEventKind::Transport);
 			} else if (metric == "defect") {
 				r.value = count_kind(vsepr::kernel::KernelEventKind::Defect);
+			} else if (metric == "bond_angles") {
+				r.value  = vsim::analysis::run_bond_angle_analysis(log, doc);
+				r.window = "static";
+			} else if (metric == "spectral_response" || metric == "energy_map") {
+				r.value  = vsim::analysis::run_spectral_response_analysis(log, doc);
+				r.window = "static";
+			} else if (metric == "interference") {
+				r.value  = vsim::analysis::run_interference_analysis(log, doc);
+				r.window = "ensemble";
+			} else if (metric == "coordination") {
+				r.value  = count_kind(vsepr::kernel::KernelEventKind::Formation);
+				r.window = "cumulative";
 			} else {
-				// Unknown metric — pass through as zero (forward-compatible)
+				// Unknown metric  -  pass through as zero (forward-compatible)
 				r.value   = 0.0;
 				r.warning = "unknown metric: " + metric;
 			}
@@ -336,7 +371,7 @@ public:
 		if (cfg.guards.empty()) return;
 
 		for (const auto& guard : cfg.guards) {
-			std::printf("\n%s%s── while: %s%s\n%s  cond: %s%s\n",
+			std::printf("\n%s%s-- while: %s%s\n%s  cond: %s%s\n",
 				rt_ansi::bold, rt_ansi::yel,
 				guard.name.c_str(), rt_ansi::rst,
 				rt_ansi::dim, guard.condition.c_str(), rt_ansi::rst);
@@ -349,7 +384,7 @@ public:
 										   doc.n_evolution_cfg,
 										   log);
 				if (!cond) {
-					std::printf("  %s✓ condition false — while '%s' exits at iter %d%s\n",
+					std::printf("  %s✓ condition false  -  while '%s' exits at iter %d%s\n",
 						rt_ansi::grn, guard.name.c_str(), iter, rt_ansi::rst);
 					break;
 				}
@@ -381,7 +416,7 @@ public:
 			}
 
 			if (iter >= guard.max_iters) {
-				std::printf("  %s⚠ while '%s' hit max_iters=%d — exiting%s\n",
+				std::printf("  %s⚠ while '%s' hit max_iters=%d  -  exiting%s\n",
 					rt_ansi::yel, guard.name.c_str(), guard.max_iters, rt_ansi::rst);
 			}
 		}
@@ -405,12 +440,12 @@ public:
 				total_runs *= vals.size();
 
 			if (cfg.print_plan) {
-				std::printf("\n%s%s── batch: %s%s\n",
+				std::printf("\n%s%s-- batch: %s%s\n",
 					rt_ansi::bold, rt_ansi::mag, job.name.c_str(), rt_ansi::rst);
 				std::printf("  %s%zu total run(s)  seeds=%d%s\n",
 					rt_ansi::dim, total_runs, job.seed_count, rt_ansi::rst);
 				for (const auto& [p, vals] : job.sweep_params) {
-					std::printf("  %s  %-16s →", rt_ansi::dim, p.c_str());
+					std::printf("  %s  %-16s ->", rt_ansi::dim, p.c_str());
 					for (const auto& v : vals) std::printf("  %s", v.c_str());
 					std::printf("%s\n", rt_ansi::rst);
 				}
@@ -422,7 +457,7 @@ public:
 				}
 			}
 
-			// Execute sweep — flat cross-product over first sweep param for display
+			// Execute sweep  -  flat cross-product over first sweep param for display
 			int run_idx = 0;
 			auto run_job = [&](const std::string& param_label, int seed) {
 				log.clear();
@@ -469,16 +504,156 @@ public:
 			}
 
 			if (job.aggregate) {
-				std::printf("  %s── aggregate: %zu runs complete, spine clean%s\n",
+				std::printf("  %s-- aggregate: %zu runs complete, spine clean%s\n",
 					rt_ansi::grn, (size_t)run_idx, rt_ansi::rst);
 			}
 		}
 	}
 
 	// -----------------------------------------------------------------------
-	// 6. Export flush — write KernelEventLog to declared output files
+	// 6. Export flush  -  write KernelEventLog to declared output files
 	//
 	// Call after any run (while body, batch run, or top-level sim) when
+	// -----------------------------------------------------------------------
+	// 5b. Organic diagnostics evaluator
+	//
+	// Evaluates [diagnostics.organic] at end-of-run (or on demand).
+	// Produces a JSON summary appended to output_dir/organic_diag.json
+	// and prints a one-line banner.  Called from flush_exports when the
+	// OrganicScaleSection is enabled.
+	// -----------------------------------------------------------------------
+
+	static std::vector<OrganicDiagnosticResult>
+	evaluate_organic_diagnostics(const VsimDocument& doc, uint64_t step)
+	{
+		std::vector<OrganicDiagnosticResult> results;
+		const auto& cfg = doc.organic_diagnostics;
+
+		if (!cfg.enabled) return results;
+		if (!cfg.run_on_peptide && !cfg.run_on_small_molecule) return results;
+
+		const auto& chem = doc.chemistry;
+
+		// --- Peptide domain check ---
+		if (cfg.run_on_peptide && chem.domain == "peptide" && !chem.sequence.empty()) {
+			// Ramachandran check: flag if sequence is suspiciously long (>500 AA)
+			// Full per-residue φ/ψ requires trajectory data — this checks metadata.
+			if (chem.sequence.size() > 500) {
+				OrganicDiagnosticResult r;
+				r.code    = "VSIM-D010";
+				r.level   = "warn";
+				r.message = "Peptide sequence length " + std::to_string(chem.sequence.size()) +
+							" exceeds 500 residues — φ/ψ coverage may be incomplete";
+				r.step    = static_cast<int>(step);
+				r.chain   = "A";
+				results.push_back(r);
+			}
+
+			// Check for non-standard amino acids (chars outside ACDEFGHIKLMNPQRSTVWY)
+			static const std::string standard_aa = "ACDEFGHIKLMNPQRSTVWY";
+			std::string non_standard;
+			for (char c : chem.sequence) {
+				if (standard_aa.find(std::toupper(c)) == std::string::npos)
+					non_standard += c;
+			}
+			if (!non_standard.empty()) {
+				OrganicDiagnosticResult r;
+				r.code    = "VSIM-D011";
+				r.level   = cfg.peptide.allow_d_amino_acids ? "info" : "warn";
+				r.message = "Non-standard residue codes in sequence: '" + non_standard + "'";
+				r.step    = static_cast<int>(step);
+				r.chain   = "A";
+				results.push_back(r);
+			}
+
+			OrganicDiagnosticResult ok;
+			ok.code    = "VSIM-D019";
+			ok.level   = "info";
+			ok.message = "Peptide domain audit complete: sequence length=" +
+						 std::to_string(chem.sequence.size()) +
+						 "  formula=" + chem.expanded_formula;
+			ok.step    = static_cast<int>(step);
+			results.push_back(ok);
+		}
+
+		// --- Small molecule check ---
+		if (cfg.run_on_small_molecule && chem.domain == "small_molecule") {
+			OrganicDiagnosticResult r;
+			r.code    = "VSIM-D020";
+			r.level   = "info";
+			r.message = "Small molecule domain registered: chemistry=" + chem.chemistry;
+			r.step    = static_cast<int>(step);
+			results.push_back(r);
+		}
+
+		// --- Generic chemistry checks ---
+		if (chem.has_chemistry()) {
+			// Verify heat gate is in range
+			int effective_h = chem.effective_heat(doc.environment.temperature);
+			if (effective_h < 0 || effective_h > 999) {
+				OrganicDiagnosticResult r;
+				r.code    = "VSIM-D025";
+				r.level   = "error";
+				r.message = "heat gate out of range [0,999]: " + std::to_string(effective_h);
+				r.step    = static_cast<int>(step);
+				results.push_back(r);
+			}
+		}
+
+		return results;
+	}
+
+	// Print organic diagnostic results to stdout and optionally write JSON.
+	static void flush_organic_diagnostics(
+			const VsimDocument&                          doc,
+			const std::vector<OrganicDiagnosticResult>& results,
+			const std::string&                          run_label = "")
+	{
+		const auto& cfg = doc.organic_diagnostics;
+		if (results.empty()) return;
+
+		int warns = 0, errors = 0;
+		for (const auto& r : results) {
+			if (r.level == "warn")  ++warns;
+			if (r.level == "error") ++errors;
+		}
+
+		std::printf("  %s[organic_diag]%s  %zu findings  (%d warn / %d error)",
+			rt_ansi::cyan, rt_ansi::rst,
+			results.size(), warns, errors);
+		if (!run_label.empty()) std::printf("  run=%s", run_label.c_str());
+		std::printf("\n");
+
+		for (const auto& r : results) {
+			const char* col = (r.level == "error") ? rt_ansi::red :
+							  (r.level == "warn")  ? rt_ansi::yel :
+							  rt_ansi::dim;
+			std::printf("    %s%s  %s%s\n", col, r.code.c_str(), r.message.c_str(), rt_ansi::rst);
+		}
+
+		if (!cfg.write_summary_json) return;
+
+		std::string dir = doc.exports.output_dir.empty() ? "out" : doc.exports.output_dir;
+		std::filesystem::create_directories(dir);
+		std::string path = dir + "/" + cfg.output_prefix + ".json";
+		std::ofstream f(path, std::ios::app);
+		if (!f) return;
+
+		if (!run_label.empty()) f << "// run: " << run_label << "\n";
+		f << "{\n  \"organic_diagnostics\": [\n";
+		for (size_t i = 0; i < results.size(); ++i) {
+			const auto& r = results[i];
+			f << "    {\"code\":\"" << r.code << "\","
+			  << "\"level\":\"" << r.level << "\","
+			  << "\"step\":" << r.step << ","
+			  << "\"message\":\"" << r.message << "\"}"
+			  << (i + 1 < results.size() ? "," : "") << "\n";
+		}
+		f << "  ]\n}\n";
+
+		std::printf("  %s-> %s%s\n", rt_ansi::grn, path.c_str(), rt_ansi::rst);
+	}
+
 	// the script declares [export] flags.  The output_dir is created if it
 	// does not exist.  Files are opened in append mode so multi-run batch
 	// sweeps accumulate into a single artefact per flag.
@@ -507,7 +682,7 @@ public:
 				if (!run_label.empty())
 					f << "// run: " << run_label << "\n";
 				f << log.to_jsonl();
-				std::printf("  %s→ events.jsonl%s  (+%zu events)%s\n",
+				std::printf("  %s-> events.jsonl%s  (+%zu events)%s\n",
 					rt_ansi::grn, rt_ansi::dim, log.size(), rt_ansi::rst);
 			} else {
 				std::printf("  %s⚠ flush_exports: cannot open '%s'%s\n",
@@ -522,7 +697,7 @@ public:
 				if (!run_label.empty())
 					f << "## Run: " << run_label << "\n\n";
 				f << log.to_markdown() << "\n";
-				std::printf("  %s→ events.md%s  (+%zu events)%s\n",
+				std::printf("  %s-> events.md%s  (+%zu events)%s\n",
 					rt_ansi::grn, rt_ansi::dim, log.size(), rt_ansi::rst);
 			} else {
 				std::printf("  %s⚠ flush_exports: cannot open '%s'%s\n",
@@ -531,8 +706,24 @@ public:
 		}
 	}
 
+	// Overload that also evaluates organic diagnostics when doc is available.
+	static void flush_exports(const ExportSection&                  exp,
+							  const vsepr::kernel::KernelEventLog&  log,
+							  const VsimDocument&                   doc,
+							  const std::string&                    run_label = "")
+	{
+		flush_exports(exp, log, run_label);
+
+		if (doc.organic_diagnostics.enabled) {
+			auto snap = log.snapshot();
+			uint64_t last_step = snap.empty() ? 0 : snap.back().frame_id;
+			auto diag_results = evaluate_organic_diagnostics(doc, last_step);
+			flush_organic_diagnostics(doc, diag_results, run_label);
+		}
+	}
+
 	// -----------------------------------------------------------------------
-	// 6.5. Registry resolution — WO-VSIM-03C
+	// 6.5. Registry resolution  -  WO-VSIM-03C
 	//
 	// Call after parsing a VsimDocument that contains a [material] section.
 	// Expands the resolved prototype key into a RegistryBundle and logs every
@@ -547,11 +738,11 @@ public:
 	{
 		const MaterialSection& mat = doc.material;
 		if (!mat.has_formula() && !mat.has_prototype() && mat.structure.empty()) {
-			// No [material] section present — nothing to resolve
+			// No [material] section present  -  nothing to resolve
 			return RegistryBundle{};
 		}
 
-		std::printf("[REGISTRY] resolving material — formula=%s  prototype=%s  structure=%s\n",
+		std::printf("[REGISTRY] resolving material  -  formula=%s  prototype=%s  structure=%s\n",
 			mat.formula.c_str(),
 			mat.prototype.c_str(),
 			mat.structure.c_str());
@@ -560,7 +751,7 @@ public:
 		RegistryBundle bundle = RegistryResolver::resolve(mat, log);
 
 		if (!bundle.populated) {
-			std::printf("[REGISTRY] ⚠ no registry entry for prototype '%s' — pass-through\n",
+			std::printf("[REGISTRY] ⚠ no registry entry for prototype '%s'  -  pass-through\n",
 				mat.resolved_prototype().c_str());
 			std::fflush(stdout);
 		}
@@ -569,7 +760,7 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// 6.6. apply_registry_defaults — WO-VSIM-03C  B9-12
+	// 6.6. apply_registry_defaults  -  WO-VSIM-03C  B9-12
 	//
 	// Merges RegistryBundle defaults into a VsimDocument.
 	// Explicit user values in the document are NEVER overwritten.
@@ -607,7 +798,7 @@ public:
 			log_apply("environment", "medium", b.default_medium);
 		}
 
-		// [environment] temperature — only apply if doc.environment was not
+		// [environment] temperature  -  only apply if doc.environment was not
 		// explicitly set (still at EnvironmentSection default of 300.0)
 		if (doc.environment.temperature == 300.0
 				&& b.default_temperature != 300.0) {
@@ -615,7 +806,7 @@ public:
 			log_apply("environment", "temperature", std::to_string(b.default_temperature));
 		}
 
-		// [environment] periodic — only set true from registry if user left it false
+		// [environment] periodic  -  only set true from registry if user left it false
 		if (!doc.environment.periodic && b.is_periodic) {
 			doc.environment.periodic = true;
 			log_apply("environment", "periodic", "true");
@@ -632,14 +823,14 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// 6.7. resolve_export_profile — WO-VSIM-03C  B9-16
+	// 6.7. resolve_export_profile  -  WO-VSIM-03C  B9-16
 	//
 	// Maps a named export profile to a set of ExportSection flags.
 	// Profiles:
-	//   "minimal"         — xyz only
-	//   "standard"        — xyz + analysis_json + metrics_tsv + report_md
-	//   "research_report" — all standard + events_jsonl + manifest + dashboard_svg
-	//   "publication"     — research_report + symbolic_trace + pipeline_audit
+	//   "minimal"          -  xyz only
+	//   "standard"         -  xyz + analysis_json + metrics_tsv + report_md
+	//   "research_report"  -  all standard + events_jsonl + manifest + dashboard_svg
+	//   "publication"      -  research_report + symbolic_trace + pipeline_audit
 	//
 	// Returns the number of flags set.
 	// -----------------------------------------------------------------------
@@ -688,9 +879,45 @@ public:
 			set_flag(exp.write_symbolic_trace_json,    "write_symbolic_trace_json");
 			set_flag(exp.write_pipeline_audit_jsonl,   "write_pipeline_audit_jsonl");
 
-		} else {
-			log << "[REGISTRY] ⚠ unknown export_profile '" << profile << "' — skipped\n";
-		}
+} else if (profile == "max_sampling") {
+// ---------------------------------------------------------------
+// max_sampling: enable every output flag for maximum data capture
+// Use in combination with [analysis.sampling] and [variance].
+// ---------------------------------------------------------------
+
+// Trajectory / state
+exp.write_xyz                  = true;
+exp.write_xyzf                 = true;
+exp.write_xyzfull              = true;
+exp.write_pdb                  = true;
+
+// Analysis layer
+exp.write_analysis_json        = true;
+exp.write_metrics_tsv          = true;
+exp.write_cluster_json         = true;
+exp.write_fingerprint_json     = true;
+
+// Event spine
+exp.write_events_json          = true;
+exp.write_symbolic_trace_json  = true;
+
+// Reporting
+exp.write_report_md            = true;
+exp.write_summary_csv          = true;
+exp.write_dashboard_json       = true;
+exp.write_manifest_json        = true;
+exp.write_dashboard_svg        = true;
+exp.write_pipeline_audit_jsonl = true;
+
+// Geometry
+exp.write_vtp_mesh             = true;
+
+set = 28;
+log << "[REGISTRY] export_profile 'max_sampling' resolved -> all 28 output flags enabled\n";
+
+} else {
+log << "[REGISTRY] ⚠ unknown export_profile '" << profile << "'  -  skipped\n";
+}
 
 		if (set > 0)
 			log << "[REGISTRY] export_profile '" << profile << "' resolved "
@@ -700,14 +927,84 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// 7. run_pipeline_from_log — real simulation exit → pipeline
+	// 6.8. resolve_visual_profile  -  WO-OUTPUT-PHASE2
 	//
-	// Bridges KernelEventLog → v4::FormationRecord → run_pipeline().
+	// Maps a named visual profile to a set of ExportVisualSection flags.
+	// Profiles:
+	//   "minimal_visual"        -  no figures, no animation, no HTML
+	//   "figures_only"          -  static SVG/PNG figures, no animation
+	//   "web_only"              -  HTML dashboard + report_html only
+	//   "max_sampling_visual"   -  all visual outputs including animation
+	//
+	// Returns the number of flags set.
+	// -----------------------------------------------------------------------
+
+	static int resolve_visual_profile(const std::string& profile,
+									  ExportVisualSection& vis,
+									  std::ostream& log = std::cout)
+	{
+		if (profile.empty()) return 0;
+
+		int set = 0;
+		auto set_flag = [&](bool& field, const char* name) {
+			if (!field) {
+				field = true;
+				log << "[REGISTRY] visual_profile." << name << " = true\n";
+				++set;
+			}
+		};
+
+		if (profile == "minimal_visual") {
+			log << "[REGISTRY] visual_profile 'minimal_visual' -> all visual off\n";
+
+		} else if (profile == "figures_only") {
+			set_flag(vis.write_svg_figures,         "write_svg_figures");
+			set_flag(vis.write_png_snapshots,        "write_png_snapshots");
+			set_flag(vis.write_rdf_svg,              "write_rdf_svg");
+			set_flag(vis.write_energy_trace_svg,     "write_energy_trace_svg");
+			set_flag(vis.write_packing_heatmap_svg,  "write_packing_heatmap_svg");
+			set_flag(vis.write_defect_map_svg,       "write_defect_map_svg");
+			set_flag(vis.write_cluster_map_svg,      "write_cluster_map_svg");
+
+		} else if (profile == "web_only") {
+			set_flag(vis.write_html_dashboard, "write_html_dashboard");
+			set_flag(vis.write_report_html,    "write_report_html");
+
+		} else if (profile == "max_sampling_visual") {
+			set_flag(vis.write_svg_figures,         "write_svg_figures");
+			set_flag(vis.write_png_snapshots,        "write_png_snapshots");
+			set_flag(vis.write_rdf_svg,              "write_rdf_svg");
+			set_flag(vis.write_energy_trace_svg,     "write_energy_trace_svg");
+			set_flag(vis.write_packing_heatmap_svg,  "write_packing_heatmap_svg");
+			set_flag(vis.write_defect_map_svg,       "write_defect_map_svg");
+			set_flag(vis.write_cluster_map_svg,      "write_cluster_map_svg");
+			set_flag(vis.write_trajectory_gif,       "write_trajectory_gif");
+			set_flag(vis.write_overlay_cycle_gif,    "write_overlay_cycle_gif");
+			set_flag(vis.write_html_dashboard,       "write_html_dashboard");
+			set_flag(vis.write_report_html,          "write_report_html");
+			log << "[REGISTRY] visual_profile 'max_sampling_visual' resolved -> "
+				<< set << " flags\n";
+
+		} else {
+			log << "[REGISTRY] unknown visual_profile '" << profile << "'  -  skipped\n";
+		}
+
+		if (set > 0 && profile != "max_sampling_visual")
+			log << "[REGISTRY] visual_profile '" << profile << "' resolved "
+				<< set << " flags\n";
+
+		return set;
+	}
+
+	// -----------------------------------------------------------------------
+	// 7. run_pipeline_from_log  -  real simulation exit -> pipeline
+	//
+	// Bridges KernelEventLog -> v4::FormationRecord -> run_pipeline().
 	//
 	// Every FormationEvent in the log is promoted to a v4::FormationRecord
 	// and passed through the full 5-stage pipeline:
-	//   stage_fingerprint → stage_cluster → stage_analysis
-	//   → stage_report → stage_dashboard
+	//   stage_fingerprint -> stage_cluster -> stage_analysis
+	//   -> stage_report -> stage_dashboard
 	//
 	// This is the power button.  Call it after a real simulation completes.
 	// If [export] flags are set the DashboardRecord is also flushed to disk.
@@ -726,7 +1023,7 @@ public:
 		auto events = log.filter_by_kind(vsepr::kernel::KernelEventKind::Formation);
 
 		if (events.empty()) {
-			std::printf("  %s⚠ run_pipeline_from_log: no FormationEvents in log — "
+			std::printf("  %s⚠ run_pipeline_from_log: no FormationEvents in log  -  "
 						"pipeline skipped%s\n", rt_ansi::yel, rt_ansi::rst);
 			DashboardRecord empty;
 			empty.run_label   = run_label;
@@ -734,7 +1031,7 @@ public:
 			return empty;
 		}
 
-		// Convert KernelEvent (sliced-to-base) → v4::FormationRecord
+		// Convert KernelEvent (sliced-to-base) -> v4::FormationRecord
 		// FormationEvent fields map directly onto FormationRecord columns.
 		std::vector<v4::FormationRecord> formations;
 		formations.reserve(events.size());
@@ -779,7 +1076,7 @@ public:
 			formations.push_back(fr);
 		}
 
-		std::printf("  %s── run_pipeline_from_log%s  %s%zu formation(s)  label=%s%s\n",
+		std::printf("  %s-- run_pipeline_from_log%s  %s%zu formation(s)  label=%s%s\n",
 					rt_ansi::bold, rt_ansi::rst,
 					rt_ansi::dim, formations.size(), run_label.c_str(), rt_ansi::rst);
 
@@ -819,18 +1116,18 @@ public:
 
 private:
 
-	// ── Pipeline artifact flush (Phase 2A–2E) ─────────────────────────────────
+	// -- Pipeline artifact flush (Phase 2A-2E) ---------------------------------
 	//
 	// Folder layout produced:
 	//   <output_dir>/
 	//     reports/
-	//       beta7_pipeline_report.md        (2A — always)
-	//       beta7_pipeline_report.json      (2A — always)
+	//       beta7_pipeline_report.md        (2A  -  always)
+	//       beta7_pipeline_report.json      (2A  -  always)
 	//     reports/audit/
-	//       beta7_pipeline_audit.jsonl      (2C — write_pipeline_audit_jsonl)
+	//       beta7_pipeline_audit.jsonl      (2C  -  write_pipeline_audit_jsonl)
 	//     reports/dashboard/
-	//       beta7_dashboard.svg             (2B — write_dashboard_svg)
-	//       beta7_dashboard.png.DEFERRED    (2B — PNG deferred marker)
+	//       beta7_dashboard.svg             (2B  -  write_dashboard_svg)
+	//       beta7_dashboard.png.DEFERRED    (2B  -  PNG deferred marker)
 	//     pipeline_dashboard.md             (legacy compat)
 	//     pipeline_records.json             (write_analysis_json)
 	//     run_manifest.json                 (write_manifest_json)
@@ -867,7 +1164,7 @@ private:
 			return true;
 		};
 
-		// ── 2A: Report MD + JSON ─────────────────────────────────────────────
+		// -- 2A: Report MD + JSON ---------------------------------------------
 		const std::string rep_dir = root + "/reports";
 		if (mkdirs(rep_dir)) {
 			// Markdown report
@@ -917,7 +1214,7 @@ private:
 				}
 
 				if (write_file(md_path, md.str()))
-					std::printf("  %s→ reports/beta7_pipeline_report.md%s\n",
+					std::printf("  %s-> reports/beta7_pipeline_report.md%s\n",
 								rt_ansi::grn, rt_ansi::rst);
 			}
 
@@ -934,32 +1231,32 @@ private:
 				   << "  \"records\": " << dash.json_array << "\n"
 				   << "}\n";
 				if (write_file(json_path, js.str()))
-					std::printf("  %s→ reports/beta7_pipeline_report.json%s\n",
+					std::printf("  %s-> reports/beta7_pipeline_report.json%s\n",
 								rt_ansi::grn, rt_ansi::rst);
 			}
 		}
 
-		// ── 2B: SVG dashboard ────────────────────────────────────────────────
+		// -- 2B: SVG dashboard ------------------------------------------------
 		const std::string dash_dir = root + "/reports/dashboard";
 		if (exp.write_dashboard_svg && mkdirs(dash_dir)) {
 			std::string svg_path = dash_dir + "/beta7_dashboard.svg";
 			std::string svg = generate_dashboard_svg(dash, run_label);
 			if (write_file(svg_path, svg))
-				std::printf("  %s→ reports/dashboard/beta7_dashboard.svg%s\n",
+				std::printf("  %s-> reports/dashboard/beta7_dashboard.svg%s\n",
 							rt_ansi::grn, rt_ansi::rst);
 
 			// PNG raster (beta-8)
 			std::string png_path = dash_dir + "/beta7_dashboard.png";
 			bool png_ok = generate_dashboard_png(dash, run_label, png_path);
 			if (png_ok)
-				std::printf("  %s→ reports/dashboard/beta7_dashboard.png%s\n",
+				std::printf("  %s-> reports/dashboard/beta7_dashboard.png%s\n",
 							rt_ansi::grn, rt_ansi::rst);
 			else
-				std::printf("  %s→ reports/dashboard/beta7_dashboard.png  [PPM fallback]%s\n",
+				std::printf("  %s-> reports/dashboard/beta7_dashboard.png  [PPM fallback]%s\n",
 							rt_ansi::yel, rt_ansi::rst);
 		}
 
-		// ── 2C: Audit JSONL ──────────────────────────────────────────────────
+		// -- 2C: Audit JSONL --------------------------------------------------
 		const std::string audit_dir = root + "/reports/audit";
 		if (exp.write_pipeline_audit_jsonl && mkdirs(audit_dir)) {
 			std::string audit_path = audit_dir + "/beta7_pipeline_audit.jsonl";
@@ -967,11 +1264,11 @@ private:
 				exp.write_report_md, exp.write_dashboard_svg,
 				exp.write_pipeline_audit_jsonl);
 			if (write_file(audit_path, audit, /*append=*/true))
-				std::printf("  %s→ reports/audit/beta7_pipeline_audit.jsonl%s\n",
+				std::printf("  %s-> reports/audit/beta7_pipeline_audit.jsonl%s\n",
 							rt_ansi::grn, rt_ansi::rst);
 		}
 
-		// ── Legacy compat: pipeline_dashboard.md ────────────────────────────
+		// -- Legacy compat: pipeline_dashboard.md ----------------------------
 		{
 			std::string path = root + "/pipeline_dashboard.md";
 			std::ofstream f(path, std::ios::app);
@@ -981,16 +1278,16 @@ private:
 				  << dash.run_summary << "\n\n";
 		}
 
-		// ── 2D: JSON records (write_analysis_json) ───────────────────────────
+		// -- 2D: JSON records (write_analysis_json) ---------------------------
 		if (exp.write_analysis_json) {
 			if (mkdirs(root)) {
 				std::string path = root + "/pipeline_records.json";
 				if (write_file(path, dash.json_array + "\n", /*append=*/true))
-					std::printf("  %s→ pipeline_records.json%s\n", rt_ansi::grn, rt_ansi::rst);
+					std::printf("  %s-> pipeline_records.json%s\n", rt_ansi::grn, rt_ansi::rst);
 			}
 		}
 
-		// ── 2E: Run manifest ─────────────────────────────────────────────────
+		// -- 2E: Run manifest -------------------------------------------------
 		if (exp.write_manifest_json && mkdirs(root)) {
 			std::string path = root + "/run_manifest.json";
 			std::ostringstream mf;
@@ -1008,22 +1305,22 @@ private:
 				mf << ",\n    \"geometry/structure.step\"";
 			mf << "\n  ]\n}\n";
 			if (write_file(path, mf.str()))
-				std::printf("  %s→ run_manifest.json%s\n", rt_ansi::grn, rt_ansi::rst);
+				std::printf("  %s-> run_manifest.json%s\n", rt_ansi::grn, rt_ansi::rst);
 		}
 
-		// ── 2F: STEP geometry sidecar (engineering truth) ────────────────────
+		// -- 2F: STEP geometry sidecar (engineering truth) --------------------
 		if (exp.write_step_file && mkdirs(root + "/geometry")) {
 			std::string step_path = root + "/geometry/structure.step";
 			std::string step_content = generate_step_file(run_label, dash);
 			if (write_file(step_path, step_content))
-				std::printf("  %s→ geometry/structure.step%s\n",
+				std::printf("  %s-> geometry/structure.step%s\n",
 							rt_ansi::grn, rt_ansi::rst);
 		}
 	}
 
-	// ── SVG dashboard generator ───────────────────────────────────────────────
+	// -- SVG dashboard generator -----------------------------------------------
 
-	// ── STEP geometry sidecar (ISO 10303-21 / STEP AP203) ────────────────────
+	// -- STEP geometry sidecar (ISO 10303-21 / STEP AP203) --------------------
 	//
 	// Writes a minimal ASCII STEP file encoding each analysis case as a
 	// point-cloud entity (CARTESIAN_POINT).  This is the engineering-geometry-
@@ -1046,13 +1343,13 @@ private:
 		  << "FILE_DESCRIPTION(('VSEPR-SIM structure export'),'2;1');\n"
 		  << "FILE_NAME('" << run_label << ".step',\n"
 		  << "  '2026-04',('VSEPR-SIM'),('LMSM3'),\n"
-		  << "  'VSEPR-SIM v5.0.0-beta.8','','');\n"
+		  << "  'VSEPR-SIM v5.0.2','','');\n"
 		  << "FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));\n"
 		  << "ENDSEC;\n"
 		  << "DATA;\n";
 
 		// One CARTESIAN_POINT per analysis case (position encoded as case index)
-		// Real atom positions require pipeline integration — deferred to beta-8.1.
+		// Real atom positions require pipeline integration  -  deferred to beta-8.1.
 		// This establishes the STEP entity infrastructure.
 		int entity_id = 1;
 		for (int i = 0; i < dash.n_cases; ++i) {
@@ -1077,7 +1374,7 @@ private:
 		const vsepr::pipeline::DashboardRecord& dash,
 		const std::string& run_label)
 	{
-		// Gate rows: stage → pass/fail/pending
+		// Gate rows: stage -> pass/fail/pending
 		struct GateRow { std::string label; std::string status; };
 		std::vector<GateRow> rows = {
 			{ "Formation",       dash.n_cases > 0    ? "PASS"    : "FAIL"    },
@@ -1152,7 +1449,7 @@ private:
 		return svg.str();
 	}
 
-	// ── PNG raster dashboard (stb_image_write) ───────────────────────────────
+	// -- PNG raster dashboard (stb_image_write) -------------------------------
 	//
 	// Converts the dashboard data into a minimal 1-bit-per-pixel PNG using
 	// stb_image_write.  Renders a simple text-table as coloured rows.
@@ -1234,7 +1531,7 @@ private:
 		int ok = stbi_write_png(png_path.c_str(), W, H, 3, pixels.data(), W * 3);
 		return ok != 0;
 #else
-		// stb not linked in this translation unit — write a .ppm fallback
+		// stb not linked in this translation unit  -  write a .ppm fallback
 		std::string ppm_path = png_path + ".ppm";
 		std::ofstream f(ppm_path, std::ios::binary);
 		if (!f) return false;
@@ -1245,7 +1542,7 @@ private:
 #endif
 	}
 
-	// ── Stage audit JSONL generator ───────────────────────────────────────────
+	// -- Stage audit JSONL generator -------------------------------------------
 
 	static std::string generate_audit_jsonl(
 		const vsepr::pipeline::DashboardRecord& dash,
@@ -1313,11 +1610,11 @@ private:
 		return out.str();
 	}
 
-	// ── Post-run window popup (bonus) ─────────────────────────────────────────
+	// -- Post-run window popup (bonus) -----------------------------------------
 	//
 	// Opens a terminal-rendered summary panel showing the SVG dashboard
 	// content as an ANSI-rendered gate table after a run completes.
-	// This is a console-only rendering — no GL required.
+	// This is a console-only rendering  -  no GL required.
 
 	static void show_post_run_window(
 		const vsepr::pipeline::DashboardRecord& dash,
@@ -1379,7 +1676,7 @@ private:
 		bar();
 		std::printf("\n");
 
-		// ── Beta-version release history dashboards ──────────────────────
+		// -- Beta-version release history dashboards ----------------------
 		auto brow = [&](const std::string& label, const std::string& val) {
 			int pad = w - 4 - static_cast<int>(label.size()) - static_cast<int>(val.size());
 			if (pad < 1) pad = 1;
@@ -1508,7 +1805,7 @@ private:
 		return data;
 	}
 
-	// ── Statistical helpers ──────────────────────────────────────────────────
+	// -- Statistical helpers --------------------------------------------------
 
 	static double compute_variance(const std::vector<double>& v) {
 		if (v.size() < 2) return 0.0;
@@ -1524,14 +1821,14 @@ private:
 		return (pop.back() - pop.front()) / static_cast<double>(pop.size() - 1);
 	}
 
-	// ── Condition parser ─────────────────────────────────────────────────────
+	// -- Condition parser -----------------------------------------------------
 
 	static bool eval_condition(const std::string& cond,
 							   const VarianceSection& var_cfg,
 							   const NEvolutionSection& nev_cfg,
 							   const vsepr::kernel::KernelEventLog& log)
 	{
-		// "variance <probe_name> > <value>"  or  "variance <probe_name> < <value>"
+		// "variance <probe_name> > <value>"
 		if (cond.rfind("variance", 0) == 0) {
 			auto results = eval_variance_silent(var_cfg, log);
 			return check_threshold(cond, results);
@@ -1541,7 +1838,7 @@ private:
 			auto results = eval_n_evolution_silent(nev_cfg, log);
 			return check_threshold(cond, results);
 		}
-		// "energy_drift > <value>" — use variance of result_values as proxy
+		// "energy_drift > <value>"
 		if (cond.rfind("energy_drift", 0) == 0) {
 			auto events = log.snapshot();
 			std::vector<double> vals;
@@ -1549,33 +1846,77 @@ private:
 			double var = compute_variance(vals);
 			return parse_comparison(cond, "energy_drift", var);
 		}
-		// "iteration < N" — caller increments; always return true here (caller has ceiling)
+		// WO-72U  molecule[i].property  and  property[name]  condition forms
+		// Examples:
+		//   molecule[0].order_param >= 0.98
+		//   property[density] > 8500.0
+		// These perform a named-event lookup on the log; if no matching event is
+		// found the probe returns 0.0 (condition evaluates false by default).
+		if (cond.rfind("molecule[", 0) == 0 || cond.rfind("property[", 0) == 0) {
+			double probe_val = extract_named_event_value(cond, log);
+			return parse_comparison(cond, "", probe_val);
+		}
+		// "iteration < N"  -  caller increments; always true here (caller has ceiling)
 		return true;
 	}
 
+	// Resolve molecule[i].prop or property[name] to a scalar from the event log.
+	// Looks for the most recent event whose label contains the extracted key.
+	static double extract_named_event_value(
+			const std::string& cond,
+			const vsepr::kernel::KernelEventLog& log)
+	{
+		// Extract everything between '[' and first ']', plus optional '.subfield'
+		auto ob = cond.find('[');
+		auto cb = cond.find(']');
+		if (ob == std::string::npos || cb == std::string::npos) return 0.0;
+		std::string key = cond.substr(ob + 1, cb - ob - 1);
+		// If there is a subfield (molecule[0].order_param) append it
+		if (cb + 1 < cond.size() && cond[cb + 1] == '.') {
+			auto op_start = cb + 2;
+			auto op_end   = cond.find_first_of(" <>!=", op_start);
+			if (op_end == std::string::npos) op_end = cond.size();
+			key += "." + cond.substr(op_start, op_end - op_start);
+		}
+		// Scan log in reverse for most-recent matching event
+		auto events = log.snapshot();
+		for (auto it = events.rbegin(); it != events.rend(); ++it) {
+			if (it->source_formula.find(key) != std::string::npos
+			 || it->equation_symbolic.find(key) != std::string::npos)
+				return it->result_value;
+		}
+		return 0.0;
+	}
+
 	static bool parse_comparison(const std::string& cond,
-								 const std::string& name,
+								 const std::string& /*name*/,
 								 double val)
 	{
-		auto gt = cond.find('>');
-		auto lt = cond.find('<');
-		if (gt != std::string::npos) {
-			double rhs = 0.0;
-			try { rhs = std::stod(cond.substr(gt + 1)); } catch (...) {}
-			return val > rhs;
+		// Operator precedence check: >= and <= before > and <
+		auto gte = cond.find(">=");
+		auto lte = cond.find("<=");
+		auto eq2 = cond.find("==");
+		auto gt  = (gte == std::string::npos) ? cond.find('>') : std::string::npos;
+		auto lt  = (lte == std::string::npos) ? cond.find('<') : std::string::npos;
+		double rhs = 0.0;
+		auto parse_rhs = [&](std::string::size_type pos, int advance) -> double {
+			try { return std::stod(cond.substr(pos + advance)); } catch (...) { return 0.0; }
+		};
+		if (gte != std::string::npos) return val >= parse_rhs(gte, 2);
+		if (lte != std::string::npos) return val <= parse_rhs(lte, 2);
+		if (eq2 != std::string::npos) {
+			rhs = parse_rhs(eq2, 2);
+			return std::abs(val - rhs) < 1e-12;
 		}
-		if (lt != std::string::npos) {
-			double rhs = 0.0;
-			try { rhs = std::stod(cond.substr(lt + 1)); } catch (...) {}
-			return val < rhs;
-		}
+		if (gt  != std::string::npos) return val > parse_rhs(gt, 1);
+		if (lt  != std::string::npos) return val < parse_rhs(lt, 1);
 		return false;
 	}
 
 	static bool check_threshold(const std::string& cond,
 								const std::vector<EvalResult>& results)
 	{
-		// Extract probe name from condition — second token
+		// Extract probe name from condition  -  second token
 		std::istringstream ss(cond);
 		std::string kw, probe_name;
 		ss >> kw >> probe_name;
@@ -1606,13 +1947,13 @@ private:
 		return eval_n_evolution(tmp, log);
 	}
 
-	// ── Terminal output helpers ──────────────────────────────────────────────
+	// -- Terminal output helpers ----------------------------------------------
 
 	static void print_eval_results(const char* kind,
 								   const std::vector<EvalResult>& results,
 								   const char* unit)
 	{
-		std::printf("\n%s%s── %s ──%s\n", rt_ansi::bold, rt_ansi::wht, kind, rt_ansi::rst);
+		std::printf("\n%s%s-- %s --%s\n", rt_ansi::bold, rt_ansi::wht, kind, rt_ansi::rst);
 		for (const auto& r : results) {
 			const char* flag_col = r.above_threshold ? rt_ansi::red : rt_ansi::grn;
 			const char* flag_sym = r.above_threshold ? "▲" : "✓";
@@ -1633,7 +1974,185 @@ private:
 		double rmsd = 0.0;
 		for (const auto& e : events) rmsd += e.result_value * e.result_value;
 		rmsd = events.empty() ? 0.0 : std::sqrt(std::abs(rmsd) / events.size());
-		std::printf("    %s→ RMSD proxy = %.4f Å%s\n", rt_ansi::dim, rmsd, rt_ansi::rst);
+		std::printf("    %s-> RMSD proxy = %.4f Å%s\n", rt_ansi::dim, rmsd, rt_ansi::rst);
+	}
+
+	// -----------------------------------------------------------------------
+	// 6. Until-loop interpreter (WO-72U)
+	// Inverted [while]: runs until condition becomes TRUE (or max_iters).
+	// -----------------------------------------------------------------------
+
+	static void run_until(const UntilSection& cfg,
+						  const VsimDocument& doc,
+						  vsepr::kernel::KernelEventLog& log,
+						  EmitFn emit_fn)
+	{
+		if (cfg.guards.empty()) return;
+
+		for (const auto& guard : cfg.guards) {
+			std::printf("\n%s%s-- until: %s%s\n%s  stop when: %s%s\n",
+				rt_ansi::bold, rt_ansi::cyan,
+				guard.name.c_str(), rt_ansi::rst,
+				rt_ansi::dim, guard.condition.c_str(), rt_ansi::rst);
+
+			int iter = 0;
+			while (iter < guard.max_iters) {
+				if (!guard.measure.empty()) {
+					eval_variance(doc.variance_cfg, log);
+					eval_n_evolution(doc.n_evolution_cfg, log);
+				}
+				bool stop = eval_condition(guard.condition,
+										   doc.variance_cfg,
+										   doc.n_evolution_cfg,
+										   log);
+				if (stop) {
+					std::printf("  %s\u2713 stop condition met  -  until '%s' exits at iter %d%s\n",
+						rt_ansi::grn, guard.name.c_str(), iter, rt_ansi::rst);
+					break;
+				}
+
+				std::printf("  %s[iter %d/%d]%s  running %d steps ...",
+					rt_ansi::dim, iter + 1, guard.max_iters,
+					rt_ansi::rst, guard.body_steps);
+				std::fflush(stdout);
+
+				int new_events = emit_fn(guard.body_steps, iter);
+				std::printf("  %s+%d events%s\n", rt_ansi::cyan, new_events, rt_ansi::rst);
+
+				if (guard.export_each)
+					flush_exports(doc.exports, log,
+						guard.name + "  iter=" + std::to_string(iter));
+
+				if (guard.iter_delay_ms > 0)
+					std::this_thread::sleep_for(
+						std::chrono::milliseconds(guard.iter_delay_ms));
+
+				++iter;
+			}
+
+			if (iter >= guard.max_iters)
+				std::printf("  %s\u26A0 until '%s' hit max_iters=%d  -  condition never met%s\n",
+					rt_ansi::yel, guard.name.c_str(), guard.max_iters, rt_ansi::rst);
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// 7. Smart loop interpreter (WO-72L)
+	// -----------------------------------------------------------------------
+
+	static void run_smart_loop(const SmartLoopSection& cfg,
+							   const VsimDocument& doc,
+							   vsepr::kernel::KernelEventLog& log,
+							   EmitFn emit_fn)
+	{
+		if (cfg.name.empty() && cfg.iterations <= 0) return;
+
+		std::printf("\n%s%s-- loop: %s%s  iterations=%d  body_steps=%d%s\n",
+			rt_ansi::bold, rt_ansi::mag,
+			cfg.name.c_str(), rt_ansi::dim,
+			cfg.iterations, cfg.body_steps, rt_ansi::rst);
+
+		for (int iter = 0; iter < cfg.iterations; ++iter) {
+			for (const auto& vs : cfg.var_steps) {
+				double cur = 0.0;
+				if (vs.step_mode == "linear") {
+					cur = vs.start + iter * vs.step_delta;
+				} else if (vs.step_mode == "geometric") {
+					cur = vs.start;
+					for (int k = 0; k < iter; ++k) cur *= vs.step_factor;
+				} else if (vs.step_mode == "random" || vs.step_mode == "combo") {
+					const double base = vs.start + iter * vs.step_delta;
+					uint64_t h = static_cast<uint64_t>(iter * 2654435761ULL) ^
+								 static_cast<uint64_t>(cfg.rand_seed * 0x9e3779b9ULL);
+					double noise_frac = static_cast<double>(h & 0xFFFFFF) /
+										static_cast<double>(0xFFFFFF) - 0.5;
+					cur = base + noise_frac * 2.0 * vs.noise;
+				} else {
+					cur = vs.start;
+				}
+				if (cfg.record_each)
+					std::printf("  %s  %-16s = %.6g%s\n",
+						rt_ansi::dim, vs.var_name.c_str(), cur, rt_ansi::rst);
+			}
+
+			std::printf("  %s[iter %d/%d]%s  running %d steps ...",
+				rt_ansi::dim, iter + 1, cfg.iterations,
+				rt_ansi::rst, cfg.body_steps);
+			std::fflush(stdout);
+
+			int new_events = emit_fn(cfg.body_steps, iter);
+			std::printf("  %s+%d events%s\n", rt_ansi::cyan, new_events, rt_ansi::rst);
+
+			if (cfg.export_each)
+				flush_exports(doc.exports, log,
+					cfg.name + "  iter=" + std::to_string(iter));
+
+			if (!cfg.stop_condition.empty()) {
+				bool stop = eval_condition(cfg.stop_condition,
+										   doc.variance_cfg,
+										   doc.n_evolution_cfg,
+										   log);
+				if (stop) {
+					std::printf("  %s\u2713 stop_condition met at iter %d  -  exiting loop%s\n",
+						rt_ansi::grn, iter, rt_ansi::rst);
+					break;
+				}
+			}
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// 8. Weighted selection interpreter (WO-72S  Uitt2 method)
+	// -----------------------------------------------------------------------
+
+	static void run_select(const SelectSection& cfg)
+	{
+		if (cfg.candidates.empty() || cfg.criteria.empty()) return;
+
+		const size_t N = cfg.candidates.size();
+
+		std::printf("\n%s%s-- select: %s%s\n",
+			rt_ansi::bold, rt_ansi::yel, cfg.name.c_str(), rt_ansi::rst);
+
+		std::vector<double> weighted(N, 0.0);
+		double weight_sum = 0.0;
+		for (const auto& c : cfg.criteria) weight_sum += c.weight;
+
+		for (const auto& c : cfg.criteria)
+			for (size_t i = 0; i < N && i < c.scores.size(); ++i)
+				weighted[i] += c.weight * c.scores[i];
+
+		if (cfg.print_table) {
+			std::printf("  %s%-30s  %6s", rt_ansi::dim, "Criterion", "Wt.");
+			for (const auto& cand : cfg.candidates)
+				std::printf("  %8.8s", cand.c_str());
+			std::printf("%s\n", rt_ansi::rst);
+
+			std::string sep(30 + 8 + static_cast<int>(N) * 10, '-');
+			std::printf("  %s%s%s\n", rt_ansi::dim, sep.c_str(), rt_ansi::rst);
+
+			for (const auto& c : cfg.criteria) {
+				std::printf("  %-30s  %5.0f%%", c.name.c_str(),
+							weight_sum > 0 ? c.weight / weight_sum * 100.0 : 0.0);
+				for (size_t i = 0; i < N && i < c.scores.size(); ++i)
+					std::printf("  %8.1f", c.scores[i]);
+				std::printf("\n");
+			}
+
+			std::printf("  %s%-30s  %6s", rt_ansi::bold, "Weighted score", "");
+			for (size_t i = 0; i < N; ++i)
+				std::printf("  %8.2f", weighted[i]);
+			std::printf("%s\n", rt_ansi::rst);
+		}
+
+		if (cfg.print_winner) {
+			size_t winner = 0;
+			for (size_t i = 1; i < N; ++i)
+				if (weighted[i] > weighted[winner]) winner = i;
+			std::printf("\n  %s\u2605 Selected: %s  (score %.2f)%s\n\n",
+				rt_ansi::grn, cfg.candidates[winner].c_str(),
+				weighted[winner], rt_ansi::rst);
+		}
 	}
 };
 

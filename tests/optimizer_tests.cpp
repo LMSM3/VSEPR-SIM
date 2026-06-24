@@ -1,6 +1,7 @@
 #include "sim/optimizer.hpp"
 #include "sim/molecule.hpp"
 #include "pot/energy_model.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <cmath>
 #include <cassert>
@@ -370,7 +371,8 @@ int main() {
     std::cout << "========================================\n";
     std::cout << "FIRE Optimizer Test Suite\n";
     std::cout << "========================================\n\n";
-    
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
         test_h2_optimization();
         std::cout << "\n";

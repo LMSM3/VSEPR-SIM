@@ -21,6 +21,7 @@
 #include "pot/energy_model.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -101,7 +102,8 @@ int main() {
     std::cout << "==========================================\n";
     std::cout << "Ethane Torsional Barrier Test\n";
     std::cout << "==========================================\n\n";
-    
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     std::cout << "Scanning H-C-C-H dihedral angle from 0° to 360°\n";
     std::cout << "Expected: Minima at 60°, 180°, 300° (staggered)\n";
     std::cout << "          Maxima at 0°, 120°, 240° (eclipsed)\n";

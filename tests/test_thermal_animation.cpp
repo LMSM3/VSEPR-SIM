@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 2: Thermal Animation Test Suite
  * vsepr-sim v2.3.1
  * 
@@ -22,6 +22,7 @@
 
 #include "thermal/thermal_runner.hpp"
 #include "dynamic/real_molecule_generator.hpp"
+#include "core/element_data.hpp"
 #include <filesystem>
 #include <iostream>
 #include <iomanip>
@@ -45,10 +46,10 @@ static fs::path thermal_output_base() {
 
 void print_header() {
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║     VSEPR-Sim Phase 2: Thermal Animation Tests          ║\n";
-    std::cout << "║     Version 2.3.1                                        ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==========================================================+\n";
+    std::cout << "|     VSEPR-Sim Phase 2: Thermal Animation Tests          |\n";
+    std::cout << "|     Version 2.3.1                                        |\n";
+    std::cout << "+==========================================================+\n";
     std::cout << "\n";
 }
 
@@ -179,7 +180,7 @@ void test_temperature_effects() {
         std::cout << "  Avg energy: " << std::fixed << std::setprecision(2) 
                  << mean << " kcal/mol\n";
         std::cout << "  Std dev: " << std_dev << " kcal/mol\n";
-        std::cout << "  (Higher temperature → higher fluctuations)\n";
+        std::cout << "  (Higher temperature -> higher fluctuations)\n";
     }
     
     std::cout << "\n✓ Temperature effects test complete!\n";
@@ -276,6 +277,8 @@ void test_export_functions() {
 // ============================================================================
 
 int main() {
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
         print_header();
         
@@ -297,9 +300,9 @@ int main() {
         
         // Summary
         std::cout << "\n";
-        std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║                   ALL TESTS PASSED!                      ║\n";
-        std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+==========================================================+\n";
+        std::cout << "|                   ALL TESTS PASSED!                      |\n";
+        std::cout << "+==========================================================+\n";
         std::cout << "\n";
         
         std::cout << "Next steps:\n";

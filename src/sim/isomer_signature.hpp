@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * isomer_signature.hpp - Canonical Isomer Identification
  * 
@@ -7,7 +7,7 @@
  * - Geometric isomers: Ligand arrangement around metal centers
  * - Stereoisomers: Chirality and spatial configuration
  * 
- * Key principle: Same isomer → Same signature regardless of atom ordering
+ * Key principle: Same isomer -> Same signature regardless of atom ordering
  */
 
 #include "molecule.hpp"
@@ -225,14 +225,20 @@ inline CoordinationSignature compute_coordination_signature(
     sig.metal_Z = 0;
     sig.coordination_number = 0;
     
-    // Find first metal center (Z >= 21 and <= 30, or other transition metals)
-    // Simple heuristic: atoms with Z in transition metal range
+    // Metal center detection: covers transition metals, lanthanides, and actinides.
+    // Z=21-30  3d transition metals (Sc-Zn)
+    // Z=39-48  4d transition metals (Y-Cd)
+    // Z=57-71  lanthanides         (La-Lu)
+    // Z=72-80  5d transition metals (Hf-Hg)
+    // Z=89-103 actinides           (Ac-Lr, incl. Th=90, U=92)
     auto is_metal = [](uint32_t Z) -> bool {
-        return (Z >= 21 && Z <= 30) || // 3d metals
-               (Z >= 39 && Z <= 48) || // 4d metals
-               (Z >= 72 && Z <= 80);   // 5d metals
+        return (Z >= 21 && Z <= 30) ||
+               (Z >= 39 && Z <= 48) ||
+               (Z >= 57 && Z <= 71) ||
+               (Z >= 72 && Z <= 80) ||
+               (Z >= 89 && Z <= 104);
     };
-    
+	// Search for metal center
     uint32_t metal_idx = UINT32_MAX;
     for (uint32_t i = 0; i < mol.num_atoms(); ++i) {
         if (is_metal(mol.atoms[i].Z)) {
@@ -243,7 +249,7 @@ inline CoordinationSignature compute_coordination_signature(
     }
     
     if (metal_idx == UINT32_MAX) {
-        // No metal center → not a coordination complex
+        // No metal center -> not a coordination complex
         return sig;
     }
     
@@ -301,9 +307,65 @@ struct ChiralSignature {
 };
 
 inline ChiralSignature compute_chiral_signature(const Molecule& mol) {
-    // TODO: Implement Cahn-Ingold-Prelog priority rules
-    // For now, return empty (no chirality detected)
-    return ChiralSignature();
+    // Simplified CIP: detect tetrahedral stereocentres by atomic-number priority.
+    //
+    // A tetrahedral centre is an atom with exactly 4 neighbours all having
+    // distinct atomic numbers (depth-1 only; full DFS tie-breaking deferred).
+    // Configuration (R vs S) from signed triple product of the top-3 priority
+    // substituent vectors relative to the centre.
+
+    ChiralSignature sig;
+
+    // Build neighbour list from bond list
+    const uint32_t N = static_cast<uint32_t>(mol.num_atoms());
+    std::vector<std::vector<uint32_t>> nbrs(N);
+    for (const auto& b : mol.bonds) {
+        nbrs[b.i].push_back(b.j);
+        nbrs[b.j].push_back(b.i);
+    }
+
+    auto pos_of = [&](uint32_t idx) -> std::array<double,3> {
+        double x,y,z;
+        mol.get_position(idx, x, y, z);
+        return {x, y, z};
+    };
+
+    for (uint32_t i = 0; i < N; ++i) {
+        if (nbrs[i].size() != 4) continue;
+
+        // Collect (Z, atom_index) for each substituent
+        std::vector<std::pair<uint8_t, uint32_t>> subs;
+        subs.reserve(4);
+        for (uint32_t nb : nbrs[i])
+            subs.push_back({mol.atoms[nb].Z, nb});
+
+        // Require all four atomic numbers to be distinct (simple case)
+        std::vector<uint8_t> zs;
+        for (auto& s : subs) zs.push_back(s.first);
+        std::sort(zs.begin(), zs.end());
+        if (std::adjacent_find(zs.begin(), zs.end()) != zs.end()) continue;
+
+        // Sort by descending Z → CIP priority (highest Z = priority 1)
+        std::sort(subs.begin(), subs.end(),
+                  [](const auto& a, const auto& b){ return a.first > b.first; });
+
+        // Signed volume of vectors to substituents 0,1,2 from centre
+        auto ci = pos_of(i);
+        auto v0 = pos_of(subs[0].second);
+        auto v1 = pos_of(subs[1].second);
+        auto v2 = pos_of(subs[2].second);
+
+        double ax = v0[0]-ci[0], ay = v0[1]-ci[1], az = v0[2]-ci[2];
+        double bx = v1[0]-ci[0], by = v1[1]-ci[1], bz = v1[2]-ci[2];
+        double cx = v2[0]-ci[0], cy = v2[1]-ci[1], cz = v2[2]-ci[2];
+
+        double sv = ax*(by*cz - bz*cy) - ay*(bx*cz - bz*cx) + az*(bx*cy - by*cx);
+
+        sig.chiral_centers.push_back(static_cast<int>(i));
+        sig.configurations.push_back(sv > 0.0 ? 'R' : 'S');
+    }
+
+    return sig;
 }
 
 //=============================================================================

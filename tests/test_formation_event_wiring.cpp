@@ -1,16 +1,16 @@
-// =============================================================================
-// tests/test_formation_event_wiring.cpp  —  Group 28: FormationEvent FIRE Wiring
+﻿// =============================================================================
+// tests/test_formation_event_wiring.cpp   -   Group 28: FormationEvent FIRE Wiring
 // =============================================================================
 //
 // Acceptance tests for WO-56D-AuditChain step 1:
 //   Wire FormationEvent into the FIRE relaxation exit path so real simulation
-//   runs populate KernelEventLog — not just test harnesses.
+//   runs populate KernelEventLog  -  not just test harnesses.
 //
 // Tests:
 //   1. test_fire_records_formation_event
 //      Run a real FIRE relaxation on CH4 (5-atom molecule).
 //      Assert KernelEventLog contains at least one FormationEvent.
-//      Assert the event was NOT injected manually — only the FIRE exit path
+//      Assert the event was NOT injected manually  -  only the FIRE exit path
 //      may produce it.
 //
 //   2. test_fire_event_fields_are_populated
@@ -45,6 +45,7 @@
 #include "pot/energy_model.hpp"
 #include "kernel/kernel_event.hpp"
 #include "kernel/kernel_event_log.hpp"
+#include "core/element_data.hpp"
 
 using namespace vsepr;
 using namespace vsepr::kernel;
@@ -81,7 +82,7 @@ static int count_formation_events(const KernelEventLog& log)
 // 1. test_fire_records_formation_event
 // =============================================================================
 // Run a real FIRE relaxation. Assert at least one FormationEvent appears in
-// the global KernelEventLog — without any manual injection.
+// the global KernelEventLog  -  without any manual injection.
 // =============================================================================
 
 static void test_fire_records_formation_event()
@@ -138,9 +139,9 @@ static void test_fire_event_fields_are_populated()
 	assert(found != nullptr &&
 		"fire_event_fields_populated: FormationEvent not found in log");
 
-	// n_beads: CH4 has 5 atoms → 5 beads
+	// n_beads: CH4 has 5 atoms -> 5 beads
 	// (stored in FormationEvent but base KernelEvent doesn't have n_beads;
-	//  check via the filter_by_kind path + cast is not available on base —
+	//  check via the filter_by_kind path + cast is not available on base  - 
 	//  we verify the base fields that FormationEvent::compute() must set)
 
 	// equation_symbolic must be non-empty (set by compute())
@@ -151,7 +152,7 @@ static void test_fire_event_fields_are_populated()
 	assert(!found->equation_numeric.empty() &&
 		"fire_event_fields_populated: equation_numeric is empty");
 
-	// result_value must be the final energy — must be finite
+	// result_value must be the final energy  -  must be finite
 	assert(std::isfinite(found->result_value) &&
 		"fire_event_fields_populated: result_value is not finite");
 
@@ -163,7 +164,7 @@ static void test_fire_event_fields_are_populated()
 	assert(found->event_id > 0 &&
 		"fire_event_fields_populated: event_id was not assigned");
 
-	// FIRE ran steps — fire_steps > 0 (encoded in equation_numeric string)
+	// FIRE ran steps  -  fire_steps > 0 (encoded in equation_numeric string)
 	// We verify this indirectly by confirming the FIRE result iteration count > 0
 	assert(result.iterations > 0 &&
 		"fire_event_fields_populated: FIRE did not run any iterations");
@@ -214,7 +215,7 @@ static void test_fire_event_source_formula_threaded()
 // =============================================================================
 // 4. test_fire_nonconverged_event_flagged
 // =============================================================================
-// Run FIRE with max_iterations = 1 — cannot converge on CH4 in one step.
+// Run FIRE with max_iterations = 1  -  cannot converge on CH4 in one step.
 // Assert: converged == false in the encoded event (is_valid == false,
 // warning non-empty).
 // =============================================================================
@@ -315,6 +316,8 @@ static void test_fire_multiple_runs_accumulate_events()
 
 int main()
 {
+	auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+	vsepr::init_chemistry_db(&s_pt);
 	test_fire_records_formation_event();
 	test_fire_event_fields_are_populated();
 	test_fire_event_source_formula_threaded();

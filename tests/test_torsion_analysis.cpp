@@ -1,18 +1,18 @@
-/*
+﻿/*
 test_torsion_analysis.cpp
 =========================
 Interpretive analysis layer for torsional geometry.
 
 Layers
 ------
-  Layer 1 – TorsionRecord
+  Layer 1 - TorsionRecord
     Per-torsion geometry snapshot:
       - dihedral angle φ (degrees)
       - four C-C / C-X bond lengths in Angstroms for i-j, j-k, k-l
       - central bond length (j-k) in Angstroms
       - conformer classification (gauche+/anti/gauche-/eclipsed/...)
 
-  Layer 2 – TorsionStats  (active only when N > 2 torsions)
+  Layer 2 - TorsionStats  (active only when N > 2 torsions)
     Population-level summary across all torsions in a molecule:
       - average dihedral (arithmetic mean of |φ| and signed φ)
       - most prevalent dihedral (mode at 5° bucket resolution)
@@ -21,17 +21,18 @@ Layers
 
 Tests
 -----
-  1. Ethane (C2H6)          – 9 torsions, 3-fold barrier
-  2. Propane (C3H8)         – medium N, mixed H-C-C-H and H-C-C-C
-  3. Butane anti (C4H10)    – high N, anti conformer dominated
-  4. Butane gauche (C4H10)  – high N, gauche conformer
-  5. Cyclohexane proxy      – chair-like ring fragment, high N
+  1. Ethane (C2H6)          - 9 torsions, 3-fold barrier
+  2. Propane (C3H8)         - medium N, mixed H-C-C-H and H-C-C-C
+  3. Butane anti (C4H10)    - high N, anti conformer dominated
+  4. Butane gauche (C4H10)  - high N, gauche conformer
+  5. Cyclohexane proxy      - chair-like ring fragment, high N
 */
 
 #include "sim/molecule.hpp"
 #include "pot/energy_model.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -54,7 +55,7 @@ struct TorsionRecord {
 
     // Bond lengths in Angstroms
     double r_ij;             // i-j bond length (Å)
-    double r_jk;             // j-k bond length (Å) — central bond
+    double r_jk;             // j-k bond length (Å)  -  central bond
     double r_kl;             // k-l bond length (Å)
 
     // Conformer label
@@ -292,9 +293,10 @@ int main() {
     std::cout << "  (avg dihedral, most prevalent phi, per-conformer histogram)\n";
     std::cout << "  Stats active only when N > 2 torsions\n";
     std::cout << "================================================================\n";
-
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
-        // ── Ethane ───────────────────────────────────────────────────────────
+        // -- Ethane -----------------------------------------------------------
         {
             Molecule mol;
             const double r_cc = 1.54, r_ch = 1.09;
@@ -333,7 +335,7 @@ int main() {
             run_assertions("Ethane", recs, st);
         }
 
-        // ── Propane ───────────────────────────────────────────────────────────
+        // -- Propane -----------------------------------------------------------
         {
             Molecule mol;
             mol.add_atom(6, -1.27,  0.0,  0.0);
@@ -367,7 +369,7 @@ int main() {
             run_assertions("Propane", recs, st);
         }
 
-        // ── Butane anti ───────────────────────────────────────────────────────
+        // -- Butane anti -------------------------------------------------------
         {
             Molecule mol;
             mol.add_atom(6, -1.87,  0.0,  0.61);
@@ -401,7 +403,7 @@ int main() {
             run_assertions("Butane-anti", recs, st);
         }
 
-        // ── Butane gauche ─────────────────────────────────────────────────────
+        // -- Butane gauche -----------------------------------------------------
         {
             Molecule mol;
             const double g = 60.0 * M_PI / 180.0;

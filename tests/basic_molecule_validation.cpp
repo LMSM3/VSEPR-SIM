@@ -20,6 +20,7 @@
 #include "pot/energy_model.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -320,10 +321,11 @@ int main() {
     std::cout << "======================================\n";
     std::cout << "Basic Molecule Validation Test Suite\n";
     std::cout << "======================================\n";
-    
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     int passed = 0;
     int total = 0;
-    
+
     total++;
     if (test_h2o()) passed++;
     

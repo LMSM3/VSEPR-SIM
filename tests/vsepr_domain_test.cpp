@@ -12,6 +12,7 @@ Tests:
 #include "sim/molecule.hpp"
 #include "pot/energy_vsepr.hpp"
 #include "sim/optimizer.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 
@@ -155,7 +156,8 @@ int main() {
     std::cout << "VSEPR Electron Domain Repulsion Tests\n";
     std::cout << "Testing explicit LP-LP, LP-BP, BP-BP interactions\n";
     std::cout << "===================================================\n";
-    
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
         test_water();
         test_ammonia();

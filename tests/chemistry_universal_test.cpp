@@ -11,7 +11,7 @@
  * - Universal API (same functions for all chemistry)
  */
 
-#include "core/element_data_integrated.hpp"
+#include "core/element_data.hpp"
 #include "core/chemistry_v2.hpp"
 #include <iostream>
 #include <iomanip>

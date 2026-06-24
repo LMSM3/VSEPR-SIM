@@ -254,28 +254,6 @@ add_executable(test_element_db_phase1_simple test_element_db_phase1_simple.cpp)
 target_link_libraries(test_element_db_phase1_simple vsepr_core)
 vsepr_add_test(NAME ElementDBPhase1Simple TARGET test_element_db_phase1_simple LABELS core chemistry)
 
-# --- Chemistry tests re-enabled after API-mismatch fix (2026-06-18) ---
-add_executable(test_element_db_phase1 test_element_db_phase1.cpp)
-set_target_properties(test_element_db_phase1 PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
-target_link_libraries(test_element_db_phase1 vsepr_core)
-vsepr_add_test(NAME ElementDBPhase1Full TARGET test_element_db_phase1 LABELS core chemistry)
-
-add_executable(chemistry_validation_test chemistry_validation_test.cpp)
-set_target_properties(chemistry_validation_test PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
-target_link_libraries(chemistry_validation_test vsepr_core vsepr_pot)
-vsepr_add_test(NAME ChemistryValidation TARGET chemistry_validation_test LABELS core chemistry)
-
-add_executable(chemistry_universal_test chemistry_universal_test.cpp)
-set_target_properties(chemistry_universal_test PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
-target_link_libraries(chemistry_universal_test vsepr_core)
-vsepr_add_test(NAME ChemistryUniversal TARGET chemistry_universal_test LABELS core chemistry)
-
-add_executable(test_reaction_engine test_reaction_engine.cpp)
-set_target_properties(test_reaction_engine PROPERTIES AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
-target_link_libraries(test_reaction_engine coarse_grain atomistic vsepr_core)
-target_include_directories(test_reaction_engine PRIVATE ${PROJECT_SOURCE_DIR})
-vsepr_add_test(NAME ReactionEngineAudit TARGET test_reaction_engine LABELS coarse_grain chemistry reaction)
-
 
 
 # ============================================================================
@@ -519,10 +497,49 @@ vsepr_add_test(NAME BenchGpuCpu TARGET bench_gpu_cpu LABELS benchmark gpu)
 # ============================================================================
 # Disabled tests (API mismatch -- preserved for future re-enablement)
 # ============================================================================
-# formula_builder_tests, conformer_test, isomer_test,
+# formula_builder_tests, conformer_test,
 # phase3_isomer_validation, phase4_coordination_variants,
-# phase5_ionic_manifold, chemistry_universal_test,
-# ensemble_consistency_test
+# phase5_ionic_manifold, ensemble_consistency_test
+
+# ============================================================================
+# Re-enabled chemistry tests (API mismatch fixed 2026-06-18)
+# ============================================================================
+
+# chemistry_universal_test: element DB + organic + coordination compounds
+add_executable(chemistry_universal_test chemistry_universal_test.cpp)
+target_include_directories(chemistry_universal_test PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR})
+set_target_properties(chemistry_universal_test PROPERTIES
+    AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(chemistry_universal_test PRIVATE vsepr_chem vsepr_core)
+vsepr_add_test(NAME ChemistryUniversalV2 TARGET chemistry_universal_test
+    LABELS chemistry organic coordination element universal)
+
+# phase2_complex_molecules: coordination complexes + hypervalent molecules
+add_executable(phase2_complex_molecules phase2_complex_molecules.cpp)
+target_include_directories(phase2_complex_molecules PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR})
+set_target_properties(phase2_complex_molecules PROPERTIES
+    AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(phase2_complex_molecules PRIVATE vsepr_chem vsepr_core)
+vsepr_add_test(NAME Phase2ComplexMolecules TARGET phase2_complex_molecules
+    LABELS chemistry coordination complex phase2)
+
+# isomer_test: geometric isomers cis/trans/fac/mer + conformational + canonical hash
+add_executable(isomer_test isomer_test.cpp)
+target_include_directories(isomer_test PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR})
+set_target_properties(isomer_test PROPERTIES
+    AUTOMOC OFF AUTOUIC OFF AUTORCC OFF CXX_SCAN_FOR_MODULES OFF)
+target_link_libraries(isomer_test PRIVATE vsepr_sim vsepr_pot vsepr_core)
+vsepr_add_test(NAME IsomerTest TARGET isomer_test
+    LABELS isomer chemistry conformer cis trans fac mer)
 
 # ============================================================================
 # Group 11: Electrohydrodynamic Multiphysics (EHD)

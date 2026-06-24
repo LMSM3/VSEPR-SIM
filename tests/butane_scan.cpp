@@ -11,6 +11,7 @@ Expected: ~3.5 kcal/mol barrier between anti and gauche.
 #include "sim/molecule.hpp"
 #include "pot/energy_model.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -23,7 +24,8 @@ int main() {
     std::cout << "Butane Dihedral Scan (Rigid Rotation)\n";
     std::cout << "Testing pure torsion energy vs. C-C-C-C angle\n";
     std::cout << "===================================================\n\n";
-
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     // Build butane in anti conformation
     Molecule mol;
     

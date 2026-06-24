@@ -75,7 +75,7 @@ The bridge from CLI → xport canonical output is not yet wired.
 |----|---------|-----|--------|--------|
 | MF-C01 | `[generator.isomers]` runtime | Schema + parser done (WO-VSIM-03B); generator engine pending (WO-VSIM-03C) | UC-3 | 🔴 PENDING |
 | MF-C02 | `[analysis.isomer_tracking]` trajectory walker | Struct present; step-by-step walker not wired | UC-3 | 🔴 PENDING |
-| MF-C03 | Geometric / chirality detection | `GeometricVariant` / `StereoVariant` enum reserved; detection algorithm missing | UC-3 | 🔴 PENDING |
+| MF-C03 | Geometric / chirality detection | Simplified CIP tetrahedral R/S implemented in `isomer_signature.hpp`; all isomer tests pass | UC-3 | ✅ COMPLETE |
 | MF-C04 | Isomer-ranked output report | No ranked-results writer | UC-3 | 🔴 PENDING |
 
 ### D — Analysis layer
@@ -172,4 +172,4 @@ helper calls.
 
 ---
 
-*Last updated: 2026-06-18 | WO-MF-01 | Desktop Kernel Legacy — Step 3/3 (UC-6 + UC-7 added)*
+*Last updated: 2026-06-19 | WO-MF-01 | Chemistry audit: MF-C03 promoted to COMPLETE; 167/167 tests passing*

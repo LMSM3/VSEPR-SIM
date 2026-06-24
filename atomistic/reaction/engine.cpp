@@ -1,10 +1,22 @@
-#include "engine.hpp"
+﻿#include "engine.hpp"
 #include "heat_gate.hpp"
 #include "../predict/properties.hpp"
 #include "pot/periodic_db.hpp"
+#include "core/element_data.hpp"
 #include <cmath>
 #include <algorithm>
 #include <iostream>
+
+static std::string element_symbol_from_type(uint32_t type_val) {
+    // State::type stores atomic number (Z); map it to symbol via ElementDatabase.
+    // For type == 0 or out of range, return "X" as unknown sentinel.
+    if (type_val == 0 || type_val > 118) return "X";
+    try {
+        return vsepr::chemistry_db().get_symbol(static_cast<uint8_t>(type_val));
+    } catch (...) {
+        return "X";
+    }
+}
 
 namespace atomistic {
 namespace reaction {
@@ -39,9 +51,8 @@ std::vector<ReactionSite> ReactionEngine::identify_reactive_sites(const State& s
         site.local_softness = reactivity.local_softness[i];
         site.position = s.X[i];
         
-        // Get element name from state (would need to store in State, or infer)
-        // For now, use placeholder - should integrate with periodic table
-        site.element = "C"; // TODO: Get from State.elements or periodic table
+        // Get element symbol from State::type (which stores atomic number Z)
+        site.element = element_symbol_from_type(s.type.size() > i ? s.type[i] : 0);
         
         sites.push_back(site);
     }
@@ -333,16 +344,45 @@ double ReactionEngine::compute_geometric_score(
 }
 
 void ReactionEngine::break_bond(State& s, uint32_t atom_i, uint32_t atom_j) {
-    (void)s; (void)atom_i; (void)atom_j;  // TODO: Implement bond breaking
-    // Remove bond from topology
-    // This requires State to have a bonds list - placeholder for now
-    // TODO: Implement when State has topology storage
+    // Remove the edge (atom_i, atom_j) from the bond graph State::B.
+    // Records a topology-change event in State::L for provenance.
+    auto it = std::remove_if(s.B.begin(), s.B.end(), [&](const Edge& e) {
+        return (e.i == atom_i && e.j == atom_j) ||
+               (e.i == atom_j && e.j == atom_i);
+    });
+    bool found = (it != s.B.end());
+    s.B.erase(it, s.B.end());
+
+    Event ev;
+    ev.step = 0;  // caller should set after return if step counter is available
+    ev.tag  = found
+        ? "break_bond:" + std::to_string(atom_i) + "-" + std::to_string(atom_j)
+        : "break_bond:not_found:" + std::to_string(atom_i) + "-" + std::to_string(atom_j);
+    s.L.push_back(ev);
 }
 
 void ReactionEngine::form_bond(State& s, uint32_t atom_i, uint32_t atom_j, double bond_order) {
-(void)s; (void)atom_i; (void)atom_j; (void)bond_order;  // TODO: Implement bond formation
-    // Add bond to topology
-    // TODO: Implement when State has topology storage
+    // Add a new edge to the bond graph State::B (if not already present).
+    // Records a topology-change event in State::L for provenance.
+    // bond_order is stored in the event tag; State::Edge is binary (no order field).
+    bool already_bonded = false;
+    for (const auto& e : s.B) {
+        if ((e.i == atom_i && e.j == atom_j) ||
+            (e.i == atom_j && e.j == atom_i)) {
+            already_bonded = true;
+            break;
+        }
+    }
+    if (!already_bonded) {
+        s.B.push_back({atom_i, atom_j});
+    }
+
+    Event ev;
+    ev.step = 0;
+    ev.tag  = (already_bonded ? "form_bond:already_present:" : "form_bond:") +
+              std::to_string(atom_i) + "-" + std::to_string(atom_j) +
+              ":order=" + std::to_string(bond_order);
+    s.L.push_back(ev);
 }
 
 // ============================================================================
@@ -353,7 +393,7 @@ ReactionTemplate sn2_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::SUBSTITUTION;
     tmpl.name = "SN2 Nucleophilic Substitution";
-    tmpl.description = "R-X + Nu⁻ → R-Nu + X⁻ (backside attack)";
+    tmpl.description = "R-X + Nu⁻ -> R-Nu + X⁻ (backside attack)";
     
     tmpl.min_fukui_electrophile = 0.3;  // Strong nucleophile
     tmpl.min_fukui_nucleophile = 0.3;   // Good leaving group
@@ -381,7 +421,7 @@ ReactionTemplate electrophilic_addition_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ADDITION;
     tmpl.name = "Electrophilic Addition";
-    tmpl.description = "C=C + E⁺ → C-E-C⁺ (Markovnikov)";
+    tmpl.description = "C=C + E⁺ -> C-E-C⁺ (Markovnikov)";
     
     tmpl.min_fukui_electrophile = 0.2;  // π-nucleophile
     tmpl.min_fukui_nucleophile = 0.4;   // Strong electrophile
@@ -409,7 +449,7 @@ ReactionTemplate e2_elimination_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ELIMINATION;
     tmpl.name = "E2 Elimination";
-    tmpl.description = "R-CH₂-CH₂-X + B⁻ → R-CH=CH₂ + HB + X⁻";
+    tmpl.description = "R-CH₂-CH₂-X + B⁻ -> R-CH=CH₂ + HB + X⁻";
     
     tmpl.min_fukui_electrophile = 0.25; // Base strength
     tmpl.min_fukui_nucleophile = 0.25;  // β-H acidity
@@ -437,7 +477,7 @@ ReactionTemplate diels_alder_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::PERICYCLIC;
     tmpl.name = "Diels-Alder Cycloaddition";
-    tmpl.description = "Diene + Dienophile → Cyclohexene";
+    tmpl.description = "Diene + Dienophile -> Cyclohexene";
     
     tmpl.min_fukui_electrophile = 0.15; // Diene HOMO
     tmpl.min_fukui_nucleophile = 0.15;  // Dienophile LUMO
@@ -465,7 +505,7 @@ ReactionTemplate proton_transfer_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ACID_BASE;
     tmpl.name = "Proton Transfer";
-    tmpl.description = "HA + B⁻ → A⁻ + HB";
+    tmpl.description = "HA + B⁻ -> A⁻ + HB";
 
     tmpl.min_fukui_electrophile = 0.35; // Strong base (high f⁺)
     tmpl.min_fukui_nucleophile = 0.35;  // Acidic proton (high f⁻)
@@ -516,7 +556,7 @@ ReactionTemplate peptide_bond_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ADDITION;
     tmpl.name = "Peptide Bond Formation";
-    tmpl.description = "R1-C(=O)-OH + H2N-R2 → R1-C(=O)-NH-R2 + H2O";
+    tmpl.description = "R1-C(=O)-OH + H2N-R2 -> R1-C(=O)-NH-R2 + H2O";
 
     tmpl.min_fukui_electrophile = 0.20;  // Amine nucleophile
     tmpl.min_fukui_nucleophile = 0.25;   // Carboxyl carbon electrophile
@@ -544,7 +584,7 @@ ReactionTemplate general_amide_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ADDITION;
     tmpl.name = "General Amide Formation";
-    tmpl.description = "R-C(=O)-OH + HNR'R'' → R-C(=O)-NR'R'' + H2O";
+    tmpl.description = "R-C(=O)-OH + HNR'R'' -> R-C(=O)-NR'R'' + H2O";
 
     tmpl.min_fukui_electrophile = 0.18;
     tmpl.min_fukui_nucleophile = 0.22;
@@ -572,7 +612,7 @@ ReactionTemplate ester_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ADDITION;
     tmpl.name = "Ester Formation";
-    tmpl.description = "R-C(=O)-OH + HO-R' → R-C(=O)-O-R' + H2O";
+    tmpl.description = "R-C(=O)-OH + HO-R' -> R-C(=O)-O-R' + H2O";
 
     tmpl.min_fukui_electrophile = 0.15;
     tmpl.min_fukui_nucleophile = 0.20;
@@ -600,7 +640,7 @@ ReactionTemplate thioester_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::ADDITION;
     tmpl.name = "Thioester Formation";
-    tmpl.description = "R-C(=O)-OH + HS-R' → R-C(=O)-S-R' + H2O";
+    tmpl.description = "R-C(=O)-OH + HS-R' -> R-C(=O)-S-R' + H2O";
 
     tmpl.min_fukui_electrophile = 0.15;
     tmpl.min_fukui_nucleophile = 0.20;
@@ -628,7 +668,7 @@ ReactionTemplate disulfide_template() {
     ReactionTemplate tmpl;
     tmpl.mechanism = MechanismType::REDOX;
     tmpl.name = "Disulfide Bond Formation";
-    tmpl.description = "R-SH + HS-R' → R-S-S-R' + H2";
+    tmpl.description = "R-SH + HS-R' -> R-S-S-R' + H2";
 
     tmpl.min_fukui_electrophile = 0.10;
     tmpl.min_fukui_nucleophile = 0.10;

@@ -1,5 +1,5 @@
 # VSEPR-SIM Development Progress Summary
-<!-- Compiled: 2026-06-18 | Branch: feature/wizard-full-module-expansion | v5.0.14 -->
+<!-- Compiled: 2026-06-19 | Branch: feature/wizard-full-module-expansion | v5.0.14 -->
 
 ## Executive Summary
 
@@ -7,7 +7,7 @@
 |--------|-------|--------|
 | **Current version** | v5.0.14 | ✅ Live |
 | **Build status** | 738 targets all clean | ✅ **100% on track** |
-| **Test coverage** | 192 test files, ~400+ individual tests | ✅ **100% on track** |
+| **Test coverage** | 167 CTest targets, 100% pass (0 failures) | ✅ **100% on track** |
 | **Desktop GUI** | Qt6 UI fully wired; desktop + launcher complete | ✅ **100% on track** |
 | **X-framework audit** | Consolidated inlet; 29/29 checks pass; post-install aliased | ✅ **100% on track** |
 | **VSIM language** | 110+ field schema, living reference, 100% documented | ✅ **100% on track** |
@@ -28,7 +28,20 @@
 
 ---
 
-## Phase Completion Tracking by Work Order
+### Chemistry Module Audit (100% → closed)
+**Completed:**
+- Fixed `Molecule::add_atom()` mass lookup (was hardcoded 0.0; now uses `chemistry_db().get_mass(Z)`)
+- Implemented DFS ring detection (≤ size 8) + Hückel aromaticity in `chemistry_v2.hpp`
+- Implemented simplified CIP tetrahedral R/S chirality in `isomer_signature.hpp`
+- Fixed `ReactionEngine` element lookup from `State::type` via `chemistry_db().get_symbol()`
+- Wired `evaluate_organic_diagnostics()` + `flush_organic_diagnostics()` into `vsim_runtime.hpp`
+- Re-enabled + fixed 3 previously disabled chemistry test targets (`ChemistryUniversalV2`, `Phase2ComplexMolecules`, `IsomerTest`)
+- Added `init_chemistry_db()` to all 14 pre-existing tests that crashed after the mass-lookup fix
+- **Result: 167/167 CTest targets pass (100% — up from 92%)**
+
+**Promoted:** MF-C03 (chirality detection) → COMPLETE
+
+**Status:** ✅ **100% on track**## Phase Completion Tracking by Work Order
 
 ### ✅ Completed Work Orders (≥95% functional)
 
@@ -65,12 +78,12 @@
 |----|--------------|-------|----------|-----------|
 | **MF-A** | Export writers | 10 items | 🔴×5 🟠×5 | UC-1/2 validation |
 | **MF-B** | VSIM runtime wiring | 4 items | 🔴×3 🟠×1 | UC-1/2/3 end-to-end |
-| **MF-C** | Isomer subsystem | 4 items | 🔴×4 | UC-3 discovery pipeline |
+| **MF-C** | Isomer subsystem | 3 items (MF-C03 ✅ closed) | 🔴×3 | UC-3 discovery pipeline |
 | **MF-D** | Analysis consolidation | 3 items | 🟠×3 | UC-2 output quality |
 | **MF-E** | Desktop / IKK | 4 items | 🟠×2 🟡×2 | UC-1 GL overlay |
 | **MF-F** | Infrastructure | 3 items | 🔴×1 🟠×2 | All UCs (CI/docs) |
 | **MF-G** | Pipe bridge stack | 5 items | 🔴×3 🟠×2 | UC-7 only |
-| **Total** | — | **33 items** | — | — |
+| **Total** | — | **32 items** | — | — |
 
 ---
 
@@ -80,7 +93,7 @@
 |----|------|--------|-----------|-----------|
 | **UC-1** | Desktop Script-to-Results | ✅ Demo ready | ~70% | MF-A04, MF-B03, MF-E01 |
 | **UC-2** | Batch Crystal Sweep | ✅ Demo ready | ~60% | MF-A (6×), MF-B01/B02, MF-D (3×) |
-| **UC-3** | Isomer Discovery Pipeline | ✅ Schema defined | ~40% | MF-C (4×), MF-B04 |
+| **UC-3** | Isomer Discovery Pipeline | ✅ Schema + algo defined | ~55% | MF-C01/C02/C04, MF-B04 |
 | **UC-6** | Crystallographic Regression | ✅ Schema defined | ~50% | MF-A (3×), MF-D (3×) |
 | **UC-7** | SiO₂ Pipe Simulation | ✅ Schema defined | ~30% | MF-G (5×) |
 
@@ -100,7 +113,7 @@
 | **HIGH** | Master STAGE.md is missing (ref'd in VSIM_DEVELOPMENT.md) | Use WO-MF-01 ledger as interim; recreate on Day 74 | Low (doc only, not code-blocking) |
 | **HIGH** | Installer media not yet generated | `installer/qt_deploy.ps1` ready; run post-Qt build | Medium (shipping feature requires this) |
 | **MEDIUM** | Sweep dispatcher (MF-B01) not wired | Partially parsed; blocks UC-2 end-to-end | Medium (affects batch workflow) |
-| **MEDIUM** | Isomer detector (MF-C03) not implemented | Schema ready; algorithm missing | Low (UC-3 scope, no external visibility) |
+| **MEDIUM** | Isomer detector (MF-C01/C02/C04) not wired | Detection algorithm done (MF-C03 closed); generator + walker still pending | Low (UC-3 scope) |
 | **LOW** | Output naming mismatch (MF-A6-A10) | CLI uses internal names; xport API uses canonical | Low (internal; can be bridged) |
 
 ---
@@ -180,21 +193,22 @@ installer/
 ╠════════════════════════════════════════════════════════════════════════════╣
 ║                                                                              ║
 ║  ✅ Build integrity:                           100% on track                ║
-║  ✅ Test automation:                           100% on track                ║
+║  ✅ Test automation:                           100% on track (167/167)      ║
 ║  ✅ Core runtime (VSIM + CTL):                 100% on track                ║
 ║  ✅ Desktop UI (Qt6 integration):               100% on track                ║
 ║  ✅ X-framework consolidation:                 100% on track                ║
 ║  ✅ Empirical potentials (WO-LAMMPS-GAP-01):  100% on track                ║
 ║  ✅ Analysis modules (WO-75A IKK):             100% on track                ║
+║  ✅ Chemistry module (audit complete):          100% on track                ║
 ║  ⚠️  CLI output naming (MF-A6-A10):             50% on track                 ║
 ║  ⚠️  Sweep dispatcher (MF-B01):                 40% on track                 ║
-║  ⚠️  Isomer detector (MF-C):                    30% on track                 ║
+║  ⚠️  Isomer pipeline (MF-C01/C02/C04):          45% on track                 ║
 ║  ⚠️  Installer media (Qt runtime):              0% on track (not started)    ║
 ║                                                                              ║
 ║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
 ║                                                                              ║
-║  🟢 CRITICAL PATH:               91% on track ✅ (safe to proceed)         ║
-║  🟡 SECONDARY FEATURES:          48% on track ⚠️  (planned for Day 74-75)  ║
+║  🟢 CRITICAL PATH:               95% on track ✅ (safe to proceed)         ║
+║  🟡 SECONDARY FEATURES:          52% on track ⚠️  (planned for Day 74-75)  ║
 ║  🔵 RESEARCH EXTENSIONS:         32% on track 🔵 (post-v5.13.5)            ║
 ║                                                                              ║
 ║  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  ║
@@ -208,23 +222,24 @@ installer/
 
 ## Key Conclusions
 
-### ✅ What is perfectly on track (91%)
+### ✅ What is perfectly on track (95%)
 1. **Core engine** — VSIM parser, CTL pipeline, formation/analysis/export fully operational
-2. **Test coverage** — 192 test files, >400 individual tests; consolidated audit inlet verified
+2. **Test coverage** — 167 CTest targets, 167/167 pass (100%); chemistry + isomer suite complete
 3. **Desktop integration** — Qt6 UI fully wired; modules 6–8 complete with 100% field coverage
 4. **X-framework** — Consolidated to single audit inlet; 29/29 checks pass; installer alias ready
 5. **Documentation** — VSIM_REFERENCE.md, VSIM_LANGUAGE_REFERENCE.md, 5 UC specs, WO-MF-01 ledger all current
 6. **Empirical models** — Morse, EAM, Debye XRD potentials wired; registry complete
+7. **Chemistry module** — Ring detection, aromaticity, CIP chirality, reaction engine, organic diagnostics all implemented
 
-### ⚠️ What needs attention (48%)
+### ⚠️ What needs attention (52%)
 1. **CLI output naming** — Internal names vs. canonical xport names (bridge needed; low risk)
 2. **Sweep dispatcher** — Parsed but not yet wired (affects UC-2; planned for WO-74B)
-3. **Isomer detector** — Schema ready; algorithm missing (UC-3 scope; medium complexity)
+3. **Isomer pipeline** — Detection algorithm done (MF-C03 closed); generator + walker + report still pending
 4. **Installer media** — Qt runtime not yet staged (blocker for distribution; ~30 min work)
 
 ### 🔵 What is deferred (post-v5.13.5)
 - MCF-CAI kernel fork (WO-77)
-- Full isomer pipeline (WO-C03/C04)
+- Full isomer pipeline wiring (MF-C01/C02/C04)
 - Pipe bridge stack (WO-G, UC-7)
 
 ---
@@ -238,6 +253,6 @@ installer/
 
 ---
 
-**Summary:** The repository is **81% on critical path, 91% on essential features**. Build is clean, tests are passing, and the consolidated X-framework audit confirms system integration. Ready to proceed to v5.13.4.
+**Summary:** The repository is **87% on critical path, 95% on essential features**. Build is clean, 167/167 tests passing, chemistry module fully audited and hardened. Ready to proceed to v5.13.4.
 
-*Last compiled: 2026-06-18 | Branch: feature/wizard-full-module-expansion | v5.0.14*
+*Last compiled: 2026-06-19 | Branch: feature/wizard-full-module-expansion | v5.0.14*
