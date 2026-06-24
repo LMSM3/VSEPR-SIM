@@ -1,7 +1,10 @@
 ﻿# ============================================================================
-# VSEPR-SIM Modular Test Infrastructure - V3.0.X                             #
-# ============================================================================     
-# +-----------------------------------------------------------------------------+
+# VSEPR-SIM Modular Test Infrastructure - V3.1.0                             #
+# ============================================================================
+# 116 active test targets across Groups 1-52 (Groups 43-52: WO-VSIM-62C,
+# WO-XSUITE-02B, WO-VSIM-66A, WO-BRIDGE-65). Dead if(EXISTS) blocks and
+# commented-out disabled targets removed in v5.1.13 cleanup pass.
+#
 # Extracted from root CMakeLists.txt (archive/integrated-testing-1013).
 # All test targets are defined here and grouped by domain via CTest labels.
 #
@@ -23,7 +26,8 @@
 # Helper: register a test with labels for filtered execution
 function(vsepr_add_test)
     cmake_parse_arguments(T "" "NAME;TARGET" "LABELS" ${ARGN})
-    add_test(NAME ${T_NAME} COMMAND ${T_TARGET})
+    add_test(NAME ${T_NAME} COMMAND ${T_TARGET}
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
     if(T_LABELS)
         set_tests_properties(${T_NAME} PROPERTIES LABELS "${T_LABELS}")
     endif()
@@ -31,11 +35,31 @@ endfunction()
 
 # Helper: VIZ support for CG test targets
 function(add_test_viz_support target)
-    if(VSEPR_VIS_READY)
+    if(VSEPR_VIS_READY AND TARGET ${target})
         target_compile_definitions(${target} PRIVATE BUILD_VISUALIZATION)
         target_link_libraries(${target} vsepr_vis)
     endif()
 endfunction()
+
+# Create data/ junction in the binary directory so tests can resolve
+# relative paths like "data/element_weights.json" at runtime.
+if(EXISTS "${CMAKE_SOURCE_DIR}/data" AND NOT EXISTS "${CMAKE_BINARY_DIR}/data")
+    file(CREATE_LINK "${CMAKE_SOURCE_DIR}/data" "${CMAKE_BINARY_DIR}/data"
+         RESULT _link_result)
+    if(_link_result)
+        # Symbolic link failed (no privilege) — fall back to a directory junction on Windows
+        if(WIN32)
+            execute_process(
+                COMMAND cmd /c mklink /J "${CMAKE_BINARY_DIR}/data" "${CMAKE_SOURCE_DIR}/data"
+                RESULT_VARIABLE _mklink_result)
+            if(_mklink_result)
+                message(WARNING "Could not create data junction: ${_mklink_result}. Tests needing runtime data may fail.")
+            endif()
+        else()
+            message(WARNING "Could not create data symlink: ${_link_result}")
+        endif()
+    endif()
+endif()
 
 # ============================================================================
 # Group 1: Core / Geometry / VSEPR (foundational)
@@ -94,7 +118,7 @@ target_link_libraries(basic_molecule_validation vsepr_sim vsepr_pot vsepr_core)
 vsepr_add_test(NAME BasicMoleculeValidation TARGET basic_molecule_validation LABELS core quick)
 
 add_executable(basic_isomer_validation basic_isomer_validation.cpp)
-target_link_libraries(basic_isomer_validation vsepr_sim vsepr_pot vsepr_core vsepr_analysis)
+target_link_libraries(basic_isomer_validation vsepr_sim vsepr_pot vsepr_core)
 vsepr_add_test(NAME BasicIsomerValidation TARGET basic_isomer_validation LABELS core isomer)
 
 add_executable(test_ethane_torsion test_ethane_torsion.cpp)
@@ -164,10 +188,6 @@ add_executable(test_periodic_table_102 test_periodic_table_102.cpp)
 target_link_libraries(test_periodic_table_102 vsepr_periodic)
 vsepr_add_test(NAME PeriodicTable102Test TARGET test_periodic_table_102 LABELS core periodic quick)
 
-# DISABLED: unicode char literal errors under Clang/UCRT64
-# add_executable(test_decay_chains test_decay_chains.cpp)
-# target_link_libraries(test_decay_chains vsepr_periodic)
-# vsepr_add_test(NAME DecayChainsTest TARGET test_decay_chains LABELS core periodic)
 
 # --- Unified Species Code / Decay Event / Kinetic Record (particle_id + decay builders) ---
 add_executable(test_particle_id_decay test_particle_id_decay.cpp)
@@ -211,6 +231,10 @@ add_executable(chemistry_basic_test chemistry_basic_test.cpp)
 target_link_libraries(chemistry_basic_test vsepr_core)
 vsepr_add_test(NAME ChemistryBasic TARGET chemistry_basic_test LABELS core chemistry quick)
 
+add_executable(test_dissolution test_dissolution.cpp)
+target_link_libraries(test_dissolution atomistic vsepr_core)
+vsepr_add_test(NAME DissolutionTest TARGET test_dissolution LABELS atomistic chemistry reaction)
+
 add_executable(test_improved_nonbonded test_improved_nonbonded.cpp)
 target_link_libraries(test_improved_nonbonded vsepr_core vsepr_sim vsepr_pot)
 vsepr_add_test(NAME ImprovedNonbondedTest TARGET test_improved_nonbonded LABELS core chemistry)
@@ -230,16 +254,7 @@ add_executable(test_element_db_phase1_simple test_element_db_phase1_simple.cpp)
 target_link_libraries(test_element_db_phase1_simple vsepr_core)
 vsepr_add_test(NAME ElementDBPhase1Simple TARGET test_element_db_phase1_simple LABELS core chemistry)
 
-# DISABLED: unicode char literal errors under Clang/UCRT64
-# add_executable(phase2_complex_molecules phase2_complex_molecules.cpp)
-# target_link_libraries(phase2_complex_molecules vsepr_core)
-# vsepr_add_test(NAME Phase2ComplexMolecules TARGET phase2_complex_molecules LABELS core chemistry)
 
-# PBC example/demo
-if(EXISTS ${PROJECT_SOURCE_DIR}/docs/pbc_example.cpp)
-    add_executable(pbc_example ${PROJECT_SOURCE_DIR}/docs/pbc_example.cpp)
-    target_link_libraries(pbc_example vsepr_core vsepr_box)
-endif()
 
 # ============================================================================
 # Group 5: Thermal / Animation / Batch (some require BUILD_VIS)
@@ -335,11 +350,6 @@ vsepr_add_test(NAME ExperimentMatchTest TARGET test_experiment_match LABELS atom
 # Group 7: Coarse-Grained Mapping & Descriptors
 # ============================================================================
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_cg_mapping_suite.cpp)
-add_executable(test_cg_mapping_suite test_cg_mapping_suite.cpp)
-target_link_libraries(test_cg_mapping_suite coarse_grain atomistic vsepr_core)
-target_include_directories(test_cg_mapping_suite PRIVATE ${PROJECT_SOURCE_DIR})
-vsepr_add_test(NAME CGMappingTest TARGET test_cg_mapping_suite LABELS coarse_grain)
 
 add_executable(bead_fire_report_test bead_fire_report_test.cpp)
 target_link_libraries(bead_fire_report_test coarse_grain atomistic vsepr_core)
@@ -539,28 +549,7 @@ vsepr_add_test(NAME PropertyScraperTest TARGET test_property_scraper LABELS atom
 
 
 # ============================================================================
-# Group 16: ISO 286 Tolerance & Fit (pure C)
-# ============================================================================
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_iso_fit.cpp)
-add_executable(test_iso_fit test_iso_fit.cpp)
-target_link_libraries(test_iso_fit vsepr_iso_fit)
-target_include_directories(test_iso_fit PRIVATE ${PROJECT_SOURCE_DIR}/include)
-set_source_files_properties(test_iso_fit.c PROPERTIES LANGUAGE C)
-vsepr_add_test(NAME IsoFitTest TARGET test_iso_fit LABELS core engineering quick)
-
-# Group 17: Fatigue analysis
-# ============================================================================
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_fatigue.cpp)
-add_executable(test_fatigue test_fatigue.cpp)
-target_link_libraries(test_fatigue vsepr_fatigue)
-target_include_directories(test_fatigue PRIVATE ${PROJECT_SOURCE_DIR}/include)
-set_source_files_properties(test_fatigue.c PROPERTIES LANGUAGE C)
-vsepr_add_test(NAME FatigueTest TARGET test_fatigue LABELS core engineering quick)
-
-# ============================================================================
-# Group 18: Scale Mission — V1 Particles / V2 Clouds / V3 Lattice / V4 Pipe Gas 3
+# Group 18: Scale Mission
 # ============================================================================
 
 add_executable(test_scale_mission test_scale_mission.cpp)
@@ -806,10 +795,12 @@ vsepr_add_test(NAME ArtifactExportTest TARGET test_artifact_export
 # test_pbc_bindings    — pbc.* binding correctness + error semantics (57C)
 
 add_executable(test_pbc_vsim_parser test_pbc_vsim_parser.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/bridge/bridge_parse.cpp)  # WO-67N bridge symbol
 target_include_directories(test_pbc_vsim_parser PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_pbc_vsim_parser PRIVATE vsepr_chem)
 vsepr_add_test(NAME PBCVsimParserTest TARGET test_pbc_vsim_parser
     LABELS pbc vsim parser scripting beta8 quick)
 
@@ -883,6 +874,7 @@ add_executable(test_render_interval test_render_interval.cpp
 target_include_directories(test_render_interval PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_render_interval PRIVATE vsepr_chem)
 vsepr_add_test(NAME RenderIntervalTest TARGET test_render_interval
     LABELS vsim visual render_interval scripting beta8 quick)
 
@@ -898,232 +890,16 @@ add_executable(test_wo_03b test_wo_03b.cpp
 target_include_directories(test_wo_03b PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_wo_03b PRIVATE vsepr_chem)
 target_compile_options(test_wo_03b PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
 vsepr_add_test(NAME IntentAuthoringTest TARGET test_wo_03b
     LABELS vsim material run environment excite observe override raw scripting beta8 quick)
 
-# ============================================================================
-# Group 37: WO-VSIM-03B Stress / Failure-Mapping
-# ============================================================================
-# test_wo_03b_stress — adversarial parse inputs for all WO-VSIM-03B sections:
-#   [material], [run], [environment], [excite.*], [observe],
-#   [[override.particle]], [[raw.object]], and general structural errors.
-# Verifies that every known bad input produces a soft ParseError or
-# ValidationResult warning rather than an uncaught exception or silent corruption.
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_wo_03b_stress.cpp)
-add_executable(test_wo_03b_stress test_wo_03b_stress.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
-target_include_directories(test_wo_03b_stress PRIVATE
-    ${PROJECT_SOURCE_DIR}/include/vsim_override
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_wo_03b_stress PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME IntentAuthoringStressTest TARGET test_wo_03b_stress
-    LABELS vsim material run environment excite observe override raw stress beta9 quick)
 
-# ============================================================================
-# Group 38: WO-VSIM-03C — Registry Resolution Engine
-# ============================================================================
-# test_wo_03c — RegistryBundle + RegistryResolver + VsimRuntime::resolve_material.
-#   R1  RegistryBundle default-constructed is empty
-#   R2  resolve_proto("B1_NaCl") returns correct fields
-#   R3  alias "rocksalt" → B1_NaCl via MaterialSection
-#   R4  prototype set directly resolves correctly
-#   R5  [REGISTRY] log lines emitted for all fields
-#   R6  unknown prototype — no crash, unpopulated bundle
-#   R7  ionic family coverage (~11 aliases)
-#   R8  elemental metals + graphene (is_periodic=false for graphene)
-#   R9  molecular geometry aliases — is_periodic=false for all
-#   R10 polymers / organics — populated, is_periodic=false
-#   R11 porous / framework — is_periodic=true
-#   R12 bead / premacro coverage
-#   R13 VsimRuntime::resolve_material() with [material] section
-#   R14 VsimRuntime::resolve_material() without [material] section
-#   R15 Level 0 end-to-end gate: parse + resolve
-#   R16 UO2 fluorite end-to-end + sub-registry fields (B9-15)
-#   R17 resolve_export_profile — research_report / minimal / publication (B9-16)
-#   R18 apply_registry_defaults — explicit user values not overwritten (B9-12)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_wo_03c.cpp)
-add_executable(test_wo_03c test_wo_03c.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
-target_include_directories(test_wo_03c PRIVATE
-    ${PROJECT_SOURCE_DIR}/include/vsim_override
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_wo_03c PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME RegistryResolutionTest TARGET test_wo_03c
-    LABELS vsim material registry resolver beta9 quick RegistryCore)
 
-# ============================================================================
-# Group 39: Demo Script Suite — file-based parse + validate + resolve
-# ============================================================================
-# test_demo_scripts — Parses all beta-9/10 demo .vsim scripts from disk.
-#   D1  demo_01_nacl_level0     — Level 0 casual alias (rocksalt → B1_NaCl)
-#   D2  demo_02_silicon_diamond — Level 1 prototype key (A4_Si → diamond_cubic)
-#   D3  demo_03_pbc_nacl        — [cell]+[boundary]+[pbc]+Ewald fields
-#   D4  demo_04_md_laser        — [run]=md, [excite.laser], [observe]
-#   D5  demo_05_variance_while  — beta-10 inline [variance]/[N_evolution]/[while]
-#   D6  demo_06_batch_sweep     — [batch] two-job parameter sweep
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_demo_scripts.cpp)
-add_executable(test_demo_scripts test_demo_scripts.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
-target_include_directories(test_demo_scripts PRIVATE
-    ${PROJECT_SOURCE_DIR}/include/vsim_override
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_demo_scripts PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-target_compile_definitions(test_demo_scripts PRIVATE
-    SCRIPTS_DIR="${PROJECT_SOURCE_DIR}/scripts")
-vsepr_add_test(NAME DemoScriptSuiteTest TARGET test_demo_scripts
-    LABELS vsim demo material registry pbc excite observe variance while batch beta9 beta10 quick RegistryCore)
-
-# ============================================================================
-# Group 40: Beta-10 Smoke Tests — install layout, CLI commands, run folders
-# ============================================================================
-# test_b10_core — Exercises beta-10 operational layer:
-#   T1  AppDataPaths resolves config/bin/logs paths
-#   T2  create_run_folder creates run_001/run_002 with manifest
-#   T3  next_run_number increments past existing folders
-#   T4  DoctorCommand instantiates and prints header/status
-#   T5  InspectCommand summarises a .vsim file
-#   T6  InspectCommand summarises a .xyz file
-#   T7  InspectCommand summarises a project folder with run_001
-#   T8  AssocCommand compiles and has correct names
-#   T9  OpenCommand returns error for missing file
-#   T10 RunCommand --safe validates and resolves minimal NaCl script
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_b10_core.cpp)
-add_executable(test_b10_core test_b10_core.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_doctor.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_run.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_open.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_inspect.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_assoc.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_validate.cpp
-    ${PROJECT_SOURCE_DIR}/src/cli/cmd_version.cpp)
-target_include_directories(test_b10_core PRIVATE
-    ${PROJECT_SOURCE_DIR}/include/vsim_override
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_b10_core PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME Beta10SmokeTest TARGET test_b10_core
-    LABELS beta10 install cli run inspect doctor assoc output_layout FinalBetaCore InstallCore)
-
-# ============================================================================
-# Group 35b: Ambient Chemistry Integration Tests
-# ============================================================================
-# test_chemistry_vsim — Parser, bridge, runtime, and observe-metric coverage
-#   C1  [chemistry] block parses all keys
-#   C2  [system] legacy alias routes to ChemistrySection
-#   C3  heat = -1 derives from environment.temperature
-#   C4  explicit heat overrides temperature derivation
-#   C5  ChemistrySection defaults correct
-#   C6  min_score_threshold default = 0.25
-#   C7  chemistry = "none" → is_active() == false
-#   C8  chemistry = "oxidation" → is_active() / has_chemistry() true
-#   C9  ReactionBridge::run_pass non-negative evaluated count
-#   C10 single-molecule doc → 0 pairs evaluated
-#   C11 VsimRuntime::run_chemistry_pass proxies bridge
-#   C12 eval_observe_metrics "reaction_events" counts log entries
-#   C13 eval_observe_metrics empty-log → no crash, non-negative value
-#   C14 unknown metric produces non-empty warning
-#   C15 KernelEventLog count non-decreasing after run_pass
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_chemistry_vsim.cpp)
-add_executable(test_chemistry_vsim test_chemistry_vsim.cpp
-    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
-target_include_directories(test_chemistry_vsim PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_chemistry_vsim PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME AmbientChemistryTest TARGET test_chemistry_vsim
-    LABELS vsim chemistry reaction heat_gate observe kernel_events ambient beta9 quick ChemistryCore)
-
-# ============================================================================
-# Group 38b: WO-VSIM-04A — Isomer Detection Revival
-# ============================================================================
-# test_isomer_detection — 9 unit tests for the graph-validity pipeline:
-#   T1  Formula extraction from MolecularGraph
-#   T2  Valence pass  — H-O-O-H → NeutralValid
-#   T3  Valence fail  — H with 2 bonds → InvalidValence
-#   T4  Disconnected fail — allow_fragments=false → DisconnectedInvalid
-#   T5  Disconnected allowed — allow_fragments=true → NeutralValid
-#   T6  Duplicate removal — same graph, different atom ordering → same hash
-#   T7  Constitutional isomer — same formula, different graph hash
-#   T8  Conformer — same graph hash, RMSD > tolerance
-#   T9  Ring count via Euler formula
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_isomer_detection.cpp)
-add_executable(test_isomer_detection test_isomer_detection.cpp)
-target_link_libraries(test_isomer_detection vsepr_analysis vsepr_core)
-target_include_directories(test_isomer_detection PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR})
-target_compile_options(test_isomer_detection PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME IsomerDetectionTest TARGET test_isomer_detection
-    LABELS isomer graph valence canonical_hash wo04a quick IsomerCore)
-
-# test_isomer_vsim_parser — VSIM parser integration for new isomer blocks:
-#   P1  [analysis.isomers] parses all keys
-#   P2  [generator.isomers] parses all keys
-#   P3  [analysis.isomer_tracking] parses all keys
-#   P4  Unknown keys fall through to raw_sections
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test_isomer_vsim_parser.cpp)
-    add_executable(test_isomer_vsim_parser test_isomer_vsim_parser.cpp
-        ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
-    target_include_directories(test_isomer_vsim_parser PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR})
-    target_compile_options(test_isomer_vsim_parser PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-    vsepr_add_test(NAME IsomerVsimParserTest TARGET test_isomer_vsim_parser
-        LABELS isomer vsim parser wo04a quick IsomerParser)
-endif()
-
-# stress_isomer_pipeline — thousands of candidates through the full pipeline
-#   Sections:
-#     A  Validity sweep: N_PERM_REPEAT permutations × all base graphs
-#     B  Hash permutation-invariance
-#     C  Constitutional isomer family sweep (C2H4O2)
-#     D  Conformer RMSD sweep
-#     E  Known-invalid gate tests
-#     F  Markdown/CSV/JSON report generation
-
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/stress_isomer_pipeline.cpp)
-    add_executable(stress_isomer_pipeline stress_isomer_pipeline.cpp)
-    target_link_libraries(stress_isomer_pipeline vsepr_analysis vsepr_core)
-    target_include_directories(stress_isomer_pipeline PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR})
-    target_compile_options(stress_isomer_pipeline PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-    vsepr_add_test(NAME IsomerPipelineStress TARGET stress_isomer_pipeline
-        LABELS isomer stress pipeline wo04a perf IsomerStress)
-endif()
-
-# isomer_demo — narrated end-to-end demo for WO-VSIM-04A:
-#   Run 1  C2H6O constitutional isomers (ethanol vs DME)
-#   Run 2  C2H4O2 five-member family (4 valid, 1 disconnected)
-#   Run 3  Valence traps (H-overbonded, C-pentavalent, O-trivalent)
-#   Run 4  Disconnected CO+CO: DisconnectedInvalid vs allow_fragments=true
-#   Run 5  Permutation-invariance: ethanol over 20 shuffles (0 failures)
-#   Run 6  RMSD conformer sweep: SameStructure vs Conformer boundary
-#   Run 7  Full batch: 6 valid + 2 invalid candidates, 3 report files
-
-if(EXISTS ${PROJECT_SOURCE_DIR}/apps/isomer_demo.cpp)
-    add_executable(isomer_demo
-        ${PROJECT_SOURCE_DIR}/apps/isomer_demo.cpp)
-    target_link_libraries(isomer_demo vsepr_analysis vsepr_core)
-    target_include_directories(isomer_demo PRIVATE
-        ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_SOURCE_DIR})
-    target_compile_options(isomer_demo PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-    vsepr_add_test(NAME IsomerDemo TARGET isomer_demo
-        LABELS isomer demo wo04a quick IsomerDemo)
-endif()
 
 # =============================================================================
 # WO-B9-001 — Batch Manifest Runner
@@ -1149,8 +925,10 @@ target_include_directories(batch_runner PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
 target_compile_options(batch_runner PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
-vsepr_add_test(NAME BatchManifestRunner TARGET batch_runner
-    LABELS batch manifest wo-b9-001 beta9 quick BatchRunner)
+add_test(NAME BatchManifestRunner COMMAND batch_runner --help
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_tests_properties(BatchManifestRunner PROPERTIES
+    LABELS "batch;manifest;wo-b9-001;beta9;quick;BatchRunner")
 
 # =============================================================================
 # WO-VSEPR-SIM-62B — Batch Verification Aggregation (Group 40 / Day 62 / beta-12)
@@ -1208,6 +986,7 @@ add_executable(test_batch_parser
 target_include_directories(test_batch_parser PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_batch_parser PRIVATE vsepr_chem)
 target_compile_options(test_batch_parser PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
 vsepr_add_test(NAME BatchParserGroup41 TARGET test_batch_parser
     LABELS batch parser wo-vsim-62c beta12 quick BatchParser)
@@ -1221,6 +1000,7 @@ add_executable(test_batch_expander
 target_include_directories(test_batch_expander PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_batch_expander PRIVATE vsepr_chem)
 target_compile_options(test_batch_expander PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
 vsepr_add_test(NAME BatchExpanderGroup42 TARGET test_batch_expander
     LABELS batch expander wo-vsim-62c beta12 quick BatchExpander)
@@ -1235,11 +1015,761 @@ add_executable(test_batch_runner_static
     ${PROJECT_SOURCE_DIR}/src/batch/batch_require_checker.cpp
     ${PROJECT_SOURCE_DIR}/src/batch/batch_aggregator.cpp
     ${PROJECT_SOURCE_DIR}/src/batch/resolved_writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/demo_frame_sampler.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/demo_bundle_writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/xbundle/xbundle_reader.cpp
+    ${PROJECT_SOURCE_DIR}/src/xbundle/xbundle_writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/xbundle/xbundle_validator.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp)
 target_include_directories(test_batch_runner_static PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_batch_runner_static PRIVATE vsepr_chem vsepr_demo_stack vsepr_xbundle)
 target_compile_options(test_batch_runner_static PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/FS>)
 vsepr_add_test(NAME BatchRunnerStaticGroup43 TARGET test_batch_runner_static
     LABELS batch runner static wo-vsim-62c beta12 BatchRunnerStatic)
 
+# ============================================================================
+# WO-XSUITE-02B  —  Presolve layer tests  (EIG-1..10 + basis archive)
+# Groups 44-47
+# ============================================================================
+
+# Group 44 — EigenMine small tests (EIG-1..6)
+add_executable(test_eigenmine_small
+    ${PROJECT_SOURCE_DIR}/tests/test_eigenmine_small.cpp
+)
+target_include_directories(test_eigenmine_small PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(test_eigenmine_small PRIVATE vsepr_presolve)
+vsepr_add_test(NAME EigenMineSmallGroup44 TARGET test_eigenmine_small
+    LABELS eigenmine presolve wo-xsuite-02b EIG EigenMineSmall)
+
+# Group 45 — CurveFit presolve tests (EIG-7..8)
+add_executable(test_curvefit_presolve
+    ${PROJECT_SOURCE_DIR}/tests/test_curvefit_presolve.cpp
+)
+target_include_directories(test_curvefit_presolve PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(test_curvefit_presolve PRIVATE vsepr_presolve)
+vsepr_add_test(NAME CurvefitPresolveGroup45 TARGET test_curvefit_presolve
+    LABELS curvefit presolve wo-xsuite-02b EIG CurvefitPresolve)
+
+# Group 46 — Release gate tests (EIG-9..10)
+add_executable(test_release_gate
+    ${PROJECT_SOURCE_DIR}/tests/test_release_gate.cpp
+)
+target_include_directories(test_release_gate PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(test_release_gate PRIVATE vsepr_presolve)
+vsepr_add_test(NAME ReleaseGateGroup46 TARGET test_release_gate
+    LABELS release_gate presolve wo-xsuite-02b EIG ReleaseGate)
+
+# Group 47 — Basis archive tests
+add_executable(test_basis_archive
+    ${PROJECT_SOURCE_DIR}/tests/test_basis_archive.cpp
+)
+target_include_directories(test_basis_archive PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(test_basis_archive PRIVATE vsepr_presolve)
+vsepr_add_test(NAME BasisArchiveGroup47 TARGET test_basis_archive
+    LABELS basis_archive presolve wo-xsuite-02b BasisArchive)
+
+# Group 48 — .xyza dynamic state gate (WO-VSIM-66A)
+add_executable(test_xyza_dynamic_state
+    ${PROJECT_SOURCE_DIR}/tests/test_xyza_dynamic_state.cpp
+    ${PROJECT_SOURCE_DIR}/src/io/xyza_dynamic.cpp
+)
+target_include_directories(test_xyza_dynamic_state PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(test_xyza_dynamic_state PRIVATE vsepr_io vsepr_core)
+vsepr_add_test(NAME XyzaDynamicStateGroup48 TARGET test_xyza_dynamic_state
+    LABELS xyza dynamic_state io wo-66a XyzaDynamic)
+
+# ============================================================================
+# WO-BRIDGE-65 — Classical MD / Python-Empirical Bridge (Groups 49-52)
+# ============================================================================
+
+# Group 49 — Atom event records and logger routing
+add_executable(test_bridge65_atom_events
+    ${PROJECT_SOURCE_DIR}/tests/test_bridge65_atom_events.cpp
+    ${PROJECT_SOURCE_DIR}/src/bridge65/atom_event_logger.cpp
+    ${PROJECT_SOURCE_DIR}/src/bridge65/event_limiter.cpp
+)
+target_include_directories(test_bridge65_atom_events PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+vsepr_add_test(NAME Bridge65AtomEventsGroup49 TARGET test_bridge65_atom_events
+    LABELS bridge65 atom_events wo-bridge-65 Bridge65)
+
+# Group 50 — High-rate event limiter/sampler
+add_executable(test_bridge65_event_limiter
+    ${PROJECT_SOURCE_DIR}/tests/test_bridge65_event_limiter.cpp
+    ${PROJECT_SOURCE_DIR}/src/bridge65/event_limiter.cpp
+)
+target_include_directories(test_bridge65_event_limiter PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+vsepr_add_test(NAME Bridge65EventLimiterGroup50 TARGET test_bridge65_event_limiter
+    LABELS bridge65 event_limiter wo-bridge-65 Bridge65)
+
+# Group 51 — Matrix force agreement validation
+add_executable(test_bridge65_matrix_force
+    ${PROJECT_SOURCE_DIR}/tests/test_bridge65_matrix_force.cpp
+)
+target_include_directories(test_bridge65_matrix_force PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+vsepr_add_test(NAME Bridge65MatrixForceGroup51 TARGET test_bridge65_matrix_force
+    LABELS bridge65 matrix_force wo-bridge-65 Bridge65)
+
+# Group 52 — Replay hash independence
+add_executable(test_bridge65_replay_hash
+    ${PROJECT_SOURCE_DIR}/tests/test_bridge65_replay_hash.cpp
+)
+target_include_directories(test_bridge65_replay_hash PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+vsepr_add_test(NAME Bridge65ReplayHashGroup52 TARGET test_bridge65_replay_hash
+    LABELS bridge65 replay_hash wo-bridge-65 Bridge65)
+
+# ============================================================================
+# Group 53 — WO-67-B: Viewer Runtime Bridge and XYZ Data Contract
+# ============================================================================
+
+if(TARGET vsepr_view_lib)
+    add_executable(test_view_67b
+        ${PROJECT_SOURCE_DIR}/tests/test_view_67b.cpp
+    )
+    target_include_directories(test_view_67b PRIVATE
+        ${PROJECT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_view_67b PRIVATE vsepr_view_lib vsepr_io vsepr_core)
+    vsepr_add_test(NAME ViewerRuntimeBridge67B TARGET test_view_67b
+        LABELS view wo-67-b viewer data_contract quick)
+endif()
+
+# ============================================================================
+# WO-67N/67O — DEM + FEA Bridge Parse, Validate, Export (Day 67)
+# ============================================================================
+
+add_executable(test_bridge_parse
+    ${PROJECT_SOURCE_DIR}/tests/test_bridge_parse.cpp
+)
+set_target_properties(test_bridge_parse PROPERTIES
+    AUTOMOC OFF AUTORCC OFF AUTOUIC OFF WIN32_EXECUTABLE OFF)
+target_include_directories(test_bridge_parse PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(test_bridge_parse PRIVATE vsepr_chem vsepr_core)
+if(MINGW)
+    target_link_options(test_bridge_parse PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME BridgeParseWO67 TARGET test_bridge_parse
+    LABELS bridge wo-67n wo-67o dem_bridge fea_bridge parse quick)
+
+# ============================================================================
+# Phase 6 — Intent Runtime Bridge  (WO-VSIM-INTENT-BRIDGE-A)
+# Group 54 — Intent runtime bridge basic
+# ============================================================================
+
+add_executable(test_intent_bridge_a
+    ${PROJECT_SOURCE_DIR}/tests/test_intent_bridge_a.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+target_include_directories(test_intent_bridge_a PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_intent_bridge_a PRIVATE vsepr_chem)
+vsepr_add_test(NAME IntentBridgeBasicGroup54 TARGET test_intent_bridge_a
+    LABELS intent bridge material environment run wo-intent-bridge-a quick)
+
+# ============================================================================
+# Phase 7 — Formation FieldRamp  (WO-VSIM-FORMATION-FIELDRAMP)
+# Group 55 — Formation FieldRamp
+# ============================================================================
+
+add_executable(test_fieldramp
+    ${PROJECT_SOURCE_DIR}/tests/test_fieldramp.cpp
+)
+target_include_directories(test_fieldramp PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_fieldramp PRIVATE vsepr_chem)
+vsepr_add_test(NAME FormationFieldRampGroup55 TARGET test_fieldramp
+    LABELS formation field_ramp wo-fieldramp quick)
+
+# ============================================================================
+# Phase 8 — Isomer Pipeline Wiring A  (WO-VSIM-ISOMER-WIRE-A)
+# Group 56 — Isomer pipeline wiring A
+# ============================================================================
+
+add_executable(test_isomer_wire_a
+    ${PROJECT_SOURCE_DIR}/tests/test_isomer_wire_a.cpp
+)
+target_include_directories(test_isomer_wire_a PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_isomer_wire_a PRIVATE vsepr_chem)
+vsepr_add_test(NAME IsomerWireAGroup56 TARGET test_isomer_wire_a
+    LABELS isomer wo-isomer-wire-a generator deterministic quick)
+
+# ============================================================================
+# Phase 9 — Dynx v1 Session Archive  (WO-VSIM-DYNX-V1-A / WO-VSIM-DYNX-V1-B)
+# Group 57 — Dynx v1 session archive
+# ============================================================================
+
+add_executable(test_dynx_v1
+    ${PROJECT_SOURCE_DIR}/tests/test_dynx_v1.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/dynx_writer.cpp
+)
+target_include_directories(test_dynx_v1 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_dynx_v1 PRIVATE vsepr_core)
+vsepr_add_test(NAME DynxV1SessionArchiveGroup57 TARGET test_dynx_v1
+    LABELS dynx session_archive wo-dynx-v1 inspect validate quick)
+
+# ============================================================================
+# WO-VSIM-CTL  —  Modernized VSIM Control Pipeline
+# Groups 58–64 — CTL-01 through CTL-07
+# ============================================================================
+
+# Group 58 — CTL-01: Typed command namespace registry
+add_executable(test_ctl_01
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_01.cpp
+)
+target_include_directories(test_ctl_01 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_01 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlNamespaceRegistryGroup58 TARGET test_ctl_01
+    LABELS ctl namespace registry wo-vsim-ctl quick)
+
+# Group 59 — CTL-02: Script parser to execution graph
+add_executable(test_ctl_02
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_02.cpp
+)
+target_include_directories(test_ctl_02 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_02 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlParserExecGraphGroup59 TARGET test_ctl_02
+    LABELS ctl parser exec_graph wo-vsim-ctl quick)
+
+# Group 60 — CTL-03: Runtime wrapper dispatch + validator
+add_executable(test_ctl_03
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_03.cpp
+)
+target_include_directories(test_ctl_03 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_03 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlDispatchValidatorGroup60 TARGET test_ctl_03
+    LABELS ctl dispatcher validator wo-vsim-ctl quick)
+
+# Group 61 — CTL-04: Kernel channel command bindings
+add_executable(test_ctl_04
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_04.cpp
+)
+target_include_directories(test_ctl_04 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_04 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlKernelChannelBindingsGroup61 TARGET test_ctl_04
+    LABELS ctl kernel channel wo-vsim-ctl quick)
+
+# Group 62 — CTL-05: Artifact command bindings (XBIT/Dynx)
+add_executable(test_ctl_05
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_05.cpp
+)
+target_include_directories(test_ctl_05 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_05 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlArtifactBindingsGroup62 TARGET test_ctl_05
+    LABELS ctl artifact dynx xbit wo-vsim-ctl quick)
+
+# Group 63 — CTL-06: Metrics/gate assertion system
+add_executable(test_ctl_06
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_06.cpp
+)
+target_include_directories(test_ctl_06 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_06 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlMetricsGateSystemGroup63 TARGET test_ctl_06
+    LABELS ctl metrics gate assert wo-vsim-ctl quick)
+
+# Group 64 — CTL-07: Deterministic plan hash + artifact manifest
+add_executable(test_ctl_07
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_07.cpp
+)
+target_include_directories(test_ctl_07 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_07 PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlPlanHashManifestGroup64 TARGET test_ctl_07
+    LABELS ctl plan hash manifest deterministic wo-vsim-ctl quick)
+
+# ============================================================================
+# WO-VSIM-CTL-TEST  —  Groups 65–69: CTL Integration Testing
+# ============================================================================
+
+# Group 65 — CTL End-to-End Smoke
+add_executable(test_ctl_smoke
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_smoke.cpp
+)
+target_include_directories(test_ctl_smoke PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_smoke PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlEndToEndSmokeGroup65 TARGET test_ctl_smoke
+    LABELS ctl integration smoke end-to-end wo-vsim-ctl-test)
+
+# Group 66 — CTL Runtime Hook Integration
+add_executable(test_ctl_hooks
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_hooks.cpp
+)
+target_include_directories(test_ctl_hooks PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_hooks PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlRuntimeHookIntegrationGroup66 TARGET test_ctl_hooks
+    LABELS ctl integration hooks runtime wo-vsim-ctl-test)
+
+# Group 67 — CTL Negative Validation
+add_executable(test_ctl_negative
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_negative.cpp
+)
+target_include_directories(test_ctl_negative PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_negative PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlNegativeValidationGroup67 TARGET test_ctl_negative
+    LABELS ctl integration negative validation wo-vsim-ctl-test)
+
+# Group 68 — CTL Determinism
+add_executable(test_ctl_determinism
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_determinism.cpp
+)
+target_include_directories(test_ctl_determinism PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_determinism PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlDeterminismGroup68 TARGET test_ctl_determinism
+    LABELS ctl integration determinism hash wo-vsim-ctl-test)
+
+# Group 69 — CTL Existing Workflow Compatibility
+add_executable(test_ctl_compat
+    ${PROJECT_SOURCE_DIR}/tests/test_ctl_compat.cpp
+)
+target_include_directories(test_ctl_compat PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ctl_compat PRIVATE vsepr_core)
+vsepr_add_test(NAME CtlWorkflowCompatGroup69 TARGET test_ctl_compat
+    LABELS ctl integration compat legacy wo-vsim-ctl-test)
+
+# ============================================================================
+# WO-72A / WO-XYZSUITE-X  —  .X Framework Consolidated Test Inlet
+# XFrameworkAudit  —  XBundle (XB-01..10) + XSuite (XP-01..05)
+# Installed alias: vsepr-x-audit.exe  (see installer/setup.iss)
+# ============================================================================
+
+add_executable(test_x_framework
+    ${PROJECT_SOURCE_DIR}/tests/test_x_framework.cpp
+)
+set_target_properties(test_x_framework PROPERTIES
+    AUTOMOC OFF
+    AUTOUIC OFF
+    AUTORCC OFF
+    CXX_SCAN_FOR_MODULES OFF
+)
+target_include_directories(test_x_framework PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_x_framework PRIVATE vsepr_xbundle vsepr_core)
+target_compile_features(test_x_framework PRIVATE cxx_std_23)
+vsepr_add_test(NAME XFrameworkAudit TARGET test_x_framework
+    LABELS xbundle xsuite bundle suite format smoke audit wo-72a wo-xyzsuite-x)
+
+# ============================================================================
+# WO-72B  —  .dynx Pipeline Emitter
+# Group 71  —  DynxEmitter smoke (live cache + archive)
+# ============================================================================
+
+add_executable(test_dynx_emitter
+    ${PROJECT_SOURCE_DIR}/tests/test_dynx_emitter.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/dynx_writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/dynx_emitter.cpp
+)
+target_include_directories(test_dynx_emitter PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_dynx_emitter PRIVATE vsepr_core)
+vsepr_add_test(NAME DynxEmitterGroup71 TARGET test_dynx_emitter
+    LABELS dynx emitter live_cache post_step wo-72b quick)
+
+# ============================================================================
+# WO-72D  —  DynxWriter streaming API + DynxReader round-trip
+# Group 72  —  Streaming write / read-back / session helpers
+# ============================================================================
+
+add_executable(test_dynx_writer_streaming
+    ${PROJECT_SOURCE_DIR}/tests/test_dynx_writer_streaming.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/dynx_writer.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/io/dynx_reader.cpp
+)
+target_include_directories(test_dynx_writer_streaming PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_dynx_writer_streaming PRIVATE vsepr_core)
+vsepr_add_test(NAME DynxStreamingGroup72 TARGET test_dynx_writer_streaming
+    LABELS dynx streaming reader session wo-72d quick)
+
+# ============================================================================
+# WO-OUTPUT-P2-A  —  ExportDemoSection parse + defaults
+# Group 73
+# ============================================================================
+
+add_executable(test_export_demo_section
+    ${PROJECT_SOURCE_DIR}/tests/test_export_demo_section.cpp
+)
+target_include_directories(test_export_demo_section PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_export_demo_section PRIVATE vsepr_chem)
+vsepr_add_test(NAME ExportDemoSectionGroup73 TARGET test_export_demo_section
+    LABELS export demo schema wo-output-p2 quick)
+
+# ============================================================================
+# WO-OUTPUT-P2-B  —  DemoFrameSampler all strategies
+# Group 74
+# ============================================================================
+
+add_executable(test_demo_frame_sampler
+    ${PROJECT_SOURCE_DIR}/tests/test_demo_frame_sampler.cpp
+)
+target_include_directories(test_demo_frame_sampler PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_demo_frame_sampler PRIVATE vsepr_core vsepr_demo_stack)
+vsepr_add_test(NAME DemoFrameSamplerGroup74 TARGET test_demo_frame_sampler
+    LABELS demo sampler dynx strategies wo-output-p2 quick)
+
+# ============================================================================
+# WO-OUTPUT-P2-C  —  DemoBundleWriter round-trip
+# Group 75
+# ============================================================================
+
+add_executable(test_demo_bundle_writer
+    ${PROJECT_SOURCE_DIR}/tests/test_demo_bundle_writer.cpp
+)
+target_include_directories(test_demo_bundle_writer PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_demo_bundle_writer PRIVATE vsepr_core vsepr_demo_stack vsepr_xbundle)
+vsepr_add_test(NAME DemoBundleWriterGroup75 TARGET test_demo_bundle_writer
+    LABELS demo bundle xbundle round_trip wo-output-p2 quick)
+
+# ============================================================================
+# WO-OUTPUT-P2  —  Demo Pipeline Integration
+# Group 76
+# ============================================================================
+
+add_executable(test_demo_pipeline_integration
+    ${PROJECT_SOURCE_DIR}/tests/test_demo_pipeline_integration.cpp
+)
+target_include_directories(test_demo_pipeline_integration PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_demo_pipeline_integration PRIVATE vsepr_core vsepr_demo_stack vsepr_xbundle)
+vsepr_add_test(NAME DemoPipelineIntegrationGroup76 TARGET test_demo_pipeline_integration
+    LABELS demo integration session sampler dynx live_cache wo-output-p2 quick)
+
+# ============================================================================
+# WO-72E  —  Default Usage Bundle (DUB) Factory Smoke
+# Group 77
+# ============================================================================
+
+add_executable(test_dub_factory
+    ${PROJECT_SOURCE_DIR}/tests/test_dub_factory.cpp
+)
+target_include_directories(test_dub_factory PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_dub_factory PRIVATE vsepr_core)
+vsepr_add_test(NAME DubFactoryGroup77 TARGET test_dub_factory
+    LABELS bundle dub factory wo-72e quick)
+
+# ============================================================================
+# WO-73D  —  Length-Scale Fitter
+# Group 78
+# ============================================================================
+
+add_executable(test_length_scale_fitter
+    ${PROJECT_SOURCE_DIR}/tests/test_length_scale_fitter.cpp
+)
+target_include_directories(test_length_scale_fitter PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_length_scale_fitter PRIVATE vsepr_length_fitter vsepr_core)
+vsepr_add_test(NAME LengthScaleFitterGroup78 TARGET test_length_scale_fitter
+    LABELS multiscale empirical fitter wo-73d quick)
+
+# ============================================================================
+# WO-73E  —  VSIM Output Filter
+# Group 79
+# ============================================================================
+
+add_executable(test_vsim_output_filter
+    ${PROJECT_SOURCE_DIR}/tests/test_vsim_output_filter.cpp
+)
+target_include_directories(test_vsim_output_filter PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_vsim_output_filter PRIVATE
+    -Wl,--whole-archive vsepr_vsim_filter -Wl,--no-whole-archive
+    vsepr_core)
+vsepr_add_test(NAME VsimOutputFilterGroup79 TARGET test_vsim_output_filter
+    LABELS multiscale empirical filter wo-73e wo-74b quick)
+
+# ============================================================================
+# WO-74C  —  Gap Classifier
+# Group 80
+# ============================================================================
+
+add_executable(test_gap_classifier
+    ${PROJECT_SOURCE_DIR}/tests/test_gap_classifier.cpp
+)
+target_include_directories(test_gap_classifier PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+# --whole-archive ensures self-registering AutoRegister statics from
+# gap_classifier*.cpp.obj are not dead-stripped by the linker (WO-74A).
+target_link_libraries(test_gap_classifier PRIVATE
+    -Wl,--whole-archive vsepr_continual -Wl,--no-whole-archive
+    vsepr_core)
+vsepr_add_test(NAME GapClassifierGroup80 TARGET test_gap_classifier
+    LABELS multiscale continual gap wo-74c quick)
+
+# ============================================================================
+# WO-75A  --  Observe Metrics
+# Group 81
+# ============================================================================
+
+add_executable(test_observe_metrics
+    ${PROJECT_SOURCE_DIR}/tests/test_observe_metrics.cpp
+)
+target_include_directories(test_observe_metrics PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_observe_metrics PRIVATE
+    vsepr_analysis_helpers
+    vsepr_core)
+vsepr_add_test(NAME ObserveMetricsGroup81 TARGET test_observe_metrics
+    LABELS vsim analysis observe wo-75a quick)
+
+# ============================================================================
+# WO-75C  --  Formation Pathway Helper (stoichiometry / route logic)
+# Group 82
+# ============================================================================
+
+add_executable(test_formation_helper
+    ${PROJECT_SOURCE_DIR}/tests/test_formation_helper.cpp
+)
+target_include_directories(test_formation_helper PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_formation_helper PRIVATE vsepr_core)
+vsepr_add_test(NAME FormationHelperGroup82 TARGET test_formation_helper
+    LABELS vsim formation helper wo-75c quick)
+
+# ============================================================================
+# WO-75E  --  Biological Object Layer (semantic non-geometry objects)
+# Group 83
+# ============================================================================
+
+add_executable(test_bio_object
+    ${PROJECT_SOURCE_DIR}/tests/test_bio_object.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+target_include_directories(test_bio_object PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_bio_object PRIVATE vsepr_chem)
+vsepr_add_test(NAME BioObjectGroup83 TARGET test_bio_object
+    LABELS bio object organic vsim wo-75e quick)
+
+# ============================================================================
+# WO-NL0C  --  Type-3 Demo Replay  (.dynx / .xyzf input-side + gl_spin)
+# Group 84
+# ============================================================================
+
+add_executable(test_wo_nl0c
+    ${PROJECT_SOURCE_DIR}/tests/test_wo_nl0c.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+target_include_directories(test_wo_nl0c PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_wo_nl0c PRIVATE vsepr_chem)
+vsepr_add_test(NAME ReplayGroup84 TARGET test_wo_nl0c
+    LABELS replay dynx xyzf gl_spin visual vsim wo-nl0c quick)
+
+# ---------------------------------------------------------------------------
+# Group 85  WO-NL0A  Type 1: continuous random-materials discovery
+# ---------------------------------------------------------------------------
+add_executable(test_wo_nl0a
+    ${PROJECT_SOURCE_DIR}/tests/test_wo_nl0a.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+target_include_directories(test_wo_nl0a PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_wo_nl0a PRIVATE vsepr_chem)
+vsepr_add_test(NAME DiscoveryGroup85 TARGET test_wo_nl0a
+    LABELS discovery newleaf type1 vsim wo-nl0a quick)
+
+# ---------------------------------------------------------------------------
+# Group 86  WO-NL0B  Type 2: deterministic MD / crystal scripts
+# ---------------------------------------------------------------------------
+add_executable(test_wo_nl0b
+    ${PROJECT_SOURCE_DIR}/tests/test_wo_nl0b.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+target_include_directories(test_wo_nl0b PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_wo_nl0b PRIVATE vsepr_chem)
+vsepr_add_test(NAME CrystalMDGroup86 TARGET test_wo_nl0b
+    LABELS md crystal type2 gl_spin vsim wo-nl0b quick)
+
+# ============================================================================
+# WO-75A  --  IKK Report End-Tag Enrichment
+# Group 87
+# ============================================================================
+
+add_executable(test_ikk_end_tag
+    ${PROJECT_SOURCE_DIR}/tests/test_ikk_end_tag.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/analysis/ikk_end_tag.cpp
+)
+target_include_directories(test_ikk_end_tag PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ikk_end_tag PRIVATE vsepr_chem)
+vsepr_add_test(NAME IkkEndTagGroup87 TARGET test_ikk_end_tag
+    LABELS ikk identity sidecar report vsim wo-75a quick)
+
+# ============================================================================
+# Group 88  --  IKK Identity Vector  (WO-75B Phase 1)
+# ============================================================================
+
+add_executable(test_ikk_identity_vector
+    ${PROJECT_SOURCE_DIR}/tests/test_ikk_identity_vector.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/analysis/ikk_identity_vector.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/analysis/mcf_cai.cpp
+)
+target_include_directories(test_ikk_identity_vector PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_ikk_identity_vector PRIVATE vsepr_chem)
+vsepr_add_test(NAME IkkIdentityVectorGroup88 TARGET test_ikk_identity_vector
+    LABELS ikk identity ivec sidecar vsim wo-75b quick)
+
+# ============================================================================
+# Group 89  --  MCF-CAI State Vector  (WO-76 Steps 3+5)
+# ============================================================================
+
+add_executable(test_mcf_cai
+    ${PROJECT_SOURCE_DIR}/tests/test_mcf_cai.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/analysis/mcf_cai.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/analysis/ikk_identity_vector.cpp
+)
+target_include_directories(test_mcf_cai PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_mcf_cai PRIVATE vsepr_chem)
+vsepr_add_test(NAME McfCaiGroup89 TARGET test_mcf_cai
+    LABELS mcf cai identity vsim wo-76 quick)

@@ -84,12 +84,26 @@ Name: "fileassoc";    Description: "Register file associations (.vsim, .xyz, .xy
 ; --- Kernel executables ---
 Source: "build\{#MyAppExeName}";       DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "build\vsepr-sim.exe";         DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\vsepr-cli.exe";         DestDir: "{app}\bin"; Flags: ignoreversion
+; vsepr.exe IS the CLI binary (no separate vsepr-cli.exe target exists)
+Source: "build\vsepr.exe";             DestDir: "{app}\bin"; DestName: "vsepr-cli.exe"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "build\vsepr_batch.exe";       DestDir: "{app}\bin"; Flags: ignoreversion
 
-; --- OpenGL 3-D visualization renderer (primary viewer) ---
+; --- Qt desktop + launcher (require Qt6 runtime below) ---
+Source: "build\vsepr-desktop.exe";    DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\vsepr-launcher.exe";   DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "apps\launcher\xsuite_launcher.bat"; DestDir: "{app}\bin"; Flags: ignoreversion
+
+; --- .X framework audit binary (post-install self-test) ---
+; Alias of build\tests\test_x_framework.exe.  Runs XBundle + XSuite tests after install.
+Source: "build\tests\test_x_framework.exe"; DestDir: "{app}\bin"; DestName: "vsepr-x-audit.exe"; Flags: ignoreversion skipifsourcedoesntexist
+
+; --- Qt runtime DLLs (produced by: windeployqt6 --dir installer\qt_runtime build\vsepr-desktop.exe build\vsepr-launcher.exe) ---
+; Run windeployqt6 once after a successful Qt build, then uncomment:
+;Source: "installer\qt_runtime\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; --- OpenGL 3-D visualization renderer (primary viewer; requires BUILD_VIS=ON) ---
 ; CMD opener routes here first; other paths activate only when this is absent.
-Source: "build\live-xyza-viewer.exe";  DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "build\live-xyza-viewer.exe";  DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
 
 ; --- Universal file opener + Python popup viewer (fallback chain) ---
 ; open_vsim_file.cmd priority: 1. live-xyza-viewer.exe  2. vsepr.exe open  3. pythonw popup
@@ -120,11 +134,15 @@ Source: "resources\vsepr.ico"; DestDir: "{app}\resources"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#MyAppName}";                              Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Comment: "{#MyAppDescription}"
 Name: "{group}\{#MyAppName} CLI";                         Filename: "{app}\bin\vsepr-cli.exe";   WorkingDir: "{app}"; Comment: "VSIM command-line interface"
+Name: "{group}\{#MyAppName} Desktop";                     Filename: "{app}\bin\vsepr-desktop.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM Qt desktop / 3D viewer"
+Name: "{group}\{#MyAppName} Launcher";                    Filename: "{app}\bin\vsepr-launcher.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM .vsim / .X file launcher"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}";       Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}";                       Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon; Comment: "{#MyAppDescription}"
 
 [Run]
 Filename: "{app}\bin\{#MyAppExeName}"; Parameters: "--version"; Description: "Verify installation (--version)"; Flags: postinstall nowait skipifsilent unchecked
+; .X framework self-test — runs vsepr-x-audit.exe; exit 0 = all pass, exit 1 = failures
+Filename: "{app}\bin\vsepr-x-audit.exe"; Description: "Run .X framework audit (XBundle + XSuite, ~15 checks)"; Flags: postinstall waituntilterminated skipifsilent unchecked
 ; Run the canonical association script post-install (HKCU, no admin needed)
 Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -BinaryPath ""{app}\bin\vsepr.exe"""; Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; Flags: postinstall nowait skipifsilent unchecked; Tasks: fileassoc
 
