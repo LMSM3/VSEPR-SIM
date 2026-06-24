@@ -91,7 +91,7 @@ The bridge from CLI → xport canonical output is not yet wired.
 | ID | Feature | Gap | Blocks | Status |
 |----|---------|-----|--------|--------|
 | MF-E01 | IKK GL overlay (WO-75A Part B) | Scripting layer done; GL render pass not wired | UC-1 GL mode | 🟠 PENDING |
-| MF-E02 | IKK Python time-series (WO-75A Part C) | Not started | UC-1 | 🟡 PENDING |
+| MF-E02 | IKK Python time-series (WO-75A Part C) | `plot_dist_timeseries()` + PNG embed delivered in `reporting/generate_report.py` | UC-1 | ✅ COMPLETE |
 | MF-E03 | MCF-CAI state vector integration (WO-76) | Depends on WO-75A | UC-3 | 🟡 PENDING |
 | MF-E04 | `[run] mode = "sweep"` desktop progress reporting | RunVsimPanel has no sweep-step counter | UC-2 | 🟠 PENDING |
 
@@ -99,7 +99,7 @@ The bridge from CLI → xport canonical output is not yet wired.
 
 | ID | Feature | Gap | Blocks | Status |
 |----|---------|-----|--------|--------|
-| MF-F01 | STAGE.md missing | Master gate ledger deleted; referenced by VSIM_DEVELOPMENT.md step 5 | All | 🔴 PENDING |
+| MF-F01 | STAGE.md missing | Recreated at repo root with Days 1-75, Groups 1-89, release gate table | All | ✅ COMPLETE |
 | MF-F02 | GitHub Actions CI workflow | No `.github/workflows/*.yml` in repo root | All | 🟠 PENDING |
 | MF-F03 | v5.13.5 release gate (WO-75B) | ≥143 tests, `vsepr doctor` all OK, tag not pushed | All | 🟠 PENDING |
 
@@ -172,4 +172,4 @@ helper calls.
 
 ---
 
-*Last updated: 2026-06-19 | WO-MF-01 | Chemistry audit: MF-C03 promoted to COMPLETE; 167/167 tests passing*
+*Last updated: 2026-06-24 | WO-MF-01 | MF-F01 (STAGE.md) + MF-E02 (WO-75A Part C) promoted to COMPLETE; 167/167 tests passing*

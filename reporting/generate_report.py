@@ -194,6 +194,132 @@ def generate_fire_params_plot(data, out_path):
 
 
 # ===========================================================================
+# IKK Identity Sidecar — Discovery and D Time-Series Plot  (WO-75A Part C)
+# ===========================================================================
+
+def discover_identity_sidecar(search_dir):
+    """
+    Find all .identity.json sidecar files produced by the IKK identity vector
+    pipeline (write_identity_json in ikk_identity_vector.cpp).
+    """
+    found = []
+    for root, _, files in os.walk(search_dir):
+        for fname in sorted(files):
+            if fname.endswith('.identity.json'):
+                found.append(os.path.join(root, fname))
+    return found
+
+
+def plot_dist_timeseries(sidecar_path, out_path):
+    """
+    WO-75A Part C — IKK distinguishability time-series figure.
+
+    Reads a .identity.json sidecar (IKKIdentitySeries, written by
+    write_identity_json in src/vsim/analysis/ikk_identity_vector.cpp).
+
+    Produces a dual-axis matplotlib figure:
+      - Left axis  (blue):       D_rec = mean.x per frame (existence component,
+                                 Phase 1 proxy for 1 - dataloss)
+      - Right axis (red dashed): entropy proxy = 1 - D_rec (rises as identity
+                                 is lost; proportional to Delta-S, IKK 2nd law)
+      - Amber band:              frames where Delta-D_rec < 0 (identity loss zone)
+      - Reference line:          D = 0.5 (IKK IV property activation threshold)
+
+    Returns (out_path, caption_str) on success, (None, None) on failure.
+
+    Doctrine: reads sidecar-only fields; never writes back to .xyz/.xyzFull.
+    """
+    if not HAS_MPL:
+        return None, None
+
+    try:
+        with open(sidecar_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception:
+        return None, None
+
+    frames = data.get('frames', [])
+    if not frames:
+        return None, None
+
+    run_id = data.get('run_id',
+                      os.path.splitext(os.path.basename(sidecar_path))[0])
+    run_id = run_id.replace('.identity', '')
+
+    # D_rec = mean.x (existence axis, Phase 1 proxy for 1 - dataloss)
+    indices   = [fr['frame_index'] for fr in frames]
+    d_rec     = [fr['mean']['x']   for fr in frames]
+    ent_proxy = [1.0 - d           for d  in d_rec]
+
+    # Per-frame Delta-D_rec (frame 0 has no predecessor -> 0)
+    delta_d = [0.0]
+    for i in range(1, len(d_rec)):
+        delta_d.append(d_rec[i] - d_rec[i - 1])
+
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+
+    # --- Left axis: D_rec ---------------------------------------------------
+    ax1.set_xlabel('Simulation Step')
+    ax1.set_ylabel('D_rec (Distinguishability)', color='tab:blue')
+    ax1.plot(indices, d_rec, color='tab:blue', linewidth=1.8, label='D_rec')
+    ax1.tick_params(axis='y', labelcolor='tab:blue')
+    ax1.set_ylim(-0.02, 1.05)
+
+    # IKK IV property activation threshold
+    ax1.axhline(y=0.5, color='black', linestyle=':', linewidth=1.0,
+                label='D = 0.5 (IKK IV threshold)')
+
+    # Amber shading: regions where Delta-D < 0 (identity loss zone)
+    for i in range(1, len(indices)):
+        if delta_d[i] < 0:
+            ax1.axvspan(indices[i - 1], indices[i],
+                        alpha=0.22, color='#FFA500', linewidth=0)
+
+    # --- Right axis: entropy proxy ------------------------------------------
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Entropy Proxy (1 − D_rec)', color='tab:red')
+    ax2.plot(indices, ent_proxy, color='tab:red', linestyle='--',
+             linewidth=1.4, label='Entropy proxy')
+    ax2.tick_params(axis='y', labelcolor='tab:red')
+    ax2.set_ylim(-0.02, 1.05)
+
+    # Combined legend
+    h1, l1 = ax1.get_legend_handles_labels()
+    h2, l2 = ax2.get_legend_handles_labels()
+    ax1.legend(h1 + h2, l1 + l2, loc='upper right', fontsize=9)
+
+    plt.title(f'IKK Distinguishability Time Series -- {run_id}', fontsize=11)
+    plt.tight_layout()
+
+    try:
+        plt.savefig(out_path, dpi=150)
+    except Exception:
+        plt.close(fig)
+        return None, None
+    finally:
+        plt.close(fig)
+
+    # Auto-generate caption from sidecar summary (ASCII-safe for cp1252 locales)
+    d_mean    = sum(d_rec) / len(d_rec) if d_rec else 0.0
+    run_mean  = data.get('run_mean', {})
+    d_run     = run_mean.get('x', d_mean)
+    n_frames  = data.get('frame_count', len(frames))
+    loss_n    = sum(1 for dd in delta_d if dd < 0)
+    badge     = 'PASS' if d_run >= 0.8 else ('WARN' if d_run >= 0.5 else 'FAIL')
+    caption   = (
+        f'**IKK Distinguishability Time Series** -- `{run_id}` '
+        f'({n_frames} frames, D_mean={d_run:.3f}, second-law badge={badge}, '
+        f'identity-loss frames={loss_n}/{n_frames}). '
+        f'Left axis: D_rec (existence component, IKK Phase 1 proxy for 1-dataloss). '
+        f'Right axis: entropy proxy = 1-D_rec (proportional to Delta-S, IKK 2nd law). '
+        f'Amber shading: Delta-D < 0 (identity loss zone). '
+        f'Dotted line: D = 0.5 (IKK IV property activation threshold).'
+    )
+
+    return out_path, caption
+
+
+# ===========================================================================
 # Artifact Discovery
 # ===========================================================================
 
@@ -240,11 +366,16 @@ def discover_artifacts(search_dir):
 # Consolidated Report Generation
 # ===========================================================================
 
-def generate_consolidated_report(out_dir, artifacts, figures, seed=None):
+def generate_consolidated_report(out_dir, artifacts, figures, seed=None,
+                                  captions=None):
     """
     Write a consolidated Markdown report referencing all discovered artifacts
     and generated figures.
+
+    captions: optional dict mapping figure label -> caption string. When
+              provided, a caption paragraph is written below each figure.
     """
+    captions = captions or {}
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     seed_label = f" (Seed {seed})" if seed is not None else ""
 
@@ -279,6 +410,8 @@ def generate_consolidated_report(out_dir, artifacts, figures, seed=None):
             rel = os.path.basename(fig_path)
             lines.append(f"### {label}\n")
             lines.append(f"![{label}]({rel})\n")
+            if label in captions:
+                lines.append(captions[label] + "\n")
             lines.append("")
 
     # Inline Markdown reports
@@ -517,12 +650,32 @@ def main():
     print()
 
     # ------------------------------------------------------------------
+    # 2.5  Generate IKK distinguishability time-series (WO-75A Part C)
+    # ------------------------------------------------------------------
+    captions = {}
+    sidecar_files = discover_identity_sidecar(scan_dir)
+    if sidecar_files:
+        print(f"[*] Found {len(sidecar_files)} identity sidecar(s) — generating D time-series plots...")
+    for sc_path in sidecar_files:
+        run_id = os.path.basename(sc_path).replace('.identity.json', '')
+        png_path = os.path.join(args.out, f'{run_id}_dist_timeseries.png')
+        result_path, caption = plot_dist_timeseries(sc_path, png_path)
+        if result_path:
+            label = f'IKK D Time Series ({run_id})'
+            figures[label] = result_path
+            captions[label] = caption
+            print(f"[\u2713] {result_path}")
+        else:
+            print(f"[!] dist_timeseries skipped for {run_id} (matplotlib not available or empty sidecar)")
+    print()
+
+    # ------------------------------------------------------------------
     # 3. Generate consolidated report
     # ------------------------------------------------------------------
     print("[*] Generating consolidated report...")
     report_path = generate_consolidated_report(
-        args.out, artifacts, figures, seed=args.seed)
-    print(f"[✓] Report: {report_path}")
+        args.out, artifacts, figures, seed=args.seed, captions=captions)
+    print(f"[\u2713] Report: {report_path}")
 
     # ------------------------------------------------------------------
     # 4. Write manifest JSON
