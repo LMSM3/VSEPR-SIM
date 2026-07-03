@@ -659,6 +659,10 @@ enabled            = false
 render\_interval    = 50
 display\_fps        = 30
 external\_renderer  = none
+gl\_auto\_orbit      = false
+gl\_spin            = false
+gl\_spin\_axis       = "y"
+gl\_spin\_deg\_per\_s  = 30.0
 ```
 
 |Field|Type|Default|Default source|Required|Status|
@@ -673,6 +677,9 @@ external\_renderer  = none
 |`gl\_window\_width`|int|`1280`|universal|no|partial|
 |`gl\_window\_height`|int|`800`|universal|no|partial|
 |`gl\_auto\_orbit`|bool|`false`|universal|no|partial|
+|`gl\_spin`|bool|`false`|universal|no|partial|
+|`gl\_spin\_axis`|string|`"y"`|universal|no|partial|
+|`gl\_spin\_deg\_per\_s`|float|`30.0`|universal|no|partial|
 |`overlay\_sequence`|string\[]|none|none|no|partial|
 
 \---
@@ -1362,7 +1369,9 @@ observables            += radiation\_damage, defects
 |v5.0.0-beta.9|Added \[\[raw.object\]\] block (§19) — Level 4 explicit particle injection (debug/import only). Schema and parser complete.|
 |v5.0.0-beta.9|Expanded Registry: structure (§24) alias map to ~70 canonical entries across 8 groups: ionic/salts, elemental metals, covalent/semiconductor, oxides/ceramics, molecular geometry, polymers/organics, porous/framework, bead/premacro.|
 |v5.0.0-beta.9|Beta-8 declared closed. Beta-9 theme: Registry Resolution and Minimal Lab Script Layer (WO-VSEPR-SIM-58A).|
+|v5.1.4 (Day 84)|Added `[chem_plus]` block — declarative reaction classification and VSEPR geometry bridge for the `vsepr classify` preview path. Keys: `reaction`, `preset`, `vsepr_link`, `class_override`, `energy_kj`. Schema in `vsim_document.hpp`; evaluator in `chemplus_declarative.hpp`. Full reference: `docs/CHEMISTRY_CLASSIFY_REFERENCE.md`.|
+|v5.1.4 (Day 84)|`vsepr classify` extended: now renders a `[ChemPlus]` output block when the input script contains an active `[chem_plus]` section. CLI entry point: `src/cli/cmd_classify.cpp`.|
 
-> \*\*Reminder:\*\* When you change a block, field, default, or built-in function in the VSIM runtime or parser, add a row to this changelog and update the affected section. If the change is breaking, mark the field status as `changed` and add a migration note.
+> \*\*Reminder:\*\*
 
 

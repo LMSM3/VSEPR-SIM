@@ -1357,6 +1357,9 @@ src/analysis/
 | `[analysis.sampling]` | Scalar trajectory sampling: RDF, MSD | Canonical — replaces `[analysis.property_sampling]` (deprecated) |
 | `[analysis.scale_sampling]` | Field projection, RVE, emergence metrics | WO-VSEPR-SIM-61D |
 | `[analysis.inference]` | Property inference | Alias `[inference]` accepted in v2 with warning |
+| `[analysis.ikk_end_tag]` | IKK report end-tag enrichment | WO-75A — D, eta_ab, \|Psi^hid\|, Delta-S, badge |
+| `[analysis.ivec]` | IKK identity-vector series output | WO-75B Phase 1 — Ī_f, ΔĪ_f, `.identity.json` |
+| `[object.<layer>.<basis>]` | MCF-CAI object state grid | WO-76 — 9 cells: macro/chemical/fundamental × carrier/action/information |
 | `[output]` | Output paths and file switches | `output_dir` / `output_prefix` added WO-VSEPR-SIM-61D |
 
 ### `[analysis.scale_sampling]` fields
@@ -1384,6 +1387,142 @@ src/analysis/
 |---|---|---|---|
 | `enabled` | bool | `false` | |
 | `mode` | string | `"rule_based_61b"` | `rule_based_61b` \| `rule_based_61d` |
+
+### `[analysis.ikk_end_tag]` fields  — WO-75A
+
+Controls per-section IKK (Identity-Knowledge-Kernel) end-tag generation.
+End-tags summarise D_rec, eta_ab, |Psi^hid|, Delta-S, and a second-law badge
+from an `IdentitySidecarSeries` and append them to each Markdown / LaTeX
+report section.
+
+**Doctrine:** all values are DERIVED from sidecar data only.  Never written
+back into truth-state (`.xyz` / `.xyzFull`).
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `enabled` | bool | `false` | ✅ | Must be `true` for any output to be emitted |
+| `emit_markdown` | bool | `true` | ✅ | Appends an IKK block to `.md` report sections |
+| `emit_latex` | bool | `false` | ✅ | Emits `\ikkendsection{}{}` macro to `.tex` sections |
+| `d_pass_threshold` | float | `0.60` | ✅ | D_rec ≥ this value → PASS badge.  Clamped to [0,1] |
+| `d_warn_threshold` | float | `0.35` | ✅ | D_rec ≥ this value → WARN badge.  Clamped; guard enforces pass > warn |
+| `scale_regime` | string | `"S3"` | ✅ | IKK Notation Registry v1.0: `S0`, `S2`, `S3`, `S4`, `S_mat` |
+| `section_reference` | string | `""` | ✅ | Appended as `IKK IV §<label>` in the end-tag.  Empty → omit |
+
+**Example script block:**
+
+```toml
+[analysis.ikk_end_tag]
+enabled           = true
+emit_markdown     = true
+emit_latex        = false
+d_pass_threshold  = 0.70
+d_warn_threshold  = 0.40
+scale_regime      = "S_mat"
+section_reference = "IV.7"
+```
+
+**Struct:** `VsimIkkEndTagSection` (`include/vsim/vsim_document.hpp`)  
+**Document member:** `doc.pipeline_ikk_end_tag`  
+**Module key:** `"ikk_end_tag"` (self-registers via `AutoRegister`)  
+**Implementation:** `include/vsim/analysis/ikk_end_tag.hpp` + `src/vsim/analysis/ikk_end_tag.cpp`  
+**Tests:** Group 87 (`tests/test_ikk_end_tag.cpp`) — 20 cases, all PASS
+
+---
+
+### `[analysis.ivec]` fields  — WO-75B Phase 1
+
+Enables per-frame IKK identity-vector (Ī_f) computation and serialisation to
+`<output_dir>/<run_id>.identity.json`.
+
+**Mathematical basis:**  
+Each frame maps to one aggregate I-vector in ℝ⁵ with fixed axis order
+`(x, y, z, t, w)` — existence, EM, spatial, temporal, internal.  
+The frame mean `Ī_f = (1/N_f) Σ I_{p,f}` is permutation-invariant and
+non-invertible (first-moment only; does not recover `{I_{p,f}}`).  
+Phase 1 uses a scalar proxy: one aggregate per frame derived from
+`IdentitySidecarRecord` fields (particle_count = 1).
+
+**Phase 1 proxy mapping:**
+
+| Axis | Sidecar field | Formula |
+|---|---|---|
+| `x` — existence (S0) | `dataloss` | `1 − dataloss` |
+| `y` — EM (S2/S3) | `hidden_channel` | `1 − hidden_channel` |
+| `z` — spatial (S3) | `recoverable_info` | `recoverable_info` |
+| `t` — temporal (S4) | `projection_loss` | `1 − projection_loss` |
+| `w` — internal | `identity_residual` | `1 − identity_residual` |
+
+All values are clamped to [0, 1].
+
+**Doctrine:** derived from sidecar data only; never written back to
+truth-state (`.xyz` / `.xyzFull`); never used as force input.
+
+| Field | Type | Default | Notes |
+|---|---|---|---|
+| `enabled` | bool | `false` | Must be `true` for output to be emitted |
+| `write_json` | bool | `true` | Write `<run_id>.identity.json` |
+| `include_delta` | bool | `true` | Include ΔĪ_f per frame |
+| `include_var` | bool | `false` | Include diag(Var_f) — always zero in Phase 1 |
+| `output_dir` | string | `""` | Override output dir; empty = use `pipeline_output.output_dir` |
+
+**Example script block:**
+
+```toml
+[analysis.ivec]
+enabled       = true
+write_json    = true
+include_delta = true
+output_dir    = "out/identity"
+```
+
+**Struct:** `VsimIvecSection` (`include/vsim/vsim_document.hpp`)  
+**Document member:** `doc.pipeline_ivec`  
+**Implementation:** `include/vsim/analysis/ikk_identity_vector.hpp` + `src/vsim/analysis/ikk_identity_vector.cpp`  
+**Tests:** Group 88 (`tests/test_ikk_identity_vector.cpp`) — 28 cases, all PASS
+
+---
+
+### `[object.<layer>.<basis>]` fields  — WO-76 Steps 3+5
+
+Populates the MCF-CAI 3×3 object state grid (`McfCaiSection`).
+
+**The grid:**
+
+|  | `carrier` | `action` | `information` |
+|---|---|---|---|
+| **macro** | geometry, phase | stress, heat flux | formation age, defect memory *(sidecar)* |
+| **chemical** | Z, mass, CN | reaction, oxidation | bond entropy, D_chem *(sidecar)* |
+| **fundamental** | charge, spin | EM/strong/weak | \|Ψ^hid\|, projection loss *(sidecar)* |
+
+**Doctrine:** `information` column fields are sidecar-only derived quantities;
+they must never be used as force inputs and must never be written back into
+truth-state files.
+
+**Layer strings:** `macro` · `chemical` · `fundamental`  
+**Basis strings:** `carrier` · `action` · `information`
+
+**Example script block:**
+
+```toml
+[object.macro.carrier]
+phase_label  = "FCC"
+grain_count  = 12
+
+[object.chemical.action]
+reaction_active = true
+oxidation_state = -2
+
+[object.fundamental.information]
+psi_hid         = 0.12
+projection_loss = 0.08
+entropy_trace   = 0.35
+```
+
+**Struct:** `VsimMcfCaiSection` = `vsim::analysis::McfCaiSection`
+(`include/vsim/analysis/mcf_cai.hpp`)  
+**Document member:** `doc.mcf_cai`  
+**Implementation:** `src/vsim/analysis/mcf_cai.cpp`  
+**Tests:** Group 89 (`tests/test_mcf_cai.cpp`) — 24 cases, all PASS
 
 ### Inference modes
 
@@ -1426,6 +1565,93 @@ src/analysis/
 All 19 tests passing: T1–T17 covering `macro_ready`, mass conservation failure,
 invalid RVE windows, inference mode separation, schema compatibility, output naming,
 seed determinism, auto-enable manifest, and enum/bounds validation.
+
+---
+
+## Surface Analysis — `[object.surface]` / `[[object.surface]]`
+
+**Added v5.0.14.** Analysis-only measurement probes that record particle
+crossing events and flux metrics at geometric surfaces during a simulation run.
+Surfaces never affect the force kernel, particle truth-state, or `.xyz` output.
+
+### Doctrine
+
+- Surfaces are post-step analysis; they execute after every force integration step.
+- All output lands in a `.surface.json` sidecar, never in `.xyz` / `.xyzFull`.
+- `enabled = false` at the master level silently disables all probes.
+- `compute_ivec_flux = true` is a no-op unless `[analysis.ivec] enabled = true`.
+
+### Master fields (`[object.surface]`)
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Master on/off switch for all surface probes |
+| `write_json` | bool | `false` | Emit `.surface.json` sidecar |
+| `output_dir` | string | `""` | Directory for sidecar files |
+
+### Per-probe fields (`[[object.surface]]`)
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `name` | string | `""` | Human-readable probe label |
+| `geometry` | string | `"rectangle"` | `"rectangle"` · `"disk"` · `"sphere"` |
+| `center_x` | float | `0.0` | Probe centre X in Å |
+| `center_y` | float | `0.0` | Probe centre Y in Å |
+| `center_z` | float | `0.0` | Probe centre Z in Å |
+| `normal_x` | float | `0.0` | Surface outward-normal X component |
+| `normal_y` | float | `0.0` | Surface outward-normal Y component |
+| `normal_z` | float | `1.0` | Surface outward-normal Z component |
+| `width` | float | `10.0` | Rectangle half-width in Å (ignored for disk/sphere) |
+| `height` | float | `10.0` | Rectangle half-height in Å (ignored for disk/sphere) |
+| `radius` | float | `5.0` | Disk or sphere radius in Å (ignored for rectangle) |
+| `log_crossings` | bool | `false` | Record every individual crossing event with step index |
+| `compute_flux` | bool | `false` | Φ — net particle crossings / (area · step) |
+| `compute_mass_flux` | bool | `false` | J_m — mass-weighted flux / (area · step) |
+| `compute_energy_flux` | bool | `false` | Q — kinetic energy flux / (area · step) |
+| `compute_momentum_flux` | bool | `false` | P — normal momentum transfer / (area · step) |
+| `compute_species_flux` | bool | `false` | J_s — per-species crossing subtable |
+| `compute_ivec_flux` | bool | `false` | J_iv — IKK identity-vector crossing signature |
+| `species_filter` | list/string | `[]` | Restrict probe to named species; inline array or bare string |
+| `output_tag` | string | `""` | Key used for this probe in the `.surface.json` sidecar |
+
+### Geometry helpers
+
+| Geometry | Active dimension fields | `area()` formula |
+|---|---|---|
+| `rectangle` | `width`, `height` | `4 × width × height` |
+| `disk` | `radius` | `π × radius²` |
+| `sphere` | `radius` | `4π × radius²` |
+
+### Schema location
+
+**Struct:** `VsimSurfaceObject`, `VsimSurfaceSection`
+(`include/vsim/vsim_document.hpp`)  
+**Document member:** `doc.surfaces`  
+**Parser applier:** `VsimParser::apply_surface_key()`
+(`src/vsim/vsim_parser.cpp`)  
+**Section token:** `object.surface`  
+**Double-bracket:** `[[object.surface]]` creates a new `VsimSurfaceObject`
+
+### Sidecar output schema (`.surface.json`)
+
+```json
+{
+  "run": "<project.name>",
+  "surfaces": {
+    "<output_tag>": {
+      "crossings":       [ { "step": 0, "particle_id": 42, "sign": 1 }, ... ],
+      "flux":            0.0014,
+      "mass_flux":       0.0,
+      "energy_flux":     0.0,
+      "momentum_flux":   0.0,
+      "species_flux":    { "Na": 0.0012, "Cl": 0.0002 },
+      "ivec_flux":       [ 0.98, 0.95, 0.91, 0.89, 0.87 ]
+    }
+  }
+}
+```
+
+Fields not requested (e.g. `compute_flux = false`) are absent from the sidecar entry.
 
 ---
 
@@ -2990,3 +3216,61 @@ site_density_per_nm2  = 5.0
 - **Bridge:** `vsim::DissolutionBridge`
 - **Test:** `test_dissolution` (Group 4: Chemistry)
 Scoring: 70% proximity to target (Gaussian, σ=20% of target) + 30% stored confidence.
+
+---
+
+## `[chem_plus]` — ChemPlus Reaction Bridge  *(Day 84)*
+
+Declarative reaction classification and VSEPR geometry linking for the
+`vsepr classify` preview path. No simulation engine is invoked.
+
+### Schema
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `reaction` | string | `""` | Canonical reaction string, e.g. `"CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"`. Arrow must be ` -> `. Energy token `+ NNN kJ` is parsed automatically. |
+| `preset` | string | `""` | Named reaction preset: `"999"` (8 combustion/general reactions) or `"998"`. |
+| `vsepr_link` | bool | `false` | When `true`, resolves an AX-notation VSEPR tag for the dominant product of each reaction. |
+| `class_override` | string | `""` | Force reaction class: `combustion` \| `decomposition` \| `acid-base` \| `synthesis` \| `general`. |
+| `energy_kj` | double | `0.0` | Override parsed energy (kJ/mol). `0.0` = parse from reaction string. |
+
+The section is active when either `reaction` or `preset` is non-empty.
+
+### Reaction classification rules (lexical, in order)
+
+| Class | Trigger |
+|-------|---------|
+| `combustion` | LHS contains `o2` AND RHS contains `co2` |
+| `decomposition` | LHS has no `+` but RHS has `+` |
+| `acid-base` | Reaction contains a recognised acid (`hcl`, `h2so4`, `hno3`) AND base (`naoh`, `koh`, `ca(oh)2`) |
+| `general` | No other rule matched |
+
+> **Known gap:** hydrogen combustion (`2H2 + O2 → H2O`) is classified as `general`.
+> Use `class_override = combustion` as a workaround. See `docs/BUG_REPORT_CHEMISTRY_CLASSIFY.md`.
+
+### Example
+
+```toml
+[formula]
+formula = "CH4"
+
+[chem_plus]
+reaction   = "CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"
+vsepr_link = true
+```
+
+Output (via `vsepr classify`):
+```
+[ChemPlus]
++ CH4 + 2O2 -> CO2 + 2H2O + 891 kJ
+    class=combustion  mode=exothermic  energy=891 kJ  vsepr=AX2
+```
+
+### Related components
+
+- **Schema:** `include/vsim/vsim_document.hpp` — `ChemPlusSection`
+- **Evaluator:** `include/vsim/chemplus_declarative.hpp` — `vsim::chemplus::evaluate()`
+- **CLI:** `src/cli/cmd_classify.cpp` — `run_classify_preview()`
+- **Tests:** `tests/test_chemplus_declarative.cpp` (Group 91), `tests/test_chemplus_cli.cpp` (Group 92)
+- **Demo script:** `scripts/combustion_chem_pipeline.vsim`
+- **Full reference:** `docs/CHEMISTRY_CLASSIFY_REFERENCE.md`
