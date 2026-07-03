@@ -1,0 +1,213 @@
+# combustion_chem_pipeline.vsim
+# ============================================================================
+# VSEPR-SIM  |  Chemistry Classify Pipeline  |  Full Demonstration Script
+# ============================================================================
+#
+# Purpose:
+#   A comprehensive end-to-end demonstration of the VSEPR geometry classifier,
+#   organic candidate analysis, and ChemPlus reaction bridge working together.
+#   This script is designed to be run as:
+#
+#       vsepr classify combustion_chem_pipeline.vsim
+#
+#   It does NOT start a simulation engine.  It is a declarative classify script.
+#
+# What this script covers:
+#   1. Molecule declaration (methane, CH4 — simplest hydrocarbon)
+#   2. VSEPR geometry preview (AX4 tetrahedral centre, 4x AX1 hydrogen sites)
+#   3. Organic family classification (alkane family inference)
+#   4. ChemPlus combustion reaction with full energy and VSEPR product link
+#   5. All supported [chem_plus] keys exercised in one script
+#
+# Validated by:
+#   scripts/demo_wo84u_chemplus_cli.py  (15/15 PASS)
+#   tests/test_chemplus_cli.cpp         (Group 92, 33/33 PASS)
+#
+# Reference:
+#   docs/CHEMISTRY_CLASSIFY_REFERENCE.md
+#   docs/BUG_REPORT_CHEMISTRY_CLASSIFY.md
+#
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# [project]  —  identity block
+# ----------------------------------------------------------------------------
+# Every VSIM script begins with a [project] section.  The name is used in
+# report filenames, dashboard labels, and log output.
+
+[project]
+name        = "combustion_chem_pipeline"
+description = "Full chemistry classify pipeline: VSEPR + organic + ChemPlus"
+version     = "1.0.0"
+author      = "VSEPR-SIM classify demo"
+tags        = "chemistry classify vsepr chemplus combustion"
+
+
+# ----------------------------------------------------------------------------
+# [formula]  —  molecular identity
+# ----------------------------------------------------------------------------
+# Declares the molecule for the VSEPR and OrganicCandidate classifiers.
+# The classify preview builds a minimal atomic scaffold from this formula.
+#
+# CH4 (methane):
+#   - Centre: C (Z=6), 4 bonded H ligands
+#   - VSEPR: AX4, tetrahedral (no lone pairs on carbon)
+#   - Organic family: alkane
+
+[formula]
+formula = "CH4"
+
+
+# ----------------------------------------------------------------------------
+# [chem_plus]  —  ChemPlus reaction bridge
+# ----------------------------------------------------------------------------
+# Declares one or more reactions to classify alongside the molecule geometry.
+# When [chem_plus] is present and active (reaction or preset set), the
+# classify output gains a [ChemPlus] block after the [OrganicCandidate] block.
+#
+# Supported keys:
+#   reaction        Canonical reaction string:
+#                     "<reactants> -> <products> [+ <value> kJ]"
+#                   Arrow must be " -> " (space-arrow-space).
+#                   Stoichiometric coefficients are accepted (2H2, 3.5O2).
+#                   Energy is parsed from the trailing "+ NNN kJ" token.
+#
+#   preset          Named preset library.  Available values:
+#                     "999"  8 common combustion/general reactions
+#                     "998"  alternative set of 8 reactions
+#                   preset and reaction may coexist; reaction is evaluated
+#                   first, preset reactions appended after.
+#
+#   vsepr_link      When true, resolves a VSEPR geometry tag (AX notation)
+#                   for the dominant product species of each reaction.
+#                   The tag is derived from the first token after the arrow
+#                   that matches a known species in the internal VSEPR table.
+#                   Example: CO2 -> AX2, H2O -> AX2E2, NH3 -> AX3E, CH4 -> AX4
+#
+#   class_override  Force a specific reaction class regardless of lexical
+#                   matching.  Useful for synthesis reactions (Haber process,
+#                   etc.) which are not yet auto-detected.
+#                   Valid values: combustion, decomposition, acid-base,
+#                                 synthesis, general
+#
+#   energy_kj       Override the parsed energy value (kJ/mol, positive = exo).
+#                   When set, replaces the value extracted from the reaction
+#                   string.  Use for reactions where the energy is known but
+#                   not embedded in the reaction string literal.
+#
+# Classification rules (lexical, applied in order):
+#   1. combustion     LHS has "o2" AND RHS has "co2"
+#                     NOTE: hydrogen combustion (H2O product) is not yet
+#                     auto-detected — see BUG_REPORT_CHEMISTRY_CLASSIFY.md #2.
+#                     Workaround: use class_override = combustion.
+#   2. decomposition  LHS has no "+" but RHS has "+"
+#   3. acid-base      Reaction contains a recognised acid AND base pair
+#   4. general        No other rule matched
+
+[chem_plus]
+
+# Primary reaction: methane combustion
+# C + 4H₂ → CH₄ is the synthesis, but combustion is the more interesting path:
+#   CH₄ + 2O₂  →  CO₂ + 2H₂O  +  891 kJ
+# Classification:  combustion  (LHS has o2, RHS has co2)
+# Energy:          891 kJ (exothermic — positive value in reaction string)
+# VSEPR product:   CO2 → AX2 (linear, no lone pairs)
+reaction   = "CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"
+
+# Enable VSEPR geometry tag on the first product species
+vsepr_link = true
+
+# Not overriding class — auto-detection correctly identifies combustion here.
+# (Uncomment and change to test override behaviour:)
+# class_override = combustion
+
+# Not overriding energy — parsed from reaction string as 891.0 kJ.
+# (Uncomment to test energy override:)
+# energy_kj = 891.0
+
+
+# ----------------------------------------------------------------------------
+# [export]  —  output file configuration
+# ----------------------------------------------------------------------------
+# Controls which sidecar files the runtime writes after a run.
+# For a classify-only script the engine is not invoked, so these fields
+# serve as documentation of intent for when this script is adapted to a
+# full simulation run.
+#
+# To produce a Markdown report from a real run:
+#   write_report_md = true
+#
+# To export the trajectory:
+#   write_xyz     = true
+#   write_xyzFull = true
+
+[export]
+output_dir      = "out/combustion_chem_pipeline"
+write_report_md = false
+write_xyz       = false
+write_xyzFull   = false
+
+
+# ----------------------------------------------------------------------------
+# [run]  —  simulation mode (classify scripts do not execute the engine)
+# ----------------------------------------------------------------------------
+# Included for completeness.  vsepr classify reads only the declarative
+# sections ([formula], [chem_plus]) and does not invoke the run engine.
+# If this script is later converted to a full MD run, uncomment and
+# configure these fields.
+#
+# [run]
+# mode      = "md"
+# max_steps = 500
+# dt_fs     = 1.0
+# converge  = false
+
+
+# ============================================================================
+# Extended reactions block — preset survey
+# ============================================================================
+# A second independent [chem_plus] block is not currently parsed by the
+# classify path (only the first occurrence is used).  The reactions below
+# are included as comments to document the full preset-999 library that
+# can be activated by replacing "reaction" with "preset = 999" above.
+#
+# Preset 999 — 8 reactions:
+#
+#   CH4  + 2O2   -> CO2 + 2H2O  + 891 kJ   combustion
+#   C2H6 + 3.5O2 -> 2CO2 + 3H2O + 1561 kJ  combustion
+#   C3H8 + 5O2   -> 3CO2 + 4H2O + 2219 kJ  combustion
+#   2H2  + O2    -> 2H2O         + 572 kJ   general*   (*Bug #2: should be combustion)
+#   P2O5 + 3H2O  -> 2H3PO4       + 177 kJ   general
+#   N2   + 3H2   -> 2NH3          + 92 kJ   general
+#   SO3  + H2O   -> H2SO4        + 130 kJ   general
+#   C    + O2    -> CO2           + 394 kJ   combustion
+#
+# To activate:
+#   preset     = "999"
+#   vsepr_link = true
+#
+# ============================================================================
+
+
+# ============================================================================
+# Additional reaction examples (for copy-paste testing)
+# ============================================================================
+#
+# Decomposition:
+#   reaction = "CaCO3 -> CaO + CO2"
+#
+# Acid-base neutralisation:
+#   reaction = "HCl + NaOH -> NaCl + H2O"
+#
+# Synthesis (requires class_override — not auto-detected):
+#   reaction       = "N2 + 3H2 -> 2NH3 + 92 kJ"
+#   class_override = "synthesis"
+#
+# Energy override example:
+#   reaction  = "SO3 + H2O -> H2SO4"
+#   energy_kj = 130.5
+#
+# ============================================================================
+# End of combustion_chem_pipeline.vsim
+# ============================================================================
