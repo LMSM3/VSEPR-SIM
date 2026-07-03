@@ -1873,3 +1873,25 @@ target_link_libraries(test_vsepr_observe_sink PRIVATE
     vsepr_core)
 vsepr_add_test(NAME VseprObserveSinkGroup90 TARGET test_vsepr_observe_sink
     LABELS vsepr observe sink wo-84s quick)
+
+# ============================================================================
+# Group 91  --  WO-84T: Chem+ Declarative Bridge
+# ============================================================================
+
+add_executable(test_chemplus_declarative
+    ${PROJECT_SOURCE_DIR}/tests/test_chemplus_declarative.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/vsepr.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/organic_candidate.cpp
+)
+target_include_directories(test_chemplus_declarative PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/atomistic
+)
+target_link_libraries(test_chemplus_declarative PRIVATE
+    vsepr_chem
+    vsepr_core)
+vsepr_add_test(NAME ChemPlusDeclarativeGroup91 TARGET test_chemplus_declarative
+    LABELS chemplus declarative vsepr wo-84t quick)

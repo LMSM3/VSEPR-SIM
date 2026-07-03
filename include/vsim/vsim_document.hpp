@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * vsim_document.hpp — Parsed representation of a .vsim run script
+ * vsim_document.hpp  -  Parsed representation of a .vsim run script
  * ================================================================
  *
  * A .vsim file is a TOML-subset declarative script that describes a
@@ -9,20 +9,20 @@
  *
  * Canonical section order:
  *
- *   [project]          — name, version, seed, determinism
- *   [simulation]       — molecules, formation schedule, temperature
- *   [export]           — data file outputs (xyz, json, tsv, md, ...)
- *   [export.visual]    — rendered artifact outputs (svg, png, html, gif, webgl, ...)
- *   [visual]           — interactive display modes (terminal, GL, web)
- *   [defaults.run]     — default run settings merged into every [test.*]
- *   [defaults.analysis]— default analysis flags merged into every [test.*]
- *   [test.<name>]      — golden test entry (structure, group, formula, geometry)
- *   [test.<name>.run]  — per-test run overrides
- *   [test.<name>.analysis] — per-test analysis flags
- *   [suite]            — group-based test selection, run modes, ordering
- *   [suite.limits]     — per-test timeout, fail_fast, continue_on_warning
- *   [suite.smoke]      — fast smoke subset (groups + purpose)
- *   [report]           — report content flags (manifest, hashes, mismatches)
+ *   [project]           -  name, version, seed, world_seed, determinism
+ *   [simulation]        -  molecules, formation schedule, temperature
+ *   [export]            -  data file outputs (xyz, json, tsv, md, ...)
+ *   [export.visual]     -  rendered artifact outputs (svg, png, html, gif, webgl, ...)
+ *   [visual]            -  interactive display modes (terminal, GL, web)
+ *   [defaults.run]      -  default run settings merged into every [test.*]
+ *   [defaults.analysis] -  default analysis flags merged into every [test.*]
+ *   [test.<name>]       -  golden test entry (structure, group, formula, geometry)
+ *   [test.<name>.run]   -  per-test run overrides
+ *   [test.<name>.analysis]  -  per-test analysis flags
+ *   [suite]             -  group-based test selection, run modes, ordering
+ *   [suite.limits]      -  per-test timeout, fail_fast, continue_on_warning
+ *   [suite.smoke]       -  fast smoke subset (groups + purpose)
+ *   [report]            -  report content flags (manifest, hashes, mismatches)
  *
  * The document model is a plain aggregate. No hidden state, no
  * virtual dispatch. Every field has a clear default and is
@@ -35,6 +35,20 @@
  */
 
 #include "vsim_value.hpp"
+#include "seed256.hpp"
+
+// WO-75D — biological object layer
+#include "bio/bio_object.hpp"
+
+// WO-66N/66O/66P/66Q — constructor objects, diagnostics, crystal, XBIT
+#include "objects/object_path.hpp"
+#include "objects/constructor_object.hpp"
+#include "objects/non_molecular_objects.hpp"
+#include "objects/bridge_objects.hpp"
+#include "diagnostics/organic_diagnostics.hpp"
+#include "crystal/crystal_constructor.hpp"
+#include "xbit/xbit.hpp"
+#include "vsim/analysis/mcf_cai.hpp"
 
 #include <array>
 #include <cstdint>
@@ -45,7 +59,7 @@
 namespace vsim {
 
 // ============================================================================
-// [cell] section — simulation box geometry
+// [cell] section  -  simulation box geometry
 //
 // Defines the orthorhombic periodic cell used for PBC runs.
 // Only type = "orthorhombic" is supported in beta-8.
@@ -64,7 +78,7 @@ struct CellSection {
 };
 
 // ============================================================================
-// [boundary] section — per-axis boundary mode
+// [boundary] section  -  per-axis boundary mode
 //
 // Values: "periodic" | "open" | "reflective" (reserved) | "absorbing" (reserved)
 // Compact form: mode = "periodic", axes = "x,y,z"
@@ -87,7 +101,7 @@ struct BoundarySection {
 };
 
 // ============================================================================
-// [pbc] section — PBC runtime options
+// [pbc] section  -  PBC runtime options
 //
 // WO-VSEPR-SIM-57B
 // ============================================================================
@@ -95,7 +109,7 @@ struct BoundarySection {
 // When to remap particle positions into [0, L)
 enum class WrapMode {
 	Never,
-	AfterStep,    // default — wrap after every integration step
+	AfterStep,    // default  -  wrap after every integration step
 	AfterForce,
 	OnExport
 };
@@ -117,16 +131,35 @@ struct PBCSection {
 struct ProjectSection {
 	std::string name;                    // e.g. "demo_03_graphite_stack"
 	std::string version;                 // e.g. "v5.0.0-beta.8"
-	uint64_t    seed_base    = 0;        // Base RNG seed for reproducibility
-	bool        determinism  = true;     // Always true — field kept for schema completeness
+	uint64_t    seed_base    = 0;        // Base RNG seed for reproducibility (low 64 bits)
+	bool        determinism  = true;     // Always true  -  field kept for schema completeness
 	std::string description;             // Optional human note
+	// script_type: controls pre-run dispatch behaviour.
+	//   "standard"                        = normal parse-and-run (default)
+	//   "interactive_preprocess_then_run" = CLI wizard collects inputs, writes
+	//                                       a resolved .vsim, then runs it
+	std::string script_type = "standard";
+	// world_seed: simulation-wide constant seed for process evolution equations.
+	// When set, every particle birth hash is computed twice (dual-seed assignment).
+	// See include/vsim/seed256.hpp for format details.
+	Seed256 world_seed;  // 256-bit; zero = not set (single-seed mode)
 
-	bool has_name()    const { return !name.empty(); }
-	bool has_version() const { return !version.empty(); }
+	bool has_name()           const { return !name.empty(); }
+	bool has_version()        const { return !version.empty(); }
+	bool is_interactive()     const { return script_type == "interactive_preprocess_then_run"; }
+	// WO-NL0C: replay scripts carry no simulation workload; they open an
+	// existing .xyzf or .dynx file and drive the viewer only.
+	bool is_replay()          const { return script_type == "newleaf_type3_replay"; }
+	// WO-NL0A: continuous random-materials discovery run.
+	bool is_discovery()       const { return script_type == "newleaf_type1_discovery"; }
+	// WO-NL0B: deterministic MD or crystal-relaxation script.
+	bool is_type2_md()        const { return script_type == "newleaf_type2_md"; }
+	bool is_type2_crystal()   const { return script_type == "newleaf_type2_crystal"; }
+	bool is_type2()           const { return is_type2_md() || is_type2_crystal(); }
 };
 
 // ============================================================================
-// [simulation] section — molecule / system spec
+// [simulation] section  -  molecule / system spec
 // ============================================================================
 
 struct MoleculeEntry {
@@ -137,7 +170,7 @@ struct MoleculeEntry {
 	std::string layer_mode;     // Optional stacking mode: "AB", "AA", "turbostratic"
 	int         n_layers = 1;   // Layer count (graphene/graphite stacks)
 
-	// ── Directed injection ───────────────────────────────────────────────────
+	// -- Directed injection ---------------------------------------------------
 	// region: named placement zone within the simulation box.
 	//   Supported values: "corner_xpyp" | "corner_xpyn" | "corner_xnyp" | "corner_xnyn"
 	//   (x+/x- = positive/negative X half; y+/y- = positive/negative Y half)
@@ -157,7 +190,7 @@ struct SimulationSection {
 	double box_size_ang     = 50.0;         // Cubic box edge (Å); 0 = auto
 	bool   periodic         = false;        // Periodic boundary conditions
 
-	// ── Ewald summation (ionic PBC systems) ─────────────────────────────────
+	// -- Ewald summation (ionic PBC systems) ---------------------------------
 	bool   use_ewald        = false;        // Enable Ewald long-range Coulomb
 	double ewald_alpha      = 0.3;          // Splitting parameter (Å⁻¹)
 	double ewald_rcut       = 10.0;         // Real-space cutoff (Å)
@@ -165,29 +198,29 @@ struct SimulationSection {
 
 	std::string formation_preset;           // Named preset: "metal", "polymer", "ceramic", etc.
 
-	// ── UX pacing ────────────────────────────────────────────────────────────
+	// -- UX pacing ------------------------------------------------------------
 	int    step_delay_ms    = 0;   // Artificial sleep between FIRE steps (ms); 0 = off
-	int    resim_delay_ms   = 400; // Pause before a resim (ms) — lets user see the diff
+	int    resim_delay_ms   = 400; // Pause before a resim (ms)  -  lets user see the diff
 	bool   smooth_resim     = true;// Fade event spine between resims (terminal animation)
 };
 
 // ============================================================================
-// [visual.external] section — output-side visual requests
+// [visual.external] section  -  output-side visual requests
 //
 // Allows scripts to request rendered output artifacts from the current
 // simulation state WITHOUT performing any physics. Output only.
 //
 // render_targets values:
-//   "state_current"     — render current particle positions as SVG/PNG
-//   "trajectory_last"   — render last N frames of trajectory
-//   "energy_trace"      — energy-per-step trace
-//   "rdf"               — radial distribution function
-//   "defect_map"        — defect site overlay
-//   "cluster_scatter"   — cluster assignment scatter
-//   "packing_heatmap"   — packing fraction heatmap
-//   "overlay_cycle"     — full overlay-cycle figure
-//   "dashboard"         — HTML dashboard
-//   "report"            — HTML report
+//   "state_current"      -  render current particle positions as SVG/PNG
+//   "trajectory_last"    -  render last N frames of trajectory
+//   "energy_trace"       -  energy-per-step trace
+//   "rdf"                -  radial distribution function
+//   "defect_map"         -  defect site overlay
+//   "cluster_scatter"    -  cluster assignment scatter
+//   "packing_heatmap"    -  packing fraction heatmap
+//   "overlay_cycle"      -  full overlay-cycle figure
+//   "dashboard"          -  HTML dashboard
+//   "report"             -  HTML report
 //
 // export_format values: "svg" | "png" | "html" | "auto"
 // ============================================================================
@@ -211,27 +244,27 @@ struct VisualExternalSection {
 };
 
 // ============================================================================
-// [variance] section — statistical spread / instability measurements
+// [variance] section  -  statistical spread / instability measurements
 //
 // Declares variance probes that the runtime evaluates over the event log.
 //
 // field values:
-//   "energy.total"      — total potential energy per frame
-//   "position.x/y/z"   — coordinate component across particles
-//   "displacement"      — per-particle displacement from initial position
-//   "eta"               — order parameter per frame
-//   "coordination"      — avg coordination number per frame
-//   "result"            — event result_value series
+//   "energy.total"       -  total potential energy per frame
+//   "position.x/y/z"    -  coordinate component across particles
+//   "displacement"       -  per-particle displacement from initial position
+//   "eta"                -  order parameter per frame
+//   "coordination"       -  avg coordination number per frame
+//   "result"             -  event result_value series
 //
 // window:
-//   "all"               — all recorded frames
-//   "last N"            — last N frames
-//   "frames M..N"       — frame range
+//   "all"                -  all recorded frames
+//   "last N"             -  last N frames
+//   "frames M..N"        -  frame range
 // ============================================================================
 
 struct VarianceProbe {
 	std::string name;       // user label, e.g. "energy_var"
-	std::string field;      // what to measure: "energy.total", "displacement", …
+	std::string field;      // what to measure: "energy.total", "displacement", ...
 	std::string window;     // "all" | "last 50" | "frames 10..200"
 	double      threshold   = 0.0;    // used by while-loop guard; 0 = no guard
 	std::string particle_group;       // optional: filter to named group
@@ -243,25 +276,25 @@ struct VarianceSection {
 };
 
 // ============================================================================
-// [N_evolution] section — population growth-rate tracking
+// [N_evolution] section  -  population growth-rate tracking
 //
 // Tracks dN/dt (discrete: ΔN/Δt) for named entity populations.
 //
 // target values:
-//   "cluster_count"     — number of clusters
-//   "defect_count"      — number of defect sites
-//   "particle_count"    — total particle count
-//   "event_count"       — total kernel events emitted
-//   "vapor"/"solid"     — particles in a given phase label
+//   "cluster_count"      -  number of clusters
+//   "defect_count"       -  number of defect sites
+//   "particle_count"     -  total particle count
+//   "event_count"        -  total kernel events emitted
+//   "vapor"/"solid"      -  particles in a given phase label
 //
-// window: same as variance — "all" | "last N" | "frames M..N"
+// window: same as variance  -  "all" | "last N" | "frames M..N"
 // ============================================================================
 
 struct NEvolutionProbe {
 	std::string name;       // user label, e.g. "cluster_growth"
-	std::string target;     // what population: "cluster_count", "defect_count", …
+	std::string target;     // what population: "cluster_count", "defect_count", ...
 	std::string window;     // frame window
-	std::string where_type; // optional filter: "vapor", "solid", …
+	std::string where_type; // optional filter: "vapor", "solid", ...
 	double      threshold   = 0.0;   // for while-loop guard
 };
 
@@ -271,7 +304,7 @@ struct NEvolutionSection {
 };
 
 // ============================================================================
-// [while] section — conditional simulation continuation
+// [while] section  -  conditional simulation continuation
 //
 // Declares one or more while-loop guards.  The runtime evaluates the
 // condition BEFORE each iteration and continues until it is false or
@@ -302,7 +335,117 @@ struct WhileSection {
 };
 
 // ============================================================================
-// [batch] section — parameter sweeps and queued job sets
+// [until] section  -  WO-72U  run-UNTIL a condition becomes true
+//
+// Inverted semantics from [while]: the loop body executes until the condition
+// becomes true (or max_iters is exhausted).  Condition strings support all
+// formats from [while] plus the extended molecule/property accessors:
+//
+//   molecule[i].order_param >= 0.98     # per-species order parameter
+//   molecule[i].density     >  8500.0   # kg/m3
+//   property[name]          <  0.01     # named property from event log
+//   energy_drift            <  0.001
+//   variance <probe>        <  0.005
+//
+// Multiple [until] blocks are executed in declaration order.
+// ============================================================================
+
+struct UntilGuard {
+	std::string name;                      // user label, e.g. "crystallised"
+	std::string condition;                 // stop condition string
+	int         body_steps    = 100;       // kernel steps per iteration
+	int         max_iters     = 50;        // hard iteration ceiling
+	std::vector<std::string> measure;      // probes to re-evaluate each iter
+	int         iter_delay_ms = 0;         // optional UX pause (ms)
+	bool        export_each   = false;     // flush [export] per iteration
+};
+
+struct UntilSection {
+	std::vector<UntilGuard> guards;
+};
+
+// ============================================================================
+// [loop] section  -  WO-72L  smart loop with variable stepping
+//
+// Runs a fixed or variable number of iterations, mutating one or more
+// parameters per step.  Supports deterministic sweeps, random perturbations,
+// and combined (sweep + noise) modes.
+//
+// step_mode values:
+//   "linear"    step_var by step_delta each iter  (default)
+//   "geometric" multiply step_var by step_factor
+//   "random"    perturb step_var by U[-noise, +noise]  (semi-stochastic)
+//   "combo"     linear drift + random noise per iter
+//
+// stop_condition: same condition strings as [while]/[until]; empty = run all iters
+// ============================================================================
+
+struct LoopVarStep {
+	std::string var_name;        // e.g. "temperature", "pressure", "lattice_a"
+	double      start      = 0.0;
+	double      stop       = 0.0;
+	double      step_delta = 0.0;   // linear
+	double      step_factor = 1.0;  // geometric multiplier
+	double      noise       = 0.0;  // random perturbation half-width
+	std::string step_mode   = "linear";
+};
+
+struct SmartLoopSection {
+	std::string name;                      // loop label
+	int         iterations    = 10;        // total iterations (max)
+	int         body_steps    = 200;       // kernel steps per iteration
+	std::string stop_condition;            // early exit (empty = run all)
+	std::vector<LoopVarStep> var_steps;    // per-variable stepping rules
+	bool        record_each   = true;      // log iteration summary
+	bool        export_each   = false;     // flush [export] each iter
+	int         rand_seed     = 0;         // 0 = derive from project seed
+	std::string perturb_mode  = "none";   // "none" | "var" | "full"
+};
+
+// ============================================================================
+// [select] section  -  WO-72S  weighted material selection (Uitt2 method)
+//
+// Scores one or more material candidates against a weighted criteria matrix.
+// Each criterion has a name, weight (0-1, must sum to ~1.0), and per-candidate
+// scores (1-5 integer scale by default).
+//
+// The runtime computes:  weighted_score[c] = sum_i( weight[i] * score[c][i] )
+// and reports the winner + full ranked table.
+//
+// Example:
+//   [select]
+//   name = "cladding_material"
+//   candidates = ["Zircaloy-4", "ZIRLO", "SiC/SiC", "SS316"]
+//
+//   [[select.criterion]]
+//   name   = "strength_stiffness"
+//   weight = 0.25
+//   scores = [3, 4, 4, 3]
+//
+//   [[select.criterion]]
+//   name   = "creep_thermal_stability"
+//   weight = 0.20
+//   scores = [3, 3, 5, 3]
+// ============================================================================
+
+struct SelectCriterion {
+	std::string         name;          // criterion label
+	double              weight = 0.0;  // 0-1 fraction
+	std::vector<double> scores;        // one score per candidate (1-5 scale)
+};
+
+struct SelectSection {
+	std::string name;                          // decision label
+	std::vector<std::string> candidates;       // candidate names
+	std::vector<SelectCriterion> criteria;     // weighted criteria
+	bool print_table  = true;                  // print full matrix
+	bool print_winner = true;                  // announce winner
+	std::string output_json;                   // optional: write scores to JSON
+	double score_scale_max = 5.0;              // max score value (default 5)
+};
+
+// ============================================================================
+// [batch] section  -  parameter sweeps and queued job sets
 //
 // Declares batch jobs: named groups of runs with parameter variation.
 //
@@ -315,7 +458,7 @@ struct WhileSection {
 
 struct BatchJob {
 	std::string name;                   // job label, e.g. "crystal_imperfection_sweep"
-	std::map<std::string,std::vector<std::string>> sweep_params; // key → value list
+	std::map<std::string,std::vector<std::string>> sweep_params; // key -> value list
 	std::vector<std::string> per_run_actions;  // actions after each run
 	int   seed_count  = 1;             // seeds per parameter combination
 	bool  export_each = false;         // export artifacts for every run
@@ -324,14 +467,20 @@ struct BatchJob {
 
 struct BatchSection {
 	std::vector<BatchJob> jobs;
-	bool print_plan   = true;   // print the full batch plan before executing
-	bool abort_on_fail = false; // stop entire batch on first invalid run
+	bool print_plan    = true;   // print the full batch plan before executing
+	bool abort_on_fail = false;  // stop entire batch on first invalid run
+	// Day #68 stochastic batch fields
+	bool enabled       = false;
+	int  max_parallel  = 1;
+	bool export_each   = false;
+	bool aggregate     = true;
+	// WO-OUTPUT-PHASE2: expand and axis members added after forward types are defined
 };
 
 // ============================================================================
-// Batch Manifest Runner — WO-B9-001
+// Batch Manifest Runner  -  WO-B9-001
 //
-// Drives batch_manifest.json → per-run isolated folders → summary tables.
+// Drives batch_manifest.json -> per-run isolated folders -> summary tables.
 //
 // batch_manifest.json schema:
 //
@@ -361,20 +510,20 @@ struct BatchSection {
 // ============================================================================
 
 // ============================================================================
-// WO-VSEPR-SIM-62B — Batch Verification Aggregation Bridge
+// WO-VSEPR-SIM-62B  -  Batch Verification Aggregation Bridge
 //
 // New batch schema sections consumed by the aggregation kernel.
 // Must be declared before BatchManifestSection which embeds them.
 // ============================================================================
 
-// [batch.verify_policy] — run-level failure response
+// [batch.verify_policy]  -  run-level failure response
 struct BatchVerifyPolicySection {
 	std::string on_run_fail   = "continue"; // "continue" | "abort"
 	std::string on_check_fail = "record";   // "record" | "reject_candidate" | "abort"
 	bool save_resolved_scripts = true;
 };
 
-// [batch.override.verify.*] — per-check threshold overrides
+// [batch.override.verify.*]  -  per-check threshold overrides
 struct BatchOverrideVerifySection {
 	double tolerance_A           = -1.0; // -1 = inherit from template
 	double relative_tolerance    = -1.0;
@@ -382,7 +531,7 @@ struct BatchOverrideVerifySection {
 	int    coordination_tolerance = -1;
 };
 
-// [batch.aggregate.verify.gates] — batch-level pass-rate thresholds
+// [batch.aggregate.verify.gates]  -  batch-level pass-rate thresholds
 struct BatchAggregateVerifyGatesSection {
 	double min_overall_pass_rate   = 0.0; // 0.0 = disabled
 	double min_mass_pass_rate      = 0.0;
@@ -391,7 +540,7 @@ struct BatchAggregateVerifyGatesSection {
 	double min_msd_pass_rate       = 0.0;
 };
 
-// [batch.aggregate.verify] — aggregation control
+// [batch.aggregate.verify]  -  aggregation control
 struct BatchAggregateVerifySection {
 	bool enabled                    = false;
 	std::vector<std::string> group_by;
@@ -401,14 +550,14 @@ struct BatchAggregateVerifySection {
 	BatchAggregateVerifyGatesSection gates;
 };
 
-// [[batch.score.metric.*]] — weighted score contributor
+// [[batch.score.metric.*]]  -  weighted score contributor
 struct BatchScoreMetricSection {
 	std::string name;
 	std::string source;      // dot-path: "verification.overall_pass"
 	double      weight = 0.0;
 };
 
-// [batch.score] — weighted composite scoring model
+// [batch.score]  -  weighted composite scoring model
 struct BatchScoreSection {
 	std::string rank_by = "composite"; // "composite"|"energy"|"convergence"|"empirical_composite"
 	std::vector<BatchScoreMetricSection> metrics;
@@ -422,7 +571,7 @@ struct BatchRequireSection {
 };
 
 // ============================================================================
-// WO-VSIM-62C — Batch Layer Parser & Static Axis Runtime
+// WO-VSIM-62C  -  Batch Layer Parser & Static Axis Runtime
 //
 // New language structs for [study], [batch.base], [batch.design],
 // [[batch.axis]], [[batch.case]], [batch.expand], [seed],
@@ -430,7 +579,7 @@ struct BatchRequireSection {
 // Must be declared before BatchManifestSweepAxis.
 // ============================================================================
 
-// [study] — top-level study metadata
+// [study]  -  top-level study metadata
 struct StudySection {
 	std::string name;
 	std::string type    = "parameter_sweep"; // parameter_sweep | empirical_validation | formation_study | sensitivity_analysis
@@ -467,7 +616,7 @@ struct BatchAxisEntry {
 	std::vector<std::string> values;
 	std::string units;
 
-	// Stochastic fields — parsed now, wired in v5.1.0
+	// Stochastic fields  -  parsed now, wired in v5.1.0
 	std::string seed_source;
 	std::string distribution  = "uniform";
 	double      mean          = 0.0;
@@ -475,19 +624,29 @@ struct BatchAxisEntry {
 	double      dist_min      = 0.0;
 	double      dist_max      = 1.0;
 	int         n_samples     = 1;
+	// Day #68 stochastic axis fields
+	double      min           = 0.0;         // uniform distribution lower bound
+	double      max           = 1.0;         // uniform distribution upper bound
+	double      stddev        = 1.0;         // normal distribution std deviation (alias std_dev)
+	double      truncate_min  = -1e30;       // truncation lower bound
+	double      truncate_max  =  1e30;       // truncation upper bound
+	int         samples       = 1;           // alias for n_samples
+	int         seed_offset   = 0;           // per-axis seed shift
 };
 
 // [[batch.case]]
 struct BatchCaseEntry {
 	std::string name;
-	std::map<std::string, std::string> overrides; // dot-path → value string
+	std::map<std::string, std::string> overrides; // dot-path -> value string
 };
 
-// [batch.expand]
+// [batch.expand]  -  WO-OUTPUT-PHASE2  named-profile shortcut for batch sweeps
 struct BatchExpandSection {
-	bool                     cases = false;
+	bool                     cases          = false;
 	std::vector<std::string> axes;
-	bool                     populated = false;
+	bool                     populated      = false;
+	std::string              export_profile;   // e.g. "max_sampling"
+	std::string              visual_profile;   // e.g. "max_sampling_visual"
 };
 
 // [seed]
@@ -499,14 +658,33 @@ struct SeedSection {
 	uint64_t placement  = 0;    // 0 = derive: foundation + 11000
 	bool     populated  = false;
 
-	// Resolved values — filled by SeedResolver, not the parser
+	// world_seed — simulation-wide 256-bit constant.
+	// Dual-seed assignment rule:
+	//   If world_seed is not set (is_set() == false): single-seed mode.
+	//     Particle birth hash uses run_seed only. Assignment is accepted once.
+	//   If world_seed is set: dual-seed mode.
+	//     Birth hash is computed in two FNV-1a passes:
+	//       Pass 1: run_seed + particle context  (instance identity)
+	//       Pass 2: world_seed                   (world context; process evolution)
+	//     This enables advanced deterministic resolution of atomic bonding
+	//     uncertainties in process evolution equations.
+	//
+	// Supported formats in .vsim files:
+	//   world_seed = 4201                          # uint64 decimal
+	//   world_seed = "0xdeadbeef"                  # hex (up to 64 hex chars)
+	//   world_seed = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"  # 256-bit max
+	//   world_seed = "//////////////////////////////////////////8="   # base64 (44 chars)
+	//   world_seed = "1111...111"                  # 256 binary digits
+	Seed256 world_seed;
+
+	// Resolved values  -  filled by SeedResolver, not the parser
 	uint64_t resolved_defect    = 0;
 	uint64_t resolved_formation = 0;
 	uint64_t resolved_thermal   = 0;
 	uint64_t resolved_placement = 0;
 };
 
-// [formation.library.*] — formation stage kinds
+// [formation.library.*]  -  formation stage kinds
 enum class FormationStageKind {
 	Hold, Ramp, Quench, Anneal, Relax, PressureRamp,
 	FieldRamp,   // planned: not yet wired
@@ -560,7 +738,7 @@ struct FormationStage {
 	int  max_steps = 2000;
 	bool converge  = true;
 
-	// field_ramp — planned, not yet wired
+	// field_ramp  -  planned, not yet wired
 	double      from_field_V_A = 0.0;
 	double      to_field_V_A   = 0.0;
 	std::string field_axis;
@@ -612,7 +790,7 @@ struct BatchManifestSection {
 	}
 };
 
-// ── BatchRunRecord — result from a single expanded run ───────────────────────
+// -- BatchRunRecord  -  result from a single expanded run -----------------------
 // Accumulated by the manifest runner; used for summary and ranking tables.
 
 struct BatchRunRecord {
@@ -620,7 +798,7 @@ struct BatchRunRecord {
 	std::string run_id;               // e.g. "run_0001"
 	std::string run_dir;              // full path to run folder
 
-	// Sweep parameters active for this run (param → value string)
+	// Sweep parameters active for this run (param -> value string)
 	std::map<std::string, std::string> params;
 	int         seed         = 0;
 
@@ -636,7 +814,7 @@ struct BatchRunRecord {
 	double      score_convergence = 0.0;
 	double      score_composite   = 0.0;
 
-	// Gate results (WO-B9-002 fields — populated as false until gates are wired)
+	// Gate results (WO-B9-002 fields  -  populated as false until gates are wired)
 	bool        steady_pass          = false;
 	std::string failure_reason;
 
@@ -647,14 +825,14 @@ struct BatchRunRecord {
 	// Ranking
 	int         rank = 0;             // 1 = best; 0 = unranked
 
-	// WO-VSEPR-SIM-62B — per-run verification outcome
+	// WO-VSEPR-SIM-62B  -  per-run verification outcome
 	// Populated by the batch aggregation kernel after consuming verify_report.json
 	std::string verify_status;          // "PASS"|"WARN"|"FAIL"|"SKIP"|"MISSING"|"ERROR"
 	std::vector<std::string> failure_modes; // BatchFailureMode code strings
 	bool        empirical_ready = false;    // true when verify_status is PASS or WARN
 };
 
-// ── Convenience: batch run score helpers ─────────────────────────────────────
+// -- Convenience: batch run score helpers -------------------------------------
 namespace batch_score {
 
 inline double energy_score(double final_energy, double reference_energy = 0.0) {
@@ -682,55 +860,60 @@ inline double composite(double es, double cs, double steady = 1.0) {
 
 
 struct ExportSection {
-	// ── Atomistic state ─────────────────────────────────────────────────────
+	// -- Atomistic state -----------------------------------------------------
 	bool write_xyz                 = true;   // Static final particle positions
 	bool write_xyzf                = false;  // Multi-frame trajectory (XYZF format)
 	bool write_xyzfull             = false;  // Full state history (xyzFull doctrine)
 	bool write_pdb                 = false;  // PDB format for external viewers (VESTA, VMD)
 
-	// ── Analysis layer ───────────────────────────────────────────────────────
+	// -- Analysis layer -------------------------------------------------------
 	bool write_analysis_json       = false;  // Derived metrics (AnalysisRecord)
 	bool write_metrics_tsv         = false;  // Tab-separated per-run metric table
 	bool write_cluster_json        = false;  // ClusterRecord assignments
 	bool write_fingerprint_json    = false;  // FingerprintRecord feature vectors
 
-	// ── Kernel event spine ──────────────────────────────────────────────────
+	// -- Kernel event spine --------------------------------------------------
 	bool write_events_json         = false;  // KernelEventLog (JSON Lines)
 	bool write_symbolic_trace_json = false;  // SymbolicTrace per-event
 
-	// ── Reporting layer ─────────────────────────────────────────────────────
+	// -- Reporting layer -----------------------------------------------------
 	bool write_report_md           = false;  // Human-readable Markdown summary
 	bool write_summary_csv         = false;  // Per-run summary CSV
 	bool write_dashboard_json      = false;  // DashboardRecord (beta-7 pipeline)
 	bool write_manifest_json       = false;  // Run manifest with artifact registry
-	bool write_dashboard_svg       = false;  // beta-7 pipeline dashboard (SVG — text, diffable)
+	bool write_dashboard_svg       = false;  // beta-7 pipeline dashboard (SVG  -  text, diffable)
 	bool write_pipeline_audit_jsonl = false; // Stage-by-stage audit JSONL (2C gate)
 	bool write_actual_hashes_tsv   = false;  // Golden suite: captured actual hashes TSV
 
-	// ── Engineering geometry ────────────────────────────────────────────────
+	// -- Engineering geometry ------------------------------------------------
 	bool write_step_file           = false;  // STEP geometry (engineering truth sidecar)
 	bool write_vtp_mesh            = false;  // VTK PolyData mesh for ParaView
+
+	// -- Day #68 batch/audit outputs -----------------------------------------
+	bool write_dynx                = false;  // Dynx session archive
+	bool write_xbit                = false;  // XBIT geometry binding file
+	bool write_aggregate_json      = false;  // Batch aggregate summary JSON
 
 	std::string output_dir;                  // Output directory (default: out/<name>/)
 };
 
 // ============================================================================
-// [export.visual] section — rendered visual artifact outputs
+// [export.visual] section  -  rendered visual artifact outputs
 //
 // These are files rendered FROM the simulation data.
-// They are sidecar artifacts — not ground-truth state.
+// They are sidecar artifacts  -  not ground-truth state.
 //
 // output_format values per flag (used by renderer dispatch):
-//   svg    — scalable vector, always available
-//   png    — raster, requires stb_image_write or Cairo
-//   html   — self-contained HTML with embedded JS charts
-//   gif    — animated GIF of trajectory (requires gifenc or ffmpeg pipe)
-//   webgl  — WebGL viewer bundle (from webgl_streamer)
-//   sse    — SSE event stream descriptor (from vsepr_live)
+//   svg     -  scalable vector, always available
+//   png     -  raster, requires stb_image_write or Cairo
+//   html    -  self-contained HTML with embedded JS charts
+//   gif     -  animated GIF of trajectory (requires gifenc or ffmpeg pipe)
+//   webgl   -  WebGL viewer bundle (from webgl_streamer)
+//   sse     -  SSE event stream descriptor (from vsepr_live)
 // ============================================================================
 
 struct ExportVisualSection {
-	// ── Static figure exports ────────────────────────────────────────────────
+	// -- Static figure exports ------------------------------------------------
 	bool write_svg_figures         = false;  // Per-material SVG metric figures
 	bool write_png_snapshots       = false;  // PNG molecular snapshot (requires GL or OSMesa)
 	bool write_rdf_svg             = false;  // Radial distribution function plot (SVG)
@@ -739,19 +922,21 @@ struct ExportVisualSection {
 	bool write_defect_map_svg      = false;  // Defect site map overlay (SVG)
 	bool write_cluster_map_svg     = false;  // Cluster assignment scatter (SVG)
 
-	// ── Animated exports ─────────────────────────────────────────────────────
+	// -- Animated exports -----------------------------------------------------
 	bool write_trajectory_gif      = false;  // Animated GIF of trajectory playback
-	bool write_overlay_cycle_gif   = false;  // Animated GIF of overlay cycle (density→coord→...)
+	bool write_overlay_cycle_gif   = false;  // Animated GIF of overlay cycle (density->coord->...)
 	int  gif_frame_skip            = 10;     // Emit every Nth frame into GIF
 	int  gif_delay_cs              = 8;      // GIF frame delay (centiseconds)
 
-	// ── Web / streaming exports ──────────────────────────────────────────────
+	// -- Web / streaming exports ----------------------------------------------
 	bool write_html_dashboard      = false;  // Self-contained HTML dashboard (JS charts)
 	bool write_webgl_bundle        = false;  // WebGL viewer bundle (webgl_streamer path)
 	bool write_sse_descriptor      = false;  // SSE stream config (vsepr_live path)
 	int  sse_port                  = 99998;  // Port for SSE / HTTP server
+	bool show_bond_graph           = false;  // Open bond graph viewer (viz_bond_graph.html via viz_web.py)
+	int  bond_graph_port           = 8899;   // viz_web.py HTTP port for /graph route
 
-	// ── Composite document ───────────────────────────────────────────────────
+	// -- Composite document ---------------------------------------------------
 	bool write_report_pdf          = false;  // PDF report (requires LaTeX / pandoc)
 	bool write_report_html         = false;  // HTML report (standalone, no server needed)
 
@@ -764,12 +949,36 @@ struct ExportVisualSection {
 			|| write_trajectory_gif   || write_overlay_cycle_gif
 			|| write_html_dashboard   || write_webgl_bundle
 			|| write_sse_descriptor   || write_report_pdf
-			|| write_report_html;
+			|| write_report_html      || show_bond_graph;
 	}
 };
 
 // ============================================================================
-// [visual] section — interactive display modes
+// [export.demo] section  -  lightweight molecular demonstration artifacts
+//
+// Controls the demo stack (WO-OUTPUT-P2): condensed .demo.dynx archives and
+// self-contained .demo.X bundles produced after batch or single runs.
+//
+// strategy values:
+//   first        - frames 0..demo_frames-1
+//   last         - last demo_frames frames
+//   uniform      - evenly spaced across full archive (default)
+//   event_gated  - frames containing at least one EVENT packet
+// ============================================================================
+
+struct ExportDemoSection {
+	bool        enabled              = false;  // master switch
+	int         demo_frames          = 10;     // max frames to include
+	std::string strategy             = "uniform"; // first|last|uniform|event_gated
+	bool        write_demo_dynx      = true;   // emit <case>.demo.dynx
+	bool        write_demo_bundle    = true;   // emit <case>.demo.X (requires write_demo_dynx)
+	bool        include_source       = true;   // embed originating .vsim in bundle
+	bool        include_manifest     = true;   // embed demo_manifest.json in bundle
+	std::string bundle_name;                   // override bundle name (default: auto)
+};
+
+// ============================================================================
+// [visual] section  -  interactive display modes
 //
 // Declares what the runner should show DURING and AFTER the simulation.
 // Separated from [export.visual] which controls rendered FILE artifacts.
@@ -777,48 +986,48 @@ struct ExportVisualSection {
 // output_type catalog:
 //
 //   Terminal (always available, no GL dependency):
-//     "none"                   — silent; no display
-//     "terminal_chart"         — live per-step convergence trace + proxy table
+//     "none"                    -  silent; no display
+//     "terminal_chart"          -  live per-step convergence trace + proxy table
 //                                Source: cg_anim_demo (Pattern A) + metal_sim
-//     "terminal_snapshot"      — post-run energy/eta bar-chart
+//     "terminal_snapshot"       -  post-run energy/eta bar-chart
 //                                Source: seed_bead_demo / SnapshotGraphCollector (Pattern B)
-//     "terminal_overlay_cycle" — full 6-panel kernel_viz_demo layout
+//     "terminal_overlay_cycle"  -  full 6-panel kernel_viz_demo layout
 //                                (timeline, bars, symbolic trace, pipeline trace,
 //                                 animation cues, audit table)
-//     "terminal_rdf"           — ASCII radial distribution function plot
-//     "terminal_energy_heatmap"— 2D ASCII energy landscape heatmap
-//     "terminal_defect_map"    — ASCII defect site map (grid projection)
-//     "terminal_phase_diagram" — ASCII phase field snapshot
+//     "terminal_rdf"            -  ASCII radial distribution function plot
+//     "terminal_energy_heatmap" -  2D ASCII energy landscape heatmap
+//     "terminal_defect_map"     -  ASCII defect site map (grid projection)
+//     "terminal_phase_diagram"  -  ASCII phase field snapshot
 //
 //   OpenGL (requires BUILD_VISUALIZATION):
-//     "gl_overlay_cycle"       — CGVizViewer: density→coord→eta→orient auto-cycle
+//     "gl_overlay_cycle"        -  CGVizViewer: density->coord->eta->orient auto-cycle
 //                                Source: cg_anim_demo VizConfig command sequence
-//     "gl_live_60fps"          — SeedBeadViewer 60fps FIRE live view
+//     "gl_live_60fps"           -  SeedBeadViewer 60fps FIRE live view
 //                                Source: seed_bead_demo BUILD_VISUALIZATION path
-//     "gl_crystal_grid"        — CrystalGrid viewer (crystal-viewer.cpp)
-//     "gl_interactive"         — Full interactive-viewer with ImGui panels
+//     "gl_crystal_grid"         -  CrystalGrid viewer (crystal-viewer.cpp)
+//     "gl_interactive"          -  Full interactive-viewer with ImGui panels
 //
 //   Web / streaming (no GL; requires network):
-//     "web_dashboard"          — HTTP server with auto-updating HTML dashboard
+//     "web_dashboard"           -  HTTP server with auto-updating HTML dashboard
 //                                Source: vsepr_live / live_server.hpp
-//     "sse_stream"             — SSE event stream to external client
-//     "webgl_viewer"           — WebGL streamer bundle (webgl_streamer.cpp)
+//     "sse_stream"              -  SSE event stream to external client
+//     "webgl_viewer"            -  WebGL streamer bundle (webgl_streamer.cpp)
 //
 // animation_mode values (terminal paths only):
-//   "none"    — static table; print once after run
-//   "spark"   — live per-step single-char spark-line during FIRE loop
-//   "bar"     — bar chart redrawn at each convergence checkpoint
-//   "overlay" — full overlay-cycle reprint at each steady-state event
+//   "none"     -  static table; print once after run
+//   "spark"    -  live per-step single-char spark-line during FIRE loop
+//   "bar"      -  bar chart redrawn at each convergence checkpoint
+//   "overlay"  -  full overlay-cycle reprint at each steady-state event
 // ============================================================================
 
 struct VisualSection {
-	// ── Primary output type ──────────────────────────────────────────────────
+	// -- Primary output type --------------------------------------------------
 	std::string output_type    = "none";   // See catalog above
 
-	// ── Animation mode (terminal paths) ─────────────────────────────────────
+	// -- Animation mode (terminal paths) -------------------------------------
 	std::string animation_mode = "none";   // none | spark | bar | overlay
 
-	// ── Terminal display flags ───────────────────────────────────────────────
+	// -- Terminal display flags -----------------------------------------------
 	// Shared across all terminal_* output types.
 	bool show_proxy_table         = true;  // EnsembleProxy summary table (Pattern A)
 	bool show_convergence_trace   = true;  // Live per-step trace row (metal_sim pattern)
@@ -834,12 +1043,12 @@ struct VisualSection {
 	bool show_defect_map          = false; // ASCII defect site grid projection
 	bool show_phase_field         = false; // ASCII phase field snapshot
 
-	// ── Advanced-renderer overlays ────────────────────────────────────────────
+	// -- Advanced-renderer overlays --------------------------------------------
 	bool show_bond_events         = false; // Highlight newly formed/broken bonds per frame
 	bool show_charge_overlay      = false; // Color atoms by dynamic partial charge
 	bool show_velocity_vectors    = false; // Draw velocity vectors for fast particles
 
-	// ── GL options (forwarded to CGVizViewer / SeedBeadViewer) ───────────────
+	// -- GL options (forwarded to CGVizViewer / SeedBeadViewer) ---------------
 	bool  gl_show_axes        = true;
 	bool  gl_show_neighbours  = true;
 	float gl_overlay_hold_s   = 2.5f;  // Seconds per overlay pane
@@ -847,27 +1056,83 @@ struct VisualSection {
 	int   gl_window_width     = 1280;
 	int   gl_window_height    = 800;
 
+	// -- GL spin / rotation (viewer-side only; does not affect particle data) -
+	// gl_spin = true enables continuous axis rotation.
+	// Mutually exclusive with gl_auto_orbit: setting gl_spin = true disables orbit.
+	// gl_spin_deg_per_s: signed rotation rate; negative = reverse direction.
+	// gl_spin_axis: "x" | "y" | "z"  (default "y").
+	bool        gl_spin           = false;
+	std::string gl_spin_axis      = "y";
+	float       gl_spin_deg_per_s = 30.0f;
+
+	// -- Replay / input source hints (script-level; forwarded to viewer) ------
+	// When a .vsim script's primary purpose is to replay existing trajectory
+	// data rather than run a new simulation, set replay_source to the path of
+	// the .xyzf or .dynx file and replay_format to the appropriate token.
+	// replay_format: "auto" | "xyz" | "xyzf" | "xyzFull" | "dynx"
+	std::string replay_source;              // path to replay file; empty = live sim
+	std::string replay_format = "auto";     // format hint; "auto" = detect from extension
+
 	// Overlay sequence: density, coordination, memory, orient_order
 	std::vector<std::string> overlay_sequence = {
 		"density", "coordination", "memory", "orient_order"
 	};
 
-	// ── Web / streaming options ──────────────────────────────────────────────
+	// -- Web / streaming options ----------------------------------------------
 	int  web_port             = 99998; // HTTP / SSE server port
 	bool web_auto_open        = false; // Open browser tab automatically
 
-	// ── Render cadence ──────────────────────────────────────────────────────
+	// -- Render cadence ------------------------------------------------------
 	// How often simulation output / render events are emitted.
-	// render_interval = N  →  emit a render frame every N simulation steps.
+	// render_interval = N  ->  emit a render frame every N simulation steps.
 	// Orthogonal to display_fps (which controls live UI refresh rate).
 	int render_interval = 1;   // steps; <= 0 is treated as 1
+
+	// -- Live-switch feed ----------------------------------------------------
+	// Derived from the element carousel pattern in demo_molecule.hpp:
+	// when the kernel transitions between simulation phases or data sources
+	// (e.g. element tour, multi-run batch, phase sweep), the viewer window is
+	// refreshed in-place via cursor-up overwrite (ANSI \x1b[NA) instead of
+	// being torn down and reopened.  This eliminates the flash / re-open
+	// latency and preserves scroll context in the terminal.
+	//
+	// Behaviour per output_type:
+	//   terminal_*   -- cursor-up overwrite; equivalent to the carousel's
+	//                   first_frame=false path in render_frame().
+	//   gl_*         -- request that the GL host reuse the existing window
+	//                   handle and swap content rather than destroy/recreate.
+	//   web_*        -- push a data-refresh SSE event instead of a full reload.
+	//
+	// Default: false (legacy teardown behaviour).
+	bool live_switch = false;
+
+	// -- Shadow type (hidden / internal) -------------------------------------
+	// Controls the depth-shading model used by ASCII and GL terminal renderers.
+	// This field is intentionally absent from the primary user-facing docs;
+	// it is an internal visual knob for renderer developers and power users.
+	// It has NO effect on physics, formation, or analysis correctness.
+	//
+	// Values:
+	//   0 -- off          : flat shading, no depth cue (legacy behaviour)
+	//   1 -- ambient_soft : soft ambient-occlusion curve
+	//                       shade = 0.30 + 0.70 * saturate((z + depth) / range)
+	//                       Gentle gradient; good for small molecules.
+	//   2 -- depth_fade   : linear depth-fade shadow
+	//                       shade = 1.0 - 0.55 * saturate((maxZ - z) / range)
+	//                       Strong perspective cue; good for crystals.
+	//   3 -- contact      : contact-shadow approximation
+	//                       shade = max(0.15, 1.0 - dist_to_nearest_neighbour * k)
+	//                       Darkens atoms that are close to other atoms.
+	//
+	// Default: 0 (off — preserves existing shading behaviour exactly).
+	int shadow_type = 0;  // hidden; 0=off 1=ambient_soft 2=depth_fade 3=contact
 
 	bool should_render(int step) const {
 		int ri = render_interval > 0 ? render_interval : 1;
 		return (step % ri) == 0;
 	}
 
-	// ── Classifiers ─────────────────────────────────────────────────────────
+	// -- Classifiers ---------------------------------------------------------
 	bool is_terminal_mode() const {
 		return output_type == "terminal_chart"
 			|| output_type == "terminal_snapshot"
@@ -892,10 +1157,15 @@ struct VisualSection {
 	}
 
 	bool is_any_mode() const { return output_type != "none"; }
+
+	// WO-NL0C: true when the script carries replay source hints rather than
+	// launching a live simulation.  Viewer should open replay panel instead
+	// of attaching to a running kernel.
+	bool is_replay_mode() const { return !replay_source.empty(); }
 };
 
 // ============================================================================
-// [open.advanced] — advanced-viewer options for post-run launch
+// [open.advanced]  -  advanced-viewer options for post-run launch
 // ============================================================================
 
 struct OpenAdvancedSection {
@@ -910,7 +1180,7 @@ struct OpenAdvancedSection {
 };
 
 // ============================================================================
-// [open] — post-run viewer launch declaration
+// [open]  -  post-run viewer launch declaration
 // ============================================================================
 
 struct OpenSection {
@@ -919,16 +1189,36 @@ struct OpenSection {
 	std::string file;                       // Path to file to open (resolved at runtime)
 	std::string mode     = "advanced";      // "advanced" | "tui" | "none"
 
+	// -- Replay / input source fields ----------------------------------------
+	// replay_path: explicit path to a .xyzf or .dynx file to open directly.
+	// When set, the viewer is launched in replay mode rather than attaching to
+	// a live simulation output.  If both file and replay_path are set,
+	// replay_path takes priority for the replay panel; file is used for the
+	// static snapshot viewer.
+	//
+	// source_format: "auto" | "xyz" | "xyzf" | "xyzFull" | "dynx"
+	// Tells the viewer which decoder to use.  "auto" = detect from extension.
+	std::string replay_path;                // path to .xyzf / .dynx replay file
+	std::string source_format = "auto";     // format hint for replay_path
+
 	OpenAdvancedSection advanced;
 
 	// Convenience: true when the effective mode requests the OpenGL renderer
 	bool wants_advanced() const {
 		return enabled && (mode == "advanced" || mode == "3d");
 	}
+
+	// WO-NL0C: true when a replay_path is set (viewer should use replay panel)
+	bool has_replay_source() const { return !replay_path.empty(); }
+
+	// Resolved effective source: prefer replay_path over file
+	const std::string& effective_source() const {
+		return replay_path.empty() ? file : replay_path;
+	}
 };
 
 // ============================================================================
-// [visual.workspace] — workspace host settings (WO-VSIM-VIS-OVERHAUL-01)
+// [visual.workspace]  -  workspace host settings (WO-VSIM-VIS-OVERHAUL-01)
 // Ignored in headless / pure CLI runs. Parsed unconditionally so scripts are
 // portable between workspace and non-workspace environments.
 // ============================================================================
@@ -941,7 +1231,7 @@ struct VisualWorkspaceSection {
 };
 
 // ============================================================================
-// [room] — room heat-field simulation block (WO-VSIM-VIS-OVERHAUL-01)
+// [room]  -  room heat-field simulation block (WO-VSIM-VIS-OVERHAUL-01)
 // Drives the room.solver viewable node. Physics is handled by RoomSimulation
 // (ported from pykernel/room_sim.py); this struct carries the parsed config.
 // ============================================================================
@@ -955,7 +1245,7 @@ struct RoomSection {
 };
 
 // ============================================================================
-// ViewDirective — parsed from `show "<kind>" target = "<path>"` directives
+// ViewDirective  -  parsed from `show "<kind>" target = "<path>"` directives
 // Stored on VsimDocument::view_directives (WO-VSIM-VIS-OVERHAUL-01)
 // ============================================================================
 
@@ -1004,7 +1294,7 @@ struct GoldenTestAnalysis {
 	bool static_susceptibility = false;
 };
 
-// One entry in the golden test registry — one [test.<name>] block
+// One entry in the golden test registry  -  one [test.<name>] block
 struct GoldenTestEntry {
 	std::string name;
 	std::string group;          // molecule | ionic_crystal | metallic_crystal | ...
@@ -1049,10 +1339,10 @@ struct GoldenTestEntry {
 	GoldenTestRunConfig  run;
 	GoldenTestAnalysis   analysis;
 
-	// Expected hash — empty means not yet captured (not PLACEHOLDER, just absent)
+	// Expected hash  -  empty means not yet captured (not PLACEHOLDER, just absent)
 	std::string expected_hash;
 
-	// Skip metadata — empty skip_reason means not skipped
+	// Skip metadata  -  empty skip_reason means not skipped
 	std::string skip_reason;
 	std::string skip_target;
 	bool        skip_blocks_release = false;
@@ -1092,7 +1382,7 @@ struct GoldenReportSection {
 };
 
 // ============================================================================
-// [post_step] section — script block executed after each simulation step
+// [post_step] section  -  script block executed after each simulation step
 //
 // The script_block is a newline-separated sequence of VSIM interpreter
 // expressions (assignments, pbc.* calls, particle.* calls).  It is
@@ -1110,11 +1400,11 @@ struct PostStepSection {
 };
 
 // ============================================================================
-// WO-VSIM-03B — Intent-based structure authoring (Level 0–4)
+// WO-VSIM-03B  -  Intent-based structure authoring (Level 0-4)
 // ============================================================================
 
-// Structure alias map — resolves casual hints to deterministic prototype keys.
-// "rocksalt" → "B1_NaCl", "diamond" → "A4_Si", etc.
+// Structure alias map  -  resolves casual hints to deterministic prototype keys.
+// "rocksalt" -> "B1_NaCl", "diamond" -> "A4_Si", etc.
 // Only called during parsing; the resolved prototype is stored in MaterialSection.
 [[nodiscard]] inline std::string_view resolve_structure_alias(std::string_view hint) noexcept {
     if (hint == "rocksalt"  || hint == "rock_salt")   return "B1_NaCl";
@@ -1127,11 +1417,137 @@ struct PostStepSection {
     if (hint == "bcc")                                  return "A2_bcc";
     if (hint == "fcc")                                  return "A1_fcc";
     if (hint == "hcp")                                  return "A3_hcp";
-    return hint;   // unknown → pass through verbatim
+    return hint;   // unknown -> pass through verbatim
 }
 
-// ── Level 0 / 1: [material] ──────────────────────────────────────────────────
+// -- Level 0 / 1: [material] --------------------------------------------------
 //
+// ============================================================================
+// KernelTraceSection  -  [kernel.trace]
+// ============================================================================
+// Controls per-frame diagnostic logging emitted by the kernel.
+//
+struct KernelTraceSection {
+    bool        enabled              = false;
+    int         interval             = 1;       // frames between trace flushes
+    bool        write_force_channels = false;
+    bool        write_energy_terms   = false;
+    bool        write_state          = false;
+    bool        write_fields         = false;
+    std::string profile;                        // named profile key (optional)
+};
+
+// ============================================================================
+// KernelSection  -  [kernel]
+// ============================================================================
+// Declares the MD/SMF kernel model, integrator, and execution parameters.
+// model values: "smf_md_v1", "legacy_md", "legacy_rigid", "velocity_verlet", "none"
+//
+struct KernelSection {
+    std::string model;              // kernel model identifier
+    std::string integrator;         // integrator key
+    double      dt            = 0.001; // timestep (fs or native units)
+    int         steps         = 0;
+    bool        deterministic = false;
+    uint64_t    seed          = 0;
+
+    KernelTraceSection trace;
+
+    bool has_model() const { return !model.empty(); }
+};
+
+// ============================================================================
+// StateSchemaSection  -  [state_schema]
+// ============================================================================
+// Declares the S-state field bundle expected by the kernel.
+//
+struct StateSchemaSection {
+    std::string              model;             // e.g. "S_state_v1"
+    bool                     enabled = false;
+    std::vector<std::string> fields;            // ordered field names
+};
+
+// ============================================================================
+// FieldSchemaSection  -  [field_schema]
+// ============================================================================
+// Declares the external field bundle sampled per particle.
+//
+struct FieldSchemaSection {
+    std::string              model;             // e.g. "field_bundle_v1"
+    bool                     enabled = false;
+    std::vector<std::string> fields;
+};
+
+// ============================================================================
+// InteractionsSection  -  [interactions]
+// ============================================================================
+// Per-channel force weights (0.0 = disabled, >0 = scaled).
+// Channels: repulsion, dispersion, coulomb, bond, angle, torsion,
+//           field, state, radiation, damage, constraint
+//
+struct InteractionsSection {
+    double repulsion  = 1.0;
+    double dispersion = 1.0;
+    double coulomb    = 1.0;
+    double bond       = 1.0;
+    double angle      = 1.0;
+    double torsion    = 1.0;
+    double field      = 1.0;
+    double state      = 1.0;
+    double radiation  = 1.0;
+    double damage     = 1.0;
+    double constraint = 1.0;
+};
+
+// ============================================================================
+// GeometryMeshEntry  -  [[geometry.mesh]]
+// ============================================================================
+struct GeometryMeshEntry {
+    std::string id;     // mesh identifier referenced by [[xbit.binding]]
+    std::string file;   // path to STL (or other) mesh file
+    std::string role;   // "visual_only" | "collision_proxy" | "visual_and_collision_proxy"
+};
+
+// ============================================================================
+// GeometrySection  -  [geometry]
+// ============================================================================
+struct GeometrySection {
+    std::string                    root;        // base directory for mesh files
+    std::string                    units;       // "mm", "m", "angstrom"
+    std::vector<GeometryMeshEntry> meshes;      // [[geometry.mesh]] entries
+};
+
+// ============================================================================
+// XbitBindingEntry  -  [[xbit.binding]]
+// ============================================================================
+struct XbitBindingEntry {
+    int         object_id         = -1;
+    int         state_index       = -1;
+    std::string mesh_id;
+    std::string binding_type;       // "object_to_mesh"
+    std::string material_layer;
+    std::string render_layer;
+    bool        collision_enabled = true;
+    // 4x4 column-major transform matrix stored as 16 doubles (identity by default)
+    std::array<double,16> transform = {{
+        1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1
+    }};
+};
+
+// ============================================================================
+// XbitConfigSection  -  [xbit] (Day #68 geometry-binding extension)
+// ============================================================================
+struct XbitConfigSection {
+    bool        enabled                = false;
+    std::string schema;                         // e.g. "xyz_stl_binding_v1"
+    std::string checksum               = "crc32";
+    bool        strict_hash_validation = false;
+    std::vector<XbitBindingEntry> bindings;     // [[xbit.binding]] entries
+};
+
+// ============================================================================
+// [material]  -  material identity and structural intent
+// ============================================================================
 // Declares the material identity and structural intent.
 // Level 0:  formula + structure (alias resolved to prototype)
 // Level 1:  prototype (deterministic key) | space_group + basis (explicit)
@@ -1164,15 +1580,15 @@ struct MaterialSection {
     }
 };
 
-// ── Level 0: [run] ───────────────────────────────────────────────────────────
+// -- Level 0: [run] -----------------------------------------------------------
 //
 // Declares the run mode and top-level controls.
 // mode values: "relax", "md", "npt", "nvt", "nve", "scan", "single_point"
 //
 struct RunSection {
-    std::string mode;              // Required: "relax", "md", "npt", …
+    std::string mode;              // Required: "relax", "md", "npt", ...
     int         max_steps  = 500;  // Step / iteration limit
-    double      dt_fs      = 1.0;  // Timestep (fs) — ignored for "relax"
+    double      dt_fs      = 1.0;  // Timestep (fs)  -  ignored for "relax"
     double      temperature_K = 300.0;
     double      pressure_GPa  = 0.0;   // For NPT
     bool        converge   = true;     // Stop early on convergence
@@ -1181,19 +1597,19 @@ struct RunSection {
     bool has_mode() const { return !mode.empty(); }
 };
 
-// ── Level 2: [environment] ───────────────────────────────────────────────────
+// -- Level 2: [environment] ---------------------------------------------------
 struct EnvironmentSection {
     bool   periodic     = false;
     double temperature  = 300.0;   // K
     double pressure     = 0.0;     // GPa
-    std::string medium;            // "vacuum", "water", "argon_gas", …
-    double humidity     = 0.0;     // 0–1 fraction
+    std::string medium;            // "vacuum", "water", "argon_gas", ...
+    double humidity     = 0.0;     // 0-1 fraction
     double field_x      = 0.0;    // External E-field components (V/Å)
     double field_y      = 0.0;
     double field_z      = 0.0;
 };
 
-// ── Level 2: [excite.*] ──────────────────────────────────────────────────────
+// -- Level 2: [excite.*] ------------------------------------------------------
 // Each named excite subsection (e.g. [excite.laser]) becomes one ExciteEntry.
 //
 struct ExciteEntry {
@@ -1217,14 +1633,14 @@ struct ExciteSection {
     }
 };
 
-// ── Level 2: [observe] ───────────────────────────────────────────────────────
+// -- Level 2: [observe] -------------------------------------------------------
 struct ObserveSection {
     std::vector<std::string> metrics;  // e.g. ["energy_map","interference","spectral_response"]
     std::string output_format = "auto"; // "csv", "json", "svg", "auto"
     int         every_n_steps = 1;     // Observation cadence
 };
 
-// ── Level 3: [[override.particle]] ──────────────────────────────────────────
+// -- Level 3: [[override.particle]] ------------------------------------------
 // Array-of-tables: selectively mutate specific particles before or during run.
 //
 struct ParticleOverrideEntry {
@@ -1239,8 +1655,8 @@ struct ParticleOverrideEntry {
     bool   has_charge   = false;
 };
 
-// ── Level 4: [[raw.object]] ─────────────────────────────────────────────────
-// Explicit particle injection — tests, importers, file bridges, debugging only.
+// -- Level 4: [[raw.object]] -------------------------------------------------
+// Explicit particle injection  -  tests, importers, file bridges, debugging only.
 //
 struct RawObjectEntry {
     std::string id;                 // Arbitrary label: "debug_particle_001"
@@ -1253,11 +1669,11 @@ struct RawObjectEntry {
 };
 
 // ============================================================================
-// ChemistrySection — [chemistry] / [system]
+// ChemistrySection  -  [chemistry] / [system]
 // ============================================================================
 //
 // Declares the ambient reaction physics context for a simulation.
-// Reactions are NOT an opt-in mode — they are always evaluated whenever
+// Reactions are NOT an opt-in mode  -  they are always evaluated whenever
 // reactant pairs exist.  This section controls which chemistry rules are
 // active, the heat-gate level, scoring thresholds, and logging verbosity.
 //
@@ -1270,37 +1686,37 @@ struct RawObjectEntry {
 //   "isomer_scan", "none"
 //
 struct ChemistrySection {
-	// ── Registry alias ───────────────────────────────────────────────────
-	std::string chemistry;          // Registry alias — resolves reaction rule set
+	// -- Registry alias ---------------------------------------------------
+	std::string chemistry;          // Registry alias  -  resolves reaction rule set
 									// Default "none" = reactions evaluated but no
 									// rule family active; heat-gate still applies
 
-	// ── Heat-gate ────────────────────────────────────────────────────────
+	// -- Heat-gate --------------------------------------------------------
 	// Integer h ∈ [0, 999].  Maps directly to atomistic::reaction::HeatConfig.
 	// 0   = cold / no thermal activation
 	// 999 = extreme temperature activation
 	// -1  = derive from environment.temperature (default, recommended)
-	int  heat       = -1;           // -1 → derive from environment.temperature
+	int  heat       = -1;           // -1 -> derive from environment.temperature
 
-	// ── Reaction event controls ──────────────────────────────────────────
+	// -- Reaction event controls ------------------------------------------
 	bool reaction_events      = true;  // Emit ReactionEvent into KernelEventLog
 	bool track_species_state  = true;  // Emit ChemicalStateEvent per species change
 	bool event_registry       = true;  // Build per-step event registry (enables
 									   //   reaction_scan observe metric)
 
-	// ── Scoring filter ───────────────────────────────────────────────────
+	// -- Scoring filter ---------------------------------------------------
 	double min_score_threshold  = 0.25; // overall_score must exceed this to emit
 	int    max_reactions_per_step = 8;  // Cap per simulation step (0 = unlimited)
 
-	// ── Domain layer (organic formula parser integration) ─────────────────
+	// -- Domain layer (organic formula parser integration) -----------------
 	// When domain = "peptide" and sequence is non-empty, vsim_parser expands
 	// the sequence into a canonical molecular formula and stores it in
 	// material.formula.  Other domain values are reserved for future modules.
 	//
 	// Supported domain values:
-	//   "peptide"      — amino acid one-letter sequence (e.g. "ACDEFG")
-	//   "small_molecule" — trivial name or condensed formula
-	//   ""             — not set; no organic expansion performed
+	//   "peptide"       -  amino acid one-letter sequence (e.g. "ACDEFG")
+	//   "small_molecule"  -  trivial name or condensed formula
+	//   ""              -  not set; no organic expansion performed
 	std::string domain;    // "peptide" | "small_molecule" | "" (not set)
 	std::string sequence;  // for domain="peptide": one-letter AA sequence
 
@@ -1308,14 +1724,14 @@ struct ChemistrySection {
 	// formula parser.  Empty if domain/sequence were not set.
 	std::string expanded_formula;
 
-	// ── Helpers ──────────────────────────────────────────────────────────
+	// -- Helpers ----------------------------------------------------------
 	bool is_active()    const { return chemistry != "none"; }
 	bool has_chemistry() const { return !chemistry.empty() && chemistry != "none"; }
 	bool has_domain()    const { return !domain.empty(); }
 	bool has_sequence()  const { return !sequence.empty(); }
 
-	// Derive a 0–999 heat integer from a temperature in Kelvin.
-	// Calibration: 300 K → h≈100; 1000 K → h≈333; 3000 K → h≈999
+	// Derive a 0-999 heat integer from a temperature in Kelvin.
+	// Calibration: 300 K -> h≈100; 1000 K -> h≈333; 3000 K -> h≈999
 	static int heat_from_temperature(double T_K) {
 		if (T_K <= 0.0)     return 0;
 		if (T_K >= 3000.0)  return 999;
@@ -1330,12 +1746,140 @@ struct ChemistrySection {
 };
 
 // ============================================================================
-// IsomerAnalysisSection — [analysis.isomers]
+// ChemPlusSection  -  [chem_plus]                                 WO-84T
+// ============================================================================
+//
+// Declarative bridge from the Chem+ reaction shell into the .vsim pipeline.
+// Lets a script describe one or more reactions (or a preset tag) alongside
+// optional VSEPR geometry linkage.  The C++ bridge classifies the reaction,
+// parses energy, and resolves the VSEPR topology tag without spawning a
+// Python subprocess.
+//
+// Schema keys:
+//   reaction        - canonical reaction string, e.g. "CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"
+//   preset          - "998" | "999" | "" (loads a named preset library)
+//   vsepr_link      - bool; when true, attach VSEPR geometry tag to each product
+//   emit_events     - bool; emit ChemPlusEvent into KernelEventLog (default true)
+//   energy_kj       - double override; if set skips automatic parse (0.0 = not set)
+//   class_override  - string override for reaction class (empty = auto-classify)
+//
+struct ChemPlusSection {
+	std::string reaction;           // reaction string  (empty = not declared)
+	std::string preset;             // preset tag: "998" | "999" | ""
+	bool        vsepr_link   = false; // bridge VSEPR geometry onto products
+	bool        emit_events  = true;  // emit events into KernelEventLog
+	double      energy_kj    = 0.0;   // 0.0 = auto-parse from reaction string
+	std::string class_override;     // empty = auto-classify
+
+	// Helpers
+	bool has_reaction() const { return !reaction.empty(); }
+	bool has_preset()   const { return !preset.empty(); }
+	bool is_active()    const { return has_reaction() || has_preset(); }
+
+	// Reaction classes (matches chem_shell/controller.py vocabulary)
+	enum class ReactionClass {
+		combustion,
+		decomposition,
+		acid_base,
+		synthesis,
+		general,
+	};
+
+	// Auto-classify reaction string (mirrors Python classify_reaction logic).
+	static ReactionClass classify(const std::string& rxn) {
+		const auto lc = [](std::string s) {
+			for (auto& c : s) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+			return s;
+		};
+		std::string t = lc(rxn);
+		const auto arrow = t.find("->");
+		std::string lhs = (arrow != std::string::npos) ? t.substr(0, arrow) : t;
+		std::string rhs = (arrow != std::string::npos) ? t.substr(arrow + 2) : "";
+		if (lhs.find("o2") != std::string::npos && rhs.find("co2") != std::string::npos)
+			return ReactionClass::combustion;
+		if (lhs.find('+') == std::string::npos && rhs.find('+') != std::string::npos) {
+			// LHS has no '+' but RHS does -> decomposition pattern
+			std::string lhst = lhs; while (!lhst.empty() && lhst.front() == ' ') lhst.erase(lhst.begin());
+			if (lhst.find('+') == std::string::npos)
+				return ReactionClass::decomposition;
+		}
+		const char* acids[] = { "hcl", "h2so4", "hno3", nullptr };
+		const char* bases[] = { "naoh", "koh", "ca(oh)2", nullptr };
+		bool is_acid = false, is_base = false;
+		for (int i = 0; acids[i]; ++i)  if (t.find(acids[i]) != std::string::npos) is_acid = true;
+		for (int i = 0; bases[i]; ++i)  if (t.find(bases[i]) != std::string::npos) is_base = true;
+		if (is_acid && is_base) return ReactionClass::acid_base;
+		return ReactionClass::general;
+	}
+
+	static std::string class_to_string(ReactionClass c) {
+		switch (c) {
+			case ReactionClass::combustion:    return "combustion";
+			case ReactionClass::decomposition: return "decomposition";
+			case ReactionClass::acid_base:     return "acid-base";
+			case ReactionClass::synthesis:     return "synthesis";
+			default:                           return "general";
+		}
+	}
+
+	// Parse energy value from reaction string (e.g. "+ 891 kJ" or "- 200 kJ").
+	static double parse_energy(const std::string& rxn) {
+		// Look for optional sign then number followed by kj/kJ
+		std::size_t pos = 0;
+		while ((pos = rxn.find("kJ", pos)) != std::string::npos ||
+			   (pos = rxn.find("kj", pos)) != std::string::npos) {
+			// Walk back over whitespace and digits
+			if (pos == std::string::npos) break;
+			std::size_t end = pos;
+			while (end > 0 && (std::isspace(static_cast<unsigned char>(rxn[end-1])) ||
+							   std::isdigit(static_cast<unsigned char>(rxn[end-1])) ||
+							   rxn[end-1] == '.')) { --end; }
+			// Allow leading sign
+			std::size_t start = end;
+			if (start > 0 && (rxn[start-1] == '+' || rxn[start-1] == '-')) {
+				// skip whitespace before sign
+				std::size_t s2 = start - 1;
+				while (s2 > 0 && std::isspace(static_cast<unsigned char>(rxn[s2-1]))) --s2;
+				start = s2;
+			}
+			try {
+				double v = std::stod(rxn.substr(end, pos - end));
+				// If a '-' sign appeared between end and pos is tricky; just
+				// search forward for the first numeric substring before "kJ"
+				(void)v;
+			} catch (...) {}
+			break;
+		}
+		// Simpler targeted parse: find last number before first "kJ"/"kj"
+		std::size_t kj = rxn.find("kJ");
+		if (kj == std::string::npos) kj = rxn.find("kj");
+		if (kj == std::string::npos) return 0.0;
+		// Scan backwards for digits
+		std::size_t e = kj;
+		while (e > 0 && std::isspace(static_cast<unsigned char>(rxn[e-1]))) --e;
+		if (e == 0) return 0.0;
+		std::size_t s = e;
+		while (s > 0 && (std::isdigit(static_cast<unsigned char>(rxn[s-1])) || rxn[s-1] == '.')) --s;
+		if (s == e) return 0.0;
+		double val = 0.0;
+		try { val = std::stod(rxn.substr(s, e - s)); } catch (...) { return 0.0; }
+		// Sign: look for +/- immediately before digits (after whitespace)
+		if (s > 0) {
+			std::size_t sp = s;
+			while (sp > 0 && std::isspace(static_cast<unsigned char>(rxn[sp-1]))) --sp;
+			if (sp > 0 && rxn[sp-1] == '-') val = -val;
+		}
+		return val;
+	}
+};
+
+// ============================================================================
+// IsomerAnalysisSection  -  [analysis.isomers]
 // ============================================================================
 //
 // Controls the static isomer analysis pipeline:
-//   formula → graph → valence → connectivity → charge/radical gate →
-//   canonical hash → geometry → relaxation → validity class → report
+//   formula -> graph -> valence -> connectivity -> charge/radical gate ->
+//   canonical hash -> geometry -> relaxation -> validity class -> report
 //
 // WO-VSIM-04A
 //
@@ -1343,7 +1887,7 @@ struct IsomerAnalysisSection {
 	bool enabled = false;
 	std::string mode = "graph_geometry";  // "graph_only" | "graph_geometry"
 
-	// ── Validation gates ──────────────────────────────────────────────────
+	// -- Validation gates --------------------------------------------------
 	bool formula_guard        = true;
 	bool graph_validation     = true;
 	bool valence_check        = true;
@@ -1351,13 +1895,13 @@ struct IsomerAnalysisSection {
 	bool formal_charge_check  = true;
 	bool radical_check        = false;
 
-	// ── Identity and geometry ─────────────────────────────────────────────
+	// -- Identity and geometry ---------------------------------------------
 	bool canonical_hash       = true;
 	bool geometry_rmsd        = true;
 	bool relaxation_check     = true;
 	bool known_database_check = false;
 
-	// ── Permissive flags ──────────────────────────────────────────────────
+	// -- Permissive flags --------------------------------------------------
 	bool allow_fragments      = false;
 	bool allow_charged        = false;
 	bool allow_radicals       = false;
@@ -1365,19 +1909,19 @@ struct IsomerAnalysisSection {
 
 	int  max_bond_order       = 3;
 
-	// ── Tolerances ────────────────────────────────────────────────────────
+	// -- Tolerances --------------------------------------------------------
 	double bond_tolerance_scale = 1.20;  // scale × covalent radius sum
 	double rmsd_tolerance       = 0.05;
 	double angle_tolerance_deg  = 3.0;
 
-	// ── Strategy ─────────────────────────────────────────────────────────
+	// -- Strategy ---------------------------------------------------------
 	std::string bond_source    = "hybrid";   // "explicit" | "infer" | "hybrid"
 	std::string geometry_build = "vsepr";
 	std::string report_level   = "detailed"; // "minimal" | "standard" | "detailed"
 };
 
 // ============================================================================
-// IsomerGeneratorSection — [generator.isomers]
+// IsomerGeneratorSection  -  [generator.isomers]
 // ============================================================================
 //
 // Controls constitutional isomer generation from a molecular formula.
@@ -1398,12 +1942,12 @@ struct IsomerGeneratorSection {
 };
 
 // ============================================================================
-// IsomerTrackingSection — [analysis.isomer_tracking]
+// IsomerTrackingSection  -  [analysis.isomer_tracking]
 // ============================================================================
 //
 // Per-frame isomer identity tracking over a trajectory (.xyzf / .xyzFull).
 // Bond changes, hash changes, and validity transitions are logged as
-// KernelEvents — never written back into the raw trajectory.
+// KernelEvents  -  never written back into the raw trajectory.
 // WO-VSIM-04A
 //
 struct IsomerTrackingSection {
@@ -1417,12 +1961,12 @@ struct IsomerTrackingSection {
 };
 
 // ============================================================================
-// WO-VSIM-61C — analysis pipeline section structs
+// WO-VSIM-61C  -  analysis pipeline section structs
 //
 // These sections are parsed from a .vsim analysis script and consumed by
 // the runtime pipeline orchestrator (src/runtime/vsim_analysis_pipeline.hpp).
 // The kernels (structure_inference, property_sampling, property_inference)
-// never see these structs — they receive only their typed *Config structs.
+// never see these structs  -  they receive only their typed *Config structs.
 // ============================================================================
 
 struct VsimSystemSection {
@@ -1454,9 +1998,9 @@ struct VsimSamplingSection {
 };
 
 // ============================================================================
-// [analysis.scale_sampling] — WO-VSIM-61D
+// [analysis.scale_sampling]  -  WO-VSIM-61D
 // ============================================================================
-// Owns L1 → L2 field projection and RVE window sampling.
+// Owns L1 -> L2 field projection and RVE window sampling.
 // Strictly separated from [analysis.sampling] (scalar RDF/MSD only).
 // ============================================================================
 
@@ -1517,7 +2061,7 @@ struct VsimOutputSection {
 };
 
 // ============================================================================
-// WO-62A — Empirical Verification sections
+// WO-62A  -  Empirical Verification sections
 // ============================================================================
 
 struct VsimVerifyStructureSection {
@@ -1554,9 +2098,45 @@ struct VsimVerifyMassSection {
 	double relative_tolerance    = 1e-10;
 };
 
+// [verify.compare]  -  WO-VSIM-LAMMPS-VERIFY-01
+// Selects which observable channels to cross-compare against the external target.
+struct VsimVerifyCompareSection {
+	bool energy        = true;
+	bool temperature   = true;
+	bool pressure      = false;
+	bool rdf           = true;
+	bool msd           = true;
+	bool diffusion     = true;
+	bool coordination  = true;
+	bool rmsd          = true;
+};
+
+// [verify.thresholds]  -  WO-VSIM-LAMMPS-VERIFY-01
+// Acceptance gates for each comparison channel.
+// All errors are relative (fraction) unless the name ends in _abs or _A.
+struct VsimVerifyThresholdsSection {
+	double energy_rel_error       = 0.05;   // |ΔETOT| / max(|E_ref|, ε)
+	double temperature_rel_error  = 0.03;
+	double pressure_rel_error     = 0.10;
+	double rdf_l1_error           = 0.10;   // ∫|g_VSIM(r) - g_ref(r)| dr
+	double msd_rel_error          = 0.15;
+	double diffusion_rel_error    = 0.20;
+	double coordination_abs_error = 0.50;   // absolute difference in CN
+	double rmsd_A                 = 0.25;   // Å — final-frame geometry RMSD
+};
+
+// [verify.outputs]  -  WO-VSIM-LAMMPS-VERIFY-01
+// Controls which cross-comparison artefacts are written.
+struct VsimVerifyOutputsSection {
+	bool write_report            = true;    // verification_report.md
+	bool write_json              = true;    // verification.json
+	bool write_overlay_tables    = true;    // energy_overlay.csv, rdf_overlay.csv, msd_overlay.csv
+};
+
 struct VsimVerifySection {
 	bool   enabled               = false;
-	std::string profile          = "";   // informational label, e.g. "nacl_rocksalt_short_md"
+	std::string profile          = "";    // informational label, e.g. "nacl_rocksalt_short_md"
+	std::string target           = "";    // external reference backend: "lammps" | "openmm" | "gromacs"
 	bool   write_verify_report   = true;
 	bool   write_verify_tsv      = true;
 
@@ -1564,10 +2144,170 @@ struct VsimVerifySection {
 	VsimVerifyRdfSection       rdf;
 	VsimVerifyMsdSection       msd;
 	VsimVerifyMassSection      mass;
+	VsimVerifyCompareSection   compare;    // [verify.compare]   WO-VSIM-LAMMPS-VERIFY-01
+	VsimVerifyThresholdsSection thresholds; // [verify.thresholds] WO-VSIM-LAMMPS-VERIFY-01
+	VsimVerifyOutputsSection   outputs;    // [verify.outputs]   WO-VSIM-LAMMPS-VERIFY-01
 };
 
 // Aggregate parsed from an analysis-oriented .vsim script.
 // Consumed by run_vsim_analysis_pipeline(); kernels never see this type.
+// ============================================================================
+// Collision module schema  -  WO-VSIM-COLLISION-AUDIT-01 / WO-VSIM-COLLIDER-MAP-01
+// ============================================================================
+
+// Per-particle / per-daughter state record for one collision event.
+// Stores the minimal relativistic kinematics + bookkeeping needed for
+// energy/momentum/charge conservation audits.
+struct CollisionParticleState {
+	int         id                  = -1;
+	std::string type_code           = "";    // PDG-style label: "p+", "e-", "mu-", "jet_proxy", …
+	double      rest_mass_GeV       = 0.0;
+	double      charge              = 0.0;
+	double      spin_proxy          = 0.0;
+	double      px_GeV              = 0.0;  // momentum components (natural units, c=1)
+	double      py_GeV              = 0.0;
+	double      pz_GeV              = 0.0;
+	double      kinetic_energy_GeV  = 0.0;
+	double      total_energy_GeV    = 0.0;  // E² = (pc)² + (mc²)²
+	double      gamma_lorentz       = 1.0;  // γ = 1 / sqrt(1 - v²/c²)
+	double      event_time_ns       = 0.0;
+	double      lifetime_ns         = -1.0; // -1 = stable
+	std::string interaction_channel = "";
+	std::string decay_channel       = "";
+	int         parent_id           = -1;
+	std::vector<int> daughter_ids;
+};
+
+// Conservation audit record for one collision event  (WO-VSIM-COLLISION-AUDIT-01 §B)
+struct CollisionConservationRecord {
+	double energy_in_GeV         = 0.0;
+	double energy_out_GeV        = 0.0;
+	double momentum_in_GeV       = 0.0;
+	double momentum_out_GeV      = 0.0;
+	double charge_in             = 0.0;
+	double charge_out            = 0.0;
+	double baryon_proxy_in       = 0.0;
+	double baryon_proxy_out      = 0.0;
+	double lepton_proxy_in       = 0.0;
+	double lepton_proxy_out      = 0.0;
+	double missing_energy_GeV    = 0.0;
+	bool   energy_conserved      = false;
+	bool   momentum_conserved    = false;
+	bool   charge_conserved      = false;
+	bool   lineage_valid         = false;
+};
+
+// One collision event case declared in a [[collision.case]] block.
+struct CollisionCaseEntry {
+	std::string name                     = "";
+	std::vector<std::string> species;           // incoming beam species
+	double      sqrt_s_GeV               = 0.0; // center-of-mass energy
+	double      sqrt_s_GeV_per_nucleon   = 0.0; // for heavy-ion cases
+	std::string topology                 = "";   // "jet_proxy", "annihilation_proxy", …
+	int         events                   = 1000;
+	// Reference anchor matched from [collision.reference] database
+	std::string reference_collider       = "";   // e.g. "LHC_Run3_pp"
+	double      reference_sqrt_s_GeV     = 0.0;
+	double      R_E                      = 0.0;  // = sqrt_s_VSIM / sqrt_s_ref
+};
+
+// [collision.audit]  -  WO-VSIM-COLLISION-AUDIT-01 §A–C
+struct CollisionAuditSection {
+	bool   check_energy_conservation    = true;
+	bool   check_momentum_conservation  = true;
+	bool   check_charge_conservation    = true;
+	bool   check_lineage                = true;
+	bool   check_topology               = true;
+	double energy_tolerance_GeV         = 1.0;    // |E_in - E_out| acceptance
+	double momentum_tolerance_GeV       = 1.0;
+};
+
+// [collision.reference]  -  WO-VSIM-COLLIDER-MAP-01
+// Points to the collider reference anchor table (CSV).
+struct CollisionReferenceSection {
+	bool        enabled    = false;
+	std::string database   = "";    // path to collider_reference_table.csv
+};
+
+// [outputs] (collision context)
+struct CollisionOutputsSection {
+	std::string profile     = "";         // "collision_audit"
+	std::string root        = "runs/collision_reference_map";
+	bool write_manifest             = true;
+	bool write_events_jsonl         = true;
+	bool write_collision_csv        = true;
+	bool write_analysis_json        = true;
+	bool write_report_md            = true;
+};
+
+// Top-level collision section — all [[collision.case]] entries + audit config + outputs.
+struct CollisionSection {
+	bool   enabled = false;
+	std::string system_type = "";    // "collision_suite"
+	std::string mode        = "";    // "event_proxy"
+	CollisionReferenceSection   reference;
+	std::vector<CollisionCaseEntry> cases;      // [[collision.case]]
+	CollisionAuditSection       audit;
+	CollisionOutputsSection     outputs;
+};
+
+// ============================================================================
+// [analysis.ikk_end_tag] section  —  WO-75A: IKK Report End-Tag Enrichment
+//
+// Controls per-section IKK (Identity-Knowledge-Kernel) end-tag generation.
+// End-tags summarise D (distinguishability), eta_ab (identity coupling),
+// |Psi^hid| (hidden residual), and Delta-S (entropy proxy) drawn from an
+// IdentitySidecarSeries and appended to each Markdown / LaTeX report section.
+//
+// DOCTRINE (mirrors identity_sidecar.hpp):
+//   - All values are DERIVED from sidecar data only.
+//   - End-tags must NEVER be written back into truth-state (.xyz / .xyzFull).
+//   - The second-law check (Delta-S >= 0 or Delta-D <= 0) is advisory only.
+//
+// Scale-regime strings follow the IKK Notation Registry v1.0:
+//   "S0" = existence  "S2" = colour  "S3" = EM/spatial
+//   "S4" = weak       "S_mat" = material
+//
+// Added: WO-75A (Day 75)
+// ============================================================================
+
+struct VsimIkkEndTagSection {
+	// ---- feature toggle ----------------------------------------------------
+	bool enabled = false;  // false → section silently skipped
+
+	// ---- output format flags -----------------------------------------------
+	bool emit_markdown = true;   // append IKK block to .md report sections
+	bool emit_latex    = false;  // append \ikkendsection macro to .tex sections
+
+	// ---- IKK metric thresholds for the second-law badge --------------------
+	// D (distinguishability) ∈ [0,1]: >= pass_threshold → PASS badge
+	double d_pass_threshold = 0.60;  // [0,1]; below warn_threshold → FAIL
+	double d_warn_threshold = 0.35;  // [0,1]; d_pass > d >= d_warn → WARN
+
+	// ---- active scale regime (IKK notation) --------------------------------
+	// Controls which rung of the scale ladder is annotated in the end-tag.
+	// Valid values: "S0", "S2", "S3", "S4", "S_mat"
+	std::string scale_regime = "S3";   // default: EM/spatial regime
+
+	// ---- section reference label -------------------------------------------
+	// Appended to each end-tag block as "IKK IV §<label>".
+	// Leave empty to omit the reference line.
+	std::string section_reference = "";
+
+	// ---- helper: evaluate the second-law badge for a given D value ---------
+	// Returns "PASS", "WARN", or "FAIL".  Pure; no side effects.
+	[[nodiscard]] const char* badge(double d_rec) const noexcept {
+		if (d_rec >= d_pass_threshold) return "PASS";
+		if (d_rec >= d_warn_threshold) return "WARN";
+		return "FAIL";
+	}
+
+	// ---- helper: true when any output is requested -------------------------
+	[[nodiscard]] bool wants_output() const noexcept {
+		return enabled && (emit_markdown || emit_latex);
+	}
+};
+
 struct VsimAnalysisPipelineConfig {
 	VsimSystemSection              system;
 	VsimStructureAnalysisSection   structure;
@@ -1576,36 +2316,406 @@ struct VsimAnalysisPipelineConfig {
 	VsimAnalysisInferenceSection   inference;
 	VsimOutputSection              output;
 	VsimVerifySection              verify;         // WO-62A
+	VsimIkkEndTagSection           ikk_end_tag;    // WO-75A
 };
 
 // ============================================================================
-// VsimDocument — full parsed .vsim file
+// [analysis.ivec] section  —  WO-75B Phase 1: IKK I-Vector
+//
+// Controls computation of per-frame I-vector statistics (Ī_f) and output
+// to <run_id>.identity.json.  Fields are derived from IdentitySidecarSeries.
+//
+// DOCTRINE: derived data only; never written back to truth-state.
+// Output file: <output_dir>/<run_id>.identity.json
+// Added: WO-75B Phase 1 (Day 76)
 // ============================================================================
+
+struct VsimIvecSection {
+	bool        enabled        { false }; // false -> section silently skipped
+	bool        write_json     { true  }; // write .identity.json to output_dir
+	bool        include_delta  { true  }; // include ΔĪ_f per frame
+	bool        include_var    { false }; // include diag(Var_f) per frame
+										 //   (always zero in Phase 1)
+	std::string output_dir;              // override output directory (empty=use pipeline_output.output_dir)
+
+	[[nodiscard]] bool wants_output() const noexcept { return enabled && write_json; }
+};
+
+// ============================================================================
+// [object.<layer>.<basis>] section  —  WO-76 Steps 3+5: MCF-CAI State Grid
+//
+// Wraps vsim::analysis::McfCaiSection (defined in mcf_cai.hpp).
+// Each of the 9 sub-sections is parsed independently; only those present
+// in the script contribute to the section.  Information-column fields
+// (basis=information) are sidecar-only and never used as force inputs.
+//
+// Section routing (handled by handle_section / apply_mcf_cai_key):
+//   [object.macro.carrier]          -> grid[MACRO][CARRIER]
+//   [object.macro.action]           -> grid[MACRO][ACTION]
+//   [object.macro.information]      -> grid[MACRO][INFO]  (sidecar)
+//   [object.chemical.carrier]       -> grid[CHEM][CARRIER]
+//   [object.chemical.action]        -> grid[CHEM][ACTION]
+//   [object.chemical.information]   -> grid[CHEM][INFO]   (sidecar)
+//   [object.fundamental.carrier]    -> grid[FUND][CARRIER]
+//   [object.fundamental.action]     -> grid[FUND][ACTION]
+//   [object.fundamental.information]-> grid[FUND][INFO]   (sidecar)
+//
+// Added: WO-76 Step 3 (Day 76)
+// ============================================================================
+
+using VsimMcfCaiSection = analysis::McfCaiSection;
+
+// ============================================================================
+// [[object.surface]] section  —  Analysis Surface Objects
+//
+// Defines non-physical analysis surfaces for measuring particle crossings,
+// flux, heat transfer, and momentum transfer.  Surfaces do NOT affect
+// dynamics — they are measurement probes only.
+//
+// Geometry types:
+//   "rectangle" — center + normal + width/height (default)
+//   "disk"      — center + normal + radius
+//   "sphere"    — center + radius (shell; normal ignored)
+//
+// Each [[object.surface]] block creates one VsimSurfaceObject entry in
+// doc.surfaces.  Multiple surfaces are supported.
+//
+// Core metrics computed per surface per frame:
+//   Φ⁺  — crossing count in +normal direction
+//   Φ⁻  — crossing count in −normal direction
+//   Φⁿᵉᵗ — net crossing count (Φ⁺ − Φ⁻)
+//   J   — mass flux (kg/m²/s proxy)
+//   Q   — energy flux (eV/Å²/fs proxy)
+//   P   — momentum flux normal component
+//
+// DOCTRINE: analysis-only; never affects force kernel or truth-state.
+// Output: <output_dir>/<run_id>.surface.json
+//
+// Added: Surface Analysis Examples (Day 77)
+// ============================================================================
+
+// Surface geometry enumeration
+enum class SurfaceGeometry {
+	RECTANGLE = 0,   // rectangular plane: width × height
+	DISK      = 1,   // circular plane: radius
+	SPHERE    = 2,   // spherical shell: radius (for radial flux)
+};
+
+// Single analysis surface object
+struct VsimSurfaceObject {
+	std::string name;                        // unique surface identifier
+
+	// Geometry type
+	SurfaceGeometry geometry { SurfaceGeometry::RECTANGLE };
+
+	// Center point (Å)
+	double center_x { 0.0 };
+	double center_y { 0.0 };
+	double center_z { 0.0 };
+
+	// Normal vector (unit; ignored for SPHERE)
+	double normal_x { 0.0 };
+	double normal_y { 0.0 };
+	double normal_z { 1.0 };   // default: +Z pointing
+
+	// Dimensions
+	double width    { 10.0 };  // RECTANGLE: extent in local X (Å)
+	double height   { 10.0 };  // RECTANGLE: extent in local Y (Å)
+	double radius   { 5.0 };   // DISK/SPHERE: radius (Å)
+
+	// Measurement options
+	bool   log_crossings    { true };   // log each crossing event
+	bool   compute_flux     { true };   // compute Φ⁺/Φ⁻/Φⁿᵉᵗ
+	bool   compute_mass_flux{ true };   // compute J (mass flux)
+	bool   compute_energy_flux { true };// compute Q (kinetic energy flux)
+	bool   compute_momentum_flux{ false }; // compute P (momentum flux)
+	bool   compute_species_flux { false }; // per-species crossing breakdown
+	bool   compute_ivec_flux{ false };  // mean I-vector of crossers (WO-75B link)
+
+	// Species filter (empty = all species)
+	std::vector<std::string> species_filter;
+
+	// Output
+	std::string output_tag;              // optional tag for .surface.json grouping
+
+	// Helpers
+	[[nodiscard]] double area() const noexcept {
+		switch (geometry) {
+			case SurfaceGeometry::RECTANGLE: return width * height;
+			case SurfaceGeometry::DISK:      return 3.14159265358979 * radius * radius;
+			case SurfaceGeometry::SPHERE:    return 4.0 * 3.14159265358979 * radius * radius;
+		}
+		return 0.0;
+	}
+
+	[[nodiscard]] std::string geometry_name() const noexcept {
+		switch (geometry) {
+			case SurfaceGeometry::RECTANGLE: return "rectangle";
+			case SurfaceGeometry::DISK:      return "disk";
+			case SurfaceGeometry::SPHERE:    return "sphere";
+		}
+		return "unknown";
+	}
+};
+
+// Container for all surfaces in a document
+struct VsimSurfaceSection {
+	bool enabled { false };              // master enable for surface analysis
+	bool write_json { true };            // write .surface.json output
+	std::string output_dir;              // override output directory (empty = pipeline default)
+
+	std::vector<VsimSurfaceObject> surfaces;
+
+	[[nodiscard]] bool has_surfaces() const noexcept { return !surfaces.empty(); }
+	[[nodiscard]] std::size_t count() const noexcept { return surfaces.size(); }
+
+	// Find surface by name (nullptr if not found)
+	[[nodiscard]] const VsimSurfaceObject* find(const std::string& name) const noexcept {
+		for (const auto& s : surfaces) if (s.name == name) return &s;
+		return nullptr;
+	}
+	[[nodiscard]] VsimSurfaceObject* find(const std::string& name) noexcept {
+		for (auto& s : surfaces) if (s.name == name) return &s;
+		return nullptr;
+	}
+};
+
+// ============================================================================
+// [identity_matrices] section  (WO-VSEPR-SIM Extreme Addendum)
+//
+// Controls which default identity matrices are active in a run.
+// ============================================================================
+
+struct IdentityMatricesSection {
+	bool default_particle {true};
+	bool quark_component  {true};
+	bool lepton_identity  {true};
+	bool boson_identity   {true};
+	bool relation_particle{false};
+	bool proper_time      {false};
+	bool dark_projection  {false};   // requires guard_xd override
+	bool event_annihilation{true};
+};
+
+// ============================================================================
+// [verification] section  (WO-VSEPR-SIM Extreme Addendum)
+//
+// Master verification control block for extreme suite runs.
+// ============================================================================
+
+struct VerificationModesSection {
+	bool gluon_dynamic    {false};
+	bool gluon_normal     {false};
+	bool gluon_scheq_eigen{false};
+	bool scheq_only       {false};
+};
+
+struct VerificationSection {
+	bool                   run_all         {false};
+	bool                   compare         {false};
+	bool                   convergence     {false};
+	bool                   persistent_state{false};
+	VerificationModesSection modes;
+};
+
+// ============================================================================
+// [extras.togglescale] section  (WO-VSEPR-SIM Extreme Addendum)
+//
+// Scale-slot toggle configuration.  Mirrors vsim::extras::ToggleScaleConfig.
+// ============================================================================
+
+struct ExtrasToggleScaleSection {
+	bool        enabled      {false};
+	std::string default_mode {"cycle"};  // "cycle" | "pin" | "collapse"
+	double      w_depth      {0.0};
+	bool        persist      {true};
+	// active S_n scale slots; empty = runtime default {0,1,3}
+	// (field named 'scale_slots' to avoid conflict with Qt macro 'slots')
+	std::vector<int> scale_slots;
+	bool        guard_xd     {true};
+};
+
+// ============================================================================
+// [dynx]  -  script-level .dynx session-archive emission control  (WO-72C)
+//
+// Controls whether and how the runtime emits a .dynx session archive during
+// the run.  Requires DynxEmitter support in the active runtime path.
+//
+// emit_mode values:
+//   "off"          -  no .dynx file written (default)
+//   "run"          -  one archive per top-level simulation run
+//   "batch"        -  one archive per batch job
+//   "continuous"   -  keep archive open for the full session; close on exit
+//
+// rich_frames: include per-step FORCE, BOND_FORCE, FIELD, RENDER, CAMERA
+//              blocks as defined in the .dynx v1 format spec (WO-72B).
+//              When false only FRAME position/velocity/energy is written
+//              (compact mode).
+//
+// live_cache: keep the DynxLiveCache populated for viewer polling (e.g. the
+//             gl_interactive viewer's live-frame scrubber).
+//             Independent of emit_mode: you may have live_cache = true with
+//             emit_mode = "off".
+//
+// compress: reserved; no-op in v1.  Will activate LZ4 frame compression.
+//
+// WO-72C
+// ============================================================================
+
+// ============================================================================
+// [thermal_probe] section  -  WO-OUTPUT-PHASE2
+//
+// Regional thermal-gradient and heat-flux sampling.
+// Each enabled metric is collected every `every_n_steps` and appended to
+// the analysis layer.  All values are per-region (label or box index).
+// ============================================================================
+
+struct ThermalProbeSection {
+	bool enabled                    = false;
+	bool compute_gradient           = true;   // spatial dT/dx, dT/dy, dT/dz
+	bool compute_heat_flux          = true;   // J_x, J_y, J_z via kinetic/virial
+	bool compute_conductivity_proxy = true;   // kappa estimate from GK autocorr
+	bool compute_local_temperature  = true;   // per-region mean KE temperature
+	bool compute_temperature_variance = true; // variance of per-atom temperature
+	bool compute_heat_capacity_proxy = false; // dE/dT finite-difference estimate
+
+	int     every_n_steps  = 50;              // sample interval (steps)
+	double  gradient_dx    = 1.0;             // finite-difference width (Angstrom)
+	int     region_bins    = 8;               // spatial bins along each axis
+	std::string region     = "all";           // "all" | region label
+	std::string output_format = "json";       // "json" | "tsv"
+};
+
+// ============================================================================
+// [field_probe] section  -  WO-OUTPUT-PHASE2
+//
+// Stress tensor, density field, and optional EM field coupling.
+// Provides the volumetric state needed for continuum upscaling.
+// ============================================================================
+
+struct FieldProbeSection {
+	bool enabled                     = false;
+	bool compute_stress_tensor       = true;   // full 3×3 virial stress
+	bool compute_stress_eigenvalues  = true;   // principal stresses σ1,σ2,σ3
+	bool compute_von_mises           = true;   // von Mises stress scalar
+	bool compute_density_field       = true;   // volumetric number/mass density
+	bool compute_pressure_field      = true;   // local pressure P = -Tr(σ)/3
+	bool compute_velocity_field      = false;  // mean velocity per voxel
+	bool compute_charge_density      = false;  // requires charge on particles
+	bool compute_electric_field      = false;  // E-field from Ewald/PPPM (reserved)
+
+	int         every_n_steps  = 50;
+	std::vector<int> grid      = {8, 8, 8};   // voxel grid resolution
+	std::string output_format  = "json";       // "json" | "tsv" | "vtp"
+	bool        write_vtp      = false;        // write VTK PolyData alongside JSON
+};
+
+struct DynxSection {
+	std::string emit_mode      = "off";   // "off" | "run" | "batch" | "continuous"
+	bool        rich_frames    = false;   // include FORCE/BOND_FORCE/FIELD/RENDER/CAMERA
+	bool        live_cache     = false;   // keep DynxLiveCache populated
+	std::string output_path;             // explicit output path; empty = auto (out/<name>/<name>.dynx)
+	int         frame_skip     = 1;      // write every Nth step frame; <= 0 treated as 1
+	bool        write_provenance = true; // embed #source/#source_hash/#kernel_version header
+	bool        compress       = false;  // reserved for LZ4 compression (no-op in v1)
+
+	bool is_active() const { return emit_mode != "off"; }
+	bool wants_live() const { return live_cache; }
+	bool wants_rich() const { return rich_frames; }
+};
+
+// ============================================================================
+// [discovery] section  -  WO-NL0A  Type 1: continuous random-materials run
+// ============================================================================
+//  Controls the open-ended compound generator.  No physics simulation is
+//  required; the section is ignored when script_type != newleaf_type1_discovery.
+//
+//  emit_mode values:
+//    "off"        - no .dynx emitted (default)
+//    "run"        - one .dynx per compound accepted
+//    "batch"      - single .dynx for the whole run
+//    "continuous" - streaming .dynx; never closed until run ends
+
+struct DiscoverySection {
+	// Generator control
+	std::string feasibility_filter = "stoich+charge"; // filter pipeline tag
+	int         max_compounds      = 0;               // 0 = unlimited
+	std::string seed_formula;                         // optional starting formula
+	bool        event_enumerate    = true;            // list creation+annihilation events
+
+	// Output
+	bool        output_xyzf  = true;   // write .xyzf per accepted compound
+	bool        output_dynx  = false;  // write .dynx session archive
+	std::string emit_mode    = "off";  // .dynx emit cadence (mirrors DynxSection)
+	std::string output_dir;            // destination directory for .xyzf / .dynx
+
+	// Live display
+	std::string display_mode = "terminal_chart"; // forwarded to visual layer
+
+	bool is_active()    const { return max_compounds != 0 || !seed_formula.empty(); }
+	bool emits_dynx()   const { return output_dynx || emit_mode != "off"; }
+};
+
+
 
 struct VsimDocument {
 	std::string         source_path;
 	ProjectSection      project;
 	SimulationSection   simulation;
-	CellSection         cell;         // [cell]     — WO-57B
-	BoundarySection     boundary;     // [boundary] — WO-57B
-	PBCSection          pbc;          // [pbc]      — WO-57B
+	CellSection         cell;         // [cell]      -  WO-57B
+	BoundarySection     boundary;     // [boundary]  -  WO-57B
+	PBCSection          pbc;          // [pbc]       -  WO-57B
 
-	// WO-VSIM-03B — intent-based authoring
+	// WO-VSIM-03B  -  intent-based authoring
 	MaterialSection     material;                       // [material]
 	RunSection          run;                            // [run]
 	EnvironmentSection  environment;                    // [environment]
 	ChemistrySection    chemistry;                      // [chemistry] / [system]
+	ChemPlusSection     chem_plus;                      // [chem_plus]  WO-84T
+
+	// WO-56D  -  surface dissolution module
+	struct DissolutionSection {
+		bool        enabled                  = false;
+		std::string engine                   = "protonation_ladder";
+		double dG_first_protonation          = -12.0;
+		double dG_second_protonation         = -8.0;
+		double Ea_bridging_cleavage          = 25.0;
+		double Ea_terminal_release           = 15.0;
+		double dG_hydration_Fe3              = -105.0;
+		double dG_hydration_Fe2              = -85.0;
+		double dG_hydration_Al3              = -115.0;
+		double dG_hydration_generic          = -80.0;
+		double dG_sulfate_mono               = -3.5;
+		double dG_sulfate_bi                 = -6.0;
+		double dG_sulfate_bridge             = -8.5;
+		double pH_reference                  = 1.0;
+		double pH_slope                      = -0.5;
+		double T_reference                   = 298.15;
+		double Ea_apparent                   = 15.0;
+		double site_density_per_nm2          = 5.0;
+		bool is_active() const { return enabled; }
+	} dissolution;                                      // [dissolution]  WO-56D
+
 	ExciteSection       excite;                         // [excite.*]
 	ObserveSection      observe;                        // [observe]
 	std::vector<ParticleOverrideEntry> overrides;       // [[override.particle]]
 	std::vector<RawObjectEntry>        raw_objects;     // [[raw.object]]
 
-	// WO-VSIM-04A — isomer analysis pipeline
+	// WO-VSIM-DAY68-AUDIT  -  SMF-MD kernel, geometry/XBIT binding, schemas
+	KernelSection       kernel;                         // [kernel] + [kernel.trace]
+	StateSchemaSection  state_schema;                   // [state_schema]
+	FieldSchemaSection  field_schema;                   // [field_schema]
+	InteractionsSection interactions;                   // [interactions]
+	GeometrySection     geometry;                       // [geometry] + [[geometry.mesh]]
+	XbitConfigSection   xbit_config;                    // [xbit] + [[xbit.binding]]
+
+	// WO-VSIM-04A  -  isomer analysis pipeline
 	IsomerAnalysisSection   isomer_analysis;    // [analysis.isomers]
 	IsomerGeneratorSection  isomer_generator;   // [generator.isomers]
 	IsomerTrackingSection   isomer_tracking;    // [analysis.isomer_tracking]
 	ExportSection       exports;
 	ExportVisualSection export_visual;
+	ExportDemoSection   export_demo;
 	VisualSection       visual;
 	VisualExternalSection visual_external;
 	VisualWorkspaceSection visual_workspace;        // [visual.workspace]
@@ -1615,10 +2725,15 @@ struct VsimDocument {
 	VarianceSection     variance_cfg;
 	NEvolutionSection   n_evolution_cfg;
 	WhileSection        while_cfg;
+	UntilSection        until_cfg;          // WO-72U  [until]
+	SmartLoopSection    loop_cfg;           // WO-72L  [loop]
+	SelectSection       select_cfg;         // WO-72S  [select]
 	BatchSection        batch_cfg;
-	PostStepSection     post_step;    // [post_step] — WO-57E
+	BatchExpandSection  batch_expand;                       // [batch.expand]  WO-OUTPUT-PHASE2
+	std::vector<BatchAxisEntry> batch_axes;                 // [[batch.axis]]  WO-OUTPUT-PHASE2
+	PostStepSection     post_step;    // [post_step]  -  WO-57E
 
-	// WO-VSIM-61C/61D — analysis pipeline sections
+	// WO-VSIM-61C/61D  -  analysis pipeline sections
 	VsimSystemSection              pipeline_system;         // [system]
 	VsimStructureAnalysisSection   pipeline_structure;      // [analysis.structure]
 	VsimSamplingSection            pipeline_sampling;       // [analysis.sampling]
@@ -1626,8 +2741,55 @@ struct VsimDocument {
 	VsimAnalysisInferenceSection   pipeline_inference;      // [analysis.inference] (v2) / [inference] (v1)
 	VsimOutputSection              pipeline_output;         // [output]
 	VsimVerifySection              pipeline_verify;         // [verify] WO-62A
+	VsimIkkEndTagSection           pipeline_ikk_end_tag;    // [analysis.ikk_end_tag] WO-75A
+	VsimIvecSection                pipeline_ivec;           // [analysis.ivec]        WO-75B
+	VsimMcfCaiSection              mcf_cai;                 // [object.*.*]           WO-76
+	VsimSurfaceSection             surfaces;                // [[object.surface]]     Surface Analysis
 
-	// Golden test suite — populated by [defaults.*], [test.*], [suite], [report]
+	// WO-VSIM-COLLISION-AUDIT-01 / WO-VSIM-COLLIDER-MAP-01
+	CollisionSection               collision;               // [system] + [[collision.case]] + [collision.audit]
+
+	// WO-VSEPR-SIM Extreme Addendum
+	IdentityMatricesSection        identity_matrices;       // [identity_matrices]
+	VerificationSection            verification;            // [verification]
+	ExtrasToggleScaleSection       extras_togglescale;      // [extras.togglescale]
+
+	// WO-66K-AUDIT  Dual-seed assignment
+	SeedSection                    seed;                    // [seed]
+
+	// WO-72C  .dynx session-archive emission
+	DynxSection                    dynx;                    // [dynx]
+
+	// WO-OUTPUT-PHASE2  -  physical probe sections
+	ThermalProbeSection            thermal_probe;           // [thermal_probe]
+	FieldProbeSection              field_probe;             // [field_probe]
+
+	// WO-66N  Constructor-style objects + batching + upper-block references
+	ConstructorObjectRegistry      objects;                 // [objects]
+
+	// WO-66O  Organic/peptide scale diagnostics
+	OrganicScaleSection            organic_diagnostics;     // [diagnostics.organic]
+
+	// WO-66P  Crystal/PBC functional constructor
+	CrystalConstructorSection      crystal;                 // [objects] CrystalModule(...) / [cell]+[pbc] compat
+
+	// WO-66Q  Non-molecular objects + XBIT
+	NonMolecularObjectStore        nm_objects;              // geometry/surface/source/sink/ambient
+	BridgeObjectStore              bridge_objects;          // dem_bridges / fea_bridges
+
+	// WO-NL0A  -  continuous random-materials discovery
+	DiscoverySection               discovery;               // [discovery]
+
+	// WO-75D  —  biological object layer
+	// [bio] section: semantic identity for plant-scale objects; geometry is opt-in projection only
+	struct BioSection {
+		std::string object      {};       // e.g. "leaf", "stem", "plant"
+		std::string class_tag   { "plant/object" };
+		bool        projection  { false }; // geometry projection off by default
+		bool        present     { false }; // true when [bio] block appears in the script
+	} bio;
+
+	// Golden test suite  -  populated by [defaults.*], [test.*], [suite], [report]
 	GoldenDefaultsSection               golden_defaults;
 	std::vector<GoldenTestEntry>        golden_tests;
 	SuiteSection                        suite;
@@ -1656,7 +2818,7 @@ struct VsimDocument {
 			r.error("[project] name is required");
 
 		if (simulation.molecules.empty())
-			r.warn("[simulation] no molecules specified — empty run");
+			r.warn("[simulation] no molecules specified  -  empty run");
 
 		for (const auto& mol : simulation.molecules) {
 			if (mol.formula.empty())
@@ -1675,13 +2837,13 @@ struct VsimDocument {
 
 		// WO-VSIM-03B validations
 		if (material.has_formula() && simulation.molecules.empty()) {
-			// [material] used without [simulation] — that is fine, no error
+			// [material] used without [simulation]  -  that is fine, no error
 		}
 		if (run.has_mode()) {
 			const std::string& m = run.mode;
 			if (m != "relax" && m != "md" && m != "npt" && m != "nvt" &&
 				m != "nve"   && m != "scan" && m != "single_point")
-				r.warn("[run] mode '" + m + "' is unrecognized — will pass through to runtime");
+				r.warn("[run] mode '" + m + "' is unrecognized  -  will pass through to runtime");
 			if (run.max_steps < 1)
 				r.error("[run] max_steps must be >= 1");
 		}
@@ -1691,7 +2853,7 @@ struct VsimDocument {
 		}
 
 		if (!exports.output_dir.empty()) {
-			// output_dir is informational — no filesystem check at parse time
+			// output_dir is informational  -  no filesystem check at parse time
 		}
 
 		return r;
