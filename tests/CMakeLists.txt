@@ -1895,3 +1895,25 @@ target_link_libraries(test_chemplus_declarative PRIVATE
     vsepr_core)
 vsepr_add_test(NAME ChemPlusDeclarativeGroup91 TARGET test_chemplus_declarative
     LABELS chemplus declarative vsepr wo-84t quick)
+
+# ============================================================================
+# Group 92  --  WO-84U: ChemPlus CLI classify integration
+# ============================================================================
+
+add_executable(test_chemplus_cli
+    ${PROJECT_SOURCE_DIR}/tests/test_chemplus_cli.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/vsepr.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/organic_candidate.cpp
+)
+target_include_directories(test_chemplus_cli PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/atomistic
+)
+target_link_libraries(test_chemplus_cli PRIVATE
+    vsepr_chem
+    vsepr_core)
+vsepr_add_test(NAME ChemPlusCliGroup92 TARGET test_chemplus_cli
+    LABELS chemplus cli classify wo-84u quick)
