@@ -73,6 +73,7 @@ struct EvalResult {
 	double      threshold  = 0.0;
 	bool        above_threshold = false;
 	std::string warning;   // Non-empty if metric name is unknown or result is flagged
+	std::string detail;    // WO-84S: structured payload for VSEPR/classify metrics
 };
 
 // ============================================================================
@@ -316,6 +317,18 @@ public:
 			} else if (metric == "coordination") {
 				r.value  = count_kind(vsepr::kernel::KernelEventKind::Formation);
 				r.window = "cumulative";
+			} else if (metric == "vsepr_sites"
+					|| metric == "geometry_candidates"
+					|| metric == "vsepr_confidence"
+					|| metric == "vsepr_flags"
+					|| metric == "lone_pair_inference"
+					|| metric == "fallback_mode") {
+				// WO-84S: VSEPR observe sink  -  recognised but unpopulated here.
+				// Callers with live VSEPR data should use eval_observe_vsepr_metrics()
+				// from include/vsim/vsepr_observe.hpp.
+				r.value   = 0.0;
+				r.window  = "static";
+				r.warning = "no_vsepr_data: run classify path to populate";
 			} else {
 				// Unknown metric  -  pass through as zero (forward-compatible)
 				r.value   = 0.0;
