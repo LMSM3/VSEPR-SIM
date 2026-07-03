@@ -346,6 +346,46 @@ target_link_libraries(test_experiment_match atomistic)
 target_include_directories(test_experiment_match PRIVATE ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME ExperimentMatchTest TARGET test_experiment_match LABELS atomistic)
 
+add_executable(test_classify_compile_status test_classify_compile_status.cpp)
+target_link_libraries(test_classify_compile_status atomistic)
+target_include_directories(test_classify_compile_status PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifyCompileStatusTest TARGET test_classify_compile_status LABELS atomistic classify quick)
+
+add_executable(test_classify_vsepr test_classify_vsepr.cpp)
+target_link_libraries(test_classify_vsepr atomistic)
+target_include_directories(test_classify_vsepr PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifyVSEPRTest TARGET test_classify_vsepr LABELS atomistic classify quick)
+
+add_executable(test_classify_lone_pair_inference test_classify_lone_pair_inference.cpp)
+target_link_libraries(test_classify_lone_pair_inference atomistic)
+target_include_directories(test_classify_lone_pair_inference PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifyLonePairInferenceTest TARGET test_classify_lone_pair_inference LABELS atomistic classify quick)
+
+add_executable(test_script_expansion test_script_expansion.cpp)
+target_link_libraries(test_script_expansion vsepr_cli)
+target_include_directories(test_script_expansion PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ScriptExpansionPreviewTest TARGET test_script_expansion LABELS cli script quick)
+
+add_executable(test_providers_smoke test_providers_smoke.cpp)
+target_link_libraries(test_providers_smoke atomistic)
+target_include_directories(test_providers_smoke PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifyProvidersTest TARGET test_providers_smoke LABELS atomistic classify quick)
+
+add_executable(test_classify_pipeline test_classify_pipeline.cpp)
+target_link_libraries(test_classify_pipeline atomistic)
+target_include_directories(test_classify_pipeline PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifyPipelineTest TARGET test_classify_pipeline LABELS atomistic classify quick)
+
+add_executable(test_classify_determinism test_classify_determinism.cpp)
+target_link_libraries(test_classify_determinism atomistic)
+target_include_directories(test_classify_determinism PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifyDeterminismTest TARGET test_classify_determinism LABELS atomistic classify quick)
+
+add_executable(test_classify_safe_defaults test_classify_safe_defaults.cpp)
+target_link_libraries(test_classify_safe_defaults atomistic)
+target_include_directories(test_classify_safe_defaults PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ClassifySafeDefaultsTest TARGET test_classify_safe_defaults LABELS atomistic classify quick)
+
 # ============================================================================
 # Group 7: Coarse-Grained Mapping & Descriptors
 # ============================================================================
@@ -1812,3 +1852,24 @@ target_include_directories(test_mcf_cai PRIVATE
 target_link_libraries(test_mcf_cai PRIVATE vsepr_chem)
 vsepr_add_test(NAME McfCaiGroup89 TARGET test_mcf_cai
     LABELS mcf cai identity vsim wo-76 quick)
+
+# ============================================================================
+# Group 90  --  WO-84S: VSEPR Observe Sink
+# ============================================================================
+
+add_executable(test_vsepr_observe_sink
+    ${PROJECT_SOURCE_DIR}/tests/test_vsepr_observe_sink.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/vsepr.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/organic_candidate.cpp
+)
+target_include_directories(test_vsepr_observe_sink PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/atomistic
+)
+target_link_libraries(test_vsepr_observe_sink PRIVATE
+    vsepr_analysis_helpers
+    vsepr_core)
+vsepr_add_test(NAME VseprObserveSinkGroup90 TARGET test_vsepr_observe_sink
+    LABELS vsepr observe sink wo-84s quick)
