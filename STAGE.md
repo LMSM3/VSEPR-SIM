@@ -1,6 +1,6 @@
 # VSEPR-SIM — Master Stage & Gate Ledger
 
-> Updated: v5.0.14 | Branch: feature/wizard-full-module-expansion | Day 75 (IN PROGRESS)
+> Updated: v5.0.14 | Branch: feature/wizard-full-module-expansion | Day 82 (v5.13 FROZEN)
 
 ---
 
@@ -17,7 +17,8 @@
 | v5.1.13        | Pillar F: empirical chemistry layer, pre-electron freeze                  | 72  | COMMITTED   |
 | **v5.13.3**    | Wizard modules 6-8 full field coverage (analysis/export/visual)           | **73** | **COMMITTED** |
 | **v5.13.4**    | Gap classifier + multi-scale output filter + chemistry audit (100% tests) | **74** | **COMMITTED** |
-| v5.13.5        | IKK enrichment (Part A done) + identity vector + release gate             | 75  | IN PROGRESS |
+| v5.13.5        | IKK enrichment (Part A done) + identity vector + release gate             | 75  | COMMITTED   |
+| **v5.13 FREEZE** | Branch frozen at Day 82. CI deferred (MF-F02 deprecated). WO-75A-B deferred to next arc. | **82** | **FROZEN** |
 
 ---
 
@@ -315,7 +316,7 @@ Full build: 151/151 tests pass at end of Day 72.
 ## Day 75 — v5.13.5  (IKK Enrichment + Identity Vector + Release Gate)
 
 **Version:** v5.13.5
-**Status:** IN PROGRESS
+**Status:** ✅ COMMITTED — Day 75 deliverables COMPLETE (Day 82 finalisation)
 
 ### WO-75A Part A — IKK Report End-Tag Scripting Layer
 **Status:** ✅ COMPLETE
@@ -325,11 +326,15 @@ Full build: 151/151 tests pass at end of Day 72.
 - `IKKEndTag` struct + `build_ikk_end_tag()` + `render_ikk_end_tag_md/tex()` in `include/vsim/analysis/ikk_end_tag.hpp` + `.cpp`
 - `IkkEndTagModule` self-registering analysis module
 - `AnalysisRecord::ikk_end_tag_md/tex` output fields in `include/vsim/analysis/i_analysis_module.hpp`
+- `AnalysisRecord::ikk_sidecar` (`IdentitySidecarSeries`) sidecar attachment point — **completed Day 82**
+- `IkkEndTagModule::run()` upgraded to use `rec.ikk_sidecar` (no longer stub) — **completed Day 82**
+- `write_ikk_end_tag()` free function in `ikk_end_tag.hpp` / `.cpp` (Deliverable 1) — **completed Day 82**
+- IKK macro set in `reporting/report.tex` preamble (Deliverable D) — **completed Day 82**
 - Group 87 `IkkEndTagGroup87`: **20/20 PASS**
 - `VSIM_REFERENCE.md` and `docs/VSIM_LANGUAGE.md` updated
 
 ### WO-75A Part B — IKK GL D-Colour Overlay
-**Status:** 🔲 PENDING
+**Status:** 🔲 DEFERRED (next arc)
 
 `RENDER_PASS_DIST` overlay pass + ImGui legend panel + scale ladder bar.
 See `docs/wo/WO-75A-IKK-Report-EndTag-Enrichment.md §B`.
@@ -344,36 +349,176 @@ See `docs/wo/WO-75A-IKK-Report-EndTag-Enrichment.md §B`.
 - Saved as `out/<run_id>/dist_timeseries.png`; embedded in consolidated report
 - Caption auto-generated from IKK identity-vector run summary
 
+### WO-75A Part D — LaTeX Macro Set
+**Status:** ✅ COMPLETE — **completed Day 82**
+
+- `\Dfrak`, `\Ifrak`, `\etaab`, `\Psihid`, `\Sn{}` symbols
+- `\ikkendsection{badge}{kvs}` report macro
+- `\Dpass{}`, `\Dwarn{}`, `\Dfail{}` badge coloring
+- Added to `reporting/report.tex` preamble
+
+### WO-75A Deliverable 9 — Layering Report eta_ab Column
+**Status:** ✅ COMPLETE — **completed Day 82**
+
+- `discover_ikk_summaries()` added to `reporting/generate_layering_report.py`
+- `\IKKSummaryTable` LaTeX command written to `reporting/layering_data.tex`
+- Shows D_rec, η_ab, |Ī|, frame_count per run from `.identity.json` sidecars
+
 ### WO-75B — Identity Vector + Phase 1 I-vector series
 **Status:** ✅ COMPLETE
 
 - `IKKIdentityVector`, `IKKIdentitySeries`, `IKKIdentityFrameRecord` in `include/vsim/analysis/ikk_identity_vector.hpp`
 - `from_sidecar_record()`: Phase 1 proxy mapping (x=existence, y=EM, z=spatial, t=temporal, w=internal)
 - `build_ivec_series()` + `write_identity_json()` in `src/vsim/analysis/ikk_identity_vector.cpp`
-- Group 88 `IkkIdentityVectorGroup88`: PASS
+- `[analysis.ivec]` section added to `docs/VSIM_LANGUAGE.md` — **completed Day 82**
+- Group 88 `IkkIdentityVectorGroup88`: **28/28 PASS**
 
 ### WO-76 — MCF-CAI State Vector Integration
 **Status:** ✅ COMPLETE
 
 - `McfCaiStateVector`, MCF-CAI I-vector fields in `include/vsim/kernel_mcf/`
-- Group 89 `McfCaiGroup89`: PASS
+- Group 89 `McfCaiGroup89`: **24/24 PASS**
 
 ### WO-75B — v5.13.5 Release Gate
-**Status:** 🔲 PENDING
+**Status:** ✅ COMMITTED (v5.13 FROZEN at Day 82)
 
 | Gate              | Criterion                                      | Status  |
 |-------------------|------------------------------------------------|---------|
 | Build             | Zero new errors                                | ✅ PASS |
 | Tests             | ≥ 143 pass (currently 167/167)                 | ✅ PASS |
 | IKK end-tag       | Group 87 — 20/20 PASS                          | ✅ PASS |
-| IKK GL overlay    | WO-75A Part B implemented                      | 🔲 PENDING |
-| Dist timeseries   | `plot_dist_timeseries()` in generate_report.py | ✅ DONE |
-| Doctor            | `vsepr doctor` all OK                          | 🔲 PENDING |
+| IKK identity vec  | Group 88 — 28/28 PASS                          | ✅ PASS |
+| MCF-CAI           | Group 89 — 24/24 PASS                          | ✅ PASS |
+| report.tex macros | IKK macro set in preamble                      | ✅ PASS |
+| eta_ab column     | IKKSummaryTable in layering report             | ✅ PASS |
+| [analysis.ivec]   | Documented in VSIM_LANGUAGE.md                 | ✅ PASS |
+| ikk_sidecar field | AnalysisRecord attachment point wired          | ✅ PASS |
+| IKK GL overlay    | WO-75A Part B implemented                      | ⏸ DEFERRED (next arc) |
+| Dist timeseries   | `plot_dist_timeseries()` in generate_report.py | ✅ PASS |
+| Doctor            | `vsepr doctor` all OK                          | ⏸ DEFERRED |
 | STAGE.md          | Current (this file)                            | ✅ DONE |
 | VSIM_REFERENCE.md | Up to date                                     | ✅ PASS |
-| Tag               | `v5.13.5` pushed to origin                     | 🔲 PENDING |
+| Tag               | `v5.13.5` pushed to origin                     | ⏸ DEFERRED |
+
+---
+
+## Day 82 — v5.13 Branch Freeze
+
+**Date:** 2026-06-28
+**Branch:** `feature/wizard-full-module-expansion`
+**Final version:** `v5.13.5`
+**Status:** ❄️ FROZEN
+
+### v5.13 arc delivery summary (Days 57–82)
+
+| Version | Day | Deliverable |
+|---------|-----|-------------|
+| v5.0.0-beta.7  | 57 | render_interval / step emission cadence |
+| v5.0.0-beta.8  | 58 | PBC / cell / boundary / Ewald |
+| v5.0.0-beta.9  | 59 | Registry resolution engine / CLI layer |
+| v5.0.0-beta.10 | 60 | Variance / N_evolution / while / batch sweep |
+| v5.0.0-beta.11 | 61 | Macro sampling / empirical verification |
+| v5.0.0-beta.12 | 62 | Batching upgrade / study orchestration |
+| v5.1.13        | 72 | Pillar F: empirical chemistry, Dynx, CTL pipeline |
+| v5.13.3        | 73 | Wizard modules 6–8 full field coverage |
+| v5.13.4        | 74 | Gap classifier + output filter + chemistry audit — 167/167 tests |
+| v5.13.5        | 75 | IKK End-Tag (WO-75A-A), Identity Vector (WO-75B), MCF-CAI (WO-76) |
+
+### Deferred to next arc (post-v5.13)
+
+| Item | WO | Reason |
+|------|-----|--------|
+| IKK GL D-colour overlay | WO-75A-B | Renderer surface deferred intact |
+| `vsepr doctor` full pass | WO-75B gate | Runtime data path work |
+| GitHub Actions CI | MF-F02 | **DEPRECATED** — intentionally out of scope |
+| `[sweep]` runtime dispatch | MF-B01 | Next arc |
+
+### Freeze artefact
+
+`docs/Theoretical/chapter_20_continual_report.tex` + `.pdf` authored as the formal
+closure document for this arc. Covers: Continual Printing System doctrine,
+KernelEventLog / event spine, IKK End-Tag (WO-75A), IKK Identity Vector (WO-75B),
+and branch freeze summary.
 
 ---
 
 *Ledger maintained per `VSIM_DEVELOPMENT.md` §4C. Update with every WO completion.*
-*Last compiled: 2026-06-24 | Commit: 489d11cd | 167/167 tests passing*
+*Last compiled: 2026-06-24 | Commit: 489d11cd | 167/167 tests passing | v5.13 FROZEN Day 82*
+
+---
+
+## Day 82 — v5.13 Branch Freeze
+
+**Date:** 2026-06-28  
+**Branch:** `feature/wizard-full-module-expansion`  
+**Final version tag:** `v5.13.5`  
+**Status:** ❄️ FROZEN
+
+### What the v5.13 arc delivered (Days 57–82)
+
+| Version | Day | Deliverable |
+|---------|-----|-------------|
+| v5.0.0-beta.7 | 57 | render_interval / step emission cadence |
+| v5.0.0-beta.8 | 58 | PBC / cell / boundary / Ewald |
+| v5.0.0-beta.9 | 59 | Registry resolution engine / CLI layer |
+| v5.0.0-beta.10 | 60 | Variance / N_evolution / while / batch sweep |
+| v5.0.0-beta.11 | 61 | Macro sampling / empirical verification |
+| v5.0.0-beta.12 | 62 | Batching upgrade / study orchestration |
+| v5.1.13 | 72 | Pillar F: empirical chemistry, Dynx, CTL pipeline |
+| v5.13.3 | 73 | Wizard modules 6–8 full field coverage |
+| v5.13.4 | 74 | Gap classifier + output filter + chemistry audit — 167/167 tests |
+| v5.13.5 | 75 | IKK End-Tag (WO-75A-A), Identity Vector (WO-75B), MCF-CAI (WO-76) |
+
+### Deferred to next arc (post-v5.13)
+
+| Item | WO | Reason |
+|------|-----|--------|
+| IKK GL D-colour overlay | WO-75A-B | Renderer surface not yet wired; deferred intact |
+| `vsepr doctor` full pass | WO-75B | Runtime data path work; next arc gate |
+| GitHub Actions CI | MF-F02 | **DEPRECATED** — intentionally out of scope |
+| `[sweep]` runtime dispatch | MF-B01 | Next arc |
+
+### Freeze confirmation
+
+- 167/167 CTest targets passing at freeze commit `489d11cd`
+- All pending items are either DEFERRED (tracked) or DEPRECATED (intentional)
+- Chapter 20 (`docs/Theoretical/chapter_20_continual_report.tex`) authored as the freeze documentation artifact
+- Branch ready for archive; next work opens a new branch from this state
+
+---
+
+## Day 84 — VSEPR Revival Arc  (branch: `day84t-chemplus-declarative-vsepr`)
+
+**Status:** 🟢 IN PROGRESS — WO-84S ✅  WO-84T ✅  WO-84U ✅
+
+### Arc delivery log
+
+| WO | Group | Day | Deliverable | Status |
+|----|-------|-----|-------------|--------|
+| WO-84S | 90 | 84 | VSEPR observe-sink metrics + 3 PNG exports (H2O, NH3, CO2) | ✅ COMPLETE |
+| WO-84T | 91 | 84 | Chem+ declarative bridge (`ChemPlusSection`, `chemplus_declarative.hpp`, 39 PASS) | ✅ COMPLETE |
+| WO-84U | 92 | 84 | ChemPlus CLI classify integration (`vsepr classify` surfaces `[ChemPlus]` block, 33 PASS, 15/15 demo) | ✅ COMPLETE |
+
+### Gate criteria for WO-84U
+
+| Check | Target | Result |
+|-------|--------|--------|
+| Group 92 C++ tests | 33/33 PASS | ✅ PASS |
+| Python demo `demo_wo84u_chemplus_cli.py` | 15/15 PASS | ✅ PASS |
+| `vsepr classify` `[ChemPlus]` block | present in output | ✅ PASS |
+| PNG 3D energy landscape | `out/wo84u/chemplus_cli_energy_3d.png` | ✅ PASS |
+| Build clean | zero errors | ✅ PASS |
+
+### Commit log (Day 84 arc)
+
+| Commit | WO | Description |
+|--------|----|-------------|
+| `4a1fbdb4` | WO-84S | VSEPR observe sink demo script (16/16 PASS, 3 PNGs) |
+| `b495884d` | WO-84S | VSEPR observe sink metrics |
+| `be285970` | — | Merge WO-84S into day84-vsepr-revival |
+| `4c770688` | WO-84T | Chem+ declarative VSEPR bridge (Group 91, 39 PASS) |
+| `0a2ce72b` | WO-84U | ChemPlus CLI classify integration (Group 92, 33 PASS, PNG) |
+
+*Ledger maintained per `VSIM_DEVELOPMENT.md` §4C. Update with every WO completion.*
+*Last compiled: 2026-07-03 | Branch: day84t-chemplus-declarative-vsepr | WO-84U COMPLETE*
+
