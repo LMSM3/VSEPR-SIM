@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_test\CMakeFiles\115eda30b10da711da09282d4b0a8be5\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{5D0F7405-196B-34E8-BF19-EF25734DBFD5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

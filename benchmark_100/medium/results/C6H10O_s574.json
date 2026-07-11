@@ -1,0 +1,19 @@
+{
+  "formula": "C6H10O",
+  "seed": 574,
+  "tier": "medium",
+  "num_atoms": 17,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 60006.219017,
+  "energy_per_atom": 3529.777589,
+  "rms_force": 52221.544150,
+  "max_force": 52221.544150,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 2.365800,
+  "timestamp": "2026-03-28T12:52:54",
+  "xyz_file": "benchmark_100\medium\structures\C6H10O_s574.xyz"
+}

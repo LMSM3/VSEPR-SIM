@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="220" viewBox="0 0 640 220">
+<title>Run Summary — demo_03_graphite_stack</title>
+<rect width="640" height="220" fill="#0d1117"/>
+<line x1="50" y1="50" x2="50" y2="170" stroke="#58a6ff" stroke-width="1"/>
+<line x1="50" y1="170" x2="590" y2="170" stroke="#58a6ff" stroke-width="1"/>
+<polyline fill="none" stroke="#3fb950" stroke-width="2" points="50,105.239 320,108.707 590,120.651 "/>
+<polyline fill="none" stroke="#f0883e" stroke-width="2" points="50,118.571 320,116.732 590,107.564 "/>
+<rect x="50" y="8" width="12" height="10" fill="#3fb950" opacity="1"/>
+<text x="66" y="17" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="start">eta (order param)</text>
+<rect x="210" y="8" width="12" height="10" fill="#f0883e" opacity="1"/>
+<text x="226" y="17" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="start">avg coordination</text>
+<text x="320" y="214" fill="#8b949e" font-family="monospace" font-size="11" text-anchor="middle">FIRE step</text>
+<text x="590" y="214" fill="#6e7681" font-family="monospace" font-size="9" text-anchor="end">2026-04-27T00:55:01Z</text>
+</svg>

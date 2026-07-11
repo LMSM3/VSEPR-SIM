@@ -1,4 +1,5 @@
-#include "vis/window.hpp"
+﻿#include "vis/window.hpp"
+#include "vis/xyz_to_snapshot.hpp"
 #include "../sim/sim_thread.hpp"
 #include "command_router.hpp"
 #include <GLFW/glfw3.h>
@@ -7,6 +8,7 @@
 #include "imgui_impl_opengl3.h"
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 namespace vsepr {
 
@@ -30,6 +32,7 @@ Window::Window(int width, int height, const std::string& title)
     VizConfig config;
     config.apply_mode_preset(VizMode::CARTOON);
     viz_router_.init(config);
+    ui_manager_.set_auto_pilot(&auto_pilot_);
 }
 
 Window::~Window() {
@@ -196,6 +199,9 @@ void Window::run(FrameBuffer& frame_buffer) {
         glfwGetFramebufferSize(window_, &width, &height);
         viz_router_.render(renderer_, width, height);
         
+        // Tick auto-pilot (spin + capture)
+        auto_pilot_.tick(renderer_.camera(), frame_time, width, height);
+        
         // Swap buffers
         glfwSwapBuffers(window_);
     }
@@ -239,6 +245,10 @@ void Window::run_with_ui(SimulationThread& sim_thread) {
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         
         // Swap buffers
+        
+        // Tick auto-pilot (spin + capture)
+        auto_pilot_.tick(renderer_.camera(), frame_time, width, height);
+        
         glfwSwapBuffers(window_);
     }
 }
@@ -285,6 +295,58 @@ void Window::run_with_ui(SimulationThread& sim_thread, CommandRouter& command_ro
         
         // Swap buffers
         glfwSwapBuffers(window_);
+    }
+}
+
+void Window::run_batch(vis::BatchWindowBridge& bridge, float display_fps) {
+    // Apply passive batch preset — disables ImGui, outlines, shadows, interpolation
+    VizConfig cfg;
+    cfg.apply_mode_preset(VizMode::BATCH_PASSIVE);
+    cfg.batch_display_fps  = display_fps;
+    cfg.batch_run_label    = bridge.status_snapshot().run_label;
+    viz_router_.init(cfg);
+
+    const double tick_s = 1.0 / std::max(display_fps, 0.5f);
+    last_frame_time_     = Clock::now();
+
+    while (!glfwWindowShouldClose(window_)) {
+        auto now = Clock::now();
+        std::chrono::duration<double> elapsed = now - last_frame_time_;
+        double frame_time = elapsed.count();
+        last_frame_time_ = now;
+
+        // Minimal event pump — keeps the OS window responsive
+        glfwPollEvents();
+
+        // Throttle: only render at display_fps
+        if (bridge.display_tick(display_fps)) {
+            if (auto xyz = bridge.latest_frame()) {
+                FrameSnapshot snap = vis::xyz_frame_to_snapshot(*xyz);
+                snap.status_message = bridge.status_text();  // overlay text
+                viz_router_.update_physics(snap);
+            }
+        }
+
+        viz_router_.update(frame_time);
+
+        int width, height;
+        glfwGetFramebufferSize(window_, &width, &height);
+        viz_router_.render(renderer_, width, height);
+
+        // Auto-pilot: passive spin is opt-in via auto_pilot_.set_spin_enabled()
+        auto_pilot_.tick(renderer_.camera(), frame_time, width, height);
+
+        glfwSwapBuffers(window_);
+
+        // Exit once batch is done and no extra frames are pending
+        if (bridge.is_done()) break;
+
+        // Sleep to cap CPU burn on slow-fps batch display
+        double render_cost =
+            std::chrono::duration<double>(Clock::now() - now).count();
+        double sleep_s = tick_s - render_cost;
+        if (sleep_s > 0.001)
+            std::this_thread::sleep_for(std::chrono::duration<double>(sleep_s));
     }
 }
 
@@ -406,6 +468,16 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
         if (key == GLFW_KEY_R && action == GLFW_PRESS) {
             win->renderer_.camera().reset();
         }
+        
+        // Auto-spin toggle (S key)
+        if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+            win->auto_pilot_.toggle_spin();
+        }
+        
+        // Auto-capture toggle (P key = photograph)
+        if (key == GLFW_KEY_P && action == GLFW_PRESS) {
+            win->auto_pilot_.toggle_capture();
+        }
     }
     
     // Forward to ImGui for its own processing
@@ -418,3 +490,6 @@ void Window::key_callback(GLFWwindow* window, int key, int scancode, int action,
 }
 
 } // namespace vsepr
+
+
+

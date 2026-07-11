@@ -1,0 +1,19 @@
+{
+  "formula": "HCOOH",
+  "seed": 714,
+  "tier": "fast",
+  "num_atoms": 5,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 13.188209,
+  "energy_per_atom": 2.637642,
+  "rms_force": 30.138435,
+  "max_force": 30.138435,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.528000,
+  "timestamp": "2026-03-28T12:55:30",
+  "xyz_file": "benchmark_100\fast\structures\HCOOH_s714.xyz"
+}

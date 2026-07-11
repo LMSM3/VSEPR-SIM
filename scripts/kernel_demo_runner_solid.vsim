@@ -1,0 +1,150 @@
+# scripts/kernel_demo_runner_solid.vsim
+# VSEPR-SIM solid-state kernel demo runner
+# Covers kernel_demo scenarios 14-17 (solid class)
+#
+# Entry:     vsper run scripts/kernel_demo_runner_solid.vsim
+# Back-call: vsper run kernel_demo --scenario <N>
+# Pipe:      vsper run scripts/kernel_demo_runner_solid.vsim | vsper run kernel_demo
+#
+# Each run_scenario block emits --scenario <N> for the main demo to consume.
+
+[project]
+name        = kernel_demo_runner_solid
+version     = v5.0.0-beta.7.1
+seed_base   = 9014
+determinism = true
+
+[runner]
+target_demo    = kernel_demo
+scenario_class = solid
+scenario_range = 14,15,16,17
+
+[runner.pipe]
+output_format = scenario_args
+back_call     = vsper run kernel_demo --scenario {N}
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events  = true
+defect_events     = true
+transport_events  = true
+dynamic_energy    = true
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 5000
+steps_relax      = 5000
+save_every       = 50
+temperature_low  = 300
+temperature_mid  = 900
+temperature_high = 1800
+
+# -- Scenario 14: BCC-Fe vacancy migration ------------------------------------
+[run_scenario.14]
+formula    = Fe
+rule       = vacancy_hop
+mode       = solid_lattice
+lattice    = BCC
+temperature = 900
+steps      = 5000
+
+[run_scenario.14.defects]
+vacancy_fraction = 0.005
+
+[run_scenario.14.expected]
+primary = vacancy_hop_coordination_7
+trend_1 = migration_energy_governs_hop_rate
+trend_2 = temperature_increases_hop_frequency
+
+# -- Scenario 15: Al2O3 grain-boundary sliding ---------------------------------
+[run_scenario.15]
+formula    = Al2O3
+rule       = grain_boundary_diffusion
+mode       = solid_lattice
+lattice    = corundum
+temperature = 1600
+steps      = 5000
+# uncertain: grain boundary is a planar interface proxy
+
+[run_scenario.15.expected]
+primary = grain_boundary_slip_coordination_5
+trend_1 = high_temperature_accelerates_boundary_sliding
+
+# -- Scenario 16: NaCl surface ion desorption ----------------------------------
+[run_scenario.16]
+formula    = NaCl
+rule       = dissolution_surface
+mode       = solid_lattice
+lattice    = FCC
+temperature = 300
+steps      = 3000
+
+[run_scenario.16.expected]
+primary = surface_ion_desorption_coordination_5
+trend_1 = surface_ions_desorb_before_bulk_ions
+trend_2 = dissolution_rate_increases_with_temperature
+
+# -- Scenario 17: SiC oxidation (Deal-Grove) -----------------------------------
+[run_scenario.17]
+formula    = SiC+O2
+rule       = deal_grove_parabolic
+mode       = solid_lattice
+lattice    = zincblende
+temperature = 1200
+steps      = 5000
+# uncertain: Deal-Grove parabolic rate is a proxy scaling law
+
+[run_scenario.17.expected]
+primary = oxide_layer_growth_parabolic
+trend_1 = oxide_thickness_follows_sqrt_time
+trend_2 = defect_fraction_increases_at_interface
+
+[universal_smoke_tests]
+check_state_validity    = true
+check_no_nan            = true
+check_no_inferred_state = true
+check_reproducibility   = true
+
+[sweep]
+enabled         = true
+scenario_range  = 14,15,16,17
+seeds           = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_report_md           = true
+
+[report]
+title                  = kernel_demo_runner_solid
+include_material_cards = true
+include_metric_tables  = true
+include_expected_trends = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_overlay_cycle
+animation_mode        = overlay
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = true
+show_audit_table      = true
+overlay_sequence      = density,coordination,memory,orient_order
+gl_overlay_hold_s     = 2.5
+gl_auto_orbit         = true
+gl_window_width       = 1280
+gl_window_height      = 800

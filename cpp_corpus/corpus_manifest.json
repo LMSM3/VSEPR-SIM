@@ -1,0 +1,165 @@
+{
+  "corpus_id": "vsepr-sim-cpp-standards-corpus",
+  "version": "1.0.0",
+  "created": "2025-01-01",
+  "description": "C++23/26 standards corpus for VSEPR-SIM 4.0-Legacy-Beta development reference",
+  "practical_selection_rule": "1 full C++23 draft, 1 full C++26 working draft, 2-4 cppreference pages, 2-3 WG21 papers",
+  "compiler_baseline": {
+    "gcc": "15.2.0",
+    "target": "+ucrt64",
+    "cpp_standard": "C++23 (with C++26 experimental features)",
+    "cmake_cxx_standard": 23,
+    "note": "GCC 15.2 supports nearly all C++23 features and many C++26 proposals"
+  },
+
+  "entries": [
+    {
+      "id": "cpp23_n4950",
+      "title": "Working Draft, Standard for Programming Language C++",
+      "type": "standard_draft",
+      "standard": "C++23",
+      "source": "WG21",
+      "file": "standards/N4950_Cpp23_Working_Draft.pdf",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2023/n4950.pdf",
+      "status": "reference",
+      "relevance": [
+        "std::expected — error handling without exceptions",
+        "std::print/std::println — formatted output",
+        "std::flat_map/std::flat_set — cache-friendly containers",
+        "consteval/constinit — compile-time enforcement",
+        "std::optional monadic operations (and_then, transform, or_else)",
+        "multidimensional subscript operator",
+        "deducing this",
+        "std::unreachable",
+        "std::to_underlying"
+      ]
+    },
+    {
+      "id": "cpp26_n5014",
+      "title": "Working Draft, Programming Languages — C++",
+      "type": "standard_draft",
+      "standard": "C++26",
+      "source": "WG21",
+      "file": "standards/N5014_Cpp26_Working_Draft.pdf",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5014.pdf",
+      "status": "reference",
+      "relevance": [
+        "Contracts (preconditions, postconditions, assertions)",
+        "std::execution (sender/receiver async)",
+        "Reflection (P2996)",
+        "Pattern matching (P2688)",
+        "std::inplace_vector",
+        "Hazard pointers and RCU",
+        "std::simd"
+      ]
+    },
+    {
+      "id": "cppreference_cpp23",
+      "title": "C++23",
+      "type": "reference_overview",
+      "standard": "C++23",
+      "source": "cppreference",
+      "file": "references/cppreference_cpp23.html",
+      "url": "https://en.cppreference.com/w/cpp/23"
+    },
+    {
+      "id": "cppreference_cpp26",
+      "title": "C++26",
+      "type": "reference_overview",
+      "standard": "C++26",
+      "source": "cppreference",
+      "file": "references/cppreference_cpp26.html",
+      "url": "https://en.cppreference.com/w/cpp/26"
+    },
+    {
+      "id": "cppreference_support_23",
+      "title": "Compiler support for C++23",
+      "type": "compiler_support",
+      "standard": "C++23",
+      "source": "cppreference",
+      "file": "references/cppreference_compiler_support_23.html",
+      "url": "https://en.cppreference.com/w/cpp/compiler_support/23"
+    },
+    {
+      "id": "cppreference_support_26",
+      "title": "Compiler support for C++26",
+      "type": "compiler_support",
+      "standard": "C++26",
+      "source": "cppreference",
+      "file": "references/cppreference_compiler_support_26.html",
+      "url": "https://en.cppreference.com/w/cpp/compiler_support/26"
+    },
+    {
+      "id": "cppreference_support_index",
+      "title": "C++ compiler support (all standards)",
+      "type": "compiler_support",
+      "standard": "all",
+      "source": "cppreference",
+      "file": "references/cppreference_compiler_support_index.html",
+      "url": "https://en.cppreference.com/w/cpp/compiler_support"
+    },
+    {
+      "id": "wg21_standards_index",
+      "title": "WG21 Standards and Draft Documents",
+      "type": "standards_index",
+      "standard": "all",
+      "source": "WG21",
+      "file": "references/wg21_standards_index.html",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/standards"
+    },
+    {
+      "id": "p2869r3",
+      "title": "Remove Deprecated Atomic Access APIs from C++26",
+      "type": "wg21_paper",
+      "standard": "C++26",
+      "source": "WG21",
+      "file": "papers/P2869R3_remove_deprecated_atomic_access_apis.pdf",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2869r3.pdf",
+      "impact": "Audit: remove shared_ptr atomic free functions if present, migrate to std::atomic<std::shared_ptr<T>>"
+    },
+    {
+      "id": "p2875r4",
+      "title": "Undeprecate polymorphic_allocator::destroy for C++26",
+      "type": "wg21_paper",
+      "standard": "C++26",
+      "source": "WG21",
+      "file": "papers/P2875R4_undeprecate_polymorphic_allocator_destroy.pdf",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2875r4.pdf",
+      "impact": "pmr allocator usage is stable — destroy() is no longer deprecated"
+    },
+    {
+      "id": "p3099r1",
+      "title": "Contracts for C++: User-defined diagnostic messages",
+      "type": "wg21_paper",
+      "standard": "C++26",
+      "source": "WG21",
+      "file": "papers/P3099R1_contracts_user_defined_diagnostic_messages.pdf",
+      "url": "https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p3099r1.html",
+      "impact": "Future: contract annotations on kernel invariants, property search preconditions"
+    }
+  ],
+
+  "feature_adoption_plan": {
+    "immediate_c++23": [
+      "std::expected<T,E> for fallible operations (molecule resolution, property lookup)",
+      "std::optional monadic ops (and_then, transform) for chain-style processing",
+      "std::to_underlying for enum conversions",
+      "std::unreachable for exhaustive switch coverage",
+      "consteval for compile-time validation functions",
+      "std::print/std::println where available (GCC 14+)"
+    ],
+    "near_term_c++23": [
+      "std::flat_map for hot-path property lookups",
+      "deducing this for CRTP elimination",
+      "multidimensional subscript for tensor/matrix types",
+      "std::generator for lazy property iteration"
+    ],
+    "future_c++26": [
+      "Contracts (pre/post conditions on kernel APIs)",
+      "std::execution for async experiment pipelines",
+      "Reflection for automatic serialization",
+      "std::inplace_vector for fixed-capacity hot-path containers",
+      "std::simd for vectorized property computation"
+    ]
+  }
+}

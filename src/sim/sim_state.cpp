@@ -223,6 +223,18 @@ void SimulationState::set_param(const std::string& path, const ParamValue& value
     }
     
     // LJ / nonbonded parameters
+    else if (path == "ewald.enabled") {
+        if (auto v = get_as<bool>(value)) params_.use_ewald = *v;
+    }
+    else if (path == "ewald.alpha") {
+        if (auto v = get_as<double>(value)) params_.ewald_alpha = *v;
+    }
+    else if (path == "ewald.rcut") {
+        if (auto v = get_as<double>(value)) params_.ewald_rcut = *v;
+    }
+    else if (path == "ewald.kmax") {
+        if (auto v = get_as<int>(value)) params_.ewald_kmax = *v;
+    }
     else if (path == "lj.epsilon") {
         if (auto v = get_as<double>(value)) {
             // TODO: Update energy model
@@ -411,7 +423,12 @@ void SimulationState::fire_velocity_verlet_step() {
     for (size_t i = 0; i < N; ++i) {
         coords_[i] += displacement[i];
     }
-    
+
+    // Wrap coordinates back into the simulation box (PBC)
+    if (params_.use_pbc) {
+        box_.wrap_coords(coords_);
+    }
+
     // Evaluate new forces
     evaluate_forces();
     
@@ -501,7 +518,7 @@ void SimulationState::md_velocity_verlet_step() {
     }
     
     // Apply PBC if enabled
-    if (params_.use_pbc && box_.enabled()) {
+    if (params_.use_pbc && box_.enabled) {
         box_.wrap_coords(coords_);
     }
     
@@ -584,13 +601,40 @@ void SimulationState::evaluate_forces() {
     
     std::vector<double> gradient(coords_.size());
     double energy = energy_model_->evaluate_energy_gradient(coords_, gradient);
-    
+
     // Convert gradient to forces (F = -grad)
     for (size_t i = 0; i < gradient.size(); ++i) {
         forces_[i] = -gradient[i];
     }
-    
+
     stats_.potential_energy = energy;
+
+    // Add Ewald long-range Coulomb if enabled (ionic PBC systems)
+    if (params_.use_ewald && params_.use_pbc && box_.enabled) {
+        evaluate_ewald_forces();
+    }
+}
+
+// ============================================================================
+// Ewald summation (long-range Coulomb for ionic PBC systems)
+// ============================================================================
+
+void SimulationState::evaluate_ewald_forces() {
+    if (charges_.size() != coords_.size() / 3) {
+        // No charges assigned — nothing to do
+        return;
+    }
+
+    // Sync Ewald params from SimParams
+    vsepr::EwaldParams ep;
+    ep.alpha     = params_.ewald_alpha;
+    ep.rcut_real = params_.ewald_rcut;
+    ep.kmax      = params_.ewald_kmax;
+    ewald_.set_params(ep);
+
+    // Ewald forces are accumulated on top of the short-range forces already in forces_
+    double E_ewald = ewald_.evaluate(coords_, charges_, box_, forces_);
+    stats_.potential_energy += E_ewald;
 }
 
 void SimulationState::compute_statistics() {

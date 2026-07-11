@@ -1,0 +1,19 @@
+{
+  "formula": "CH3Br",
+  "seed": 812,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 12.528271,
+  "energy_per_atom": 2.505654,
+  "rms_force": 35.212441,
+  "max_force": 35.212441,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.795700,
+  "timestamp": "2026-03-28T12:53:39",
+  "xyz_file": "benchmark_100\medium\structures\CH3Br_s812.xyz"
+}

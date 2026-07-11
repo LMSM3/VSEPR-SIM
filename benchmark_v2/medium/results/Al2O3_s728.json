@@ -1,0 +1,19 @@
+{
+  "formula": "Al2O3",
+  "seed": 728,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 420.839833,
+  "energy_per_atom": 84.167967,
+  "rms_force": 1089.939786,
+  "max_force": 1089.939786,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.086500,
+  "timestamp": "2026-03-28T13:04:35",
+  "xyz_file": "benchmark_v2\medium\structures\Al2O3_s728.xyz"
+}

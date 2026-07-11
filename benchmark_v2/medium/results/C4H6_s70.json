@@ -1,0 +1,19 @@
+{
+  "formula": "C4H6",
+  "seed": 70,
+  "tier": "medium",
+  "num_atoms": 10,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 22011.130041,
+  "energy_per_atom": 2201.113004,
+  "rms_force": 76543.366707,
+  "max_force": 76543.366707,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.231500,
+  "timestamp": "2026-03-28T13:06:00",
+  "xyz_file": "benchmark_v2\medium\structures\C4H6_s70.xyz"
+}

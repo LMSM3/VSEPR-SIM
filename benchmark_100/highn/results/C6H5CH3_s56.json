@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5CH3",
+  "seed": 56,
+  "tier": "highn",
+  "num_atoms": 15,
+  "steps_taken": 6618,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.719415,
+  "energy_per_atom": -0.047961,
+  "rms_force": 0.351862,
+  "max_force": 0.351862,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 7.736200,
+  "timestamp": "2026-03-28T12:53:04",
+  "xyz_file": "benchmark_100\highn\structures\C6H5CH3_s56.xyz"
+}

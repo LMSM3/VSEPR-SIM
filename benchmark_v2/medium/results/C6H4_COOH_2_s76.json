@@ -1,0 +1,19 @@
+{
+  "formula": "C6H4(COOH)2",
+  "seed": 76,
+  "tier": "medium",
+  "num_atoms": 14,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 44320.685629,
+  "energy_per_atom": 3165.763259,
+  "rms_force": 58380.261895,
+  "max_force": 58380.261895,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.438500,
+  "timestamp": "2026-03-28T13:07:31",
+  "xyz_file": "benchmark_v2\medium\structures\C6H4_COOH_2_s76.xyz"
+}

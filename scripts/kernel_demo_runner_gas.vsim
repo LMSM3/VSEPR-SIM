@@ -1,0 +1,132 @@
+# scripts/kernel_demo_runner_gas.vsim
+# VSEPR-SIM gas-process kernel demo runner
+# Covers kernel_demo scenarios 10-13 (gas class)
+#
+# Entry:     vsper run scripts/kernel_demo_runner_gas.vsim
+# Back-call: vsper run kernel_demo --scenario <N>
+# Pipe:      vsper run scripts/kernel_demo_runner_gas.vsim | vsper run kernel_demo
+#
+# Each run_scenario block emits --scenario <N> for the main demo to consume.
+
+[project]
+name        = kernel_demo_runner_gas
+version     = v5.0.0-beta.7.1
+seed_base   = 9010
+determinism = true
+
+[runner]
+target_demo = kernel_demo
+scenario_class = gas
+scenario_range = 10,11,12,13
+
+[runner.pipe]
+# Pipe pattern: output of this runner feeds kernel_demo via --scenario
+output_format = scenario_args
+back_call     = vsper run kernel_demo --scenario {N}
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+chemical_events  = true
+dynamic_energy   = true
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 1000
+steps_relax      = 1000
+save_every       = 25
+temperature_low  = 200
+temperature_mid  = 500
+temperature_high = 1000
+
+# -- Scenario 10: Ozone photolysis ---------------------------------------------
+[run_scenario.10]
+formula = O3
+rule    = uv_homolysis
+mode    = gas_phase
+temperature = 230
+steps   = 1000
+# uncertain: UV proxy is qualitative
+
+[run_scenario.10.expected]
+primary = atomic_O_and_O2
+trend_1 = photolysis_rate_scales_with_UV_proxy
+
+# -- Scenario 11: Methane steam reforming --------------------------------------
+[run_scenario.11]
+formula = CH4+H2O
+rule    = heterogeneous_catalysis
+mode    = gas_phase
+temperature = 850
+steps   = 1000
+
+[run_scenario.11.expected]
+primary = syngas_CO_H2
+trend_1 = conversion_above_700K
+
+# -- Scenario 12: NOx SCR ------------------------------------------------------
+[run_scenario.12]
+formula = NOx+NH3
+rule    = scr_deNOx
+mode    = gas_phase
+temperature = 450
+steps   = 1000
+
+[run_scenario.12.expected]
+primary = N2_and_H2O
+trend_1 = NH3_ratio_controls_selectivity
+
+# -- Scenario 13: Cl2 UV dissociation ------------------------------------------
+[run_scenario.13]
+formula = Cl2
+rule    = photodissociation
+mode    = gas_phase
+temperature = 300
+steps   = 500
+# uncertain: radical lifetime proxy is qualitative
+
+[run_scenario.13.expected]
+primary = Cl_radical_pair
+trend_1 = bond_length_at_homolysis_threshold
+
+[universal_smoke_tests]
+check_state_validity    = true
+check_no_nan            = true
+check_no_inferred_state = true
+check_reproducibility   = true
+
+[sweep]
+enabled         = true
+scenario_range  = 10,11,12,13
+seeds           = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_report_md           = true
+
+[report]
+title                  = kernel_demo_runner_gas
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_chart
+animation_mode        = spark
+show_proxy_table      = false
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = false
+show_audit_table      = false

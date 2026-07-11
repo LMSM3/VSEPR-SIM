@@ -410,6 +410,90 @@ inline std::vector<SceneBead> scene_perturbed_lattice(
 }
 
 /**
+ * Linear aligned stack with orientation spread (cone distribution).
+ *
+ * N beads along z-axis at uniform spacing.  Each bead's orientation axis
+ * n_hat is drawn uniformly from a cone of half-angle theta_max (radians)
+ * around the +z axis.  At theta_max=0 this degenerates to the perfectly
+ * aligned stack; at theta_max=pi/2 orientations span the full hemisphere.
+ *
+ * The average P2 of the resulting ensemble is:
+ *   <P2> ≈ 0.5 * cos(theta_max) * (1 + cos(theta_max))
+ *
+ * which can be used to predict the expected directional bias in the
+ * simulation before the first step.
+ *
+ * @param n          Number of beads
+ * @param spacing    Inter-bead spacing along z (Å)
+ * @param theta_max  Half-angle of orientation cone (radians)
+ * @param seed       PRNG seed for reproducibility
+ */
+inline std::vector<SceneBead> scene_linear_stack_spread(
+    int n, double spacing, double theta_max, uint32_t seed = 42)
+{
+    constexpr double pi = 3.14159265358979323846;
+    Xorshift32 rng(seed);
+    std::vector<SceneBead> beads(n);
+    for (int i = 0; i < n; ++i) {
+        beads[i].position = {0.0, 0.0, i * spacing};
+        beads[i].has_orientation = true;
+        if (theta_max < 1e-12) {
+            beads[i].n_hat = {0, 0, 1};
+        } else {
+            // Uniform sampling inside cone: cos(theta) in [cos(theta_max), 1]
+            double cos_theta = 1.0 - rng.uniform() * (1.0 - std::cos(theta_max));
+            double sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+            double phi = 2.0 * pi * rng.uniform();
+            beads[i].n_hat = {sin_theta * std::cos(phi),
+                              sin_theta * std::sin(phi),
+                              cos_theta};
+        }
+    }
+    return beads;
+}
+
+/**
+ * Perturbed cubic lattice with orientation spread (cone distribution).
+ *
+ * Extends scene_perturbed_lattice with a controllable cone half-angle
+ * for orientation sampling, replacing the fully random orientations
+ * used in the base builder.  This allows Phase C comparisons where the
+ * average N directional (mean |cos theta| per neighbourhood) is tunable.
+ *
+ * @param n_side          Number of sites per axis (total = n_side^3)
+ * @param spacing         Lattice spacing (Å)
+ * @param jitter_fraction Displacement jitter as fraction of spacing
+ * @param theta_max       Half-angle of orientation cone (radians)
+ * @param seed            PRNG seed
+ */
+inline std::vector<SceneBead> scene_perturbed_lattice_spread(
+    int n_side, double spacing, double jitter_fraction,
+    double theta_max, uint32_t seed = 42)
+{
+    constexpr double pi = 3.14159265358979323846;
+    auto beads = scene_cubic_lattice(n_side, spacing);
+    Xorshift32 rng(seed);
+    double jitter = jitter_fraction * spacing;
+    for (auto& b : beads) {
+        b.position.x += rng.uniform(-jitter, jitter);
+        b.position.y += rng.uniform(-jitter, jitter);
+        b.position.z += rng.uniform(-jitter, jitter);
+        if (theta_max < 1e-12) {
+            b.n_hat = {0, 0, 1};
+        } else {
+            double cos_theta = 1.0 - rng.uniform() * (1.0 - std::cos(theta_max));
+            double sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+            double phi = 2.0 * pi * rng.uniform();
+            b.n_hat = {sin_theta * std::cos(phi),
+                       sin_theta * std::sin(phi),
+                       cos_theta};
+        }
+        b.has_orientation = true;
+    }
+    return beads;
+}
+
+/**
  * Large shell initialization: center bead + N_shell beads on a sphere
  * with random orientations (for large-N studies).
  */
@@ -773,6 +857,168 @@ inline std::vector<SceneBead> permute_scene(
         std::swap(result[i], result[j]);
     }
     return result;
+}
+
+// ============================================================================
+// 3D Geometry Scene Builders
+// ============================================================================
+
+/**
+ * Helical chain: N beads wound on a helix of given radius and pitch.
+ *
+ * Parametric form:
+ *   x(t) = R * cos(t)
+ *   y(t) = R * sin(t)
+ *   z(t) = (pitch / (2*pi)) * t
+ *
+ * t is uniformly sampled over [0, n_turns * 2*pi].
+ * Each bead's n_hat is the unit tangent vector at that point:
+ *   tangent = (-R*sin(t), R*cos(t), pitch/(2*pi)) normalised.
+ *
+ * This gives an intrinsic directional structure where neighbouring
+ * n_hat axes are nearly parallel (small twist per step), so P2
+ * should be high and decline only with large n_turns.
+ *
+ * @param n           Number of beads
+ * @param radius      Helix radius (Å)
+ * @param pitch       Rise per full turn (Å)
+ * @param n_turns     Number of complete turns to span
+ */
+inline std::vector<SceneBead> scene_helix(
+    int n, double radius, double pitch, double n_turns)
+{
+    constexpr double pi = 3.14159265358979323846;
+    double dz_dt = pitch / (2.0 * pi);   // dz/dt
+    std::vector<SceneBead> beads(n);
+    for (int i = 0; i < n; ++i) {
+        double t = (n <= 1) ? 0.0 : (n_turns * 2.0 * pi * i / (n - 1));
+        double x = radius * std::cos(t);
+        double y = radius * std::sin(t);
+        double z = dz_dt * t;
+        beads[i].position = {x, y, z};
+
+        // Tangent = d/dt (x,y,z) / |d/dt|
+        double tx = -radius * std::sin(t);
+        double ty =  radius * std::cos(t);
+        double tz =  dz_dt;
+        double tlen = std::sqrt(tx*tx + ty*ty + tz*tz);
+        beads[i].n_hat = {tx / tlen, ty / tlen, tz / tlen};
+        beads[i].has_orientation = true;
+    }
+    return beads;
+}
+
+/**
+ * FCC patch: fills a rectangular slab with beads on a face-centred
+ * cubic lattice.  nx * ny * nz unit cells, each contributing 4 beads:
+ *   corner (0,0,0) and face centres (a/2,a/2,0), (a/2,0,a/2), (0,a/2,a/2).
+ *
+ * All orientations along z (as-placed).  The result is a realistic
+ * bulk-density packing — useful for testing rho/eta bulk vs surface
+ * contrast.
+ *
+ * @param nx, ny, nz   Number of unit cells per axis
+ * @param a            Lattice constant (Å)
+ */
+inline std::vector<SceneBead> scene_fcc_patch(int nx, int ny, int nz, double a) {
+    // FCC basis vectors (4 per unit cell)
+    const double bx[] = {0.0, 0.5, 0.5, 0.0};
+    const double by[] = {0.0, 0.5, 0.0, 0.5};
+    const double bz[] = {0.0, 0.0, 0.5, 0.5};
+
+    std::vector<SceneBead> beads;
+    beads.reserve(nx * ny * nz * 4);
+    for (int ix = 0; ix < nx; ++ix)
+    for (int iy = 0; iy < ny; ++iy)
+    for (int iz = 0; iz < nz; ++iz)
+    for (int b  = 0; b  < 4;  ++b ) {
+        SceneBead bead;
+        bead.position = {(ix + bx[b]) * a,
+                         (iy + by[b]) * a,
+                         (iz + bz[b]) * a};
+        bead.n_hat = {0, 0, 1};
+        bead.has_orientation = true;
+        beads.push_back(bead);
+    }
+    return beads;
+}
+
+/**
+ * Bilayer slab: two parallel planes of beads, normals opposed.
+ *
+ * Upper leaflet (z = +z_sep/2): n_per_side × n_per_side grid, n_hat = +z.
+ * Lower leaflet (z = -z_sep/2): n_per_side × n_per_side grid, n_hat = -z.
+ *
+ * Beads in the same plane are on a square grid with in_plane_spacing.
+ * With opposed n_hat axes the cross-leaflet P2 contribution is strongly
+ * negative (cos(pi) = -1 → p2_pair = +1, but the leaflet-averaged P2
+ * across all pairs including within-plane) will be near 0 or slightly
+ * negative, mimicking the anti-parallel order of a lipid bilayer.
+ *
+ * @param n_per_side        Grid size per leaflet
+ * @param in_plane_spacing  Spacing within each leaflet (Å)
+ * @param z_sep             Distance between the two leaflets (Å)
+ */
+inline std::vector<SceneBead> scene_bilayer(
+    int n_per_side, double in_plane_spacing, double z_sep)
+{
+    std::vector<SceneBead> beads;
+    beads.reserve(2 * n_per_side * n_per_side);
+    double xy_off = -(n_per_side - 1) * in_plane_spacing / 2.0;
+
+    for (int ix = 0; ix < n_per_side; ++ix)
+    for (int iy = 0; iy < n_per_side; ++iy) {
+        double x = xy_off + ix * in_plane_spacing;
+        double y = xy_off + iy * in_plane_spacing;
+        // Upper leaflet — n_hat points +z (outward)
+        beads.push_back(SceneBead{{x, y,  z_sep / 2.0}, {0, 0,  1}, true, 0.0});
+        // Lower leaflet — n_hat points -z (outward from lower face)
+        beads.push_back(SceneBead{{x, y, -z_sep / 2.0}, {0, 0, -1}, true, 0.0});
+    }
+    return beads;
+}
+
+/**
+ * Icosahedral shell: 12 vertices of a regular icosahedron at given radius,
+ * plus an optional central bead.
+ *
+ * Vertex coordinates from the standard icosahedron (golden ratio phi):
+ *   (0, ±1, ±phi) and cyclic permutations, normalised to unit sphere then
+ *   scaled to radius.
+ *
+ * n_hat for each shell bead is the outward radial direction.
+ * n_hat for the central bead (if present) is +z.
+ *
+ * This is the maximally uniform spherical arrangement of 12 points,
+ * ideal for verifying isotropic rho and near-zero P2 at the centre.
+ *
+ * @param radius      Shell radius (Å)
+ * @param add_center  If true, insert a bead at origin
+ */
+inline std::vector<SceneBead> scene_icosahedron(double radius, bool add_center = true) {
+    constexpr double phi = 1.6180339887498948482;   // golden ratio
+    // Raw vertices (un-normalised)
+    const double raw[12][3] = {
+        { 0,  1,  phi}, { 0, -1,  phi}, { 0,  1, -phi}, { 0, -1, -phi},
+        { 1,  phi,  0}, {-1,  phi,  0}, { 1, -phi,  0}, {-1, -phi,  0},
+        { phi,  0,  1}, {-phi,  0,  1}, { phi,  0, -1}, {-phi,  0, -1}
+    };
+    std::vector<SceneBead> beads;
+    if (add_center)
+        beads.push_back(SceneBead{{0, 0, 0}, {0, 0, 1}, true, 0.0});
+
+    double ref_len = std::sqrt(1.0 + phi * phi);   // length of each raw vertex
+    for (int i = 0; i < 12; ++i) {
+        double nx = raw[i][0] / ref_len;
+        double ny = raw[i][1] / ref_len;
+        double nz = raw[i][2] / ref_len;
+        beads.push_back(SceneBead{
+            {nx * radius, ny * radius, nz * radius},
+            {nx, ny, nz},           // outward radial n_hat
+            true, 0.0
+        });
+    }
+    return beads;
 }
 
 } // namespace test_util

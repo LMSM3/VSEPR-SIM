@@ -1,0 +1,19 @@
+{
+  "formula": "Li2O",
+  "seed": 622,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": -0.075720,
+  "energy_per_atom": -0.025240,
+  "rms_force": 0.049214,
+  "max_force": 0.049214,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.400000,
+  "timestamp": "2026-03-28T13:03:44",
+  "xyz_file": "benchmark_v2\medium\structures\Li2O_s622.xyz"
+}

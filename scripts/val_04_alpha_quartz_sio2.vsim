@@ -1,0 +1,131 @@
+# scripts/validation/val_04_alpha_quartz_sio2.vsim
+# Priority 4 — α-quartz SiO₂
+# Geometry: trigonal (P3₁21 or P3₂21), corner-sharing SiO₄ tetrahedra
+# Main modules: topology + RDF + Kabsch alignment + fingerprints
+# External target: SiO₄ network geometry, Si-O-Si angle
+# Experimental: a = 4.9137 Å, c = 5.4047 Å
+# Si at (u,0,0) u≈0.4697; O at (x,y,z) x≈0.4135, y≈0.2669, z≈0.1191
+# Hexagonal cell — orthorhombic supercell approximation required for PBC
+# vsper validate scripts/validation/val_04_alpha_quartz_sio2.vsim
+
+[project]
+name        = val_04_alpha_quartz_sio2
+version     = v5.0.0-beta.8
+seed_base   = 8004
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[cell]
+# Orthorhombic supercell from hexagonal primitive
+# a_orth = a, b_orth = a*sqrt(3), c_orth = c
+# Confirm: use 2x1x1 supercell if needed for adequate statistics
+type    = orthorhombic
+lengths = 4.9137, 8.5111, 5.4047
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = false
+
+[species.Si]
+charge = +4.0
+mass   = 28.086
+# Confirm: quartz is covalent-ionic; formal charge may overestimate Ewald
+
+[species.O]
+charge = -2.0
+mass   = 15.999
+
+[material]
+id      = alpha_quartz_sio2
+formula = SiO2
+classes = framework_silicate,trigonal,quartz_structure
+
+[material.structure]
+type     = quartz_lattice
+elements = Si,O
+a0       = 4.9137
+c0       = 5.4047
+# Wyckoff positions loaded from internal quartz template
+# Confirm: quartz_lattice generator exists; if not, use fractional_coords block below
+
+[material.structure.fractional_coords]
+# Fallback if quartz_lattice generator is absent
+# Space group P3₁21 (No. 152), Z = 3
+# Si: 3a  (u, 0, 0), (0, u, 2/3), (-u, -u, 1/3)  u = 0.4697
+# O:  6c  (x, y, z) and symmetry equivalents
+# Partial list — confirm completeness against ITA or Materials Project mp-7000
+Si  0.4697  0.0000  0.0000
+Si  0.0000  0.4697  0.6667
+Si  0.5303  0.5303  0.3333
+O   0.4135  0.2669  0.1191
+O   0.2669  0.4135  0.8809
+O  -0.0801  0.1466  0.4524
+O   0.1466 -0.0801  0.5476
+O   0.7331  0.8534  0.7857
+O   0.8534  0.7331  0.2143
+
+[electrostatics]
+method      = ewald
+ewald_alpha = 0.3
+ewald_kmax  = 6
+ewald_rcut  = 8.0
+units       = angstrom
+
+[formation]
+mode        = fixed_lattice
+relax_steps = 0
+
+[analysis]
+coordination       = true
+rdf                = true
+rdf_pairs          = Si-O,Si-Si,O-O
+rdf_rmax           = 8.0
+rdf_bins           = 200
+bond_lengths       = true
+bond_angle         = true
+topology           = true
+topology_rings     = true
+kabsch_rmsd        = true
+fingerprint        = true
+charge_neutrality  = true
+
+[expected]
+coordination_Si       = 4
+coordination_O        = 2
+bond_length_Si_O      = 1.609
+bond_length_tol       = 0.05
+angle_Si_O_Si         = 144.0
+angle_O_Si_O          = 109.5
+angle_tol             = 8.0
+# Si-O-Si bridging angle in quartz ≈ 144°, broad distribution 130–155°
+# O-Si-O tetrahedral angle ≈ 109.5°, deviation < 5° expected
+ring_size_mode        = 6
+# Six-membered Si-O rings are the dominant topology in quartz
+charge_sum            = 0.0
+charge_sum_tol        = 1e-10
+
+[run]
+mode  = static
+steps = 0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                   = val_04_alpha_quartz_sio2
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true

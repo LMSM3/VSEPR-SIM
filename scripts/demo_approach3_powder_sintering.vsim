@@ -1,0 +1,162 @@
+# scripts/demo_approach3_powder_sintering.vsim
+# =============================================================================
+# Approach 3 -- Powder packing and sintering-readiness
+#
+# Five packing protocols for MgO powder bed.
+# Independent variable: packing protocol (categorical).
+# Primary observables: packing fraction, Voronoi local density,
+#                      contact statistics, void distribution tail
+# Ranking target: packing fraction ascending -> Section 4 table
+#
+# Seeds: 4 per job.  Output: out/approach3_powder_sintering/
+# Graph: dashboard SVG via export.profile = research_report
+#
+# vsper run scripts/demo_approach3_powder_sintering.vsim
+# =============================================================================
+
+[project]
+name        = demo_approach3_powder_sintering
+version     = v5.0.0-beta.12
+seed_base   = 9301
+determinism = false
+description = "Approach 3: five MgO powder packing protocols ranked by packing fraction"
+
+[material]
+formula   = "MgO"
+prototype = "premacro_powder_bed"
+phase     = "solid"
+
+[run]
+mode         = "relax"
+output_level = "standard"
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+contact_events   = true
+dynamic_energy   = true
+
+[variance]
+print_results    = true
+energy_var       = "energy.total  last 100  0.03"
+displacement_var = "displacement  all  0.05"
+
+# ---------------------------------------------------------------------------
+# Five batch jobs -- one per packing protocol
+# ---------------------------------------------------------------------------
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: loose drop (gravity-settled, no applied load)
+job             = loose_drop
+packing_mode    = ["gravity_drop"]
+particle_count  = ["200"]
+particle_radius = ["2.5"]
+seed_count      = 4
+aggregate       = true
+analyze         = voronoi
+analyze         = packing_fraction
+analyze         = contact_statistics
+analyze         = void_distribution
+measure         = energy_var
+
+# Job 2: uniaxial compression after loose drop
+job             = compressed
+packing_mode    = ["uniaxial_compress"]
+particle_count  = ["200"]
+particle_radius = ["2.5"]
+applied_stress  = ["0.5"]
+seed_count      = 4
+aggregate       = true
+analyze         = voronoi
+analyze         = packing_fraction
+analyze         = contact_statistics
+analyze         = void_distribution
+analyze         = compaction_curve
+measure         = energy_var
+
+# Job 3: vibration-settled (sinusoidal vibration during settling)
+job               = vibrated
+packing_mode      = ["vibration_settle"]
+particle_count    = ["200"]
+particle_radius   = ["2.5"]
+vibration_amp     = ["0.5"]
+vibration_freq    = ["0.05"]
+seed_count        = 4
+aggregate         = true
+analyze           = voronoi
+analyze           = packing_fraction
+analyze           = contact_statistics
+analyze           = void_distribution
+measure           = energy_var
+
+# Job 4: bimodal size distribution (60 % large r=2.5, 40 % small r=1.0)
+job               = bimodal
+packing_mode      = ["bimodal_gravity_drop"]
+particle_count    = ["200"]
+radius_large      = ["2.5"]
+radius_small      = ["1.0"]
+fraction_large    = ["0.60"]
+seed_count        = 4
+aggregate         = true
+analyze           = voronoi
+analyze           = packing_fraction
+analyze           = contact_statistics
+analyze           = void_distribution
+analyze           = size_resolved_stats
+measure           = energy_var
+
+# Job 5: contaminated (5 % Al2O3 particles in MgO bed)
+job                  = contaminated
+packing_mode         = ["gravity_drop"]
+particle_count       = ["200"]
+particle_radius      = ["2.5"]
+contaminant          = ["Al2O3"]
+contaminant_fraction = ["0.05"]
+seed_count           = 4
+aggregate            = true
+analyze              = voronoi
+analyze              = packing_fraction
+analyze              = contact_statistics
+analyze              = void_distribution
+analyze              = species_resolved
+measure              = energy_var
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+profile             = research_report
+write_metrics_tsv   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/approach3_powder_sintering"
+
+# ---------------------------------------------------------------------------
+# Visual
+# ---------------------------------------------------------------------------
+[visual]
+output_type            = "terminal_overlay_cycle"
+animation_mode         = "overlay"
+render_interval        = 100
+show_proxy_table       = true
+show_convergence_trace = true
+show_event_timeline    = true
+show_bar_chart         = true
+overlay_sequence       = ["density", "coordination", "contact_age", "void_map"]
+
+[visual.external]
+enabled          = true
+render           = packing_fraction_bar
+render           = voronoi_density_map
+render           = void_distribution_tail
+render           = contact_network
+render           = dashboard
+export_format    = svg
+show_progress    = true

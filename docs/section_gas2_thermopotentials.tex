@@ -1,0 +1,426 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\title{\textbf{gas2 Module --- Thermodynamic Potentials and Phase Equilibrium} \\
+\Large Theoretical Foundation Document}
+\author{VSEPR-SIM Development}
+\date{Version 1.0.0 - 4.X Beta --- April 2026}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Scope and Purpose}
+% ============================================================================
+
+This document establishes the theoretical foundation for the thermodynamic
+potential infrastructure in the gas2 module.  The goal is to compute
+the four fundamental potentials
+\[
+  A(T,V,N), \quad G(T,P,N), \quad \mu_i(T,P,\mathbf{x}), \quad S(T,V,N)
+\]
+from a partition-function basis, then derive phase boundaries from rigorous
+equilibrium conditions rather than empirical curve fits.
+
+\subsection{Design Principles}
+
+\begin{enumerate}
+  \item \textbf{SI internally, Hartree at render time.}
+        All thermodynamic quantities are stored in SI (J, Pa, m$^3$, K).
+        Hartree conversion is applied at the display layer only:
+        \[
+          E_\mathrm{Eh} = \frac{E_\mathrm{J}}{E_h}, \qquad
+          E_h = 4.3597447222071 \times 10^{-18}\;\mathrm{J}
+        \]
+
+  \item \textbf{Anti-black-box.}
+        Every intermediate---partition function, fugacity coefficient,
+        chemical potential, activity coefficient---is stored in the result
+        struct and available for inspection.
+
+  \item \textbf{Deterministic.}
+        Given $(T, P, N, \text{species})$, outputs are reproducible
+        with no hidden stochastic state.
+\end{enumerate}
+
+
+% ============================================================================
+\section{Partition Function and Free Energy}
+% ============================================================================
+
+\subsection{Classical Partition Function}
+
+For an $N$-particle system with Hamiltonian $H(\mathbf{q},\mathbf{p})$,
+the classical canonical partition function is
+\begin{equation}
+  Z(T,V,N) = \frac{1}{N!\,h^{3N}}
+    \int e^{-\beta H(\mathbf{q},\mathbf{p})}\,d\mathbf{q}\,d\mathbf{p},
+    \qquad \beta = \frac{1}{k_B T}.
+  \label{eq:partition_function}
+\end{equation}
+
+\subsection{Ideal Gas Partition Function}
+
+For a single-component ideal gas of $N$ molecules with molar mass $M$,
+the translational partition function factorises:
+\begin{equation}
+  Z_\mathrm{trans} = \frac{V^N}{N!\,\Lambda^{3N}},
+  \qquad
+  \Lambda = \sqrt{\frac{h^2}{2\pi m k_B T}}
+  \label{eq:thermal_wavelength}
+\end{equation}
+where $\Lambda$ is the thermal de~Broglie wavelength and $m = M/N_A$.
+
+Internal degrees of freedom contribute multiplicatively:
+\begin{equation}
+  Z = Z_\mathrm{trans} \cdot Z_\mathrm{rot}^N \cdot Z_\mathrm{vib}^N
+      \cdot Z_\mathrm{elec}^N.
+\end{equation}
+
+For a rigid rotor:
+\begin{equation}
+  Z_\mathrm{rot} =
+  \begin{cases}
+    1, & \text{monoatomic} \\
+    \dfrac{T}{\sigma_\mathrm{rot}\,\Theta_\mathrm{rot}}, &
+      \text{linear},\;\Theta_\mathrm{rot} = \dfrac{\hbar^2}{2Ik_B} \\[6pt]
+    \dfrac{\sqrt{\pi}}{\sigma_\mathrm{rot}}
+      \left(\dfrac{T}{\Theta_A}\right)^{1/2}
+      \left(\dfrac{T}{\Theta_B}\right)^{1/2}
+      \left(\dfrac{T}{\Theta_C}\right)^{1/2}, &
+      \text{nonlinear}
+  \end{cases}
+\end{equation}
+
+For a harmonic oscillator mode $k$:
+\begin{equation}
+  Z_{\mathrm{vib},k} = \frac{e^{-\Theta_{v,k}/(2T)}}{1 - e^{-\Theta_{v,k}/T}},
+  \qquad \Theta_{v,k} = \frac{h\nu_k}{k_B}.
+\end{equation}
+
+
+% ============================================================================
+\section{Thermodynamic Potentials}
+% ============================================================================
+
+\subsection{Helmholtz Free Energy $A(T,V,N)$}
+
+The Helmholtz free energy follows directly from the partition function:
+\begin{equation}
+  A(T,V,N) = -k_B T \ln Z(T,V,N).
+  \label{eq:helmholtz}
+\end{equation}
+
+For the ideal gas:
+\begin{equation}
+  A^\mathrm{ig}(T,V,N) = -Nk_BT
+    \left[\ln\!\left(\frac{V}{N\Lambda^3}\right) + 1\right]
+    - Nk_BT \ln Z_\mathrm{int}(T).
+  \label{eq:helmholtz_ig}
+\end{equation}
+
+For a real gas described by a cubic equation of state (Van der Waals, RK, PR),
+the departure function is
+\begin{equation}
+  A^\mathrm{dep}(T,V,N) = A(T,V,N) - A^\mathrm{ig}(T,V,N)
+    = -\int_\infty^V \left(P - \frac{NRT}{V'}\right) dV'.
+  \label{eq:helmholtz_departure}
+\end{equation}
+
+\paragraph{Van der Waals departure:}
+\begin{equation}
+  A^\mathrm{dep}_\mathrm{VdW} = -NRT\ln\!\left(\frac{V - Nb}{V}\right)
+    - \frac{N^2 a}{V}.
+  \label{eq:helmholtz_vdw}
+\end{equation}
+
+\paragraph{Redlich--Kwong departure:}
+\begin{equation}
+  A^\mathrm{dep}_\mathrm{RK} = -NRT\ln\!\left(\frac{V - Nb}{V}\right)
+    - \frac{Na}{b\sqrt{T}}\ln\!\left(\frac{V + Nb}{V}\right).
+  \label{eq:helmholtz_rk}
+\end{equation}
+
+\subsection{Gibbs Free Energy $G(T,P,N)$}
+
+The Gibbs free energy is obtained via Legendre transform:
+\begin{equation}
+  G(T,P,N) = A(T,V,N) + PV.
+  \label{eq:gibbs}
+\end{equation}
+
+In practice, we solve for $V(T,P)$ from the EOS, then evaluate:
+\begin{equation}
+  G = A^\mathrm{ig}(T,V,N) + A^\mathrm{dep}(T,V,N) + PV.
+  \label{eq:gibbs_eval}
+\end{equation}
+
+\subsection{Entropy}
+
+\begin{equation}
+  S(T,V,N) = -\left(\frac{\partial A}{\partial T}\right)_{V,N}.
+  \label{eq:entropy}
+\end{equation}
+
+For the ideal gas (Sackur--Tetrode):
+\begin{equation}
+  S^\mathrm{ig} = Nk_B\left[\frac{5}{2}
+    + \ln\!\left(\frac{V}{N\Lambda^3}\right)\right]
+    + S_\mathrm{int}(T).
+  \label{eq:sackur_tetrode}
+\end{equation}
+
+
+% ============================================================================
+\section{Chemical Potential and Phase Equilibrium}
+% ============================================================================
+
+\subsection{Chemical Potential $\mu_i(T,P,\mathbf{x})$}
+
+For component $i$ in a mixture:
+\begin{equation}
+  \mu_i(T,P,\mathbf{x}) = \mu_i^\circ(T)
+    + RT\ln\!\left(\frac{f_i}{f_i^\circ}\right),
+  \label{eq:chemical_potential}
+\end{equation}
+where $f_i$ is the fugacity of component $i$ and $f_i^\circ$ is the
+reference fugacity (typically 1~bar for gases).
+
+The fugacity coefficient from a cubic EOS:
+\begin{equation}
+  \ln \phi_i = \frac{1}{RT}\int_V^\infty
+    \left[\left(\frac{\partial P}{\partial N_i}\right)_{T,V,N_{j\neq i}}
+    - \frac{RT}{V}\right] dV - \ln Z.
+  \label{eq:fugacity}
+\end{equation}
+
+\subsection{Phase Equilibrium Conditions}
+
+At phase equilibrium between phases $\alpha$ and $\beta$:
+\begin{align}
+  T^\alpha &= T^\beta, \label{eq:thermal_eq} \\
+  P^\alpha &= P^\beta, \label{eq:mechanical_eq} \\
+  \mu_i^\alpha(T,P,\mathbf{x}^\alpha) &=
+    \mu_i^\beta(T,P,\mathbf{x}^\beta)
+    \quad \forall\;i.
+  \label{eq:chemical_eq}
+\end{align}
+
+For a pure substance, this reduces to finding $(T,P)$ where the
+Gibbs free energy of the two phases is equal:
+\begin{equation}
+  G^\alpha(T,P) = G^\beta(T,P).
+  \label{eq:gibbs_equality}
+\end{equation}
+
+\subsection{Maxwell Construction (Equal-Area Rule)}
+
+For a cubic EOS at subcritical temperatures, the pressure--volume
+isotherm exhibits a van der Waals loop.  The saturation pressure
+$P_\mathrm{sat}$ is determined by the equal-area condition:
+\begin{equation}
+  \int_{V_\mathrm{liq}}^{V_\mathrm{vap}}
+    \left[P(V) - P_\mathrm{sat}\right] dV = 0,
+  \label{eq:maxwell_construction}
+\end{equation}
+which is equivalent to requiring $G^\mathrm{liq} = G^\mathrm{vap}$.
+
+This is implemented as a root-finding problem: find $P_\mathrm{sat}$
+such that the fugacities of the liquid and vapour roots are equal.
+
+
+% ============================================================================
+\section{Intermolecular Potential Decomposition}
+% ============================================================================
+
+The total potential energy of a molecular system is decomposed as:
+\begin{equation}
+  U_\mathrm{total} = U_\mathrm{bond} + U_\mathrm{angle}
+    + U_\mathrm{torsion} + U_\mathrm{vdW}
+    + U_\mathrm{Coul} + U_\mathrm{pol}
+    + U_\mathrm{many\text{-}body}.
+  \label{eq:potential_decomposition}
+\end{equation}
+
+\subsection{Bonded Interactions}
+
+\paragraph{Bond stretching (harmonic):}
+\begin{equation}
+  U_\mathrm{bond} = \sum_\mathrm{bonds} \frac{1}{2}\,k_r\,(r - r_0)^2.
+\end{equation}
+
+\paragraph{Angle bending (harmonic):}
+\begin{equation}
+  U_\mathrm{angle} = \sum_\mathrm{angles}
+    \frac{1}{2}\,k_\theta\,(\theta - \theta_0)^2.
+\end{equation}
+
+\paragraph{Torsional rotation:}
+\begin{equation}
+  U_\mathrm{torsion} = \sum_\mathrm{dihedrals}
+    \frac{V_n}{2}\left[1 + \cos(n\phi - \phi_0)\right].
+\end{equation}
+
+\subsection{Non-bonded Interactions}
+
+\paragraph{Van der Waals (Lennard-Jones 12-6):}
+\begin{equation}
+  U_\mathrm{vdW} = \sum_{i<j} 4\varepsilon_{ij}
+    \left[\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12}
+    - \left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right].
+\end{equation}
+
+\paragraph{Coulomb electrostatics:}
+\begin{equation}
+  U_\mathrm{Coul} = \sum_{i<j} \frac{k_e\,q_i\,q_j}{r_{ij}}.
+\end{equation}
+
+\paragraph{Polarization (induced dipole, SCF):}
+\begin{equation}
+  U_\mathrm{pol} = -\frac{1}{2} \sum_i \boldsymbol{\mu}_i^\mathrm{ind}
+    \cdot \mathbf{E}_i^\mathrm{perm},
+\end{equation}
+where $\boldsymbol{\mu}_i^\mathrm{ind} = \alpha_i \mathbf{E}_i^\mathrm{total}$
+and the total field is solved self-consistently (see \texttt{polarization\_scf.cpp}).
+
+\paragraph{Many-body corrections:}
+\begin{equation}
+  U_\mathrm{many\text{-}body} = U_\mathrm{3\text{-}body}
+    + U_\mathrm{association} + \cdots
+\end{equation}
+These include Axilrod--Teller--Muto triple-dipole terms and
+hydrogen-bonding association models where applicable.
+
+
+% ============================================================================
+\section{Coarse-Grained Free-Energy Functional}
+% ============================================================================
+
+Near a phase transition, the relevant physics is captured by a
+density order parameter:
+\begin{equation}
+  \phi(\mathbf{r}) = \rho(\mathbf{r}) - \rho_c,
+  \label{eq:order_parameter}
+\end{equation}
+where $\rho_c$ is the critical density.
+
+The Landau--Ginzburg free-energy functional:
+\begin{equation}
+  F[\phi] = \int \left[
+    a\,\phi^2 + b\,\phi^4 + \kappa\,(\nabla\phi)^2 + \cdots
+  \right] dV,
+  \label{eq:landau_ginzburg}
+\end{equation}
+where:
+\begin{itemize}
+  \item $a(T) = a_0(T - T_c)$ changes sign at the critical point,
+  \item $b > 0$ ensures thermodynamic stability,
+  \item $\kappa > 0$ penalises density gradients (interface cost).
+\end{itemize}
+
+The equilibrium density profile minimises $F[\phi]$, yielding the
+Euler--Lagrange equation:
+\begin{equation}
+  2a\,\phi + 4b\,\phi^3 - 2\kappa\,\nabla^2\phi = 0.
+  \label{eq:euler_lagrange}
+\end{equation}
+
+
+% ============================================================================
+\section{Monitoring Infrastructure}
+% ============================================================================
+
+The gas2 module exposes a steady-state monitoring window displaying
+the 8-component potential decomposition and free-energy functional
+in real time.
+
+\subsection{Potential Decomposition Display}
+
+Eight channels of $U$, each updated per evaluation cycle:
+\begin{center}
+\begin{tabular}{clll}
+  \toprule
+  Channel & Symbol & Description & Units \\
+  \midrule
+  1 & $U_\mathrm{bond}$      & Bond stretching        & kJ/mol \\
+  2 & $U_\mathrm{angle}$     & Angle bending          & kJ/mol \\
+  3 & $U_\mathrm{torsion}$   & Dihedral rotation      & kJ/mol \\
+  4 & $U_\mathrm{vdW}$       & Van der Waals          & kJ/mol \\
+  5 & $U_\mathrm{Coul}$      & Coulomb electrostatics & kJ/mol \\
+  6 & $U_\mathrm{pol}$       & Polarization           & kJ/mol \\
+  7 & $U_\mathrm{many}$      & Many-body corrections  & kJ/mol \\
+  8 & $U_\mathrm{total}$     & Total potential         & kJ/mol \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Free-Energy Functional Display}
+
+The free-energy functional $F[\phi]$ is evaluated on a 1D density
+profile $\phi(x)$ across the simulation domain, with coefficients
+$a$, $b$, $\kappa$ derived from the EOS:
+\begin{equation}
+  a = \frac{1}{2}\left(\frac{\partial^2 A}{\partial V^2}\right)_{T,N},
+  \qquad
+  b \sim \frac{1}{4!}\left(\frac{\partial^4 A}{\partial V^4}\right)_{T,N},
+  \qquad
+  \kappa \propto \sigma^2 \varepsilon,
+\end{equation}
+where $\sigma$ and $\varepsilon$ are the LJ parameters for the species.
+
+
+% ============================================================================
+\section{Implementation Mapping}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Theory} & \textbf{Code Location} \\
+  \midrule
+  $Z(T,V,N)$, $\Lambda$
+    & \texttt{include/gas2/gas2\_thermo.hpp} \\
+  $A(T,V,N)$, $A^\mathrm{dep}$
+    & \texttt{include/gas2/gas2\_thermo.hpp} \\
+  $G(T,P,N)$
+    & \texttt{include/gas2/gas2\_thermo.hpp} \\
+  $\mu_i$, $\phi_i$, $f_i$
+    & \texttt{include/gas2/gas2\_thermo.hpp} \\
+  $P_\mathrm{sat}$ (Maxwell construction)
+    & \texttt{include/gas2/gas2\_thermo.hpp} \\
+  $U$ decomposition
+    & \texttt{include/gas2/gas2\_potential.hpp} \\
+  $F[\phi]$ functional
+    & \texttt{include/gas2/gas2\_potential.hpp} \\
+  Monitoring window
+    & \texttt{tools/gas2\_monitor.py} \\
+  Tests
+    & \texttt{tests/test\_gas2.cpp} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+
+\end{document}

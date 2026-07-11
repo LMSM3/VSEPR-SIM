@@ -1,0 +1,47 @@
+# scripts/demo_01_minimal_hexene.vsim
+# VSEPR-SIM single-molecule organic formation demo
+# vsper validate scripts/demo_01_minimal_hexene.vsim
+
+[project]
+name        = demo_01_minimal_hexene
+version     = v5.0.0-beta.7.1
+seed_base   = 1001
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+continual_reporting = true
+
+[simulation.molecule]
+formula     = C6H12
+count       = 1
+temperature = 300.0
+lattice     = none
+
+[simulation]
+fire_max_steps   = 300
+fire_dt_fs       = 1.0
+box_size_ang     = 30.0
+periodic         = false
+formation_preset = organic
+
+[export]
+write_xyz           = true
+write_xyzf          = false
+write_analysis_json = false
+write_metrics_tsv   = false
+write_report_md     = false
+write_events_json   = true
+
+[visual]
+output_type           = terminal_chart
+animation_mode        = spark
+show_proxy_table      = false
+show_convergence_trace = false
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = false
+show_bar_chart        = false
+show_symbolic_trace   = false
+show_audit_table      = false

@@ -1,0 +1,82 @@
+{
+  "generator": "VSEPR-SIM metal_gen",
+  "branch": "v5.0.0-beta.7-step-attempt",
+  "supercell": "3x3x3",
+  "unit_coords": "angstrom",
+  "unit_energy": "kcal/mol",
+  "unit_velocity": "angstrom/fs",
+  "materials": [
+  {
+    "tag": "NiTi_B2",
+    "name": "Nitinol",
+    "composition": "Ni-50 Ti-50 at%",
+    "lattice": "B2",
+    "a_ang": 3.0150,
+    "c_ang": 3.0150,
+    "density_gcc": 6.4500,
+    "supercell": "3x3x3",
+    "n_atoms": 54,
+    "artifacts": {
+      "xyz":  "NiTi_B2.xyz",
+      "xyza": "NiTi_B2.xyza",
+      "xyzc": "NiTi_B2.xyzc",
+      "xyzf": "NiTi_B2.xyzf",
+      "step": "NiTi_B2.step"
+    }
+  },
+  {
+    "tag": "W_BCC",
+    "name": "Tungsten",
+    "composition": "W-100 at%",
+    "lattice": "BCC",
+    "a_ang": 3.1650,
+    "c_ang": 3.1650,
+    "density_gcc": 19.2500,
+    "supercell": "3x3x3",
+    "n_atoms": 54,
+    "artifacts": {
+      "xyz":  "W_BCC.xyz",
+      "xyza": "W_BCC.xyza",
+      "xyzc": "W_BCC.xyzc",
+      "xyzf": "W_BCC.xyzf",
+      "step": "W_BCC.step"
+    }
+  },
+  {
+    "tag": "IN625_FCC",
+    "name": "Inconel625",
+    "composition": "Ni-61 Cr-22 Mo-9 Nb-4 at% (nom.) | cycle: Ti*6 Al*2 V*2 per 10 atoms",
+    "lattice": "FCC",
+    "a_ang": 3.5750,
+    "c_ang": 3.5750,
+    "density_gcc": 8.4400,
+    "supercell": "3x3x3",
+    "n_atoms": 108,
+    "artifacts": {
+      "xyz":  "IN625_FCC.xyz",
+      "xyza": "IN625_FCC.xyza",
+      "xyzc": "IN625_FCC.xyzc",
+      "xyzf": "IN625_FCC.xyzf",
+      "step": "IN625_FCC.step"
+    }
+  },
+  {
+    "tag": "Ti64_HCP",
+    "name": "Ti-6Al-4V",
+    "composition": "Ti-90 Al-6 V-4 wt% (nom.)",
+    "lattice": "HCP",
+    "a_ang": 2.9210,
+    "c_ang": 4.6200,
+    "density_gcc": 4.4300,
+    "supercell": "3x3x3",
+    "n_atoms": 54,
+    "artifacts": {
+      "xyz":  "Ti64_HCP.xyz",
+      "xyza": "Ti64_HCP.xyza",
+      "xyzc": "Ti64_HCP.xyzc",
+      "xyzf": "Ti64_HCP.xyzf",
+      "step": "Ti64_HCP.step"
+    }
+  }
+  ]
+}

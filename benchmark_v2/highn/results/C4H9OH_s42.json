@@ -1,0 +1,19 @@
+{
+  "formula": "C4H9OH",
+  "seed": 42,
+  "tier": "highn",
+  "num_atoms": 15,
+  "steps_taken": 8714,
+  "max_steps": 10000,
+  "energy_kcal_mol": -2.981657,
+  "energy_per_atom": -0.198777,
+  "rms_force": 0.016774,
+  "max_force": 0.016774,
+  "alpha_final": 0.000677,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 9.970800,
+  "timestamp": "2026-03-28T13:05:15",
+  "xyz_file": "benchmark_v2\highn\structures\C4H9OH_s42.xyz"
+}

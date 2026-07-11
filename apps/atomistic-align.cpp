@@ -35,6 +35,7 @@
 #include "atomistic/core/state.hpp"
 #include "atomistic/core/alignment.hpp"
 #include "atomistic/core/linalg.hpp"
+#include "io/molecular_io.hpp"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -77,29 +78,23 @@ int element_symbol_to_Z(const std::string& symbol) {
 
 XYZData load_xyz(const std::string& filename) {
     XYZData data;
-    std::ifstream file(filename);
-    
-    if (!file.is_open()) {
+
+    auto result = vsepr::io::load_structure(filename);
+    if (!result.is_ok()) {
         std::cerr << "Error: Cannot open " << filename << std::endl;
         return data;
     }
-    
-    int n_atoms;
-    file >> n_atoms;
-    file.ignore(1000, '\n');
-    std::getline(file, data.comment);
-    
-    for (int i = 0; i < n_atoms; ++i) {
-        std::string symbol;
-        Vec3 pos;
-        file >> symbol >> pos.x >> pos.y >> pos.z;
-        
-        int Z = element_symbol_to_Z(symbol);
+
+    const auto& xyz_mol = result.value();
+    data.comment = xyz_mol.comment;
+
+    for (const auto& atom : xyz_mol.atoms) {
+        int Z = element_symbol_to_Z(atom.element);
         data.Z.push_back(Z);
-        data.positions.push_back(pos);
+        data.positions.push_back({atom.position[0], atom.position[1], atom.position[2]});
         data.masses.push_back(get_atomic_mass(Z));
     }
-    
+
     return data;
 }
 

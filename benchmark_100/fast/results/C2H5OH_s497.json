@@ -1,0 +1,19 @@
+{
+  "formula": "C2H5OH",
+  "seed": 497,
+  "tier": "fast",
+  "num_atoms": 9,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 2250.903989,
+  "energy_per_atom": 250.100443,
+  "rms_force": 5705.977480,
+  "max_force": 5705.977480,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.505500,
+  "timestamp": "2026-03-28T12:53:36",
+  "xyz_file": "benchmark_100\fast\structures\C2H5OH_s497.xyz"
+}

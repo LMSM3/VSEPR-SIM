@@ -1,0 +1,32 @@
+# @category Calibration
+# @title    Helium HTGR — 1200 C peak
+# Ported from scripts/demos/demo_calibration_3d.py (archived).
+# Visual constants: helix turns=3, radius=4.0, pitch=6.0, severity_scale=3.0.
+# Blue->red colormap on T_C; severity bars green/yellow/red;
+# diamond markers on regime transitions; square markers on loop boundaries.
+
+[project]
+name      = "calibration_helium_htgr"
+seed_base = 3008
+
+[material]
+formula = "He"
+
+[environment]
+temperature = 1473.0
+medium      = "helium_gas"
+
+[run]
+mode      = "relax"
+max_steps = 500
+
+[observe]
+metrics       = ["energy_map", "regime_transition", "loop_boundary", "severity"]
+every_n_steps = 1
+
+[visual.workspace]
+enabled = true
+
+show "calibration.helix"    target = "run.history"
+show "data.events.timeline" target = "kernel.events"
+show "data.scalar.panel"    target = "run.summary"

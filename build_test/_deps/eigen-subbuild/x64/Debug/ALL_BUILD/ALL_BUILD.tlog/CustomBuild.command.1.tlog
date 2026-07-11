@@ -1,0 +1,10 @@
+^C:\R\VSPER-SIM\BUILD_TEST\_DEPS\EIGEN-SUBBUILD\CMAKELISTS.TXT
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM/build_test/_deps/eigen-subbuild -BC:/R/VSPER-SIM/build_test/_deps/eigen-subbuild --check-stamp-file C:/R/VSPER-SIM/build_test/_deps/eigen-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

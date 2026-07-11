@@ -1,70 +1,70 @@
 ; ============================================================================
-; VSEPR-Sim Windows Installer Script (Inno Setup)
+; VSEPR-SIM Windows Installer Script (Inno Setup)
 ; ============================================================================
-; 
+;
 ; Prerequisites:
-;   - Download and install Inno Setup: https://jrsoftware.org/isinfo.php
-;   - Build the project in Release mode
-;   - Generate the icon (resources/vsepr.ico)
+;   - Download and install Inno Setup 6+: https://jrsoftware.org/isinfo.php
+;   - Build the project in Release mode (cmake --build build --config Release)
+;   - Ensure resources\vsepr.ico exists
 ;
 ; Build Installer:
 ;   iscc installer\setup.iss
 ;
+; Architecture:
+;   File associations are owned by a single canonical script:
+;     installer\register-file-associations.ps1
+;   This installer packages that script and runs it post-install.
+;   The [Registry] section is intentionally empty — the PS script
+;   writes all HKCU entries so no admin rights are needed.
+;
+;   Universal file opener (all VSIM/XYZ types):
+;     installer\bin\open_vsim_file.cmd
+;   Priority: live-xyza-viewer.exe -> vsepr.exe open -> pythonw vsepr_xyz_popup.pyw
+;
 ; ============================================================================
 
-#define MyAppName "VSEPR-Sim"
-#define MyAppVersion "2.0.0"
-#define MyAppPublisher "VSEPR-Sim Project"
-#define MyAppURL "https://github.com/yourusername/vsepr-sim"
+#define MyAppName "VSEPR-SIM"
+#define MyAppVersion "5.0.0"
+#define MyAppPublisher "LMSM3"
+#define MyAppURL "https://github.com/LMSM3/VSEPR-SIM"
 #define MyAppExeName "vsepr.exe"
-#define MyAppDescription "Molecular Geometry Simulator using VSEPR Theory"
+#define MyAppDescription "Atomistic simulation platform — VSEPR-SIM v5"
 
 [Setup]
-; App Information
 AppId={{8B5C2D3E-9F4A-4E2B-B8C1-7A6D5E3F2C1B}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
-AppSupportURL={#MyAppURL}
-AppUpdatesURL={#MyAppURL}
+AppSupportURL={#MyAppURL}/issues
+AppUpdatesURL={#MyAppURL}/releases
 AppComments={#MyAppDescription}
 
-; Installation Directories
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
 
-; Output Configuration
 OutputDir=installer\output
 OutputBaseFilename=vsepr-sim-{#MyAppVersion}-setup
 SetupIconFile=resources\vsepr.ico
-UninstallDisplayIcon={app}\{#MyAppExeName}
+UninstallDisplayIcon={app}\bin\{#MyAppExeName}
 
-; Compression
 Compression=lzma2/ultra64
 SolidCompression=yes
 LZMAUseSeparateProcess=yes
 LZMANumBlockThreads=4
 
-; Architecture
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 
-; Privileges
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 
-; UI
 WizardStyle=modern
-WizardImageFile=resources\installer_banner.bmp
-WizardSmallImageFile=resources\installer_icon.bmp
 
-; License
 LicenseFile=LICENSE
 
-; Version Information
 VersionInfoVersion={#MyAppVersion}
 VersionInfoCompany={#MyAppPublisher}
 VersionInfoDescription={#MyAppDescription}
@@ -76,68 +76,102 @@ VersionInfoProductVersion={#MyAppVersion}
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked; OnlyBelowVersion: 6.1; Check: not IsAdminInstallMode
-Name: "addtopath"; Description: "Add to PATH environment variable"; GroupDescription: "System Integration:"; Flags: unchecked
+Name: "desktopicon";  Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "addtopath";    Description: "Add {#MyAppName} bin to PATH"; GroupDescription: "System Integration:"; Flags: unchecked
+Name: "fileassoc";    Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; GroupDescription: "System Integration:"; Flags: unchecked
 
 [Files]
-; Main Executable
-Source: "build\bin\{#MyAppExeName}"; DestDir: "{app}\bin"; Flags: ignoreversion
+; --- Kernel executables ---
+Source: "build\{#MyAppExeName}";       DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "build\vsepr-sim.exe";         DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+; vsepr.exe IS the CLI binary (no separate vsepr-cli.exe target exists)
+Source: "build\vsepr.exe";             DestDir: "{app}\bin"; DestName: "vsepr-cli.exe"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\vsepr_batch.exe";       DestDir: "{app}\bin"; Flags: ignoreversion
 
-; Additional Executables
-Source: "build\bin\vsepr_batch.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
-Source: "build\bin\md_demo.exe"; DestDir: "{app}\bin"; Flags: ignoreversion
+; --- Qt desktop + launcher (require Qt6 runtime below) ---
+Source: "build\vsepr-desktop.exe";    DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "build\vsepr-launcher.exe";   DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "apps\launcher\xsuite_launcher.bat"; DestDir: "{app}\bin"; Flags: ignoreversion
 
-; Data Files
+; --- .X framework audit binary (post-install self-test) ---
+; Alias of build\tests\test_x_framework.exe.  Runs XBundle + XSuite tests after install.
+Source: "build\tests\test_x_framework.exe"; DestDir: "{app}\bin"; DestName: "vsepr-x-audit.exe"; Flags: ignoreversion skipifsourcedoesntexist
+
+; --- Qt runtime DLLs (produced by: windeployqt6 --dir installer\qt_runtime build\vsepr-desktop.exe build\vsepr-launcher.exe) ---
+; Run windeployqt6 once after a successful Qt build, then uncomment:
+;Source: "installer\qt_runtime\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; --- OpenGL 3-D visualization renderer (primary viewer; requires BUILD_VIS=ON) ---
+; CMD opener routes here first; other paths activate only when this is absent.
+Source: "build\live-xyza-viewer.exe";  DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
+
+; --- Universal file opener + Python popup viewer (fallback chain) ---
+; open_vsim_file.cmd priority: 1. live-xyza-viewer.exe  2. vsepr.exe open  3. pythonw popup
+Source: "tools\vsepr_xyz_popup.pyw";   DestDir: "{app}\bin"; Flags: ignoreversion
+Source: "installer\bin\open_vsim_file.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion
+
+; --- File association script (canonical registry writer — HKCU, no admin) ---
+Source: "installer\register-file-associations.ps1"; DestDir: "{app}\installer"; Flags: ignoreversion
+
+; --- VSIM parser + runtime headers (SDK) ---
+Source: "include\vsim\*"; DestDir: "{app}\include\vsim"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+; --- Data ---
 Source: "data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Documentation
-Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion isreadme
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "docs\*"; DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
+; --- Scripts ---
+Source: "scripts\*"; DestDir: "{app}\scripts"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Examples
-Source: "*.xyz"; DestDir: "{app}\examples"; Flags: ignoreversion
+; --- Documentation ---
+Source: "README.md";         DestDir: "{app}"; Flags: ignoreversion isreadme
+Source: "LICENSE";           DestDir: "{app}"; Flags: ignoreversion
+Source: "VSIM_REFERENCE.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "docs\*";            DestDir: "{app}\docs"; Flags: ignoreversion recursesubdirs createallsubdirs
 
-; Launcher Script
-Source: "vsepr.bat"; DestDir: "{app}"; Flags: ignoreversion
+; --- Resources ---
+Source: "resources\vsepr.ico"; DestDir: "{app}\resources"; Flags: ignoreversion
 
 [Icons]
-; Start Menu
-Name: "{group}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Comment: "{#MyAppDescription}"
-Name: "{group}\{#MyAppName} Documentation"; Filename: "{app}\docs\QUICKSTART.md"; Comment: "Getting Started Guide"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
-
-; Desktop Icon (optional)
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon; Comment: "{#MyAppDescription}"
-
-; Quick Launch (optional)
-Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\{#MyAppName}"; Filename: "{app}\bin\{#MyAppExeName}"; Tasks: quicklaunchicon; WorkingDir: "{app}"
+Name: "{group}\{#MyAppName}";                              Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Comment: "{#MyAppDescription}"
+Name: "{group}\{#MyAppName} CLI";                         Filename: "{app}\bin\vsepr-cli.exe";   WorkingDir: "{app}"; Comment: "VSIM command-line interface"
+Name: "{group}\{#MyAppName} Desktop";                     Filename: "{app}\bin\vsepr-desktop.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM Qt desktop / 3D viewer"
+Name: "{group}\{#MyAppName} Launcher";                    Filename: "{app}\bin\vsepr-launcher.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM .vsim / .X file launcher"
+Name: "{group}\{cm:UninstallProgram,{#MyAppName}}";       Filename: "{uninstallexe}"
+Name: "{autodesktop}\{#MyAppName}";                       Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon; Comment: "{#MyAppDescription}"
 
 [Run]
-Filename: "{app}\docs\QUICKSTART.md"; Description: "{cm:LaunchProgram,View Quick Start Guide}"; Flags: postinstall shellexec skipifsilent unchecked
-Filename: "{app}\bin\{#MyAppExeName}"; Parameters: "--version"; Description: "{cm:LaunchProgram,Test Installation}"; Flags: postinstall nowait skipifsilent unchecked
+Filename: "{app}\bin\{#MyAppExeName}"; Parameters: "--version"; Description: "Verify installation (--version)"; Flags: postinstall nowait skipifsilent unchecked
+; .X framework self-test — runs vsepr-x-audit.exe; exit 0 = all pass, exit 1 = failures
+Filename: "{app}\bin\vsepr-x-audit.exe"; Description: "Run .X framework audit (XBundle + XSuite, ~15 checks)"; Flags: postinstall waituntilterminated skipifsilent unchecked
+; Run the canonical association script post-install (HKCU, no admin needed)
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -BinaryPath ""{app}\bin\vsepr.exe"""; Description: "Register file associations (.vsim, .xyz, .xyza, .xyzc, .xyzf, .xyzfull, .vsxyz)"; Flags: postinstall nowait skipifsilent unchecked; Tasks: fileassoc
 
+[UninstallRun]
+Filename: "powershell.exe"; Parameters: "-ExecutionPolicy Bypass -File ""{app}\installer\register-file-associations.ps1"" -Unregister"; Flags: nowait
+
+; [Registry] block intentionally empty.
+; All file-type registry entries are written by register-file-associations.ps1
+; under HKCU — no admin rights required, clean uninstall guaranteed.
 [Registry]
-; File Association for .xyz files (optional)
-Root: HKA; Subkey: "Software\Classes\.xyz\OpenWithProgids"; ValueType: string; ValueName: "VSEPRSim.XYZFile"; ValueData: ""; Flags: uninsdeletevalue
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.XYZFile"; ValueType: string; ValueName: ""; ValueData: "XYZ Molecule File"; Flags: uninsdeletekey
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.XYZFile\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\bin\{#MyAppExeName},0"
-Root: HKA; Subkey: "Software\Classes\VSEPRSim.XYZFile\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\bin\{#MyAppExeName}"" ""%1"""
 
 [Code]
 const
   EnvironmentKey = 'SYSTEM\CurrentControlSet\Control\Session Manager\Environment';
 
+// Broadcast WM_SETTINGCHANGE so shells pick up PATH immediately.
+procedure BroadcastEnvChange();
+var
+  Dummy: DWORD;
+begin
+  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0,
+    PAnsiChar('Environment'), SMTO_ABORTIFHUNG, 2000, Dummy);
+end;
+
 procedure AddToPath();
 var
-  OldPath: string;
-  NewPath: string;
-  BinPath: string;
+  OldPath, NewPath, BinPath: string;
 begin
   BinPath := ExpandConstant('{app}\bin');
-  
   if RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', OldPath) then
   begin
     if Pos(BinPath, OldPath) = 0 then
@@ -146,6 +180,7 @@ begin
       if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', NewPath) then
       begin
         Log('Added to PATH: ' + BinPath);
+        BroadcastEnvChange();
       end;
     end;
   end;
@@ -153,26 +188,21 @@ end;
 
 procedure RemoveFromPath();
 var
-  OldPath: string;
-  NewPath: string;
-  BinPath: string;
-  PathPos: Integer;
+  OldPath, NewPath, BinPath: string;
 begin
   BinPath := ExpandConstant('{app}\bin');
-  
   if RegQueryStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', OldPath) then
   begin
-    PathPos := Pos(BinPath, OldPath);
-    if PathPos > 0 then
+    if Pos(BinPath, OldPath) > 0 then
     begin
       NewPath := OldPath;
       StringChangeEx(NewPath, ';' + BinPath, '', True);
       StringChangeEx(NewPath, BinPath + ';', '', True);
       StringChangeEx(NewPath, BinPath, '', True);
-      
       if RegWriteStringValue(HKEY_LOCAL_MACHINE, EnvironmentKey, 'Path', NewPath) then
       begin
         Log('Removed from PATH: ' + BinPath);
+        BroadcastEnvChange();
       end;
     end;
   end;
@@ -183,32 +213,22 @@ begin
   if CurStep = ssPostInstall then
   begin
     if IsTaskSelected('addtopath') then
-    begin
       AddToPath();
-    end;
   end;
 end;
 
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if CurUninstallStep = usPostUninstall then
-  begin
     RemoveFromPath();
-  end;
 end;
 
 function InitializeSetup(): Boolean;
-var
-  Version: TWindowsVersion;
 begin
   Result := True;
-  
-  GetWindowsVersionEx(Version);
-  
-  // Require Windows 10 or later
-  if Version.Major < 10 then
+  if not IsWin64() then
   begin
-    MsgBox('This application requires Windows 10 or later.', mbError, MB_OK);
+    MsgBox('VSEPR-SIM v5 requires a 64-bit version of Windows.', mbError, MB_OK);
     Result := False;
   end;
 end;

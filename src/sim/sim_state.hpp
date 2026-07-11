@@ -11,6 +11,7 @@
 
 #include "molecule.hpp"
 #include "pot/energy_model.hpp"
+#include "pot/ewald_sum.hpp"
 #include "sim/optimizer.hpp"
 #include "sim_command.hpp"
 #include "core/frame_snapshot.hpp"
@@ -54,6 +55,12 @@ struct SimParams {
     // Periodic boundary conditions
     bool use_pbc = false;
     double box_size[3] = {10.0, 10.0, 10.0};
+
+    // Long-range Coulomb (Ewald summation) — requires use_pbc = true
+    bool   use_ewald      = false;
+    double ewald_alpha    = 0.3;   // splitting parameter (Å⁻¹)
+    double ewald_rcut     = 10.0;  // real-space cutoff (Å)
+    int    ewald_kmax     = 5;     // k-vector range per axis
     
     // Visualization
     int publish_every = 2;          // Publish frame every N steps
@@ -159,6 +166,7 @@ private:
     
     // Energy/force evaluation
     void evaluate_forces();
+    void evaluate_ewald_forces();  // Ewald Coulomb (PBC ionic systems)
     void compute_statistics();
     
     // FIRE optimizer state
@@ -189,7 +197,11 @@ private:
     
     // Periodic box
     BoxOrtho box_;
-    
+
+    // Ewald summation (ionic PBC systems)
+    EwaldSum ewald_;
+    std::vector<double> charges_;   // Partial charges [q0, q1, ...] (N_atoms)
+
     // Parameters and statistics
     SimParams params_;
     SimStats stats_;

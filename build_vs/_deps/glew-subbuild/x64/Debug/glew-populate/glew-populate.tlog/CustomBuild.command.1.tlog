@@ -1,0 +1,150 @@
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-MKDIR.RULE
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -Dcfgdir=/Debug -P C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/tmp/glew-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/tmp/glew-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-UPDATE.RULE
+setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/tmp/glew-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-PATCH.RULE
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-BUILD.RULE
+setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-INSTALL.RULE
+setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\CFDED541428D7AE0016EB3B184730F67\GLEW-POPULATE-TEST.RULE
+setlocal
+cd C:\R\VSPER-SIM\build_vs\_deps\glew-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\73165D79BACB300DC61259B71B7B3E74\GLEW-POPULATE-COMPLETE.RULE
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -E make_directory C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/Debug/glew-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+C:\msys64\ucrt64\bin\cmake.exe -E touch C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/glew-populate-prefix/src/glew-populate-stamp/Debug/glew-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKEFILES\998137D0E9C2F5C928E7793155F1131A\GLEW-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKELISTS.TXT
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM/build_vs/_deps/glew-subbuild -BC:/R/VSPER-SIM/build_vs/_deps/glew-subbuild --check-stamp-file C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

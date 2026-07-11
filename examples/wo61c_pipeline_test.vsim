@@ -1,0 +1,52 @@
+# WO-61C canonical pipeline test script
+# v5.0.0-beta.7-step-attempt | WO-VSIM-61C
+
+[system]
+name = "wo61c_pipeline_test"
+source = "state/replay.xyzf"
+source_format = "xyzf"
+
+[analysis.structure]
+enabled = true
+
+compute_coordination = true
+compute_packing = true
+compute_displacement = true
+compute_anisotropy = true
+
+neighbor_cutoff_A = 3.0
+contact_cutoff_A = 2.2
+
+[analysis.sampling]
+enabled = true
+
+compute_rdf = true
+compute_msd = true
+compute_fields = true
+
+min_frames_for_motion = 2
+min_frames_for_msd = 10
+min_particles_for_fields = 64
+
+field_grid = [8, 8, 8]
+unwrap_pbc = false
+
+[inference]
+enabled = true
+mode = "rule_based_61b"
+
+infer_packing_regime = true
+infer_mobility_regime = true
+infer_anisotropy_regime = true
+infer_structural_stability = true
+infer_macro_readiness = true
+
+min_particles_macro_candidate = 128
+min_frames_macro_candidate = 20
+minimum_available_metrics_for_macro_ready = 4
+
+[output]
+write_structure_json = true
+write_sampling_json = true
+write_inference_json = true
+write_sampling_manifest = true

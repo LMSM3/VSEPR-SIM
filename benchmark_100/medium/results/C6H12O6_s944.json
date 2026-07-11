@@ -1,0 +1,19 @@
+{
+  "formula": "C6H12O6",
+  "seed": 944,
+  "tier": "medium",
+  "num_atoms": 24,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 502837.675338,
+  "energy_per_atom": 20951.569806,
+  "rms_force": 372502.024618,
+  "max_force": 372502.024618,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 4.316100,
+  "timestamp": "2026-03-28T12:55:25",
+  "xyz_file": "benchmark_100\medium\structures\C6H12O6_s944.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "Ca(OH)2",
+  "seed": 966,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 4.894863,
+  "energy_per_atom": 1.631621,
+  "rms_force": 20.754249,
+  "max_force": 20.754249,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.536000,
+  "timestamp": "2026-03-28T13:03:35",
+  "xyz_file": "benchmark_v2\medium\structures\Ca_OH_2_s966.xyz"
+}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * chemistry_universal_test.cpp
  * ============================
  * Test universal chemistry system: both organic and coordination compounds.
@@ -66,13 +66,13 @@ void test_element_database() {
         std::cout << "    ✓ Octahedral coordination (6 coord) found\n";
     }
     
-    // Symbol → Z lookup
+    // Symbol -> Z lookup
     {
         const auto& db = chemistry_db();
         uint8_t Z_N = db.Z_from_symbol("N");
         assert(Z_N == 7);
         assert(db.get_symbol(Z_N) == "N");
-        std::cout << "  ✓ Symbol lookup: \"N\" → Z=" << (int)Z_N << "\n";
+        std::cout << "  ✓ Symbol lookup: \"N\" -> Z=" << (int)Z_N << "\n";
     }
     
     std::cout << "  ✓ Element database working\n";
@@ -312,16 +312,15 @@ void test_universal_api() {
 }
 
 int main() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Universal Chemistry System Validation               ║\n";
-    std::cout << "║  (Organic + Coordination via Data-Driven Manifolds)  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+=======================================================+\n";
+    std::cout << "|  Universal Chemistry System Validation               |\n";
+    std::cout << "|  (Organic + Coordination via Data-Driven Manifolds)  |\n";
+    std::cout << "+=======================================================+\n";
     
     // Initialize periodic table and chemistry database
     std::cout << "\nInitializing periodic table and chemistry database...\n";
     auto pt = vsepr::PeriodicTable::load_from_json_file(
-        "../data/elements.physics.json",
-        "../data/elements.visual.json"
+        "../data/elements.physics.json"
     );
     vsepr::init_chemistry_db(&pt);
     std::cout << "  ✓ Databases initialized\n";
@@ -334,9 +333,9 @@ int main() {
     test_topological_distance();
     test_universal_api();
     
-    std::cout << "\n╔═══════════════════════════════════════════════════════╗\n";
-    std::cout << "║  ✓ ALL TESTS PASSED                                   ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+=======================================================+\n";
+    std::cout << "|  ✓ ALL TESTS PASSED                                   |\n";
+    std::cout << "+=======================================================+\n\n";
     
     std::cout << "Summary:\n";
     std::cout << "  • Element database: data-driven bonding manifolds ✓\n";

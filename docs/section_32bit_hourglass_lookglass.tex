@@ -1,0 +1,706 @@
+% ============================================================================
+%  VSEPR-SIM — §R: 32-Bit Identity Word, Hourglass Model, Lookglass Model
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code listings ─────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{lstbg}{RGB}{248,248,248}
+\definecolor{lstkw}{RGB}{0,0,180}
+\definecolor{lstcm}{RGB}{80,120,80}
+\definecolor{lstst}{RGB}{160,30,30}
+
+\lstdefinestyle{cppstyle}{
+  language=C++,
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{lstbg},
+  keywordstyle=\color{lstkw}\bfseries,
+  commentstyle=\color{lstcm}\itshape,
+  stringstyle=\color{lstst},
+  frame=single, framesep=4pt,
+  breaklines=true, keepspaces=true,
+  tabsize=4,
+  showstringspaces=false,
+  numbers=left, numberstyle=\tiny\color{gray}, numbersep=6pt
+}
+\lstset{style=cppstyle}
+
+% ── Theorem environments ───────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{postulate}[definition]{Postulate}
+\newtheorem{remark}[definition]{Remark}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM Research Platform}}
+\fancyhead[R]{\small\textit{32-Bit Model, Hourglass \& Lookglass}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}{§\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% ── Colours / boxes ────────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\definecolor{bitblue}{RGB}{220,235,250}
+\definecolor{hgolden}{RGB}{255,245,220}
+\definecolor{lgmint}{RGB}{220,250,235}
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=green!50!black,
+  urlcolor=blue!70!black
+}
+
+% ── Macros ─────────────────────────────────────────────────────────────────
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\boldI}{\bm{I}}
+\newcommand{\bits}[1]{\texttt{[#1~bits]}}
+\newcommand{\file}[1]{\texttt{#1}}
+
+% ============================================================================
+\begin{document}
+% ============================================================================
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries VSEPR-SIM Research Platform\par}
+  \vspace{1cm}
+  {\Large\bfseries §R\quad Three Foundational Models\par}
+  \vspace{0.5cm}
+  \rule{0.6\textwidth}{0.4pt}\par
+  \vspace{0.8cm}
+  {\large
+    \textbf{I.}  The 32-Bit Particle Identity Word\par
+    \vspace{0.3cm}
+    \textbf{II.} The Hourglass Convergence Model\par
+    \vspace{0.3cm}
+    \textbf{III.}The Lookglass Bidirectional Feedback Model\par
+  }
+  \vspace{1.5cm}
+  {\normalsize
+    All three models operate on the Identity–State Decomposition
+    framework introduced in §0.\par
+    \vspace{0.5cm}
+    Implementation files:\par
+    \file{coarse\_grain/core/bit32\_identity.hpp}\par
+    \file{coarse\_grain/models/hourglass\_model.hpp}\par
+    \file{coarse\_grain/models/lookglass\_model.hpp}\par
+  }
+  \vfill
+  {\small Status: Research-oriented active development}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ============================================================================
+\section{The 32-Bit Particle Identity Word}
+\label{sec:bit32}
+% ============================================================================
+
+\subsection{Motivation}
+
+The §0 Identity–State Decomposition Framework defines a six-component
+particle identity vector
+%
+\begin{equation}
+  \boldI_i =
+  \begin{bmatrix}
+    Z_i \\ A_i \\ Q_i \\ \Sigma_i \\ \Lambda_i \\ \Theta_i
+  \end{bmatrix}
+  \label{eq:identity-vector}
+\end{equation}
+%
+where $Z_i$ is atomic number, $A_i$ is mass identity, $Q_i$ is effective
+charge participation, $\Sigma_i$ is structural role, $\Lambda_i$ is
+stability class, and $\Theta_i$ is provenance memory.
+
+In production simulations the identity vector is evaluated for every
+bead at every step.  Storing it as six separate fields costs memory
+bandwidth and breaks cache locality.  The 32-bit identity word packs
+all six fields into a single \texttt{uint32\_t} that fits in a
+register, enabling branch-free scalar read-outs and SIMD-friendly
+bulk operations.
+
+\subsection{Bit-Field Layout}
+
+\begin{tcolorbox}[
+  colback=bitblue, colframe=blue!40!black,
+  title={32-Bit Identity Word Layout},
+  fonttitle=\bfseries\small
+]
+\begin{center}
+\ttfamily\small
+\begin{tabular}{|c|c|c|c|c|c|}
+\hline
+\textbf{31--24} & \textbf{23--16} & \textbf{15--8} &
+\textbf{7--5} & \textbf{4--3} & \textbf{2--0} \\
+\hline
+$Z_i$~[8] & $A_i$~[8] & $Q_i$~[8] & $\Sigma_i$~[3] & $\Lambda_i$~[2] & $\Theta_i$~[3] \\
+\hline
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+\noindent Total width: 8 + 8 + 8 + 3 + 2 + 3 = \textbf{32 bits exactly}.
+
+\subsection{Field Encodings}
+\label{sec:bit32-encodings}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Field & Bits & Range & Encoding \\
+\midrule
+$Z_i$ & 8 & 0--118 & Atomic number; 0 = unassigned \\
+$A_i$ & 8 & 0--255 & Mass bucket; 0 = natural-abundance average \\
+$Q_i$ & 8 & $-32.0$\ldots$+31.75$\,e & Signed s8.2 fixed-point, resolution 0.25\,e \\
+$\Sigma_i$ & 3 & 0--4 & StructuralRole enum (5 values; 3 bits sufficient) \\
+$\Lambda_i$ & 2 & 0--3 & StabilityClass enum (4 values; 2 bits exact) \\
+$\Theta_i$ & 3 & 0--7 & Provenance tag (8 provenance buckets) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Charge Encoding ($Q_i$)}
+
+$Q_i$ uses signed 8-bit fixed-point with two fractional bits (s8.2),
+giving a resolution of $0.25\,e$ and a range of $[-32.0, +31.75]\,e$.
+This is sufficient for all common ions (Th$^{4+}$, Fe$^{3+}$,
+organic anions) and avoids floating-point operations in the hot path.
+
+The round-trip equation is:
+%
+\begin{equation}
+  q_{\rm fp} = q_{\rm raw} \times 0.25\,e,
+  \qquad
+  q_{\rm raw} = \operatorname{round}(q_{\rm fp} / 0.25\,e)
+  \label{eq:charge-roundtrip}
+\end{equation}
+
+\subsubsection{Provenance Tag ($\Theta_i$)}
+
+The full provenance hash lives in \texttt{Bead::parent\_atom\_indices}.
+The 3-bit tag is a coarse provenance bucket sufficient for routing
+decisions without dereferencing the parent record:
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+Tag & Meaning \\
+\midrule
+0 & Virgin / untracked \\
+1 & Mapped from atomistic parent \\
+2 & FIRE-relaxed minimum \\
+3 & CG-only (no atomistic parent) \\
+4 & Reaction product \\
+5 & Crystal seed \\
+6 & Foreign import \\
+7 & Hypothesis / mutated structure \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Round-Trip Guarantee}
+
+\begin{definition}[Round-Trip Consistency]
+  A 32-bit identity word $w$ is \emph{round-trip consistent} if
+  $\operatorname{pack}(\operatorname{unpack}(w)) = w$.
+\end{definition}
+
+All valid inputs satisfy this property.  The only invalid words are
+those with $\Sigma_i \in \{5,6,7\}$ (reserved), which are never
+produced by \texttt{pack\_identity()}.
+
+\subsection{Implementation}
+
+The full implementation is in
+\file{coarse\_grain/core/bit32\_identity.hpp}.
+Key interface:
+
+\begin{lstlisting}
+// Pack from individual fields
+Identity32 id = pack_identity(Z, A, Q_fp, sigma, lambda, theta);
+
+// Pack directly from a Bead
+Identity32 id = pack_from_bead(bead, Z);
+
+// Read individual fields (branch-free bit shifts)
+uint8_t        z   = id.Z();
+double         q   = id.Q();        // decoded to floating-point
+StructuralRole sig = id.sigma();
+StabilityClass lam = id.lambda();
+ProvenanceTag  th  = id.theta();
+
+// Debug dump
+std::cout << id.to_string() << '\n';
+// → Identity32{ Z=6 A=0 Q=0 Σ=Directional-Covalent Λ=Ambient-Stable Θ=Mapped-Atomistic }
+
+// Verify round-trip
+assert(identity32_roundtrip_ok(id));
+\end{lstlisting}
+
+% ============================================================================
+\section{The Hourglass Convergence Model}
+\label{sec:hourglass}
+% ============================================================================
+
+\subsection{Concept}
+
+In standard molecular optimisation, a single trajectory descends a
+potential energy surface from an initial configuration to the nearest
+local minimum.  This is efficient but blind: it finds \emph{a} minimum,
+not necessarily the \emph{best} minimum accessible from the current state.
+
+The Hourglass Model addresses this by running a population of candidate
+configurations through a three-layer filter at each macro-step.  The
+geometry of an hourglass is the natural metaphor:
+
+\begin{center}
+\begin{tabular}{cl}
+\toprule
+Layer & Role \\
+\midrule
+Wide mouth (H1) & Generate $N_{\rm cand}$ perturbed candidates \\
+Narrow neck (H2) & Filter by stability, energy, and role weights \\
+Wide base (H3) & Score and rank the survivors \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Formal Specification}
+\label{sec:hourglass-formal}
+
+\subsubsection{H1 — Mouth: Candidate Generation}
+
+Let $\mathbf{r}^{(0)}$ be the current bead configuration.
+Generate $N_{\rm cand}$ candidates:
+%
+\begin{equation}
+  \mathbf{r}^{(c)} = \mathbf{r}^{(0)} + \delta^{(c)},
+  \quad \delta^{(c)}_i \sim \mathcal{U}(-\delta_{\max}, +\delta_{\max})^3,
+  \quad c = 1,\ldots,N_{\rm cand}
+  \label{eq:hg-mouth}
+\end{equation}
+%
+Uniform perturbations (not Gaussian) ensure the sampled volume in
+configuration space has a well-defined boundary at radius $\delta_{\max}$.
+
+\subsubsection{H2 — Neck: Three-Gate Filter}
+
+Each candidate passes three gates in sequence.  Rejection at any gate
+eliminates the candidate immediately.
+
+\paragraph{Gate 1 — Stability filter.}
+%
+\begin{equation}
+  \bar{\Lambda}^{(c)} \;=\;
+  \frac{1}{N} \sum_{i=1}^N \Lambda_i^{(c)}
+  \;\geq\; \Lambda_{\min}
+  \label{eq:gate1}
+\end{equation}
+
+\paragraph{Gate 2 — Energy filter.}
+%
+\begin{equation}
+  \Delta E^{(c)} \;=\; E^{(c)} - E_{\rm basin} \;\leq\; E_{\rm tol},
+  \qquad
+  E_{\rm basin} = \min_c E^{(c)}
+  \label{eq:gate2}
+\end{equation}
+
+\paragraph{Gate 3 — Role weight filter.}
+
+Let $w_{\rm dom}^{(i)}$ denote the dominant channel weight of bead $i$:
+%
+\begin{equation}
+  w_{\rm dom}^{(i)} = \max\!\bigl(w_{\rm steric}^{(i)},\;
+                                   w_{\rm elec}^{(i)},\;
+                                   w_{\rm disp}^{(i)}\bigr)
+\end{equation}
+%
+Then:
+%
+\begin{equation}
+  \frac{1}{N}\sum_{i=1}^N w_{\rm dom}^{(i)} \;\geq\; w_{\rm min}
+  \label{eq:gate3}
+\end{equation}
+
+\subsubsection{H3 — Base: Composite Score}
+
+Surviving candidates are ranked by:
+%
+\begin{equation}
+  \mathcal{S}^{(c)} =
+    w_E \cdot \frac{E_{\rm ref} - E^{(c)}}{|E_{\rm ref}| + \epsilon}
+  + w_\Lambda \cdot \frac{\bar\Lambda^{(c)}}{3}
+  + w_\Sigma \cdot \frac{1}{N}\sum_i w_{\rm dom}^{(i)}
+  \label{eq:hg-score}
+\end{equation}
+%
+The top $k \leq N_{\rm out}$ candidates are returned in descending score.
+
+\subsection{Parameters}
+
+\begin{center}
+\begin{tabular}{llrl}
+\toprule
+Parameter & Symbol & Default & Meaning \\
+\midrule
+$N_{\rm cand}$ & — & 64 & Candidate count \\
+$\delta_{\max}$ & — & 0.5\,\AA & Perturbation radius \\
+$\Lambda_{\min}$ & — & 1 (Metastable) & Stability floor \\
+$E_{\rm tol}$ & — & 5.0\,kcal/mol & Energy ceiling above basin \\
+$w_{\rm min}$ & — & 0.5 & Role-weight floor \\
+$N_{\rm out}$ & — & 8 & Maximum ranked survivors \\
+$w_E, w_\Lambda, w_\Sigma$ & — & 1.0, 0.5, 0.3 & Score weights \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Implementation}
+
+The full implementation is in
+\file{coarse\_grain/models/hourglass\_model.hpp}.
+
+\begin{lstlisting}
+HourglassParams params;
+params.N_cand    = 128;
+params.delta_max = 0.3;    // tighter sampling
+params.E_tol     = 3.0;    // stricter energy gate
+
+HourglassResult result = run_hourglass(sys, params);
+
+if (result.any_survived) {
+    const CandidateRecord* best = hourglass_best(result);
+    // Apply best configuration to system...
+}
+
+// Full audit: all candidates and gate verdicts
+for (const auto& c : result.candidates) {
+    std::cout << "Candidate " << c.candidate_id
+              << "  E=" << c.energy
+              << "  survived=" << c.survived
+              << "  score="    << c.score  << '\n';
+}
+\end{lstlisting}
+
+\subsubsection{Relationship to the Identity Vector}
+
+The Hourglass Model consumes $\Sigma_i$ and $\Lambda_i$ directly from
+each bead's 32-bit identity word at Gate 1, Gate 3, and the H3 scoring
+function.  It is therefore the first model in the platform that makes
+the Identity–State Decomposition \emph{operationally load-bearing}
+rather than merely descriptive.
+
+% ============================================================================
+\section{The Lookglass Bidirectional Feedback Model}
+\label{sec:lookglass}
+% ============================================================================
+
+\subsection{Concept}
+
+The 6+9 Seed-Bead Stepper is a \emph{forward} pass: atomistic (seed)
+information propagates toward the coarse-grained (bead) layer.  This
+is the natural direction of coarse-graining.
+
+The Lookglass Model introduces the reverse: bead-layer observables
+are reflected back into the atomistic layer as soft corrections.
+The name is deliberately evocative — just as a lookglass
+(Lewis Carroll, \textit{Through the Looking-Glass}) shows a mirror-reversed
+world, the Lookglass pass shows the atomistic layer a reversed image of
+its own coarse-grained representation.
+
+\begin{tcolorbox}[
+  colback=lgmint, colframe=green!40!black,
+  title={Lookglass Architecture},
+  fonttitle=\bfseries\small
+]
+\begin{center}
+\begin{tabular}{ll}
+\textbf{Forward}  & [S1--S6] $\to$ [B1--B9] $\to$ \texttt{SeedBeadStepRecord}\\[4pt]
+\textbf{Backward} & [L1] pos correction $\leftarrow$ bead COM \\
+                  & [L2] damping modulation $\leftarrow$ $\bar\eta$ \\
+                  & [L3] force scale $\leftarrow$ role weights \\
+                  & [L4] dt guard $\leftarrow$ $\bar\Lambda$ \\
+                  & [L5] convergence mirror
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+\subsection{Backward-Pass Unit Equations}
+
+\subsubsection{L1 — Position Correction}
+
+The CG centroid for bead group $i$ is $\mathbf{r}_i^{\rm bead}$.
+The atomistic COM is $\mathbf{r}_i^{\rm seed}$.  The correction:
+%
+\begin{equation}
+  \Delta\mathbf{r}_i^{\rm seed}
+  = \alpha_{\rm pos}\,\bigl(\mathbf{r}_i^{\rm bead} - \mathbf{r}_i^{\rm seed}\bigr)
+  \label{eq:L1}
+\end{equation}
+%
+$\alpha_{\rm pos} \in [0,1]$ is the position coupling constant.
+At $\alpha_{\rm pos}=0$ the backward pass is decoupled; at
+$\alpha_{\rm pos}=1$ atomistic positions are snapped to bead centroids.
+
+\subsubsection{L2 — Damping Modulation}
+
+The mean slow state $\bar\eta$ from the BEAD layer inflates the FIRE
+damping coefficient:
+%
+\begin{equation}
+  \gamma_{\rm eff} = \gamma_0 \cdot \bigl(1 + \alpha_{\rm damp} \cdot \bar\eta\bigr)
+  \label{eq:L2}
+\end{equation}
+%
+High $\bar\eta$ (ordered environment) → larger damping → slower
+but more stable relaxation.
+
+\subsubsection{L3 — Force Scale Correction}
+
+For each bead $i$ with dominant role weight $w_{\rm dom}^{(i)}$:
+%
+\begin{equation}
+  F_i^{\rm seed} \;\leftarrow\;
+  F_i^{\rm seed} \cdot \bigl[1 + \alpha_{\rm force}(w_{\rm dom}^{(i)} - 1)\bigr]
+  \label{eq:L3}
+\end{equation}
+%
+Chemically specific beads ($w_{\rm dom} > 1$) have their forces
+amplified; generic Mixed beads ($w_{\rm dom} = 1$) are unchanged.
+
+\subsubsection{L4 — FIRE Step-Size Guard}
+
+Mean stability class $\bar\Lambda \in [0,3]$ modulates the FIRE
+timestep ceiling:
+%
+\begin{equation}
+  \Delta t_{\rm max} = \Delta t_0 \cdot
+  \operatorname{clamp}\!\left(
+    1 - \alpha_{\Delta t}\,\frac{3-\bar\Lambda}{3},\;
+    0.1,\; 1.0
+  \right)
+  \label{eq:L4}
+\end{equation}
+%
+Unstable systems ($\bar\Lambda \approx 0$) reduce the timestep to at
+most $10\%$ of $\Delta t_0$; bulk-lattice systems ($\bar\Lambda = 3$)
+run at the full timestep.
+
+\subsubsection{L5 — Convergence Mirror}
+
+The backward pass declares steady state when both:
+%
+\begin{equation}
+  \max_i |\Delta\mathbf{r}_i^{\rm feedback}| < r_{\rm tol}
+  \quad\text{AND}\quad
+  |\bar\eta - \bar\eta_{\rm prev}| < \eta_{\rm tol}
+  \label{eq:L5}
+\end{equation}
+%
+Once L5 is satisfied the backward pass is \emph{frozen}: subsequent
+ticks skip the backward computation, recovering the pure 6+9 forward
+cost.
+
+\subsection{Lookglass Steady State}
+
+\begin{definition}[Lookglass Steady State]
+  The combined forward–backward system is in \emph{Lookglass steady
+  state} when the 6+9 Seed-Bead Stepper satisfies its own steady-state
+  condition (§5.1) \emph{and} the Lookglass backward pass satisfies
+  equation~(\ref{eq:L5}).
+\end{definition}
+
+The joint steady state is strictly stronger than either condition alone:
+it requires that the coarse-grained representation has converged
+\emph{and} that its reflection no longer perturbs the atomistic layer.
+
+\subsection{Parameters}
+
+\begin{center}
+\begin{tabular}{llrl}
+\toprule
+Parameter & Symbol & Default & Meaning \\
+\midrule
+$\alpha_{\rm pos}$ & — & 0.05 & Position coupling (L1) \\
+$\alpha_{\rm damp}$ & — & 0.30 & $\bar\eta$ damping inflation (L2) \\
+$\gamma_0$ & — & 0.10 & Base FIRE damping (L2) \\
+$\alpha_{\rm force}$ & — & 0.20 & Role-weight force scale (L3) \\
+$\alpha_{\Delta t}$ & — & 0.50 & Stability-class dt guard (L4) \\
+$\Delta t_0$ & — & 5\,fs & Base FIRE timestep (L4) \\
+$r_{\rm tol}$ & — & 0.001\,\AA & Feedback displacement tol (L5) \\
+$\eta_{\rm tol}$ & — & $10^{-4}$ & Slow-state convergence tol (L5) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Implementation}
+
+The full implementation is in
+\file{coarse\_grain/models/lookglass\_model.hpp}.
+
+\begin{lstlisting}
+LookglassParams lg_params;
+lg_params.alpha_pos   = 0.05;
+lg_params.alpha_force = 0.2;
+
+LookglassRunRecord run_record;
+run_record.record_history = true;
+
+double eta_prev = 0.0;
+
+for (uint64_t step = 0; step < max_steps; ++step) {
+    // Forward: 6+9 Seed-Bead step
+    SeedBeadStepRecord fwd = step_seed_bead(sys, sb_params);
+
+    // Backward: Lookglass reflection
+    LookglassStepRecord bwd =
+        step_lookglass(sys, fwd, lg_params, eta_prev);
+    run_record.ingest(bwd);
+
+    eta_prev = fwd.avg_eta;
+
+    if (fwd.steady_state && bwd.lookglass_steady) break;
+}
+
+std::cout << "Lookglass steady at step "
+          << run_record.steps_to_steady << '\n';
+std::cout << "Peak feedback |dr| = "
+          << run_record.peak_pos_correction << " A\n";
+\end{lstlisting}
+
+% ============================================================================
+\section{Relationships Between the Three Models}
+\label{sec:relationships}
+% ============================================================================
+
+The three models introduced in this document form a coherent stack:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Model & Consumes & Produces \\
+\midrule
+32-Bit Word & $\boldI_i$ fields & \texttt{Identity32} word \\
+Hourglass & Bead population + $\Sigma_i$, $\Lambda_i$ & Ranked candidate set \\
+Lookglass & Forward step record + $\bar\eta$, $\bar\Lambda$ & Corrected system state \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Interaction Pattern}
+
+A production simulation loop using all three models proceeds as follows:
+
+\begin{enumerate}[label=\textbf{\arabic*.}]
+  \item \textbf{Pack identity words.}
+        At initialisation (and after any structural event), pack each
+        bead's $\boldI_i$ into an \texttt{Identity32} word for fast
+        lookup during force evaluation.
+
+  \item \textbf{Forward pass.}
+        Run the 6+9 Seed-Bead Stepper.  Channel weights use
+        $\Sigma_i$ directly from the bead structs.
+
+  \item \textbf{Backward pass.}
+        Run \texttt{step\_lookglass()} using the forward record.
+        This corrects bead positions, adjusts FIRE damping and
+        timestep, and checks L5.
+
+  \item \textbf{Hourglass probe (periodic).}
+        Every $N_{\rm hg}$ steps, run \texttt{run\_hourglass()} to
+        probe the local configuration space.  If the best candidate
+        scores substantially higher than the current state, accept
+        the move.
+
+  \item \textbf{Check joint steady state.}
+        Halt when both the Seed-Bead Stepper and the Lookglass
+        backward pass have converged.
+\end{enumerate}
+
+\subsection{Anti-Black-Box Guarantee}
+
+All three models honour the project-wide anti-black-box contract:
+
+\begin{itemize}
+  \item \texttt{Identity32::to\_string()} decodes every bit field by name.
+  \item \texttt{CandidateRecord} exposes gate verdicts for every candidate.
+  \item \texttt{LookglassStepRecord} exposes every backward-unit output.
+\end{itemize}
+
+Every decision made by these models can be reproduced, inspected, and
+reported without any hidden state.
+
+% ============================================================================
+\section*{Conclusion}
+% ============================================================================
+
+This document introduced three foundational models that build directly
+on the §0 Identity–State Decomposition framework:
+
+\begin{enumerate}
+  \item The \textbf{32-Bit Identity Word} compresses $\boldI_i$ into a
+        single register-width integer, enabling branch-free field read-outs
+        with no information loss.
+
+  \item The \textbf{Hourglass Model} operationalises $\Sigma_i$ and
+        $\Lambda_i$ as load-bearing filter criteria, transforming the
+        identity framework from a labelling system into a genuine
+        constraint engine for structural convergence.
+
+  \item The \textbf{Lookglass Model} closes the loop between atomistic
+        and coarse-grained layers, making the 6+9 Stepper bidirectional
+        and enabling joint steady-state convergence.
+
+\end{enumerate}
+
+Together they move VSEPR-SIM from a forward-only simulation pipeline
+toward a fully coupled, inspectable, and deterministic research platform.
+
+\end{document}

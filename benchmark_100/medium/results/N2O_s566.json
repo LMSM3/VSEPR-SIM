@@ -1,0 +1,19 @@
+{
+  "formula": "N2O",
+  "seed": 566,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 3.814352,
+  "energy_per_atom": 1.271451,
+  "rms_force": 13.864504,
+  "max_force": 13.864504,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.561100,
+  "timestamp": "2026-03-28T12:53:02",
+  "xyz_file": "benchmark_100\medium\structures\N2O_s566.xyz"
+}

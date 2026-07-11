@@ -1,0 +1,19 @@
+{
+  "formula": "AlF3",
+  "seed": 196,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 71.808952,
+  "energy_per_atom": 17.952238,
+  "rms_force": 234.227319,
+  "max_force": 234.227319,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.606900,
+  "timestamp": "2026-03-28T12:55:48",
+  "xyz_file": "benchmark_100\medium\structures\AlF3_s196.xyz"
+}

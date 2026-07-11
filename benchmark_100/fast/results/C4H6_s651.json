@@ -1,0 +1,19 @@
+{
+  "formula": "C4H6",
+  "seed": 651,
+  "tier": "fast",
+  "num_atoms": 10,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 27919.645818,
+  "energy_per_atom": 2791.964582,
+  "rms_force": 81165.170321,
+  "max_force": 81165.170321,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.516300,
+  "timestamp": "2026-03-28T12:53:16",
+  "xyz_file": "benchmark_100\fast\structures\C4H6_s651.xyz"
+}

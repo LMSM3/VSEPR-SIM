@@ -1,0 +1,19 @@
+{
+  "formula": "Na2SO4",
+  "seed": 42,
+  "tier": "highn",
+  "num_atoms": 7,
+  "steps_taken": 10000,
+  "max_steps": 10000,
+  "energy_kcal_mol": 26.231294,
+  "energy_per_atom": 3.747328,
+  "rms_force": 46.570101,
+  "max_force": 46.570101,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 3.162700,
+  "timestamp": "2026-03-28T13:05:00",
+  "xyz_file": "benchmark_v2\highn\structures\Na2SO4_s42.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "CaCl2",
+  "seed": 1224,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 17.390908,
+  "energy_per_atom": 5.796969,
+  "rms_force": 51.897631,
+  "max_force": 51.897631,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.579300,
+  "timestamp": "2026-03-28T13:05:10",
+  "xyz_file": "benchmark_v2\medium\structures\CaCl2_s1224.xyz"
+}

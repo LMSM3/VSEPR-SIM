@@ -1,0 +1,18 @@
+Animation intent mapping
+========================
+Each reaction class maps to a shell animation (ASCII) and a web animation (CSS/JS).
+
+# shell_anim: flash_arrow       -> combustion: rapid arrow expansion with heat marker
+# shell_anim: split_burst       -> decomposition: bracket split with expanding arrows
+# shell_anim: merge_glow        -> synthesis: converging arrow with merge symbol
+# shell_anim: neutralize_fade   -> acid-base: fading arrow with pH note
+# shell_anim: sparkline         -> general: simple expanding arrow
+
+# web_anim: heat_burst          -> red border pulse, particle scatter toward products
+# web_anim: fragment_scatter    -> orange burst, pieces fly outward
+# web_anim: molecule_merge      -> green glow, pieces converge
+# web_anim: ph_gradient         -> purple gradient sweep across card
+# web_anim: molecule_flow       -> blue flow lines, neutral motion
+
+Keep shell version ASCII only.
+Keep web version CSS-transition friendly for polling refresh.

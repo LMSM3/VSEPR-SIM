@@ -327,6 +327,10 @@ struct BeadVisualRecord {
     std::string bead_class;             // Type name (e.g. "BB", "SC1", "W")
     std::string fragment_name;          // Source fragment label
 
+    // --- Identity–State Decomposition (§0) ---
+    StructuralRole  structural_role{StructuralRole::Mixed};   // Σ_i
+    StabilityClass  stability_class{StabilityClass::AmbientStable}; // Λ_i
+
     // --- Effective (atomistic) domain ---
     atomistic::Vec3 center_world{};     // Bead center in world space
     double effective_radius{1.0};       // Shell radius (Angstrom)
@@ -457,6 +461,10 @@ inline BeadVisualRecord build_visual_record(
     rec.bead_id = bead_id;
     rec.center_world = bead.position;
     rec.mapping_residual = bead.mapping_residual;
+
+    // --- Identity–State Decomposition (§0) ---
+    rec.structural_role = bead.structural_role;
+    rec.stability_class = bead.stability_class;
 
     // --- Effective domain ---
     // Use surface descriptor frame asphericity for effective radius scaling

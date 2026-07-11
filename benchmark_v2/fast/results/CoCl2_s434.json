@@ -1,0 +1,19 @@
+{
+  "formula": "CoCl2",
+  "seed": 434,
+  "tier": "fast",
+  "num_atoms": 3,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 15.046357,
+  "energy_per_atom": 5.015452,
+  "rms_force": 45.875489,
+  "max_force": 45.875489,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.687500,
+  "timestamp": "2026-03-28T13:04:58",
+  "xyz_file": "benchmark_v2\fast\structures\CoCl2_s434.xyz"
+}

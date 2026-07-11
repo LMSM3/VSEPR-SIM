@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VSEPR-SIM Dashboard: demo_03_graphite_stack</title>
+<style>
+  body { background:#0d1117; color:#c9d1d9; font-family:monospace; margin:32px; }
+  h1 { color:#58a6ff; border-bottom:1px solid #30363d; padding-bottom:8px; }
+  h2 { color:#8b949e; font-size:14px; margin-top:28px; }
+  .grid { display:flex; gap:24px; flex-wrap:wrap; }
+  .card { background:#161b22; border:1px solid #30363d;          border-radius:6px; padding:16px; }
+  table { border-collapse:collapse; font-size:12px; width:100%; }
+  th { background:#21262d; color:#8b949e; padding:6px 10px;       text-align:left; border-bottom:1px solid #30363d; }
+  td { padding:5px 10px; border-bottom:1px solid #21262d; }
+  .meta { color:#6e7681; font-size:11px; margin-top:4px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:12px;           font-size:11px; background:#21262d; color:#8b949e; }
+</style>
+</head>
+<body>
+<h1>VSEPR-SIM Dashboard</h1>
+<p class="meta">  <span class="badge">demo_03_graphite_stack</span>  <span class="badge">RMgX</span>  <span class="badge">complex</span>  &nbsp; Generated 2026-04-27T00:55:01Z</p>
+<div class="grid">
+  <div class="card"><h2>Energy Trace</h2>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="200" viewBox="0 0 500 200">
+<title>energy</title>
+<rect width="500" height="200" fill="#0d1117"/>
+<line x1="40" y1="10" x2="40" y2="170" stroke="#58a6ff" stroke-width="1"/>
+<line x1="40" y1="170" x2="490" y2="170" stroke="#58a6ff" stroke-width="1"/>
+<polyline fill="none" stroke="#58a6ff" stroke-width="2" points="40,12.506 47.6271,22.3621 55.2542,31.5722 62.8814,40.1785 70.5085,48.2208 78.1356,55.7358 85.7627,62.7582 93.3898,69.3203 101.017,75.4523 108.644,81.1823 116.271,86.5368 123.898,91.5402 131.525,96.2157 139.153,100.585 146.78,104.667 154.407,108.482 162.034,112.047 169.661,115.378 177.288,118.491 184.915,121.4 192.542,124.118 200.169,126.658 207.797,129.032 215.424,131.25 223.051,133.322 230.678,135.259 238.305,137.069 245.932,138.76 253.559,140.34 261.186,141.817 268.814,143.197 276.441,144.486 284.068,145.691 291.695,146.817 299.322,147.869 306.949,148.852 314.576,149.771 322.203,150.629 329.831,151.432 337.458,152.181 345.085,152.882 352.712,153.536 360.339,154.148 367.966,154.719 375.593,155.254 383.22,155.753 390.847,156.219 398.475,156.655 406.102,157.062 413.729,157.443 421.356,157.798 428.983,158.131 436.61,158.441 444.237,158.731 451.864,159.002 459.492,159.256 467.119,159.492 474.746,159.714 482.373,159.92 490,160.114 "/>
+<text x="260" y="195" fill="#8b949e" font-family="monospace" font-size="11" text-anchor="middle">U (kcal/mol) vs FIRE step</text>
+</svg>
+</div>
+  <div class="card"><h2>Event Kind Distribution</h2>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="180" viewBox="0 0 500 180">
+<title>event_bars</title>
+<rect width="500" height="180" fill="#0d1117"/>
+<rect x="100" y="14" width="380" height="16" fill="#58a6ff" opacity="0.8"/>
+<text x="96" y="26" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Reaction</text>
+<text x="484" y="26" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+<rect x="100" y="39" width="380" height="16" fill="#3fb950" opacity="0.8"/>
+<text x="96" y="51" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">ChemicalState</text>
+<text x="484" y="51" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+<rect x="100" y="64" width="0" height="16" fill="#f0883e" opacity="0.8"/>
+<text x="96" y="76" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Formation</text>
+<text x="104" y="76" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">0</text>
+<rect x="100" y="89" width="0" height="16" fill="#f85149" opacity="0.8"/>
+<text x="96" y="101" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Defect</text>
+<text x="104" y="101" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">0</text>
+<rect x="100" y="114" width="0" height="16" fill="#d2a8ff" opacity="0.8"/>
+<text x="96" y="126" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Transport</text>
+<text x="104" y="126" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">0</text>
+<rect x="100" y="139" width="380" height="16" fill="#ffa657" opacity="0.8"/>
+<text x="96" y="151" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">ContinualReport</text>
+<text x="484" y="151" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+</svg>
+</div>
+</div>
+<h2>Event Audit Table</h2>
+<table>
+<tr><th>ID</th><th>Kind</th><th>Frame</th><th>Formula</th><th>Result</th><th>Unit</th><th>Valid</th></tr>
+<tr><td>1</td><td>Reaction</td><td>51</td><td>RMgX</td><td>-53.4</td><td>kcal/mol</td><td style="color:#3fb950">OK</td></tr>
+<tr><td>2</td><td>ChemicalState</td><td>52</td><td>RMgX</td><td>-53.4</td><td>kcal/mol</td><td style="color:#3fb950">OK</td></tr>
+<tr><td>3</td><td>ContinualReport</td><td>56</td><td>RMgX</td><td>-89.4</td><td>kcal/mol</td><td style="color:#3fb950">OK</td></tr>
+</table>
+</body>
+</html>

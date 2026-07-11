@@ -1,0 +1,764 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath, amssymb, graphicx, geometry, booktabs, xcolor}
+\usepackage{tikz, pgfplots}
+\usepackage{tcolorbox}
+\usepackage{array, multirow, tabularx}
+\usepackage{caption, subcaption}
+\usepackage{hyperref}
+\usepackage{soul}
+\usepackage[normalem]{ulem}
+\usetikzlibrary{matrix, fit, arrows.meta, positioning, shapes.geometric,
+				decorations.pathrounding, backgrounds, calc}
+\pgfplotsset{compat=1.18}
+\geometry{margin=1in}
+\tcbuselibrary{skins, breakable}
+
+%%VSSIM-MARKUP-INJECTED
+%% ═══════════════════════════════════════════════════════════════════
+%% VSEPR-SIM Revision Markup — permanent colour definitions
+%% ═══════════════════════════════════════════════════════════════════
+\definecolor{vsgreen}{HTML}{27AE60}
+\definecolor{vsred}{HTML}{E74C3C}
+\definecolor{vsyellow}{HTML}{F1C40F}
+\definecolor{vsyellowbg}{HTML}{FEF9E7}
+\definecolor{vscyan}{HTML}{1ABC9C}
+\definecolor{vsdarkred}{HTML}{C0392B}
+\newcommand{\vsadd}[1]{\textcolor{vsgreen}{\textbf{+}~#1}}
+\newcommand{\vsedit}[1]{\colorbox{vsyellowbg}{\textcolor{black}{#1}}}
+\newcommand{\vsfig}[1]{\textcolor{vscyan}{#1}}
+\newcommand{\vschart}[1]{\textcolor{vsdarkred}{#1}}
+
+%% Palette shortcuts
+\definecolor{bdblue}{HTML}{2E86C1}
+\definecolor{bdorange}{HTML}{F39C12}
+\definecolor{bdteal}{HTML}{1ABC9C}
+\definecolor{bdred}{HTML}{E74C3C}
+\definecolor{bdgreen}{HTML}{27AE60}
+\definecolor{bdgray}{HTML}{7F8C8D}
+\definecolor{bddark}{HTML}{2C3E50}
+
+%% Convenience box
+\newtcolorbox{rulebox}[1]{
+  enhanced, breakable,
+  colback=vsyellowbg, colframe=vsyellow,
+  fonttitle=\bfseries, title=#1,
+  left=4pt, right=4pt, top=4pt, bottom=4pt,
+}
+\newtcolorbox{specbox}{
+  enhanced, breakable,
+  colback=blue!4, colframe=bdblue,
+  left=4pt, right=4pt, top=4pt, bottom=4pt,
+}
+
+\graphicspath{{../out/bead_dynamics_report/figures/}}
+
+% ============================================================================
+\title{%
+  \textbf{Environment-Responsive Coarse-Grained Bead Dynamics}\\[4pt]
+  \large Version 2.0 --- \vsadd{with Figures, Charts, and Renderings}
+}
+\author{VSEPR-SIM Project}
+\date{April 16, 2026}
+% ============================================================================
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\vsadd{%
+The anisotropic surface-mapped bead acquires a second layer of state that
+responds to and encodes its local environment.  This document defines that
+layer, derives its equations of motion, and \vsfig{illustrates every key
+concept with figures generated directly from the VSEPR-SIM reporting
+pipeline}.  Version~2.0 adds a visual breakdown of the full bead state
+matrix $\mathbb{B}_B$, ten data-driven figures, and a streamlined
+explanation of why the architecture is built the way it is.}
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+% ============================================================================
+\section{What This Document Is and Why It Exists}
+% ============================================================================
+
+The companion document \emph{Anisotropic Surface-Mapped Coarse-Grained
+Beads for Molecular Systems} defines a bead that interacts anisotropically
+and moves under force and torque---but has no awareness of its surroundings.
+A bead in vacuum behaves identically to a bead in a dense crystal.
+
+This document fixes that by adding \textbf{Layer~E}: a set of local
+environment observables and one slow internal state variable.  The result is
+a bead that \emph{participates} in collective material behaviour rather than
+merely existing in a simulation.
+
+\medskip
+\noindent
+\textbf{What is added:}
+\begin{itemize}
+  \item Three fast observables: $\rho_B$ (density), $C_B$ (coordination),
+		$P_{2,B}$ (orientational order)
+  \item One slow state: $\eta_B \in [0,1]$ with relaxation timescale $\tau$
+  \item Six new parameters that connect environment to interaction kernels
+\end{itemize}
+
+\noindent
+\textbf{What is not changed:} the companion document's equations.  This
+extension is purely additive.
+
+% ============================================================================
+\section{The Full Bead State $\mathbb{B}_B$ --- Visual Map}
+\label{sec:state_map}
+% ============================================================================
+
+\vsadd{%
+Version~2.0 replaces the prose-only state description with a visual
+multi-layer diagram.  Each layer has a distinct update schedule and role;
+conflating them is the single most common modelling error.}
+
+% ── TikZ block diagram of bead state layers ──────────────────────────────────
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[
+  font=\small,
+  layer/.style={
+	draw, rounded corners=4pt, minimum width=11.8cm, minimum height=1.1cm,
+	align=left, text width=11.4cm, inner sep=6pt,
+  },
+  label/.style={font=\bfseries\small, anchor=west},
+]
+
+%% Layer A — Identity
+\node[layer, fill=bdblue!15,  draw=bdblue,  label] (A) at (0,0) {%
+  \textbf{Layer A — Identity} \hfill \textit{fixed at mapping; never updated mid-run}\\[1pt]
+  $\{c_{\ell m}^{(k)}\}$ descriptor coefficients,\quad
+  $M_B$ mass,\quad
+  $Q_B^{\rm tot}$ net charge,\quad
+  $\mathbf{I}_B$ inertia tensor
+};
+
+%% Layer B — Pose
+\node[layer, fill=bdteal!15, draw=bdteal, label, below=4pt of A] (B) {%
+  \textbf{Layer B — Pose} \hfill \textit{updated every dynamics step}\\[1pt]
+  $\mathbf{R}_B$ centre-of-mass position,\quad
+  $\mathbf{Q}_B$ orientation quaternion
+};
+
+%% Layer C — Resolution
+\node[layer, fill=bdgreen!10, draw=bdgreen, label, below=4pt of B] (C) {%
+  \textbf{Layer C — Resolution} \hfill \textit{updated at adaptation only}\\[1pt]
+  $\ell_{\max}$ harmonic truncation,\quad
+  active channels,\quad
+  descriptor residuals
+};
+
+%% Layer D — Provenance
+\node[layer, fill=bdgray!12, draw=bdgray, label, below=4pt of C] (D) {%
+  \textbf{Layer D — Provenance} \hfill \textit{set once at mapping}\\[1pt]
+  Fragment ID,\quad mapping frame method,\quad source trajectory reference
+};
+
+%% Layer E — Environment (new in V2)
+\node[layer, fill=bdorange!18, draw=bdorange, label, below=4pt of D] (E) {%
+  \textbf{Layer E — Environment} \hfill
+  \vsadd{\textit{new --- updated every step}}\\[1pt]
+  \vsadd{%
+	$\rho_B$ local density\quad
+	$C_B$ coordination number\quad
+	$P_{2,B}$ orientational order\quad
+	$\eta_B$ slow internal state
+  }
+};
+
+%% Right-side annotation arrows
+\node[anchor=west, xshift=0.3cm, text=bdblue,  font=\footnotesize] (tA) at (A.east) {};
+\draw[bdorange, very thick, -{Stealth}] ([xshift=6.4cm]E.west)
+  -- node[right, font=\scriptsize\itshape, text=bdorange]
+	 {couples back into\\interaction engine}
+  ++(0,5.0);
+
+%% Bracket labelling the fast-observable sub-block
+\draw[decorate, decoration={brace, amplitude=5pt}, bdteal, thick]
+  ([xshift=6.6cm]B.north east) -- ([xshift=6.6cm]D.south east)
+  node[midway, right=8pt, font=\footnotesize, text=bdteal]
+	   {companion\\document};
+
+\draw[decorate, decoration={brace, amplitude=5pt}, bdorange, thick]
+  ([xshift=6.6cm]E.north east) -- ([xshift=6.6cm]E.south east)
+  node[midway, right=8pt, font=\footnotesize, text=bdorange]
+	   {this\\document};
+
+\end{tikzpicture}
+\caption{%
+  \vsadd{%
+	Full five-layer bead state $\mathbb{B}_B$.  Each layer has an independent
+	update schedule and a distinct physical role.  Layer~E is the new
+	contribution of this document; it reads Layers B--D and writes back into
+	the interaction kernels defined in the companion document.
+  }
+}
+\label{fig:state_layers}
+\end{figure}
+
+% ── Compact state matrix ──────────────────────────────────────────────────────
+\subsection*{State as a Multi-Column Matrix}
+\vsadd{%
+Concretely, the full state of bead $B$ at any instant is a row in the
+following matrix (one column group per layer):
+}
+
+\begin{equation}
+\mathbb{B}_B =
+\underbrace{%
+  \begin{bmatrix}
+	\{c_{\ell m}^{(k)}\} & M_B & Q_B^{\rm tot} & \mathbf{I}_B
+  \end{bmatrix}
+}_{\text{Layer A (identity)}}
+\;\Bigg|\;
+\underbrace{%
+  \begin{bmatrix}
+	\mathbf{R}_B & \mathbf{Q}_B
+  \end{bmatrix}
+}_{\text{Layer B (pose)}}
+\;\Bigg|\;
+\underbrace{%
+  \begin{bmatrix}
+	\rho_B & C_B & P_{2,B} & \eta_B
+  \end{bmatrix}
+}_{\text{Layer E (environment)}}
+\label{eq:state_matrix}
+\end{equation}
+
+\noindent
+\vsadd{%
+Reading across the matrix left to right: \emph{what the bead is} (A),
+\emph{where and how it is oriented} (B), and \emph{what it is currently
+experiencing} (E).  Layers C and D are omitted from the runtime matrix---they
+are metadata, not degrees of freedom.
+}
+
+\medskip
+\noindent
+\begin{rulebox}{One-sentence summary of each column group}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+  \toprule
+  \textbf{Column group} & \textbf{Plain-language meaning} \\
+  \midrule
+  $\{c_{\ell m}^{(k)}\}$ & The bead's permanent ``personality'' ---
+							its anisotropic shape and charge distribution. \\
+  $\mathbf{R}_B,\,\mathbf{Q}_B$ & Where it is and which way it faces right now. \\
+  $\rho_B,\,C_B,\,P_{2,B}$ & Snapshot of the neighbourhood: how crowded, how
+							   many neighbours, how aligned. \\
+  $\eta_B$ & A running memory of the recent neighbourhood: slow to rise,
+			  slow to fall. \\
+  \bottomrule
+\end{tabularx}
+\end{rulebox}
+
+% ── Update order ────────────────────────────────────────────────────────────
+\subsection*{Update Order Per Dynamics Step}
+
+\vsadd{%
+The following sequence is mandatory.  Violations break energy conservation
+or causality:
+}
+
+\begin{center}
+\begin{tikzpicture}[
+  font=\small,
+  node distance=0.7cm,
+  box/.style={draw, rounded corners=3pt, minimum width=3.2cm,
+			  minimum height=0.75cm, align=center, fill=white},
+  arr/.style={-{Stealth}, thick},
+]
+  \node[box, draw=bdteal,  fill=bdteal!10]  (p) {Integrate poses\\$\mathbf{R}_B,\mathbf{Q}_B$};
+  \node[box, draw=bdblue,  fill=bdblue!10,  right=0.6cm of p] (o)
+		{Compute fast\\observables $\rho,C,P_2$};
+  \node[box, draw=bdorange,fill=bdorange!10,right=0.6cm of o] (e)
+		{Update slow\\state $\eta_B$};
+  \node[box, draw=bdred,   fill=bdred!10,   right=0.6cm of e] (k)
+		{Evaluate modulated\\kernels $K_k(\eta)$};
+  \node[box, draw=bddark,  fill=bdgray!10,  right=0.6cm of k] (f)
+		{Compute forces\\and torques};
+
+  \draw[arr] (p) -- (o);
+  \draw[arr] (o) -- (e);
+  \draw[arr] (e) -- (k);
+  \draw[arr] (k) -- (f);
+\end{tikzpicture}
+\end{center}
+
+% ============================================================================
+\section{Design Rules}
+% ============================================================================
+
+Four rules govern the extension.  Breaking any one makes the model
+physically wrong, not just inelegant.
+
+\begin{rulebox}{Rule 1 --- $X_B$ is derived, not invented}
+Every component of the environment state must be computable from positions,
+orientations, and distances of neighbours.  Arbitrary labels, ad hoc
+classifications, and externally imposed phase tags are prohibited.
+\end{rulebox}
+
+\begin{rulebox}{Rule 2 --- Separate fast observables from slow state}
+Fast observables are recomputed each step.  The slow state integrates them
+over time.  Conflating these two classes destroys hysteresis.
+\end{rulebox}
+
+\begin{rulebox}{Rule 3 --- $X_B$ modifies behaviour, not identity}
+Layer~E encodes what the bead is experiencing.  Layer~A encodes what it
+intrinsically is.  These update on different schedules and must never be
+merged.
+\end{rulebox}
+
+\begin{rulebox}{Rule 4 --- Keep it low-dimensional}
+If $X_B$ grows beyond a handful of scalars the result is a worse atomistic
+model with extra steps.  Every additional variable must justify its existence
+by producing observable behaviour that could not be obtained without it.
+\end{rulebox}
+
+% ============================================================================
+\section{Fast Observables}
+\label{sec:observables}
+% ============================================================================
+
+Fast observables are instantaneous measurements---no memory, no relaxation.
+They are recomputed from neighbour geometry every step and read by the slow
+state update.
+
+\subsection{Local Density $\rho_B$}
+
+\begin{equation}
+  \rho_B = \sum_{C \neq B} w(r_{BC}),
+  \qquad
+  w(r) = \begin{cases}
+	\exp\!\left(-\dfrac{r^2}{2\sigma_\rho^2}\right)
+	\cdot f_{\rm sw}(r;\,r_c,\delta)
+	& r < r_c \\[4pt]
+	0 & r \geq r_c
+  \end{cases}
+\end{equation}
+
+\noindent
+$\rho_B$ is large in dense packings, small in dilute environments.
+\vsfig{Figure~\ref{fig:bd03_density_heatmap}} shows the spatial structure of
+$\rho_B$ on a 32$\times$32 bead grid.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.56\textwidth]{BD-03_rho_density_heatmap.png}
+  \caption{%
+	Local density field $\rho_B$ on a $32\times32$ bead grid using Gaussian
+	weighting ($\sigma=0.04\,\ell$, $r_c=0.12\,\ell$).  A dense cluster at
+	the centre and an interface (dashed teal) demonstrate spatial resolution.
+	Inferno colour scale: bright = high density.
+  }
+  \label{fig:bd03_density_heatmap}
+\end{figure}
+
+\subsection{Coordination Number $C_B$}
+
+\begin{equation}
+  C_B = \sum_{C \neq B} \mathbf{1}_{r_{BC} < r_c}
+  \qquad \text{(smoothed: PLUMED-style switching function)}
+\end{equation}
+
+\subsection{Orientational Order Parameter $P_{2,B}$}
+
+\begin{equation}
+  P_{2,B}
+  = \frac{1}{N_B}\sum_{C \in \mathcal{N}_B}
+	\tfrac{1}{2}\!\left(3\left(\hat{n}_B \cdot \hat{n}_C\right)^2 - 1\right)
+  \quad \in \left[-\tfrac{1}{2},\;1\right]
+\end{equation}
+
+\noindent
+$P_{2,B} \approx 1$: perfect parallel stacking.\quad
+$P_{2,B} \approx 0$: isotropic.\quad
+$P_{2,B} \approx -\tfrac{1}{2}$: anti-nematic.
+
+\vsfig{Figure~\ref{fig:bd04_p2_histogram}} shows how $P_{2,B}$ shifts
+from a flat distribution (random orientations at $t=0$) to a sharp peak
+near $P_2 \approx 0.82$ as spontaneous ordering develops.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.72\textwidth]{BD-04_p2_order_histogram.png}
+  \caption{%
+	$P_{2,B}$ distribution across $N=512$ beads at four snapshots.
+	Vertical lines mark: isotropic ($P_2=0$), anti-nematic
+	($P_2=-\tfrac{1}{2}$), perfect order ($P_2=1$).  Generated by
+	\texttt{bead\_dynamics\_report\_pipeline.py} from NVT ensemble data.
+  }
+  \label{fig:bd04_p2_histogram}
+\end{figure}
+
+\subsection{Joint Phase Awareness}
+
+Without any explicit phase labels, the triple $(\rho_B, C_B, P_{2,B})$
+already separates four material regimes.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.65\textwidth]{BD-06_phase_awareness_scatter.png}
+  \caption{%
+	$(\rho_B, P_{2,B})$ scatter for 800 beads, coloured by $\eta_B$.
+	Four regimes emerge without external labels: gas (bottom left),
+	isotropic liquid (bottom centre), crystal/ordered (top right),
+	and interface (mixed).
+  }
+  \label{fig:bd06_phase_scatter}
+\end{figure}
+
+\vsfig{Figure~\ref{fig:bd06_phase_scatter}} further confirms that $\eta_B$
+(colour) correctly tracks regime membership.  The observable correlation
+structure is quantified in
+\vschart{Figure~\ref{fig:bd09_correlation}}: $C_B$ is nearly redundant with
+$\rho_B$ in dense phases, while $\eta_B$ integrates information from both
+density and order as designed.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.52\textwidth]{BD-09_observable_correlation_matrix.png}
+  \caption{%
+	Pearson correlation matrix: $(\rho_B, C_B, P_{2,B}, \eta_B, K_{\rm eff})$.
+	$C_B$ is strongly correlated with $\rho_B$, confirming redundancy in
+	dense phases.  $\eta_B$ integrates both $\rho_B$ and $P_{2,B}$.
+  }
+  \label{fig:bd09_correlation}
+\end{figure}
+
+% ============================================================================
+\section{Slow Internal State $\eta_B$}
+\label{sec:slow_state}
+% ============================================================================
+
+The slow state $\eta_B \in [0,1]$ provides memory.  It relaxes toward the
+instantaneous fast observables but does not track them instantaneously.
+
+\subsection{Evolution Equation}
+
+\begin{equation}
+\boxed{
+  \frac{d\eta_B}{dt}
+  = \frac{1}{\tau}\!\left(
+	  \alpha\,\hat{\rho}_B + \beta\,\hat{P}_{2,B} - \eta_B
+	\right)
+}
+\qquad \alpha + \beta = 1,\quad \tau > 0
+\label{eq:eta_ode}
+\end{equation}
+
+Three parameters control everything: $\alpha$ (density weight), $\beta$
+(order weight), and $\tau$ (memory depth).
+
+\subsection{Numerical Integration}
+
+\noindent
+\textbf{Forward-Euler} (use when $\Delta t / \tau < 0.5$):
+\begin{equation}
+  \eta_B(t+\Delta t) = \eta_B(t) + \frac{\Delta t}{\tau}
+  \bigl(f_B(t) - \eta_B(t)\bigr)
+\end{equation}
+
+\noindent
+\textbf{Exact implicit} (unconditionally stable; preferred):
+\begin{equation}
+  \eta_B(t+\Delta t) = f_B(t)
+  + \bigl(\eta_B(t) - f_B(t)\bigr)\,e^{-\Delta t/\tau}
+\end{equation}
+
+\vsfig{Figure~\ref{fig:bd01_eta_relaxation}} compares both integrators
+for three values of $\tau$ under a step-function environment.  Forward-Euler
+overshoots at large $\Delta t/\tau$; the exact form does not.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{BD-01_eta_relaxation_curves.png}
+  \caption{%
+	$\eta_B(t)$ response to a step-function target $f(t)$ for
+	$\tau \in \{100\,\text{fs},\,500\,\text{fs},\,2\,\text{ps}\}$.
+	\textbf{Left}: Forward-Euler. \textbf{Right}: Exact implicit.
+	Shaded region: interval where environment is ordered ($f=0.85$).
+	Larger $\tau$ produces stronger memory and wider hysteresis.
+  }
+  \label{fig:bd01_eta_relaxation}
+\end{figure}
+
+\subsection{Phase Portrait}
+
+\vsfig{Figure~\ref{fig:bd02_phase_space}} plots $\eta_B$ versus $f$ for
+a 1024-bead ensemble, coloured by $|d\eta/dt|$.  Beads on the diagonal are
+at steady state; off-diagonal beads are in active relaxation.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.55\textwidth]{BD-02_eta_phase_space.png}
+  \caption{%
+	Phase portrait: $\eta_B$ vs $f(\rho_B, P_{2,B})$ for $N=1024$ beads.
+	Colour encodes $|d\eta/dt|$ (brighter = faster relaxation).
+	The dashed diagonal is the steady-state locus $\eta = f$.
+  }
+  \label{fig:bd02_phase_space}
+\end{figure}
+
+% ============================================================================
+\section{Coupling $X_B$ into the Interaction Machinery}
+\label{sec:coupling}
+% ============================================================================
+
+The environment state is physically meaningful only if it modifies
+interactions.  The recommended approach is multiplicative kernel modulation:
+
+\begin{equation}
+  K_k(\ell, r;\,\eta_A, \eta_B)
+  = K_k(\ell, r) \cdot \bigl(1 + \gamma_k\,\bar{\eta}_{AB}\bigr),
+  \qquad \bar{\eta}_{AB} = \tfrac{1}{2}(\eta_A + \eta_B)
+\end{equation}
+
+\noindent Channel-specific signs:
+\begin{itemize}
+  \item $\gamma_{\rm disp} > 0$: dispersion \emph{enhanced} by ordering
+  \item $\gamma_{\rm elec} < 0$: electrostatics \emph{screened} by crowding
+  \item $\gamma_{\rm steric} > 0$: excluded volume \emph{hardened} by compression
+\end{itemize}
+
+\vsfig{Figure~\ref{fig:bd05_kernel_surface}} shows the modulation surface
+$K(\eta,r)$ for all three channels.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{BD-05_kernel_modulation_surface.png}
+  \caption{%
+	Kernel modulation surfaces $K(\eta,r)$ for the three interaction channels.
+	\textbf{Left}: dispersion (enhanced by ordering, $\gamma=+0.8$).
+	\textbf{Centre}: electrostatic (damped by crowding, $\gamma=-0.6$).
+	\textbf{Right}: steric (hardened by compression, $\gamma=+0.4$).
+	Contour levels are identical within each panel.
+  }
+  \label{fig:bd05_kernel_surface}
+\end{figure}
+
+\noindent
+\textbf{Invariants that must hold at every step:}
+\begin{itemize}
+  \item $\eta_B \in [0,1]$ (clamp if target overshoots)
+  \item $|1 + \gamma_k \bar{\eta}| > 0$ for all channels (kernel sign preserved)
+  \item Fast observables computed \emph{before} $\eta$ update
+  \item $\eta$ updated \emph{before} kernel evaluation
+\end{itemize}
+
+% ============================================================================
+\section{Emergent Behaviour}
+\label{sec:emergent}
+% ============================================================================
+
+\subsection{Spontaneous Ordering Feedback Loop}
+
+\vsfig{Figure~\ref{fig:bd07_feedback}} shows the positive feedback mechanism
+that drives spontaneous ordering.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.80\textwidth]{BD-07_feedback_loop_diagram.png}
+  \caption{%
+	Feedback loop: high $P_{2,B}$ drives $f$ toward 1, which increases
+	$\eta_B$ (with lag $\tau$), which strengthens $K_{\rm disp}$, which
+	reinforces $P_{2,B}$.  This mechanism underlies spontaneous stacking,
+	liquid-crystal alignment, and local crystallisation.
+  }
+  \label{fig:bd07_feedback}
+\end{figure}
+
+\noindent The feedback chain is:
+\begin{equation}
+  \text{high }P_{2,B}
+  \;\to\;
+  \text{high }f_B
+  \;\xrightarrow{\;\tau\;}
+  \text{high }\eta_B
+  \;\to\;
+  \text{stronger }K_{\rm disp}
+  \;\to\;
+  \text{higher }P_{2,B}
+\end{equation}
+
+\subsection{$\eta_B$ Distribution Evolution}
+
+\vsfig{Figure~\ref{fig:bd08_eta_kde}} tracks how the full $\eta_B$
+distribution shifts from broad and disordered to a sharp ordered peak.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=0.75\textwidth]{BD-08_eta_distribution_evolution.png}
+  \caption{%
+	KDE of $\eta_B$ across $N=512$ beads at six snapshots ($t = 0$--$200\,\text{ps}$).
+	Colour maps to simulation time (cool palette: dark = early, bright = late).
+	The distribution narrows and shifts right as the ensemble orders.
+  }
+  \label{fig:bd08_eta_kde}
+\end{figure}
+
+\subsection{Hysteresis and Metastability}
+
+Because $\eta_B$ relaxes on timescale $\tau$, the system is
+history-dependent: a bead that was recently in an ordered environment retains
+high $\eta$ even after ordering dissolves, temporarily maintaining stronger
+interactions.
+
+\vsfig{Figure~\ref{fig:bd10_hysteresis}} demonstrates this with a linear
+ramp of $f$ from 0 to 1 and back.  The ordering and disordering paths
+diverge in the $\eta$-vs-$f$ plane---a classic hysteresis loop.
+
+\begin{figure}[h!]
+  \centering
+  \includegraphics[width=\textwidth]{BD-10_hysteresis_loop.png}
+  \caption{%
+	Hysteresis in $\eta_B$ for a linear $f$ ramp ($\tau=600\,\text{fs}$).
+	\textbf{Left}: time series.
+	\textbf{Right}: hysteresis loop---the ordering path (blue) and
+	disordering path (red) do not coincide.  The instant-response limit
+	($\tau\to 0$, dashed) has no hysteresis.
+  }
+  \label{fig:bd10_hysteresis}
+\end{figure}
+
+% ============================================================================
+\section{Formal Specification Summary}
+\label{sec:spec}
+% ============================================================================
+
+\begin{specbox}
+\textbf{Extended state}
+\begin{equation*}
+  \mathbb{B}_B = \bigl\{
+	\underbrace{
+	  \mathbf{R}_B,\;
+	  \mathbf{Q}_B,\;
+	  \{c_{\ell m}^{(k)}\},\;
+	  M_B,\;
+	  Q_B^{\rm tot},\;
+	  \mathbf{I}_B
+	}_{B\;\text{(intrinsic)}},\;
+	\underbrace{
+	  \rho_B,\;
+	  C_B,\;
+	  P_{2,B},\;
+	  \eta_B
+	}_{X_B\;\text{(environment)}}
+  \bigr\}
+\end{equation*}
+
+\medskip
+\textbf{Slow state ODE}
+\begin{equation*}
+  \dot\eta_B = \frac{1}{\tau}\!\left(
+	\alpha\,\hat\rho_B + \beta\,\hat P_{2,B} - \eta_B
+  \right)
+\end{equation*}
+
+\medskip
+\textbf{Kernel modulation}
+\begin{equation*}
+  K_k(\ell,r;\eta_A,\eta_B) = K_k(\ell,r)\cdot\bigl(1+\gamma_k\,\bar\eta_{AB}\bigr)
+\end{equation*}
+
+\medskip
+\textbf{Parameter table}
+
+\begin{center}
+\begin{tabular}{cll}
+  \toprule
+  \textbf{Parameter} & \textbf{Role} & \textbf{Typical range} \\
+  \midrule
+  $\alpha$                    & density weight in $f$               & $[0,1]$ \\
+  $\beta$                     & order weight in $f$ \;($\alpha+\beta=1$) & $[0,1]$ \\
+  $\tau$                      & relaxation timescale                 & $10$--$10^4$ fs \\
+  $\gamma_{\rm steric}$       & steric kernel modulation             & $[0,1]$ \\
+  $\gamma_{\rm elec}$         & electrostatic kernel modulation      & $[-1,0]$ \\
+  $\gamma_{\rm disp}$         & dispersion kernel modulation         & $[0,2]$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\end{specbox}
+
+% ============================================================================
+\section{Reporting Pipeline}
+\label{sec:pipeline}
+% ============================================================================
+
+\vsadd{%
+All figures in this document are generated deterministically by
+\texttt{bead\_dynamics\_report\_pipeline.py} (VSEPR-SIM 4.0.5).  The
+pipeline reads NVT ensemble snapshots, applies the physics kernels defined
+in Section~\ref{sec:observables}--\ref{sec:slow_state}, and writes:
+\begin{itemize}
+  \item 10 high-DPI PNG figures to \texttt{out/bead\_dynamics\_report/figures/}
+  \item \texttt{bead\_dynamics\_manifest.json} --- figure catalogue with
+		labels, captions, and section assignments
+  \item \texttt{bead\_dynamics\_figure\_includes.tex} --- ready-to-paste
+		LaTeX \texttt{\textbackslash includegraphics} blocks
+\end{itemize}
+
+\noindent
+To regenerate all figures:
+\begin{center}
+  \texttt{python bead\_dynamics\_report\_pipeline.py}
+\end{center}
+
+\noindent
+Same data $\to$ identical PNGs (seeded RNG, deterministic kernels).
+Every metric plotted traces to a specific physics function in the pipeline.
+}
+
+% ============================================================================
+\section{Relationship to the Companion Document}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{Companion document} & \textbf{This document} \\
+  \midrule
+  Defines $B$ (intrinsic state)           & Defines $X_B$ (environment state) \\
+  Pairwise interaction engine             & Environment-modulated kernels \\
+  Static descriptor coefficients         & Coefficients optionally scaled \\
+  No environment awareness               & Phase awareness from local observables \\
+  Rigid-body dynamics only               & Slow internal state with memory \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+The interface is clean: this document adds Layer~E to the existing
+four-layer architecture and modulates existing kernels via multiplicative
+coupling.  No existing equation is changed.
+
+% ============================================================================
+\section{Conclusion}
+% ============================================================================
+
+The environment-responsive extension transforms the anisotropic bead from a
+static descriptor carrier into a material participant.  The additions are:
+\begin{itemize}
+  \item Three fast observables ($\rho_B$, $C_B$, $P_{2,B}$) that give the
+		bead local phase awareness without external labels
+  \item One slow state $\eta_B$ with three governing parameters ($\alpha$,
+		$\beta$, $\tau$) that provides memory and hysteresis
+  \item Three modulation parameters ($\gamma_{\rm steric}$, $\gamma_{\rm
+		elec}$, $\gamma_{\rm disp}$) that couple environment into kernels
+\end{itemize}
+
+Six parameters in total.  \vsadd{All behaviour documented in this version
+is directly visible in the ten figures generated by the reporting pipeline.}
+
+\medskip
+\noindent
+The distinction is between \emph{the model works} (beads interact and move)
+and \emph{the system behaves} (beads spontaneously order, screen
+electrostatics, resist disordering, and exhibit hysteresis).  The first
+capability was established in the companion document.  The second is
+established here.
+
+\end{document}

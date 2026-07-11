@@ -1,0 +1,279 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!70!black}\bfseries,
+  commentstyle=\color{green!50!black}\itshape,
+  stringstyle=\color{red!60!black},
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=4
+}
+
+\title{Reserved Particle Identifier Scheme for Decay\\
+and Special Physics Entities\\[6pt]
+\large VSEPR-SIM Methodology Document --- Particle ID / Decay Event Subsystem}
+\author{VSEPR-SIM Project}
+\date{v4.0.0 --- June 2025}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Reserved Particle Identifier Scheme}
+\label{sec:particle-id}
+% ============================================================================
+
+To support deterministic decay handling, emitted particle bookkeeping, and future transport or defect coupling, the simulation engine defines a reserved particle identifier namespace. The convention is:
+
+\begin{itemize}
+    \item Nonnegative identifiers correspond to ordinary matter-like species, including atoms, isotopes, molecules, or structured candidate objects.
+    \item Negative identifiers correspond to emitted decay particles, radiation surrogates, energy stand-ins, or internal special-purpose physics entities.
+\end{itemize}
+
+Let the particle identifier be denoted by
+\[
+ID_p \in \mathbb{Z}.
+\]
+
+The initial reserved set is defined as follows:
+
+\[
+\begin{aligned}
+ID_p &= 0   &&\rightarrow \text{generic nuclear placeholder},\\
+ID_p &= -1  &&\rightarrow \alpha \text{ particle},\\
+ID_p &= -2  &&\rightarrow \beta^- \text{ particle},\\
+ID_p &= -3  &&\rightarrow \gamma \text{ photon},\\
+ID_p &= -4  &&\rightarrow \text{generic energy packet / unresolved energy stand-in},\\
+ID_p &= -5  &&\rightarrow \beta^+ \text{ particle},\\
+ID_p &= -6  &&\rightarrow \text{electron capture bookkeeping token},\\
+ID_p &= -7  &&\rightarrow \text{neutron emission token},\\
+ID_p &= -8  &&\rightarrow \text{proton emission token},\\
+ID_p &= -9  &&\rightarrow \text{neutrino or unresolved loss token}.
+\end{aligned}
+\]
+
+\subsection{Defect Token Extensions}
+
+The reserved range extends to defect-oriented tokens for lattice damage coupling:
+
+\[
+\begin{aligned}
+ID_p &= -10  &&\rightarrow \text{vacancy defect token},\\
+ID_p &= -11  &&\rightarrow \text{interstitial defect token},\\
+ID_p &= -12  &&\rightarrow \text{defect cluster token},\\
+ID_p &= -13  &&\rightarrow \text{helium bubble seed},\\
+ID_p &= -14  &&\rightarrow \text{lattice damage packet}.
+\end{aligned}
+\]
+
+Future extensions may reserve additional negative ranges for transport pseudo-particles and internal engine sentinels.
+
+% ============================================================================
+\section{Decay Event Transition Framework}
+\label{sec:decay-event}
+% ============================================================================
+
+This reserved identifier system allows nuclear events to be represented in a uniform transition framework. A decay event may be written abstractly as
+\[
+S_{\text{parent}} \rightarrow S_{\text{daughter}} + \sum_k P_k,
+\]
+where $S_{\text{parent}}$ is the parent nuclear state, $S_{\text{daughter}}$ is the daughter state, and $P_k$ are emitted particles represented by reserved identifiers.
+
+For alpha decay,
+\[
+S(Z,A) \rightarrow S(Z-2,A-4) + P_{-1},
+\]
+and for beta-minus decay,
+\[
+S(Z,A) \rightarrow S(Z+1,A) + P_{-2} + P_{-9}.
+\]
+
+\subsection{Energy Partitioning}
+
+Each decay event carries explicit energy partitioning:
+\begin{itemize}
+    \item \textbf{Deposited fraction} --- energy absorbed locally (lattice heating, recoil).
+    \item \textbf{Transported fraction} --- energy carried away by emitted particles.
+    \item \textbf{Local damage score} --- proxy for lattice displacement probability.
+\end{itemize}
+
+Default partitioning by decay mode:
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Decay Mode} & \textbf{Deposited} & \textbf{Transported} & \textbf{Damage} \\
+\midrule
+Alpha ($\alpha$)     & 0.85 & 0.15 & 0.90 \\
+Beta-minus ($\beta^-$) & 0.35 & 0.65 & 0.30 \\
+Gamma ($\gamma$)     & 0.10 & 0.90 & 0.05 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Design Purpose}
+
+The purpose of this scheme is not only categorical labeling, but also deterministic support for:
+\begin{itemize}
+    \item decay chain propagation,
+    \item local energy deposition,
+    \item transport-ready emitted particle objects,
+    \item defect generation and lattice damage coupling,
+    \item universal kinetic event bookkeeping.
+\end{itemize}
+
+% ============================================================================
+\section{Three-Layer Architecture}
+\label{sec:architecture}
+% ============================================================================
+
+The particle ID and decay event subsystem is organized into three layers:
+
+\subsection{Layer A: Identity Layer}
+
+Defines the namespace for all particle, species, isotope, and defect identifiers.
+
+\begin{itemize}
+    \item \texttt{ParticleID} --- scoped enum (\texttt{std::int32\_t} backing) with constexpr queries.
+    \item Species IDs --- positive integers mapping to \texttt{ElementDescriptor} or isotope tables.
+    \item Defect tokens --- negative range $[-14, -10]$ for vacancy, interstitial, cluster, bubble, damage.
+\end{itemize}
+
+\subsection{Layer B: Event Layer}
+
+Captures physics-specific event data:
+
+\begin{itemize}
+    \item \texttt{DecayEvent} --- parent/daughter IDs, emitted particle array (max 8), energy partitioning, damage score, confidence.
+    \item \texttt{GenericTransportEvent} --- source/target IDs, time, confidence (placeholder for future expansion).
+\end{itemize}
+
+\subsection{Layer C: Kinetics Layer}
+
+Wraps physics events in a universal kinetic framework:
+
+\begin{itemize}
+    \item \texttt{EventKind} --- coarse classification (decay, transport, collision, adsorption, desorption, coalescence, nucleation, deposition, restructuring, phase\_change).
+    \item \texttt{KineticEventRecord} --- carries EventKind, transition intensity, barrier score, environment multiplier, and a type-safe \texttt{std::variant} payload.
+\end{itemize}
+
+% ============================================================================
+\section{Integration with Existing Infrastructure}
+\label{sec:integration}
+% ============================================================================
+
+The particle ID system is designed to complement, not replace, existing codebase structures:
+
+\subsection{Relationship to DecayMode and DecayType}
+
+\begin{itemize}
+    \item \texttt{vsepr::nuclear::DecayMode} (in \texttt{decay\_chains.hpp}) classifies \emph{how} a nuclide decays (Alpha, BetaMinus, BetaPlus, ElectronCapture, Fission, Stable).
+    \item \texttt{atomistic::nuclear::DecayType} (in \texttt{nuclear\_stability.hpp}) predicts the dominant decay mode for a given $Z$.
+    \item \texttt{vsepr::physics::ParticleID} identifies \emph{what was emitted} as a first-class bookkeeping object.
+\end{itemize}
+
+These are orthogonal: DecayMode/DecayType answer ``what kind of decay?'' while ParticleID answers ``what came out?''
+
+\subsection{Relationship to ElementDescriptor}
+
+\texttt{ElementDescriptor} (in \texttt{element\_descriptor.hpp}) carries identity-layer data including \texttt{decay\_clock} (half-life countdown), \texttt{metastable} (isomer flag), \texttt{mass\_number} ($A$), and \texttt{isotope\_label}. The new \texttt{NuclearState} struct is deliberately minimal --- it carries only \texttt{species\_id}, $Z$, and $A$ for transition arithmetic, deferring full identity resolution to \texttt{ElementDescriptor}.
+
+\subsection{Relationship to Formation Kinetics}
+
+\texttt{atomistic::kinetic::EventType} (in \texttt{formation\_kinetics.hpp}) has 28 formation-specific event types including \texttt{DECAY}, \texttt{EMISSION}, and \texttt{CAPTURE}. The new \texttt{vsepr::kinetics::EventKind} is coarser and universal --- a formation-kinetics \texttt{DECAY} event maps to \texttt{EventKind::decay} at the kinetic scheduling layer.
+
+% ============================================================================
+\section{C++ API Summary}
+\label{sec:cpp-api}
+% ============================================================================
+
+\subsection{Constexpr Queries on ParticleID}
+
+\begin{lstlisting}[language=C++]
+constexpr bool is_reserved_particle_id(ParticleID id);
+constexpr bool is_transportable(ParticleID id);
+constexpr bool is_bookkeeping_only(ParticleID id);
+constexpr bool is_defect_token(ParticleID id);
+constexpr std::string_view to_string(ParticleID id);
+\end{lstlisting}
+
+\subsection{Decay Event Builders}
+
+\begin{lstlisting}[language=C++]
+DecayEvent make_alpha_decay(int32_t parent, int32_t daughter,
+                            double energy_eV, double time_s,
+                            double confidence);
+
+DecayEvent make_beta_minus_decay(int32_t parent, int32_t daughter,
+                                  double energy_eV, double time_s,
+                                  double confidence);
+
+DecayEvent make_gamma_decay(int32_t parent, int32_t daughter,
+                             double energy_eV, double time_s,
+                             double confidence);
+\end{lstlisting}
+
+\subsection{Daughter-State Arithmetic}
+
+\begin{lstlisting}[language=C++]
+constexpr DaughterState alpha_daughter(const NuclearState& s);
+constexpr DaughterState beta_minus_daughter(const NuclearState& s);
+constexpr DaughterState beta_plus_daughter(const NuclearState& s);
+\end{lstlisting}
+
+% ============================================================================
+\section{Plain C Legacy API}
+\label{sec:c-api}
+% ============================================================================
+
+A plain C bridge is provided in \texttt{legacy/c\_api/} for portable or embedded code paths:
+
+\begin{lstlisting}[language=C]
+typedef enum ParticleID { /* 0 to -14 */ } ParticleID;
+
+const char* particle_id_name(int id);
+int particle_id_is_reserved(int id);
+int particle_id_is_transportable(int id);
+int particle_id_is_bookkeeping_only(int id);
+
+typedef struct DecayEvent { /* ... */ } DecayEvent;
+void decay_event_init(DecayEvent* ev);
+int decay_event_add_emitted(DecayEvent* ev, int particle_id);
+\end{lstlisting}
+
+% ============================================================================
+\section{File Placement}
+\label{sec:files}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{File} & \textbf{Layer} \\
+\midrule
+\texttt{include/physics/particle\_id.hpp}            & A (identity) \\
+\texttt{include/physics/decay\_event.hpp}             & B (event) \\
+\texttt{include/physics/decay\_event\_builder.hpp}    & B (event builder) \\
+\texttt{include/kinetics/kinetic\_event\_kind.hpp}    & C (kinetics) \\
+\texttt{include/kinetics/kinetic\_event\_record.hpp}  & C (kinetics) \\
+\texttt{legacy/c\_api/particle\_ids.h}                & A (C bridge) \\
+\texttt{legacy/c\_api/particle\_ids.c}                & A (C bridge) \\
+\texttt{legacy/c\_api/decay\_event.h}                 & B (C bridge) \\
+\texttt{legacy/c\_api/decay\_event.c}                 & B (C bridge) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

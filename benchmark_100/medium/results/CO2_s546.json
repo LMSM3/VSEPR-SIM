@@ -1,0 +1,19 @@
+{
+  "formula": "CO2",
+  "seed": 546,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 5.530328,
+  "energy_per_atom": 1.843443,
+  "rms_force": 21.800833,
+  "max_force": 21.800833,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.778900,
+  "timestamp": "2026-03-28T12:53:26",
+  "xyz_file": "benchmark_100\medium\structures\CO2_s546.xyz"
+}

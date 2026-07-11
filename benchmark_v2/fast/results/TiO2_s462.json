@@ -1,0 +1,19 @@
+{
+  "formula": "TiO2",
+  "seed": 462,
+  "tier": "fast",
+  "num_atoms": 3,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 0.824831,
+  "energy_per_atom": 0.274944,
+  "rms_force": 3.471348,
+  "max_force": 3.471348,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.434700,
+  "timestamp": "2026-03-28T13:03:51",
+  "xyz_file": "benchmark_v2\fast\structures\TiO2_s462.xyz"
+}

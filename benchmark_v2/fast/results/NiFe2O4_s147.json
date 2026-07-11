@@ -1,0 +1,19 @@
+{
+  "formula": "NiFe2O4",
+  "seed": 147,
+  "tier": "fast",
+  "num_atoms": 7,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 127.634419,
+  "energy_per_atom": 18.233488,
+  "rms_force": 191.155908,
+  "max_force": 191.155908,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.358900,
+  "timestamp": "2026-03-28T13:05:30",
+  "xyz_file": "benchmark_v2\fast\structures\NiFe2O4_s147.xyz"
+}

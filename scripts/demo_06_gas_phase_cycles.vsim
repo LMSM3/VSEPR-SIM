@@ -1,0 +1,133 @@
+# scripts/demo_06_gas_phase_cycles.vsim
+# VSEPR-SIM gas-phase process demo
+# Scenarios: 10 (ozone photolysis), 11 (steam reforming),
+#            12 (NOx SCR), 13 (Cl2 UV dissociation)
+# vsper validate scripts/demo_06_gas_phase_cycles.vsim
+# Back-call: vsper run kernel_demo --scenario <10-13>
+
+[project]
+name        = demo_06_gas_phase_cycles
+version     = v5.0.0-beta.7.1
+seed_base   = 6010
+determinism = true
+
+[kernel]
+pass_through      = true
+symbolic_trace    = true
+event_registry    = true
+continual_reporting = true
+
+[kernel.trace]
+chemical_events  = true
+dynamic_energy   = true
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 1000
+steps_relax      = 1000
+save_every       = 25
+temperature_low  = 200
+temperature_mid  = 500
+temperature_high = 1000
+
+[material.ozone_photolysis]
+id      = ozone_photolysis
+classes = photochemical_reaction,atmospheric_cycle
+formula = O3
+rule    = uv_homolysis
+# scenario 10 in kernel_demo
+# uncertain: UV energy is a proxy parameter, not a full photon flux model
+
+[material.ozone_photolysis.formation]
+mode        = relax_from_precursor
+temperature = 230
+relax_steps = 1000
+
+[material.ozone_photolysis.expected_signature]
+primary = atomic_O_and_O2_coordination_1
+trend_1 = photolysis_rate_scales_with_UV_proxy
+trend_2 = Chapman_cycle_partial_recovery
+
+[material.steam_reforming]
+id      = steam_reforming
+classes = heterogeneous_catalysis,endothermic_reaction
+formula = CH4+H2O
+rule    = heterogeneous_catalysis
+# scenario 11 in kernel_demo
+
+[material.steam_reforming.formation]
+mode        = relax_from_precursor
+temperature = 850
+relax_steps = 1000
+
+[material.steam_reforming.expected_signature]
+primary = syngas_coordination_3
+trend_1 = CO_and_H2_yield_increases_with_temperature
+trend_2 = CH4_conversion_above_700K
+
+[material.nox_scr]
+id      = nox_scr
+classes = catalytic_reduction,emission_control
+formula = NOx+NH3
+rule    = scr_deNOx
+# scenario 12 in kernel_demo
+
+[material.nox_scr.formation]
+mode        = relax_from_precursor
+temperature = 450
+relax_steps = 1000
+
+[material.nox_scr.expected_signature]
+primary = N2_and_H2O_coordination_2
+trend_1 = NH3_to_NOx_ratio_controls_selectivity
+
+[material.cl2_uv]
+id      = cl2_uv
+classes = photodissociation,radical_generation
+formula = Cl2
+rule    = photodissociation
+# scenario 13 in kernel_demo
+# uncertain: radical lifetime proxy is qualitative
+
+[material.cl2_uv.formation]
+mode        = relax_from_precursor
+temperature = 300
+relax_steps = 500
+
+[material.cl2_uv.expected_signature]
+primary = Cl_radical_coordination_0
+trend_1 = bond_length_increases_to_homolysis_threshold
+
+[sweep]
+enabled   = true
+materials = ozone_photolysis,steam_reforming,nox_scr,cl2_uv
+seeds     = 1,2,3
+temperature_cases = low,mid,high
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+
+[report]
+title                  = demo_06_gas_phase_cycles
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type           = terminal_chart
+animation_mode        = spark
+show_proxy_table      = true
+show_convergence_trace = true
+show_steady_state_marker = true
+show_snapshot_chart   = true
+show_event_timeline   = true
+show_bar_chart        = true
+show_symbolic_trace   = true
+show_animation_cues   = false
+show_audit_table      = false

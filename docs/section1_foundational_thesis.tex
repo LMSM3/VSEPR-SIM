@@ -11,14 +11,14 @@
 \title{\textbf{Formation Engine Methodology} \\
 \Large Section 1 — Foundational Thesis and Scope}
 \author{Formation Engine Development Team}
-\date{Version 0.1 — First Principles Draft}
+\date{Version 3.0.0 — First Principles Draft}
 
 \begin{document}
 \maketitle
 
 \section{Motivation: The Emergence Boundary}
 
-Modern materials science operates across multiple descriptive regimes, each internally successful but structurally disconnected. Quantum methods provide high-fidelity descriptions of small systems but are computationally prohibitive for large ensembles. Classical force-field simulations scale efficiently but are rarely used as generative tools for structure discovery under explicit physical constraints. Mesoscale models often assume structural statistics rather than deriving them from underlying interaction physics.
+Coarse-grained models often assume structural statistics rather than deriving them from underlying interaction physics.
 
 This creates a practical discontinuity: we can accurately describe systems \textit{once structure is known}, but we lack reproducible tools for generating physically admissible structural ensembles at intermediate scales. The result is an implicit reliance on heuristic structure selection and opaque initialization pipelines.
 
@@ -171,7 +171,7 @@ Enhanced sampling methods (replica exchange, metadynamics, umbrella sampling) ad
 
 The formation engine uses MD not as an equilibration tool but as an \textbf{exploration tool}. Short dynamical runs at elevated temperature allow the system to cross barriers. Periodic quenching extracts local minima. Multiple seeds generate an ensemble of structures. The goal is not to sample thermal fluctuations but to discover stable configurations.
 
-\subsection{Mesoscale Models: The Structure Assumption}
+\subsection{Coarse-Grained Models: The Structure Assumption}
 
 Coarse-grained and continuum models describe materials at scales where atomistic detail is impractical. These models assume:
 
@@ -195,7 +195,7 @@ Each assumption leads to different predicted properties. Without experimental gu
 
 The formation engine provides a bridge: generate atomistic structures at intermediate scales, extract structural statistics (coordination numbers, radial distribution functions), and use those statistics to parameterize coarse-grained models.
 
-This is not a replacement for mesoscale modeling but a way to ground mesoscale assumptions in atomistically generated structure.
+This is not a replacement for coarse-grained modeling but a way to ground coarse-grained assumptions in atomistically generated structure.
 
 \subsection{Data-Driven Methods: Correlation Without Constraint}
 

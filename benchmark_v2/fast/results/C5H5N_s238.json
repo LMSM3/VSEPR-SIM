@@ -1,0 +1,19 @@
+{
+  "formula": "C5H5N",
+  "seed": 238,
+  "tier": "fast",
+  "num_atoms": 11,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 24956.720702,
+  "energy_per_atom": 2268.792791,
+  "rms_force": 60888.627623,
+  "max_force": 60888.627623,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.456300,
+  "timestamp": "2026-03-28T13:05:38",
+  "xyz_file": "benchmark_v2\fast\structures\C5H5N_s238.xyz"
+}

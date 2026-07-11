@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\7903fd007df3f5feb4b536c97bc477d1\glfw-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\0337cd11ea11d8859d68b35acf37543b\glfw-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\24073ab86e04a279a6abfd270ae2955c\glfw-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\R\VSPER-SIM\build_vs\_deps\glfw-subbuild\CMakeFiles\glfw-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{E0B3741C-C63B-36AA-B9C1-27589E9D7108}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

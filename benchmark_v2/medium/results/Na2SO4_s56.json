@@ -1,0 +1,19 @@
+{
+  "formula": "Na2SO4",
+  "seed": 56,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 363.427429,
+  "energy_per_atom": 51.918204,
+  "rms_force": 581.128757,
+  "max_force": 581.128757,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.178900,
+  "timestamp": "2026-03-28T13:03:34",
+  "xyz_file": "benchmark_v2\medium\structures\Na2SO4_s56.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "C2H5OH",
+  "seed": 56,
+  "tier": "highn",
+  "num_atoms": 9,
+  "steps_taken": 6489,
+  "max_steps": 10000,
+  "energy_kcal_mol": -1.404567,
+  "energy_per_atom": -0.156063,
+  "rms_force": 0.000450,
+  "max_force": 0.000450,
+  "alpha_final": 0.100000,
+  "dt_final": 0.025000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 3.244800,
+  "timestamp": "2026-03-28T13:04:51",
+  "xyz_file": "benchmark_v2\highn\structures\C2H5OH_s56.xyz"
+}

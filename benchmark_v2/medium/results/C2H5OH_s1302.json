@@ -1,0 +1,19 @@
+{
+  "formula": "C2H5OH",
+  "seed": 1302,
+  "tier": "medium",
+  "num_atoms": 9,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 804.248243,
+  "energy_per_atom": 89.360916,
+  "rms_force": 1535.415503,
+  "max_force": 1535.415503,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.078700,
+  "timestamp": "2026-03-28T13:05:34",
+  "xyz_file": "benchmark_v2\medium\structures\C2H5OH_s1302.xyz"
+}

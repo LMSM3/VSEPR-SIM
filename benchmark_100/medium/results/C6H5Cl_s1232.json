@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5Cl",
+  "seed": 1232,
+  "tier": "medium",
+  "num_atoms": 12,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 33229.097912,
+  "energy_per_atom": 2769.091493,
+  "rms_force": 43597.732615,
+  "max_force": 43597.732615,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.394100,
+  "timestamp": "2026-03-28T12:55:51",
+  "xyz_file": "benchmark_100\medium\structures\C6H5Cl_s1232.xyz"
+}

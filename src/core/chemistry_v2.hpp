@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * chemistry_v2.hpp
  * ================
@@ -19,7 +19,9 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <algorithm>
+#include <functional>
 #include <limits>
+#include <queue>
 
 namespace vsepr {
 
@@ -136,17 +138,19 @@ public:
     // Cached topology
     std::vector<std::vector<uint32_t>> neighbors_;       // neighbors[i] = {j, k, ...}
     std::vector<std::vector<uint8_t>> bond_orders_;      // bond_orders_[i][idx] = order to neighbor idx
-    std::unordered_map<uint64_t, uint8_t> bond_order_map_;  // (i,j) → order
+    std::unordered_map<uint64_t, uint8_t> bond_order_map_;  // (i,j) -> order
     
     // Computed annotations (filled by perception pipeline)
     std::vector<Hybridization> hybridization_;
     std::vector<bool> is_aromatic_atom_;
     std::vector<bool> is_aromatic_bond_;
     std::vector<bool> is_ring_atom_;
+    std::vector<std::vector<uint32_t>> rings_;             // each entry = atom indices forming one ring
+    std::vector<std::vector<uint32_t>> ring_membership_;  // ring_membership_[atom] = ring indices
     
     // Property maps (extensible without struct changes)
-    std::unordered_map<uint32_t, int> atom_type_;       // Atom → FF type
-    std::unordered_map<uint64_t, int> bond_type_;       // Bond → FF type
+    std::unordered_map<uint32_t, int> atom_type_;       // Atom -> FF type
+    std::unordered_map<uint64_t, int> bond_type_;       // Bond -> FF type
     
     ChemistryGraph() = default;
     
@@ -267,16 +271,170 @@ inline void ChemistryGraph::perceive() {
 }
 
 inline void ChemistryGraph::detect_rings() {
-    // Simple cycle detection (basic implementation)
-    is_ring_atom_.resize(atoms.size(), false);
-    // TODO: Implement proper ring perception (SSSR, Figueras, etc.)
+    const uint32_t N = static_cast<uint32_t>(atoms.size());
+    is_ring_atom_.assign(N, false);
+    ring_membership_.clear();
+    ring_membership_.resize(N);
+
+    // DFS-based all-simple-cycles detection (up to size 8 for performance).
+    // For each unvisited node we run a DFS and record back-edges that form cycles.
+    // A node is a ring atom if it participates in at least one cycle of size ≤8.
+    constexpr int MAX_RING_SIZE = 8;
+
+    std::vector<int> depth(N, -1);
+    std::vector<uint32_t> path;
+    path.reserve(MAX_RING_SIZE + 1);
+
+    std::function<void(uint32_t, uint32_t, int)> dfs =
+        [&](uint32_t v, uint32_t parent, int d) {
+            depth[v] = d;
+            path.push_back(v);
+
+            for (uint32_t nb : neighbors_[v]) {
+                if (nb == parent) continue;
+                if (depth[nb] == -1) {
+                    dfs(nb, v, d + 1);
+                } else if (depth[nb] < depth[v]) {
+                    // Back-edge found: cycle from nb..v in path
+                    int ring_sz = d - depth[nb] + 1;
+                    if (ring_sz <= MAX_RING_SIZE) {
+                        // Mark all atoms on this cycle path
+                        std::vector<uint32_t> ring;
+                        int start_idx = static_cast<int>(path.size()) - ring_sz;
+                        if (start_idx >= 0) {
+                            for (int k = start_idx; k < static_cast<int>(path.size()); ++k) {
+                                ring.push_back(path[k]);
+                                is_ring_atom_[path[k]] = true;
+                            }
+                            rings_.push_back(ring);
+                            for (uint32_t a : ring) {
+                                ring_membership_[a].push_back(
+                                    static_cast<uint32_t>(rings_.size() - 1));
+                            }
+                        }
+                    }
+                }
+            }
+
+            path.pop_back();
+            depth[v] = -1;  // reset so cross-component atoms are processed
+        };
+
+    // Re-run so each connected component is visited; avoid re-traversing visited
+    std::vector<bool> visited(N, false);
+    for (uint32_t start = 0; start < N; ++start) {
+        if (!visited[start]) {
+            // BFS to mark component, then DFS for rings
+            std::vector<uint32_t> comp;
+            std::queue<uint32_t> q;
+            q.push(start);
+            visited[start] = true;
+            while (!q.empty()) {
+                uint32_t cur = q.front(); q.pop();
+                comp.push_back(cur);
+                for (uint32_t nb : neighbors_[cur]) {
+                    if (!visited[nb]) { visited[nb] = true; q.push(nb); }
+                }
+            }
+            // Only graphs with cycles (|E| >= |V|) need DFS
+            // For a connected subgraph: cycles exist when edges >= vertices
+            int edges_in_comp = 0;
+            for (uint32_t a : comp) edges_in_comp += degree(a);
+            edges_in_comp /= 2;
+            if (edges_in_comp >= static_cast<int>(comp.size())) {
+                // reset depth for this component
+                for (uint32_t a : comp) depth[a] = -1;
+                dfs(start, static_cast<uint32_t>(-1), 0);
+            }
+        }
+    }
 }
 
 inline void ChemistryGraph::detect_aromaticity() {
-    // Placeholder: Hückel rule + planarity check
-    is_aromatic_atom_.resize(atoms.size(), false);
-    is_aromatic_bond_.resize(bonds.size(), false);
-    // TODO: Implement aromaticity perception
+    const uint32_t N = static_cast<uint32_t>(atoms.size());
+    is_aromatic_atom_.assign(N, false);
+    is_aromatic_bond_.assign(bonds.size(), false);
+
+    // Hückel rule: a ring is aromatic if:
+    //   1. All ring atoms are sp2-like (degree ≤ 3, at least one unsaturated bond
+    //      OR lone-pair donor: O, S, N with degree 2)
+    //   2. The ring contributes 4n+2 π-electrons (n = 0, 1, 2 …)
+    //
+    // π-electron contribution per atom in the ring:
+    //   - C/N double bond to ring neighbour   → 1  (each double bond = 2 π e⁻ shared)
+    //   - Aromatic-flagged bond               → 1
+    //   - Lone-pair donors (O, S with deg 2;  → 2
+    //     N with deg 2 not double-bonded)
+    //   - Triple bond to ring neighbour       → 2
+
+    // Ensure hybridisation is computed first (called before this in perceive())
+    const auto& hyb = hybridization_;
+
+    auto pi_electrons_from_atom = [&](uint32_t a, const std::vector<uint32_t>& ring_atoms) -> int {
+        uint8_t Z = atoms[a].Z;
+        const std::unordered_set<uint32_t> ring_set(ring_atoms.begin(), ring_atoms.end());
+
+        // Check for double/triple bond to a ring neighbour
+        int max_order_in_ring = 0;
+        for (uint32_t nb : neighbors_[a]) {
+            if (ring_set.count(nb)) {
+                int ord = bond_order(a, nb);
+                max_order_in_ring = std::max(max_order_in_ring, ord);
+            }
+        }
+
+        if (max_order_in_ring == 2) return 1;  // one double bond contributes 2 π e⁻ to ring (shared)
+        if (max_order_in_ring == 3) return 2;
+
+        // Lone-pair donors: O(Z=8), S(Z=16) with degree 2; N(Z=7) with degree 2
+        if ((Z == 8 || Z == 16) && degree(a) == 2) return 2;
+        if (Z == 7 && degree(a) == 2) return 2;
+
+        // sp2 carbon with no double bond to ring (e.g. cationic aromatic) → 0 or 1
+        if (Z == 6 && a < hyb.size() && hyb[a] == Hybridization::SP2) return 1;
+
+        return 0;  // saturated atom: ring is not aromatic
+    };
+
+    auto is_sp2_like = [&](uint32_t a) -> bool {
+        if (a >= hyb.size()) return false;
+        if (hyb[a] == Hybridization::SP2) return true;
+        uint8_t Z = atoms[a].Z;
+        // Lone-pair donors that contribute to aromatic system
+        if ((Z == 8 || Z == 16) && degree(a) == 2) return true;
+        if (Z == 7 && degree(a) == 2) return true;
+        return false;
+    };
+
+    for (const auto& ring : rings_) {
+        if (ring.size() < 5 || ring.size() > 7) continue;  // 5/6/7-membered rings only
+
+        // 1. All atoms must be sp2-like
+        bool all_sp2 = true;
+        for (uint32_t a : ring) {
+            if (!is_sp2_like(a)) { all_sp2 = false; break; }
+        }
+        if (!all_sp2) continue;
+
+        // 2. Count total π electrons
+        int pi_e = 0;
+        for (uint32_t a : ring) pi_e += pi_electrons_from_atom(a, ring);
+
+        // 3. Hückel: 4n+2 for n = 0, 1, 2 → 2, 6, 10
+        bool huckel = (pi_e == 2 || pi_e == 6 || pi_e == 10);
+        if (!huckel) continue;
+
+        // Mark ring atoms
+        for (uint32_t a : ring) is_aromatic_atom_[a] = true;
+
+        // Mark ring bonds
+        const std::unordered_set<uint32_t> ring_set(ring.begin(), ring.end());
+        for (size_t bi = 0; bi < bonds.size(); ++bi) {
+            if (ring_set.count(bonds[bi].i) && ring_set.count(bonds[bi].j)) {
+                is_aromatic_bond_[bi] = true;
+            }
+        }
+    }
 }
 
 inline void ChemistryGraph::infer_hybridization() {

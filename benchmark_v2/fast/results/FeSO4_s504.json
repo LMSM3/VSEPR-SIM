@@ -1,0 +1,19 @@
+{
+  "formula": "FeSO4",
+  "seed": 504,
+  "tier": "fast",
+  "num_atoms": 6,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 9.522425,
+  "energy_per_atom": 1.587071,
+  "rms_force": 14.282253,
+  "max_force": 14.282253,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.418100,
+  "timestamp": "2026-03-28T13:07:11",
+  "xyz_file": "benchmark_v2\fast\structures\FeSO4_s504.xyz"
+}

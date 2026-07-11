@@ -1,0 +1,687 @@
+% ============================================================================
+%  VSEPR-SIM — §L: Five-Layer Vertical Integration Stack
+%  Materials Discovery Engine.  Full Fuel Cycle Simulation.
+%  Cradle to Product.
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code listings ─────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{lstbg}{RGB}{248,248,248}
+\definecolor{lstkw}{RGB}{0,0,180}
+\definecolor{lstcm}{RGB}{80,120,80}
+\lstdefinestyle{cppstyle}{
+  language=C++, basicstyle=\ttfamily\footnotesize,
+  backgroundcolor=\color{lstbg},
+  keywordstyle=\color{lstkw}\bfseries,
+  commentstyle=\color{lstcm}\itshape,
+  frame=single, framesep=3pt, breaklines=true, keepspaces=true, tabsize=4,
+  showstringspaces=false
+}
+\lstset{style=cppstyle}
+
+% ── Theorem environments ───────────────────────────────────────────────────
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{postulate}[definition]{Postulate}
+\newtheorem{remark}[definition]{Remark}
+\newtheorem{hardproblem}[definition]{Hard Problem}
+
+% ── TColorbox ─────────────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+\definecolor{l1col}{RGB}{230,245,255}
+\definecolor{l2col}{RGB}{255,245,220}
+\definecolor{l3col}{RGB}{240,255,230}
+\definecolor{l4col}{RGB}{255,230,240}
+\definecolor{l5col}{RGB}{235,225,255}
+\definecolor{hardcol}{RGB}{255,220,210}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM Research Platform}}
+\fancyhead[R]{\small\textit{§L — Five-Layer Vertical Integration Stack}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{§\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue!60!black,urlcolor=blue!70!black}
+
+% ── Macros ─────────────────────────────────────────────────────────────────
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\Ang}{\text{\AA}}
+\newcommand{\kcalmol}{\text{kcal/mol}}
+\newcommand{\boldI}{\bm{I}}
+\newcommand{\lname}[1]{\textbf{L#1}}
+
+% ============================================================================
+\begin{document}
+% ============================================================================
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.8cm}
+  {\Huge\bfseries VSEPR-SIM Research Platform\par}
+  \vspace{0.8cm}
+  {\Large\bfseries §L\quad Five-Layer Vertical Integration Stack\par}
+  \vspace{0.5cm}
+  \rule{0.7\textwidth}{0.6pt}\par
+  \vspace{0.8cm}
+  {\large\itshape
+    Materials Discovery Engine\\[0.3em]
+    Full Fuel Cycle Simulation\\[0.3em]
+    Cradle to Product\par}
+  \vspace{1.2cm}
+  \begin{tabular}{cl}
+    \toprule
+    Layer & Description \\
+    \midrule
+    L1 & Paper Identity — Formula, class, name.  Static. \\
+    L2 & Atomistic — Z, A, Q, $\varepsilon$.  Physics and energy state. \\
+    L3 & Molecular 3D — Geometry, bonding, coordination. \\
+    L4 & Atomistic / CG — Beads, phase behaviour, bulk interactions. \\
+    L5 & Macro — CAD-scale geometry, volumes, surfaces. \\
+    \bottomrule
+  \end{tabular}
+  \vspace{1.2cm}
+
+  {\normalsize
+    The particle identity from L2 propagates all the way up.\\
+    The iron in a pipe at L5 is still Fe with its $Z$, $A$, $Q$ underneath.\\
+    The macro geometry is the accumulated consequence of everything below it.\par
+  }
+  \vfill
+  {\small
+    Implementation files:\quad
+    \file{include/layer\_stack.hpp} \quad
+    \file{coarse\_grain/models/layer\_boundary.hpp}\par
+    \vspace{0.3em}
+    Status: Research-oriented active development
+  }
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+% ============================================================================
+\section{Architecture Overview}
+\label{sec:overview}
+% ============================================================================
+
+\subsection{Purpose}
+
+The five-layer stack is the routing document for the entire VSEPR-SIM
+platform.  It answers the question: \emph{what is the particle at every
+scale, and how does it get there?}
+
+The stack is not a layer model in the OSI sense — layers do not replace
+each other.  They accumulate.  Each higher layer is an interpretation of
+the same underlying physical object at a different resolution.
+
+\subsection{The Vertical Integration Invariant}
+
+\begin{postulate}[Vertical Integration Invariant]
+For any particle $i$ and any layer $k \in \{2, 3, 4, 5\}$:
+\[
+  L_k(i).Z = L_2(i).Z, \qquad L_k(i).A = L_2(i).A
+\]
+Nuclear identity is immutable across all layers under all non-nuclear
+transformations.  The iron in a pipe at L5 is still Fe at L2.
+\end{postulate}
+
+Charge $Q_i$ and energy state $\varepsilon_i$ are \emph{environment-dependent}
+and evolve as the chemical context changes:
+\[
+  \mathrm{Fe}^0\;(\text{ore, L2}) \;\to\;
+  \mathrm{Fe}^{3+}\;(\text{acid leach, L2}) \;\to\;
+  \mathrm{Fe}_2\mathrm{O}_3\;\text{bead}\;(\text{L4})
+\]
+Same $Z = 26$.  Different $Q$, different $\varepsilon$, different $\Sigma_i$
+(structural role changes from metallic to ionic at oxidation).
+
+\subsection{The Compute Problem}
+
+The discovery-end use case requires pushing millions of candidates through
+the stack.  Most die at L1.  The rest are screened progressively:
+
+\begin{center}
+\begin{tabular}{lrll}
+\toprule
+Layer & Typical survivors & Cost per candidate & Gate criterion \\
+\midrule
+L1 screen & $10^6$ & $\mu$s & Formula valid, class not excluded \\
+L2 screen & $10^4$ & ms & $\varepsilon$ in range, $|Q| < Q_{\max}$, $\Lambda \geq \Lambda_{\min}$ \\
+L3 screen & $10^3$ & 0.1--1 s & Geometry converged, $F_{\rm rms} < F_{\rm tol}$ \\
+L4 screen & $10^2$ & 1--10 s & Bead mapping residual $< \delta$, phase coherent \\
+L5 report & $10^1$ & 10--100 s & CAD geometry, corrosion model, integrity check \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This is the Hourglass model applied at the platform level (§R).  Each
+layer is a gate.  The funnel is by design.
+
+% ============================================================================
+\section{L1 — Paper Identity}
+\label{sec:l1}
+% ============================================================================
+
+\begin{tcolorbox}[colback=l1col, colframe=blue!40!black,
+  title={L1 — Paper Identity},fonttitle=\bfseries\small]
+  Formula, class, name.  Static.  Never mutates.\\
+  A candidate that fails L1 is never instantiated at L2 or above.
+\end{tcolorbox}
+
+\subsection{What L1 carries}
+
+\begin{itemize}
+  \item \textbf{Formula} — Hill-order chemical formula string
+        (\texttt{"Fe2O3"}, \texttt{"UO2"}, \texttt{"Ti6Al4V"})
+  \item \textbf{IUPAC name} — systematic name (may be empty for elements)
+  \item \textbf{Common name} — engineering or mineral name
+        (\texttt{"hematite"}, \texttt{"urania"}, \texttt{"sphalerite"})
+  \item \textbf{CAS number} — registry identifier
+  \item \textbf{Class tag} — coarse classification:
+        \texttt{"element"}, \texttt{"oxide"}, \texttt{"halide"},
+        \texttt{"organometallic"}, \texttt{"alloy"}, \texttt{"mineral"}
+  \item \textbf{$Z$-set and stoichiometry} — atomic numbers and coefficients
+\end{itemize}
+
+\subsection{L1 gate}
+
+A species passes L1 if and only if:
+\begin{enumerate}
+  \item Formula is non-empty and parseable
+  \item All $Z_i \in [1, 118]$
+  \item \texttt{class\_tag} is not in the exclusion list
+\end{enumerate}
+
+L1 costs microseconds.  It is the first and cheapest filter.  Run it on
+the full candidate set before doing anything else.
+
+\subsection{Process simulation context}
+
+In a full fuel cycle workflow, L1 represents the catalog:
+\begin{itemize}
+  \item Every ore mineral has an L1 record (\texttt{"Fe2O3"},
+        \texttt{"FeS2"}, \texttt{"FeCO3"})
+  \item Every reagent has an L1 record (\texttt{"H2SO4"},
+        \texttt{"NaOH"}, \texttt{"HNO3"})
+  \item Every product target has an L1 record (\texttt{"Fe"},
+        \texttt{"UO2"}, \texttt{"ThO2"})
+\end{itemize}
+
+The L1 catalog is populated once and queried throughout the simulation.
+No physics is required at this stage.
+
+% ============================================================================
+\section{L2 — Atomistic Layer}
+\label{sec:l2}
+% ============================================================================
+
+\begin{tcolorbox}[colback=l2col, colframe=orange!60!black,
+  title={L2 — Atomistic},fonttitle=\bfseries\small]
+  $Z$, $A$, $Q$, $\varepsilon$.  Physics and energy state.\\
+  Environment-dependent.  The §0 Identity Vector lives here.
+\end{tcolorbox}
+
+\subsection{What L2 carries}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Field & Symbol & Units & Notes \\
+\midrule
+Atomic number & $Z_i$ & — & Immutable. Anchor of propagation invariant. \\
+Mass number   & $A_i$ & — & Immutable. 0 = natural-abundance average. \\
+Charge        & $Q_i$ & $e$ & Environment-dependent. $\mathrm{Fe}^{3+}$ vs $\mathrm{Fe}^0$. \\
+LJ well depth & $\varepsilon_i$ & kcal/mol & Energy state. Scales with polarisability. \\
+LJ radius     & $\sigma_i$ & \Ang & Size parameter. \\
+Temperature   & $T_i$ & K & Local thermal state. \\
+Pressure      & $P_i$ & bar & Local mechanical state. \\
+Phase         & $\phi_i$ & — & \texttt{SOLID, LIQUID, GAS, AQUEOUS, \ldots} \\
+\midrule
+$\Sigma_i$ & StructuralRole & — & Bonding topology prior (§0). \\
+$\Lambda_i$ & StabilityClass & — & Persistence class (§0). \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The environment-dependence of Q and $\varepsilon$}
+
+This is not an approximation — it is physics.
+$\mathrm{Fe}^{3+}$ in sulphuric acid leach solution behaves fundamentally
+differently from $\mathrm{Fe}^0$ in a solid ore body:
+
+\begin{equation}
+  \mathrm{Fe}^0 \;\xrightarrow{\text{oxidation}}\; \mathrm{Fe}^{3+}
+  \qquad
+  Q_i: 0 \;\to\; +3
+  \quad
+  \Sigma_i: \text{Metallic} \;\to\; \text{Ionic-Dominant}
+  \label{eq:fe-oxidation}
+\end{equation}
+
+The $\varepsilon$ track this transition:
+\begin{itemize}
+  \item $\mathrm{Fe}^0$: $\varepsilon \approx 0.13$\,kcal/mol (metallic, dispersion-dominant)
+  \item $\mathrm{Fe}^{3+}$ (aq): $\varepsilon \approx 0.55$\,kcal/mol (ionic, Coulomb-dominant)
+\end{itemize}
+
+Your $\varepsilon$ field tracks that energy transition at every simulation step.
+
+\subsection{L2 gate}
+
+Candidates fail L2 if:
+\begin{itemize}
+  \item $\varepsilon < 0$ or $\varepsilon > \varepsilon_{\max}$ (unphysical energy state)
+  \item $|Q_i| > Q_{\max}$ (exceeds ionic saturation)
+  \item $\Lambda_i < \Lambda_{\min}$ (unstable in this environment)
+\end{itemize}
+
+% ============================================================================
+\section{L3 — Molecular 3D Layer}
+\label{sec:l3}
+% ============================================================================
+
+\begin{tcolorbox}[colback=l3col, colframe=green!50!black,
+  title={L3 — Molecular 3D},fonttitle=\bfseries\small]
+  Geometry, bonding, coordination, local environment.\\
+  Built by FIRE minimisation on the L2 state.
+\end{tcolorbox}
+
+\subsection{What L3 carries}
+
+\begin{itemize}
+  \item Optimised 3D positions (Å) for all atoms in the species
+  \item Bond table: pairs $(i,j)$, order, length, bond energy proxy
+  \item Angle table: triples $(i,j,k)$ with deviation from ideal
+  \item Coordination record per atom: coordination number, geometry class,
+        bond-length spread (distortion indicator)
+  \item Quality metrics: $F_{\rm rms}$, total energy, convergence flag
+  \item Local environment summary: mean coordination, anisotropy index
+\end{itemize}
+
+\subsection{L3 in the process simulation}
+
+The acid leach stage is an L3 event.  When
+$\mathrm{Fe}_2\mathrm{O}_3$ dissolves in $\mathrm{H}_2\mathrm{SO}_4$:
+\begin{enumerate}
+  \item L1: \texttt{"Fe2O3"} + \texttt{"H2SO4"} are both in the catalog
+  \item L2: $Q(\mathrm{Fe})$ increments from $0 \to +3$ over the dissolution timestep
+  \item L3: Fe–O bonds break; Fe–O(H$_2$O) coordination shell forms
+  \item L4: The solvated Fe$^{3+}$ complex becomes a charged CG bead
+\end{enumerate}
+
+L3 is where the bonding topology changes are made explicit.
+
+% ============================================================================
+\section{L4 — Atomistic Bead Layer}
+\label{sec:l4}
+% ============================================================================
+
+\begin{tcolorbox}[colback=l4col, colframe=red!50!black,
+  title={L4 — Atomistic Bead (CG)},fonttitle=\bfseries\small]
+  Coarse-grained beads, phase behaviour, bulk interactions.\\
+  Anisotropic surface mapping lives here.
+\end{tcolorbox}
+
+\subsection{What L4 carries}
+
+\begin{itemize}
+  \item The full \type{Bead} struct from the CG layer, including:
+    \begin{itemize}
+      \item $\Sigma_i$ (structural role) and $\Lambda_i$ (stability class)
+      \item Three-channel role-weighted interaction kernel weights
+      \item Anisotropic surface descriptor (Fuzzy Ball Model)
+      \item Slow environmental state $\eta$ from the 6+9 Stepper
+    \end{itemize}
+  \item Phase region: dominant phase + volume fraction + order parameter $P_2$
+  \item Local density $\rho_B$ and coordination number $C_B$
+  \item Back-reference to the dominant L2 atom (preserving $Z$, $A$, $Q$)
+\end{itemize}
+
+\subsection{Anisotropic surface mapping}
+
+The anisotropic surface descriptor is the Fuzzy Ball Model (§Fuzzy).
+At L4, the bead's surface carries a three-channel spherical harmonic
+field:
+\[
+  S^{(k)}(\theta, \phi) = \sum_{\ell=0}^{\ell_{\max}}
+                           \sum_{m=-\ell}^{+\ell}
+                           c_{\ell m}^{(k)} Y_\ell^m(\theta, \phi),
+  \quad k \in \{\text{steric}, \text{electrostatic}, \text{dispersion}\}
+\]
+This is the Container Geometry Approximation $\Omega_i$ from §0,
+made concrete.
+
+% ============================================================================
+\section{L5 — Macro / CAD Layer}
+\label{sec:l5}
+% ============================================================================
+
+\begin{tcolorbox}[colback=l5col, colframe=violet!60!black,
+  title={L5 — Macro / CAD},fonttitle=\bfseries\small]
+  Actual geometry, volumes, surfaces, material bodies.\\
+  A pipe. A reactor wall. A valve seat.
+\end{tcolorbox}
+
+\subsection{What L5 carries}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Field & Units & Description \\
+\midrule
+\texttt{body\_type} & — & Pipe, Vessel, Valve, HeatExchanger, \ldots \\
+\texttt{material\_formula} & — & L1 formula of bulk material \\
+\texttt{length\_m} & m & Body length \\
+\texttt{outer\_diameter\_m} & m & Outer diameter \\
+\texttt{wall\_thickness\_m} & m & Wall thickness \\
+\texttt{volume\_m3} & m$^3$ & Total enclosed volume \\
+\texttt{surface\_area\_m2} & m$^2$ & Wetted or exposed surface area \\
+\midrule
+\texttt{corrosion\_depth\_m} & m & Wall loss from chemical attack \\
+\texttt{oxide\_layer\_m} & m & Passivation / scale layer thickness \\
+\texttt{roughness\_Ra\_m} & m & Surface roughness \\
+\texttt{dominant\_species} & — & L1 formula of the surface species \\
+\midrule
+\texttt{temperature\_K} & K & Operating temperature \\
+\texttt{pressure\_bar} & bar & Operating pressure \\
+\texttt{fluid\_formula} & — & L1 formula of the process fluid \\
+\texttt{structural\_integrity} & 0--1 & 1 = pristine, 0 = failed \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Particle identity at L5}
+
+The iron in a pipe wall at L5 is still Fe ($Z = 26$) underneath.
+The macro geometry — wall thickness, corrosion depth, surface roughness —
+is the accumulated consequence of:
+\begin{itemize}
+  \item L2: Fe$^0$ $\varepsilon$ determining surface adhesion energy
+  \item L3: Fe–O bond formation rate at the surface
+  \item L4: oxide scale growth modelled by bead density and phase fields
+  \item L5: wall loss recorded as \texttt{corrosion\_depth\_m}
+\end{itemize}
+
+The structural integrity field is a direct function of these upward-propagated
+identities:
+\[
+  \text{integrity} = 1 - \frac{\delta_{\rm corr}}{t_{\rm wall}}
+  \quad \in [0, 1]
+\]
+where $\delta_{\rm corr}$ is the corrosion depth and $t_{\rm wall}$ is the
+original wall thickness.
+
+% ============================================================================
+\section{The L2 ↔ L4 Hard Boundary}
+\label{sec:boundary}
+% ============================================================================
+
+\begin{tcolorbox}[colback=hardcol, colframe=red!70!black,
+  title={Hard Problem 1: The L2 ↔ L4 Phase Transition Boundary},
+  fonttitle=\bfseries\small, breakable]
+This is where most simulations cheat or break.\\[4pt]
+Atomic behaviour (discrete particle physics, quantum-derived $\varepsilon$,
+explicit bonding) transitions into coarse-grained bulk behaviour (phase
+fields, density order parameters, collective interactions).
+It is not a sharp line.  It is a controlled approximation zone.
+\end{tcolorbox}
+
+\subsection{What cheating looks like}
+
+\begin{enumerate}
+  \item \textbf{Silent $\varepsilon$ switch.}
+        Swapping from LJ $\varepsilon$ (L2) to CG bead $\varepsilon$ (L4)
+        without recording the mapping error.  The energy changes by an
+        unmeasured amount.
+
+  \item \textbf{Charge loss.}
+        Lumping Fe$^{3+}$ and O$^{2-}$ into a neutral bead loses the
+        Coulomb interaction entirely.  The electrostatic energy disappears
+        from the simulation without a trace.
+
+  \item \textbf{Single-phase fiction.}
+        Treating a bead group as single-phase when atoms in it straddle
+        a liquid-solid boundary.  Phase boundaries do not coincide with
+        CG mapping boundaries.
+
+  \item \textbf{Frozen structural role.}
+        Using the same $\Sigma_i$ = Metallic for Fe across the
+        liquid-metal/ionic transition.  The bonding topology changes;
+        the role must follow.
+\end{enumerate}
+
+\subsection{The \file{layer\_boundary.hpp} solution}
+
+Five boundary checks run at every L2→L4 transition:
+
+\begin{center}
+\begin{tabular}{llp{7cm}}
+\toprule
+Unit & Name & What it measures \\
+\midrule
+B1 & Energy consistency &
+  $|E_{\rm L4} - E_{\rm L2}|$ per bead group.
+  Flags when CG energy deviates from atomistic. \\
+B2 & Charge conservation &
+  $|q_{\rm L4} - \sum_j q_j^{\rm L2}|$ per bead.
+  Non-conservation above threshold is always flagged. \\
+B3 & Phase coherence &
+  Detects bead groups spanning multiple phases.
+  Optional split or flag. \\
+B4 & Structural role re-evaluation &
+  Re-classifies $\Sigma_i$ from current $Q_i$ and $Z_i$.
+  Updates the bead in-place if changed. \\
+B5 & Mapping residual &
+  Weighted composite $(0.5 \times E_{\rm term}
+    + 0.3 \times Q_{\rm term}
+    + 0.2 \times \phi_{\rm term})$.
+  High residual $>$ 0.15 is flagged. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The boundary report is a first-class output.  Every approximation is
+recorded with its magnitude.  Nothing is silent.
+
+\subsection{The B4 role re-evaluation equation}
+
+\begin{equation}
+  \Sigma_i^{(\rm boundary)} =
+  \begin{cases}
+    \text{IonicDominant} & Z_i \in \text{transition metals}
+                           \;\wedge\; |Q_i| > 0.8 \\
+    \text{Metallic}      & Z_i \in \text{transition metals}
+                           \;\wedge\; |Q_i| \leq 0.8 \\
+    \text{IonicDominant} & |Q_i| > 0.5 \\
+    \text{DirectionalCovalent} & \text{otherwise}
+  \end{cases}
+  \label{eq:b4-role}
+\end{equation}
+
+This is equation~(\ref{eq:fe-oxidation}) made computational.
+
+% ============================================================================
+\section{Hard Problem 2: Compute Cost}
+\label{sec:compute}
+% ============================================================================
+
+\begin{tcolorbox}[colback=hardcol, colframe=red!70!black,
+  title={Hard Problem 2: Compute Cost},
+  fonttitle=\bfseries\small]
+Pushing millions of candidates through all five layers is not feasible
+without aggressive early rejection and lazy evaluation.
+\end{tcolorbox}
+
+\subsection{The answer: lazy layer evaluation}
+
+No particle is evaluated at layer $k$ until it has passed the gate at
+layer $k-1$.  The \type{LayerParticle} struct uses \texttt{std::optional}
+for L3, L4, and L5 precisely for this reason:
+
+\begin{lstlisting}
+struct LayerParticle {
+    L1_PaperIdentity                     l1;  // always populated
+    L2_AtomisticState                    l2;  // populated after L1 gate
+    std::optional<L3_MolecularGeometry>  l3;  // populated after L2 gate
+    std::optional<L4_AtomisticBeadState> l4;  // populated after L3 gate
+    std::optional<L5_MacroGeometry>      l5;  // populated after L4 gate
+};
+\end{lstlisting}
+
+L3, L4, and L5 are never heap-allocated for particles that fail their
+predecessor gate.  The rejected candidate costs only its screen cost,
+not the full simulation cost.
+
+\subsection{The answer: Hourglass at platform scale}
+
+The Hourglass Model (§R) was designed for individual configuration
+sampling.  At platform scale the same logic applies to the candidate
+population:
+
+\begin{enumerate}
+  \item \textbf{Mouth:} Generate $10^6$ L1 candidates from combinatorial
+        formula space
+  \item \textbf{Neck:} Sequential L1/L2/L3 gates reduce to $\sim 10^2$
+  \item \textbf{Base:} Surviving candidates get full L4/L5 treatment and
+        are ranked by composite score
+\end{enumerate}
+
+The gate criteria are the same physics as the layer boundaries.
+They are not ad hoc filters — they are the physics screening.
+
+% ============================================================================
+\section{Full Fuel Cycle Simulation}
+\label{sec:fuel-cycle}
+% ============================================================================
+
+\subsection{Discovery end}
+
+Generate candidate metal species, classify, screen.  Millions of
+candidates, most rejected at L1, survivors get full L2–L5 treatment.
+This document is the routing specification for that pipeline.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Stage & Input & Output \\
+\midrule
+Candidate generation & L1 formula space & $10^6$ L1 records \\
+L1 screen & Class + formula validity & $\sim 10^4$ survivors \\
+L2 evaluation & $\varepsilon$, $Q$, $\Lambda$ screening & $\sim 10^3$ survivors \\
+L3 geometry & FIRE minimisation & $\sim 10^2$ converged structures \\
+L4 mapping & CG bead + phase + anisotropy & $\sim 10^1$ viable materials \\
+L5 report & CAD geometry, corrosion, integrity & Product candidates \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Process simulation}
+
+Ore input $\to$ crushing $\to$ dissolution $\to$ separation $\to$
+refining.  Every stage is a chemical environment.  Species identities
+evolve as they move through:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Stage & Active layer(s) & Key identity change \\
+\midrule
+Ore body & L1, L4 & Fe as \texttt{Fe2O3}, \texttt{FeS2} \\
+Crushing / grinding & L5 & Surface area increases \\
+Acid leach & L2, L3 & Fe$^{3+}$ forms; $Q$, $\Sigma$ update \\
+Solvent extraction & L3, L4 & Complex speciation; bead re-mapping \\
+Stripping & L2, L3 & Metal ion concentration \\
+Electrowinning & L2, L5 & Metal deposits; cathode grows \\
+Refining & L3, L4, L5 & Alloy composition; grain structure \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Pipe and reactor simulation}
+
+L3 to L5.  Material integrity, corrosion, fluid-wall interactions,
+thermal loads.  The CAD layer is the physical infrastructure.
+The particle layer is what is eating it or flowing through it.
+
+The corrosion loop:
+\begin{enumerate}
+  \item L2: $\varepsilon(\mathrm{Fe})$ and $Q(\mathrm{Fe})$ at the pipe surface
+  \item L3: Fe–O bond formation rate (surface oxidation kinetics)
+  \item L4: Oxide scale growth rate (bead phase field, $\eta$ slow state)
+  \item L5: \texttt{corrosion\_depth\_m} increments; \texttt{structural\_integrity} decrements
+\end{enumerate}
+
+% ============================================================================
+\section*{Conclusion}
+% ============================================================================
+
+The five-layer stack is the architectural spine of the VSEPR-SIM
+materials discovery platform.  Its properties:
+
+\begin{enumerate}
+  \item \textbf{Vertically integrated.}
+        The same particle identity ($Z$, $A$, $Q$) propagates from
+        ore body to finished material without discontinuity.
+
+  \item \textbf{Lazy.}
+        Candidates are never evaluated at cost above their gate status.
+        The funnel is the architecture.
+
+  \item \textbf{Explicit at every boundary.}
+        The L2↔L4 hard boundary is not approximated silently.
+        \file{layer\_boundary.hpp} records every energy gap, every
+        charge error, every role update, every phase mismatch.
+
+  \item \textbf{Anti-black-box.}
+        Every layer transition is a named, typed, inspectable C++ struct.
+        Every approximation has a magnitude.  Nothing is hidden.
+
+  \item \textbf{Deterministic.}
+        Same candidate + same environment + same parameters
+        $\Rightarrow$ same layer traversal $\Rightarrow$ same output.
+\end{enumerate}
+
+\end{document}

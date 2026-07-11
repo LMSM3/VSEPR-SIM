@@ -1,0 +1,19 @@
+{
+  "formula": "C6H12",
+  "seed": 804,
+  "tier": "medium",
+  "num_atoms": 18,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 154842.782637,
+  "energy_per_atom": 8602.376813,
+  "rms_force": 160911.968485,
+  "max_force": 160911.968485,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 2.314500,
+  "timestamp": "2026-03-28T12:54:40",
+  "xyz_file": "benchmark_100\medium\structures\C6H12_s804.xyz"
+}

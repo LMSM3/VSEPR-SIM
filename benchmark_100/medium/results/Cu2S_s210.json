@@ -1,0 +1,19 @@
+{
+  "formula": "Cu2S",
+  "seed": 210,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 0.337103,
+  "energy_per_atom": 0.112368,
+  "rms_force": 1.197098,
+  "max_force": 1.197098,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.528700,
+  "timestamp": "2026-03-28T12:54:48",
+  "xyz_file": "benchmark_100\medium\structures\Cu2S_s210.xyz"
+}

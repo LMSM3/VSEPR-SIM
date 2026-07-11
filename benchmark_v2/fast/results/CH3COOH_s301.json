@@ -1,0 +1,19 @@
+{
+  "formula": "CH3COOH",
+  "seed": 301,
+  "tier": "fast",
+  "num_atoms": 8,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 293.682862,
+  "energy_per_atom": 36.710358,
+  "rms_force": 520.019932,
+  "max_force": 520.019932,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.355100,
+  "timestamp": "2026-03-28T13:04:22",
+  "xyz_file": "benchmark_v2\fast\structures\CH3COOH_s301.xyz"
+}

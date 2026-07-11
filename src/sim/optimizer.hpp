@@ -16,6 +16,8 @@ Bitzek et al., PRL 97, 170201 (2006)
 
 #include "pot/energy_model.hpp"
 #include "core/geom_ops.hpp"
+#include "kernel/kernel_event.hpp"
+#include "kernel/kernel_event_log.hpp"
 #include <vector>
 #include <string>
 #include <cmath>
@@ -73,6 +75,10 @@ struct OptimizerSettings {
     
     // Verbosity
     int print_every = 0;            // Print status every N steps (0 = silent)
+
+    // Kernel audit trail — passed through to FormationEvent on exit
+    std::string source_formula;     // e.g. "C6H12", "Fe" — recorded in KernelEventLog
+    std::string formation_preset;   // e.g. "metal", "ceramic" — recorded in KernelEventLog
 };
 
 // ============================================================================
@@ -274,11 +280,31 @@ inline OptimizeResult FIREOptimizer::minimize(
     
     // Final energy breakdown
     result.energy_breakdown = model.evaluate_detailed(result.coords);
-    
+
     if (result.termination_reason.empty()) {
         result.termination_reason = "Maximum iterations reached";
     }
-    
+
+    // ── Kernel audit trail ────────────────────────────────────────────────────
+    // Record a FormationEvent into the global KernelEventLog so every real
+    // FIRE run produces an auditable trace entry.  Test harnesses must NOT
+    // inject this event manually — this is the only call site.
+    {
+        vsepr::kernel::FormationEvent fev;
+        fev.source_formula    = settings_.source_formula;
+        fev.formation_preset  = settings_.formation_preset;
+        fev.frame_id          = 0;   // FIRE is pre-trajectory; frame 0 by convention
+        fev.n_beads           = static_cast<int>(result.coords.size() / 3);
+        fev.fire_steps        = result.iterations;
+        fev.converged         = result.converged;
+        fev.final_energy      = result.energy;
+        fev.packing_fraction  = 0.0; // computed by analysis layer, not FIRE
+        fev.lattice_class     = "";  // inferred by FingerprintRecord, not FIRE
+        fev.compute();               // builds equation trace, sets is_valid, warning
+        vsepr::kernel::KernelEventLog::instance().record(fev);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     return result;
 }
 

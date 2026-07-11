@@ -1,0 +1,19 @@
+{
+  "formula": "SO2",
+  "seed": 1182,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 30.838459,
+  "energy_per_atom": 10.279486,
+  "rms_force": 120.908389,
+  "max_force": 120.908389,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.424700,
+  "timestamp": "2026-03-28T13:06:21",
+  "xyz_file": "benchmark_v2\medium\structures\SO2_s1182.xyz"
+}

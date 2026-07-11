@@ -885,6 +885,13 @@ inline void BeadInspectorView::draw_inspector_panel(
         if (rec.is_aromatic) ImGui::TextColored(ImVec4(0.6f, 0.3f, 0.9f, 1.0f), "  aromatic");
         if (rec.is_cyclic)   ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.5f, 1.0f), "  cyclic");
         if (rec.is_metal_centered) ImGui::TextColored(ImVec4(0.9f, 0.7f, 0.2f, 1.0f), "  metal center");
+
+        ImGui::Separator();
+        ImGui::Text("Role (\xCE\xA3):  %s", structural_role_name(rec.structural_role));
+        ImGui::Text("Stability (\xCE\x9B): %s", stability_class_name(rec.stability_class));
+        auto rw = role_weights(rec.structural_role);
+        ImGui::Text("  w_steric=%.2f  w_elec=%.2f  w_disp=%.2f",
+                     rw.w_steric, rw.w_electrostatic, rw.w_dispersion);
     }
 
     // --- Section 2: Geometry ---

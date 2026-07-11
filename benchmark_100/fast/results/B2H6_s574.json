@@ -1,0 +1,19 @@
+{
+  "formula": "B2H6",
+  "seed": 574,
+  "tier": "fast",
+  "num_atoms": 8,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 635.503286,
+  "energy_per_atom": 79.437911,
+  "rms_force": 1212.129688,
+  "max_force": 1212.129688,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.437600,
+  "timestamp": "2026-03-28T12:52:35",
+  "xyz_file": "benchmark_100\fast\structures\B2H6_s574.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "Al(OH)3",
+  "seed": 216,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 129.534805,
+  "energy_per_atom": 43.178268,
+  "rms_force": 511.897376,
+  "max_force": 511.897376,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.582500,
+  "timestamp": "2026-03-28T13:03:42",
+  "xyz_file": "benchmark_v2\medium\structures\Al_OH_3_s216.xyz"
+}

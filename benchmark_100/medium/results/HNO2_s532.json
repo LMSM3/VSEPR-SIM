@@ -1,0 +1,19 @@
+{
+  "formula": "HNO2",
+  "seed": 532,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 10.309029,
+  "energy_per_atom": 2.577257,
+  "rms_force": 30.259618,
+  "max_force": 30.259618,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.728900,
+  "timestamp": "2026-03-28T12:55:50",
+  "xyz_file": "benchmark_100\medium\structures\HNO2_s532.xyz"
+}

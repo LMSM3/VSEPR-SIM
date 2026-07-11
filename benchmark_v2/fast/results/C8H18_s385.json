@@ -1,0 +1,19 @@
+{
+  "formula": "C8H18",
+  "seed": 385,
+  "tier": "fast",
+  "num_atoms": 26,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 2034989.947061,
+  "energy_per_atom": 78268.844118,
+  "rms_force": 3509669.141781,
+  "max_force": 3509669.141781,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.571000,
+  "timestamp": "2026-03-28T13:04:22",
+  "xyz_file": "benchmark_v2\fast\structures\C8H18_s385.xyz"
+}

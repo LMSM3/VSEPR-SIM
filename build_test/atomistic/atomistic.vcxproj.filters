@@ -1,0 +1,219 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\core\linalg.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\core\alignment.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\core\maxwell_boltzmann.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\analysis\pmf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\crystal\lattice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\crystal\unit_cell.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\crystal\supercell.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\crystal\crystal_metrics.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\classify\fingerprints.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\classify\cluster.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\models\lj_coulomb.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\models\bonded.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\models\composite.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\models\polarization_scf.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\integrators\fire.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\integrators\velocity_verlet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\parsers\xyz_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\compilers\xyz_compiler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\predict\properties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\reaction\engine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\reaction\heat_gate.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\reaction\discovery.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\reaction\causal.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\reaction\discovery_viz.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\report\report_md.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\validation\experiment_match.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\R\VSPER-SIM\atomistic\tui\crystal_tui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\state.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\fragment_view.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\linalg.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\alignment.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\statistics.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\thermodynamics.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\core\maxwell_boltzmann.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\analysis\pmf.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\crystal\lattice.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\crystal\unit_cell.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\crystal\supercell.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\crystal\crystal_metrics.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\crystal\reference_data.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\classify\fingerprints.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\classify\cluster.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\model.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\bonded.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\composite.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\atomic_descriptors.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\alpha_model.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\nuclear_stability.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\alpha_stability.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\polarization_scf.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\integrators\fire.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\integrators\velocity_verlet.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\parsers\xyz_parser.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\compilers\xyz_compiler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\predict\properties.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\reaction\engine.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\reaction\heat_gate.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\reaction\discovery.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\reaction\causal.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\reaction\discovery_viz.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\report\report_md.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\validation\experiment_match.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\validation\nanoparticle_ref.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\wind_particle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\models\env_particle.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\tui\crystal_tui.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\R\VSPER-SIM\atomistic\tui\flower_health.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\atomistic\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{61FB64A8-6B6B-39CE-A4A7-F9C98A9CA9FC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8AF858AB-C8DD-3BD7-AB1A-C86794FD6ECB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

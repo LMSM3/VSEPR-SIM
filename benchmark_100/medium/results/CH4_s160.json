@@ -1,0 +1,19 @@
+{
+  "formula": "CH4",
+  "seed": 160,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 16.343666,
+  "energy_per_atom": 3.268733,
+  "rms_force": 51.205670,
+  "max_force": 51.205670,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.555800,
+  "timestamp": "2026-03-28T12:54:16",
+  "xyz_file": "benchmark_100\medium\structures\CH4_s160.xyz"
+}

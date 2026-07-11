@@ -1,0 +1,50 @@
+# T3 — Heterogeneous Non-Convergence (Critical Negative Test)
+# synthetic:two_cluster_512_trajectory | Full pipeline
+# Expected: spatial_cv high, rve_candidate = false, emergent_candidate = false, macro_ready = false
+
+[system]
+schema_version = 2
+name = "T3_heterogeneous_nonconverged"
+source = "synthetic:two_cluster_512_trajectory"
+source_format = "synthetic"
+seed = 61063
+
+[analysis.structure]
+enabled = true
+
+[analysis.sampling]
+enabled = true
+compute_rdf = true
+compute_msd = true
+min_frames_for_motion = 2
+min_frames_for_msd = 10
+
+[analysis.scale_sampling]
+enabled = true
+compute_field_projection = true
+compute_rve_sampling = true
+compute_emergence_metrics = true
+field_grid = [8, 8, 8]
+min_particles_for_scale_sampling = 64
+rve_window_lengths_A = [4.0, 6.0, 8.0]
+rve_windows_per_level = 16
+rve_window_placement = "stratified"
+temporal_drift_metric = "block_difference"
+scale_drift_metric = "successive_window_difference"
+spatial_cv_threshold = 0.20
+temporal_drift_threshold = 0.10
+scale_drift_threshold = 0.15
+
+[analysis.inference]
+enabled = true
+mode = "rule_based_61d"
+infer_macro_readiness = true
+
+[output]
+output_dir = "runs/T3_heterogeneous_nonconverged"
+output_prefix = "T3"
+write_structure_json = true
+write_sampling_json = true
+write_scale_sampling_json = true
+write_inference_json = true
+write_sampling_manifest = true

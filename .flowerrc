@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+export FLOWER_ROOT="${FLOWER_ROOT:-$HOME/FlowerOS}"
+export FLOWER_CONFIG_DIR="${FLOWER_CONFIG_DIR:-$HOME/.config/flower}"
+export FLOWER_LOG_DIR="${FLOWER_LOG_DIR:-$FLOWER_ROOT/logs}"
+
+flower_pick_ascii_line() {
+  local file="${1:-$FLOWER_ROOT/share/motd/ascii.txt}"
+  [[ -f "$file" ]] || return 0
+  shuf -n 1 "$file" 2>/dev/null || head -n 1 "$file" 2>/dev/null || true
+}
+
+flower_ensure_dirs() {
+  mkdir -p "$FLOWER_CONFIG_DIR" "$FLOWER_LOG_DIR"
+}
+
+flower_banner() {
+  local line
+  line="$(flower_pick_ascii_line)"
+  [[ -n "${line:-}" ]] && printf '%s\n' "$line"
+  printf 'FlowerOS active at %s\n' "$FLOWER_ROOT"
+}
+
+flower_bootstrap() {
+  flower_ensure_dirs
+}
+
+flower_bootstrap

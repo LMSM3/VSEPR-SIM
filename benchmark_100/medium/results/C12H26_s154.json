@@ -1,0 +1,19 @@
+{
+  "formula": "C12H26",
+  "seed": 154,
+  "tier": "medium",
+  "num_atoms": 38,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 278769143.250644,
+  "energy_per_atom": 7336030.085543,
+  "rms_force": 1130296615.235196,
+  "max_force": 1130296615.235196,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 9.238800,
+  "timestamp": "2026-03-28T12:56:09",
+  "xyz_file": "benchmark_100\medium\structures\C12H26_s154.xyz"
+}

@@ -1,0 +1,19 @@
+{
+  "formula": "PCl5",
+  "seed": 748,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 238.072044,
+  "energy_per_atom": 39.678674,
+  "rms_force": 262.786206,
+  "max_force": 262.786206,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.609700,
+  "timestamp": "2026-03-28T13:05:10",
+  "xyz_file": "benchmark_v2\medium\structures\PCl5_s748.xyz"
+}

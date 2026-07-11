@@ -1,0 +1,41 @@
+# demo_01_nacl_level0.vsim
+# =============================================================================
+# Beta-9 Level 0 — Minimal intent authoring
+#
+# What changed from beta-8:
+#   beta-8: required [[simulation.molecule]] with formula + lattice + count
+#   beta-9: [material] + [run] is sufficient; registry auto-expands the prototype
+#
+# This script describes a NaCl crystal using the casual "rocksalt" alias.
+# VsimRuntime::resolve_material() maps it:
+#   "rocksalt" → B1_NaCl → space_group=Fm-3m, generator=ionic_rocksalt,
+#                            coordination=6, charge_model=formal
+# =============================================================================
+
+[project]
+name        = "demo_01_nacl_level0"
+version     = "v5.0.0-beta.9"
+seed_base   = 1001
+determinism = true
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"   # alias resolved to prototype B1_NaCl
+cell      = "4x4x4"
+phase     = "solid"
+
+[run]
+mode         = "relax"
+max_steps    = 500
+converge     = true
+output_level = "standard"
+
+[export]
+write_xyz          = true
+write_analysis_json = true
+write_report_md    = true
+output_dir         = "out/demo_01"
+
+[visual]
+output_type    = "terminal_chart"
+render_interval = 50

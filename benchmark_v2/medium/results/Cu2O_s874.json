@@ -1,0 +1,19 @@
+{
+  "formula": "Cu2O",
+  "seed": 874,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 0.276537,
+  "energy_per_atom": 0.092179,
+  "rms_force": 1.020264,
+  "max_force": 1.020264,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.519600,
+  "timestamp": "2026-03-28T13:07:37",
+  "xyz_file": "benchmark_v2\medium\structures\Cu2O_s874.xyz"
+}

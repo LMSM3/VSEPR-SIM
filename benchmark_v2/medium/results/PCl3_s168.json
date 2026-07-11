@@ -1,0 +1,19 @@
+{
+  "formula": "PCl3",
+  "seed": 168,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 155.684671,
+  "energy_per_atom": 38.921168,
+  "rms_force": 330.590903,
+  "max_force": 330.590903,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.520100,
+  "timestamp": "2026-03-28T13:05:07",
+  "xyz_file": "benchmark_v2\medium\structures\PCl3_s168.xyz"
+}

@@ -1,0 +1,31 @@
+# test_pbc_error_track_images.vsim
+# Parser test: pbc.image_count + pbc.unwrap require track_images = true.
+# Parser must accept track_images = false without error.
+# Binding calls raise feature-gate error at runtime.
+# Expression-level execution: WO-57C
+
+[project]
+name        = test_pbc_error_track_images
+version     = v5.0.0-beta.8
+determinism = true
+
+[cell]
+type    = orthorhombic
+lengths = 10.0, 10.0, 10.0
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+track_images = false
+
+# [script] — 57C
+# expect_error("pbc.image_count", "track_images") {
+#     ix, iy, iz = pbc.image_count(1)
+# }
+# expect_error("pbc.unwrap", "track_images") {
+#     r = pbc.unwrap(1)
+# }

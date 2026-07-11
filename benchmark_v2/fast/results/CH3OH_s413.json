@@ -1,0 +1,19 @@
+{
+  "formula": "CH3OH",
+  "seed": 413,
+  "tier": "fast",
+  "num_atoms": 6,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 13.214549,
+  "energy_per_atom": 2.202425,
+  "rms_force": 21.995500,
+  "max_force": 21.995500,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.489400,
+  "timestamp": "2026-03-28T13:04:43",
+  "xyz_file": "benchmark_v2\fast\structures\CH3OH_s413.xyz"
+}

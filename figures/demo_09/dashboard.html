@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VSEPR-SIM Dashboard: demo_09_beta10_showcase</title>
+<style>
+  body { background:#0d1117; color:#c9d1d9; font-family:monospace; margin:32px; }
+  h1 { color:#58a6ff; border-bottom:1px solid #30363d; padding-bottom:8px; }
+  h2 { color:#8b949e; font-size:14px; margin-top:28px; }
+  .grid { display:flex; gap:24px; flex-wrap:wrap; }
+  .card { background:#161b22; border:1px solid #30363d;          border-radius:6px; padding:16px; }
+  table { border-collapse:collapse; font-size:12px; width:100%; }
+  th { background:#21262d; color:#8b949e; padding:6px 10px;       text-align:left; border-bottom:1px solid #30363d; }
+  td { padding:5px 10px; border-bottom:1px solid #21262d; }
+  .meta { color:#6e7681; font-size:11px; margin-top:4px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:12px;           font-size:11px; background:#21262d; color:#8b949e; }
+</style>
+</head>
+<body>
+<h1>VSEPR-SIM Dashboard</h1>
+<p class="meta">  <span class="badge">demo_09_beta10_showcase</span>  <span class="badge">NaCl</span>  <span class="badge">solid</span>  &nbsp; Generated 2026-04-27T01:07:06Z</p>
+<div class="grid">
+  <div class="card"><h2>Energy Trace</h2>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="200" viewBox="0 0 500 200">
+<title>energy</title>
+<rect width="500" height="200" fill="#0d1117"/>
+<line x1="40" y1="10" x2="40" y2="170" stroke="#58a6ff" stroke-width="1"/>
+<line x1="40" y1="170" x2="490" y2="170" stroke="#58a6ff" stroke-width="1"/>
+<polyline fill="none" stroke="#58a6ff" stroke-width="2" points="40,12.0253 47.6271,14.5427 55.2542,17.06 62.8814,19.5773 70.5085,22.0947 78.1356,24.612 85.7627,27.1294 93.3898,29.6467 101.017,32.1641 108.644,34.6814 116.271,37.1987 123.898,39.7161 131.525,42.2334 139.153,44.7508 146.78,47.2681 154.407,49.7855 162.034,52.3028 169.661,54.8201 177.288,57.3375 184.915,59.8548 192.542,62.3722 200.169,64.8895 207.797,67.4069 215.424,69.9242 223.051,72.4415 230.678,74.9589 238.305,77.4762 245.932,79.9936 253.559,82.5109 261.186,85.0282 268.814,87.5456 276.441,90.0629 284.068,92.5803 291.695,95.0976 299.322,97.615 306.949,100.132 314.576,102.65 322.203,105.167 329.831,107.684 337.458,110.202 345.085,112.719 352.712,115.236 360.339,117.754 367.966,120.271 375.593,122.788 383.22,125.306 390.847,127.823 398.475,130.34 406.102,132.858 413.729,135.375 421.356,137.892 428.983,140.41 436.61,142.927 444.237,145.444 451.864,147.962 459.492,150.479 467.119,152.996 474.746,155.514 482.373,158.031 490,160.549 "/>
+<text x="260" y="195" fill="#8b949e" font-family="monospace" font-size="11" text-anchor="middle">U (kcal/mol) vs FIRE step</text>
+</svg>
+</div>
+  <div class="card"><h2>Event Kind Distribution</h2>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="180" viewBox="0 0 500 180">
+<title>event_bars</title>
+<rect width="500" height="180" fill="#0d1117"/>
+<rect x="100" y="14" width="380" height="16" fill="#58a6ff" opacity="0.8"/>
+<text x="96" y="26" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Reaction</text>
+<text x="484" y="26" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+<rect x="100" y="39" width="380" height="16" fill="#3fb950" opacity="0.8"/>
+<text x="96" y="51" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">ChemicalState</text>
+<text x="484" y="51" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+<rect x="100" y="64" width="0" height="16" fill="#f0883e" opacity="0.8"/>
+<text x="96" y="76" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Formation</text>
+<text x="104" y="76" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">0</text>
+<rect x="100" y="89" width="380" height="16" fill="#f85149" opacity="0.8"/>
+<text x="96" y="101" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Defect</text>
+<text x="484" y="101" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+<rect x="100" y="114" width="0" height="16" fill="#d2a8ff" opacity="0.8"/>
+<text x="96" y="126" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">Transport</text>
+<text x="104" y="126" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">0</text>
+<rect x="100" y="139" width="380" height="16" fill="#ffa657" opacity="0.8"/>
+<text x="96" y="151" fill="#8b949e" font-family="monospace" font-size="10" text-anchor="end">ContinualReport</text>
+<text x="484" y="151" fill="#c9d1d9" font-family="monospace" font-size="10" text-anchor="start">1</text>
+</svg>
+</div>
+</div>
+<h2>Event Audit Table</h2>
+<table>
+<tr><th>ID</th><th>Kind</th><th>Frame</th><th>Formula</th><th>Result</th><th>Unit</th><th>Valid</th></tr>
+<tr><td>1</td><td>Reaction</td><td>61</td><td>NaCl</td><td>-32.05</td><td>kcal/mol</td><td style="color:#3fb950">OK</td></tr>
+<tr><td>2</td><td>ChemicalState</td><td>70</td><td>NaCl</td><td>4.121</td><td>kcal/mol</td><td style="color:#3fb950">OK</td></tr>
+<tr><td>3</td><td>ContinualReport</td><td>34</td><td>NaCl</td><td>-86.38</td><td>kcal/mol</td><td style="color:#3fb950">OK</td></tr>
+<tr><td>4</td><td>Defect</td><td>49</td><td>NaCl</td><td>0.07867</td><td>frac</td><td style="color:#3fb950">OK</td></tr>
+</table>
+</body>
+</html>

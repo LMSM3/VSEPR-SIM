@@ -1,22 +1,26 @@
 # Molecular File Formats: XYZ, XYZA, XYZC
 
-**Version:** 2.5.0-dev  
-**Last Updated:** January 21, 2026  
-**Purpose:** Day #11 Nano-Scale Simulation File I/O
+**Version:** 3.0.0  
+**Last Updated:** 2026  
+**Purpose:** Molecular file I/O specifications
 
 ---
 
 ## Overview
 
-The VSEPR-Sim ecosystem uses three molecular file formats:
+The VSEPR-Sim ecosystem uses the following file formats:
 
 | Format | Description | Use Case |
 |--------|-------------|----------|
 | **XYZ** | Static molecular geometry | Single structures, snapshots |
-| **XYZA** | Animated trajectory | Minimization traces, reaction paths |
-| **XYZC** | Checkpointed simulation | Restartable MD simulations |
+| **XYZA** | Extended properties (charge/vel/force/energy) | Minimization traces, reaction paths |
+| **XYZC** | Checkpointed simulation frame | Restartable MD simulations |
+| **XYZF** | Multi-frame trajectory | Real-time streaming, long MD runs |
+| **XYZW** | Wind particle field | Directed flux, phonon seeds, shock fronts, non-equilibrium init |
+| **STEP** | ISO 10303-21 AP203 engineering geometry | CAD provenance, geometry truth artifact |
 
-All formats are **human-readable text** for transparency and debugging.
+All XYZ-family formats are **human-readable text** for transparency and debugging.  
+`.step` follows the ISO 10303-21 plain-text exchange structure.
 
 ---
 
@@ -462,6 +466,8 @@ done
 | **meso-discover** | `.xyz`, `.xyz` | Multiple `.xyz` | Find reactions |
 | **interactive-viewer** | `.xyz`, `.xyza` | - | Visualize (with animation) |
 | **simple-viewer** | `.xyz` | - | Quick static view |
+| **wind-inject** | `.xyzw`, `.xyzc` | `.xyzc` | Apply wind field as velocity bias |
+| **wind-measure** | `.xyza` | `.xyzw` | Extract momentum flux field from trajectory |
 
 ---
 
@@ -572,6 +578,128 @@ WARNING: Frame 25 missing energy value
 
 ---
 
+## XYZW Format: Wind Particle Field
+
+### Concept
+
+A **wind particle** is an atomistic site carrying a directed momentum flux — a local velocity vector field imposed on or measured from the atomic environment. XYZW encodes this: each atom has its standard position plus a **wind vector** $(w_x, w_y, w_z)$ and a **wind weight** $\omega$ (scalar influence magnitude).
+
+This format is intended for:
+- Propagating disturbance fields through a lattice (phonon seeds, shock fronts)
+- Environmental flow fields attached to atomic sites (fluid-structure interaction)
+- Directional energy injection for non-equilibrium studies
+- Wind-seeded initial conditions for MD (directional momentum deposition)
+- Candidate screening under directed external fields
+
+The "wind" is not a physical wind in the atmospheric sense. It is a **directional atomistic flux** — a vector carried by each particle that biases its momentum state or participation in a propagating front.
+
+### Specification
+
+```
+<atom_count>
+WIND | <key1>=<val1> | <key2>=<val2> | ...
+<element> <x> <y> <z> <wx> <wy> <wz> <omega>
+<element> <x> <y> <z> <wx> <wy> <wz> <omega>
+...
+```
+
+### Fields Per Atom Line
+
+| Column | Symbol | Units | Description |
+|--------|--------|-------|-------------|
+| 1 | `element` | — | Element symbol (H, Fe, Au, ...) |
+| 2–4 | `x y z` | Å | Cartesian position |
+| 5–7 | `wx wy wz` | Å/fs | Wind velocity vector (directed momentum flux) |
+| 8 | `omega` | [0, 1] | Wind weight — local influence magnitude |
+
+### Header Metadata Keys
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `Source` | string | Origin label (`phonon_seed`, `shock_front`, `field_injection`, `measured`) |
+| `Direction` | float3 | Global wind axis unit vector `(dx,dy,dz)` |
+| `Magnitude` | float | Reference wind speed (Å/fs) |
+| `Wavelength` | float | Characteristic spatial wavelength (Å), if wave-like |
+| `Decay` | float | Spatial decay constant (Å⁻¹), 0 = no decay |
+| `Step` | int | Timestep at which wind field was captured or applied |
+| `Time` | float | Simulation time (fs) |
+| `Seed` | int | RNG seed (if stochastically generated) |
+
+### Example: Planar Shock Front Along X-axis
+
+```
+64
+WIND | Source=shock_front | Direction=(1,0,0) | Magnitude=0.45 | Step=0 | Time=0.0fs
+Fe  0.000000  0.000000  0.000000   0.450000  0.000000  0.000000  1.000
+Fe  2.870000  0.000000  0.000000   0.412000  0.000000  0.000000  0.916
+Fe  5.740000  0.000000  0.000000   0.341000  0.000000  0.000000  0.758
+Fe  8.610000  0.000000  0.000000   0.243000  0.000000  0.000000  0.540
+Fe 11.480000  0.000000  0.000000   0.128000  0.000000  0.000000  0.284
+Fe 14.350000  0.000000  0.000000   0.031000  0.000000  0.000000  0.069
+...
+```
+
+The wind decays along X as the shock attenuates. `omega` = 1.0 at the front, decaying toward 0 at the unperturbed bulk.
+
+### Example: Radial Phonon Seed from Central Atom
+
+```
+64
+WIND | Source=phonon_seed | Direction=(0,0,0) | Magnitude=0.12 | Decay=0.28 | Step=0
+Au  0.000000  0.000000  0.000000   0.000000  0.000000  0.000000  1.000
+Au  2.884000  0.000000  0.000000   0.120000  0.000000  0.000000  0.834
+Au  0.000000  2.884000  0.000000   0.000000  0.120000  0.000000  0.834
+Au  0.000000  0.000000  2.884000   0.000000  0.000000  0.120000  0.834
+Au  2.884000  2.884000  0.000000   0.085000  0.085000  0.000000  0.591
+...
+```
+
+Direction `(0,0,0)` means the wind is radially outward from the seeded centre, not globally directional.
+
+### Omega Conventions
+
+| `omega` | Meaning |
+|---------|---------|
+| `1.0` | Full wind influence — particle is fully in the wind field |
+| `0.5` | Partial — boundary / transition region |
+| `0.0` | Quiescent — particle is unperturbed by the wind |
+
+`omega` is dimensionless and should be in [0, 1]. It is **not** a probability — it is a continuous local field weight.
+
+### Relationship to Other Formats
+
+| Format | What it carries | Use |
+|--------|----------------|-----|
+| XYZ | Position only | Static geometry |
+| XYZA | Position over time | Trajectory |
+| XYZC | Position + velocity + thermodynamics | Restartable MD |
+| **XYZW** | **Position + wind vector + weight** | **Directed flux, field injection, phonon seeds, shock fronts** |
+
+XYZW is not a trajectory format — it is a **field annotation format**. A single XYZW frame describes the wind state of the system at one moment. It can be used as initial conditions for XYZC (inject wind vectors as velocity biases) or as a post-analysis output (measure local momentum flux from a completed run).
+
+### Validation Rules
+
+#### XYZW Files Must:
+- ✅ Have `WIND` keyword at start of comment line
+- ✅ Have exactly 8 columns per atom line: `element x y z wx wy wz omega`
+- ✅ Have `omega` in [0, 1] (clamped on read; warning if outside range)
+- ✅ Have consistent atom count between line 1 and atom rows
+- ✅ Use valid element symbols
+
+#### XYZW Files Should:
+- ℹ️ Specify `Source=` in header to classify the wind origin
+- ℹ️ Specify `Direction=` for globally directional fields (omit or `(0,0,0)` for radial/isotropic)
+- ℹ️ Normalise wind vectors so `|w| <= Magnitude` (not enforced, but expected)
+
+### Use Cases
+
+1. **Shock front propagation study** — encode the momentum field of an advancing front through a BCC crystal; replay as velocity bias in XYZC
+2. **Phonon seeding** — inject a directed phonon pulse from a central atom into a lattice; capture the radiated wind field
+3. **Environmental field screening** — systematically vary `Direction` and `Magnitude` as candidate parameters; evaluate structural response
+4. **Non-equilibrium initialisation** — convert XYZW to XYZC by adding wind vectors as per-atom velocity offsets before running MD
+
+---
+
 ## Future Extensions (Planned)
 
 - **XYZB** - Binary XYZ format (faster I/O)
@@ -618,23 +746,121 @@ echo "✓ Valid XYZ file ($natoms atoms)"
 
 ---
 
-## See Also
+## I/O Consolidation Status
 
-- [`MESO_SIM_GUIDE.md`](../apps/MESO_SIM_GUIDE.md) - Simulation workflows
-- [`ALIGNMENT_GUIDE.md`](../apps/ALIGNMENT_GUIDE.md) - Structure comparison
-- [`MESO_BUILD_GUIDE.md`](../apps/MESO_BUILD_GUIDE.md) - Interactive molecule builder
-- [`INTERACTIVE_UI_GUIDE.md`](../src/vis/INTERACTIVE_UI_GUIDE.md) - Viewer controls
+An audit identified 15 locations with scattered file I/O and ~40% code
+duplication.  A unified `molecular_io.hpp` API was designed
+(`include/io/molecular_io.hpp`) that provides:
+
+- `load_structure()` / `save_structure()` — single-structure I/O
+- `load_trajectory()` / `save_trajectory()` — in-memory multi-frame
+- `TrajectoryWriter` / `TrajectoryReader` — streaming for large trajectories
+- `Result<T>` error handling, automatic format detection, NaN/Inf validation
+
+Migration is in progress; new code should use the unified API.
 
 ---
 
-**Ready to use file formats?**
+---
 
-```bash
-# Quick start
-./meso-build                      # Create molecule → XYZ
-./meso-sim --mode minimize        # Run simulation → XYZA
-./interactive-viewer output.xyza  # Visualize trajectory
-./meso-align --ref A.xyz --target B.xyz  # Compare structures
+## STEP AP203 Format: Engineering Geometry Truth
+
+> **Status:** Beta — placeholder writer in `src/gen/step_writer.hpp`  
+> **Standard:** ISO 10303-21 / AP203 Configuration-Controlled Design  
+> **Branch introduced:** `v5.0.0-beta.7-step-attempt`
+
+### Role in the Artifact Pipeline
+
+The `.step` file is the **engineering geometry truth** counterpart to the
+simulation-truth `.xyz*` family.  Every supercell or workflow artifact
+should be accompanied by a paired `.step` + `geometry_map.json`:
+
+```
+<tag>.xyza            ← simulation truth  (forces, velocities, charges)
+<tag>.step            ← engineering truth (geometry, provenance, identity)
+geometry_map.json     ← manifest          (binds both artifact sets per material)
 ```
 
-**All formats are human-readable. Open in any text editor to inspect!**
+### File Structure
+
+```
+ISO-10303-21;
+HEADER;
+  FILE_DESCRIPTION(...)   ← human description + schema version
+  FILE_NAME(...)          ← name, timestamp, author, generator
+  FILE_SCHEMA(('CONFIG_CONTROL_DESIGN'));
+ENDSEC;
+DATA;
+  #n = PRODUCT(...)                          ← product identity
+  #n = PRODUCT_DEFINITION_FORMATION(...)
+  #n = PRODUCT_DEFINITION(...)
+  #n = PRODUCT_DEFINITION_SHAPE(...)
+  #n = GEOMETRIC_REPRESENTATION_CONTEXT(...) ← 3D, Å units
+  #n = AXIS2_PLACEMENT_3D(...)               ← world origin
+  #n = CARTESIAN_POINT('El',(x,y,z))         ← one per atom (Å)
+  ...
+  #n = SHAPE_REPRESENTATION(...)             ← references all points
+  #n = SHAPE_DEFINITION_REPRESENTATION(...)
+ENDSEC;
+END-ISO-10303-21;
+```
+
+Coordinates are in **Å** (angstrom), matching the XYZ family unit system.
+Each atom is encoded as a `CARTESIAN_POINT` labelled with its element symbol.
+
+### Current Limitations (beta placeholder)
+
+- `CARTESIAN_POINT` cloud only — no surface/solid geometry (no `ADVANCED_FACE`).
+- No units declaration entity (assumed Å by convention in the DATA section).
+- Designed for identity/provenance and CAD import of atom positions; not
+  suitable for mesh-based FEA without downstream triangulation.
+
+**Planned (beta.9+):** Convex-hull or Voronoi-cell mesh → `ADVANCED_BREP_SHAPE_REPRESENTATION`.
+
+### Writing STEP Files
+
+```cpp
+#include "src/gen/step_writer.hpp"
+
+// From an XYZFrame (stream overload)
+vsepr::gen::write_step_ap203(out_stream, frame, "Nitinol NiTi_B2 3x3x3");
+
+// File convenience overload
+vsepr::gen::write_step_ap203("NiTi_B2.step", frame, "Nitinol NiTi_B2 3x3x3");
+```
+
+---
+
+## `src/gen/` — Metal / Alloy Supercell Generator
+
+> See [`src/gen/README.md`](../src/gen/README.md) for full documentation.
+
+A standalone generator that produces the complete artifact set for four
+reference metals and alloys:
+
+| Tag | Material | Lattice | a (Å) |
+|---|---|---|---|
+| `NiTi_B2` | Nitinol (shape-memory) | B2 ordered BCC | 3.015 |
+| `W_BCC` | Tungsten (pure refractory) | BCC | 3.165 |
+| `IN625_FCC` | Inconel 625 (Ni-Cr-Mo-Nb superalloy) | FCC | 3.575 |
+| `Ti64_HCP` | Ti-6Al-4V (aerospace structural) | HCP | 2.921 |
+
+Build and run:
+
+```sh
+# From src/gen/
+g++ -std=c++20 -O2 -I../../ -I../../src -o metal_gen metal_gen.cpp
+./metal_gen [output_dir]
+```
+
+---
+
+## See Also
+
+- [`ALIGNMENT_GUIDE.md`](../apps/ALIGNMENT_GUIDE.md) — Structure comparison
+- [`INTERACTIVE_UI_GUIDE.md`](../src/vis/INTERACTIVE_UI_GUIDE.md) — Viewer controls
+- [`src/gen/README.md`](../src/gen/README.md) — Metal/alloy generator module
+
+---
+
+**All formats are human-readable. Open in any text editor to inspect.**

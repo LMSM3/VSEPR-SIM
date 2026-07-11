@@ -1,0 +1,19 @@
+{
+  "formula": "C4H9OH",
+  "seed": 70,
+  "tier": "highn",
+  "num_atoms": 15,
+  "steps_taken": 7345,
+  "max_steps": 10000,
+  "energy_kcal_mol": -3.033570,
+  "energy_per_atom": -0.202238,
+  "rms_force": 0.000192,
+  "max_force": 0.000192,
+  "alpha_final": 0.052560,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 8.632200,
+  "timestamp": "2026-03-28T13:06:25",
+  "xyz_file": "benchmark_v2\highn\structures\C4H9OH_s70.xyz"
+}

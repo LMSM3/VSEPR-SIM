@@ -1,0 +1,317 @@
+% ============================================================================
+%  crystal_density_vacancy_diffraction.tex
+%  VSEPR-SIM / thenewmethods
+%
+%  Document 1 of 3 -- The New Methods
+%  Crystal structure, density, vacancy, and diffraction relations
+%  Compact, invertible, system-grouped notation
+% ============================================================================
+
+\documentclass[11pt, letterpaper]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{hyperref}
+
+\geometry{margin=1.1in}
+
+\definecolor{accent}{RGB}{30, 80, 160}
+\definecolor{note}{RGB}{120, 120, 120}
+
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
+
+\title{\textbf{The New Methods I}\\[0.4em]
+\large Crystal Structure \textbullet\ Density \textbullet\
+Vacancy \textbullet\ Diffraction}
+\author{VSEPR-SIM thenewmethods}
+\date{}
+
+% ── convenience macros ──────────────────────────────────────────────────────
+\newcommand{\NA}{N_{\!A}}
+\newcommand{\Qv}{Q_v}
+\newcommand{\Nv}{N_v}
+\newcommand{\dhkl}{d_{hkl}}
+\newcommand{\argmin}{\operatorname{arg\,min}}
+
+% ── section style ───────────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}[\vspace{-0.3em}\rule{\linewidth}{0.6pt}]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+% ============================================================================
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\noindent
+Notation that is readable, compact, invertible where possible, and grouped
+as systems where that helps.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Crystal Structure Relations}
+% ────────────────────────────────────────────────────────────────────────────
+
+\subsection{FCC}
+
+\[
+\text{FCC:}\quad
+\begin{cases}
+  n = 4 \\[2pt]
+  \mathrm{CN} = 12 \\[2pt]
+  \mathrm{APF} = 0.74 \\[2pt]
+  a = 2\sqrt{2}\,R \qquad \Longleftrightarrow \qquad R = \dfrac{\sqrt{2}}{4}\,a
+\end{cases}
+\]
+
+\subsection{BCC}
+
+\[
+\text{BCC:}\quad
+\begin{cases}
+  n = 2 \\[2pt]
+  \mathrm{CN} = 8 \\[2pt]
+  \mathrm{APF} = 0.68 \\[2pt]
+  a = \dfrac{4R}{\sqrt{3}} \qquad \Longleftrightarrow \qquad R = \dfrac{\sqrt{3}}{4}\,a
+\end{cases}
+\]
+
+\subsection{HCP (for review, not default assumption)}
+
+\[
+\text{HCP:}\quad
+\begin{cases}
+  n = 6 \\[2pt]
+  \mathrm{CN} = 12 \\[2pt]
+  \mathrm{APF} = 0.74 \\[2pt]
+  a = 2R
+\end{cases}
+\qquad \text{ideal ratio:}\quad \frac{c}{a} \approx 1.633
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Density Relations}
+% ────────────────────────────────────────────────────────────────────────────
+
+Master equation for cubic unit cells:
+
+\[
+\boxed{\rho = \frac{n A}{\NA\, a^3}}
+\]
+
+\noindent
+where $n$ = atoms per unit cell, $A$ = atomic weight, $\NA$ = Avogadro's number,
+$a^3$ = unit cell volume.
+
+\subsection{Inverse Forms}
+
+Solve for atomic weight:
+\[
+A = \frac{\rho\, \NA\, a^3}{n}
+\]
+
+Solve for lattice parameter:
+\[
+a = \left(\frac{n A}{\rho\, \NA}\right)^{1/3}
+\]
+
+One line, invertible, no theatrical suffering.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Vacancy Relations}
+% ────────────────────────────────────────────────────────────────────────────
+
+\subsection{Forward Form}
+
+\[
+\Nv = N\exp\!\left(-\frac{\Qv}{kT}\right)
+\]
+
+\subsection{Vacancy Fraction (often the more useful version)}
+
+\[
+\frac{\Nv}{N} = \exp\!\left(-\frac{\Qv}{kT}\right)
+\]
+
+\subsection{Inverse Form for $\Qv$}
+
+Take the natural log:
+\[
+\ln\!\left(\frac{\Nv}{N}\right) = -\frac{\Qv}{kT}
+\qquad\Longrightarrow\qquad
+\Qv = -kT\ln\!\left(\frac{\Nv}{N}\right)
+\]
+
+\subsection{Inverse Form for Temperature}
+
+\[
+T = -\frac{\Qv}{k\ln\!\left(N_v/N\right)}
+\]
+
+\noindent
+Memorization form: \emph{exponential forward, log backward}.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Diffraction Relations}
+% ────────────────────────────────────────────────────────────────────────────
+
+\subsection{Bragg Law}
+
+\[
+n\lambda = 2d\sin\theta
+\]
+
+\subsection{Inverse Forms}
+
+Solve for spacing:
+\[
+d = \frac{n\lambda}{2\sin\theta}
+\]
+
+Solve for angle:
+\[
+\theta = \sin^{-1}\!\left(\frac{n\lambda}{2d}\right)
+\]
+
+\noindent
+When XRD reports $2\theta$ directly:
+\[
+\theta = \tfrac{1}{2}(2\theta)
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Cubic Plane-Spacing Relations}
+% ────────────────────────────────────────────────────────────────────────────
+
+For cubic crystals:
+\[
+\dhkl = \frac{a}{\sqrt{h^2 + k^2 + l^2}}
+\qquad\Longleftrightarrow\qquad
+a = \dhkl\sqrt{h^2 + k^2 + l^2}
+\]
+
+\subsection{Combined Diffraction System}
+
+Useful when solving structure problems:
+\[
+\begin{cases}
+  n\lambda = 2\,\dhkl\,\sin\theta \\[4pt]
+  \dhkl = \dfrac{a}{\sqrt{h^2+k^2+l^2}}
+\end{cases}
+\]
+
+Substitute and solve for $a$:
+
+\[
+\boxed{a = \frac{n\lambda\,\sqrt{h^2+k^2+l^2}}{2\sin\theta}}
+\]
+
+That is the one-line usable relation to keep.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Ionic Characterization}
+% ────────────────────────────────────────────────────────────────────────────
+
+Let $\Delta\chi = |\chi_A - \chi_B|$.
+
+\[
+\text{\%IC} = 100\!\left(1 - \exp\!\left[-\tfrac{1}{4}(\Delta\chi)^2\right]\right)
+\]
+
+System form (memorization form):
+\[
+\begin{cases}
+  \Delta\chi = |\chi_A - \chi_B| \\[4pt]
+  \text{\%IC} = 100\!\left(1 - \exp\!\left[-\dfrac{(\Delta\chi)^2}{4}\right]\right)
+\end{cases}
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Structure Classification Logic}
+% ────────────────────────────────────────────────────────────────────────────
+
+Input: $\{R,\,A,\,\rho,\,T,\,\theta,\,\lambda\}$.
+Try FCC and BCC; for each compute $a(R)$, $\rho_{\mathrm{theoretical}}$,
+$\dhkl$, and consistency with $T$.
+
+Best structure via weighted residual:
+\[
+S^* = \argmin_{S\,\in\,\{\text{FCC},\text{BCC}\}}
+\bigl[
+  w_\rho\,|\rho_{\exp} - \rho_S|
+  + w_d\,|d_{\exp} - d_S|
+  + w_T\,\Pi_T(S)
+\bigr]
+\]
+
+General classification objective:
+\[
+J(S) = \sum_i w_i\,|x_i^{\mathrm{measured}} - x_i(S)|
+\qquad S^* = \argmin_S J(S)
+\]
+
+\noindent
+Measured features: $x_i \in \{\rho,\,\dhkl,\,a,\,\mathrm{CN},\,\mathrm{APF},\,T\text{-stability}\}$.
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Ring Orbitals (compact Hückel form)}
+% ────────────────────────────────────────────────────────────────────────────
+
+For a cyclic $\pi$-system with $N$ p-orbitals:
+\[
+E_m = \alpha + 2\beta\cos\!\left(\frac{2\pi m}{N}\right),
+\qquad m = 0, 1, \ldots, N-1
+\]
+
+Fill from lowest $E_m$ upward, 2 electrons per orbital.
+
+\[
+4n+2 \text{ pi electrons} \;\Rightarrow\; \text{aromatic}
+\qquad
+4n \text{ pi electrons} \;\Rightarrow\; \text{antiaromatic tendency}
+\]
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Compact Memorization Block}
+% ────────────────────────────────────────────────────────────────────────────
+
+\begin{align*}
+&\text{FCC: } a=2\sqrt{2}\,R,\quad n=4,\quad \mathrm{CN}=12,\quad \mathrm{APF}=0.74 \\
+&\text{BCC: } a=\tfrac{4R}{\sqrt{3}},\quad n=2,\quad \mathrm{CN}=8,\quad \mathrm{APF}=0.68 \\
+&\text{HCP: } a=2R,\quad n=6,\quad \mathrm{CN}=12,\quad \mathrm{APF}=0.74,\quad c/a\approx1.633 \\[4pt]
+&\rho = \frac{nA}{\NA a^3} \\[4pt]
+&\Nv = N\exp\!\left(-\frac{\Qv}{kT}\right)
+\qquad
+\Qv = -kT\ln\!\left(\frac{\Nv}{N}\right) \\[4pt]
+&n\lambda = 2d\sin\theta
+\qquad
+d = \frac{a}{\sqrt{h^2+k^2+l^2}} \\[4pt]
+&\Delta\chi = |\chi_A - \chi_B|
+\qquad
+\text{\%IC} = 100\!\left(1-e^{-(\Delta\chi)^2/4}\right) \\[4pt]
+&S^* = \argmin_S J(S)
+\end{align*}
+
+% ────────────────────────────────────────────────────────────────────────────
+\section{Full System Form}
+% ────────────────────────────────────────────────────────────────────────────
+
+\[
+\begin{cases}
+  \text{Given: } A,\,R,\,\rho_{\exp},\,\lambda,\,\theta,\,T,\,\chi_A,\,\chi_B \\[4pt]
+  a_{\mathrm{FCC}} = 2\sqrt{2}\,R,\quad a_{\mathrm{BCC}} = \dfrac{4R}{\sqrt{3}} \\[6pt]
+  \rho_{\mathrm{FCC}} = \dfrac{4A}{\NA\, a_{\mathrm{FCC}}^3},\quad
+  \rho_{\mathrm{BCC}} = \dfrac{2A}{\NA\, a_{\mathrm{BCC}}^3} \\[6pt]
+  d = \dfrac{n\lambda}{2\sin\theta} \\[6pt]
+  \Delta\chi = |\chi_A - \chi_B| \\[4pt]
+  \text{\%IC} = 100\!\left(1 - e^{-(\Delta\chi)^2/4}\right) \\[4pt]
+  \dfrac{\Nv}{N} = \exp\!\left(-\dfrac{\Qv}{kT}\right) \\[6pt]
+  S^* = \displaystyle\argmin_{S\in\{\text{FCC},\text{BCC}\}} J(S)
+\end{cases}
+\]
+
+\end{document}

@@ -62,7 +62,7 @@ inline std::map<int, int> parse_formula(const std::string& formula, const Period
         if (count == 0) count = 1;
         
         // Look up element in periodic table (physics data only)
-        const ElementPhysics* elem = periodic_table.physics_by_symbol(symbol);
+        const Element* elem = periodic_table.physics_by_symbol(symbol);
         if (!elem) {
             throw std::runtime_error("Unknown element: " + symbol);
         }
@@ -121,7 +121,7 @@ inline Molecule build_molecule_from_formula(
     // Assign lone pairs based on typical valence (VSEPR theory)
     // Use valence electrons from periodic table (physics data)
     auto assign_lone_pairs = [&periodic_table](int Z) -> int {
-        const ElementPhysics* elem = periodic_table.physics_by_Z(Z);
+        const Element* elem = periodic_table.physics_by_Z(Z);
         if (!elem) return 0;
         
         uint8_t valence = elem->valence_electrons();

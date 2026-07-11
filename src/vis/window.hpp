@@ -1,9 +1,11 @@
-#pragma once
+﻿#pragma once
 
 #include "vis/renderer.hpp"
 #include "vis/viz_router.hpp"
+#include "vis/auto_pilot.hpp"
 #include "core/frame_buffer.hpp"
 #include "vis/ui_panels.hpp"
+#include "vis/batch_window_bridge.hpp"
 #include <string>
 #include <functional>
 #include <chrono>
@@ -39,6 +41,18 @@ public:
     
     // Main render loop with UI and CommandRouter (new)
     void run_with_ui(SimulationThread& sim_thread, CommandRouter& command_router);
+
+    /**
+     * Passive batch display loop.
+     * Runs at a reduced display_fps, pulling frames from the bridge without
+     * blocking the producer.  No ImGui, no interactive event handling beyond
+     * close/resize.  Returns when the bridge reports done OR the window is
+     * closed by the OS.
+     *
+     * @param bridge       Live frame + status source from the batch producer.
+     * @param display_fps  Target refresh rate for the window (default: 5 Hz).
+     */
+    void run_batch(vis::BatchWindowBridge& bridge, float display_fps = 5.0f);
     
     // Request window to close
     void close();
@@ -54,6 +68,9 @@ public:
     
     // Camera access
     Camera& camera();
+    
+    // Auto-pilot access (auto-spin + auto-capture)
+    AutoPilot& auto_pilot() { return auto_pilot_; }
     
     // Visualization router access
     VizRouter& viz_router() { return viz_router_; }
@@ -74,6 +91,7 @@ private:
     GLFWwindow* window_;
     Renderer renderer_;
     VizRouter viz_router_;
+    AutoPilot auto_pilot_;
     UIManager ui_manager_;
     
     int width_;
@@ -95,3 +113,4 @@ private:
 };
 
 } // namespace vsepr
+

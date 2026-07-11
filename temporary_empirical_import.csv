@@ -1,0 +1,17 @@
+molecule_id,formula,smiles,empirical_geometry,empirical_bond_angle_deg,empirical_polarity,empirical_imf,empirical_boiling_point_C,empirical_melting_point_C,empirical_density_g_cm3,empirical_enthalpy_combustion_kJ_mol,empirical_reaction_class
+1,CO2,O=C=O,linear,180,nonpolar,london_dispersion,-78.5,,,
+2,H2O,O,bent,104.5,polar,hydrogen_bonding,100,0,1.0,,
+3,NH3,N,trigonal_pyramidal,107,polar,hydrogen_bonding,-33.3,-77.7,0.73,,
+4,CH4,C,tetrahedral,109.5,nonpolar,london_dispersion,-161.5,-182.5,,-890,combustion
+5,BF3,[B](F)(F)F,trigonal_planar,120,nonpolar,london_dispersion,-99.9,,,,
+6,C2H5OH,CCO,mixed_local,109.5,polar,hydrogen_bonding,78.4,-114.1,0.789,-1367,oxidation_or_combustion
+7,C6H14,CCCCCC,tetrahedral,109.5,nonpolar,london_dispersion,69,-95,0.659,-4163,combustion
+8,C3H6O,CC(=O)C,trigonal_planar,120,polar,dipole_dipole,56.1,-94.7,0.784,,
+9,C8H18,CCCCCCCC,tetrahedral,109.5,nonpolar,london_dispersion,125.7,-56.8,0.703,-5471,combustion
+10,HCl,[H]Cl,linear,180,polar,dipole_dipole,-85.1,-114.2,,,acid_base
+11,NaOH,[Na]O,linear,,polar,ionic,1388,323,2.13,,acid_base
+12,CH3OH,CO,mixed_local,109.5,polar,hydrogen_bonding,64.7,-97.6,0.792,-726,oxidation_or_combustion
+13,C2H6,CC,tetrahedral,109.5,nonpolar,london_dispersion,-88.6,-182.8,,-1561,combustion
+14,C3H8,CCC,tetrahedral,109.5,nonpolar,london_dispersion,-42.1,-187.7,,-2220,combustion
+15,SF6,F[S](F)(F)(F)(F)F,octahedral,90,nonpolar,london_dispersion,-63.9,,,,
+16,PCl5,Cl[P](Cl)(Cl)(Cl)Cl,trigonal_bipyramidal,,nonpolar,london_dispersion,166.8,,,,

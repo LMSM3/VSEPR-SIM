@@ -1,0 +1,19 @@
+{
+  "formula": "C2H6",
+  "seed": 476,
+  "tier": "medium",
+  "num_atoms": 8,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 263.148406,
+  "energy_per_atom": 32.893551,
+  "rms_force": 539.362594,
+  "max_force": 539.362594,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.312300,
+  "timestamp": "2026-03-28T13:03:44",
+  "xyz_file": "benchmark_v2\medium\structures\C2H6_s476.xyz"
+}

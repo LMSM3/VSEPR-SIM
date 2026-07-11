@@ -1,0 +1,105 @@
+# scripts/demo_06_batch_sweep.vsim
+# =============================================================================
+# Beta-10 [batch] — parameter sweep execution
+#
+# What changed from beta-8:
+#   beta-8: No batch section. Parameter sweeps required launching separate
+#           processes manually or via shell scripts.
+#   beta-10: [batch] section declaratively describes parameter sweeps.
+#            The runtime expands each job into N independent sub-runs and
+#            aggregates results.
+#
+# Batch syntax:
+#   [batch]
+#   job         = <name>    ← starts a new job entry
+#   <param>     = [v1, v2]  ← sweep axis (temperature, lattice, defect, seed…)
+#   seed_count  = N         ← seeds per parameter point
+#   aggregate   = true      ← collect results into a single report
+#   analyze     = <action>  ← per-run post-processing action
+#   measure     = <probe>   ← N_evolution / variance probe to record
+#
+# Two jobs in this script:
+#   1. nacl_pressure_sweep  — cell compression at 3 pressures × 3 seeds
+#   2. temperature_melt     — NaCl from 300 K → 2000 K; track energy variance
+#
+# Run: vsper validate scripts/demo_06_batch_sweep.vsim
+# =============================================================================
+
+[project]
+name        = demo_06_batch_sweep
+version     = v5.0.0-beta.10
+seed_base   = 6001
+determinism = true
+
+# ── Material (shared across all batch jobs) ───────────────────────────────────
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "3x3x3"
+phase     = "solid"
+
+# ── Run defaults (overridden per job by the batch engine) ─────────────────────
+[run]
+mode         = "relax"
+max_steps    = 600
+converge     = true
+output_level = "minimal"
+
+# ── Variance probes (evaluated per sub-run) ───────────────────────────────────
+[variance]
+print_results = true
+energy_var    = "energy.total  last 50  0.05"
+
+# ── Batch definition ──────────────────────────────────────────────────────────
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: pressure sweep (NPT relax)
+job           = nacl_pressure_sweep
+temperature   = ["300"]
+pressure      = ["0.0", "5.0", "20.0"]
+seed_count    = 3
+export_each   = false
+aggregate     = true
+analyze       = rmsd
+analyze       = variance displacement
+measure       = energy_var
+
+# Job 2: temperature melt ramp (NVT MD)
+job           = temperature_melt
+temperature   = ["300", "600", "900", "1300", "2000"]
+seed_count    = 1
+aggregate     = true
+analyze       = variance energy.total
+measure       = energy_var
+
+# ── Kernel ────────────────────────────────────────────────────────────────────
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+# ── Output ────────────────────────────────────────────────────────────────────
+[export]
+write_xyz           = false
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_jsonl  = true
+write_manifest_json = true
+output_dir          = "out/demo_06"
+
+[visual]
+output_type              = "terminal_chart"
+animation_mode           = "bar"
+render_interval          = 100
+show_proxy_table         = true
+show_convergence_trace   = false
+show_steady_state_marker = true
+show_bar_chart           = true
+show_event_timeline      = false

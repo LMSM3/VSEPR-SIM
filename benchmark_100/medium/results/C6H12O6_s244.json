@@ -1,0 +1,19 @@
+{
+  "formula": "C6H12O6",
+  "seed": 244,
+  "tier": "medium",
+  "num_atoms": 24,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 1446577.594164,
+  "energy_per_atom": 60274.066424,
+  "rms_force": 1941950.133772,
+  "max_force": 1941950.133772,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 3.692200,
+  "timestamp": "2026-03-28T12:54:03",
+  "xyz_file": "benchmark_100\medium\structures\C6H12O6_s244.xyz"
+}

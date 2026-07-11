@@ -1,0 +1,73 @@
+# beta7_pipeline_smoke.vsim
+# =========================
+# Gate 1 smoke test for Phase 1 — Real Simulation Exit Wiring.
+#
+# This script is the canonical "power button" test.
+# Running it via:
+#
+#   vsepr run scripts/beta7_pipeline_smoke.vsim
+#
+# must produce:
+#
+#   [PASS] simulation completed
+#   [PASS] KernelEventLog populated
+#   [PASS] run_pipeline invoked from real exit path
+#   [PASS] ClusterRecord produced
+#   [PASS] AnalysisRecord produced
+#
+# Expected outputs in out/beta7_pipeline_smoke/:
+#   events.jsonl              — KernelEventLog full trace
+#   events.md                 — Markdown audit table
+#   pipeline_dashboard.md     — Aggregated pipeline result table
+#
+# Doctrine: reporting is script-declared, not autonomous.
+# This script declares exactly what it wants.
+#
+# WO-56C / beta-7 Phase 1 gate test
+
+[project]
+name        = beta7_pipeline_smoke
+version     = v5.0.0-beta.7
+seed_base   = 42
+determinism = true
+
+[simulation]
+molecules           = Au:2,Fe:2,W:1
+fire_max_steps      = 300
+fire_dt_fs          = 1.0
+box_size_ang        = 30.0
+periodic            = false
+formation_preset    = metal
+step_delay_ms       = 0
+resim_delay_ms      = 0
+smooth_resim        = false
+
+[variance]
+probe energy_var
+  field     = energy.total
+  window    = all
+  threshold = 0.10
+end
+
+[N_evolution]
+probe cluster_growth
+  target    = cluster_count
+  window    = all
+  threshold = 0.05
+end
+
+[while]
+guard equilibrate
+  condition  = variance energy_var > 0.10
+  body_steps = 100
+  max_iters  = 3
+end
+
+[export]
+output_dir                 = out/beta7_pipeline_smoke
+write_events_json          = true
+write_report_md            = true
+write_analysis_json        = true
+write_dashboard_svg        = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true

@@ -24,7 +24,7 @@
 \title{\textbf{Formation Engine Methodology} \\
 \Large Section 11 — Deterministic Pipeline and Self-Audit}
 \author{Formation Engine Development Team}
-\date{Version 0.1 — As Implemented in Codebase}
+\date{Version 3.0.0 — As Implemented in Codebase}
 
 \begin{document}
 \maketitle
@@ -230,7 +230,7 @@ def generate_minimal_repro(self, seed: int, formula: str,
     """Generate minimal reproduction command."""
     
     cmd_parts = [
-        f"./build/meso-sim",
+        f"./build/vsepr-sim",
         f"--formula {formula}",
         f"--seed {seed}",
     ]
@@ -243,7 +243,7 @@ def generate_minimal_repro(self, seed: int, formula: str,
 
 \paragraph{Example output:}
 \begin{verbatim}
-./build/meso-sim --formula NaCl --seed 12345 --temp 5000 --dt 10
+./build/vsepr-sim --formula NaCl --seed 12345 --temp 5000 --dt 10
 \end{verbatim}
 
 This allows instant reproduction of any failure without searching through logs.
@@ -278,7 +278,7 @@ The classifier produces a JSON report:
       "seed": 12345,
       "formula": "H2O",
       "params": {"temp": 300, "dt": 0.001},
-      "minimal_repro": "./build/meso-sim --formula H2O --seed 12345 ..."
+      "minimal_repro": "./build/vsepr-sim --formula H2O --seed 12345 ..."
     },
     ...
   ]
@@ -689,7 +689,7 @@ Regression Detector & Config changes & Invariant breaks + verdict \\
 \begin{lstlisting}[language=bash]
 # Run 10 times
 for i in {1..10}; do
-    ./build/meso-sim --formula H2O --seed 42 --output run_$i.xyz
+    ./build/vsepr-sim --formula H2O --seed 42 --output run_$i.xyz
     sha256sum run_$i.xyz >> hashes.txt
 done
 

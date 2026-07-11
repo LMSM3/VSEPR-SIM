@@ -1,0 +1,19 @@
+{
+  "formula": "ZnFe2O4",
+  "seed": 910,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 53.060226,
+  "energy_per_atom": 7.580032,
+  "rms_force": 91.098288,
+  "max_force": 91.098288,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.129300,
+  "timestamp": "2026-03-28T13:05:41",
+  "xyz_file": "benchmark_v2\medium\structures\ZnFe2O4_s910.xyz"
+}

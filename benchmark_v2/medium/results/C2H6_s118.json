@@ -1,0 +1,19 @@
+{
+  "formula": "C2H6",
+  "seed": 118,
+  "tier": "medium",
+  "num_atoms": 8,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 137.075557,
+  "energy_per_atom": 17.134445,
+  "rms_force": 213.918722,
+  "max_force": 213.918722,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.809600,
+  "timestamp": "2026-03-28T13:04:33",
+  "xyz_file": "benchmark_v2\medium\structures\C2H6_s118.xyz"
+}

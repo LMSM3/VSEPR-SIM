@@ -1,0 +1,19 @@
+{
+  "formula": "C4H10",
+  "seed": 231,
+  "tier": "fast",
+  "num_atoms": 14,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 373830.377753,
+  "energy_per_atom": 26702.169840,
+  "rms_force": 1349853.523654,
+  "max_force": 1349853.523654,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.463500,
+  "timestamp": "2026-03-28T13:07:16",
+  "xyz_file": "benchmark_v2\fast\structures\C4H10_s231.xyz"
+}

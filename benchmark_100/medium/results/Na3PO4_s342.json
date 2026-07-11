@@ -1,0 +1,19 @@
+{
+  "formula": "Na3PO4",
+  "seed": 342,
+  "tier": "medium",
+  "num_atoms": 8,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 665.406645,
+  "energy_per_atom": 83.175831,
+  "rms_force": 936.274878,
+  "max_force": 936.274878,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.836500,
+  "timestamp": "2026-03-28T12:55:58",
+  "xyz_file": "benchmark_100\medium\structures\Na3PO4_s342.xyz"
+}

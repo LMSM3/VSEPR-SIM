@@ -1,0 +1,19 @@
+{
+  "formula": "C4H6",
+  "seed": 126,
+  "tier": "medium",
+  "num_atoms": 10,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 11241.860478,
+  "energy_per_atom": 1124.186048,
+  "rms_force": 22643.886168,
+  "max_force": 22643.886168,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.289900,
+  "timestamp": "2026-03-28T12:55:32",
+  "xyz_file": "benchmark_100\medium\structures\C4H6_s126.xyz"
+}

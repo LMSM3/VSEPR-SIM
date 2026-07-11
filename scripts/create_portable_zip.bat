@@ -1,16 +1,16 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 REM ============================================================================
 REM Create Portable Distribution Package
 REM ============================================================================
 
 echo.
-echo ╔═══════════════════════════════════════════════════════════════╗
-echo ║          VSEPR-Sim Portable Distribution Creator             ║
-echo ╚═══════════════════════════════════════════════════════════════╝
+echo â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+echo â•‘          VSEPR-Sim Portable Distribution Creator             â•‘
+echo â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 echo.
 
-set "VERSION=2.0.0"
+set "VERSION=5.0.0"
 set "PROJECT_ROOT=%~dp0.."
 set "DIST_DIR=%PROJECT_ROOT%\dist-portable"
 set "OUTPUT_ZIP=%PROJECT_ROOT%\vsepr-sim-v%VERSION%-portable.zip"
@@ -19,8 +19,8 @@ REM ============================================================================
 REM Check Prerequisites
 REM ============================================================================
 
-if not exist "%PROJECT_ROOT%\build\bin\vsepr.exe" (
-    echo ✗ ERROR: vsepr.exe not found!
+if not exist "%PROJECT_ROOT%\build\vsepr.exe" (
+    echo âœ— ERROR: vsepr.exe not found!
     echo Please build the project first:
     echo   build_windows.bat --clean
     echo.
@@ -28,14 +28,14 @@ if not exist "%PROJECT_ROOT%\build\bin\vsepr.exe" (
     exit /b 1
 )
 
-echo ✓ Executable found
+echo âœ“ Executable found
 echo.
 
 REM ============================================================================
 REM Create Distribution Directory
 REM ============================================================================
 
-echo ▶ Creating distribution directory...
+echo â–¶ Creating distribution directory...
 
 if exist "%DIST_DIR%" (
     rmdir /s /q "%DIST_DIR%"
@@ -48,40 +48,40 @@ mkdir "%DIST_DIR%\data"
 mkdir "%DIST_DIR%\docs"
 mkdir "%DIST_DIR%\examples"
 
-echo ✓ Directory structure created
+echo âœ“ Directory structure created
 echo.
 
 REM ============================================================================
 REM Copy Files
 REM ============================================================================
 
-echo ▶ Copying executables...
-copy /Y "%PROJECT_ROOT%\build\bin\vsepr.exe" "%DIST_DIR%\bin\" >nul
-copy /Y "%PROJECT_ROOT%\build\bin\vsepr_batch.exe" "%DIST_DIR%\bin\" >nul
-copy /Y "%PROJECT_ROOT%\build\bin\md_demo.exe" "%DIST_DIR%\bin\" >nul
-echo ✓ Executables copied
+echo â–¶ Copying executables...
+copy /Y "%PROJECT_ROOT%\build\vsepr.exe" "%DIST_DIR%\bin\" >nul
+copy /Y "%PROJECT_ROOT%\build\vsepr_batch.exe" "%DIST_DIR%\bin\" >nul
+copy /Y "%PROJECT_ROOT%\build\md_demo.exe" "%DIST_DIR%\bin\" >nul
+echo âœ“ Executables copied
 
-echo ▶ Copying data files...
+echo â–¶ Copying data files...
 xcopy /E /I /Y "%PROJECT_ROOT%\data\*" "%DIST_DIR%\data\" >nul
-echo ✓ Data files copied
+echo âœ“ Data files copied
 
-echo ▶ Copying documentation...
+echo â–¶ Copying documentation...
 xcopy /E /I /Y "%PROJECT_ROOT%\docs\*" "%DIST_DIR%\docs\" >nul
 copy /Y "%PROJECT_ROOT%\README.md" "%DIST_DIR%\" >nul
 copy /Y "%PROJECT_ROOT%\LICENSE" "%DIST_DIR%\" 2>nul
 copy /Y "%PROJECT_ROOT%\CHANGELOG.md" "%DIST_DIR%\" >nul
-echo ✓ Documentation copied
+echo âœ“ Documentation copied
 
-echo ▶ Copying examples...
+echo â–¶ Copying examples...
 copy /Y "%PROJECT_ROOT%\*.xyz" "%DIST_DIR%\examples\" 2>nul
-echo ✓ Examples copied
+echo âœ“ Examples copied
 
-echo ▶ Copying launcher...
+echo â–¶ Copying launcher...
 copy /Y "%PROJECT_ROOT%\vsepr.bat" "%DIST_DIR%\" >nul
-echo ✓ Launcher copied
+echo âœ“ Launcher copied
 
 REM Create portable launcher
-echo ▶ Creating portable launcher...
+echo â–¶ Creating portable launcher...
 (
 echo @echo off
 echo REM VSEPR-Sim Portable Launcher
@@ -92,10 +92,10 @@ echo set "PATH=%%VSEPR_ROOT%%bin;%%PATH%%"
 echo.
 echo "%%VSEPR_ROOT%%bin\vsepr.exe" %%*
 ) > "%DIST_DIR%\vsepr-portable.bat"
-echo ✓ Portable launcher created
+echo âœ“ Portable launcher created
 
 REM Create README for portable version
-echo ▶ Creating portable README...
+echo â–¶ Creating portable README...
 (
 echo # VSEPR-Sim v%VERSION% - Portable Edition
 echo.
@@ -137,7 +137,7 @@ echo ## Support
 echo.
 echo For help and documentation, visit the docs folder.
 ) > "%DIST_DIR%\README_PORTABLE.txt"
-echo ✓ Portable README created
+echo âœ“ Portable README created
 
 echo.
 
@@ -145,7 +145,7 @@ REM ============================================================================
 REM Create ZIP Archive
 REM ============================================================================
 
-echo ▶ Creating ZIP archive...
+echo â–¶ Creating ZIP archive...
 
 if exist "%OUTPUT_ZIP%" (
     del /f "%OUTPUT_ZIP%"
@@ -154,7 +154,7 @@ if exist "%OUTPUT_ZIP%" (
 powershell -Command "Compress-Archive -Path '%DIST_DIR%\*' -DestinationPath '%OUTPUT_ZIP%' -CompressionLevel Optimal"
 
 if errorlevel 1 (
-    echo ✗ Failed to create ZIP archive
+    echo âœ— Failed to create ZIP archive
     pause
     exit /b 1
 )
@@ -163,31 +163,31 @@ REM Get ZIP size
 for %%F in ("%OUTPUT_ZIP%") do set ZIP_SIZE=%%~zF
 set /a ZIP_SIZE_MB=!ZIP_SIZE! / 1048576
 
-echo ✓ ZIP archive created
+echo âœ“ ZIP archive created
 echo.
 
 REM ============================================================================
 REM Generate Checksum
 REM ============================================================================
 
-echo ▶ Generating checksum...
+echo â–¶ Generating checksum...
 certutil -hashfile "%OUTPUT_ZIP%" SHA256 | findstr /v ":" | findstr /v "CertUtil" > "%PROJECT_ROOT%\vsepr-sim-v%VERSION%-portable.sha256"
-echo ✓ Checksum generated
+echo âœ“ Checksum generated
 echo.
 
 REM ============================================================================
 REM Summary
 REM ============================================================================
 
-echo ╔═══════════════════════════════════════════════════════════════╗
-echo ║                    Build Complete                             ║
-echo ╚═══════════════════════════════════════════════════════════════╝
+echo â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+echo â•‘                    Build Complete                             â•‘
+echo â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 echo.
-echo ✓ Portable distribution created:
+echo âœ“ Portable distribution created:
 echo   %OUTPUT_ZIP%
 echo   Size: !ZIP_SIZE_MB! MB
 echo.
-echo ✓ SHA256 checksum:
+echo âœ“ SHA256 checksum:
 type "%PROJECT_ROOT%\vsepr-sim-v%VERSION%-portable.sha256"
 echo.
 echo Distribution ready for:
@@ -200,3 +200,4 @@ echo.
 
 pause
 exit /b 0
+

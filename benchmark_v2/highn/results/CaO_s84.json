@@ -1,0 +1,19 @@
+{
+  "formula": "CaO",
+  "seed": 84,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 7840,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.119499,
+  "energy_per_atom": -0.059749,
+  "rms_force": 0.000087,
+  "max_force": 0.000087,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 0.886100,
+  "timestamp": "2026-03-28T13:05:00",
+  "xyz_file": "benchmark_v2\highn\structures\CaO_s84.xyz"
+}

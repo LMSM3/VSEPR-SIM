@@ -1,0 +1,19 @@
+{
+  "formula": "MgSO4",
+  "seed": 448,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 51.978092,
+  "energy_per_atom": 8.663015,
+  "rms_force": 105.860316,
+  "max_force": 105.860316,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.612500,
+  "timestamp": "2026-03-28T13:03:47",
+  "xyz_file": "benchmark_v2\medium\structures\MgSO4_s448.xyz"
+}

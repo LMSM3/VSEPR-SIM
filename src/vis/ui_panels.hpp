@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * ui_panels.hpp
  * -------------
@@ -18,6 +18,7 @@ namespace vsepr {
 // Forward declaration
 class Renderer;
 class CommandRouter;
+class AutoPilot;
 
 /**
  * UI Manager for ImGui panels.
@@ -53,6 +54,8 @@ public:
     // GPU/OpenGL status panel
     void render_gpu_status_panel(Renderer* renderer);
     
+    void set_auto_pilot(AutoPilot* p) { auto_pilot_ = p; }
+    void render_auto_pilot_panel(AutoPilot& pilot);
     // Settings - Console-first UI: only command console shown by default
     bool show_control_panel = false;
     bool show_parameters_panel = false;
@@ -62,10 +65,12 @@ public:
     bool show_gpu_status_panel = true;  // GPU status visible by default
     bool show_demo_window = false;
     bool show_command_console = false;  // Start hidden, toggle with ~
+    bool show_auto_pilot_panel = false;
     
 private:
     // Command router for sending commands (not owned)
     CommandRouter* command_router_ = nullptr;
+    AutoPilot* auto_pilot_ = nullptr;
     // UI state
     int selected_mode_ = 0;
     
@@ -106,3 +111,4 @@ private:
 };
 
 } // namespace vsepr
+

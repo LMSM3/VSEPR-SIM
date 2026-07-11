@@ -1,0 +1,19 @@
+{
+  "formula": "P4O10",
+  "seed": 216,
+  "tier": "medium",
+  "num_atoms": 14,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 602900.981918,
+  "energy_per_atom": 43064.355851,
+  "rms_force": 1456685.706264,
+  "max_force": 1456685.706264,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.653200,
+  "timestamp": "2026-03-28T13:03:34",
+  "xyz_file": "benchmark_v2\medium\structures\P4O10_s216.xyz"
+}

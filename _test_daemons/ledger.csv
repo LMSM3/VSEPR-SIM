@@ -1,0 +1,7 @@
+timestamp,formula,seed,tier,num_atoms,steps,max_steps,energy,energy_per_atom,rms_force,classification,wall_ms,converged,conformer,phi
+2025-01-01T00:00:00,C4H10,42,screen,10,800,1000,18.12074,1.812074,0.0001,stable,12.3,1,anti,-180.0
+2025-01-01T00:00:01,C4H10,43,screen,10,800,1000,18.12074,1.812074,0.0001,stable,12.3,1,gauche+,61.25
+2025-01-01T00:00:02,C4H10,44,screen,10,800,1000,18.12074,1.812074,0.0001,stable,12.3,1,gauche-,-57.41
+2025-01-01T00:00:03,CH4,42,screen,5,80,100,-89.5,-17.9,0.0005,stable,15.1,1,,
+2025-01-01T00:00:04,Fe2O3,42,screen,5,80,100,-196.4,-98.2,0.0005,stable,15.1,1,,
+2025-01-01T00:00:05,Ne,42,screen,1,10,10,0.0,0.0,0.0,stable,1.0,1,,

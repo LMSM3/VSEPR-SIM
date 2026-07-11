@@ -55,6 +55,9 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
+    // Open a .vsim script on startup (called from main after w.show())
+    void openVsimPath(const QString& path);
+
 protected:
     void closeEvent(QCloseEvent* event) override;
 
@@ -63,6 +66,7 @@ private slots:
     void onFileOpen();
     void onFileSave();
     void onFileExportImage();
+    void onScreenshot();
 
     // Simulation
     void onRunRelax();
@@ -71,10 +75,12 @@ private slots:
 
     // View
     void onResetCamera();
+    void onFitCamera();
     void onToggleWireframe();
 
     // Console
     void onCommand(const QString& cmd);
+    void onClearConsole();
 
 private:
     void createActions();
@@ -109,6 +115,7 @@ private:
     QAction* openAct_;
     QAction* saveAct_;
     QAction* exportImageAct_;
+    QAction* screenshotAct_;
     QAction* exitAct_;
 
     QAction* relaxAct_;
@@ -116,5 +123,8 @@ private:
     QAction* singlePointAct_;
 
     QAction* resetCameraAct_;
+    QAction* fitCameraAct_;
     QAction* wireframeAct_;
+
+    QAction* clearConsoleAct_;
 };

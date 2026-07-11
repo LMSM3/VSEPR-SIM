@@ -1,10 +1,10 @@
-# run_cli_tests.ps1
+﻿# run_cli_tests.ps1
 # VSEPR-Sim CLI smoke/regression automation (PowerShell)
 # Runs representative user-path commands, validates exit codes and artifacts
 #
 # Usage:
 #   .\scripts\run_cli_tests.ps1
-#   $env:VSEPR_BIN=".\build\bin\vsepr.exe"; .\scripts\run_cli_tests.ps1
+#   $env:VSEPR_BIN=".\build\vsepr.exe"; .\scripts\run_cli_tests.ps1
 #
 # Exit codes:
 #   0 = all tests passed
@@ -26,15 +26,15 @@ $ProjectRoot = Split-Path -Parent $PSScriptRoot
 # Respect user override; otherwise auto-detect
 $VseprBin = $env:VSEPR_BIN
 if (-not $VseprBin) {
-    if (Test-Path "$ProjectRoot\build\bin\vsepr.exe") {
-        $VseprBin = "$ProjectRoot\build\bin\vsepr.exe"
-    } elseif (Test-Path "$ProjectRoot\build\bin\molecule_builder.exe") {
-        $VseprBin = "$ProjectRoot\build\bin\molecule_builder.exe"
+    if (Test-Path "$ProjectRoot\build\vsepr.exe") {
+        $VseprBin = "$ProjectRoot\build\vsepr.exe"
+    } elseif (Test-Path "$ProjectRoot\build\molecule_builder.exe") {
+        $VseprBin = "$ProjectRoot\build\molecule_builder.exe"
     } else {
-        Write-Host "✗ Could not find VSEPR binary" -ForegroundColor Red
+        Write-Host "âœ— Could not find VSEPR binary" -ForegroundColor Red
         Write-Host "  Tried:" -ForegroundColor Yellow
-        Write-Host "    $ProjectRoot\build\bin\vsepr.exe" -ForegroundColor Yellow
-        Write-Host "    $ProjectRoot\build\bin\molecule_builder.exe" -ForegroundColor Yellow
+        Write-Host "    $ProjectRoot\build\vsepr.exe" -ForegroundColor Yellow
+        Write-Host "    $ProjectRoot\build\molecule_builder.exe" -ForegroundColor Yellow
         Write-Host "  Set `$env:VSEPR_BIN or run 'cmake --build build' first" -ForegroundColor Yellow
         exit 1
     }
@@ -78,7 +78,7 @@ function Run-Cmd {
     $OutFile = "$RunDir\$SafeName.out"
     $ErrFile = "$RunDir\$SafeName.err"
     
-    Say "• $Name : $VseprBin $($Args -join ' ')"
+    Say "â€¢ $Name : $VseprBin $($Args -join ' ')"
     
     $output = & $VseprBin @Args 2>&1
     $rc = $LASTEXITCODE
@@ -87,13 +87,13 @@ function Run-Cmd {
     $output | Add-Content -Path $StdoutLog
     
     if ($rc -ne $ExpectedRc) {
-        Say "  ✗ FAIL: $Name (rc=$rc, expected=$ExpectedRc)"
+        Say "  âœ— FAIL: $Name (rc=$rc, expected=$ExpectedRc)"
         Say "    stdout: $OutFile"
         $script:FailCount++
         return $false
     }
     
-    Say "  ✓ OK (rc=$rc)"
+    Say "  âœ“ OK (rc=$rc)"
     $script:PassCount++
     return $true
 }
@@ -102,12 +102,12 @@ function Assert-FileExistsNonempty {
     param([string]$Path)
     
     if (-not (Test-Path $Path) -or (Get-Item $Path).Length -eq 0) {
-        Say "  ✗ FAIL: expected non-empty file: $Path"
+        Say "  âœ— FAIL: expected non-empty file: $Path"
         $script:FailCount++
         return $false
     }
     
-    Say "  ✓ file exists: $Path"
+    Say "  âœ“ file exists: $Path"
     $script:PassCount++
     return $true
 }
@@ -116,7 +116,7 @@ function Assert-XyzHeaderSane {
     param([string]$Path)
     
     if (-not (Test-Path $Path)) {
-        Say "  ✗ FAIL: missing xyz: $Path"
+        Say "  âœ— FAIL: missing xyz: $Path"
         $script:FailCount++
         return $false
     }
@@ -126,18 +126,18 @@ function Assert-XyzHeaderSane {
     $line2 = $lines[1].Trim()
     
     if ($line1 -notmatch '^\d+$') {
-        Say "  ✗ FAIL: xyz line1 not an integer atom count: '$line1' ($Path)"
+        Say "  âœ— FAIL: xyz line1 not an integer atom count: '$line1' ($Path)"
         $script:FailCount++
         return $false
     }
     
     if ([string]::IsNullOrWhiteSpace($line2)) {
-        Say "  ✗ FAIL: xyz line2 comment missing/empty ($Path)"
+        Say "  âœ— FAIL: xyz line2 comment missing/empty ($Path)"
         $script:FailCount++
         return $false
     }
     
-    Say "  ✓ xyz header sane: $Path (atoms=$line1)"
+    Say "  âœ“ xyz header sane: $Path (atoms=$line1)"
     $script:PassCount++
     return $true
 }
@@ -151,12 +151,12 @@ function Assert-Contains {
     
     $content = Get-Content $Path -Raw -ErrorAction SilentlyContinue
     if (-not $content -or $content -notmatch $Pattern) {
-        Say "  ✗ FAIL: missing '$Label' (/$Pattern/) in $Path"
+        Say "  âœ— FAIL: missing '$Label' (/$Pattern/) in $Path"
         $script:FailCount++
         return $false
     }
     
-    Say "  ✓ contains: $Label"
+    Say "  âœ“ contains: $Label"
     $script:PassCount++
     return $true
 }
@@ -188,10 +188,10 @@ if (Run-Cmd "version -v" 0 @("-v")) { $verOk = $true }
 if (Run-Cmd "version subcmd" 0 @("version")) { $verOk = $true }
 
 if (-not $verOk) {
-    Say "  ⚠ WARNING: No version command worked"
+    Say "  âš  WARNING: No version command worked"
     Say "  This is acceptable if not yet implemented"
 } else {
-    Say "  ✓ At least one version command works"
+    Say "  âœ“ At least one version command works"
     $script:PassCount++
 }
 
@@ -253,7 +253,7 @@ Say ""
 Say "=== Test Suite: Visualization ==="
 
 if ($SkipViz) {
-    Say "  • Viz tests skipped (-SkipViz)"
+    Say "  â€¢ Viz tests skipped (-SkipViz)"
 } else {
     $vizOk = $false
     
@@ -265,18 +265,18 @@ if ($SkipViz) {
     if ($rc -eq 0) {
         $vfile = Get-ChildItem -Filter "*_viewer.html" -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($vfile) {
-            Say "  ✓ Viz artifact: $OutDir\$($vfile.Name)"
+            Say "  âœ“ Viz artifact: $OutDir\$($vfile.Name)"
             $script:PassCount++
             $vizOk = $true
         } else {
-            Say "  ⚠ XYZ created but no *_viewer.html found"
+            Say "  âš  XYZ created but no *_viewer.html found"
         }
     }
     
     Pop-Location
     
     if (-not $vizOk) {
-        Say "  • No validated HTML output (may require explicit --viz flag)"
+        Say "  â€¢ No validated HTML output (may require explicit --viz flag)"
     }
 }
 
@@ -312,24 +312,24 @@ Say ""
 
 Say "=== Test Suite: Formula Parser ==="
 
-if (Test-Path "$ProjectRoot\build\bin\test_formula_parser.exe") {
-    Say "• Running formula parser tests..."
+if (Test-Path "$ProjectRoot\build\test_formula_parser.exe") {
+    Say "â€¢ Running formula parser tests..."
     
-    $output = & "$ProjectRoot\build\bin\test_formula_parser.exe" 2>&1
+    $output = & "$ProjectRoot\build\test_formula_parser.exe" 2>&1
     $rc = $LASTEXITCODE
     
     $output | Out-File "$RunDir\formula_parser.out"
     
     if ($rc -eq 0) {
-        Say "  ✓ Formula parser tests PASSED"
+        Say "  âœ“ Formula parser tests PASSED"
         $script:PassCount++
     } else {
-        Say "  ✗ Formula parser tests FAILED (rc=$rc)"
+        Say "  âœ— Formula parser tests FAILED (rc=$rc)"
         Say "    Output: $RunDir\formula_parser.out"
         $script:FailCount++
     }
 } else {
-    Say "  • Formula parser tests not built (skipping)"
+    Say "  â€¢ Formula parser tests not built (skipping)"
 }
 
 Say ""
@@ -340,15 +340,15 @@ Say ""
 
 Say "=== Test Suite: Batch Processing ==="
 
-if (Test-Path "$ProjectRoot\build\bin\vsepr_batch.exe") {
+if (Test-Path "$ProjectRoot\build\vsepr_batch.exe") {
     $BatchOut = "$OutDir\batch_test"
     New-Item -ItemType Directory -Path $BatchOut -Force | Out-Null
     
     Run-Cmd "vsepr_batch simple" 0 @("H2O, CO2 -per{50,50}", "--out", $BatchOut, "--dry-run") | Out-Null
     
-    Say "  • Batch runner available"
+    Say "  â€¢ Batch runner available"
 } else {
-    Say "  • Batch runner not built (skipping)"
+    Say "  â€¢ Batch runner not built (skipping)"
 }
 
 Say ""
@@ -386,11 +386,12 @@ Say "  summary: $SummaryLog"
 Say ""
 
 if ($script:FailCount -ne 0) {
-    Say "✗ Some tests failed"
+    Say "âœ— Some tests failed"
     Say "  Review logs in $RunDir"
     exit 1
 }
 
-Say "✓ All tests passed"
+Say "âœ“ All tests passed"
 Say "  Artifacts saved to $OutDir"
 exit 0
+

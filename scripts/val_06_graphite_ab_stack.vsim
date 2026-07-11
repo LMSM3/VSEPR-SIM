@@ -1,0 +1,112 @@
+# scripts/validation/val_06_graphite_ab_stack.vsim
+# Priority 6 — Graphite AB (Bernal) stacking
+# Geometry: layered anisotropic, hexagonal (P6₃/mmc)
+# Main modules: dispersion correction + anisotropic PBC
+# External target: interlayer spacing c/2 = 3.354 Å, a = 2.461 Å
+# This test is dispersion-dominated in the c direction
+# In-plane: covalent C-C bonds (not Ewald)
+# Interlayer: van der Waals only → requires D3/D4 or similar dispersion correction
+# Confirm: dispersion correction module status in codebase
+# vsper validate scripts/validation/val_06_graphite_ab_stack.vsim
+
+[project]
+name        = val_06_graphite_ab_stack
+version     = v5.0.0-beta.8
+seed_base   = 8006
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[cell]
+# Hexagonal → orthorhombic supercell
+# a_orth = a, b_orth = a*sqrt(3), c_orth = c
+# a(graphite) = 2.461 Å, c = 6.708 Å (2 layers, AB stacking)
+type    = orthorhombic
+lengths = 2.4610, 4.2627, 6.7080
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+# Note: anisotropy test — in-plane periodic, c-axis periodic with 2-layer repeat
+# A truly isolated bilayer would use z = open; periodic c tests bulk interlayer
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = false
+
+[species.C]
+charge = 0.0
+mass   = 12.011
+# Graphite is neutral; no Ewald required
+# In-plane interactions: bond + angle (covalent model)
+# Interlayer: dispersion only
+
+[material]
+id      = graphite_ab
+formula = C
+classes = layered,hexagonal,sp2_carbon,anisotropic
+
+[material.structure]
+type     = graphite_ab_lattice
+# Layer A: C at (0,0,0) and (1/3,2/3,0)
+# Layer B: C at (0,0,1/2) and (2/3,1/3,1/2) [AB Bernal shift]
+elements = C
+a0       = 2.4610
+c0       = 6.7080
+
+[dispersion]
+method  = d3_bj
+# Confirm: D3(BJ) or equivalent dispersion correction available
+# If absent: flag as PARTIAL, record interlayer energy as uncorrected
+cutoff  = 12.0
+units   = angstrom
+
+[formation]
+mode        = relax_lattice_c
+# Allow c-axis to relax; fix a to experimental value
+# This is the primary physical test: does dispersion correction reproduce interlayer spacing?
+relax_steps = 1000
+dt          = 0.001
+
+[analysis]
+interlayer_spacing = true
+lattice_constants  = true
+rdf                = true
+rdf_pairs          = C-C
+rdf_rmax           = 10.0
+rdf_bins           = 200
+anisotropy_ratio   = true
+# anisotropy: in-plane C-C ≈ 1.421 Å vs interlayer ≈ 3.354 Å
+
+[expected]
+interlayer_spacing    = 3.354
+interlayer_tol        = 0.05
+# Tight tolerance — dispersion correction should recover this to ±0.05 Å
+bond_length_C_C       = 1.421
+bond_length_tol       = 0.02
+anisotropy_ratio_min  = 2.0
+# ratio = interlayer / in-plane C-C; must be >> 1 to confirm layered character
+
+[run]
+mode  = fire_relax
+steps = 1000
+dt    = 0.001
+force_tolerance = 1e-5
+
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                   = val_06_graphite_ab_stack
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true

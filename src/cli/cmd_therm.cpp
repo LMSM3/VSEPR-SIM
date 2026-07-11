@@ -144,11 +144,87 @@ MATHEMATICAL FOUNDATIONS - Thermal Property Calculations
 #include <iomanip>
 #include <sstream>
 #include <fstream>
+#include <cstdlib>
+#include <ctime>
+#include <map>
+#include <string>
 
 using namespace vsepr;
 using namespace vsepr::cli;
 
 namespace {
+
+// ============================================================================
+// V4 Visual Card — Pre-Thermal Crystal Popup
+// ============================================================================
+
+// Known metallic host atoms from Day #47 reference set.
+// Maps element symbol -> lattice class string.
+static const std::map<std::string, std::string> KNOWN_LATTICE = {
+    {"Au","FCC"},{"Ag","FCC"},{"Cu","FCC"},{"Pt","FCC"},{"Ni","FCC"},{"Al","FCC"},
+    {"Fe","BCC"},{"W", "BCC"},{"Mo","BCC"},{"Cr","BCC"},
+    {"Ti","HCP"},{"Co","HCP"}
+};
+
+/**
+ * Determine the dominant (most frequent) element symbol in an XYZ molecule.
+ * Used to identify the host atom for the crystal card popup.
+ */
+static std::string dominant_element(const io::XYZMolecule& xyz_mol) {
+    std::map<std::string, int> counts;
+    for (const auto& atom : xyz_mol.atoms)
+        ++counts[atom.element];
+    std::string best;
+    int best_n = -1;
+    for (const auto& [sym, n] : counts)
+        if (n > best_n) { best_n = n; best = sym; }
+    return best;
+}
+
+/**
+ * Launch the crystal card popup in a detached background process.
+ *
+ * Fires non-blocking (& in shell): the kernel continues immediately.
+ * The 0.08 s sleep is inside the Python script itself.
+ *
+ * Fires at random: 1-in-3 chance per therm call, preserving surprise
+ * without overwhelming repeated runs.
+ *
+ * @param symbol   Host element symbol (e.g. "Fe")
+ * @param lattice  Lattice class string or empty for auto-detect
+ * @param gamma    V4 gamma score, or -1 if unavailable
+ * @param q_data   V4 data quality score, or -1 if unavailable
+ * @param compact  V4 compactness score, or -1 if unavailable
+ */
+static void fire_crystal_card(
+    const std::string& symbol,
+    const std::string& lattice = "",
+    double gamma   = -1.0,
+    double q_data  = -1.0,
+    double compact = -1.0)
+{
+    // 1-in-3 random trigger
+    std::srand(static_cast<unsigned>(std::time(nullptr)));
+    if (std::rand() % 3 != 0) return;
+
+    // Resolve lattice
+    std::string lat = lattice;
+    if (lat.empty()) {
+        auto it = KNOWN_LATTICE.find(symbol);
+        lat = (it != KNOWN_LATTICE.end()) ? it->second : "FCC";
+    }
+
+    // Build command — Python3, detached (&)
+    std::string cmd = "python3 tools/crystal_card_popup.py "
+                    + symbol + " " + lat;
+    if (gamma   >= 0.0) cmd += " " + std::to_string(gamma);
+    if (q_data  >= 0.0) cmd += " " + std::to_string(q_data);
+    if (compact >= 0.0) cmd += " " + std::to_string(compact);
+    cmd += " &";
+
+    int rc = std::system(cmd.c_str());
+    (void)rc;  // non-blocking; ignore return
+}
 
 // ============================================================================
 // Thermal Evolution Tracking
@@ -218,7 +294,7 @@ void print_thermal_evolution(const ThermalEvolution& evolution) {
         const auto& snap = evolution.snapshots[i];
         int bar_len = static_cast<int>(((snap.props.thermal_conductivity - min_conductivity) / range) * bar_width);
         std::cout << "    Gen " << std::setw(6) << snap.generation << ": [";
-        std::cout << std::string(bar_len, '█') << std::string(bar_width - bar_len, '░');
+        std::cout << std::string(bar_len, '#') << std::string(bar_width - bar_len, '.');
         std::cout << "] " << std::fixed << std::setprecision(2) << snap.props.thermal_conductivity << " W/m·K\n";
     }
 }
@@ -480,7 +556,14 @@ int ThermCommand::Execute(const std::vector<std::string>& args) {
     }
     
     Display::Success("Loaded " + std::to_string(mol.num_atoms()) + " atoms");
-    
+
+    // ── V4 Visual Card: fire crystal popup before thermal classification ──
+    {
+        std::string host = dominant_element(xyz_mol);
+        if (!host.empty())
+            fire_crystal_card(host);
+    }
+
     // Multi-generation mode
     if (num_generations > 0) {
         Display::Info("Running thermal evolution over " + std::to_string(num_generations) + " generations");
@@ -547,26 +630,26 @@ int ThermCommand::Execute(const std::vector<std::string>& args) {
         // Enhanced visualization output
         Display::Subheader("Enhanced Visualization Mode");
         std::cout << "  Bonding Visualization:\n";
-        std::cout << "    • Primary:   [" << std::string(static_cast<int>(props.bonding.ionic_character * 20), '█') 
-                  << std::string(20 - static_cast<int>(props.bonding.ionic_character * 20), '░') << "] Ionic\n";
-        std::cout << "    • Primary:   [" << std::string(static_cast<int>(props.bonding.covalent_character * 20), '█') 
-                  << std::string(20 - static_cast<int>(props.bonding.covalent_character * 20), '░') << "] Covalent\n";
-        
+        std::cout << "    • Primary:   [" << std::string(static_cast<int>(props.bonding.ionic_character * 20), '#') 
+                  << std::string(20 - static_cast<int>(props.bonding.ionic_character * 20), '.') << "] Ionic\n";
+        std::cout << "    • Primary:   [" << std::string(static_cast<int>(props.bonding.covalent_character * 20), '#') 
+                  << std::string(20 - static_cast<int>(props.bonding.covalent_character * 20), '.') << "] Covalent\n";
+
         if (props.bonding.metallic_character > 0.0) {
-            std::cout << "    • Metallic:  [" << std::string(static_cast<int>(props.bonding.metallic_character * 20), '█') 
-                      << std::string(20 - static_cast<int>(props.bonding.metallic_character * 20), '░') << "]\n";
+            std::cout << "    • Metallic:  [" << std::string(static_cast<int>(props.bonding.metallic_character * 20), '#') 
+                      << std::string(20 - static_cast<int>(props.bonding.metallic_character * 20), '.') << "]\n";
         }
-        
+
         std::cout << "\n  Conductivity Scale:\n";
         double conductivity_scale = std::min(1.0, props.thermal_conductivity / 400.0);
-        std::cout << "    Thermal:     [" << std::string(static_cast<int>(conductivity_scale * 20), '█') 
-                  << std::string(20 - static_cast<int>(conductivity_scale * 20), '░') << "] " 
+        std::cout << "    Thermal:     [" << std::string(static_cast<int>(conductivity_scale * 20), '#') 
+                  << std::string(20 - static_cast<int>(conductivity_scale * 20), '.') << "] " 
                   << props.thermal_conductivity << " W/m·K\n";
-        
+
         if (props.is_conductor) {
             double elec_scale = std::min(1.0, std::log10(props.electrical_conductivity) / 8.0);
-            std::cout << "    Electrical:  [" << std::string(static_cast<int>(elec_scale * 20), '█') 
-                      << std::string(20 - static_cast<int>(elec_scale * 20), '░') << "] " 
+            std::cout << "    Electrical:  [" << std::string(static_cast<int>(elec_scale * 20), '#') 
+                      << std::string(20 - static_cast<int>(elec_scale * 20), '.') << "] " 
                       << std::scientific << std::setprecision(2) << props.electrical_conductivity << " S/m\n";
         }
         std::cout << "\n";

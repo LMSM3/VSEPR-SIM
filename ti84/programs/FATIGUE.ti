@@ -1,0 +1,296 @@
+﻿; =========================================================================
+; FATIGUE.ti - S-N Fatigue Life Calculator (v2.0)
+; =========================================================================
+;
+; Full fatigue analysis for fluctuating loading with mean stress correction.
+;
+; Pipeline:
+;   1. Input sigma_max, sigma_min -> decompose to sigma_m, sigma_a
+;   2. Classify loading (R ratio)
+;   3. Load material/Marin from LCONF (999 sentinel)
+;   4. Correct endurance limit:  Se = ka * kb * kc * Se'
+;   5. Fatigue stress conc:      Kf = 1 + q*(Kt - 1)
+;   6. Effective alternating:    sigma_a_eff = Kf * sigma_a
+;   7. S-N curve: a, b, N
+;   8. Mean stress: Goodman safety factor n
+;
+; LCONF layout (set by SETUP):
+;   (1) = Sut [MPa]   (2) = Sy [MPa]     (3) = Sep [MPa]
+;   (4) = ka [-]       (5) = kb [-]        (6) = kc [-]
+;   (7) = Kt [-]       (8) = q [-]
+;
+; Variables used:
+;   S=Sut Y=Sy E=Sep A=ka B=kb C=kc T=Kt Q=q
+;   X=sigma_max  L=sigma_min  M=sigma_m  G=sigma_a
+;   R=stress ratio  W=Se  F=f  D=sn_a  H=sn_b  N=cycles
+;   J=Kf  P=sigma_a_eff  V=n_goodman
+;   K=reserved (getKey)
+;
+; Conventions:  K reserved | 999 sentinel | LCONF reads | no Pause token
+; =========================================================================
+
+ClrHome
+Disp "=== FATIGUE ==="
+Disp "S-N LIFE v2.0"
+Disp ""
+
+; === INPUT: Loading ===
+
+Disp "SIGMA_MAX [MPa]:"
+Prompt X
+Disp "SIGMA_MIN [MPa]:"
+Prompt L
+
+; === VALIDATION: max >= min ===
+
+If X<L
+Then
+ Disp "ERR: MAX>=MIN"
+ Stop
+End
+
+; === DECOMPOSE ===
+
+(X+L)/2->M
+; M = sigma_m (mean)
+(X-L)/2->G
+; G = sigma_a (alternating)
+
+; Stress ratio
+If X!=0
+Then
+ L/X->R
+End
+If X=0
+Then
+ 0->R
+End
+
+; === CLASSIFY & DISPLAY ===
+
+ClrHome
+Disp "LOADING:"
+If R=~1
+Disp "REVERSED (R=-1)"
+If R=0 and L>=0
+Disp "REPEATED (R=0)"
+If R!=~1 and (R!=0 or L<0)
+Disp "FLUCTUATING"
+Disp ""
+Disp "SIG_M:"
+Disp M
+Disp "SIG_A:"
+Disp G
+Disp "R:"
+Disp R
+
+; Pause to review loading
+Disp ""
+Disp "[ANY KEY]"
+0->K
+While K=0
+ getKey->K
+End
+
+; === INPUT: Material properties (999 = load from LCONF) ===
+
+ClrHome
+Disp "=== MATERIAL ==="
+
+Disp "Sut [MPa] (999=DEF):"
+Prompt S
+If S=999
+Then
+ LCONF(1)->S
+ Disp "LOADED:"
+ Disp S
+End
+
+Disp "Sy  [MPa] (999=DEF):"
+Prompt Y
+If Y=999
+Then
+ LCONF(2)->Y
+ Disp "LOADED:"
+ Disp Y
+End
+
+Disp "Se' [MPa] (999=DEF):"
+Prompt E
+If E=999
+Then
+ LCONF(3)->E
+ Disp "LOADED:"
+ Disp E
+End
+
+Disp "ka SURFACE (999=DEF):"
+Prompt A
+If A=999
+Then
+ LCONF(4)->A
+ Disp "LOADED:"
+ Disp A
+End
+
+Disp "kb SIZE (999=DEF):"
+Prompt B
+If B=999
+Then
+ LCONF(5)->B
+ Disp "LOADED:"
+ Disp B
+End
+
+Disp "kc RELIAB (999=DEF):"
+Prompt C
+If C=999
+Then
+ LCONF(6)->C
+ Disp "LOADED:"
+ Disp C
+End
+
+Disp "Kt SCF (999=DEF):"
+Prompt T
+If T=999
+Then
+ LCONF(7)->T
+ Disp "LOADED:"
+ Disp T
+End
+
+Disp "q NOTCH (999=DEF):"
+Prompt Q
+If Q=999
+Then
+ LCONF(8)->Q
+ Disp "LOADED:"
+ Disp Q
+End
+
+; === VALIDATION ===
+
+If S<=0
+Then
+ Disp "ERR: Sut>0 REQ"
+ Stop
+End
+
+If Y<=0
+Then
+ Disp "ERR: Sy>0 REQ"
+ Stop
+End
+
+If E<=0
+Then
+ Disp "ERR: Se'>0 REQ"
+ Stop
+End
+
+If G<=0
+Then
+ Disp "ERR: SIG_A>0"
+ Stop
+End
+
+; === COMPUTATION ===
+
+; Step 1: Corrected endurance limit (Marin equation)
+A*B*C*E->W
+; W = Se = ka * kb * kc * Se'
+
+; Step 2: Fatigue stress concentration
+1+Q*(T-1)->J
+; J = Kf = 1 + q*(Kt - 1)
+
+; Step 3: Effective alternating stress
+J*G->P
+; P = Kf * sigma_a
+
+; Step 4: Fatigue strength fraction
+0.9->F
+
+; Step 5: S-N curve constants
+(F*S)^2/W->D
+; D = a = (f*Sut)^2 / Se
+
+~(1/3)*log(F*S/W)/log(10)->H
+; H = b = -(1/3) * log10(f*Sut / Se)
+
+; Step 6: Cycles to failure
+(P/D)^(1/H)->N
+
+; Step 7: Goodman safety factor
+; n = 1 / (sigma_a_eff/Se + sigma_m/Sut)
+If M=0
+Then
+ W/P->V
+End
+If M!=0
+Then
+ 1/(P/W+M/S)->V
+End
+; V = n_goodman
+
+; === OUTPUT ===
+
+ClrHome
+Disp "=== RESULTS ==="
+Disp ""
+Disp "Se (CORRECTED):"
+Disp W
+Disp "Kf:"
+Disp J
+Disp ""
+Disp "SIG_A_EFF:"
+Disp P
+Disp "MPa"
+Disp ""
+Disp "N (CYCLES):"
+Disp N
+
+; Life classification
+If N>=1000000
+Disp ">> INFINITE LIFE"
+If N<1000 and N>0
+Disp ">> LOW-CYCLE"
+If N>=1000 and N<1000000
+Disp ">> FINITE LIFE"
+
+; Pause to review S-N
+Disp ""
+Disp "[ANY KEY]"
+0->K
+While K=0
+ getKey->K
+End
+
+; Safety factor page
+ClrHome
+Disp "=== SAFETY ==="
+Disp ""
+Disp "GOODMAN n:"
+Disp V
+Disp ""
+If V>=1
+Disp ">> SAFE"
+If V<1
+Disp ">> UNSAFE"
+Disp ""
+Disp "S-N COEFF a:"
+Disp D
+Disp "S-N EXP b:"
+Disp H
+
+; === PAUSE (canonical) ===
+Disp ""
+Disp "[ANY KEY]"
+0->K
+While K=0
+ getKey->K
+End
+
+ClrHome
+Disp "FATIGUE DONE"

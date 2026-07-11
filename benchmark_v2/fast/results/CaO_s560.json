@@ -1,0 +1,19 @@
+{
+  "formula": "CaO",
+  "seed": 560,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 2.399448,
+  "energy_per_atom": 1.199724,
+  "rms_force": 12.665879,
+  "max_force": 12.665879,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.239300,
+  "timestamp": "2026-03-28T13:04:10",
+  "xyz_file": "benchmark_v2\fast\structures\CaO_s560.xyz"
+}

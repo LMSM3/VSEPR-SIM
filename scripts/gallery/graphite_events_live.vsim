@@ -1,0 +1,97 @@
+# @category Overlay
+# @title    Graphite AB stack — kernel events with live watcher
+#
+# Stress test: detached-layout workspace with five windows including a live
+# runtime watcher. overlay.cycle, data.events.timeline, data.events.bar_chart,
+# and live.runtime are deferred view kinds — broker skips unknown kinds
+# gracefully. scene.cg_bead is also deferred. This script validates:
+#   - default_layout = "detached" parsing
+#   - live = true on [visual.workspace]
+#   - multi-show with options blocks
+#   - [while] guard parsing
+#
+# Ported from TEMP/initial tests/graphite_events_live.vsim.
+
+[project]
+name        = "gallery_graphite_events_live"
+version     = "v5.1.0"
+seed_base   = 3008
+determinism = true
+description = "5-layer AB Bernal graphite, overlay cycle + live event watch"
+
+[material]
+formula   = "C"
+structure = "graphite"
+phase     = "solid"
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 480
+temperature = 300.0
+lattice     = "hexagonal"
+layer_mode  = "AB"
+n_layers    = 5
+
+[simulation]
+fire_max_steps   = 600
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+formation_preset = "ceramic"
+smooth_resim     = true
+
+[environment]
+temperature = 300.0
+medium      = "vacuum"
+
+[run]
+mode      = "relax"
+max_steps = 600
+converge  = true
+
+[chemistry]
+chemistry           = "none"
+reaction_events     = true
+track_species_state = false
+event_registry      = true
+
+[observe]
+metrics       = ["energy.total", "rms_force", "coordination", "formation", "defect"]
+every_n_steps = 1
+
+[while]
+name          = "energy_settled"
+condition     = "variance(energy.total, last 50) < 0.05"
+body_steps    = 150
+max_iters     = 3
+measure       = ["energy.total"]
+iter_delay_ms = 200
+
+[export]
+write_xyz                 = true
+write_events_json         = true
+write_analysis_json       = true
+write_report_md           = true
+write_dashboard_svg       = true
+output_dir                = "out/gallery_graphite_events"
+
+[visual.workspace]
+enabled        = true
+default_layout = "detached"
+auto_open_tree = true
+live           = true
+
+show "scene.cg_bead" target = "run.cg_state"
+
+show "overlay.cycle" target = "run.history" options = {
+	"sequence": ["density", "coordination", "memory", "orient_order"],
+	"hold_s": 2.5,
+	"auto_orbit": true
+}
+
+show "data.events.timeline"  target = "kernel.events"
+show "data.events.bar_chart" target = "kernel.events"
+
+show "live.runtime" target = "run.history" options = {
+	"tail_length": 30,
+	"metrics": ["energy.total", "rms_force"]
+}

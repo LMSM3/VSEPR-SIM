@@ -1,0 +1,163 @@
+# scripts/demo_approach2_formation_path.vsim
+# =============================================================================
+# Approach 2 -- Formation-path dependence
+#
+# Five thermal protocols applied to NaCl, all sharing the same melt origin
+# (1400 K equilibrated state). Independent variable: thermal history.
+# Primary observables: total energy, RDF peak sharpness (FWHM proxy),
+#                      coordination at endpoint, order parameter
+# Ranking target: total energy lower = more ordered -> Section 4 table
+#
+# Seeds: 4 per job.  Output: out/approach2_formation_path/
+# Graph: dashboard SVG via export.profile = research_report
+#
+# [visual] overlay_sequence includes "memory" -- this is most informative at
+# the isothermal_anneal endpoint (job 5) where ordering nucleates from scratch.
+#
+# vsper run scripts/demo_approach2_formation_path.vsim
+# =============================================================================
+
+[project]
+name        = demo_approach2_formation_path
+version     = v5.0.0-beta.12
+seed_base   = 9201
+determinism = false
+description = "Approach 2: five NaCl thermal protocols ranked by endpoint total energy"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "5x5x5"
+phase     = "solid"
+
+[run]
+mode         = "md_nvt"
+output_level = "standard"
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+phase_events     = true
+
+[variance]
+print_results = true
+energy_var    = "energy.total  last 100  0.02"
+
+# ---------------------------------------------------------------------------
+# Five batch jobs -- one per thermal protocol
+# ---------------------------------------------------------------------------
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: slow continuous cool (1400 -> 300 K, 20 000 steps)
+job           = slow_cool
+temperature   = ["1400"]
+cool_rate     = ["0.055"]
+max_steps     = 20000
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# Job 2: rapid quench (1400 -> 300 K in 500 steps, rate 2.2 K/step)
+job           = rapid_quench
+temperature   = ["1400"]
+cool_rate     = ["2.2"]
+max_steps     = 500
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# Job 3: stepped cool with isothermal holds at 1200/900/600/300 K
+job           = stepped_cool
+temperature   = ["1400"]
+cool_schedule = ["1200,900,600,300"]
+hold_steps    = ["3000"]
+max_steps     = 12000
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# Job 4: melt-quench-reheat cycle
+job               = reheat_cycle
+temperature       = ["1400"]
+quench_temp       = ["400"]
+anneal_steps      = ["4000"]
+reheat_temp       = ["900"]
+final_cool_temp   = ["300"]
+max_steps         = 9800
+seed_count        = 4
+aggregate         = true
+analyze           = rdf
+analyze           = coordination
+analyze           = order_param
+analyze           = variance energy.total
+measure           = energy_var
+
+# Job 5: isothermal anneal from disordered start at 700 K
+# (memory overlay is most informative here -- nucleation from scratch)
+job           = isothermal_anneal
+temperature   = ["700"]
+start_config  = ["disordered"]
+max_steps     = 15000
+seed_count    = 4
+aggregate     = true
+analyze       = rdf
+analyze       = coordination
+analyze       = order_param
+analyze       = variance energy.total
+measure       = energy_var
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+profile             = research_report
+write_metrics_tsv   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/approach2_formation_path"
+
+# ---------------------------------------------------------------------------
+# Visual
+# memory overlay tracks where order has nucleated vs. where disorder persists.
+# At the isothermal_anneal endpoint it shows nucleation front geometry.
+# ---------------------------------------------------------------------------
+[visual]
+output_type            = "terminal_overlay_cycle"
+animation_mode         = "overlay"
+render_interval        = 200
+show_proxy_table       = true
+show_convergence_trace = true
+show_event_timeline    = true
+show_bar_chart         = true
+overlay_sequence       = ["density", "coordination", "orient_order", "memory"]
+
+[visual.external]
+enabled          = true
+render           = energy_trace
+render           = rdf
+render           = coordination_change
+render           = order_param_trace
+render           = memory_overlay
+render           = dashboard
+export_format    = svg
+show_progress    = true

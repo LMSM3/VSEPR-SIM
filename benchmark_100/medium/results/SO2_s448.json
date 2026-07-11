@@ -1,0 +1,19 @@
+{
+  "formula": "SO2",
+  "seed": 448,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 13.521445,
+  "energy_per_atom": 4.507148,
+  "rms_force": 51.581228,
+  "max_force": 51.581228,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.451700,
+  "timestamp": "2026-03-28T12:54:48",
+  "xyz_file": "benchmark_100\medium\structures\SO2_s448.xyz"
+}

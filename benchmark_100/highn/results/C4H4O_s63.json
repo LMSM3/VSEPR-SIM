@@ -1,0 +1,19 @@
+{
+  "formula": "C4H4O",
+  "seed": 63,
+  "tier": "highn",
+  "num_atoms": 9,
+  "steps_taken": 5943,
+  "max_steps": 10000,
+  "energy_kcal_mol": -1.651142,
+  "energy_per_atom": -0.183460,
+  "rms_force": 0.000737,
+  "max_force": 0.000737,
+  "alpha_final": 0.063619,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 3.068200,
+  "timestamp": "2026-03-28T12:55:17",
+  "xyz_file": "benchmark_100\highn\structures\C4H4O_s63.xyz"
+}

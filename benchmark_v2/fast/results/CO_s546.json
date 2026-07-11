@@ -1,0 +1,19 @@
+{
+  "formula": "CO",
+  "seed": 546,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 10.618780,
+  "energy_per_atom": 5.309390,
+  "rms_force": 51.562786,
+  "max_force": 51.562786,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.750300,
+  "timestamp": "2026-03-28T13:04:41",
+  "xyz_file": "benchmark_v2\fast\structures\CO_s546.xyz"
+}

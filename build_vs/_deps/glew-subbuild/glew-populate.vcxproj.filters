@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\cfded541428d7ae0016eb3b184730f67\glew-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\73165d79bacb300dc61259b71b7b3e74\glew-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\998137d0e9c2f5c928e7793155f1131a\glew-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\R\VSPER-SIM\build_vs\_deps\glew-subbuild\CMakeFiles\glew-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{F2DBD70E-5304-345F-9C3F-1AC30A357817}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

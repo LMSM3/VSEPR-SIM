@@ -1,0 +1,123 @@
+# scripts/demo_04_md_laser.vsim
+# =============================================================================
+# Beta-9  Level 2 — MD run with laser excitation, observable selection,
+#                   and physical environment
+#
+# What changed from beta-8:
+#   beta-8: No [excite.*], [observe], or [environment] sections existed.
+#           Excitation was hard-coded in C++ scenario branches.
+#   beta-9 (WO-VSIM-03B): Three new Level 2 sections:
+#     [environment]    — temperature, pressure, medium, E-field components
+#     [excite.<type>]  — named excitation sub-sections (laser, xray, e_beam…)
+#     [observe]        — observable metric list + output format + cadence
+#
+#   [run] mode = "md" drives a molecular dynamics run instead of FIRE relax.
+#   Multiple [excite.*] blocks may coexist in one script.
+#
+# System: Si 4×4×4 supercell in vacuum under z-axis gaussian laser pulse
+# Run: vsper validate scripts/demo_04_md_laser.vsim
+# =============================================================================
+
+[project]
+name        = demo_04_md_laser
+version     = v5.0.0-beta.9
+seed_base   = 4001
+determinism = true
+
+# ── Material ──────────────────────────────────────────────────────────────────
+[material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "4x4x4"
+phase     = "solid"
+
+# ── Run: molecular dynamics ───────────────────────────────────────────────────
+[run]
+mode          = "md"
+max_steps     = 2000
+dt_fs         = 1.0
+temperature   = 300.0
+converge      = false
+output_level  = "verbose"
+
+# ── Physical environment (beta-9 [environment] section) ──────────────────────
+[environment]
+periodic    = true
+temperature = 300.0
+pressure    = 0.0
+medium      = "vacuum"
+field_x     = 0.0
+field_y     = 0.0
+field_z     = 0.0
+
+# ── Excitation: z-axis laser pulse (beta-9 [excite.*] section) ───────────────
+# Named sub-section: [excite.laser]
+# Multiple excitation blocks are allowed; each is a distinct named sub-section.
+[excite.laser]
+axis           = "z"
+polarization   = "x"
+intensity      = 1.0
+pulse_width_fs = 200.0
+profile        = "gaussian"
+fluence        = 0.05
+photon_energy_eV = 1.5
+
+# ── Observables (beta-9 [observe] section) ────────────────────────────────────
+# Select which physical quantities the kernel should measure during the run.
+[observe]
+metrics       = ["energy_map", "spectral_response", "displacement", "coordination"]
+output_format = "json"
+every_n_steps = 10
+
+# ── PBC (required for periodic MD) ───────────────────────────────────────────
+[cell]
+type = "orthorhombic"
+lx   = 21.7
+ly   = 21.7
+lz   = 21.7
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = false
+unwrap_for_diffusion = false
+
+# ── Kernel tracing ────────────────────────────────────────────────────────────
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+# ── Output ────────────────────────────────────────────────────────────────────
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_jsonl  = true
+output_dir          = "out/demo_04"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 100
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_energy_heatmap      = true
+show_symbolic_trace      = false
+
+[visual.external]
+enabled         = true
+render_interval = 200
+export_format   = "auto"
+show_progress   = true

@@ -1,0 +1,50 @@
+# demo_pbc_syntax.vsim
+# WO-VSEPR-SIM-57B reference script.
+# Exercises [cell], [boundary], [pbc] parsing and all pbc.* function syntax.
+# Run: vsper validate scripts/demo_pbc_syntax.vsim
+
+[project]
+name        = demo_pbc_syntax
+version     = v5.0.0-beta.8
+seed_base   = 5701
+determinism = true
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[cell]
+type    = orthorhombic
+lengths = 10.0, 10.0, 10.0
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+fire_max_steps = 500
+periodic       = true
+
+# [post_step] — expression execution in WO-57C
+# r_raw      = particle.position(1)
+# r_in       = pbc.wrap(r_raw)
+# dr         = pbc.delta(particle.position(1), particle.position(2))
+# d          = pbc.distance(particle.position(1), particle.position(2))
+# crossed    = pbc.crossed_boundary(1)
+# ix, iy, iz = pbc.image_count(1)
+# r_unwrap   = pbc.unwrap(1)
+
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_report_md     = true

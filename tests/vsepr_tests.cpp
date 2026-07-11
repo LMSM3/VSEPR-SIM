@@ -20,6 +20,7 @@ Each test:
 
 #include "sim/molecule.hpp"
 #include "pot/energy_model.hpp"
+#include "core/element_data.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
 #include <iostream>
@@ -458,7 +459,8 @@ int main() {
     std::cout << "VSEPR Geometry Tests with Nonbonded Interactions\n";
     std::cout << "===================================================\n";
     std::cout.flush();
-
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
         test_co2_linear();
         std::cout.flush();

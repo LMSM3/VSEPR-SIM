@@ -1,0 +1,19 @@
+{
+  "formula": "C2H5NH2",
+  "seed": 566,
+  "tier": "medium",
+  "num_atoms": 10,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 2787.780622,
+  "energy_per_atom": 278.778062,
+  "rms_force": 5084.142942,
+  "max_force": 5084.142942,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.917000,
+  "timestamp": "2026-03-28T13:03:56",
+  "xyz_file": "benchmark_v2\medium\structures\C2H5NH2_s566.xyz"
+}

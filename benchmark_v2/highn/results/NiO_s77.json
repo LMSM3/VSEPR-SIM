@@ -1,0 +1,19 @@
+{
+  "formula": "NiO",
+  "seed": 77,
+  "tier": "highn",
+  "num_atoms": 2,
+  "steps_taken": 6072,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.030000,
+  "energy_per_atom": -0.015000,
+  "rms_force": 0.000114,
+  "max_force": 0.000114,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "stable",
+  "wall_time_ms": 0.696400,
+  "timestamp": "2026-03-28T13:07:06",
+  "xyz_file": "benchmark_v2\highn\structures\NiO_s77.xyz"
+}

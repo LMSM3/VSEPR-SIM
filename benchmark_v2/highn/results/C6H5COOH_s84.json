@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5COOH",
+  "seed": 84,
+  "tier": "highn",
+  "num_atoms": 15,
+  "steps_taken": 6966,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.251207,
+  "energy_per_atom": -0.016747,
+  "rms_force": 1.513803,
+  "max_force": 1.513803,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 10.825500,
+  "timestamp": "2026-03-28T13:05:53",
+  "xyz_file": "benchmark_v2\highn\structures\C6H5COOH_s84.xyz"
+}

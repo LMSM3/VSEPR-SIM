@@ -1,0 +1,19 @@
+{
+  "formula": "Fe2O3",
+  "seed": 105,
+  "tier": "highn",
+  "num_atoms": 5,
+  "steps_taken": 5067,
+  "max_steps": 10000,
+  "energy_kcal_mol": 4.253348,
+  "energy_per_atom": 0.850670,
+  "rms_force": 11.719911,
+  "max_force": 11.719911,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 1.372800,
+  "timestamp": "2026-03-28T12:56:12",
+  "xyz_file": "benchmark_100\highn\structures\Fe2O3_s105.xyz"
+}

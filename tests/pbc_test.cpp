@@ -1,3 +1,13 @@
+// =============================================================================
+// tests/pbc_test.cpp — Group 25: PBC Core
+// =============================================================================
+//
+// Smoke tests for vsepr::BoxOrtho (include/box/pbc.hpp):
+//   wrap(), delta() (MIC), dist/dist2, wrap_coords, disabled-box invariants,
+//   set_dimensions / dynamic resize.
+//
+// Day #57A  |  WO-56C  |  beta-8 regression anchor
+// =============================================================================
 /**
  * pbc_test.cpp - Test periodic boundary conditions
  */
@@ -87,7 +97,7 @@ void test_disabled_box() {
     std::cout << "Testing disabled box (no PBC)...\n";
     
     BoxOrtho box;  // Default constructor, disabled
-    assert(!box.enabled());
+    assert(!box.enabled);
     
     // Should behave as if no PBC
     Vec3 r1 = box.wrap({15.0, 5.0, 5.0});
@@ -123,10 +133,10 @@ void test_set_dimensions() {
     std::cout << "Testing dynamic box resizing...\n";
     
     BoxOrtho box;
-    assert(!box.enabled());
-    
+    assert(!box.enabled);
+
     box.set_dimensions(10.0, 10.0, 10.0);
-    assert(box.enabled());
+    assert(box.enabled);
     assert(std::abs(box.volume() - 1000.0) < 1e-10);
     
     // Verify invL is updated

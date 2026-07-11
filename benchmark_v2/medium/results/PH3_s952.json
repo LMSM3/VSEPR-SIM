@@ -1,0 +1,19 @@
+{
+  "formula": "PH3",
+  "seed": 952,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 8.722801,
+  "energy_per_atom": 2.180700,
+  "rms_force": 30.928707,
+  "max_force": 30.928707,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.986100,
+  "timestamp": "2026-03-28T13:06:40",
+  "xyz_file": "benchmark_v2\medium\structures\PH3_s952.xyz"
+}

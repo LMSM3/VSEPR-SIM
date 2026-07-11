@@ -1,0 +1,115 @@
+# scripts/validation/val_07_fcc_argon.vsim
+# Priority 7 — fcc Argon
+# Geometry: cubic (Fm-3m), noble gas solid
+# Main modules: dispersion-only / Lennard-Jones
+# External target: lattice constant + cohesive energy
+# Experimental (at 0 K extrapolation):
+#   a₀ = 5.256 Å   cohesive energy = 0.0873 eV/atom (≈ 8.40 kJ/mol)
+# LJ parameters for Ar: ε = 0.01042 eV, σ = 3.405 Å (Michels et al.)
+# This is the simplest possible periodic dispersion validation
+# If this fails, nothing above it is trustworthy
+# vsper validate scripts/validation/val_07_fcc_argon.vsim
+
+[project]
+name        = val_07_fcc_argon
+version     = v5.0.0-beta.8
+seed_base   = 8007
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[cell]
+type    = orthorhombic
+lengths = 5.2560, 5.2560, 5.2560
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = false
+
+[species.Ar]
+charge = 0.0
+mass   = 39.948
+
+[material]
+id      = fcc_argon
+formula = Ar
+classes = noble_gas_solid,cubic,fcc,dispersion_only
+
+[material.structure]
+type      = fcc_lattice
+elements  = Ar
+a0        = 5.2560
+supercell = 2,2,2
+# 2x2x2 supercell = 32 atoms
+# Adequate for LJ cutoff without self-image interaction at rcut < L/2
+
+[potential.Ar_Ar]
+type    = lennard_jones
+epsilon = 0.01042
+sigma   = 3.4050
+rcut    = 8.5
+units   = eV,angstrom
+# rcut = 2.5σ minimum; 8.5 Å ≈ 2.5σ for Ar
+# Confirm: tail correction applied beyond rcut
+
+[tail_correction]
+enabled = true
+method  = analytic_lj_tail
+# Long-range LJ correction is non-negligible for cohesive energy convergence
+
+[formation]
+mode        = fire_relax
+relax_steps = 2000
+dt          = 0.001
+force_tolerance = 1e-6
+
+[analysis]
+lattice_constant  = true
+cohesive_energy   = true
+rdf               = true
+rdf_pairs         = Ar-Ar
+rdf_rmax          = 10.0
+rdf_bins          = 200
+bulk_modulus      = false
+# Bulk modulus requires elastic tensor — not in scope for this validation
+
+[expected]
+lattice_constant_a    = 5.256
+lattice_constant_tol  = 0.05
+# Tolerance acknowledges T=0 LJ vs. experimental zero-point-corrected value
+cohesive_energy_per_atom   = 0.0873
+cohesive_energy_tol        = 0.005
+# eV/atom; tight — LJ with tail correction should hit this
+rdf_first_peak_Ar_Ar       = 3.721
+# nearest-neighbour distance = a₀/sqrt(2) = 5.256/1.414 ≈ 3.716 Å
+rdf_first_peak_tol         = 0.05
+coordination_Ar            = 12
+# fcc nearest-neighbour shell = 12
+
+[run]
+mode  = fire_relax
+steps = 2000
+dt    = 0.001
+force_tolerance = 1e-6
+
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                   = val_07_fcc_argon
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true

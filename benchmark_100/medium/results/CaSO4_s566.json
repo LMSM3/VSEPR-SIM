@@ -1,0 +1,19 @@
+{
+  "formula": "CaSO4",
+  "seed": 566,
+  "tier": "medium",
+  "num_atoms": 6,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 22.448657,
+  "energy_per_atom": 3.741443,
+  "rms_force": 29.754270,
+  "max_force": 29.754270,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.818500,
+  "timestamp": "2026-03-28T12:55:48",
+  "xyz_file": "benchmark_100\medium\structures\CaSO4_s566.xyz"
+}

@@ -1,5 +1,6 @@
 #pragma once
 #include "state.hpp"
+#include "statistics.hpp"
 #include <cmath>
 #include <vector>
 #include <random>
@@ -201,6 +202,22 @@ inline double heat_capacity_from_fluctuations(const std::vector<double>& E_traj,
     double var_E = E2_avg - E_avg*E_avg;
     
     return kB + var_E / (kB * T_avg * T_avg);
+}
+
+/**
+ * Heat capacity (Welford online variance path)
+ * Uses pre-accumulated OnlineStats to compute C_V without storing the
+ * full energy trajectory.  Numerically stable for large sample counts.
+ *
+ * C_V ≈ k_B + Var_E / (k_B · T²)
+ *
+ * @param stats  Accumulated energy statistics (Welford algorithm)
+ * @param T      Mean temperature (simulation units matching kB)
+ */
+inline double heat_capacity_welford(const OnlineStats& stats, double T) {
+    if (stats.count() < 2 || T <= 0.0) return 0.0;
+    double var_E = stats.get_variance();
+    return kB + var_E / (kB * T * T);
 }
 
 /**

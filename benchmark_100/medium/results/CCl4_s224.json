@@ -1,0 +1,19 @@
+{
+  "formula": "CCl4",
+  "seed": 224,
+  "tier": "medium",
+  "num_atoms": 5,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 187.875864,
+  "energy_per_atom": 37.575173,
+  "rms_force": 370.276698,
+  "max_force": 370.276698,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.589500,
+  "timestamp": "2026-03-28T12:54:01",
+  "xyz_file": "benchmark_100\medium\structures\CCl4_s224.xyz"
+}

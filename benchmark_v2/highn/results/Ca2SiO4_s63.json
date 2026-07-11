@@ -1,0 +1,19 @@
+{
+  "formula": "Ca2SiO4",
+  "seed": 63,
+  "tier": "highn",
+  "num_atoms": 7,
+  "steps_taken": 8123,
+  "max_steps": 10000,
+  "energy_kcal_mol": 133.627994,
+  "energy_per_atom": 19.089713,
+  "rms_force": 161.442365,
+  "max_force": 161.442365,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 2.987600,
+  "timestamp": "2026-03-28T13:04:51",
+  "xyz_file": "benchmark_v2\highn\structures\Ca2SiO4_s63.xyz"
+}

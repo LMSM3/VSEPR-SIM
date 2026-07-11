@@ -1,0 +1,83 @@
+# @category Geometry
+# @title    NaCl rocksalt — PBC supercell with convergence chart
+#
+# Stress test: workspace with multiple data-viewer tabs.
+# Exercises data.history.timeseries and data.scalar.panel directives.
+# scene.pbc_supercell and the timeseries/scalar panel kinds are deferred;
+# the broker will skip unknown kinds gracefully — the script validates
+# that the parser, workspace, and fallback-rejection path all work together.
+#
+# Ported from TEMP/initial tests/nacl_pbc_supercell.vsim.
+
+[project]
+name        = "gallery_nacl_pbc_supercell"
+version     = "v5.1.0"
+seed_base   = 1011
+determinism = true
+description = "NaCl rocksalt 3x3x3 supercell, FIRE relax with Ewald"
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+
+[cell]
+lx = 16.83
+ly = 16.83
+lz = 16.83
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image  = true
+wrap_positions = "after_step"
+track_images   = true
+
+[simulation]
+fire_max_steps = 200
+fire_dt_fs     = 1.0
+periodic       = true
+use_ewald      = true
+ewald_alpha    = 0.3
+ewald_rcut     = 10.0
+ewald_kmax     = 5
+
+[environment]
+temperature = 300.0
+medium      = "vacuum"
+
+[run]
+mode      = "relax"
+max_steps = 200
+converge  = true
+
+[observe]
+metrics       = ["energy.total", "rms_force", "coordination"]
+every_n_steps = 1
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = "out/gallery_nacl_pbc"
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+
+show "scene.pbc_supercell" target = "material.0" options = {
+	"extent": [3, 3, 3],
+	"show_central_box": true,
+	"image_alpha": 0.55,
+	"central_alpha": 1.0
+}
+
+show "data.history.timeseries" target = "run.history" options = {
+	"series": ["energy.total", "rms_force"],
+	"log_y": false
+}
+
+show "data.scalar.panel" target = "run.summary"

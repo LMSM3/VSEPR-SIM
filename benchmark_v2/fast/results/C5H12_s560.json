@@ -1,0 +1,19 @@
+{
+  "formula": "C5H12",
+  "seed": 560,
+  "tier": "fast",
+  "num_atoms": 17,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 352115.018940,
+  "energy_per_atom": 20712.648173,
+  "rms_force": 1005640.022347,
+  "max_force": 1005640.022347,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.537900,
+  "timestamp": "2026-03-28T13:05:26",
+  "xyz_file": "benchmark_v2\fast\structures\C5H12_s560.xyz"
+}

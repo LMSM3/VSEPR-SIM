@@ -1,0 +1,19 @@
+{
+  "formula": "BF3",
+  "seed": 966,
+  "tier": "medium",
+  "num_atoms": 4,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 22.086911,
+  "energy_per_atom": 5.521728,
+  "rms_force": 60.425778,
+  "max_force": 60.425778,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.659700,
+  "timestamp": "2026-03-28T13:07:37",
+  "xyz_file": "benchmark_v2\medium\structures\BF3_s966.xyz"
+}

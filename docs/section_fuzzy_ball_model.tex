@@ -1,0 +1,911 @@
+% ════════════════════════════════════════════════════════════════════════════
+%  Formation Engine — The Fuzzy Ball Model:
+%  Multi-Layer Directional Descriptor Visualization of Coarse-Grained Beads
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ════════════════════════════════════════════════════════════════════════════
+\documentclass[12pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code ───────────────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  language=C++
+}
+
+% ── Graphics ───────────────────────────────────────────────────────────────
+\usepackage{graphicx}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Formation Engine Methodology}}
+\fancyhead[R]{\small\textit{Fuzzy Ball Model — Directional Descriptor Visualization}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ─────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {§\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}
+  {\thesubsubsection}{1em}{}
+
+% ── Hyperlinks ─────────────────────────────────────────────────────────────
+\usepackage[
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue
+]{hyperref}
+
+% ── Convenience macros ─────────────────────────────────────────────────────
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\type}[1]{\texttt{#1}}
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\Ang}{\text{\AA}}
+\newcommand{\kcalmol}{\text{kcal/mol}}
+\newcommand{\SH}{Y_\ell^m}
+\newcommand{\Rvec}{\bm{r}}
+\newcommand{\nhat}{\hat{\bm{n}}}
+
+% ════════════════════════════════════════════════════════════════════════════
+%  Title
+% ════════════════════════════════════════════════════════════════════════════
+\title{%
+  \textbf{Formation Engine Methodology}\\[6pt]
+  \textbf{The Fuzzy Ball Model}\\[10pt]
+  \large Multi-Layer Directional Descriptor Visualization\\
+  of Coarse-Grained Atomistic Beads\\[4pt]
+  \normalsize Spherical Harmonic Surface Fields, Anisotropic Shell Rendering,
+              and Environment-Responsive Visual Inspection
+}
+\author{%
+  % ── Replace with your name, institution, and email ──
+  VSEPR-SIM Project%
+  % \\ \small Your Institution
+  % \\ \small \texttt{your.email@example.com}
+}
+\date{Version 3.0.0 — \today}
+
+% ════════════════════════════════════════════════════════════════════════════
+\begin{document}
+\maketitle
+
+% ════════════════════════════════════════════════════════════════════════════
+%  Abstract
+% ════════════════════════════════════════════════════════════════════════════
+\begin{abstract}
+This document describes the \emph{Fuzzy Ball Model}, a multi-layer visual
+representation framework for coarse-grained (CG) beads in the Formation
+Engine.  Rather than treating each CG bead as a featureless point mass,
+the fuzzy ball model preserves and exposes the directional, anisotropic,
+and environment-responsive character of the underlying atomistic fragment.
+Each bead is rendered as a translucent spherical shell whose effective
+radius encodes atomistic extent, whose surface carries a three-channel
+descriptor field expanded in real spherical harmonics, and whose interior
+optionally reveals the source atomistic skeleton.  Eight composable view
+modes---\emph{Shell}, \emph{Scaffold}, \emph{SurfaceState},
+\emph{InternalRef}, \emph{Skeleton}, \emph{Cutaway}, \emph{Residual}, and
+\emph{Comparison}---permit progressive disclosure from macroscopic overview
+to fragment-level inspection.  A five-level scale hierarchy
+(\emph{SceneCloud}~$\to$~\emph{FragmentCompare}) governs level-of-detail
+transitions.  The model is deterministic, fully inspectable, and exports
+structured data suitable for scientific reporting.  Implementation:
+\file{coarse\_grain/vis/bead\_visual\_record.hpp} and
+\file{coarse\_grain/vis/bead\_inspector\_view.hpp}.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Introduction}
+% ════════════════════════════════════════════════════════════════════════════
+
+Coarse-grained molecular simulation replaces groups of atoms with
+single interaction sites (beads), reducing degrees of freedom by one
+to two orders of magnitude.  The standard visual representation of a
+CG bead is a uniform sphere, which discards all information about
+internal geometry, anisotropy, and interaction directionality.
+
+The \textbf{Fuzzy Ball Model} restores this information by treating
+each bead not as a hard marble but as a \emph{semi-transparent shell
+with directional structure}---a ``fuzzy ball.''  The model achieves
+this through three complementary data layers:
+
+\begin{enumerate}
+  \item \textbf{Layer 1 --- Effective Shell.}  A spherical shell whose
+        radius, opacity, colour, and deformation encode the bead's
+        effective extent, mapping confidence, chemical class, and
+        principal anisotropy.
+  \item \textbf{Layer 2 --- Surface-State Field.}  A structured
+        $(\theta, \varphi)$ grid of steric, electrostatic, and
+        dispersion descriptor values painted as a spherical heatmap
+        over the shell.
+  \item \textbf{Layer 3 --- Internal Structural Reference.}  The
+        original atomistic fragment (atoms, bonds, orientation markers)
+        rendered inside the translucent shell for direct comparison.
+\end{enumerate}
+
+These layers are combined through eight selectable \emph{view modes}
+that control which layers are active and at what opacity.  A five-level
+\emph{scale hierarchy} determines how much detail is rendered at each
+zoom level, from a distant scene cloud to a close-up fragment comparison.
+
+The model is implemented entirely within the
+\file{coarse\_grain/vis/} subsystem and consumes the
+\type{BeadVisualRecord} adapter object produced by
+\texttt{build\_visual\_record()}.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Theoretical Foundation}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Effective Radius and Anisotropy}
+
+Each CG bead maps a molecular fragment to a single centre $\Rvec_B$.
+The \emph{effective radius} $R_{\text{eff}}$ quantifies the spatial
+extent of this fragment.  When a surface descriptor probe radius is
+available,
+\begin{equation}
+  R_{\text{eff}} = r_{\text{probe}}, \qquad r_{\text{probe}} > 0,
+  \label{eq:reff_probe}
+\end{equation}
+otherwise a mass-based fallback is used:
+\begin{equation}
+  R_{\text{eff}} = 1.5 \left(\frac{M_B}{12}\right)^{1/3}, \qquad
+  R_{\text{eff}} \in [0.5, \, 4.0] \;\Ang.
+  \label{eq:reff_mass}
+\end{equation}
+
+The bead is not spherically symmetric in general.  The inertia tensor
+of the source fragment yields three principal eigenvalues
+$\lambda_1 \leq \lambda_2 \leq \lambda_3$.  Their ratios define an
+\emph{anisotropy vector},
+\begin{equation}
+  \bm{a}_B = (\lambda_1, \, \lambda_2, \, \lambda_3),
+  \label{eq:aniso}
+\end{equation}
+which deforms the shell rendering from a perfect sphere toward an
+ellipsoid.
+
+\subsection{Local Frame Assignment}
+
+A local coordinate frame $\{\hat{\bm{e}}_1, \hat{\bm{e}}_2,
+\hat{\bm{e}}_3\}$ is assigned to each bead via one of several
+strategies, selected automatically based on fragment topology:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Frame-method selection rules.}
+  \label{tab:frame_methods}
+  \begin{tabular}{lll}
+    \toprule
+    Method & Condition & Description \\
+    \midrule
+    \texttt{InertiaFit}        & Full surface data available
+      & PCA of inertia tensor \\
+    \texttt{RingPlaneFit}      & Fragment is cyclic / aromatic
+      & $\hat{\bm{e}}_3$ = ring-plane normal \\
+    \texttt{MetalCoordination} & Fragment is organometallic
+      & Principal axis of coordination shell \\
+    \texttt{PCA\_Fallback}     & Orientation normal only
+      & Gram--Schmidt from $\hat{\bm{n}}$ \\
+    \texttt{SingleAtom}        & Fragment has $\leq 1$ atom
+      & Degenerate; confidence $= 0$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Frame confidence $\kappa_B$ is computed from the eigenvalue
+separation:
+\begin{equation}
+  \kappa_B = \min\!\left(1, \;
+    3 \, \frac{\lambda_3 - \lambda_1}
+              {\lambda_1 + \lambda_2 + \lambda_3}\right).
+  \label{eq:frame_confidence}
+\end{equation}
+The rendering line-width of the frame triad axes is set to 3.0 when
+$\kappa_B > 0.5$ and 1.5 otherwise, providing a visual cue for
+confidence.
+
+\subsection{Mapping Confidence and Residual}
+
+The mapping from atomistic fragment to CG bead introduces a
+positional error $\delta = |\Rvec_{\text{COM}} - \Rvec_{\text{COG}}|$.
+The mapping confidence is
+\begin{equation}
+  c_B = \max\!\left(0, \; 1 - \frac{\delta}{2}\right),
+  \label{eq:mapping_confidence}
+\end{equation}
+which scales shell opacity: $\alpha_{\text{shell}} =
+\alpha_0 \, (0.3 + 0.7 \, c_B)$.  Poorly mapped beads become
+visually faint, drawing the researcher's attention to reliable regions.
+
+% ════════════════════════════════════════════════════════════════════════════
+\subsection{Correspondence with the Canonical Container Geometry}
+\label{sec:container-correspondence}
+% ════════════════════════════════════════════════════════════════════════════
+
+The Identity--State Decomposition Framework (§0) defines for every
+particle a \emph{Canonical Container Geometry Approximation}:
+%
+\begin{equation}
+  \Omega_i =
+  \bigl(
+    R_i,\;
+    \mathcal{T}_i(\theta,\phi),\;
+    \rho_i(r)
+  \bigr)
+  \tag{§0, Eq.\,\ref*{eq:envelope}$'$}
+  \label{eq:container-omega}
+\end{equation}
+%
+Each component of~$\Omega_i$ has a direct, implemented correspondence
+in the Fuzzy Ball Model.
+
+\paragraph{Effective radius $R_i \;\longleftrightarrow\;
+            R_{\mathrm{eff}}$.}
+The §0 definition,
+\(R_i = \alpha_Z\,Z_i^{1/3} + \alpha_Q\,|Q_i|\),
+provides a \emph{first-principles} estimate suitable for isolated
+atoms.  In the CG context, the bead aggregates many atoms, so the
+Fuzzy Ball Model uses a \emph{probe-radius} or mass-derived fallback
+(Equations~\ref{eq:reff_probe}--\ref{eq:reff_mass}).  Both converge
+to the same role: determining the shell extent displayed by Layer~1.
+The §0 radius governs the formal interaction envelope; the
+visualisation radius governs what the researcher sees.  They share
+the invariant:
+\begin{equation}
+  R_{\text{eff}} \;\propto\; R_i \;\propto\; V_{\text{frag}}^{1/3},
+  \label{eq:radius-link}
+\end{equation}
+where $V_{\text{frag}}$ is the volumetric extent of the mapped
+fragment.
+
+\paragraph{Angular texture $\mathcal{T}_i(\theta,\phi)
+  \;\longleftrightarrow\; S^{(k)}(\theta,\varphi)$.}
+The §0 angular texture is a single spherical-harmonic expansion that
+encodes the directional interaction shape of the canonical container.
+The Fuzzy Ball Model implements a \emph{three-channel} generalisation:
+%
+\begin{equation}
+  \mathcal{T}_i(\theta,\phi) \;\longrightarrow\;
+  \bigl\{
+    S^{(0)},\; S^{(1)},\; S^{(2)}
+  \bigr\}(\theta,\varphi),
+  \label{eq:texture-link}
+\end{equation}
+%
+one expansion per physical channel (steric, electrostatic, dispersion).
+The synthesised channel $S^{(\text{syn})}$ (Equation~\ref{eq:synthesized})
+recovers the single-scalar §0 texture as a weighted contraction.
+The implementation uses the same mathematical object---real spherical
+harmonics $Y_\ell^m$---at both levels, so the correspondence is
+exact up to the number of channels.
+
+\paragraph{Radial density envelope
+  $\rho_i(r) \;\longleftrightarrow\;$ radial exaggeration $\xi$.}
+The §0 radial envelope,
+\(\rho_i(r) = \rho_0\,e^{-r/\lambda_i}\),
+describes a soft exponential decay of the interaction field.
+In the Fuzzy Ball Model, this manifests as the \emph{radial
+exaggeration} parameter~$\xi$
+(Equation~\ref{eq:radial_exag}), which deforms the rendered surface
+proportionally to the local field strength.  When $\xi > 0$ the
+shell bulges outward in directions of high $S^{(k)}$, reproducing
+the intuition that $\rho_i(r)$ is larger in directions where the
+interaction field is strong.  The formal mapping is:
+\begin{equation}
+  \rho_i\!\bigl(R_{\text{eff}} \cdot \nhat(\theta,\varphi)\bigr)
+  \;\sim\;
+  1 + \xi \, \bar{S}^{(k)}(\theta,\varphi),
+  \label{eq:density-link}
+\end{equation}
+providing a visual analogue of the radial density profile.
+
+\paragraph{Summary.}
+The correspondence is collected in Table~\ref{tab:omega-mapping}.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Mapping between §0 Canonical Container Geometry
+           $\Omega_i$ and the Fuzzy Ball Model implementation.}
+  \label{tab:omega-mapping}
+  \begin{tabular}{lll}
+    \toprule
+    §0 Component & Fuzzy Ball Implementation & Source \\
+    \midrule
+    $R_i$ (effective radius)
+      & \field{effective\_radius}
+      & \file{bead\_visual\_record.hpp} \\
+    $\mathcal{T}_i(\theta,\phi)$ (angular texture)
+      & $S^{(k)}(\theta,\varphi)$ via SH expansion
+      & \type{SurfaceStateGrid} \\
+    $\rho_i(r)$ (radial density)
+      & Radial exaggeration $\xi$
+      & \field{radial\_exaggeration} \\
+    $\Sigma_i$ (structural role)
+      & \field{structural\_role}
+      & \type{StructuralRole} enum \\
+    $\Lambda_i$ (stability class)
+      & \field{stability\_class}
+      & \type{StabilityClass} enum \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ════════════════════════════════════════════════════════════════════════════
+\subsection{Structural Role and Stability Class}
+\label{sec:role-stability}
+% ════════════════════════════════════════════════════════════════════════════
+
+The Identity--State Decomposition Framework assigns each particle
+two discrete classification fields: a \emph{structural role}
+$\Sigma_i$ and a \emph{stability class}~$\Lambda_i$.  Both are now
+carried on every \type{Bead} and propagated into the
+\type{BeadVisualRecord} for rendering-time inspection.
+
+\paragraph{Structural role $\Sigma_i$.}
+A five-valued prior encoding dominant bonding topology:
+%
+\[
+  \Sigma_i \in
+  \bigl\{\,
+    0\!=\!\text{inert},\;
+    1\!=\!\text{ionic},\;
+    2\!=\!\text{directional covalent},\;
+    3\!=\!\text{metallic},\;
+    4\!=\!\text{mixed}
+  \,\bigr\}.
+\]
+%
+The role biases the three-channel interaction kernel via per-channel
+weights $w_k^{(\Sigma)}$ (Table~\ref{tab:role-weights}).  For a
+bead pair $(A,B)$ the combined weight uses a geometric mean,
+analogous to Lorentz--Berthelot mixing:
+%
+\begin{equation}
+  w_k^{AB} = \sqrt{w_k^A \cdot w_k^B}.
+  \label{eq:role-mix}
+\end{equation}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Structural role $\Sigma_i$: per-channel weight biases.
+           Values are multipliers on the existing coupling constants
+           $\lambda_k$.}
+  \label{tab:role-weights}
+  \begin{tabular}{lccc}
+    \toprule
+    $\Sigma$ & $w_{\text{steric}}$ & $w_{\text{elec}}$ & $w_{\text{disp}}$ \\
+    \midrule
+    0 — Inert              & 0.3 & 0.1 & 1.5 \\
+    1 — Ionic-Dominant     & 0.5 & 1.5 & 0.3 \\
+    2 — Directional Cov.   & 1.5 & 0.5 & 0.7 \\
+    3 — Metallic           & 1.0 & 0.2 & 1.3 \\
+    4 — Mixed              & 1.0 & 1.0 & 1.0 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Stability class $\Lambda_i$.}
+A four-valued persistence classification:
+\[
+  \Lambda_i \in
+  \bigl\{\,
+    0\!=\!\text{transient},\;
+    1\!=\!\text{metastable},\;
+    2\!=\!\text{ambient-stable},\;
+    3\!=\!\text{bulk-lattice}
+  \,\bigr\}.
+\]
+Both fields are visible in the Comparison view mode and in the ImGui
+inspector panel, satisfying the anti-black-box requirement that every
+identity-state component of a bead be directly inspectable.
+
+Implementation: \type{StructuralRole} and \type{StabilityClass} enums
+in \file{coarse\_grain/core/bead.hpp}; the classifier
+\texttt{classify\_structural\_role()} infers $\Sigma_i$ from the
+$Z$~values of the parent atom group.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Layer 2: Surface-State Descriptor Field}
+\label{sec:layer2}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Spherical Harmonic Expansion}
+
+Each bead carries a \emph{unified descriptor} consisting of three
+scalar fields on $S^2$, one per interaction channel $k$:
+\begin{equation}
+  S^{(k)}(\theta, \varphi)
+    = \sum_{\ell=0}^{\ell_{\max}}
+      \sum_{m=-\ell}^{\ell}
+      c_{\ell m}^{(k)} \, \SH(\theta, \varphi),
+  \label{eq:sh_expansion}
+\end{equation}
+where $k \in \{0 = \text{steric},\; 1 = \text{electrostatic},\;
+2 = \text{dispersion}\}$ and $\SH$ are real spherical harmonics.
+
+The coefficient vectors $\{c_{\ell m}^{(k)}\}$ are pre-solved during
+bead construction and stored in the \type{UnifiedDescriptor}.  At
+visualisation time they are evaluated on a structured angular grid.
+
+\subsection{Surface-State Grid}
+
+The Layer~2 grid tessellates $S^2$ into
+$(N_\theta + 1) \times N_\phi$ vertices in row-major order.  The
+default resolution is $N_\theta = 24$, $N_\phi = 48$, yielding
+1\,200 vertices:
+
+\begin{equation}
+  \theta_i = \frac{\pi \, i}{N_\theta}, \quad i = 0 \ldots N_\theta,
+  \qquad
+  \varphi_j = \frac{2\pi \, j}{N_\phi}, \quad j = 0 \ldots N_\phi - 1.
+  \label{eq:grid_coords}
+\end{equation}
+
+At each vertex, all three channels are evaluated via
+Equation~\ref{eq:sh_expansion}.  A fourth \emph{synthesised} channel
+combines them:
+\begin{equation}
+  S^{(\text{syn})}(\theta, \varphi)
+    = w_s \, S^{(0)} + w_e \, S^{(1)} + w_d \, S^{(2)},
+  \label{eq:synthesized}
+\end{equation}
+with equal default weights $w_s = w_e = w_d = \tfrac{1}{3}$.
+
+Per-channel value ranges $[S_{\min}^{(k)}, S_{\max}^{(k)}]$ are
+tracked for colourmap normalisation.  The active channel is selectable
+at runtime.
+
+\subsection{Surface-State Channels}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Surface-state descriptor channels.}
+  \label{tab:channels}
+  \begin{tabular}{clp{7.5cm}}
+    \toprule
+    $k$ & Name & Physical Meaning \\
+    \midrule
+    0 & Steric        & Geometric accessibility / excluded-volume envelope \\
+    1 & Electrostatic & Charge-field distribution from partial charges \\
+    2 & Dispersion    & Attractive interaction strength (London dispersion) \\
+    syn & Synthesized  & Weighted combination of all three channels \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Rendering the Heatmap}
+
+The grid is rendered as a quad-strip tessellation over the shell
+surface.  Each vertex colour is obtained by mapping the active
+channel's value through a sequential colourmap, normalised by the
+tracked min/max range.
+
+Optional \emph{radial exaggeration} $\xi$ deforms the sphere in the
+normal direction:
+\begin{equation}
+  \Rvec(\theta, \varphi)
+    = \Rvec_B + R_{\text{eff}} \,
+      \bigl(1 + \xi \, \bar{S}^{(k)}(\theta,\varphi)\bigr) \,
+      \nhat(\theta, \varphi),
+  \label{eq:radial_exag}
+\end{equation}
+where $\bar{S}^{(k)}$ is the normalised channel value in $[0,1]$.
+When $\xi = 0$ the surface remains a perfect sphere; larger values
+produce a ``bumpy'' surface proportional to the field strength.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Layer 3: Internal Structural Reference}
+% ════════════════════════════════════════════════════════════════════════════
+
+Layer~3 renders the atomistic fragment that was mapped into the bead.
+This allows direct visual comparison between the CG representation and
+its atomistic source.
+
+\subsection{Source Fragment Miniature}
+
+The \type{SourceFragmentMiniature} stores a lightweight copy of the
+atomistic geometry:
+
+\begin{itemize}
+  \item \textbf{Atoms}: position, atomic number, Van der Waals radius
+        (simplified lookup), and topological flags.
+  \item \textbf{Bonds}: atom index pair $(i,j)$ and bond order.
+  \item \textbf{Centres}: centre-of-mass $\Rvec_{\text{COM}}$ and
+        centre-of-geometry $\Rvec_{\text{COG}}$.
+\end{itemize}
+
+\subsection{Internal Reference Rendering Options}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Configurable options for Layer~3 rendering.}
+  \label{tab:internal_ref}
+  \begin{tabular}{llr}
+    \toprule
+    Option & Description & Default \\
+    \midrule
+    \field{show\_atoms}              & Draw atom spheres         & true  \\
+    \field{show\_bonds}              & Draw bond sticks          & true  \\
+    \field{show\_orientation\_markers}& Draw local frame axes    & true  \\
+    \field{element\_coloring}        & CPK element colours       & true  \\
+    \field{atom\_scale}              & Fraction of VdW radius    & 0.25  \\
+    \field{bond\_width}              & Bond line width (px)      & 1.5   \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{View Modes}
+\label{sec:viewmodes}
+% ════════════════════════════════════════════════════════════════════════════
+
+The eight view modes control the composition of Layers~1--3 and
+additional diagnostic overlays.
+
+\begin{table}[htbp]
+  \centering
+  \caption{View-mode composition matrix.  $\alpha$ denotes shell
+           opacity.  ``Triad'' = local frame triad.  ``Heatmap'' =
+           Layer~2 surface-state field.  ``Fragment'' = Layer~3
+           atomistic reference.  ``Halo'' = residual glyph.}
+  \label{tab:viewmodes}
+  \begin{tabular}{lcccccc}
+    \toprule
+    Mode & $\alpha$ & Triad & Scaffold & Heatmap & Fragment & Halo \\
+    \midrule
+    Shell        & 0.60 &     &     &     &     &     \\
+    Scaffold     & 0.25 & \checkmark & \checkmark &     &     &     \\
+    SurfaceState & 0.10 & \checkmark &     & \checkmark &     &     \\
+    InternalRef  & 0.12 & \checkmark &     &     & \checkmark &     \\
+    Skeleton     & 0.15 & \checkmark &     &     & \checkmark &     \\
+    Cutaway      & 0.50 & \checkmark & \checkmark &     &     &     \\
+    Residual     & 0.30 & \checkmark &     &     &     & \checkmark \\
+    Comparison   & 0.15 & \checkmark &     & \checkmark & \checkmark & \checkmark \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\paragraph{Shell.}
+The simplest mode.  A semi-transparent sphere at
+$R_{\text{eff}}$, colour-coded by chemical class:
+purple for aromatics, gold for metals, teal for cyclic fragments,
+blue for all others.  Opacity encodes mapping confidence.
+
+\paragraph{Scaffold.}
+Adds the solved direction vectors (coordination geometry) as
+radial lines from the bead centre, plus the surface descriptor
+patch field rendered as directional glyphs.
+
+\paragraph{SurfaceState.}
+The Layer~2 heatmap mode.  The shell becomes a ghost ($\alpha = 0.10$)
+and is overlaid with the spherical descriptor field.  The active channel
+is selectable (steric, electrostatic, dispersion, or synthesised).
+
+\paragraph{InternalRef.}
+The Layer~3 mode.  The atomistic fragment is rendered inside the
+ghost shell using ball-and-stick representation with CPK colouring.
+
+\paragraph{Skeleton.}
+Similar to InternalRef but displays the raw stick model of the source
+fragment.
+
+\paragraph{Cutaway.}
+A clipping plane slices the shell to expose internal structure.  The
+scaffold and descriptor patches are drawn within the visible
+hemisphere.
+
+\paragraph{Residual.}
+Displays a residual halo whose size and colour encode the descriptor
+reconstruction residual, geometry distortion, and frame ambiguity.
+Used to identify beads where the CG mapping is least faithful.
+
+\paragraph{Comparison.}
+All diagnostic layers simultaneously: ghost shell, heatmap, atomistic
+fragment, frame triad, and residual halo.  The most information-dense
+mode, intended for close-up single-bead analysis.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Scale Hierarchy}
+% ════════════════════════════════════════════════════════════════════════════
+
+Five scale levels govern the level of detail rendered for the bead
+population as a whole.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Scale hierarchy levels.}
+  \label{tab:scale}
+  \begin{tabular}{cll}
+    \toprule
+    Level & Name & Description \\
+    \midrule
+    0 & SceneCloud       & Distant overview; beads as point sprites \\
+    1 & Cluster          & Intermediate; smooth shaded spheres \\
+    2 & BeadDetail       & Full shell rendering with opacity/colour \\
+    3 & BeadInterior     & Internal structure visible through ghost shell \\
+    4 & FragmentCompare  & Single-bead comparison with atomistic overlay \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Transitions between levels are governed by camera distance and may be
+overridden for selected beads via the inspector panel.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Alpha Polarisability Model Integration}
+\label{sec:alpha}
+% ════════════════════════════════════════════════════════════════════════════
+
+The ``fuzzy'' character of the ball extends beyond visualisation into
+the physical model.  The \emph{alpha model} fits atomic polarisabilities
+using a parameterised form that includes \emph{blob} terms:
+
+\begin{equation}
+  \alpha_{\text{eff}} = f_{\text{blob}}(\alpha_0, \, Z, \, \text{block}),
+  \label{eq:alpha_blob}
+\end{equation}
+where $f_{\text{blob}}$ is controlled by three fitted parameters:
+\begin{itemize}
+  \item \field{blob\_f\_lin} --- linear fuzzy-shell mixing fraction,
+  \item \field{blob\_f\_half} --- half-shell contribution,
+  \item \field{blob\_f\_full} --- full-shell contribution.
+\end{itemize}
+
+These are determined by evolutionary stochastic optimisation against
+reference polarisability data (see \file{tools/fit\_alpha\_model.cpp}).
+Additional fitted parameters include:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Alpha model parameters (Method~D).}
+  \label{tab:alpha_params}
+  \begin{tabular}{lp{8.5cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    $k_{\text{period}}[1\ldots7]$ & Period-dependent scaling factors \\
+    $c_{\text{block}}[s,p,d,f]$   & Orbital-block correction terms \\
+    $c_{\text{rel}}$              & Relativistic correction coefficient \\
+    $\beta_f$                     & $f$-block contraction exponent \\
+    $a_{f1}, a_{f2}, a_{f3}$      & Lanthanide/actinide amplitude terms \\
+    $\sigma_{f1}, \sigma_{f2}$    & Gaussian widths for $f$-block \\
+    $b_{\text{bind}}$             & Binding-energy correction \\
+    $q_{\text{drude}}$            & Drude oscillator effective charge \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The blob parameters connect the visual ``fuzziness'' of the shell to
+a quantitative physical property: the polarisability of the electron
+cloud determines how ``soft'' and ``diffuse'' each bead appears, both
+in the force field and in the rendering.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Environment-Responsive Coupling}
+% ════════════════════════════════════════════════════════════════════════════
+
+The fuzzy ball adapts to its thermodynamic environment.  The
+\type{BeadVisualRecord} captures an environment-state snapshot at each
+frame:
+
+\begin{table}[htbp]
+  \centering
+  \caption{Environment observables stored per bead.}
+  \label{tab:env}
+  \begin{tabular}{clp{7cm}}
+    \toprule
+    Symbol & Field & Meaning \\
+    \midrule
+    $\eta_B$ & \field{eta} & Slow internal state (relaxation variable) \\
+    $\rho_B$ & \field{rho} & Local bead density \\
+    $f_B$    & \field{target\_f} & Target function value \\
+    $P_{2,B}$& \field{P2}  & Nematic order parameter \\
+    $C_B$    & \field{coordination\_C} & Coordination number \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+These observables modulate the three-channel kernel described in
+the Seed \& Bead specification
+($\gamma_{\text{steric}}$, $\gamma_{\text{elec}}$,
+$\gamma_{\text{disp}}$), closing the loop between simulation dynamics
+and visual representation.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Connectivity and Neighbour Interactions}
+% ════════════════════════════════════════════════════════════════════════════
+
+Each bead record stores a list of \type{NeighbourLink} entries that
+describe pairwise interactions with adjacent beads:
+
+\begin{itemize}
+  \item \field{neighbour\_bead\_id} --- index of the neighbour bead,
+  \item \field{distance} --- centre-to-centre separation ($\Ang$),
+  \item \field{interaction\_strength} --- magnitude of the pairwise
+        potential,
+  \item \field{interaction\_type} --- string label classifying the
+        geometry (e.g.\ ``face-to-face'', ``edge-to-face'').
+\end{itemize}
+
+This information enables graph-based analyses and can be exported to
+the snapshot reporting system for automated figure generation.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Implementation Summary}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Data Flow}
+
+The conversion from simulation data to visual output follows a
+deterministic pipeline:
+
+\begin{enumerate}
+  \item \textbf{Bead construction.}  The atomistic fragment is mapped
+        to a CG bead via the \texttt{6+9 stepper}, producing a
+        \type{Bead} with position, mass, surface descriptor, and
+        unified descriptor.
+  \item \textbf{Record building.}  \texttt{build\_visual\_record()}
+        converts the \type{Bead} into a \type{BeadVisualRecord},
+        computing effective radius, local frame, anisotropy,
+        descriptor grids, and source-fragment miniature.
+  \item \textbf{Inspector rendering.}  \type{BeadInspectorView}
+        consumes the record and dispatches to the selected view mode,
+        composing Layers~1--3 with the appropriate opacity and overlay
+        settings.
+\end{enumerate}
+
+\subsection{Key Source Files}
+
+\begin{table}[htbp]
+  \centering
+  \caption{Implementation files for the fuzzy ball model.}
+  \label{tab:files}
+  \begin{tabular}{lp{8cm}}
+    \toprule
+    File & Role \\
+    \midrule
+    \file{coarse\_grain/vis/bead\_visual\_record.hpp}
+      & Data model: \type{BeadVisualRecord}, enumerations,
+        grid types, \texttt{build\_visual\_record()} \\
+    \file{coarse\_grain/vis/bead\_inspector\_view.hpp}
+      & Renderer: view-mode dispatch, shell/scaffold/heatmap/
+        fragment/residual compositing \\
+    \file{tools/fit\_alpha\_model.cpp}
+      & Alpha polarisability fitting with blob parameters \\
+    \file{tools/auto\_fit\_alpha.cpp}
+      & Evolutionary optimiser for \type{AlphaModelParams} \\
+    \file{coarse\_grain/models/seed\_bead\_stepper.hpp}
+      & 6+9 step function that produces bead data consumed by
+        the visual record builder \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Descriptor Evaluation: Spherical Harmonics}
+
+The inline evaluator computes real spherical harmonics $\SH(\theta,\varphi)$
+up to $\ell_{\max}$ and contracts with the coefficient vector:
+
+\begin{lstlisting}
+inline double evaluate_sh_expansion_at(
+    const std::vector<double>& coeffs,
+    int l_max,
+    double theta, double phi)
+{
+    auto Y = evaluate_all_harmonics_dynamic(theta, phi, l_max);
+    double val = 0.0;
+    int n = std::min((int)coeffs.size(), (int)Y.size());
+    for (int i = 0; i < n; ++i)
+        val += coeffs[i] * Y[i];
+    return val;
+}
+\end{lstlisting}
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Results and Discussion}
+% ════════════════════════════════════════════════════════════════════════════
+
+The fuzzy ball model provides several concrete improvements over
+conventional CG visualisation:
+
+\begin{enumerate}
+  \item \textbf{Directional information is preserved.}  The three-channel
+        surface-state heatmap reveals steric, electrostatic, and dispersion
+        anisotropy that would be invisible with uniform spheres.
+
+  \item \textbf{Mapping quality is visually encoded.}  Shell opacity
+        and residual halos immediately flag beads whose CG representation
+        deviates significantly from the atomistic source.
+
+  \item \textbf{Multi-scale inspection is seamless.}  The five-level
+        scale hierarchy and eight view modes allow a researcher to
+        navigate from a macroscopic scene overview to single-fragment
+        comparison without switching tools.
+
+  \item \textbf{Physical fuzziness is quantified.}  The alpha-model
+        blob parameters tie the visual softness of each shell to a
+        fitted atomic polarisability, connecting rendering to a
+        measurable physical property.
+
+  \item \textbf{Environment responsiveness is captured.}  The
+        environment-state snapshot ($\eta_B$, $\rho_B$, $P_{2,B}$,
+        $C_B$, $f_B$) modulates the descriptor kernel, ensuring the
+        visual representation reflects local thermodynamic conditions.
+\end{enumerate}
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Conclusion}
+% ════════════════════════════════════════════════════════════════════════════
+
+The Fuzzy Ball Model transforms the conventional point-sphere
+representation of coarse-grained beads into a scientifically rich,
+multi-layer visual instrument.  By encoding directional descriptor
+fields via spherical harmonic expansion, exposing the internal
+atomistic skeleton through progressive transparency, and coupling
+shell appearance to environment state and fitted polarisability
+parameters, the model enables deterministic, inspectable, and
+research-grade visualisation.
+
+The eight-mode composition system and five-level scale hierarchy
+provide a systematic framework for navigating between overview and
+detail, supporting both qualitative exploration and quantitative
+analysis.  All outputs are fully deterministic and exportable for
+inclusion in scientific reports.
+
+Future work includes adaptive tessellation based on descriptor
+gradient magnitude, time-dependent surface-state animation for
+trajectory playback, and integration of the fuzzy ball rendering
+with the automated snapshot and graph reporting pipeline.
+
+% ════════════════════════════════════════════════════════════════════════════
+%  References
+% ════════════════════════════════════════════════════════════════════════════
+\bibliographystyle{plain}
+% \bibliography{references}  % Uncomment if you have a .bib file
+
+\end{document}

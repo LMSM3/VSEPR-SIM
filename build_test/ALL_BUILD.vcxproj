@@ -1,0 +1,975 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ResolveNugetPackages>false</ResolveNugetPackages>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{89AB164D-986C-35CD-B5E8-F8301A8FD799}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Platform>x64</Platform>
+    <ProjectName>ALL_BUILD</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Utility</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v143</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.2.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <Midl>
+      <AdditionalIncludeDirectories>C:\R\VSPER-SIM\src;C:\R\VSPER-SIM\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\CMakeLists.txt">
+      <UseUtf8Encoding>Always</UseUtf8Encoding>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule C:/R/VSPER-SIM/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM -BC:/R/VSPER-SIM/build_test --check-stamp-file C:/R/VSPER-SIM/build_test/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\R\VSPER-SIM\VSEPR\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCUDACompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeCXXCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeRCCompiler.cmake;C:\R\VSPER-SIM\build_test\CMakeFiles\4.2.1\CMakeSystem.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Config.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3ConfigVersion.cmake;C:\R\VSPER-SIM\build_test\_deps\eigen-build\Eigen3Targets.cmake;C:\R\VSPER-SIM\cmake\CoreBuild.cmake;C:\R\VSPER-SIM\cmake\VisBuild.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCUDAInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCXXInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeCommonLanguageInclude.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeGenericSystem.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeInitializeConfigs.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeLanguageInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeRCInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\CMakeSystemSpecificInitialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\CheckLanguage.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\CMakeCommonCompilerMacros.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Compiler\NVIDIA.cmake;C:\msys64\ucrt64\share\cmake\Modules\ExternalProject\shared_internal_commands.cmake;C:\msys64\ucrt64\share\cmake\Modules\FetchContent.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCXXLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Internal\CMakeCommonLinkerInformation.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Linker\MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Linker\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-Initialize.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-C.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC-CXX.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-MSVC.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows-NVIDIA-CUDA.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\Windows.cmake;C:\msys64\ucrt64\share\cmake\Modules\Platform\WindowsPaths.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">C:\R\VSPER-SIM\build_test\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\ZERO_CHECK.vcxproj">
+      <Project>{F62A861E-F8A7-3607-BCA0-2D16E2ED9A10}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\alias_tests.vcxproj">
+      <Project>{3C2FCA6F-76DB-3561-A365-92F83A99E08E}</Project>
+      <Name>alias_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\alkane_torsion_tests.vcxproj">
+      <Project>{D7D65FDE-F8B4-396E-8051-60752A91903A}</Project>
+      <Name>alkane_torsion_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\angle_tests.vcxproj">
+      <Project>{AF98CDF0-3C60-37BE-B69F-616EE4A9324A}</Project>
+      <Name>angle_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\atomistic\atomistic.vcxproj">
+      <Project>{C8BF51E9-538E-3911-9422-9ED4CE084990}</Project>
+      <Name>atomistic</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\atomistic-align.vcxproj">
+      <Project>{F6B794C9-9964-3981-ADD8-26B0A2408141}</Project>
+      <Name>atomistic-align</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\atomistic-discover.vcxproj">
+      <Project>{5143F26A-D204-3804-B915-3038A2E51EF5}</Project>
+      <Name>atomistic-discover</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\atomistic-relax.vcxproj">
+      <Project>{C856D80C-DA61-3738-8094-D31B248A9F24}</Project>
+      <Name>atomistic-relax</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\atomistic-sim.vcxproj">
+      <Project>{5706C200-63EB-3EDF-82B1-85D2F0EFED03}</Project>
+      <Name>atomistic-sim</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\auto_fit_alpha.vcxproj">
+      <Project>{C8FA52AF-4681-325A-97A2-59013619EE65}</Project>
+      <Name>auto_fit_alpha</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\basic_isomer_validation.vcxproj">
+      <Project>{1EF3F777-DD4E-39C5-8D1E-A67983300519}</Project>
+      <Name>basic_isomer_validation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\basic_molecule_validation.vcxproj">
+      <Project>{F865F48B-4505-3958-A4D3-B7AA8C5DC230}</Project>
+      <Name>basic_molecule_validation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\bead_fire_report_test.vcxproj">
+      <Project>{10D15A5F-1745-35D7-8ACB-E3DBF16F1FCA}</Project>
+      <Name>bead_fire_report_test</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\bench_ehd.vcxproj">
+      <Project>{1684AE45-F857-3CA8-818F-4818FF4BB999}</Project>
+      <Name>bench_ehd</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\bench_gpu_cpu.vcxproj">
+      <Project>{4FD38E8E-A310-3FE9-B129-E9AE76FD7BE4}</Project>
+      <Name>bench_gpu_cpu</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\bio_report_generator.vcxproj">
+      <Project>{1470481A-7C37-32A9-8DAE-C9385B9E8DA6}</Project>
+      <Name>bio_report_generator</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\butane_scan.vcxproj">
+      <Project>{DDE6A588-E795-3D5B-99A2-3A8D75BDD03B}</Project>
+      <Name>butane_scan</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\catalytic-dissociation.vcxproj">
+      <Project>{895C705D-F838-386E-B4CA-F4D7D2B9F261}</Project>
+      <Name>catalytic-dissociation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\chemistry_basic_test.vcxproj">
+      <Project>{5D4E2A6E-0A2D-3A10-A79C-36780F0B8D63}</Project>
+      <Name>chemistry_basic_test</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\compute_forces.vcxproj">
+      <Project>{89FFFFFF-22FB-32BC-929C-50F35FE4D1D4}</Project>
+      <Name>compute_forces</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\continual_runner.vcxproj">
+      <Project>{A4A69470-B844-3EC7-B41B-BC990D45313F}</Project>
+      <Name>continual_runner</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\deep_verification.vcxproj">
+      <Project>{AA2D187B-FE51-33E7-B8B2-ECF8B8B64B23}</Project>
+      <Name>deep_verification</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\demo.vcxproj">
+      <Project>{22F2DEA0-7A66-32A8-9E12-392755C5D23F}</Project>
+      <Name>demo</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\demo-provenance-shell.vcxproj">
+      <Project>{ACDD76C3-CA1D-3612-A3AA-F4A2E7823499}</Project>
+      <Name>demo-provenance-shell</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\demo-version-lineage.vcxproj">
+      <Project>{61C48BEB-3725-3106-877C-46A7E170EF63}</Project>
+      <Name>demo-version-lineage</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\demo_code_trail.vcxproj">
+      <Project>{FB8A4B0C-A011-3839-80D7-7004D82A759F}</Project>
+      <Name>demo_code_trail</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\energy_model_v03_test.vcxproj">
+      <Project>{CF3B7F62-C2B5-3417-B08B-E3F83820FDD9}</Project>
+      <Name>energy_model_v03_test</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\energy_tests.vcxproj">
+      <Project>{D3924376-B4AF-3B13-85E3-BCE791EAB7DE}</Project>
+      <Name>energy_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\example-32bit-hourglass-lookglass.vcxproj">
+      <Project>{36FEA313-5164-304E-99D5-E36E886D7442}</Project>
+      <Name>example-32bit-hourglass-lookglass</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\fatigue_calc.vcxproj">
+      <Project>{8962EC5E-A112-3FE3-8F0C-5B4C79F1930F}</Project>
+      <Name>fatigue_calc</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\fire-smooth.vcxproj">
+      <Project>{F0FFF494-3EF4-3009-BAB1-0977455C8366}</Project>
+      <Name>fire-smooth</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\fit_alpha_model.vcxproj">
+      <Project>{96943F3A-2DEF-3991-95AA-BC392403DF97}</Project>
+      <Name>fit_alpha_model</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\formula_fuzz_tester.vcxproj">
+      <Project>{DB90A81B-19D5-37A3-AAFF-51A51895D33E}</Project>
+      <Name>formula_fuzz_tester</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\gen_xyz_demo.vcxproj">
+      <Project>{100FA8F4-B36F-36FF-80B2-06A701BA6DED}</Project>
+      <Name>gen_xyz_demo</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\geom_ops_tests.vcxproj">
+      <Project>{424CB77F-8125-306C-BF5B-8E1E26B96491}</Project>
+      <Name>geom_ops_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\metal-sim.vcxproj">
+      <Project>{8C3863D6-19C2-3933-AF82-BB4C0AC4815A}</Project>
+      <Name>metal-sim</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\molecular-census.vcxproj">
+      <Project>{3FDAF89F-BA16-3292-8A0D-B3914518B986}</Project>
+      <Name>molecular-census</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\nuclear-core-runner.vcxproj">
+      <Project>{746011BA-18F4-3512-ABA2-514B75490167}</Project>
+      <Name>nuclear-core-runner</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\nuclear-core-z2-102.vcxproj">
+      <Project>{7815DC54-CBCD-35A8-AD6F-D7E6A629BC99}</Project>
+      <Name>nuclear-core-z2-102</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\optimizer_tests.vcxproj">
+      <Project>{DCD3F35A-45A2-33B4-A718-FCD50B951FB3}</Project>
+      <Name>optimizer_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\organic-inorganic-synthesis.vcxproj">
+      <Project>{BCD78073-FAD2-3C87-8929-FD29460DCEBB}</Project>
+      <Name>organic-inorganic-synthesis</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\pbc_phase2_physics.vcxproj">
+      <Project>{DF24F590-EA22-31A1-A465-2D011C05EDBE}</Project>
+      <Name>pbc_phase2_physics</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\pbc_phase4_perf.vcxproj">
+      <Project>{9E81211C-3E12-3CBB-AB08-54E8CB58341A}</Project>
+      <Name>pbc_phase4_perf</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\pbc_phase5_regression.vcxproj">
+      <Project>{024E44A4-0397-33CE-A75D-B8D8C0642CA3}</Project>
+      <Name>pbc_phase5_regression</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\pbc_test.vcxproj">
+      <Project>{8071166E-DD66-3297-A34C-AB2246355163}</Project>
+      <Name>pbc_test</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\pbc_verification.vcxproj">
+      <Project>{EB31CEAA-B9EC-37B5-861D-4277361B16EF}</Project>
+      <Name>pbc_verification</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\peptide-stochastic-viz.vcxproj">
+      <Project>{2241D37E-962A-369A-98AB-834FF5CEBF43}</Project>
+      <Name>peptide-stochastic-viz</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase11_12_13_final.vcxproj">
+      <Project>{4D14649A-A80E-3476-8BEE-5B194071046A}</Project>
+      <Name>phase11_12_13_final</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase14_milestones.vcxproj">
+      <Project>{9EBF40F7-4D00-300A-A6D1-4D561063252F}</Project>
+      <Name>phase14_milestones</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase1_kernel_audit.vcxproj">
+      <Project>{14227239-626C-3D0C-A97D-73BD1B629338}</Project>
+      <Name>phase1_kernel_audit</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase2_structural_energy.vcxproj">
+      <Project>{3EE6FA45-EF4B-3C66-8EF5-CD2F301BCCB2}</Project>
+      <Name>phase2_structural_energy</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase3_relaxation.vcxproj">
+      <Project>{79B543B7-4316-38F6-899D-11427457FFE2}</Project>
+      <Name>phase3_relaxation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase4_formation_priors.vcxproj">
+      <Project>{DC5C9E80-DB2B-3581-B21F-E62B0BC4D5FA}</Project>
+      <Name>phase4_formation_priors</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase5_crystal_validation.vcxproj">
+      <Project>{E81453C1-8DC9-3110-BE0E-ABACA64BFBF6}</Project>
+      <Name>phase5_crystal_validation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase6_7_verification_sessions.vcxproj">
+      <Project>{EC6032A2-5597-3F14-B8F5-165AADAED904}</Project>
+      <Name>phase6_7_verification_sessions</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\phase8_9_10_environment.vcxproj">
+      <Project>{84C24A7A-38DC-3A78-87B4-69F64E843A01}</Project>
+      <Name>phase8_9_10_environment</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\pipe-thermal-tui.vcxproj">
+      <Project>{207949D2-114A-3090-B08B-6F5144573FEE}</Project>
+      <Name>pipe-thermal-tui</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\problem1_two_body_lj.vcxproj">
+      <Project>{54A0B1FB-8E31-3E05-932B-DD8888EA87F9}</Project>
+      <Name>problem1_two_body_lj</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\problem2_three_body_cluster.vcxproj">
+      <Project>{A582B5D0-D5D3-3E7C-BD1A-CDB10B9D1E46}</Project>
+      <Name>problem2_three_body_cluster</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\qa_golden_tests.vcxproj">
+      <Project>{4598CCC5-51F0-3C60-94F6-521B50D6A55C}</Project>
+      <Name>qa_golden_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\qa_random_tests.vcxproj">
+      <Project>{DF6B21D6-0DF3-34CD-91B1-7DB3C0D17D14}</Project>
+      <Name>qa_random_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\report_engine_tests.vcxproj">
+      <Project>{278DBCB3-60DD-3332-BB49-4618245B0DE2}</Project>
+      <Name>report_engine_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\report_generator.vcxproj">
+      <Project>{3B485D68-B22D-3914-B324-DCD19D4ECC29}</Project>
+      <Name>report_generator</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\run-report-automation.vcxproj">
+      <Project>{13D3DB7E-0813-3C73-A643-A0C880377955}</Project>
+      <Name>run-report-automation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\seed-bead-demo.vcxproj">
+      <Project>{918EC23F-3D6E-33A6-BC06-8D82246BFFDD}</Project>
+      <Name>seed-bead-demo</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\sim-1000.vcxproj">
+      <Project>{5D41EB75-5058-31A2-A04C-94E378F8CF3B}</Project>
+      <Name>sim-1000</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\sim-101x50.vcxproj">
+      <Project>{36F21637-2625-3833-A19C-07CB2C11C84A}</Project>
+      <Name>sim-101x50</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\spec_parser.vcxproj">
+      <Project>{BB7EF185-57A5-3269-B35D-EBE6D1EF723A}</Project>
+      <Name>spec_parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\sqlite3_bundled.vcxproj">
+      <Project>{D51ED393-8E48-349B-8C8B-F49269657646}</Project>
+      <Name>sqlite3_bundled</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test-hash-invariance.vcxproj">
+      <Project>{529D0FC7-0568-3F4D-9B68-CE1374AA2689}</Project>
+      <Name>test-hash-invariance</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_alpha_calibrator.vcxproj">
+      <Project>{11233569-7A5F-3955-AF60-51CBB681312F}</Project>
+      <Name>test_alpha_calibrator</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_alpha_model.vcxproj">
+      <Project>{9ED8D402-BDA3-378A-A5BE-FB692DA44FD5}</Project>
+      <Name>test_alpha_model</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_anisotropic_beads.vcxproj">
+      <Project>{C78F7A7A-0172-3A4A-A953-7FA6D41DC4B0}</Project>
+      <Name>test_anisotropic_beads</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_anisotropic_model.vcxproj">
+      <Project>{EDFF740A-C34C-3245-854C-652B3471B684}</Project>
+      <Name>test_anisotropic_model</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_artifact_export.vcxproj">
+      <Project>{EA9614AF-68DE-38D8-A823-5C5765505505}</Project>
+      <Name>test_artifact_export</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_backbone_planarity.vcxproj">
+      <Project>{AD9F0D8B-97DF-39B3-B162-64601BFCD3D9}</Project>
+      <Name>test_backbone_planarity</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_baoab_multi.vcxproj">
+      <Project>{EBE2DF25-C980-313B-98C9-D1774CE20D99}</Project>
+      <Name>test_baoab_multi</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_bead_layers.vcxproj">
+      <Project>{8CD1B032-D97D-3AD1-8536-FDC2F23A5014}</Project>
+      <Name>test_bead_layers</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_beta7_pipeline.vcxproj">
+      <Project>{62838897-8E85-3A53-9BC3-7BB6823A203E}</Project>
+      <Name>test_beta7_pipeline</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_cg_cli.vcxproj">
+      <Project>{15A63657-FAD9-334B-B2A6-34009C2C1BFB}</Project>
+      <Name>test_cg_cli</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_cg_mapping_suite.vcxproj">
+      <Project>{EE63EB1D-4632-38EB-ADD9-120EE058B797}</Project>
+      <Name>test_cg_mapping_suite</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_code_trail.vcxproj">
+      <Project>{796861E8-5C81-3E7F-9769-DCDE888999E8}</Project>
+      <Name>test_code_trail</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_crystal_metrics.vcxproj">
+      <Project>{461218B8-3D25-3F69-B48B-B3AD5FD22142}</Project>
+      <Name>test_crystal_metrics</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_crystal_pipeline.vcxproj">
+      <Project>{196A17F5-5C8B-36D2-802C-B5C11055AB8A}</Project>
+      <Name>test_crystal_pipeline</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_crystal_surface.vcxproj">
+      <Project>{C5FD0C9F-E1BB-3BA1-AADA-D2D60819272A}</Project>
+      <Name>test_crystal_surface</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_descriptor_enrichment.vcxproj">
+      <Project>{2330EB3C-F2E4-3070-AF8B-602B61442C27}</Project>
+      <Name>test_descriptor_enrichment</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_ehd.vcxproj">
+      <Project>{E112778C-675B-3DB1-86C0-2DA6C01696DD}</Project>
+      <Name>test_ehd</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_eigen_bridge.vcxproj">
+      <Project>{6F7C69AD-73A3-3329-8E37-15B4A60D7BA8}</Project>
+      <Name>test_eigen_bridge</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_element_db_phase1_simple.vcxproj">
+      <Project>{FC1C56E8-883F-3979-84F3-150CE1E535DD}</Project>
+      <Name>test_element_db_phase1_simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_emergence.vcxproj">
+      <Project>{03F67071-D0AE-363D-A329-C1B054EDCFBE}</Project>
+      <Name>test_emergence</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_emergence_dataset.vcxproj">
+      <Project>{D0F60674-3999-3809-BE83-B5D2BDE68DC0}</Project>
+      <Name>test_emergence_dataset</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_energy_units.vcxproj">
+      <Project>{636F0ADA-AF83-3AD7-B3F1-E1E517279F65}</Project>
+      <Name>test_energy_units</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_ensemble_proxy_suite5.vcxproj">
+      <Project>{5A494A47-65D6-3884-B031-68910567F177}</Project>
+      <Name>test_ensemble_proxy_suite5</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_env_particle.vcxproj">
+      <Project>{DA50DDB9-1339-3043-B96A-F0145A2E9A29}</Project>
+      <Name>test_env_particle</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_environment_responsive.vcxproj">
+      <Project>{D8D67A54-0E7F-3BA9-874D-529C7132A86F}</Project>
+      <Name>test_environment_responsive</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_environment_suite2.vcxproj">
+      <Project>{6A0BC8C2-C70B-32A7-9A19-6170D91E1A28}</Project>
+      <Name>test_environment_suite2</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_equipartition.vcxproj">
+      <Project>{5D87DC0D-9E41-339A-A99E-C4E6A1463E72}</Project>
+      <Name>test_equipartition</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_ethane_torsion.vcxproj">
+      <Project>{2F08C408-5D69-358B-A0B9-03334AB3E8AA}</Project>
+      <Name>test_ethane_torsion</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_experiment_match.vcxproj">
+      <Project>{E5F463C5-BC2E-3531-B790-343A26CC5318}</Project>
+      <Name>test_experiment_match</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_export_flush.vcxproj">
+      <Project>{0C9AA2EE-82FA-37D9-8B1A-705260F11A1B}</Project>
+      <Name>test_export_flush</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_fatigue.vcxproj">
+      <Project>{A18E2B4A-35F0-3EC4-849C-C020EA2248DD}</Project>
+      <Name>test_fatigue</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_flower_health.vcxproj">
+      <Project>{C48C224A-8B7F-3A08-8B39-3B81DB41642D}</Project>
+      <Name>test_flower_health</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_formation_event_wiring.vcxproj">
+      <Project>{79744617-EF2B-3DC3-B354-AD15B3D271A1}</Project>
+      <Name>test_formation_event_wiring</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_formation_regimes_suite4.vcxproj">
+      <Project>{D980AC63-4921-3986-9297-AB81EF8ED6DB}</Project>
+      <Name>test_formation_regimes_suite4</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_formation_suite3.vcxproj">
+      <Project>{34EA0165-ABB7-395D-9939-7241FF70137E}</Project>
+      <Name>test_formation_suite3</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_formula_parser.vcxproj">
+      <Project>{13B04FB6-4EA2-3C68-8641-FFB42FEB88D8}</Project>
+      <Name>test_formula_parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_fragment_bridge.vcxproj">
+      <Project>{315504DC-3CBE-3C3B-987A-675A73B1D18F}</Project>
+      <Name>test_fragment_bridge</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_gas2.vcxproj">
+      <Project>{7F2AFD49-4906-3F83-B363-A697F36C87CA}</Project>
+      <Name>test_gas2</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_gas3.vcxproj">
+      <Project>{35E13168-D79F-33C4-9403-5E62288E19C0}</Project>
+      <Name>test_gas3</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_gly_ala.vcxproj">
+      <Project>{FF566B87-9A7C-3218-ACAF-B9B6B8039AAE}</Project>
+      <Name>test_gly_ala</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_glycine.vcxproj">
+      <Project>{5F83E698-E9FC-3ABB-A7FD-C09B4F223D16}</Project>
+      <Name>test_glycine</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_heat_gate.vcxproj">
+      <Project>{676DAC5D-FE7F-3EA6-AEA6-A1A969AE4DB3}</Project>
+      <Name>test_heat_gate</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_improved_nonbonded.vcxproj">
+      <Project>{0F83CA0D-9F07-3425-A283-2163D42C6D4E}</Project>
+      <Name>test_improved_nonbonded</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_iso_fit.vcxproj">
+      <Project>{CC97F777-BB04-378B-A5D2-CFE36F1D64E2}</Project>
+      <Name>test_iso_fit</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_langevin_debug.vcxproj">
+      <Project>{DE7D3BA0-D943-3453-83A0-CF3CA78FD767}</Project>
+      <Name>test_langevin_debug</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_lattice_classifier.vcxproj">
+      <Project>{9E44FA18-7152-30C9-B658-5FADCCC17A32}</Project>
+      <Name>test_lattice_classifier</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_macro_inference.vcxproj">
+      <Project>{7FC4B8BC-310E-32FC-984F-67C381327AE7}</Project>
+      <Name>test_macro_inference</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_macro_precursor_suite6.vcxproj">
+      <Project>{FDAE5305-4DB4-3C97-B68E-5BB565F456B9}</Project>
+      <Name>test_macro_precursor_suite6</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_mb_simple.vcxproj">
+      <Project>{28019E00-399D-3421-9F6A-EA5E8426544B}</Project>
+      <Name>test_mb_simple</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_model_selection.vcxproj">
+      <Project>{9AC86127-2E6C-3974-933E-A51EC3CD53AA}</Project>
+      <Name>test_model_selection</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_modules.vcxproj">
+      <Project>{35EBFE8B-592E-3400-BDED-E6160F7FEAB6}</Project>
+      <Name>test_modules</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_molecular_io.vcxproj">
+      <Project>{E6DD035F-53D4-3939-9146-9D29A56F6B77}</Project>
+      <Name>test_molecular_io</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_nuclear_chemical.vcxproj">
+      <Project>{1A345E1C-AE34-3E7C-9D0F-1727B47E760D}</Project>
+      <Name>test_nuclear_chemical</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_nuclear_stability.vcxproj">
+      <Project>{56E61511-DE51-3676-A3F7-6FFF640295C0}</Project>
+      <Name>test_nuclear_stability</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_orientation_coupling.vcxproj">
+      <Project>{95B1F524-6DD9-320C-A8C3-AD6D9FE1C00E}</Project>
+      <Name>test_orientation_coupling</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_particle_id_decay.vcxproj">
+      <Project>{1E3B0267-85F3-36A5-B015-1BA540146506}</Project>
+      <Name>test_particle_id_decay</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_pbc_fire.vcxproj">
+      <Project>{DAAB1B14-9FEE-39C6-94F8-BA1EE7A1515A}</Project>
+      <Name>test_pbc_fire</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_periodic_table_102.vcxproj">
+      <Project>{1DD705D3-F054-3720-A6AE-9A8BF2D5D7A5}</Project>
+      <Name>test_periodic_table_102</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_pipe_thermal.vcxproj">
+      <Project>{9DCAC6A5-5E87-3312-AEB8-DA6BDE555864}</Project>
+      <Name>test_pipe_thermal</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_pipeline_sim_exit.vcxproj">
+      <Project>{53D0B5D0-9F05-329B-8870-386DDE67D840}</Project>
+      <Name>test_pipeline_sim_exit</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_pmf_calculator.vcxproj">
+      <Project>{62E10340-4FBD-33CF-B177-182802C8F06A}</Project>
+      <Name>test_pmf_calculator</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_polarization_phases.vcxproj">
+      <Project>{4EA2BB0A-82FA-3D9A-A312-3C892171440A}</Project>
+      <Name>test_polarization_phases</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_property_calibration_suite8.vcxproj">
+      <Project>{12689699-5778-34F8-97EB-F5B12564316A}</Project>
+      <Name>test_property_calibration_suite8</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_property_pipeline_suite7.vcxproj">
+      <Project>{D562CB69-1567-31E9-849E-036D3B8260EB}</Project>
+      <Name>test_property_pipeline_suite7</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_property_scraper.vcxproj">
+      <Project>{A40AFB64-41CD-3973-A23C-77920DA5B41E}</Project>
+      <Name>test_property_scraper</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_rdf_accumulator.vcxproj">
+      <Project>{E149960C-8A5F-361D-9B5D-AAF01D0E2825}</Project>
+      <Name>test_rdf_accumulator</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_scale_mission.vcxproj">
+      <Project>{3ACDF19B-9A47-3E7E-AEA6-5830F26327E6}</Project>
+      <Name>test_scale_mission</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_scf_polarization.vcxproj">
+      <Project>{AD117EA0-4C13-3A07-B052-6E927803FBD5}</Project>
+      <Name>test_scf_polarization</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_seed_bead_stepper.vcxproj">
+      <Project>{18F81439-2FF1-3AB6-9C8D-F6DBB3C961E7}</Project>
+      <Name>test_seed_bead_stepper</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_sensor.vcxproj">
+      <Project>{9C79705B-2647-36DC-B434-B5B03CAE38E4}</Project>
+      <Name>test_sensor</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_sim_metrics.vcxproj">
+      <Project>{CD43B323-1EB3-3283-B138-B5650F278275}</Project>
+      <Name>test_sim_metrics</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_spec_parser.vcxproj">
+      <Project>{B9569C0C-C2FE-3924-B483-A3BB04F89F8A}</Project>
+      <Name>test_spec_parser</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_species_family.vcxproj">
+      <Project>{C8821D4F-FC0A-358B-9FDC-4452C46C8311}</Project>
+      <Name>test_species_family</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_state_c.vcxproj">
+      <Project>{86D8F216-8576-3B32-A3EF-1B556E64BE61}</Project>
+      <Name>test_state_c</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_thermal_animation.vcxproj">
+      <Project>{E10AD716-3154-38FE-8BE4-3115395BFC24}</Project>
+      <Name>test_thermal_animation</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_thermal_ar13.vcxproj">
+      <Project>{828B6459-A4E8-39CA-B206-3BCA4EE6F0F1}</Project>
+      <Name>test_thermal_ar13</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\test_thermal_vs_quench.vcxproj">
+      <Project>{4AEEBCD0-9449-3F3F-B0BB-7FD60BE378D7}</Project>
+      <Name>test_thermal_vs_quench</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_torsion_analysis.vcxproj">
+      <Project>{C19270CE-EA48-3D28-93BD-C1C4A46B5EF4}</Project>
+      <Name>test_torsion_analysis</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_track2_robustness.vcxproj">
+      <Project>{594524DE-8A07-36E9-ABB0-DA857DDD8216}</Project>
+      <Name>test_track2_robustness</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_unified_descriptor.vcxproj">
+      <Project>{3B699DC3-AD02-3F13-BACA-A17355D59B0E}</Project>
+      <Name>test_unified_descriptor</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_vsim_runtime_day2.vcxproj">
+      <Project>{B678B8CB-5903-31B0-A45C-0CF3EDAD2CCA}</Project>
+      <Name>test_vsim_runtime_day2</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\test_wind_tui.vcxproj">
+      <Project>{2ABA3CB4-E38E-359B-9D7D-C2D261CBB104}</Project>
+      <Name>test_wind_tui</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\thermal_loss_explorer.vcxproj">
+      <Project>{07F121D5-B8C2-320E-AD41-DBB6B8AD4A9E}</Project>
+      <Name>thermal_loss_explorer</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\ti84_ascii.vcxproj">
+      <Project>{F35EEA3D-9AB6-32EC-9223-52255975DA1D}</Project>
+      <Name>ti84_ascii</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\torsion_tests.vcxproj">
+      <Project>{E9F87A54-3391-3528-BE99-FCE946AE32DD}</Project>
+      <Name>torsion_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\torsion_validation_tests.vcxproj">
+      <Project>{CD553923-52EE-34F4-A562-4246C68D8DA6}</Project>
+      <Name>torsion_validation_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\tracker_tests.vcxproj">
+      <Project>{C21C4B0D-784A-3C40-B478-2614B3EB5B1F}</Project>
+      <Name>tracker_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\uff_smoketest.vcxproj">
+      <Project>{3F3D751C-B0C3-34B0-A503-F3DC72F02F11}</Project>
+      <Name>uff_smoketest</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\universal-reaction-engine.vcxproj">
+      <Project>{5805E535-0AB4-37C9-BDB3-FC25EF083B25}</Project>
+      <Name>universal-reaction-engine</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\vec3_type_audit.vcxproj">
+      <Project>{6BF00772-092A-368D-8A65-9D8A78955D99}</Project>
+      <Name>vec3_type_audit</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr.vcxproj">
+      <Project>{4A3B5802-804E-392D-AE33-00F8BFC18662}</Project>
+      <Name>vsepr</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr-cli.vcxproj">
+      <Project>{3984BE4D-9DBF-355C-83F5-334C4EEF8F9C}</Project>
+      <Name>vsepr-cli</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr-entry.vcxproj">
+      <Project>{622695DE-4CFA-3EE5-89E4-103888CDAA81}</Project>
+      <Name>vsepr-entry</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr-ufx.vcxproj">
+      <Project>{D8B907A0-393C-350D-9FDE-8200479B3809}</Project>
+      <Name>vsepr-ufx</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_api.vcxproj">
+      <Project>{6D9B63B8-8EB3-333C-823D-60E48A08F3F9}</Project>
+      <Name>vsepr_api</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_batch.vcxproj">
+      <Project>{13727F10-9812-38CB-BAF8-A212BF6B5F31}</Project>
+      <Name>vsepr_batch</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_bio_report.vcxproj">
+      <Project>{C43EF524-01F0-3896-9E65-8058887A9B98}</Project>
+      <Name>vsepr_bio_report</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\bridge_beta\vsepr_cg3d_new.vcxproj">
+      <Project>{4D4E9E51-BEF6-3F85-BF1D-C39F4BBF2E63}</Project>
+      <Name>vsepr_cg3d_new</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_chem.vcxproj">
+      <Project>{DE8D9FA5-CB0C-37E6-8488-D35B4B8AAEA0}</Project>
+      <Name>vsepr_chem</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_cli.vcxproj">
+      <Project>{9247FD40-8EE4-387E-87CC-A95E683B32EF}</Project>
+      <Name>vsepr_cli</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_cuda_kernels.vcxproj">
+      <Project>{7E525FD6-A62B-30E6-A7E9-34A7FA19624F}</Project>
+      <Name>vsepr_cuda_kernels</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_demo.vcxproj">
+      <Project>{4C76B162-69AB-3D82-88FA-B5ACD0B82832}</Project>
+      <Name>vsepr_demo</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\bridge_beta\vsepr_dnf_sim.vcxproj">
+      <Project>{757CE0BE-AB74-3AD3-9A64-42F8AC2203D1}</Project>
+      <Name>vsepr_dnf_sim</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\vsepr_domain_test.vcxproj">
+      <Project>{11486A25-DB72-3CB0-9BE8-3583D4DA0D57}</Project>
+      <Name>vsepr_domain_test</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_dynamic.vcxproj">
+      <Project>{A7AD1FE6-DA1A-346E-BFD9-360C4A194FFB}</Project>
+      <Name>vsepr_dynamic</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_fatigue.vcxproj">
+      <Project>{7BC7B989-8B66-3839-8391-B8C42BFCFEDF}</Project>
+      <Name>vsepr_fatigue</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_gas.vcxproj">
+      <Project>{D3900534-BE64-3B3F-BEEC-07B8B32DDEC4}</Project>
+      <Name>vsepr_gas</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_gas2.vcxproj">
+      <Project>{02782FA2-A470-3883-95B1-525B664BFC4D}</Project>
+      <Name>vsepr_gas2</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_gas3.vcxproj">
+      <Project>{6CE81113-9A90-3ECD-80AE-2AAFF0022312}</Project>
+      <Name>vsepr_gas3</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_glass.vcxproj">
+      <Project>{BB2BFDCD-BD5F-34A7-96FC-B5B9926C0B37}</Project>
+      <Name>vsepr_glass</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_gpu.vcxproj">
+      <Project>{C7C0EAA1-903A-3F58-8167-3F10A2CA18B8}</Project>
+      <Name>vsepr_gpu</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_infra.vcxproj">
+      <Project>{6BD9BF43-EB7B-33B1-A25F-365547820B83}</Project>
+      <Name>vsepr_infra</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_io.vcxproj">
+      <Project>{C77BFFC0-72F9-3EB8-9FD0-DAA4FB2062F1}</Project>
+      <Name>vsepr_io</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_iso_fit.vcxproj">
+      <Project>{B15380A4-88AA-3894-9443-2BA0BCD75A7E}</Project>
+      <Name>vsepr_iso_fit</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_legacy_c.vcxproj">
+      <Project>{7DFA4358-AEA3-34A9-88EF-36C5DCFA53BA}</Project>
+      <Name>vsepr_legacy_c</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_live.vcxproj">
+      <Project>{F2DDBE77-9680-325D-B9C7-4AF70C9A8D13}</Project>
+      <Name>vsepr_live</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_live_lib.vcxproj">
+      <Project>{ADBCFAFA-F9E8-3C6C-9CCD-07AED7683C42}</Project>
+      <Name>vsepr_live_lib</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_periodic.vcxproj">
+      <Project>{9F800E58-5B9B-3AFC-AC17-63B5051A91D5}</Project>
+      <Name>vsepr_periodic</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_report.vcxproj">
+      <Project>{FB51C421-8A89-35C2-BD52-E7A90D83E6AD}</Project>
+      <Name>vsepr_report</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_sim.vcxproj">
+      <Project>{7CEC796E-4E25-3AE5-94A8-C79F20448C35}</Project>
+      <Name>vsepr_sim</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\vsepr_standalone_opt.vcxproj">
+      <Project>{E9675FD6-7D45-3816-8761-E59632F24EE8}</Project>
+      <Name>vsepr_standalone_opt</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\tests\vsepr_tests.vcxproj">
+      <Project>{76F93D50-93CB-3692-BE39-72844927E839}</Project>
+      <Name>vsepr_tests</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_thermal.vcxproj">
+      <Project>{77C951E5-6BE7-33F2-934D-F6A838781949}</Project>
+      <Name>vsepr_thermal</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_tracker.vcxproj">
+      <Project>{5F152B9F-19CE-3F3F-909F-E5498BB866E4}</Project>
+      <Name>vsepr_tracker</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_trail.vcxproj">
+      <Project>{891CF9C4-C795-3034-BF36-10AA197A4679}</Project>
+      <Name>vsepr_trail</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_uff.vcxproj">
+      <Project>{D119558C-507F-3E8F-8814-C3408B01BA89}</Project>
+      <Name>vsepr_uff</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_units.vcxproj">
+      <Project>{7FB111B3-2478-3849-ABE2-368CD45B301C}</Project>
+      <Name>vsepr_units</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\vsepr_viz_lib.vcxproj">
+      <Project>{7949EAA1-CD02-3441-B6B9-CEB57BDC6DB3}</Project>
+      <Name>vsepr_viz_lib</Name>
+    </ProjectReference>
+    <ProjectReference Include="C:\R\VSPER-SIM\build_test\xyz_make.vcxproj">
+      <Project>{5BF8F4DE-FDA3-3FD5-A35E-659B2855B760}</Project>
+      <Name>xyz_make</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 13.2.targets" />
+  </ImportGroup>
+</Project>

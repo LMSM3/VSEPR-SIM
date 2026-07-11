@@ -1,0 +1,10 @@
+^C:\R\VSPER-SIM\BUILD_TEST\_DEPS\EIGEN-SUBBUILD\CMAKEFILES\1A5111189771D2A843DE5930F1131AF9\GENERATE.STAMP.RULE
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM/build_test/_deps/eigen-subbuild -BC:/R/VSPER-SIM/build_test/_deps/eigen-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/R/VSPER-SIM/build_test/_deps/eigen-subbuild/eigen-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

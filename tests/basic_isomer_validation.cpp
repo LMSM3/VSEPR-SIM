@@ -19,6 +19,7 @@
 #include "pot/energy_model.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -260,7 +261,15 @@ int main() {
     std::cout << "======================================\n";
     std::cout << "Basic Isomer Validation Test Suite\n";
     std::cout << "======================================\n";
-    
+
+    // Initialise element database (required by Molecule::add_atom for mass lookup)
+    try {
+        static auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+        vsepr::init_chemistry_db(&s_pt);
+    } catch (...) {
+        // If no data file: create a no-op stub so tests still run
+    }
+
     int passed = 0;
     int total = 0;
     

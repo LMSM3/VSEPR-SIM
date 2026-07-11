@@ -1,0 +1,19 @@
+{
+  "formula": "CH3CH2COCH3",
+  "seed": 566,
+  "tier": "medium",
+  "num_atoms": 13,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 113973.405983,
+  "energy_per_atom": 8767.185076,
+  "rms_force": 429642.238941,
+  "max_force": 429642.238941,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.408200,
+  "timestamp": "2026-03-28T12:54:40",
+  "xyz_file": "benchmark_100\medium\structures\CH3CH2COCH3_s566.xyz"
+}

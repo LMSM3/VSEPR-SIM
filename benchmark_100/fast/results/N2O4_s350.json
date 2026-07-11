@@ -1,0 +1,19 @@
+{
+  "formula": "N2O4",
+  "seed": 350,
+  "tier": "fast",
+  "num_atoms": 6,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 54.805498,
+  "energy_per_atom": 9.134250,
+  "rms_force": 92.762338,
+  "max_force": 92.762338,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.388900,
+  "timestamp": "2026-03-28T12:52:59",
+  "xyz_file": "benchmark_100\fast\structures\N2O4_s350.xyz"
+}

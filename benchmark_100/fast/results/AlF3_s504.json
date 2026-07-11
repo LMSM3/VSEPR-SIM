@@ -1,0 +1,19 @@
+{
+  "formula": "AlF3",
+  "seed": 504,
+  "tier": "fast",
+  "num_atoms": 4,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 59.878591,
+  "energy_per_atom": 14.969648,
+  "rms_force": 196.289430,
+  "max_force": 196.289430,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.353300,
+  "timestamp": "2026-03-28T12:55:40",
+  "xyz_file": "benchmark_100\fast\structures\AlF3_s504.xyz"
+}

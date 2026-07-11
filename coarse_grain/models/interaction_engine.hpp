@@ -26,9 +26,11 @@
  */
 
 #include "coarse_grain/core/channel_kernels.hpp"
+#include "coarse_grain/core/environment_state.hpp"
 #include "coarse_grain/core/sh_rotation.hpp"
 #include "coarse_grain/core/unified_descriptor.hpp"
 #include "coarse_grain/core/spherical_harmonics.hpp"
+#include "coarse_grain/models/environment_coupling.hpp"
 #include "atomistic/core/state.hpp"
 #include <algorithm>
 #include <cmath>
@@ -142,6 +144,51 @@ inline ChannelInteractionResult channel_interaction(
     return result;
 }
 
+/**
+ * Environment-modulated variant: applies K_k(l,r;eta_A,eta_B) per LaTeX §6.1.
+ */
+inline ChannelInteractionResult channel_interaction(
+    const UnifiedChannel& A,
+    const std::vector<double>& B_rot,
+    Channel ch,
+    double r,
+    double eta_A,
+    double eta_B,
+    const ChannelKernelParams& kernel_params,
+    const EnvironmentParams& env_params)
+{
+    ChannelInteractionResult result;
+    result.channel = ch;
+
+    if (!A.active || B_rot.empty()) return result;
+
+    int l_max = A.l_max;
+    result.l_max_used = l_max;
+    result.per_l_energy.resize(l_max + 1, 0.0);
+
+    int n_a = static_cast<int>(A.coeffs.size());
+    int n_b = static_cast<int>(B_rot.size());
+
+    for (int l = 0; l <= l_max; ++l) {
+        double K = modulated_channel_kernel(ch, l, r, eta_A, eta_B,
+                                            kernel_params, env_params);
+        double lm_sum = 0.0;
+
+        for (int m = -l; m <= l; ++m) {
+            int idx = sh_index(l, m);
+            if (idx < n_a && idx < n_b) {
+                lm_sum += A.coeffs[idx] * B_rot[idx];
+            }
+        }
+
+        double E_l = lm_sum * K;
+        result.per_l_energy[l] = E_l;
+        result.energy += E_l;
+    }
+
+    return result;
+}
+
 // ============================================================================
 // Full Interaction Energy
 // ============================================================================
@@ -214,6 +261,75 @@ inline InteractionResult interaction_energy(
         result.dispersion = channel_interaction(
             desc_A.dispersion, B_rot, Channel::Dispersion,
             result.separation, params.kernel_params);
+        result.dispersion.energy *= params.lambda_dispersion;
+    }
+
+    result.E_total = result.steric.energy
+                   + result.electrostatic.energy
+                   + result.dispersion.energy;
+
+    return result;
+}
+
+/**
+ * Environment-modulated full interaction: uses per-(l,r) modulated kernels
+ * K_k(l,r;eta_A,eta_B) throughout per LaTeX spec §4 + §6.1.
+ *
+ * @param eta_A      Internal state η of bead A
+ * @param eta_B      Internal state η of bead B
+ * @param env_params Environment coupling parameters (gamma values)
+ */
+inline InteractionResult interaction_energy(
+    const UnifiedDescriptor& desc_A,
+    const UnifiedDescriptor& desc_B,
+    const atomistic::Vec3& r_vec,
+    const InteractionParams& params,
+    double eta_A,
+    double eta_B,
+    const EnvironmentParams& env_params)
+{
+    InteractionResult result;
+
+    double r2 = r_vec.x * r_vec.x + r_vec.y * r_vec.y + r_vec.z * r_vec.z;
+    if (r2 < 1e-20) r2 = 1e-20;
+    result.separation = std::sqrt(r2);
+
+    result.frames_valid = desc_A.frame.valid && desc_B.frame.valid;
+
+    Mat3 R;
+    if (result.frames_valid) {
+        R = compute_relative_rotation(desc_A.frame, desc_B.frame);
+    } else {
+        R(0,0) = 1.0; R(1,1) = 1.0; R(2,2) = 1.0;
+    }
+
+    if (desc_A.steric.active && desc_B.steric.active) {
+        int l_max_b = desc_B.steric.l_max;
+        auto B_rot = rotate_sh_coefficients(desc_B.steric.coeffs, l_max_b, R);
+        result.steric = channel_interaction(
+            desc_A.steric, B_rot, Channel::Steric,
+            result.separation, eta_A, eta_B,
+            params.kernel_params, env_params);
+        result.steric.energy *= params.lambda_steric;
+    }
+
+    if (desc_A.electrostatic.active && desc_B.electrostatic.active) {
+        int l_max_b = desc_B.electrostatic.l_max;
+        auto B_rot = rotate_sh_coefficients(desc_B.electrostatic.coeffs, l_max_b, R);
+        result.electrostatic = channel_interaction(
+            desc_A.electrostatic, B_rot, Channel::Electrostatic,
+            result.separation, eta_A, eta_B,
+            params.kernel_params, env_params);
+        result.electrostatic.energy *= params.lambda_electrostatic;
+    }
+
+    if (desc_A.dispersion.active && desc_B.dispersion.active) {
+        int l_max_b = desc_B.dispersion.l_max;
+        auto B_rot = rotate_sh_coefficients(desc_B.dispersion.coeffs, l_max_b, R);
+        result.dispersion = channel_interaction(
+            desc_A.dispersion, B_rot, Channel::Dispersion,
+            result.separation, eta_A, eta_B,
+            params.kernel_params, env_params);
         result.dispersion.energy *= params.lambda_dispersion;
     }
 

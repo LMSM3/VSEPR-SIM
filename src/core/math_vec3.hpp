@@ -91,6 +91,11 @@ struct Vec3 {
         return x*x + y*y + z*z;
     }
 
+    // norm_sq: alias for norm2(), preserves backward compatibility
+    double norm_sq() const {
+        return norm2();
+    }
+
     // Euclidean norm
     double norm() const {
         return std::sqrt(norm2());

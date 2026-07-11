@@ -1,0 +1,294 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{bm}
+\usepackage{fancyhdr}
+
+\geometry{letterpaper, margin=1in}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  language=C++
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Environmental Particle Extension}}
+\fancyhead[R]{\small\textit{VSEPR-SIM v3.0.1}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{remark}{Remark}[section]
+
+\title{\textbf{Environmental Particle Extension} \\[6pt]
+\Large Sun/Wind Dual-Kind Carriers, Root Chaos, and Leaf Generation \\[6pt]
+\large VSEPR-SIM Development Team}
+\author{Formation Engine Research Division}
+\date{Version 3.0.1 --- \today}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{abstract}
+We extend the VSEPR-SIM bead-based framework with a dual environmental
+particle regime consisting of radiative \emph{sun particles} and advective
+\emph{wind particles}.  Sun particles deposit directional energy into
+exposed beads through projected-area and shading-dependent transfer
+kernels.  Wind particles contribute momentum loading, drying, and
+transport bias.  Root development is modulated by a bounded stochastic
+response factor $\Gamma_i \in [0.98,\,1.8]$ combined with piecewise
+polynomial moisture response and logic-gated growth modifiers.  Leaf
+generation follows a Heaviside step-function initiation gate with
+post-threshold continuous expansion.  The system composes additively
+with the existing wind-particle perturbation infrastructure.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Environmental Particle State Vector}
+
+\begin{definition}[Environmental particle]
+Each environmental particle is a lightweight carrier state:
+\begin{equation}
+  P_k = (\mathrm{id},\;\mathrm{kind},\;\mathbf{r}_k,\;\mathbf{v}_k,\;
+         E_k,\;I_k,\;\omega_k,\;\chi_k,\;\tau_k)
+\end{equation}
+where:
+\begin{itemize}
+  \item $\mathbf{r}_k$: position
+  \item $\mathbf{v}_k$: direction / transport velocity
+  \item $E_k$: energy content
+  \item $I_k$: local intensity weight
+  \item $\omega_k$: oscillation or temporal modulation term
+  \item $\chi_k$: stochastic or chaos control parameter
+  \item $\tau_k$: lifetime / persistence
+\end{itemize}
+\end{definition}
+
+The kind field partitions particles into two classes:
+\begin{equation}
+  \mathrm{kind} \in \{\,\textsc{Sun},\;\textsc{Wind}\,\}
+\end{equation}
+
+Sun particles are not literal photons.  They are radiative packets or
+directional energy carriers.  Wind particles are not fluid elements.
+They are momentum plus transport disturbance packets.
+
+% =====================================================================
+\section{Sun Particle Deposition}
+
+For a bead $i$, the energy deposited by sun particle $k$:
+\begin{equation}
+  \Delta E_i^{\mathrm{sun}} = \sum_{k \in \mathrm{SUN}}
+    A_i^{\mathrm{proj}}\;I_k\;T_i\;S_i^{\mathrm{photo}}\;
+    \Phi_{\mathrm{shade}}(i, k)
+  \label{eq:sun}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$A_i^{\mathrm{proj}}$ & Projected area toward incident radiation \\
+$T_i$ & Tissue transmissivity or absorptivity \\
+$S_i^{\mathrm{photo}}$ & Biological photo-response coefficient \\
+$\Phi_{\mathrm{shade}}(i,k)$ & Shadowing / occlusion factor $\in [0,1]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+For leaves, sun deposition drives:
+\begin{itemize}
+  \item Growth activation
+  \item Local expansion bias
+  \item Surface heating
+  \item Transpiration tendency
+\end{itemize}
+
+For roots, sun is indirect and arrives through temperature field
+coupling, moisture gradient response, and shoot-driven resource
+allocation.
+
+% =====================================================================
+\section{Wind Particle Force}
+
+\begin{equation}
+  \Delta\mathbf{F}_i^{\mathrm{wind}} = \sum_{k \in \mathrm{WIND}}
+    C_{d,i}\;A_i^{\mathrm{eff}}\;\|\mathbf{v}_k - \mathbf{v}_i\|^2\;
+    \hat{\mathbf{n}}_{ik}\;\Psi_i^{\mathrm{flex}}
+  \label{eq:wind}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} \\
+\midrule
+$C_{d,i}$ & Drag-like bead coefficient \\
+$A_i^{\mathrm{eff}}$ & Effective exposed area \\
+$\hat{\mathbf{n}}_{ik}$ & Loading direction (unit relative velocity) \\
+$\Psi_i^{\mathrm{flex}}$ & Structural flexibility response \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Wind drives not only force but also:
+mechanical bending, oscillatory fatigue, pollen transport, evaporation
+and drying, boundary-layer disturbance, seed release probability.
+
+The drying rate from wind:
+\begin{equation}
+  \dot{D}_i = \kappa_{\mathrm{dry}}\;\|\mathbf{v}_k - \mathbf{v}_i\|\;A_i^{\mathrm{eff}}
+\end{equation}
+
+% =====================================================================
+\section{Root Chaos Factor}
+
+\subsection{Bounded Stochastic Multiplier}
+
+The root exploration multiplier:
+\begin{equation}
+  \Gamma_i = \mathrm{clamp}\!\bigl(
+    \alpha_0 + \alpha_1 M_i + \alpha_2 \nabla W_i
+    + \alpha_3 \rho_i^{\mathrm{soil}} + \alpha_4 \chi_i,
+    \;0.98,\;1.8
+  \bigr)
+  \label{eq:gamma}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Default} \\
+\midrule
+$\alpha_0$ & Base offset & 1.0 \\
+$\alpha_1$ & Moisture weight & 0.3 \\
+$\alpha_2$ & Water gradient weight & 0.15 \\
+$\alpha_3$ & Soil density penalty & $-0.2$ \\
+$\alpha_4$ & Stochastic amplitude & 0.1 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This gives:
+\begin{itemize}
+  \item Near-deterministic roots in stable media
+  \item More chaotic probing in poor or heterogeneous zones
+  \item Occasional lateral overreach and branching competition
+\end{itemize}
+
+\subsection{Piecewise Polynomial Response}
+
+\begin{equation}
+  R_{\mathrm{root}}(x) =
+  \begin{cases}
+    a_1 x^2 + b_1 x + c_1 & x < x_{\mathrm{dry}} \\
+    a_2 x^3 + b_2 x^2 + c_2 x + d_2 & x_{\mathrm{dry}} \leq x < x_{\mathrm{opt}} \\
+    a_3 x^2 + b_3 x + c_3 & x \geq x_{\mathrm{opt}}
+  \end{cases}
+\end{equation}
+
+The piecewise polynomial is wrapped in logic:
+\begin{equation}
+  g_i^{\mathrm{root}} = \mathrm{clamp}\!\bigl(
+    R_{\mathrm{root}}(M_i) \cdot L_{\mathrm{gates}}(s_i)
+    \cdot \Gamma_i,\;0.05,\;2.25
+  \bigr)
+\end{equation}
+
+where $L_{\mathrm{gates}}$ applies multiplicative penalties:
+\begin{align}
+  \text{if } D_i > D_{\max}: &\quad \times\, 0.55 \notag\\
+  \text{if } \rho_i^c > \rho_{\max}: &\quad \times\, 0.72 \notag\\
+  \text{if } \nabla N_i > N_{\mathrm{trig}}: &\quad \times\, 1.18 \notag\\
+  \text{if } S_i^{\mathrm{sun}} < S_{\min}: &\quad \times\, 0.91
+\end{align}
+
+% =====================================================================
+\section{Leaf Generation Gate}
+
+\subsection{Heaviside Initiation}
+
+\begin{equation}
+  H_{\mathrm{leaf}} = H\!\bigl(
+    \beta_1 E_{\mathrm{local}} + \beta_2 S_{\mathrm{light}}
+    + \beta_3 T_{\mathrm{hydr}} - \beta_4 \Sigma_{\mathrm{damage}}
+    - \Theta_{\mathrm{leaf}}
+  \bigr)
+\end{equation}
+
+Below threshold: no leaf initiation.  Above threshold: leaf primordium
+appears.
+
+\subsection{Continuous Expansion}
+
+After initiation, growth becomes continuous:
+\begin{equation}
+  \frac{dA_{\mathrm{leaf}}}{dt} = H_{\mathrm{leaf}} \cdot
+  G_{\mathrm{leaf}}(E, L, W, \Sigma)
+\end{equation}
+
+where $G_{\mathrm{leaf}}$ depends on energy availability, light, water,
+and structural stress.
+
+% =====================================================================
+\section{Energy Decomposition}
+
+The total environmental energy:
+\begin{equation}
+  U_{\mathrm{env}} = U_{\mathrm{wind}} + U_{\mathrm{sun}}
+    + U_{\mathrm{dry}} + U_{\mathrm{photo}} + U_{\mathrm{stress}}
+\end{equation}
+
+Each term is explicitly tracked and inspectable, consistent with the
+anti-black-box design philosophy.
+
+% =====================================================================
+\section{Particle Advection and Lifetime}
+
+Particles advance by:
+\begin{align}
+  \mathbf{r}_k(t + \Delta t) &= \mathbf{r}_k(t) + \mathbf{v}_k\,\Delta t \\
+  \tau_k(t + \Delta t) &= \tau_k(t) - \Delta t
+\end{align}
+
+With optional oscillation modulation:
+\begin{equation}
+  I_k \leftarrow I_k \cdot \bigl(1 + 0.1\sin(\omega_k\,\Delta t)\bigr)
+\end{equation}
+
+A particle is removed when $\tau_k \leq 0$.
+
+% =====================================================================
+\section{Integration with Existing Wind Particle System}
+
+The existing \texttt{WindParticle} (from \texttt{wind\_particle.hpp})
+operates on the atomistic \texttt{State} directly.  The environmental
+particle extension operates at the bead level.  The two compose:
+
+\begin{enumerate}
+  \item \texttt{WindParticle::apply(state)} adds force to atomistic state
+  \item \texttt{interact\_env\_particle(bead, p)} computes plant-bead response
+  \item Both contribute to $U_{\mathrm{ext}}$ additively
+\end{enumerate}
+
+The same codebase serves both metallic/turbine and plant workflows.
+
+\end{document}

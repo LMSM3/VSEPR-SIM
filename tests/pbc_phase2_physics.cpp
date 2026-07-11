@@ -1,3 +1,13 @@
+// =============================================================================
+// tests/pbc_phase2_physics.cpp — Group 25: PBC Core
+// =============================================================================
+//
+// Phase 2 — Pairwise Physics Parity:
+//   Newton's 3rd law with MIC, system translation invariance,
+//   edge stress cloud (boundary particle handling).
+//
+// Day #57A  |  WO-56C
+// =============================================================================
 /**
  * pbc_phase2_physics.cpp - Phase 2: Pairwise Physics Parity
  * 

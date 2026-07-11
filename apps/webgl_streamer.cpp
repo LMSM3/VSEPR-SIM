@@ -23,12 +23,10 @@
 #include <map>
 #include <sstream>
 #include <iomanip>
+#include "core/math_vec3.hpp"
 
-// Simple Vec3 for geometry
-struct Vec3 {
-    double x, y, z;
-    Vec3(double x=0, double y=0, double z=0) : x(x), y(y), z(z) {}
-};
+// Day #56: Vec3 unified — alias to vsepr::Vec3.
+using Vec3 = vsepr::Vec3;
 
 // Atom structure
 struct Atom {

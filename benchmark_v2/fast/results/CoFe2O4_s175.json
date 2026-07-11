@@ -1,0 +1,19 @@
+{
+  "formula": "CoFe2O4",
+  "seed": 175,
+  "tier": "fast",
+  "num_atoms": 7,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 110.397159,
+  "energy_per_atom": 15.771023,
+  "rms_force": 174.455760,
+  "max_force": 174.455760,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.497000,
+  "timestamp": "2026-03-28T13:06:32",
+  "xyz_file": "benchmark_v2\fast\structures\CoFe2O4_s175.xyz"
+}

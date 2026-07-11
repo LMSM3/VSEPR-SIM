@@ -14,6 +14,7 @@ Goal: Verify torsions are generated and contribute to energy.
 #include "pot/energy_model.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -256,7 +257,8 @@ int main() {
     std::cout << "Alkane Torsion Tests\n";
     std::cout << "Testing torsional energy on real molecules\n";
     std::cout << "===================================================\n";
-
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
         test_ethane();
         test_butane();

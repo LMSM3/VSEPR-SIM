@@ -1,0 +1,81 @@
+# scripts/demo_02_silicon_diamond.vsim
+# =============================================================================
+# Beta-9  Level 1 — Deterministic prototype key authoring
+#
+# What changed from beta-8:
+#   beta-8: [[simulation.molecule]] formula + lattice + count was required.
+#           The lattice string was an informal hint; the engine guessed.
+#   beta-9: [material] prototype = "A4_Si" is a registry key that maps
+#           deterministically to space_group, basis, generator, and
+#           coordination number without guessing.
+#
+# Registry resolution path:
+#   MaterialSection.prototype = "A4_Si"
+#   → RegistryResolver::resolve() → RegistryBundle {
+#       generator    = "diamond_cubic"
+#       space_group  = "Fd-3m"
+#       coordination = 4
+#       is_periodic  = true
+#       charge_model = "neutral"
+#   }
+#
+# Run: vsper validate scripts/demo_02_silicon_diamond.vsim
+# =============================================================================
+
+[project]
+name        = demo_02_silicon_diamond
+version     = v5.0.0-beta.9
+seed_base   = 2001
+determinism = true
+
+# ── Material (Level 1 — explicit prototype key) ───────────────────────────────
+[material]
+formula   = "Si"
+prototype = "A4_Si"       # diamond cubic; RegistryResolver maps this directly
+cell      = "4x4x4"
+phase     = "solid"
+
+# ── Run controls ─────────────────────────────────────────────────────────────
+[run]
+mode         = "relax"
+max_steps    = 800
+converge     = true
+output_level = "verbose"
+
+# ── Physical environment ──────────────────────────────────────────────────────
+[environment]
+periodic    = true
+temperature = 300
+pressure    = 0.0
+medium      = "vacuum"
+
+# ── Kernel tracing ────────────────────────────────────────────────────────────
+[kernel]
+pass_through     = true
+symbolic_trace   = true
+event_registry   = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+dynamic_energy   = true
+
+# ── Output ────────────────────────────────────────────────────────────────────
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_jsonl  = true
+output_dir          = "out/demo_02"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 40
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_event_timeline      = true
+show_symbolic_trace      = true
+overlay_sequence         = ["density", "coordination", "memory", "orient_order"]

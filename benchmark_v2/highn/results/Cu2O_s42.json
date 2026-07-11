@@ -1,0 +1,19 @@
+{
+  "formula": "Cu2O",
+  "seed": 42,
+  "tier": "highn",
+  "num_atoms": 3,
+  "steps_taken": 10000,
+  "max_steps": 10000,
+  "energy_kcal_mol": -0.023464,
+  "energy_per_atom": -0.007821,
+  "rms_force": 0.038361,
+  "max_force": 0.038361,
+  "alpha_final": 0.000000,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.294200,
+  "timestamp": "2026-03-28T13:04:51",
+  "xyz_file": "benchmark_v2\highn\structures\Cu2O_s42.xyz"
+}

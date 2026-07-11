@@ -1,0 +1,19 @@
+{
+  "formula": "PH3",
+  "seed": 399,
+  "tier": "fast",
+  "num_atoms": 4,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 18.609962,
+  "energy_per_atom": 4.652491,
+  "rms_force": 67.946041,
+  "max_force": 67.946041,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.342000,
+  "timestamp": "2026-03-28T13:04:12",
+  "xyz_file": "benchmark_v2\fast\structures\PH3_s399.xyz"
+}

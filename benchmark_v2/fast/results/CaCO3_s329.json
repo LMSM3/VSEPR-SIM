@@ -1,0 +1,19 @@
+{
+  "formula": "CaCO3",
+  "seed": 329,
+  "tier": "fast",
+  "num_atoms": 5,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 56.344515,
+  "energy_per_atom": 11.268903,
+  "rms_force": 126.696138,
+  "max_force": 126.696138,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.729300,
+  "timestamp": "2026-03-28T13:05:44",
+  "xyz_file": "benchmark_v2\fast\structures\CaCO3_s329.xyz"
+}

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+<title>Cluster Map — demo_09_beta10_showcase</title>
+<rect width="480" height="360" fill="#0d1117"/>
+<line x1="40" y1="40" x2="40" y2="300" stroke="#58a6ff" stroke-width="1"/>
+<line x1="40" y1="300" x2="440" y2="300" stroke="#58a6ff" stroke-width="1"/>
+<circle cx="100" cy="229" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="110" cy="204" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="107" cy="237" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="116" cy="218" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="139" cy="231" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="114" cy="238" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="111" cy="203" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="112" cy="202" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="154" cy="229" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="114" cy="218" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="112" cy="215" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="121" cy="210" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="142" cy="200" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="99" cy="219" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="149" cy="236" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="119" cy="232" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="98" cy="239" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="126" cy="238" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="92" cy="242" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="111" cy="233" r="5" fill="#58a6ff" opacity="0.85"/>
+<circle cx="259" cy="125" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="220" cy="114" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="272" cy="120" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="233" cy="106" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="260" cy="99" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="221" cy="117" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="226" cy="118" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="222" cy="101" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="245" cy="134" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="222" cy="116" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="260" cy="133" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="262" cy="99" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="244" cy="137" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="270" cy="131" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="263" cy="113" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="223" cy="126" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="262" cy="115" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="210" cy="98" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="250" cy="115" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="260" cy="116" r="5" fill="#3fb950" opacity="0.85"/>
+<circle cx="368" cy="239" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="351" cy="232" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="359" cy="243" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="332" cy="234" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="359" cy="200" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="372" cy="222" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="356" cy="209" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="360" cy="242" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="384" cy="203" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="340" cy="243" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="352" cy="203" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="344" cy="243" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="392" cy="218" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="340" cy="215" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="392" cy="219" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="330" cy="240" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="340" cy="208" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="360" cy="219" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="385" cy="208" r="5" fill="#f0883e" opacity="0.85"/>
+<circle cx="354" cy="223" r="5" fill="#f0883e" opacity="0.85"/>
+<text x="240" y="18" fill="#f0f6fc" font-family="monospace" font-size="13" text-anchor="middle">Cluster Map: demo_09_beta10_showcase</text>
+<text x="440" y="352" fill="#6e7681" font-family="monospace" font-size="9" text-anchor="end">2026-04-27T01:07:06Z</text>
+</svg>

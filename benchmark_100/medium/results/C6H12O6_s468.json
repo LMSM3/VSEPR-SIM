@@ -1,0 +1,19 @@
+{
+  "formula": "C6H12O6",
+  "seed": 468,
+  "tier": "medium",
+  "num_atoms": 24,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 675319.204543,
+  "energy_per_atom": 28138.300189,
+  "rms_force": 511691.163371,
+  "max_force": 511691.163371,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 4.088800,
+  "timestamp": "2026-03-28T12:52:33",
+  "xyz_file": "benchmark_100\medium\structures\C6H12O6_s468.xyz"
+}

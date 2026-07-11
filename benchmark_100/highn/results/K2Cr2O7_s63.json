@@ -1,0 +1,19 @@
+{
+  "formula": "K2Cr2O7",
+  "seed": 63,
+  "tier": "highn",
+  "num_atoms": 11,
+  "steps_taken": 7315,
+  "max_steps": 10000,
+  "energy_kcal_mol": -1.405122,
+  "energy_per_atom": -0.127738,
+  "rms_force": 0.014732,
+  "max_force": 0.014732,
+  "alpha_final": 0.000453,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 4.713300,
+  "timestamp": "2026-03-28T12:55:15",
+  "xyz_file": "benchmark_100\highn\structures\K2Cr2O7_s63.xyz"
+}

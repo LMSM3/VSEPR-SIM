@@ -1,0 +1,356 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{array}
+\usepackage{parskip}
+
+\definecolor{accent}{HTML}{00D4FF}
+\definecolor{dim}{HTML}{555577}
+\definecolor{warn}{HTML}{FFAA44}
+\definecolor{ok}{HTML}{44FFAA}
+
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
+
+\titleformat{\section}{\large\bfseries\color{accent}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+\title{\textbf{VSEPR-SIM --- Graphing Module Plan}\\
+       \large Python Visualisation Suite for Atomistic Simulation Data\\[0.4em]
+       \normalsize\color{dim}Planning Document v1.0 --- April 2026}
+\author{VSEPR-SIM V4 Research Platform}
+\date{}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\vspace{1em}
+{\small\itshape\color{dim}%
+This document describes the planned Python graphing module suite.
+No implementation code is written here.
+All modules consume JSON snapshots produced by \texttt{crystal\_card\_popup.py}
+and future simulation output files.
+Code will be written in a separate phase after this design is reviewed.}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G0 --- Design Philosophy}
+
+The graphing suite follows the same anti-black-box principle as the rest of
+VSEPR-SIM\@: every curve, every data point, and every axis must be directly
+traceable to a specific simulation output.
+No synthetic or interpolated data should be presented without explicit labelling.
+
+Three core ideas govern the design:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{Data loads visibly.}
+        Curves animate from left to right as data arrives.
+        The user sees the process, not just the result.
+  \item \textbf{2D and 3D are co-equal.}
+        Every dataset has a designated 2D representation (publication-ready)
+        and a designated 3D representation (exploratory, rotatable).
+  \item \textbf{Modules are single-purpose.}
+        Each module reads exactly one data type, produces exactly one figure class.
+        No omnibus dashboards at this stage.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G1 --- Data Sources}
+
+\subsection{G1.1 Card Snapshot JSON}
+Produced by \texttt{crystal\_card\_popup.py} on every card open.
+Location: \texttt{data/card\_snapshots/\{symbol\}\_\{lattice\}\_\{ts\_ms\}.json}
+
+Fields available for graphing:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Field & Type & Use \\
+\midrule
+\texttt{timestamp\_ms}       & int   & timeline axis \\
+\texttt{symbol}              & str   & per-element colour coding \\
+\texttt{lattice}             & str   & group/facet key \\
+\texttt{a0\_angstrom}        & float & EOS / lattice parameter plot \\
+\texttt{Tmelt\_K}            & float & thermal curve overlay \\
+\texttt{Ecoh\_eV}            & float & cohesive energy chart \\
+\texttt{gamma}               & float & score distribution / radar \\
+\texttt{q\_data}             & float & score distribution / radar \\
+\texttt{compact}             & float & score distribution / radar \\
+\texttt{render\_mode}        & str   & 2D vs.\ 3D session split \\
+\texttt{complexity\_label}   & str   & supercell tier histogram \\
+\texttt{supercell\_dims}     & list  & atom-count scaling curve \\
+\texttt{view\_azimuth\_deg}  & float & viewing angle distribution \\
+\texttt{view\_elevation\_deg}& float & viewing angle distribution \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{G1.2 Future Simulation Output Files}
+Planned formats (not yet implemented):
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{data/eos/\{symbol\}\_eos.csv} ---
+        columns: \texttt{volume\_AA3, energy\_eV, pressure\_GPa}
+  \item \texttt{data/rdf/\{symbol\}\_rdf.csv} ---
+        columns: \texttt{r\_AA, g\_r}
+  \item \texttt{data/trajectory/\{symbol\}\_md.xyz} ---
+        XYZA format; existing reader in \texttt{src/io/xyz\_format.cpp}
+  \item \texttt{data/convergence/\{symbol\}\_conv.csv} ---
+        columns: \texttt{step, energy\_eV, force\_max\_eVAA}
+  \item \texttt{data/thermo/\{symbol\}\_thermo.csv} ---
+        columns: \texttt{step, T\_K, P\_GPa, E\_total\_eV}
+  \item \texttt{data/phonon/\{symbol\}\_dos.csv} ---
+        columns: \texttt{freq\_THz, dos}
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G2 --- Planned Module List}
+
+\begin{center}
+\begin{tabular}{lllp{5.2cm}}
+\toprule
+Module file & Type & Data source & Description \\
+\midrule
+\texttt{plot\_score\_dist.py}    & 2D & snapshots     & Histogram + KDE of $\gamma$, $Q$, $C$
+                                                         across all recorded sessions \\
+\texttt{plot\_score\_radar.py}   & 2D & snapshots     & Animated radar polygon building up
+                                                         per-element as snapshots are scanned \\
+\texttt{plot\_eos.py}            & 2D & eos CSV       & Energy--volume curves with
+                                                         Birch--Murnaghan fit overlay \\
+\texttt{plot\_rdf.py}            & 2D & rdf CSV       & $g(r)$ with animated trace
+                                                         revealing from $r=0$ \\
+\texttt{plot\_rdf\_3d.py}        & 3D & rdf CSV       & $g(r,\theta)$ surface in
+                                                         Matplotlib 3D axes \\
+\texttt{plot\_convergence.py}    & 2D & conv CSV      & Energy and force vs.\ step;
+                                                         dual-axis; animated left-to-right \\
+\texttt{plot\_thermo.py}         & 2D & thermo CSV    & $T$, $P$, $E$ vs.\ MD step;
+                                                         triple panel; animated reveal \\
+\texttt{plot\_thermo\_3d.py}     & 3D & thermo CSV    & $T$--$P$--$E$ phase-space trajectory;
+                                                         points appear sequentially \\
+\texttt{plot\_trajectory\_2d.py} & 2D & XYZA          & Per-atom displacement vs.\ step
+                                                         as translucent line bundle \\
+\texttt{plot\_trajectory\_3d.py} & 3D & XYZA          & 3D scatter of atom positions;
+                                                         animated by frame \\
+\texttt{plot\_lattice\_param.py} & 2D & snapshots     & $a_0$ vs.\ $T_\text{melt}$ scatter,
+                                                         colour-coded by lattice type \\
+\texttt{plot\_ecoh\_bar.py}      & 2D & snapshots     & $E_\text{coh}$ bar chart; bars
+                                                         grow left-to-right \\
+\texttt{plot\_phonon\_dos.py}    & 2D & phonon CSV    & Phonon DOS; shaded area fills in
+                                                         from low to high frequency \\
+\texttt{plot\_session\_timeline.py} & 2D & snapshots  & Dot-strip timeline coloured
+                                                         by element; renders live \\
+\texttt{plot\_supercell\_scale.py}  & 2D & snapshots  & Atom count vs.\ supercell tier;
+                                                         FCC/BCC/HCP side by side \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G3 --- Animated Data-Loading Pattern}
+
+Every module that touches time-series or step-indexed data \emph{must} implement
+the animated loading pattern.
+The intended visual effect: the curve or scatter plot is empty at $t=0$;
+data points appear one-by-one (or in small batches) from left to right,
+building the full picture in under 3 seconds.
+
+\subsection{G3.1 Planned mechanism}
+\begin{itemize}[leftmargin=2em]
+  \item Load the full data array into memory first (no streaming required).
+  \item Use Matplotlib \texttt{FuncAnimation} with a frame count equal to
+        the number of data points (or a fixed 60--120 frames with sub-sampling).
+  \item Each frame reveals the next batch of $k$ points
+        ($k = \lceil N / 90 \rceil$ for approximately 1.5\,s at 60\,fps).
+  \item For line plots: update \texttt{line.set\_data(x[:frame], y[:frame])}.
+  \item For scatter plots: replace the \texttt{PathCollection} offsets each frame.
+  \item For area/fill plots: redraw \texttt{fill\_between} on a clipped slice.
+\end{itemize}
+
+\subsection{G3.2 Axes style}
+All modules share a common dark style consistent with the card UI:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Element & Value \\
+\midrule
+Figure background  & \texttt{\#0d0d1a} \\
+Axes background    & \texttt{\#111130} \\
+Tick / label colour & \texttt{\#888888} \\
+Grid colour        & \texttt{\#222244}, dashed \\
+Accent colour      & \texttt{\#00d4ff} \\
+Secondary colour   & \texttt{\#44ffaa} \\
+Warning colour     & \texttt{\#ffaa44} \\
+Font               & Consolas or DejaVu Sans Mono \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{G3.3 Export}
+Every module saves the completed figure to
+\texttt{data/figures/\{module\_stem\}\_\{timestamp\}.png}
+at 150\,dpi by default, 300\,dpi with \texttt{--hires} flag.
+Animated versions save \texttt{.gif} alongside.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G4 --- 3D Module Specifics}
+
+3D modules use \texttt{matplotlib.pyplot} with \texttt{projection='3d'}.
+No external OpenGL or VTK dependency is introduced at this stage.
+
+\subsection{G4.1 Rotation}
+All 3D plots are initialised with:
+\texttt{ax.view\_init(elev=22, azim=30)} ---
+the same hardcoded angles used by the crystal card viewer.
+
+\subsection{G4.2 Depth cues}
+\begin{itemize}[leftmargin=2em]
+  \item Scatter point size scales with depth (nearer = larger).
+  \item Alpha channel encodes depth (nearer = more opaque).
+  \item Line bundles use \texttt{LineCollection} with per-segment alpha.
+\end{itemize}
+
+\subsection{G4.3 Planned 3D figures and axes}
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+Module & X axis & Y axis & Z axis \\
+\midrule
+\texttt{plot\_rdf\_3d.py}        & $r$ (\AA)  & $\theta$ (rad) & $g(r,\theta)$ \\
+\texttt{plot\_thermo\_3d.py}     & $T$ (K)    & $P$ (GPa)      & $E$ (eV)      \\
+\texttt{plot\_trajectory\_3d.py} & $x$ (\AA)  & $y$ (\AA)      & $z$ (\AA)     \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G5 --- Module Directory Layout}
+
+\begin{verbatim}
+tools/
+  graphing/
+    __init__.py                  (empty, marks as package)
+    _style.py                    (shared dark style + colour palette)
+    _loader.py                   (JSON snapshot reader + CSV reader helpers)
+    _anim.py                     (FuncAnimation wrapper + export helper)
+    plot_score_dist.py
+    plot_score_radar.py
+    plot_eos.py
+    plot_rdf.py
+    plot_rdf_3d.py
+    plot_convergence.py
+    plot_thermo.py
+    plot_thermo_3d.py
+    plot_trajectory_2d.py
+    plot_trajectory_3d.py
+    plot_lattice_param.py
+    plot_ecoh_bar.py
+    plot_phonon_dos.py
+    plot_session_timeline.py
+    plot_supercell_scale.py
+
+data/
+  card_snapshots/    (JSON -- written by crystal_card_popup.py)
+  eos/               (CSV  -- future EOS engine)
+  rdf/               (CSV  -- future RDF engine)
+  convergence/       (CSV  -- future SCF/MD engine)
+  thermo/            (CSV  -- future MD thermostat)
+  trajectory/        (XYZA -- future MD engine)
+  phonon/            (CSV  -- future phonon engine)
+  figures/           (PNG + GIF output from graphing modules)
+\end{verbatim}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G6 --- CLI Interface (Planned)}
+
+Each module is callable as a standalone script:
+
+\begin{verbatim}
+python tools/graphing/plot_score_dist.py [--snapshot-dir PATH] [--hires]
+python tools/graphing/plot_eos.py Au Fe Ti [--overlay] [--hires]
+python tools/graphing/plot_convergence.py Au [--no-anim]
+python tools/graphing/plot_trajectory_3d.py Au [--frame N]
+\end{verbatim}
+
+All modules accept \texttt{--no-anim} to skip animation and render the final
+state immediately (for batch or CI use).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G7 --- Dependencies (Minimal)}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Library & Version & Use \\
+\midrule
+\texttt{matplotlib} & $\geq$\,3.7  & all 2D and 3D plots, animation \\
+\texttt{numpy}      & $\geq$\,1.24 & array operations, FFT (phonon DOS) \\
+\texttt{scipy}      & optional     & Birch--Murnaghan fit in \texttt{plot\_eos.py} \\
+\texttt{json}       & stdlib       & snapshot loading \\
+\texttt{csv}        & stdlib       & CSV loading \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No Plotly, Bokeh, VTK, or heavy GUI frameworks.
+The suite is intentionally minimal and portable.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G8 --- Implementation Order}
+
+Modules are prioritised by data availability and scientific utility:
+
+\begin{center}
+\begin{tabular}{rll}
+\toprule
+Phase & Module(s) & Blocker \\
+\midrule
+1 & \texttt{plot\_score\_dist}, \texttt{plot\_score\_radar}         & snapshots already produced \\
+1 & \texttt{plot\_lattice\_param}, \texttt{plot\_ecoh\_bar},
+    \texttt{plot\_supercell\_scale}                                  & snapshots already produced \\
+1 & \texttt{plot\_session\_timeline}                                 & snapshots already produced \\
+2 & \texttt{plot\_eos}                                               & EOS CSV engine \\
+2 & \texttt{plot\_convergence}                                       & SCF/MD convergence writer \\
+3 & \texttt{plot\_rdf}, \texttt{plot\_rdf\_3d}                      & RDF engine \\
+3 & \texttt{plot\_thermo}, \texttt{plot\_thermo\_3d}                & MD thermostat writer \\
+4 & \texttt{plot\_trajectory\_2d}, \texttt{plot\_trajectory\_3d}    & XYZA MD trajectory writer \\
+4 & \texttt{plot\_phonon\_dos}                                       & phonon engine \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Phase\,1 modules can be written immediately against live snapshot data.
+All Phase\,1 modules are 2D; 3D modules appear from Phase\,3 onward.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{\S{}G9 --- Notes and Constraints}
+
+\begin{itemize}[leftmargin=2em]
+  \item No atomistic-level simulation data is invented or hardcoded.
+        If a data file does not exist, the module exits with a clear message.
+  \item Terminology: use \emph{atomistic} throughout.
+        The word \emph{meso} is forbidden in all module code, comments, and axis labels.
+  \item All modules must run without a display server when \texttt{--no-anim}
+        is passed (\texttt{matplotlib.use('Agg')} fallback).
+  \item Figures are research-output quality: axis labels carry units,
+        titles carry element symbol and lattice type.
+  \item The \texttt{\_style.py} shared module is the single source of truth
+        for colours and font settings.
+        Individual modules must not hardcode style constants.
+\end{itemize}
+
+\vspace{2em}
+\hrule
+\vspace{0.5em}
+{\small\color{dim}%
+VSEPR-SIM Graphing Module Plan v1.0 ---
+April 2026 ---
+Planning document only; no implementation code.
+}
+
+\end{document}

@@ -1,0 +1,28 @@
+# test_pbc_image_count.vsim
+# Parser test: track_images enabled + pbc.image_count syntax
+# Expression-level execution: WO-57C
+
+[project]
+name        = test_pbc_image_count
+version     = v5.0.0-beta.8
+determinism = true
+
+[cell]
+type    = orthorhombic
+lengths = 10.0, 10.0, 10.0
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+track_images          = true
+unwrap_for_diffusion  = true
+
+# [script] — 57C
+# ix, iy, iz = pbc.image_count(1)
+# assert_eq(ix, 0, "initial image count ix")
+# assert_eq(iy, 0, "initial image count iy")
+# assert_eq(iz, 0, "initial image count iz")

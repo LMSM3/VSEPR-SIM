@@ -1,0 +1,11 @@
+metric_type,metric_key,value
+rmse,bond_angle_deg,0.000000
+rmse,boiling_point_C,0.000000
+rmse,melting_point_C,0.000000
+rmse,density_g_cm3,0.000000
+rmse,enthalpy_combustion_kJ_mol,0.000000
+accuracy,geometry,1.0000
+accuracy,polarity,1.0000
+accuracy,imf,1.0000
+accuracy,reaction_class,1.0000
+composite,weighted_score,1.0000

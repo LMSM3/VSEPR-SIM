@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\R\VSPER-SIM\build_test\_deps\eigen-subbuild\CMakeFiles\1a5111189771d2a843de5930f1131af9\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{554BD1EF-0A68-36A6-BC01-7DE564C446E0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

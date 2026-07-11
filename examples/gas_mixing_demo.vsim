@@ -1,0 +1,135 @@
+# gas_mixing_demo.vsim
+# =============================================================================
+# Four-corner directed gas-injection mixing MD simulation
+# =============================================================================
+#
+# Four pure gas species are placed in the four corners of a large cubic box
+# (150 Å) and each given an inward velocity bias directed toward the box
+# centre.  The NVT integrator propagates the mixing at 1200 K.
+#
+# Species layout:
+#
+#   N₂  (corner_xnyp — top-left)     →→→↓   O₂  (corner_xpyp — top-right)
+#                          ↘             ↙
+#                            [  centre  ]
+#                          ↗             ↖
+#   H₂O (corner_xnyp — bot-left)    ←←←↑   Ar  (corner_xpyn — bot-right)
+#
+# Total atom count: 4 × 325 molecules × 2–3 atoms/mol ≈ 1 560 atoms (> 1200)
+#
+# Visual output:
+#   - Terminal: live per-species injection bars + centre-mixing progress
+#   - Qt workstation: opened automatically (gl_auto_orbit = true)
+#
+# Run:
+#   vsper run examples/gas_mixing_demo.vsim
+#
+# v5.0.0-beta.7  |  WO-GAS-MIX-01
+# =============================================================================
+
+[project]
+name        = "gas_mixing_demo"
+version     = "v5.0.0"
+seed_base   = 7777
+determinism = false
+description = "Four-corner directed gas-mixing NVT MD — N2, O2, H2O, Ar"
+
+# ─── Simulation box ──────────────────────────────────────────────────────────
+
+[simulation]
+box_size_ang     = 150.0
+periodic         = false
+fire_max_steps   = 200
+fire_dt_fs       = 0.5
+formation_preset = "gas"
+step_delay_ms    = 0
+
+# ─── Species — one block per gas, each assigned a corner ─────────────────────
+
+[[simulation.molecule]]
+formula        = "N2"
+count          = 325
+temperature_K  = 1200.0
+lattice        = "none"
+region         = "corner_xnyp"
+velocity_drift = 0.012
+
+[[simulation.molecule]]
+formula        = "O2"
+count          = 325
+temperature_K  = 1200.0
+lattice        = "none"
+region         = "corner_xpyp"
+velocity_drift = 0.012
+
+[[simulation.molecule]]
+formula        = "H2O"
+count          = 325
+temperature_K  = 1200.0
+lattice        = "none"
+region         = "corner_xnyn"
+velocity_drift = 0.010
+
+[[simulation.molecule]]
+formula        = "Ar"
+count          = 325
+temperature_K  = 1200.0
+lattice        = "none"
+region         = "corner_xpyn"
+velocity_drift = 0.015
+
+# ─── Ambient environment ─────────────────────────────────────────────────────
+
+[environment]
+temperature = 1200.0
+pressure    = 0.0
+medium      = "vacuum"
+periodic    = false
+
+# ─── MD run ──────────────────────────────────────────────────────────────────
+
+[run]
+mode         = "md_nvt"
+max_steps    = 2000
+dt_fs        = 0.5
+temperature  = 1200.0
+converge     = false
+output_level = "standard"
+
+# ─── Chemistry context (gas-phase collisions) ────────────────────────────────
+
+[chemistry]
+chemistry = "none"
+
+# ─── Variance probes ─────────────────────────────────────────────────────────
+
+[variance]
+print_results    = true
+energy_var       = "energy.total  last 200  0.15"
+displacement_var = "displacement  all  0.10"
+
+# ─── Export ──────────────────────────────────────────────────────────────────
+
+[export]
+write_xyz            = true
+write_xyzf           = true
+write_analysis_json  = true
+write_metrics_tsv    = true
+write_report_md      = true
+write_events_json    = true
+output_dir           = "out/gas_mixing_demo"
+
+# ─── Visual ──────────────────────────────────────────────────────────────────
+# gl_auto_orbit = true  →  Qt workstation opens automatically at end-of-run
+# output_type   = "overlay_cycle"  →  also triggers Qt launch
+
+[visual]
+output_type              = "overlay_cycle"
+gl_auto_orbit            = true
+render_interval          = 50
+show_convergence_trace   = false
+show_bar_chart           = true
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_steady_state_marker = false
+animation_mode           = "md_orbit"

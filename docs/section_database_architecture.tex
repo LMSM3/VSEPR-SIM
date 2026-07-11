@@ -1,0 +1,833 @@
+% ════════════════════════════════════════════════════════════════════════════
+%  Database Architecture Demonstration Packet
+%    §4.1 Database Identity Model
+%    §4.2 Input Dimensionality and Data Typing
+%    §4.3 Element, Isotope, and Material Shard Layout
+%    §4.4 Compound and Precursor Registry Design
+%    §4.5 Seed and Hash Provenance
+%    §4.6 Integrated Mixed-Resolution Demonstration Packet
+%  Reports 1–10 of the Day 40C Report Suite.
+%  Printer-ready LaTeX.  Compile with pdflatex (twice for refs).
+% ════════════════════════════════════════════════════════════════════════════
+\documentclass[11pt, a4paper, oneside]{article}
+
+% ── Geometry ────────────────────────────────────────────────────────────────
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% ── Fonts / encoding ───────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Math ───────────────────────────────────────────────────────────────────
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% ── Tables ─────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+
+% ── Lists ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% ── Code ───────────────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{red!70!black},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  backgroundcolor=\color{gray!8},
+  xleftmargin=0.5em,
+  xrightmargin=0.5em,
+  language=C++
+}
+
+\lstdefinelanguage{JSON}{
+  basicstyle=\ttfamily\small,
+  string=[s]{"}{"},
+  stringstyle=\color{red!70!black},
+  comment=[l]{//},
+  commentstyle=\color{gray},
+  morecomment=[s]{/*}{*/},
+  literate=
+    *{:}{{{\color{blue}:}}}{1}
+     {,}{{{\color{blue},}}}{1}
+     {\{}{{{\color{blue}\{}}}{1}
+     {\}}{{{\color{blue}\}}}}{1}
+     {[}{{{\color{blue}[}}}{1}
+     {]}{{{\color{blue}]}}}{1}
+}
+
+% ── Headers / footers ─────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM Database Architecture}}
+\fancyhead[R]{\small\textit{Demonstration Packet — Day 40C}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Section formatting ────────────────────────────────────────────────────
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{§\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries}{§\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries\itshape}{§\thesubsubsection}{0.5em}{}
+
+% ── Custom commands ───────────────────────────────────────────────────────
+\newcommand{\field}[1]{\texttt{#1}}
+\newcommand{\dtype}[1]{\texttt{#1}}
+\newcommand{\recdot}{\,\cdot\,}
+
+% ════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+\begin{center}
+{\LARGE\bfseries Database Architecture Demonstration Packet}\\[0.6em]
+{\large VSEPR-SIM Day 40C Report Suite — Reports 1\,--\,10}\\[0.4em]
+{\normalsize\itshape Typed Scientific Registry for Atomistic,
+  Material, Compound, and Precursor Records}\\[1.2em]
+\rule{0.7\textwidth}{0.5pt}
+\end{center}
+\vspace{1em}
+
+\tableofcontents
+\newpage
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Database Architecture Demonstration Reports}
+\label{sec:db_arch}
+% ════════════════════════════════════════════════════════════════════════════
+
+The database layer is treated as a typed scientific registry rather than a flat
+storage table.  Each input is modeled as
+\begin{equation}
+\label{eq:generic_record}
+X_i = (I_i,\; T_i,\; D_i,\; P_i,\; S_i,\; H_i),
+\end{equation}
+where $I_i$ is the identity block, $T_i$ is the type block, $D_i$ is the
+dimension descriptor, $P_i$ is the scientific payload, $S_i$ is the
+deterministic seed block, and $H_i$ is the hash and provenance block.
+
+The architecture is designed to host:
+\begin{itemize}
+  \item elemental records,
+  \item compound and material records,
+  \item precursor staging objects,
+  \item mixed-resolution simulation inputs,
+  \item deterministic reconstruction using seed and hash provenance.
+\end{itemize}
+
+The flow is:
+\[
+\text{Input Layer}
+\;\longrightarrow\;
+\text{Canonical Registry}
+\;\longrightarrow\;
+\text{Projection / Resolution Layer}
+\;\longrightarrow\;
+\text{Validation / Hash / Report Layer}.
+\]
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 1: Input Dimension Demonstration}
+\label{sec:report1}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report demonstrates how simulation and database inputs are described in
+terms of dimensionality, resolution level, physical scale, storage type, and
+projection target.  The intent is to ensure that every input object has a known
+shape before entering either the atomistic engine, the bead engine, or the
+formation engine.
+
+\subsection{General Input Form}
+
+For a generic scientific record $X_i$, the six blocks of
+Eq.~\eqref{eq:generic_record} expand as follows:
+
+\begin{center}
+\begin{tabular}{@{} cl @{}}
+\toprule
+\textbf{Block} & \textbf{Description}\\
+\midrule
+$I_i$ & Identity block (name, symbol, canonical ID)\\
+$T_i$ & Type block (element, compound, material, precursor, \ldots)\\
+$D_i$ & Dimension block (see below)\\
+$P_i$ & Payload block (physical / chemical / nuclear data)\\
+$S_i$ & Seed / deterministic initialization block\\
+$H_i$ & Hash / provenance block\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Dimension Block}
+\label{sec:dim_block}
+
+A dimension descriptor is written as
+\begin{equation}
+\label{eq:dim_block}
+D_i = \bigl(n_{\text{state}},\; n_{\text{geom}},\; n_{\text{chem}},\;
+             n_{\text{nuc}},\; n_{\text{aux}}\bigr),
+\end{equation}
+allowing a single registry to host element cores, isotope packets, atomistic
+objects, bead objects, materials, compounds, and staged precursors.
+
+\begin{center}
+\begin{tabular}{@{} cl @{}}
+\toprule
+\textbf{Component} & \textbf{Meaning}\\
+\midrule
+$n_{\text{state}}$ & Number of runtime state variables\\
+$n_{\text{geom}}$  & Spatial / geometric dimensions\\
+$n_{\text{chem}}$  & Chemical descriptor count\\
+$n_{\text{nuc}}$   & Nuclear descriptor count\\
+$n_{\text{aux}}$   & Metadata / diagnostics / tags\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Input Dimension Table}
+\label{sec:dim_table}
+
+\begin{center}
+\small
+\begin{tabular}{@{} l l c c c l @{}}
+\toprule
+\textbf{Input Class} & \textbf{Repr.} & $n_{\text{geom}}$
+  & $n_{\text{chem}}$ & $n_{\text{nuc}}$ & \textbf{Typical Payload}\\
+\midrule
+Element core      & scalar record  & 0   & 4--12  & 0--4   & name, symbol, $Z$\\
+Isotope record    & scalar record  & 0   & 2--8   & 4--12  & decay, half-life\\
+Atomistic object  & vector state   & 3   & 6--20  & 0--8   & $\bm{r},\bm{v},q,\sigma_{\text{chem}},\sigma_{\text{nuc}}$\\
+Bead object       & reduced state  & 3   & 4--16  & 0--6   & $R,V,Q,\Theta,\beta,\chi$\\
+Compound record   & graph / set    & 0--3 & 8--64  & 0--12  & stoichiometry, class\\
+Material preset   & fielded record & 0--3 & 10--48 & 0--8   & density, phase, modulus\\
+Precursor object  & staged object  & 0--3 & 6--32  & 0--8   & reactive flags, seed geometry\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Demonstration Inputs}
+
+\paragraph{Example A: Hydrogen element core.}
+\[
+X_H^{\text{core}} = \bigl(Z{=}1,\;\text{name}{=}\text{Hydrogen},\;
+  \text{symbol}{=}\text{H},\;\text{class}{=}\text{nonmetal}\bigr).
+\]
+
+\paragraph{Example B: Plutonium atomistic object.}
+\[
+X_{\text{Pu}}^{(a)} = (\bm{r},\;\bm{v},\;q,\;\sigma_{\text{chem}},\;\sigma_{\text{nuc}}),
+\]
+with
+\[
+\sigma_{\text{nuc}} = (\lambda,\;E_{\text{dec}},\;N_{\text{emit}},\;\tau,\;\text{mode}).
+\]
+
+\paragraph{Example C: Cyclopentadienyl precursor bead.}
+\[
+X_{\text{Cp}}^{(b)} = (R,\;V,\;Q,\;\Theta,\;\beta,\;\chi,\;\eta).
+\]
+
+This demonstrates that the database accepts multiple dimensional classes without
+pretending they are all the same object.
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 2: Data Type Demonstration}
+\label{sec:report2}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report demonstrates the internal data typing rules used by the
+architecture.  Every field is assigned a \emph{semantic type} and a
+\emph{storage type}.
+
+\subsection{Typed Record Form}
+
+A field descriptor is:
+\begin{equation}
+\label{eq:field_desc}
+F_{ij} = \bigl(\text{name},\;\text{semantic\_type},\;\text{storage\_type},\;
+               \text{units},\;\text{validity}\bigr).
+\end{equation}
+
+\subsection{Semantic Type Classes}
+
+\begin{center}
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Semantic Type} & \textbf{Meaning} & \textbf{Example}\\
+\midrule
+\dtype{identity}    & Immutable object identifier      & $Z{=}94$, Pu\\
+\dtype{categorical} & Discrete class label             & actinide, ligand, precursor\\
+\dtype{scalar}      & Single real/integer value         & mass, radius, charge\\
+\dtype{vector}      & Ordered numeric list              & position, velocity\\
+\dtype{tensor}      & Matrix-like or directional data   & inertia, polarizability\\
+\dtype{set}         & Unordered discrete collection     & oxidation states\\
+\dtype{graph}       & Connectivity relation             & bonding map\\
+\dtype{hash}        & Content signature                 & SHA-256 / custom 562\\
+\dtype{pathref}     & Path to canonical shard           & \texttt{/elements/094\_Pu/core.json}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Storage Type Classes}
+
+\begin{center}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Storage Type} & \textbf{Use}\\
+\midrule
+\dtype{u32}       & Compact indices, element IDs\\
+\dtype{u64}       & Extended object IDs\\
+\dtype{f32}       & Fast approximate simulation values\\
+\dtype{f64}       & Scientific numeric values\\
+\dtype{str}       & Names, symbols, tags\\
+\dtype{bool}      & Flags, response switches\\
+\dtype{vec<T>}    & Ordered arrays\\
+\dtype{set<T>}    & Non-duplicate category collections\\
+\dtype{map<K,V>}  & Keyed lookup data\\
+\dtype{hash256}   & Record integrity (SHA-256)\\
+\dtype{hash562}   & Deep provenance digest (custom)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Demo Schema}
+
+\begin{center}
+\small
+\begin{tabular}{@{} l l l l l @{}}
+\toprule
+\textbf{Field} & \textbf{Semantic} & \textbf{Storage} & \textbf{Units} & \textbf{Validity}\\
+\midrule
+\field{atomic\_number}     & identity  & \dtype{u32}        & ---   & immutable\\
+\field{half\_life\_s}      & scalar    & \dtype{f64}        & s     & isotope-only\\
+\field{oxidation\_states}  & set       & \dtype{vec<i32>}   & ---   & context-sensitive\\
+\field{bead\_orientation}  & tensor    & \dtype{vec<f64>}   & rad   & bead projection only\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 3: Material Demonstration Report}
+\label{sec:report3}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report demonstrates how engineering and chemistry materials are stored as
+typed overlays rather than collapsed into element records.
+
+A material is not an element.
+
+\subsection{Material Record Form}
+
+\begin{equation}
+\label{eq:material_record}
+M_k = \bigl(I_k,\; C_k,\; \rho_k,\; \phi_k,\; \Pi_k,\; \Gamma_k,\; H_k\bigr),
+\end{equation}
+where:
+\begin{center}
+\begin{tabular}{@{} cl @{}}
+\toprule
+\textbf{Block} & \textbf{Description}\\
+\midrule
+$I_k$        & Material identity\\
+$C_k$        & Composition (stoichiometric or mass-fraction)\\
+$\rho_k$     & Density / bulk density\\
+$\phi_k$     & Phase state\\
+$\Pi_k$      & Engineering property vector\\
+$\Gamma_k$   & Hazard / environment descriptor\\
+$H_k$        & Provenance hash block\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Example Materials}
+
+\paragraph{A.\;Copper.}
+\[
+M_{\text{Cu}} = \bigl(\text{Copper},\;\{\text{Cu}{:}1.0\},\;
+  \rho,\;\text{solid},\;\Pi,\;\Gamma,\;H\bigr).
+\]
+
+\paragraph{B.\;Steel preset (A36).}
+\[
+M_{\text{Steel-A36}} = \bigl(\text{A36},\;\{\text{Fe},\text{C},\text{Mn},\ldots\},\;
+  \rho,\;\text{solid},\;E,\sigma_y,\nu,\ldots\bigr).
+\]
+
+\paragraph{C.\;Plutonium oxide-bearing residue.}
+\[
+M_{\text{PuResidue}} = \bigl(\text{mixed residue},\;
+  \{\text{Pu},\text{O},\text{C},\text{H},\text{trace}\},\;
+  \rho,\;\phi,\;\Pi,\;\Gamma,\;H\bigr).
+\]
+
+\subsection{Demo Material Table}
+
+\begin{center}
+\small
+\begin{tabular}{@{} l l l l @{}}
+\toprule
+\textbf{Material} & \textbf{Class} & \textbf{Phase} & \textbf{Main Use}\\
+\midrule
+Copper                & elemental material         & solid     & conductor, engineering\\
+Iron                  & elemental material         & solid     & base metal\\
+Uranium dioxide       & compound material          & solid     & nuclear fuel model\\
+Thorium oxalate       & precursor / compound       & solid     & slurry / precipitation / staging\\
+Hexene                & organic precursor          & liquid    & bead-scale precursor\\
+Cyclopentadienyl prec.& organometallic ligand      & molecular & hybrid architecture tests\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 4: Compound Demonstration Report}
+\label{sec:report4}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report demonstrates how compounds are encoded as distinct database objects
+with stoichiometric, structural, and resolution-aware metadata.
+
+\subsection{Compound Record Form}
+
+\begin{equation}
+\label{eq:compound_record}
+C_j = \bigl(S_j,\; G_j,\; B_j,\; P_j,\; R_j,\; H_j\bigr),
+\end{equation}
+where:
+\begin{center}
+\begin{tabular}{@{} cl @{}}
+\toprule
+\textbf{Block} & \textbf{Description}\\
+\midrule
+$S_j$ & Stoichiometry\\
+$G_j$ & Geometry / graph / arrangement hints\\
+$B_j$ & Bond or interaction classification\\
+$P_j$ & Phase / process metadata\\
+$R_j$ & Resolution projections\\
+$H_j$ & Compound hash block\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Demonstration Compounds}
+
+\paragraph{A.\;Water.}
+\[
+C_{\text{H}_2\text{O}} =
+  \bigl(\{\text{H}{:}2,\text{O}{:}1\},\;\text{bent},\;\text{polar covalent},\;
+        \text{molecular},\;R,\;H\bigr).
+\]
+
+\paragraph{B.\;Thorium oxalate.}
+\[
+C_{\text{Th-ox}} =
+  \bigl(\{\text{Th},\text{C},\text{O},\text{H}\},\;\text{coordination / precipitation},\;
+        \text{ionic-covalent hybrid},\;\text{precursor solid},\;R,\;H\bigr).
+\]
+
+\paragraph{C.\;Uranium dioxide.}
+\[
+C_{\text{UO}_2} =
+  \bigl(\{U{:}1,O{:}2\},\;\text{crystal lattice},\;\text{ionic / lattice},\;
+        \text{ceramic solid},\;R,\;H\bigr).
+\]
+
+\paragraph{D.\;Hexene.}
+\[
+C_{\text{C}_6\text{H}_{12}} =
+  \bigl(\{C{:}6,H{:}12\},\;\text{chain / isomer family},\;\text{covalent organic},\;
+        \text{molecular liquid},\;R,\;H\bigr).
+\]
+
+\subsection{Compound Demo Payload}
+
+\begin{lstlisting}[language=JSON, caption={Hexene compound registry entry}]
+{
+  "compound_id":   "cmp_hexene_001",
+  "name":          "hexene",
+  "formula":       "C6H12",
+  "class":         "organic_precursor",
+  "stoichiometry": {"C": 6, "H": 12},
+  "structure_family": "alkene",
+  "projection_modes": ["atomistic", "bead"],
+  "default_seed_class": "chain_seed_v1",
+  "hash256": "....",
+  "hash562": "...."
+}
+\end{lstlisting}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 5: Precursor Demonstration Report}
+\label{sec:report5}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report demonstrates how precursors are treated as staged formation objects
+rather than fully committed final structures.  A precursor is not just a
+compound.  It is a reaction-positioned entity.
+
+\subsection{Precursor Record Form}
+
+\begin{equation}
+\label{eq:precursor_record}
+P_m = \bigl(I_m,\; \Psi_m,\; \Omega_m,\; \Lambda_m,\; T_m,\; H_m\bigr),
+\end{equation}
+where:
+\begin{center}
+\begin{tabular}{@{} cl @{}}
+\toprule
+\textbf{Block} & \textbf{Description}\\
+\midrule
+$I_m$        & Precursor identity\\
+$\Psi_m$     & Chemical state\\
+$\Omega_m$   & Environment readiness\\
+$\Lambda_m$  & Transformation / reaction flags\\
+$T_m$        & Target formation class\\
+$H_m$        & Provenance block\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Example Precursors}
+
+\begin{center}
+\small
+\begin{tabular}{@{} l l l @{}}
+\toprule
+\textbf{Precursor} & \textbf{Class} & \textbf{Target Formation}\\
+\midrule
+Hexene bead prec.               & organic chain precursor      & bead-tested hydrocarbon family\\
+Cyclopentadienyl ligand prec.   & organometallic precursor     & mixed bead/atomistic coordination\\
+Thorium oxalate slurry prec.    & precipitation precursor      & oxide or residue evolution\\
+Dissolved nitrate--metal complex & process precursor            & sludge / salt / oxide outcome\\
+Pipe-scale dissolved solids     & process-field precursor      & materials + deposition model\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Hybrid Precursor Demo}
+
+A mixed-resolution precursor packet:
+\begin{equation}
+\label{eq:hybrid_prec}
+P_{\text{hybrid}} = \bigl(X_{\text{Pu}}^{(a)},\;
+  X_{\text{Cp}}^{(b)},\; X_{\text{hexene}}^{(b)},\; E,\; T,\; H\bigr),
+\end{equation}
+where $X_{\text{Pu}}^{(a)}$ is atomistic plutonium,
+$X_{\text{Cp}}^{(b)}$ is bead-scale cyclopentadienyl precursor,
+$X_{\text{hexene}}^{(b)}$ is bead-scale hexene precursor,
+$E$ is the environment state, and $T$ is the transformation intent.
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 6: Seed and Hash Demonstration Report}
+\label{sec:report6}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report demonstrates deterministic reconstruction and provenance control.
+Every major input carries both a seed for reproducible generation and a hash for
+identity and integrity verification.
+
+\subsection{Seed Block}
+
+\begin{equation}
+\label{eq:seed_block}
+S_i = \bigl(\text{seed}_{32},\;\text{seed}_{64},\;
+            \text{seed}_{\text{geom}},\;\text{seed}_{\text{chem}}\bigr),
+\end{equation}
+where seeds may control:
+\begin{itemize}
+  \item randomized cloud generation,
+  \item bead placement,
+  \item lattice jitter,
+  \item initial velocity assignment,
+  \item synthetic precursor arrangement,
+  \item test case regeneration.
+\end{itemize}
+
+\subsection{Hash Block}
+
+\begin{equation}
+\label{eq:hash_block}
+H_i = \bigl(H_{32}^{\text{tag}},\; H_{256}^{\text{content}},\;
+            H_{562}^{\text{provenance}}\bigr).
+\end{equation}
+
+Recommended roles:
+\begin{center}
+\begin{tabular}{@{} c l @{}}
+\toprule
+\textbf{Hash} & \textbf{Role}\\
+\midrule
+$H_{32}^{\text{tag}}$         & Quick human-friendly tag\\
+$H_{256}^{\text{content}}$    & Exact record content fingerprint (SHA-256)\\
+$H_{562}^{\text{provenance}}$ & Deep lineage signature (custom)\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Demonstration Table}
+
+\begin{center}
+\small
+\begin{tabular}{@{} l c c c @{}}
+\toprule
+\textbf{Object} & \textbf{Seed} & \textbf{Content Hash} & \textbf{Provenance Hash}\\
+\midrule
+H element core                & fixed canonical & yes & yes\\
+Pu isotope packet             & optional        & yes & yes\\
+Hexene bead scene             & required        & yes & yes\\
+Thorium oxalate test cloud    & required        & yes & yes\\
+Hybrid Pu--Cp--Hexene system  & required        & yes & yes\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Demo Entry}
+
+\begin{lstlisting}[language={}, caption={Seed and hash block for hybrid scene}]
+Object:       hybrid_precursor_scene_004
+Seed32:       40128
+Seed64:       40128_094_006_005
+GeometrySeed: geom_cp_hexene_pu_v2
+ChemicalSeed: chem_hybrid_transition_v1
+Hash256:      98C1...A442
+Hash562:      HYB-PU-CP-HEX-2026-TRACE-....
+\end{lstlisting}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 7: Integrated Example Report}
+\label{sec:report7}
+% ════════════════════════════════════════════════════════════════════════════
+
+\subsection{Goal}
+
+This report shows one full input packet combining element identity, material
+typing, compound registration, precursor staging, and seed and hash
+traceability.
+
+\subsection{Example: Pu + Cyclopentadienyl + Hexene Hybrid Input}
+
+\paragraph{Input packet.}
+\begin{equation}
+\label{eq:demo_packet}
+I_{\text{demo}} = \bigl(E_{\text{Pu}},\; C_{\text{Cp-like}},\;
+  C_{\text{hexene}},\; P_{\text{hybrid}},\; S,\; H\bigr).
+\end{equation}
+
+\paragraph{Expanded form.}
+\begin{align*}
+E_{\text{Pu}}        &= (I,\;B,\;N,\;R,\;C,\;X,\;H),\\
+C_{\text{Cp-like}}   &= (S,\;G,\;B,\;P,\;R,\;H),\\
+P_{\text{hybrid}}    &= (I,\;\Psi,\;\Omega,\;\Lambda,\;T,\;H).
+\end{align*}
+
+\subsection{Demo Manifest}
+
+\begin{lstlisting}[language={}, caption={Integrated demonstration manifest}]
+Demo Name: Pu_Cp_Hexene_Hybrid_001
+Mode: mixed_resolution
+Primary Atomistic Core: Pu
+Supporting Precursors: cyclopentadienyl_like, hexene
+Environment Class: dry_condensed_transition
+Dimensions:
+  state_dim = 41
+  geom_dim  = 3
+  chem_dim  = 19
+  nuc_dim   = 5
+  aux_dim   = 12
+
+Data Types:
+  core_id         : u32
+  runtime_id      : u64
+  positions       : f64[3]
+  charges         : f64
+  oxidation_set   : i32[]
+  decay_constants : f64[]
+  flags           : bool[]
+  labels          : str[]
+  hash256         : bytes32
+  hash562         : custom_trace
+
+Materials:
+  plutonium_core
+  organic_precursor_family
+  organometallic_transition_packet
+
+Compounds:
+  hexene
+  cyclopentadienyl_like
+
+Precursors:
+  Cp_precursor_stage2
+  Hexene_bead_stage1
+
+Seed:
+  seed32    = 41092
+  seed64    = 41092_2026_40C_001
+  geom_seed = ring_chain_offset_v1
+  chem_seed = hybrid_decay_response_v1
+
+Hash:
+  hash256 = ...
+  hash562 = ...
+\end{lstlisting}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 8: Recommended Chapter Placement}
+\label{sec:report8}
+% ════════════════════════════════════════════════════════════════════════════
+
+If this material becomes part of a formal textbook or architecture document, the
+recommended placement is:
+
+\begin{center}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Section} & \textbf{Topic}\\
+\midrule
+§4.1 & Database identity model\\
+§4.2 & Input dimensionality and data typing\\
+§4.3 & Element, isotope, and material shard layout\\
+§4.4 & Compound and precursor registry design\\
+§4.5 & Seed and hash provenance\\
+§4.6 & Integrated mixed-resolution demonstration packet\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 9: Clean \LaTeX{} Subsection Starter}
+\label{sec:report9}
+% ════════════════════════════════════════════════════════════════════════════
+
+The following verbatim block is the canonical \LaTeX{} subsection starter text
+for embedding in other documents:
+
+\begin{lstlisting}[language=TeX, caption={Embeddable \LaTeX{} subsection starter}]
+\section{Database Architecture Demonstration Reports}
+
+The database layer is treated as a typed scientific registry
+rather than a flat storage table. Each input is modeled as
+\[
+X_i = (I_i, T_i, D_i, P_i, S_i, H_i),
+\]
+where \(I_i\) is the identity block, \(T_i\) is the type block,
+\(D_i\) is the dimension descriptor, \(P_i\) is the scientific
+payload, \(S_i\) is the deterministic seed block, and \(H_i\) is
+the hash and provenance block.
+
+\subsection{Input Dimension Demonstration}
+A dimension descriptor is written as
+\[
+D_i = (n_{\text{state}}, n_{\text{geom}}, n_{\text{chem}},
+       n_{\text{nuc}}, n_{\text{aux}}),
+\]
+allowing a single registry to host element cores, isotope packets,
+atomistic objects, bead objects, materials, compounds, and staged
+precursors.
+
+\subsection{Seed and Hash Provenance}
+To guarantee reproducibility and traceability, each major object
+carries both a deterministic seed block and a multi-scale hash block:
+\[
+S_i = (\text{seed}_{32}, \text{seed}_{64},
+       \text{seed}_{geom}, \text{seed}_{chem}),
+\]
+\[
+H_i = (H_{32}^{tag}, H_{256}^{content}, H_{562}^{provenance}).
+\]
+This allows exact regeneration of synthetic scenes, validation of
+imported records, and lineage tracing across atomistic, bead, and
+macro-scale projections.
+\end{lstlisting}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Report 10: Best Next Expansions}
+\label{sec:report10}
+% ════════════════════════════════════════════════════════════════════════════
+
+The next useful reports building on this architecture would be:
+
+\begin{enumerate}
+  \item \textbf{Element demo packet} — H, Fe, U, Pu with full
+    $X_i = (I_i, T_i, D_i, P_i, S_i, H_i)$ records, including
+    nuclear descriptor expansions for actinides.
+
+  \item \textbf{Materials demo packet} — Copper, Steel~A36, UO\textsubscript{2},
+    Thorium oxalate with $M_k$ records and engineering property vectors.
+
+  \item \textbf{Precursor demo packet} — Hexene, cyclopentadienyl,
+    nitrate--metal slurries, dissolved crystal solids, with thermal
+    and strength initial passes for tensile hardness and brittleness
+    if those channels are validated.
+
+  \item \textbf{Seed reproducibility report} — Demonstrate that the same
+    seed produces the same scene.  Show 3D Qt6 rendering with at least
+    two physical representations per atom.  Print additional math steps
+    for the reconstruction chain.
+
+  \item \textbf{Hash mismatch report} — Demonstrate detection of tampered
+    overlays, comparing $H_{256}^{\text{content}}$ before and after
+    modification and flagging provenance violations.
+\end{enumerate}
+
+
+% ════════════════════════════════════════════════════════════════════════════
+\section*{Appendix: C++ Header Mapping}
+\label{sec:appendix_headers}
+% ════════════════════════════════════════════════════════════════════════════
+
+The formal definitions in this document are implemented as C++ header-only
+structures under \texttt{coarse\_grain/database/}:
+
+\begin{center}
+\begin{tabular}{@{} l l @{}}
+\toprule
+\textbf{Header} & \textbf{Implements}\\
+\midrule
+\texttt{input\_record.hpp}     & $X_i$, $D_i$, \texttt{SemanticType}, \texttt{StorageType}\\
+\texttt{material\_record.hpp}  & $M_k$\\
+\texttt{compound\_record.hpp}  & $C_j$\\
+\texttt{precursor\_record.hpp} & $P_m$\\
+\texttt{seed\_hash.hpp}        & $S_i$, $H_i$\\
+\texttt{demo\_entries.hpp}     & Canonical demonstration objects\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ════════════════════════════════════════════════════════════════════════════
+\end{document}

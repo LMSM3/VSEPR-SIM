@@ -113,12 +113,23 @@ inline double modulated_channel_kernel(
 
 /**
  * ModulationReport — per-channel modulation factors for inspection.
+ *
+ * The scalar evaluation score G summarises the overall modulation
+ * state as a single number suitable for thresholds, logging, and
+ * cross-module comparison:
+ *
+ *   G = (g_steric + g_electrostatic + g_dispersion) / 3
+ *
+ * G = 1.0 means unmodulated (gamma=0 or eta=0).
+ * G > 1.0 means net stiffening / enhancement.
+ * G < 1.0 means net screening / softening.
  */
 struct ModulationReport {
     double eta_bar{};
     double g_steric{};
     double g_electrostatic{};
     double g_dispersion{};
+    double G{1.0};              // Scalar model evaluation score
 };
 
 /**
@@ -136,6 +147,7 @@ inline ModulationReport compute_modulation_report(
         Channel::Electrostatic, eta_A, eta_B, params);
     report.g_dispersion = kernel_modulation_factor(
         Channel::Dispersion, eta_A, eta_B, params);
+    report.G = (report.g_steric + report.g_electrostatic + report.g_dispersion) / 3.0;
     return report;
 }
 

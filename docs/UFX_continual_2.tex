@@ -1,0 +1,1335 @@
+\documentclass[11pt, a4paper]{article}
+
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+% microtype disabled for compatibility
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{parskip}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{mdframed}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{tocloft}
+\usepackage{multicol}
+
+% Colors
+\definecolor{rulecolor}{RGB}{40,40,40}
+\definecolor{phasecolor}{RGB}{20,80,140}
+\definecolor{warncolor}{RGB}{160,40,40}
+\definecolor{codebackground}{RGB}{246,246,246}
+\definecolor{codekeyword}{RGB}{0,80,160}
+\definecolor{codestring}{RGB}{140,40,0}
+\definecolor{codecomment}{RGB}{80,110,80}
+\definecolor{tiercolor}{RGB}{60,120,60}
+
+% Section formatting
+\titleformat{\section}{\large\bfseries\color{phasecolor}}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries\color{phasecolor!70!black}}{}{0em}{}
+\titleformat{\subsubsection}{\normalsize\itshape}{}{0em}{}
+
+% Code listing style
+\lstset{
+  backgroundcolor=\color{codebackground},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekeyword}\bfseries,
+  stringstyle=\color{codestring},
+  commentstyle=\color{codecomment}\itshape,
+  breaklines=true,
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{rulecolor!30},
+  xleftmargin=8pt,
+  xrightmargin=8pt,
+  aboveskip=8pt,
+  belowskip=8pt,
+  showstringspaces=false,
+  language=C++
+}
+
+% Header / footer
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\texttt{UFX\_AUTO\_2} --- Full Design \& Work Order}
+\fancyhead[R]{\small VSEPR-SIM / v5 beta8}
+\fancyfoot[C]{\small\thepage}
+
+% Rule box
+\newmdenv[
+  linecolor=warncolor,
+  linewidth=1pt,
+  leftmargin=0pt,
+  rightmargin=0pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  backgroundcolor=warncolor!4
+]{rulebox}
+
+% Phase / info box
+\newmdenv[
+  linecolor=phasecolor,
+  linewidth=1pt,
+  leftmargin=0pt,
+  rightmargin=0pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  backgroundcolor=phasecolor!4
+]{phasebox}
+
+% Tier box
+\newmdenv[
+  linecolor=tiercolor,
+  linewidth=1pt,
+  leftmargin=0pt,
+  rightmargin=0pt,
+  innerleftmargin=10pt,
+  innerrightmargin=10pt,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  backgroundcolor=tiercolor!4
+]{tierbox}
+
+% TOC tweaks
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\setlength{\cftbeforesecskip}{2pt}
+
+\begin{document}
+
+% =========================================================
+% TITLE
+% =========================================================
+\begin{center}
+  {\LARGE\bfseries UFX\_AUTO\_2}\\[4pt]
+  {\large\bfseries Full Design Document \& Work Order}\\[6pt]
+  {\normalsize VSEPR-SIM $\cdot$ v5 beta8 $\rightarrow$ beta9 target}\\[3pt]
+  {\small\texttt{Status: speculative architecture draft / not implementation gospel}}\\[3pt]
+  {\small\textit{Because apparently we still believe in survival.}}
+\end{center}
+
+\vspace{4pt}
+\hrule height 0.8pt
+\vspace{10pt}
+
+\tableofcontents
+\newpage
+
+% =========================================================
+\section{Purpose}
+% =========================================================
+
+UFX\_AUTO\_2 expands the original UFX auto-creator from a UFF parameter completion tool into a broader materials-state database generator.
+
+The first UFX auto system answered: \textit{Can we build, fill, validate, and log a UFF-style force-field table?}
+
+UFX\_AUTO\_2 asks: \textit{Can we generate, validate, classify, and promote full material-state records across chemistry, thermodynamics, mechanics, transport, radiation, corrosion, and macro-scale engineering response?}
+
+The goal is not merely to create more entries. The goal is a system that knows what kind of entry it is creating, what source class supports it, what uncertainty it carries, and whether it deserves to be promoted from generated to validated.
+
+\begin{rulebox}
+Tiny difference between ``database'' and ``organized hallucination farm.'' Best not to confuse them.
+\end{rulebox}
+
+\subsection{Core concept}
+
+Every generated object is treated as a layered material record:
+
+\begin{center}
+\texttt{identity $\rightarrow$ atom typing $\rightarrow$ force field $\rightarrow$ molecular descriptors $\rightarrow$ thermodynamics $\rightarrow$ EOS/fluid $\rightarrow$ transport $\rightarrow$ mechanics $\rightarrow$ electronic $\rightarrow$ spectra $\rightarrow$ reaction/corrosion/radiation $\rightarrow$ macro observables $\rightarrow$ provenance $\rightarrow$ uncertainty $\rightarrow$ meta-scores}
+\end{center}
+
+The output is no longer only a \texttt{UFFEntry}. It becomes a \texttt{UFXMaterialRecord}.
+
+\begin{lstlisting}
+struct UFXMaterialRecord {
+    IdentityBlock       identity;
+    AtomTypeBlock       atom_types;
+    ForceFieldBlock     force_field;
+    MolecularDescriptorBlock molecular;
+    CrystalBlock        crystal;
+    ThermoBlock         thermo;
+    EOSBlock            eos;
+    TransportBlock      transport;
+    MechanicalBlock     mechanical;
+    ElectronicBlock     electronic;
+    SpectralBlock       spectra;
+    ReactionBlock       reactions;
+    CorrosionBlock      corrosion;
+    RadiationBlock      radiation;
+    GranularBlock       granular;
+    MacroObservableBlock macro;
+    ProvenanceBlock     provenance;
+    UncertaintyBlock    uncertainty;
+    MetaScoreBlock      meta;
+};
+\end{lstlisting}
+
+% =========================================================
+\section{Core Identity Properties}
+% =========================================================
+
+These are the ``do not lose the atom'' fields. If identity is wrong, every downstream property is beautifully arranged garbage.
+
+\subsection{Required fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item element
+  \item atomic number
+  \item isotope
+  \item mass
+  \item formal charge
+  \item oxidation state
+  \item coordination number
+  \item geometry tag
+  \item hybridization / local environment
+  \item atom type
+  \item valence electron count
+  \item electronegativity
+  \item covalent radius
+  \item ionic radius
+  \item metallic radius
+  \item van der Waals radius
+  \item polarizability
+\end{itemize}
+\end{multicols}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct IdentityBlock {
+    std::string material_key;
+    std::string formula;
+    std::string phase;
+
+    std::vector<std::string> elements;
+    std::vector<int> atomic_numbers;
+
+    std::optional<int>    isotope_mass_number;
+    std::optional<double> formal_charge;
+    std::optional<double> oxidation_state;
+    int coordination_number;
+    std::string geometry_tag;
+    std::string hybridization;
+
+    std::string local_environment_hash;
+};
+\end{lstlisting}
+
+\subsection{Uses}
+
+Atom typing, fallback generation, bond prediction, charge balancing, coordination validation, periodic trends. PubChem PUG REST for identity cross-check. NIST WebBook for InChIKey and CAS.
+
+% =========================================================
+\section{UFF / Force-Field Properties}
+% =========================================================
+
+This is the traditional UFX core. Extended with audit and provenance fields so parameters stop wearing lab coats they did not earn.
+
+\subsection{ForceFieldBlock fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item $r_1$ --- bond radius
+  \item $\theta_0$ --- preferred angle
+  \item $x_1$ --- vdW distance
+  \item $D_1$ --- vdW well depth
+  \item $\zeta$ --- scaling / effective charge
+  \item $Z_1$ --- effective charge parameter
+  \item bond order correction
+  \item coordination correction
+  \item angle correction
+  \item torsion barrier
+  \item inversion barrier
+  \item electrostatic charge model
+  \item mixing rule metadata
+\end{itemize}
+\end{multicols}
+
+\subsection{Extended audit fields}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item \texttt{parameter\_source\_class}
+  \item \texttt{parameter\_confidence}
+  \item \texttt{parameter\_revision}
+  \item \texttt{fallback\_rule}
+  \item \texttt{local\_environment\_hash}
+  \item \texttt{validated\_against}
+\end{itemize}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct ForceFieldBlock {
+    std::string atom_type;
+    double r1, theta0, x1, D1, zeta, Z1;
+    double bond_order_correction;
+    double coordination_correction;
+    double torsion_barrier;
+    double inversion_barrier;
+    std::string mixing_rule;
+    std::string fallback_rule;
+    std::string parameter_source_class;
+    double parameter_confidence;
+};
+\end{lstlisting}
+
+\subsection{Source classes}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item \texttt{REFERENCE} --- Rapp\'{e} et al.\ 1992 UFF baseline
+  \item \texttt{GENERATED} --- UFX\_AUTO\_2 fallback rules
+  \item \texttt{VALIDATED} --- passed local, molecular, and web cross-checks
+\end{itemize}
+
+% =========================================================
+\section{Molecular Descriptor Properties}
+% =========================================================
+
+Not deep physics. Excellent sanity filters. Store cheap descriptors on every molecule to catch the plausible catastrophes.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item molecular formula
+  \item molecular weight
+  \item exact mass
+  \item canonical SMILES
+  \item InChI
+  \item InChIKey
+  \item formal charge
+  \item heavy atom count
+  \item rotatable bond count
+  \item hydrogen bond donors
+  \item hydrogen bond acceptors
+  \item topological polar surface area
+  \item XLogP
+  \item complexity score
+  \item fingerprint hash
+\end{itemize}
+\end{multicols}
+
+\subsection{Failure modes these catch}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item Generated \texttt{CH3HgI} entry claims wrong molecular weight
+  \item Structure parser silently dropped iodine
+  \item Charge balance is nonsense
+\end{itemize}
+
+Which, tragically, are all very plausible.
+
+PubChem PUG REST exposes molecular properties and identifiers. Use it as an identity and descriptor cross-check source, not a force-field authority.
+
+% =========================================================
+\section{Thermochemical Properties}
+% =========================================================
+
+Required for gas, thermal, combustion, and phase behavior. State-dependent: do not store naked constants without attached state.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item enthalpy of formation $\Delta H_f$
+  \item Gibbs free energy $\Delta G_f$
+  \item entropy $S$
+  \item $C_p(T)$, $C_v(T)$
+  \item enthalpy of combustion
+  \item enthalpy of reaction
+  \item equilibrium constants
+  \item latent heat of fusion
+  \item latent heat of vaporization
+  \item boiling point
+  \item melting point
+  \item critical temperature $T_c$
+  \item critical pressure $P_c$
+  \item critical volume $V_c$
+  \item acentric factor $\omega$
+  \item vapor pressure curve
+  \item Henry's law constant
+\end{itemize}
+\end{multicols}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct ThermoBlock {
+    PropertyCurve cp_T;
+    PropertyCurve h_T;
+    PropertyCurve s_T;
+
+    std::optional<double> melting_point_K;
+    std::optional<double> boiling_point_K;
+    std::optional<double> critical_temperature_K;
+    std::optional<double> critical_pressure_Pa;
+    std::optional<double> acentric_factor;
+};
+\end{lstlisting}
+
+\subsection{Schema}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE thermo_properties (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    species_key     TEXT NOT NULL,
+    property_name   TEXT NOT NULL,
+    value           REAL,
+    units           TEXT,
+    temperature_K   REAL,
+    pressure_Pa     REAL,
+    source_id       TEXT,
+    uncertainty     REAL,
+    validation_status TEXT
+);
+\end{lstlisting}
+
+NIST Chemistry WebBook is the primary reference for thermochemical data, phase transitions, vapor pressure, and reaction thermochemistry.
+
+% =========================================================
+\section{Equation-of-State and Fluid Properties}
+% =========================================================
+
+For gas/liquid/pipe/flow work. Store as functions, not single values. A single viscosity number with no temperature attached is a decorative lie.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item density $\rho(T,P)$
+  \item compressibility factor $Z(T,P)$
+  \item specific volume
+  \item dynamic viscosity $\mu(T,P)$
+  \item kinematic viscosity $\nu(T,P)$
+  \item thermal conductivity $k(T,P)$
+  \item Prandtl number
+  \item speed of sound
+  \item bulk modulus
+  \item surface tension
+  \item diffusivity
+  \item solubility
+  \item fugacity coefficient
+  \item activity coefficient
+\end{itemize}
+\end{multicols}
+
+\subsection{Supported EOS models}
+
+Ideal gas $\cdot$ van der Waals $\cdot$ Redlich-Kwong $\cdot$ Peng-Robinson $\cdot$ tabular steam/gas $\cdot$ mixed PvT tables
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct EOSBlock {
+    std::string eos_model; // ideal, VdW, RK, PR, tabular
+
+    PropertySurface density_TP;
+    PropertySurface Z_TP;
+    PropertySurface viscosity_TP;
+    PropertySurface thermal_conductivity_TP;
+};
+\end{lstlisting}
+
+The property must be expressed as $f(T, P, \text{composition}, \text{phase})$.
+
+% =========================================================
+\section{Solid-State and Crystal Properties}
+% =========================================================
+
+Where UFX stops being molecule-only and starts touching materials science properly.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item space group
+  \item lattice parameters $a, b, c, \alpha, \beta, \gamma$
+  \item unit cell volume
+  \item density
+  \item Wyckoff positions
+  \item coordination polyhedra
+  \item packing fraction
+  \item nearest-neighbor distances
+  \item formation energy
+  \item energy above hull
+  \item decomposition products
+  \item phase stability
+  \item magnetic ordering
+  \item band gap
+  \item density of states
+  \item elastic tensor
+  \item Debye temperature
+  \item thermal expansion coefficient
+\end{itemize}
+\end{multicols}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct CrystalBlock {
+    std::string space_group;
+    Vec3 lattice_a_b_c;
+    Vec3 alpha_beta_gamma_deg;
+
+    double unit_cell_volume;
+    double density;
+    double formation_energy;
+    double energy_above_hull;
+
+    std::vector<Vec3> fractional_positions;
+    std::string structure_source;
+};
+\end{lstlisting}
+
+Materials Project and OQMD expose band gap, formation energy, magnetic ordering, elastic properties, and structural data for crystalline materials.
+
+% =========================================================
+\section{Mechanical Properties}
+% =========================================================
+
+For macro bridge and FEA coupling. The atomistic-to-engineering properties chain.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item Young's modulus $E$
+  \item shear modulus $G$
+  \item bulk modulus $K$
+  \item Poisson ratio $\nu$
+  \item yield strength
+  \item ultimate tensile strength
+  \item fracture toughness $K_{IC}$
+  \item hardness
+  \item ductility
+  \item strain hardening exponent
+  \item fatigue strength
+  \item creep constants
+  \item stress relaxation constants
+  \item plasticity model parameters
+  \item damage evolution constants
+  \item buckling load factor
+\end{itemize}
+\end{multicols}
+
+\subsection{Scale chain}
+
+\begin{center}
+atomistic stiffness curvature $\rightarrow$ bead stiffness $\rightarrow$ field stress/strain $\rightarrow$ effective engineering constants
+\end{center}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct MechanicalBlock {
+    double E_eff;
+    double G_eff;
+    double K_eff;
+    double poisson_ratio;
+
+    double yield_strength;
+    double failure_strength;
+    double fracture_toughness;
+
+    std::string test_method;
+    double strain_rate;
+    double temperature_K;
+};
+\end{lstlisting}
+
+\subsection{Schema}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE mechanical_properties (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    material_key TEXT NOT NULL,
+    test_type    TEXT NOT NULL,
+    property_name TEXT NOT NULL,
+    value        REAL,
+    units        TEXT,
+    strain_rate  REAL,
+    temperature_K REAL,
+    source_class TEXT,
+    validation_score REAL
+);
+\end{lstlisting}
+
+% =========================================================
+\section{Transport Properties}
+% =========================================================
+
+The real bead-to-macro jackpot. Mandatory for pipeline erosion, reactive fluids, and radioactive materials.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item thermal conductivity
+  \item electrical conductivity
+  \item ionic conductivity
+  \item diffusion coefficient
+  \item self-diffusion
+  \item tracer diffusion
+  \item species diffusivity
+  \item permeability
+  \item porosity
+  \item tortuosity
+  \item Darcy coefficient
+  \item Forchheimer coefficient
+  \item mass transfer coefficient
+  \item heat transfer coefficient
+  \item mobility
+  \item Nernst-Einstein fields
+\end{itemize}
+\end{multicols}
+
+\subsection{Macro connections}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item bead trajectories $\rightarrow$ diffusivity
+  \item particle-wall impacts $\rightarrow$ erosion flux
+  \item thermal bead exchange $\rightarrow$ $k_\text{eff}$
+  \item flow bead momentum exchange $\rightarrow$ pressure drop
+\end{itemize}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct TransportBlock {
+    double k_eff;
+    double diffusivity;
+    double permeability;
+    double porosity;
+    double tortuosity;
+    double electrical_conductivity;
+    double ionic_conductivity;
+    double mass_transfer_coefficient;
+};
+\end{lstlisting}
+
+% =========================================================
+\section{Electronic and Quantum-Adjacent Properties}
+% =========================================================
+
+Not full quantum mechanics. A descriptor and constraint layer. Label the approximation before it humiliates you.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item ionization energy
+  \item electron affinity
+  \item work function
+  \item band gap
+  \item HOMO-LUMO gap
+  \item orbital occupations
+  \item partial charges
+  \item dipole moment
+  \item quadrupole moment
+  \item polarizability tensor
+  \item dielectric constant
+  \item effective mass
+  \item density of states summary
+  \item Fermi level
+  \item redox potential
+  \item electrochemical window
+\end{itemize}
+\end{multicols}
+
+\subsection{UFX constraint examples}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item High polarizability $\rightarrow$ stronger dispersion correction
+  \item Low band gap $\rightarrow$ conductive/thermal coupling flag
+  \item Large electron affinity $\rightarrow$ reactive capture / ionization risk flag
+\end{itemize}
+
+NIST WebBook includes ionization energies, electron affinities, proton affinities, and cluster ion binding energies. Materials Project includes electronic properties for crystalline materials.
+
+% =========================================================
+\section{Spectral and Fingerprint Properties}
+% =========================================================
+
+For identification and validation. Far better than ``the molecule didn't crash, so ship it.''
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item IR peaks
+  \item Raman peaks
+  \item UV/Vis absorption peaks
+  \item mass spectrum peaks
+  \item NMR shifts
+  \item XRD peak list
+  \item EXAFS / XANES signatures
+  \item phonon spectrum
+  \item vibrational frequencies
+  \item normal modes
+\end{itemize}
+\end{multicols}
+
+\subsection{UFX validation use}
+
+\begin{center}
+generated molecule $\rightarrow$ predicted vibrational modes $\rightarrow$ compare against IR/NIST peak ranges $\rightarrow$ score structural plausibility
+\end{center}
+
+NIST WebBook provides IR spectra, mass spectra, UV/Vis spectra, and vibrational constants for a large number of species.
+
+% =========================================================
+\section{Reaction and Kinetic Properties}
+% =========================================================
+
+How materials move from static properties to chemistry pathways. Where UFX becomes useful for pipelines, salts, reactors, and corrosive systems.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item reaction enthalpy $\Delta H_\text{rxn}$
+  \item reaction free energy $\Delta G_\text{rxn}$
+  \item activation energy $E_a$
+  \item transition state estimate
+  \item Arrhenius $A$ factor
+  \item rate constant $k(T)$
+  \item reaction order
+  \item equilibrium constant $K_\text{eq}$
+  \item adsorption energy
+  \item desorption energy
+  \item surface binding site
+  \item catalytic scaling descriptor
+  \item reaction pathway ID
+\end{itemize}
+\end{multicols}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct ReactionBlock {
+    std::string reaction_id;
+    double delta_H;
+    double delta_G;
+    double activation_energy;
+    double arrhenius_A;
+    PropertyCurve rate_constant_T;
+};
+\end{lstlisting}
+
+\subsection{System chain}
+
+\begin{center}
+solid + fluid + temperature + radiation $\rightarrow$ reactive surface $\rightarrow$ corrosion / adsorption / fouling / phase change
+\end{center}
+
+% =========================================================
+\section{Radiation and Nuclear-Adjacent Properties}
+% =========================================================
+
+\begin{rulebox}
+\textbf{Hard rule:} Do not store nuclear decay fields in the UFF parameter table. That table has suffered enough.
+\end{rulebox}
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item isotope
+  \item half-life
+  \item decay mode
+  \item decay energy
+  \item alpha/beta/gamma probabilities
+  \item neutron absorption cross section
+  \item scattering cross section
+  \item fission cross section
+  \item activation product list
+  \item radiolysis yield
+  \item displacement threshold energy
+  \item dpa rate proxy
+  \item helium production rate
+  \item gas swelling risk
+  \item transmutation pathway
+  \item decay heat
+  \item shielding attenuation coefficient
+\end{itemize}
+\end{multicols}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct RadiationBlock {
+    std::string isotope;
+    double half_life_seconds;
+    std::vector<std::string> decay_modes;
+    double decay_heat_W_per_kg;
+    double neutron_absorption_cross_section;
+    double dpa_rate_proxy;
+    double helium_production_rate;
+    double swelling_risk;
+};
+\end{lstlisting}
+
+\subsection{Scale chain}
+
+\begin{center}
+atom/bead identity $\rightarrow$ isotope-tagged material $\rightarrow$ decay event source term $\rightarrow$ heat/radiation damage field $\rightarrow$ macro swelling/failure/corrosion risk
+\end{center}
+
+Use separate tables: \texttt{nuclear\_properties}, \texttt{radiation\_response}, \texttt{decay\_channels}, \texttt{activation\_products}.
+
+% =========================================================
+\section{Corrosion and Environment Interaction Properties}
+% =========================================================
+
+For pipes, salts, molten systems, brines, acids, actinides.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item oxidation tendency
+  \item Pourbaix region
+  \item corrosion potential
+  \item pitting potential
+  \item passivation tendency
+  \item oxide layer growth rate
+  \item solubility product
+  \item chloride sensitivity
+  \item fluoride sensitivity
+  \item hydrogen embrittlement risk
+  \item radiolysis coupling
+  \item galvanic series relation
+  \item salt compatibility
+  \item redox buffer compatibility
+\end{itemize}
+\end{multicols}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct CorrosionBlock {
+    std::string environment;
+    double corrosion_potential;
+    double pitting_risk;
+    double passivation_score;
+    double oxide_growth_rate;
+    double salt_compatibility_score;
+    double radiolysis_coupling_score;
+    double hydrogen_embrittlement_risk;
+};
+\end{lstlisting}
+
+\subsection{Macro connection}
+
+\begin{center}
+surface reaction $\rightarrow$ mass loss $\rightarrow$ wall thinning $\rightarrow$ stress concentration $\rightarrow$ failure risk
+\end{center}
+
+% =========================================================
+\section{Powder, Granular, and Bead Properties}
+% =========================================================
+
+Directly supports DEM and pipeline erosion. This belongs in UFX macro expansion.
+
+\subsection{Fields}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item particle diameter
+  \item shape factor
+  \item sphericity
+  \item aspect ratio
+  \item roughness
+  \item coefficient of restitution
+  \item static friction
+  \item rolling friction
+  \item cohesion
+  \item packing fraction
+  \item coordination number
+  \item angle of repose
+  \item percolation threshold
+  \item slugging risk
+  \item segregation tendency
+  \item abrasion coefficient
+  \item erosion coefficient
+\end{itemize}
+\end{multicols}
+
+\subsection{Pipeline erosion fields}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item impact angle, impact velocity
+  \item particle hardness, wall hardness
+  \item restitution coefficient
+  \item erosion yield, localized wear rate
+\end{itemize}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct GranularBlock {
+    double particle_diameter;
+    double sphericity;
+    double roughness;
+    double restitution;
+    double friction_static;
+    double friction_rolling;
+    double packing_fraction;
+    double erosion_coefficient;
+    double abrasion_coefficient;
+};
+\end{lstlisting}
+
+% =========================================================
+\section{Uncertainty and Provenance Properties}
+% =========================================================
+
+Not optional. This is what separates a database from a hallucination storage facility.
+
+\subsection{Required fields on every property}
+
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item \texttt{source\_id} --- identifier of source record or URL
+  \item \texttt{source\_class} --- see Section~2 enum
+  \item \texttt{source\_version}
+  \item \texttt{retrieval\_date}
+  \item \texttt{raw\_response\_hash}
+  \item \texttt{method\_tag}
+  \item \texttt{confidence} --- 0.0--1.0
+  \item \texttt{uncertainty} --- physical units
+  \item \texttt{unit\_conversion\_trace}
+  \item \texttt{validation\_status}
+  \item \texttt{validation\_method}
+  \item \texttt{number\_of\_confirmations}
+  \item \texttt{conflict\_count}
+  \item \texttt{last\_checked\_date}
+  \item \texttt{promotion\_status}
+\end{itemize}
+
+\subsection{Schema}
+
+\begin{lstlisting}[language=SQL]
+CREATE TABLE property_provenance (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    property_table TEXT NOT NULL,
+    property_id    INTEGER NOT NULL,
+    source_id      TEXT NOT NULL,
+    source_class   TEXT NOT NULL,
+    method_tag     TEXT,
+    raw_hash       TEXT,
+    confidence     REAL,
+    uncertainty    REAL,
+    retrieved_at   TEXT,
+    notes          TEXT
+);
+\end{lstlisting}
+
+\subsection{Provenance classification}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Status} & \textbf{Meaning} \\
+\midrule
+\texttt{published}   & from peer-reviewed or authoritative source \\
+\texttt{DFT}         & from first-principles calculation \\
+\texttt{generated}   & created by UFX\_AUTO\_2 rules \\
+\texttt{inferred}    & derived from periodic trends \\
+\texttt{cursed}      & should not be trusted \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+That last category is wildly important.
+
+% =========================================================
+\section{Emergent UFX Meta-Properties}
+% =========================================================
+
+Not physical constants. System intelligence fields. These guide what to generate next.
+
+\subsection{Fields}
+
+\begin{itemize}[itemsep=2pt, leftmargin=*]
+  \item \textbf{weirdness\_score} --- how unusual is this entry vs.\ periodic/structural neighbors?
+  \item \textbf{coverage\_score} --- how well-represented is this region of parameter space?
+  \item \textbf{confidence\_score} --- aggregate validation confidence
+  \item \textbf{novelty\_score} --- distance from existing validated entries
+  \item \textbf{database\_density\_score} --- local record density
+  \item \textbf{local\_consistency\_score} --- agreement with immediate neighbors
+  \item \textbf{cross\_source\_conflict\_score} --- inter-source disagreement
+  \item \textbf{macro\_usefulness\_score} --- does this help predict $E_\text{eff}$, $k_\text{eff}$, $\Delta P$, damage, or phase stability?
+  \item \textbf{simulation\_stability\_score} --- does this entry destabilize VSEPR runs?
+  \item \textbf{extrapolation\_risk\_score} --- is the model outside validated space?
+\end{itemize}
+
+\subsection{Generation steering example}
+
+\begin{phasebox}
+\textbf{high novelty + low coverage + low extrapolation risk} $\rightarrow$ prioritize generation
+
+\textbf{high weirdness + high conflict} $\rightarrow$ queue for manual review before promotion
+\end{phasebox}
+
+\subsection{C++ struct}
+
+\begin{lstlisting}
+struct MetaScoreBlock {
+    double weirdness;
+    double coverage;
+    double confidence;
+    double novelty;
+    double local_consistency;
+    double source_conflict;
+    double macro_usefulness;
+    double simulation_stability;
+    double extrapolation_risk;
+};
+\end{lstlisting}
+
+% =========================================================
+\section{Full Far-Beyond Material Record Stack}
+% =========================================================
+
+The complete UFX object. Not one table. A layered record.
+
+\subsection{Database structure}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Table} & \textbf{Owns} \\
+\midrule
+\texttt{material\_records}  & identity, class, timestamps \\
+\texttt{property\_values}   & all property data, generic \\
+\texttt{validation\_records} & comparisons and scores \\
+\texttt{generation\_axes}   & randomized creation parameters \\
+\texttt{promotion\_history} & class transitions \\
+\texttt{property\_provenance} & source trail per property \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Reconstruction query}
+
+\begin{lstlisting}[language=SQL]
+SELECT *
+FROM material_records mr
+JOIN property_values pv ON pv.material_id = mr.id
+WHERE mr.material_key = ?;
+\end{lstlisting}
+
+\subsection{SourceClass enum}
+
+\begin{lstlisting}
+enum class SourceClass {
+    Reference,    // trusted pinned source
+    Generated,    // UFX_AUTO_2 rules or randomized
+    Validated,    // passed local + external checks
+    Rejected,     // failed sanity or validation
+    Derived,      // computed from other stored quantities
+    Imported,     // loaded from external database
+    Experimental, // direct measured property
+    Simulated     // produced by VSEPR/UFX simulation
+};
+\end{lstlisting}
+
+Not all numbers deserve the same respect. Most numbers, like most committees, deserve suspicion.
+
+% =========================================================
+\section{Priority Implementation Order}
+% =========================================================
+
+Do not add everything at once unless the goal is a museum of half-working schemas.
+
+\begin{tierbox}
+\begin{tabular}{lll}
+\toprule
+\textbf{Tier} & \textbf{Blocks} & \textbf{Reason} \\
+\midrule
+0 & Identity + Provenance     & Know what the object is \\
+1 & UFF / Force-field         & Know how it moves \\
+2 & Molecular descriptors     & Sanity filters \\
+3 & Thermo + EOS              & Know how state changes \\
+4 & Crystal / material        & Know solid structure \\
+5 & Transport + Mechanics     & Know how it flows and fails \\
+6 & Reaction / Corrosion      & Know how it mutates \\
+7 & Radiation / Nuclear       & Know how it degrades \\
+8 & Spectra / Fingerprints    & Structural validation \\
+9 & Meta-scores + Active learning & Know what to generate next \\
+\bottomrule
+\end{tabular}
+\end{tierbox}
+
+\begin{rulebox}
+Do not implement Tier 7 before Tier 1 works. That is how people end up with a ``radiation-aware'' system that cannot parse oxygen. Majestic failure, but still failure.
+\end{rulebox}
+
+% =========================================================
+\section{Randomized Generation Axes}
+% =========================================================
+
+UFX\_AUTO\_2 random generation samples a high-dimensional sweep. These axes drive the continual generation loop.
+
+\subsection{Axis list}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item element family
+  \item isotope class
+  \item oxidation state
+  \item coordination
+  \item geometry
+  \item bond order
+  \item temperature
+  \item pressure
+  \item phase
+  \item density
+  \item porosity
+  \item crystal symmetry
+  \item defect density
+  \item dopant fraction
+  \item surface orientation
+  \item fluid environment
+  \item radiation field
+  \item corrosion medium
+  \item particle size
+  \item strain rate
+  \item thermal gradient
+  \item flow velocity
+  \item validation source
+  \item uncertainty target
+\end{itemize}
+\end{multicols}
+
+\subsection{Axis config example}
+
+\begin{lstlisting}[language={},basicstyle=\ttfamily\footnotesize]
+{
+  "element_family":  ["alkali","transition_metal","lanthanide",
+                      "actinide","noble_gas"],
+  "phase":           ["gas","liquid","solid","powder","molten_salt"],
+  "coordination":    [1,2,3,4,5,6,8,12],
+  "geometry":        ["linear","trigonal","tetrahedral",
+                      "square_planar","octahedral"],
+  "temperature_K":   [50, 2500],
+  "pressure_atm":    [0.001, 1000],
+  "defect_density":  [0.0, 0.10],
+  "dopant_fraction": [0.0, 0.30],
+  "strain_rate":     [1e-6, 1e3],
+  "flow_velocity":   [0.0, 100.0]
+}
+\end{lstlisting}
+
+\subsection{Example generated target}
+
+\begin{lstlisting}[language={},basicstyle=\ttfamily\footnotesize]
+{
+  "element": "Fe",
+  "oxidation_state": 2,
+  "coordination": 6,
+  "geometry": "octahedral",
+  "phase": "solid",
+  "defect_density": 0.015,
+  "dopant": "Cr",
+  "dopant_fraction": 0.12,
+  "fluid_environment": "molten_fluoride_salt",
+  "temperature_K": 973,
+  "radiation_field": "gamma",
+  "strain_rate": 0.001,
+  "target_property": "corrosion_risk"
+}
+\end{lstlisting}
+
+% =========================================================
+\section{System Architecture and Generation Cycle}
+% =========================================================
+
+\subsection{System modules}
+
+\begin{multicols}{2}
+\begin{itemize}[itemsep=1pt, leftmargin=*]
+  \item Identity Generator
+  \item Atom-Type Generator
+  \item Force-Field Generator
+  \item Descriptor Importer
+  \item Thermo/EOS Importer
+  \item Crystal/Material Importer
+  \item Mechanical Estimator
+  \item Transport Estimator
+  \item Reaction/Corrosion Estimator
+  \item Radiation/Nuclear Tagger
+  \item Granular/Bead Generator
+  \item Web/Reference Validator
+  \item SQLite Store
+  \item Provenance Logger
+  \item Uncertainty Scorer
+  \item Meta-Score Engine
+  \item Promotion Engine
+\end{itemize}
+\end{multicols}
+
+\subsection{Generation cycle}
+
+\begin{enumerate}[leftmargin=*, itemsep=2pt]
+  \item Load coverage map
+  \item Pick weak axis region
+  \item Generate candidate material/state
+  \item Fill identity block
+  \item Fill force-field block
+  \item Fill available descriptor/thermo/transport/mechanics blocks
+  \item Run local sanity checks
+  \item Store as \texttt{GENERATED}
+  \item Queue for validation
+  \item Validate from local / web / simulation references
+  \item Promote, warn, or reject
+  \item Update meta-scores
+  \item Repeat
+\end{enumerate}
+
+\subsection{Cycle pseudocode}
+
+\begin{lstlisting}
+int run_auto2_cycle(const Auto2Options& opt) {
+    SQLiteDB db(opt.db_path);
+    CoverageMap coverage = db.load_coverage_map();
+    AxisRegion target = coverage.choose_weak_region();
+
+    UFXMaterialRecord candidate =
+        generator.generate_material_record(target, opt.seed);
+
+    LocalCheckResult local = local_checker.check(candidate);
+    if (!local.pass) {
+        db.insert_record(candidate, SourceClass::Rejected);
+        return 1;
+    }
+
+    db.insert_record(candidate, SourceClass::Generated);
+
+    ValidationBatch validation = validator.validate(candidate);
+    double score = scorer.score(candidate, validation);
+
+    if (score >= opt.promote_threshold)
+        db.promote(candidate, SourceClass::Validated, score);
+    else if (score >= opt.warn_threshold)
+        db.mark_warn(candidate, score);
+    else
+        db.reject(candidate, score);
+
+    db.update_meta_scores(candidate);
+    return 0;
+}
+\end{lstlisting}
+
+\subsection{Scoring model}
+
+\begin{equation*}
+S = 0.25 S_\text{identity} + 0.20 S_\text{local} + 0.20 S_\text{reference} + 0.15 S_\text{web} + 0.10 S_\text{repeat} + 0.10 S_\text{macro}
+\end{equation*}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Score} & \textbf{Promotion class} \\
+\midrule
+$S \geq 0.95$          & \texttt{VALIDATED\_HIGH} \\
+$0.85 \leq S < 0.95$   & \texttt{VALIDATED\_WARN} \\
+$0.70 \leq S < 0.85$   & \texttt{GENERATED\_LOW\_CONFIDENCE} \\
+$S < 0.70$             & \texttt{REJECTED} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Missing webdata $\rightarrow$ confidence cap 0.85, not rejection. Missing provenance $\rightarrow$ automatic reject.
+
+\subsection{CLI commands}
+
+\begin{lstlisting}[language={}]
+.\build\vsepr.exe ufx auto2 init
+.\build\vsepr.exe ufx auto2 randomfill --count 500 --db ufx_auto2.sqlite
+.\build\vsepr.exe ufx auto2 validate   --batch 100 --db ufx_auto2.sqlite
+.\build\vsepr.exe ufx auto2 promote    --min-score 0.92 --db ufx_auto2.sqlite
+.\build\vsepr.exe ufx auto2 audit      --db ufx_auto2.sqlite
+.\build\vsepr.exe ufx auto2 run        --cycles 100 --batch 500 --web-batch 25
+\end{lstlisting}
+
+\subsection{Continual run harness}
+
+Reuses existing PowerShell pattern from \texttt{uff\_continual}.
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item Run folders: \texttt{runs/ufx\_auto2/run\_YYYYMMDD\_HHMMSS\_NNN/}
+  \item \texttt{summary.csv} per existing schema
+  \item SQLite backup snapshot per cycle
+  \item Web cache: \texttt{runs/ufx\_auto2/web\_cache/}
+  \item Rate limiting on webdata fetcher
+  \item \texttt{StopOnFail} and \texttt{CleanEachRun} flags
+  \item Failure patterns: \texttt{missing=}, \texttt{nan}, \texttt{inf}, \texttt{fatal}, \texttt{exception}, \texttt{assert}
+\end{itemize}
+
+\subsection{Audit targets}
+
+\begin{itemize}[leftmargin=*, itemsep=2pt]
+  \item Record counts by class (Reference, Generated, Validated, Rejected)
+  \item Coverage by element family, phase, property group, $T$/$P$ range
+  \item Weakest axis region
+  \item Highest conflict source
+  \item Missing provenance count / missing validation count
+  \item Highest weirdness entry / highest macro usefulness entry
+\end{itemize}
+
+\subsection{Risk register}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Risk} & \textbf{Problem} & \textbf{Mitigation} \\
+\midrule
+Source mixing     & Generated = published        & \texttt{source\_class} required everywhere \\
+Webdata false fail & Missing = model failure     & \texttt{missing} status; confidence cap \\
+Random spam       & Useless variants fill DB     & Coverage-aware scheduler + meta-scores \\
+Schema bloat      & Premature dedicated tables   & \texttt{property\_values} first \\
+Fake validation   & Local pass, no physics       & Multi-layer: local + ref + web + sim \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% =========================================================
+\section{Hard Rules}
+% =========================================================
+
+\begin{rulebox}
+\begin{enumerate}[leftmargin=*, itemsep=6pt]
+  \item \textbf{No provenance = no promotion.} Period. Without it, UFX\_AUTO\_2 is a number blender with delusions of grandeur.
+  \item \textbf{Nuclear/radiation fields never go in the UFF parameter table.} That table has suffered enough.
+  \item \textbf{Missing webdata is not a failure.} It is a confidence cap of 0.85.
+  \item \textbf{Generic \texttt{property\_values} table first.} Dedicated tables earn their place after usage stabilizes. Not before.
+  \item \textbf{Do not implement Tier 7 (radiation) before Tier 1 (identity) is stable.} This has been said once. It will not be said again.
+  \item \textbf{State is required.} A property value without attached $T$, $P$, and phase is a decorative lie.
+  \item \textbf{Label the approximation.} Electronic and quantum-adjacent properties are constraint fields, not full QM. Say so.
+  \item \textbf{SQLite is truth. JSONL is history. CSV is convenience. Binary is disposable.} Treat them accordingly.
+\end{enumerate}
+\end{rulebox}
+
+\vspace{10pt}
+\hrule
+\vspace{8pt}
+
+\begin{center}
+\textit{The database should know what it knows, what it guessed, and what it made up.\\
+All three categories exist. Only the last one is embarrassing.}
+\end{center}
+
+\end{document}

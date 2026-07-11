@@ -160,8 +160,8 @@ inline void set_torsion_angle(
 {
     // Build which atoms to rotate (BFS from j, excluding i)
     std::vector<bool> to_rotate(mol.num_atoms(), false);
-    std::vector<uint32_t> neighbors[mol.num_atoms()];
-    
+    std::vector<std::vector<uint32_t>> neighbors(mol.num_atoms());
+
     for (const auto& bond : mol.bonds) {
         neighbors[bond.i].push_back(bond.j);
         neighbors[bond.j].push_back(bond.i);

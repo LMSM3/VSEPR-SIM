@@ -1,0 +1,19 @@
+{
+  "formula": "CH3NH2",
+  "seed": 448,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 126.968759,
+  "energy_per_atom": 18.138394,
+  "rms_force": 218.314080,
+  "max_force": 218.314080,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.881900,
+  "timestamp": "2026-03-28T12:55:24",
+  "xyz_file": "benchmark_100\medium\structures\CH3NH2_s448.xyz"
+}

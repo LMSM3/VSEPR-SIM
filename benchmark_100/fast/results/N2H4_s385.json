@@ -1,0 +1,19 @@
+{
+  "formula": "N2H4",
+  "seed": 385,
+  "tier": "fast",
+  "num_atoms": 6,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 33.480572,
+  "energy_per_atom": 5.580095,
+  "rms_force": 91.296520,
+  "max_force": 91.296520,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.412800,
+  "timestamp": "2026-03-28T12:55:43",
+  "xyz_file": "benchmark_100\fast\structures\N2H4_s385.xyz"
+}

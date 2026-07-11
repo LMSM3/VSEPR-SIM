@@ -1,0 +1,19 @@
+{
+  "formula": "C4H8",
+  "seed": 328,
+  "tier": "medium",
+  "num_atoms": 12,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 53921.922628,
+  "energy_per_atom": 4493.493552,
+  "rms_force": 103918.208185,
+  "max_force": 103918.208185,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.335400,
+  "timestamp": "2026-03-28T13:04:33",
+  "xyz_file": "benchmark_v2\medium\structures\C4H8_s328.xyz"
+}

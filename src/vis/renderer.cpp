@@ -360,7 +360,7 @@ void Renderer::render(const FrameSnapshot& frame, int width, int height) {
             frame.stats.count("box_y") ? frame.stats.at("box_y") : 10.0,
             frame.stats.count("box_z") ? frame.stats.at("box_z") : 10.0
         );
-        if (box.enabled()) {
+        if (box.enabled) {
             render_box(box);
         }
     }

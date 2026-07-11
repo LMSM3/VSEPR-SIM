@@ -1,0 +1,19 @@
+{
+  "formula": "SiC",
+  "seed": 175,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 301.274156,
+  "energy_per_atom": 150.637078,
+  "rms_force": 1497.233162,
+  "max_force": 1497.233162,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.534600,
+  "timestamp": "2026-03-28T12:53:41",
+  "xyz_file": "benchmark_100\fast\structures\SiC_s175.xyz"
+}

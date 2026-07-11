@@ -1,0 +1,19 @@
+{
+  "formula": "NO2",
+  "seed": 496,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 8.764826,
+  "energy_per_atom": 2.921609,
+  "rms_force": 35.250445,
+  "max_force": 35.250445,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.848100,
+  "timestamp": "2026-03-28T13:03:34",
+  "xyz_file": "benchmark_v2\medium\structures\NO2_s496.xyz"
+}

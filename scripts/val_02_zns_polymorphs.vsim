@@ -1,0 +1,142 @@
+# scripts/validation/val_02_zns_polymorphs.vsim
+# Priority 2 — ZnS zinc blende vs wurtzite polymorphs
+# Geometry: cubic (F-43m) vs hexagonal (P6₃mc)
+# Main modules: fingerprint + Ewald + polymorph classification
+# External target: Madelung constant + coordination number
+# M(zinc blende) ≈ 1.6381   M(wurtzite) ≈ 1.6413
+# Experimental: zinc blende a₀ = 5.409 Å  wurtzite a = 3.811 Å, c = 6.234 Å
+# vsper validate scripts/validation/val_02_zns_polymorphs.vsim
+
+[project]
+name        = val_02_zns_polymorphs
+version     = v5.0.0-beta.8
+seed_base   = 8002
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[species.Zn]
+charge = +2.0
+mass   = 65.38
+
+[species.S]
+charge = -2.0
+mass   = 32.06
+
+[electrostatics]
+method      = ewald
+ewald_alpha = 0.3
+ewald_kmax  = 8
+ewald_rcut  = 9.0
+units       = angstrom
+
+# ── Zinc blende ───────────────────────────────────────────────────────────────
+
+[test.ZNS_BLENDE]
+type    = crystal
+formula = ZnS
+
+[test.ZNS_BLENDE.cell]
+type    = orthorhombic
+lengths = 5.4090, 5.4090, 5.4090
+units   = angstrom
+
+[test.ZNS_BLENDE.boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[test.ZNS_BLENDE.structure]
+type     = zincblende_lattice
+# F-43m: Zn at (0,0,0) + FCC; S at (1/4,1/4,1/4) + FCC
+elements = Zn,S
+a0       = 5.4090
+
+[test.ZNS_BLENDE.formation]
+mode        = fixed_lattice
+relax_steps = 0
+
+[test.ZNS_BLENDE.analysis]
+madelung_energy   = true
+madelung_constant = true
+coordination      = true
+fingerprint       = true
+rdf               = true
+rdf_pairs         = Zn-S
+rdf_rmax          = 8.0
+
+[test.ZNS_BLENDE.expected]
+madelung_constant     = 1.6381
+madelung_constant_tol = 0.001
+coordination_Zn       = 4
+coordination_S        = 4
+polymorph_label       = zinc_blende
+
+# ── Wurtzite ──────────────────────────────────────────────────────────────────
+
+[test.ZNS_WURTZITE]
+type    = crystal
+formula = ZnS
+
+[test.ZNS_WURTZITE.cell]
+# Orthorhombic supercell approximation for wurtzite under PBC
+# Confirm: hexagonal cell support may require triclinic — mark as PARTIAL if absent
+type    = orthorhombic
+lengths = 3.8110, 6.6008, 6.2340
+# Note: b = a*sqrt(3) for hexagonal → orthorhombic conversion
+units   = angstrom
+
+[test.ZNS_WURTZITE.boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[test.ZNS_WURTZITE.structure]
+type     = wurtzite_lattice
+# P6₃mc: Zn at (1/3,2/3,0) + hexagonal translations; S at (1/3,2/3,u) u≈0.375
+elements = Zn,S
+a0       = 3.8110
+c0       = 6.2340
+u_param  = 0.375
+
+[test.ZNS_WURTZITE.formation]
+mode        = fixed_lattice
+relax_steps = 0
+
+[test.ZNS_WURTZITE.analysis]
+madelung_energy   = true
+madelung_constant = true
+coordination      = true
+fingerprint       = true
+rdf               = true
+rdf_pairs         = Zn-S
+rdf_rmax          = 8.0
+
+[test.ZNS_WURTZITE.expected]
+madelung_constant     = 1.6413
+madelung_constant_tol = 0.001
+coordination_Zn       = 4
+coordination_S        = 4
+polymorph_label       = wurtzite
+
+[polymorph_classification]
+systems        = ZNS_BLENDE,ZNS_WURTZITE
+method         = fingerprint_distance
+expect_distinct = true
+# Both systems are ZnS, coordination-4; fingerprint must distinguish them
+# This is the primary classification gate
+
+[run]
+mode  = static
+steps = 0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title = val_02_zns_polymorphs

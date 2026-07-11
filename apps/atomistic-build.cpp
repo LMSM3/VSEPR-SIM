@@ -26,6 +26,7 @@
 #include "atomistic/parsers/xyz_parser.hpp"
 #include "atomistic/compilers/xyz_compiler.hpp"
 #include "io/xyz_format.hpp"
+#include "io/molecular_io.hpp"
 #include "build/builder_core.hpp"
 #include "identity/canonical_identity.hpp"
 #include "validation/validation_gates.hpp"
@@ -264,13 +265,12 @@ void cmd_identity() {
 }
 
 void cmd_load(const std::string& filename) {
-    vsepr::io::XYZReader reader;
-    vsepr::io::XYZMolecule xyz_mol;
-
-    if (!reader.read(filename, xyz_mol)) {
-        std::cerr << "Failed to load: " << reader.get_error() << "\n";
+    auto result = vsepr::io::load_structure(filename);
+    if (!result.is_ok()) {
+        std::cerr << "Failed to load: " << result.error().to_string() << "\n";
         return;
     }
+    const auto& xyz_mol = result.value();
 
     g_cli.current_molecule = parsers::from_xyz(xyz_mol);
 
@@ -293,10 +293,9 @@ void cmd_save(const std::string& filename) {
     }
 
     vsepr::io::XYZMolecule xyz_mol = compilers::to_xyz(g_cli.current_molecule, g_cli.element_symbols);
-    vsepr::io::XYZWriter writer;
-
-    if (!writer.write(filename, xyz_mol)) {
-        std::cerr << "Failed to save: " << writer.get_error() << "\n";
+    const auto status = vsepr::io::save_structure(filename, xyz_mol);
+    if (status.is_error()) {
+        std::cerr << "Failed to save: " << status.error().to_string() << "\n";
         return;
     }
 

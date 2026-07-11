@@ -1,0 +1,469 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{VSEPR-SIM v4.0.0}
+\lhead{CleanGate \& Phase Models}
+\rfoot{Page \thepage}
+
+\lstset{
+  language=C++,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue!70!black},
+  commentstyle=\color{green!50!black},
+  stringstyle=\color{red!60!black},
+  breaklines=true,
+  frame=single,
+  xleftmargin=1em,
+  numbers=left,
+  numberstyle=\tiny\color{gray}
+}
+
+\title{%
+  \textbf{CleanGate Adaptive Verification} \\[0.3em]
+  \textbf{\& Three-Tier Phase Models} \\[0.5em]
+  \large VSEPR-SIM Methodology Document \\
+  \large Section: Validation \& Thermodynamic Infrastructure
+}
+\author{VSEPR-SIM Project}
+\date{April 2026 --- v4.0.0}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Introduction}
+% ============================================================================
+
+This document describes two interconnected subsystems added to the VSEPR-SIM
+atomistic platform in version 4.0.0:
+
+\begin{enumerate}
+  \item \textbf{CleanGate}: A lightweight adaptive verification gate that
+        replaces rigid exhaustive validation with stratified semi-random
+        sampling and risk-driven escalation.
+  \item \textbf{Three-Tier Phase Models}: A selectable hierarchy of
+        melt/gas behavior estimators at different fidelity levels.
+\end{enumerate}
+
+Both systems follow the anti-black-box design philosophy: every intermediate
+score, every sampled module, and every escalation decision is explicitly
+recorded and traceable.
+
+% ============================================================================
+\section{CleanGate: Adaptive Verification}
+% ============================================================================
+
+\subsection{Motivation}
+
+Not every molecular or material case requires the same depth of validation.
+A simple, stable, well-classified system should pass through quickly.
+An exotic, thermally stressed, or poorly converging system should receive
+deeper scrutiny.
+
+CleanGate replaces the ``250-check religious ritual'' with:
+\begin{itemize}
+  \item Stratified semi-random sampling of gate modules across tiers
+  \item Risk scoring via interpretable variables
+  \item Escalation only when justified by measured irregularity
+\end{itemize}
+
+\subsection{Gate Tier Registry}
+
+Modules are organized into 51 gates across five tiers:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Tier} & \textbf{Range} & \textbf{Example Modules} & \textbf{Character} \\
+\midrule
+CORE   & 0--2   & identity, bounds, geometry       & Always run \\
+LOW    & 3--10  & formatting, species, charge       & Basic sanity \\
+MID    & 11--25 & geometry plausibility, bonding    & Chemistry checks \\
+HIGH   & 26--50 & partial relaxation, stability     & Physics probes \\
+TARGET & ---    & case-type specific                & Adaptive \\
+\bottomrule
+\end{tabular}
+\caption{Gate tier classification with 51 registered modules.}
+\end{table}
+
+\subsection{Semi-Random Stratified Sampling}
+
+The sampling strategy balances repeatability with coverage variety:
+
+\begin{enumerate}
+  \item Always include all 3 CORE modules (identity, bounds, geometry)
+  \item Randomly choose 2 from LOW tier (T3--T10)
+  \item Randomly choose 2 from MID tier (T11--T25)
+  \item Randomly choose 2 from HIGH tier (T26--T50)
+  \item Add 1 targeted module based on detected case type:
+    \begin{itemize}
+      \item Protein $\rightarrow$ thermal response tendency
+      \item Organometallic $\rightarrow$ coordination number
+      \item Exotic lattice $\rightarrow$ phonon stability
+      \item Thermal stress $\rightarrow$ thermal expansion
+      \item Complex organic $\rightarrow$ torsion range
+    \end{itemize}
+\end{enumerate}
+
+Total: approximately 10 modules per evaluation (vs.\ 51 exhaustive).
+
+\subsection{Weirdness Score}
+
+The weirdness score $W$ measures how far a case departs from the normal
+envelope of known, stable, classifiable systems:
+
+\begin{equation}
+  W = w_1 C_{\text{class}} + w_2 G_{\text{geom}} + w_3 E_{\text{energy}}
+    + w_4 B_{\text{bond}} + w_5 R_{\text{ref}}
+\end{equation}
+
+\noindent where:
+\begin{table}[h]
+\centering
+\begin{tabular}{clll}
+\toprule
+\textbf{Symbol} & \textbf{Component} & \textbf{Meaning} & \textbf{Default $w_i$} \\
+\midrule
+$C$ & class-uncertain    & Hard to classify                & 0.20 \\
+$G$ & geom-irregular     & Geometry looks abnormal          & 0.25 \\
+$E$ & energy-conflict    & Cheap models disagree            & 0.20 \\
+$B$ & bond-ambiguity     & Bonding assignment unstable      & 0.15 \\
+$R$ & reference-distance & Far from known material families & 0.20 \\
+\bottomrule
+\end{tabular}
+\caption{Weirdness score components and default weights (sum = 1.0).}
+\end{table}
+
+\noindent Classification bands:
+\begin{itemize}[nosep]
+  \item $0.00$--$0.25$: ordinary
+  \item $0.25$--$0.50$: unusual
+  \item $0.50$--$0.75$: highly irregular
+  \item $0.75$--$1.00$: exotic or poorly classifiable
+\end{itemize}
+
+\subsection{Temperature Score}
+
+The temperature score $T_s$ is \emph{not} just temperature---it is thermal
+severity relative to the material/system:
+
+\begin{equation}
+  T_s = a_1 \frac{T}{T_{\text{ref}}}
+      + a_2 \frac{|dP/dT|}{S_{\text{expected}}}
+      + a_3 \Phi_{\text{phase}}
+      + a_4 \Phi_{\text{noise}}
+\end{equation}
+
+\noindent where:
+\begin{table}[h]
+\centering
+\begin{tabular}{clll}
+\toprule
+\textbf{Symbol} & \textbf{Component} & \textbf{Meaning} & \textbf{Default $a_i$} \\
+\midrule
+$T/T_{\text{ref}}$ & temperature ratio & Normalized severity & 0.30 \\
+$|dP/dT|/S$        & thermal gradient  & Response sensitivity & 0.25 \\
+$\Phi_{\text{phase}}$ & phase risk     & Transition proximity & 0.25 \\
+$\Phi_{\text{noise}}$ & thermal noise  & Perturbation instability & 0.20 \\
+\bottomrule
+\end{tabular}
+\caption{Temperature score components and default weights (sum = 1.0).}
+\end{table}
+
+\noindent Classification bands:
+\begin{itemize}[nosep]
+  \item $0.00$--$0.30$: thermally mild
+  \item $0.30$--$0.60$: notable thermal influence
+  \item $0.60$--$0.80$: high thermal stress
+  \item $0.80$--$1.00$: likely phase-risk or decomposition-risk regime
+\end{itemize}
+
+\subsection{Convergence Confidence}
+
+Estimated from minimization quality signals:
+\begin{itemize}[nosep]
+  \item $> 0.80$: strong
+  \item $0.55$--$0.80$: acceptable
+  \item $0.35$--$0.55$: marginal
+  \item $< 0.35$: suspicious
+\end{itemize}
+
+Inputs: maximum residual force, RMS force, step count, convergence flag.
+Excessive step counts (>5000) incur a penalty indicating a difficult
+energy landscape.
+
+\subsection{Emergence Classification}
+
+Three states separate emergence detection from convergence proof:
+
+\begin{enumerate}[nosep]
+  \item \textbf{NONE}: No meaningful emergence detected
+  \item \textbf{VISIBLE\_WEAK}: Emergence visible but weakly verified (low convergence)
+  \item \textbf{VISIBLE\_STRONG}: Emergence visible and strongly verified
+\end{enumerate}
+
+This prevents the classic failure mode: a system looks interesting,
+everyone gets excited, and six hours later it turns out the solver was
+hallucinating with confidence.
+
+\subsection{Escalation Logic}
+
+\begin{enumerate}
+  \item If all prereqs pass and risk is low $\rightarrow$ continue normally
+  \item If $W > 0.70$ or $T_s > 0.75$ $\rightarrow$ enable verbose tracking
+  \item If convergence $< 0.45$, or exotic/protein/complex-organic case
+        $\rightarrow$ require deep gate modules
+  \item If deep gate required and convergence $< 0.30$ $\rightarrow$
+        mark result as provisional
+\end{enumerate}
+
+\subsection{Reporting}
+
+Two report formats:
+
+\textbf{Internal} (dense, numeric, machine-readable):
+\begin{lstlisting}
+clean_gate.pass_basic              = true
+clean_gate.weirdness_score         = 0.82
+clean_gate.temperature_score       = 0.67
+clean_gate.convergence_confidence  = 0.41
+clean_gate.prereq_coverage         = 0.58
+clean_gate.escalate_verbose        = true
+clean_gate.require_deep_gate       = true
+\end{lstlisting}
+
+\textbf{External} (human-readable summary):
+\begin{lstlisting}
+CleanGate Summary:
+  - Basic prerequisites: PASSED
+  - Material/system irregularity: exotic (0.82)
+  - Thermal severity: high thermal stress (0.67)
+  - Convergence confidence: marginal (0.41)
+  - Deep verification is recommended.
+\end{lstlisting}
+
+% ============================================================================
+\section{Three-Tier Phase Models}
+% ============================================================================
+
+\subsection{Overview}
+
+Three selectable modes provide melt and gas behavior estimation at
+different fidelity/cost tradeoffs:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+\textbf{Mode} & \textbf{Name} & \textbf{Melt Method} & \textbf{Gas Method} \\
+\midrule
+A & Threshold-Enthalpy      & Enthalpy threshold        & Ideal + $Z$-correction \\
+B & Smoothed Phase-Fraction & Sigmoid/piecewise $f_\ell$ & Cubic EOS (VdW/RK) \\
+C & Stability-Competition   & Gibbs $G_s$ vs $G_\ell$   & Fugacity (RK-based) \\
+\bottomrule
+\end{tabular}
+\caption{Phase model modes and their methods.}
+\end{table}
+
+\subsection{Mode A: Threshold-Enthalpy (Fast Screening)}
+
+\subsubsection{Melting}
+
+Accumulated enthalpy:
+\begin{equation}
+  H(T) \approx \int_{T_0}^{T} c_p(T')\,dT' \approx c_{p,s} \cdot T
+\end{equation}
+
+Melt onset when $H(T) \geq H_{\text{melt,onset}}$; full melt when
+$H(T) \geq H_{\text{melt,onset}} + \Delta H_f$.
+
+\subsubsection{Gas Behavior}
+
+Ideal gas with compressibility correction:
+\begin{equation}
+  PV = ZnRT, \qquad Z_{\text{est}} = 1 + \alpha\frac{P}{T} + \beta\rho
+\end{equation}
+
+\textbf{Best use}: very fast prechecks, rough material ranking,
+large-scale parameter sweeps.
+
+\textbf{Weakness}: melting treated too sharply; poor near phase boundaries.
+
+\subsection{Mode B: Smoothed Phase-Fraction (Practical)}
+
+\subsubsection{Melting}
+
+Sigmoid liquid fraction:
+\begin{equation}
+  f_\ell(T) = \frac{1}{1 + \exp[-k(T - T_m)]}
+\end{equation}
+
+or piecewise linear:
+\begin{equation}
+  f_\ell(T) = \begin{cases}
+    0 & T < T_s \\
+    \frac{T - T_s}{T_\ell - T_s} & T_s \leq T \leq T_\ell \\
+    1 & T > T_\ell
+  \end{cases}
+\end{equation}
+
+Effective heat capacity with latent heat contribution:
+\begin{equation}
+  c_{p,\text{eff}} = (1 - f_\ell)\,c_{p,s} + f_\ell\,c_{p,\ell}
+                    + \Delta H_f \frac{df_\ell}{dT}
+\end{equation}
+
+Effective density:
+\begin{equation}
+  \rho_{\text{eff}} = (1 - f_\ell)\,\rho_s + f_\ell\,\rho_\ell
+\end{equation}
+
+\subsubsection{Gas Behavior}
+
+Cubic equations of state. Van der Waals:
+\begin{equation}
+  \left(P + \frac{a\,n^2}{V^2}\right)(V - nb) = nRT
+\end{equation}
+
+Redlich-Kwong:
+\begin{equation}
+  P = \frac{RT}{V_m - b} - \frac{a}{\sqrt{T}\,V_m(V_m + b)}
+\end{equation}
+
+Newton iteration solvers with deterministic convergence bounds.
+
+\textbf{Best use}: transition-region modeling, materials that soften
+before full melt, non-ideal gases.
+
+\textbf{Weakness}: still empirical; needs fitted parameters.
+
+\subsection{Mode C: Stability-Competition (Serious)}
+
+\subsubsection{Melting}
+
+Gibbs free energy for each phase:
+\begin{equation}
+  G_\phi(T, P) = H_{\phi,\text{ref}} + c_{p,\phi}(T - T_{\text{ref}})
+               - T\left[S_{\phi,\text{ref}} + c_{p,\phi}\ln\frac{T}{T_{\text{ref}}}\right]
+               + PV_\phi
+\end{equation}
+
+Melt-driving potential:
+\begin{equation}
+  \Delta G_{\text{melt}} = G_\ell - G_s
+\end{equation}
+
+Interpretation: $\Delta G > 0$ means solid favored; $\Delta G < 0$ means
+liquid favored.
+
+Probabilistic liquid fraction via Boltzmann softening:
+\begin{equation}
+  f_\ell = \frac{1}{1 + \exp(\Delta G_{\text{melt}} / \gamma)}
+\end{equation}
+
+\subsubsection{Gas Behavior}
+
+Fugacity-based treatment using Redlich-Kwong EOS:
+\begin{equation}
+  \mu = \mu^\circ(T) + RT\ln f, \qquad f = \phi P
+\end{equation}
+
+Fugacity coefficient:
+\begin{equation}
+  \ln\phi = (Z-1) - \ln(Z - B') - \frac{A'}{B'}\ln\left(1 + \frac{B'}{Z}\right)
+\end{equation}
+
+where $A' = aP/(R^2 T^{5/2})$, $B' = bP/(RT)$.
+
+\textbf{Best use}: serious phase modeling, exotic materials,
+publication-grade results.
+
+\textbf{Weakness}: parameter hungry; computationally heavier.
+
+\subsection{Output Variables}
+
+All three modes produce a unified \texttt{PhaseReport} with:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Variable} & \textbf{Range} & \textbf{Meaning} \\
+\midrule
+\texttt{melt\_score}            & $[0,1]$ & Liquid fraction estimate \\
+\texttt{gas\_nonideality\_score} & $|Z-1|$ & Departure from ideal gas \\
+\texttt{phase\_risk\_score}      & $[0,1]$ & Proximity to phase transition \\
+\texttt{temperature\_severity}   & $[0,1]$ & Normalized thermal stress \\
+\bottomrule
+\end{tabular}
+\caption{Unified output variables across all phase model modes.}
+\end{table}
+
+% ============================================================================
+\section{Integration with CleanGate}
+% ============================================================================
+
+The phase model feeds directly into CleanGate's temperature score:
+
+\begin{itemize}
+  \item \texttt{phase\_risk\_score} $\rightarrow$ $\Phi_{\text{phase}}$ in $T_s$
+  \item \texttt{temperature\_severity} provides the $T/T_{\text{ref}}$ ratio
+  \item \texttt{gas\_nonideality\_score} contributes to weirdness via
+        energy conflict signals when multiple EOS modes disagree
+\end{itemize}
+
+The \texttt{melt\_score} also informs CleanGate's case type detection:
+systems with $f_\ell \in (0.01, 0.99)$ are automatically tagged as
+thermal stress cases for targeted module selection.
+
+% ============================================================================
+\section{File Manifest}
+% ============================================================================
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{File} & \textbf{Lines} & \textbf{Purpose} \\
+\midrule
+\texttt{atomistic/validation/clean\_gate.hpp}  & $\sim$600 & CleanGate system \\
+\texttt{atomistic/core/phase\_model.hpp}       & $\sim$540 & Three-tier phase models \\
+\texttt{docs/section\_clean\_gate\_phase\_models.tex} & this file & Methodology document \\
+\bottomrule
+\end{tabular}
+\caption{Files created for CleanGate and phase model infrastructure.}
+\end{table}
+
+% ============================================================================
+\section{Design Principles}
+% ============================================================================
+
+\begin{enumerate}
+  \item \textbf{Deterministic over theatrical}: All scores are reproducible
+        given the same seed and input data.
+  \item \textbf{Anti-black-box}: Every weirdness component, every sampled
+        module, every Gibbs energy intermediate is exposed and traceable.
+  \item \textbf{Monotonic and interpretable}: Scores increase monotonically
+        with increasing risk/severity. No inversion tricks.
+  \item \textbf{Composable with existing infrastructure}: CleanGate follows
+        the \texttt{GateResult}/\texttt{ValidationReport} pattern from
+        \texttt{validation\_gates.hpp}. Phase models compose with
+        \texttt{gas2\_eos.hpp} EOS types and \texttt{atomistic::thermo}
+        constants.
+  \item \textbf{No ``meso'' terminology}: All references use ``atomistic''
+        per permanent project rule.
+\end{enumerate}
+
+\end{document}

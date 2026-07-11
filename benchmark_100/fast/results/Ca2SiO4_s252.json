@@ -1,0 +1,19 @@
+{
+  "formula": "Ca2SiO4",
+  "seed": 252,
+  "tier": "fast",
+  "num_atoms": 7,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 435.523269,
+  "energy_per_atom": 62.217610,
+  "rms_force": 693.953260,
+  "max_force": 693.953260,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.592800,
+  "timestamp": "2026-03-28T12:53:51",
+  "xyz_file": "benchmark_100\fast\structures\Ca2SiO4_s252.xyz"
+}

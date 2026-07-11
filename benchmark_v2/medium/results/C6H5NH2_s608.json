@@ -1,0 +1,19 @@
+{
+  "formula": "C6H5NH2",
+  "seed": 608,
+  "tier": "medium",
+  "num_atoms": 14,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 31619.775814,
+  "energy_per_atom": 2258.555415,
+  "rms_force": 36862.990261,
+  "max_force": 36862.990261,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.671600,
+  "timestamp": "2026-03-28T13:05:10",
+  "xyz_file": "benchmark_v2\medium\structures\C6H5NH2_s608.xyz"
+}

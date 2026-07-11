@@ -1,0 +1,19 @@
+{
+  "formula": "CoCl2",
+  "seed": 56,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 11.515788,
+  "energy_per_atom": 3.838596,
+  "rms_force": 34.216721,
+  "max_force": 34.216721,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.719400,
+  "timestamp": "2026-03-28T12:55:58",
+  "xyz_file": "benchmark_100\medium\structures\CoCl2_s56.xyz"
+}

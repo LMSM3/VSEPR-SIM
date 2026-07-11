@@ -1,0 +1,19 @@
+{
+  "formula": "Ca2SiO4",
+  "seed": 986,
+  "tier": "medium",
+  "num_atoms": 7,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 423.866582,
+  "energy_per_atom": 60.552369,
+  "rms_force": 636.654987,
+  "max_force": 636.654987,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.831900,
+  "timestamp": "2026-03-28T13:07:14",
+  "xyz_file": "benchmark_v2\medium\structures\Ca2SiO4_s986.xyz"
+}

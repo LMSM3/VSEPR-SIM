@@ -16,6 +16,7 @@ Goal: Verify torsions integrate correctly with full energy model.
 #include "pot/energy_model.hpp"
 #include "sim/optimizer.hpp"
 #include "core/geom_ops.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -278,7 +279,8 @@ int main() {
     std::cout << "Torsion Validation Tests\n";
     std::cout << "Testing torsional energy on VSEPR molecules\n";
     std::cout << "===================================================\n";
-
+    auto s_pt = vsepr::PeriodicTable::load_from_json_file("../data/elements.physics.json");
+    vsepr::init_chemistry_db(&s_pt);
     try {
         test_bef2();
         test_bf3();

@@ -1,0 +1,135 @@
+# scripts/demo_approach1_defect_diffusion.vsim
+# =============================================================================
+# Approach 1 -- Defect-seeded diffusion comparison
+#
+# Four NaCl defect scenarios run under matched NVT conditions (800 K).
+# Independent variable : defect type (4 batch jobs, one per type)
+# Primary observables  : MSD per species, displacement variance,
+#                        coordination change, hop event counts
+# Ranking target       : Na MSD ascending -> Section 4 cross-scenario table
+#
+# Seeds: 3 per job.  Output: out/approach1_defect_diffusion/
+# Graph: dashboard SVG via export.profile = research_report
+#
+# vsper run scripts/demo_approach1_defect_diffusion.vsim
+# =============================================================================
+
+[project]
+name        = demo_approach1_defect_diffusion
+version     = v5.0.0-beta.12
+seed_base   = 9101
+determinism = false
+description = "Approach 1: four NaCl point-defect types compared by Na MSD"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "6x6x6"
+phase     = "solid"
+
+[run]
+mode         = "md_nvt"
+temperature  = 800
+max_steps    = 5000
+output_level = "standard"
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+defect_events    = true
+transport_events = true
+dynamic_energy   = true
+
+[variance]
+print_results    = true
+energy_var       = "energy.total  last 100  0.03"
+displacement_var = "displacement  all  0.05"
+
+# ---------------------------------------------------------------------------
+# Four batch jobs -- one per defect type
+# ---------------------------------------------------------------------------
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: Na vacancy
+job           = vacancy_na
+defect        = ["vacancy_Na"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# Job 2: Cl vacancy
+job           = vacancy_cl
+defect        = ["vacancy_Cl"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# Job 3: Schottky pair (charge-neutral Na+Cl vacancy)
+job           = schottky_pair
+defect        = ["schottky_pair"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# Job 4: Na Frenkel interstitial
+job           = frenkel_na
+defect        = ["frenkel_Na"]
+defect_fraction = ["0.01"]
+seed_count    = 3
+aggregate     = true
+analyze       = msd
+analyze       = coordination
+analyze       = hop_events
+measure       = displacement_var
+
+# ---------------------------------------------------------------------------
+# Export  (research_report = XYZ + analysis + metrics TSV + report MD +
+#          events JSONL + manifest JSON + dashboard SVG)
+# ---------------------------------------------------------------------------
+[export]
+profile             = research_report
+write_metrics_tsv   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/approach1_defect_diffusion"
+
+# ---------------------------------------------------------------------------
+# Visual  (terminal overlay + external render for SVG graphs)
+# ---------------------------------------------------------------------------
+[visual]
+output_type            = "terminal_overlay_cycle"
+animation_mode         = "overlay"
+render_interval        = 100
+show_proxy_table       = true
+show_convergence_trace = true
+show_event_timeline    = true
+show_bar_chart         = true
+overlay_sequence       = ["displacement", "coordination", "density"]
+
+[visual.external]
+enabled          = true
+render           = msd_trace
+render           = hop_event_timeline
+render           = coordination_change
+render           = defect_bar_chart
+render           = dashboard
+export_format    = svg
+show_progress    = true

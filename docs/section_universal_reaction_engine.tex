@@ -1,0 +1,342 @@
+% ═══════════════════════════════════════════════════════════════════════════
+% section_universal_reaction_engine.tex
+% Universal Automated Chemical Reaction Engine — Theory and Specification
+%
+% VSEPR-SIM Research Platform
+% Generated: 2025
+% ═══════════════════════════════════════════════════════════════════════════
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage[labelfont=bf]{caption}
+\usepackage{titlesec}
+
+\geometry{margin=2.5cm}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textsc{VSEPR-SIM}}
+\fancyhead[R]{\textsc{Universal Reaction Engine}}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\Large\bfseries}{\texorpdfstring{\S}{Sec.}\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\texorpdfstring{\S}{Sec.}\thesubsection}{0.8em}{}
+
+\definecolor{codeblue}{RGB}{40,80,160}
+\lstset{
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{gray},
+    frame=single,
+    breaklines=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+\title{%
+    \vspace{-1cm}
+    \textbf{Universal Automated Chemical Reaction Engine}\\[0.3cm]
+    \large Thermal--Atomistic Simulation with Bonding Predictions\\
+    and SolidWorks-Compatible Engineering Output\\[0.2cm]
+    \normalsize VSEPR-SIM Research Platform
+}
+\author{VSEPR-SIM Development}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Scope and Purpose}
+\label{sec:scope}
+% ═══════════════════════════════════════════════════════════════════════════
+
+The Universal Automated Chemical Reaction Engine extends VSEPR-SIM from
+atomistic structure generation into full chemical reaction simulation.  It
+bridges three domains:
+
+\begin{enumerate}[label=(\alph*)]
+    \item \textbf{Chemistry} --- real stoichiometric reactions with mass balance,
+          thermodynamics, and mechanism tracking.
+    \item \textbf{Atomistic simulation} --- the 6+9 seed-and-bead stepper
+          with Lorentz--Berthelot mixing and environment-responsive coupling.
+    \item \textbf{Engineering output} --- SolidWorks-compatible CFD material
+          data (12--22 element output per species), structural point clouds,
+          and Excel-compatible spreadsheets.
+\end{enumerate}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Reaction Archetypes}
+\label{sec:archetypes}
+% ═══════════════════════════════════════════════════════════════════════════
+
+Three chemically distinct reaction archetypes are implemented:
+
+\subsection{Reaction~1 --- Organic Synthesis with Inorganic Reagent}
+
+\begin{equation}
+    \text{C}_6\text{H}_6 + \text{HNO}_3
+    \xrightarrow{\text{H}_2\text{SO}_4}
+    \text{C}_6\text{H}_5\text{NO}_2 + \text{H}_2\text{O}
+    \label{eq:nitration}
+\end{equation}
+
+Electrophilic aromatic substitution.  Benzene (organic substrate) reacts
+with nitric acid (inorganic reagent) in the presence of sulfuric acid
+(catalyst) to produce nitrobenzene (organic product) and water (by-product).
+
+\subsection{Reaction~2 --- Special Inorganic Precipitation}
+
+\begin{equation}
+    \text{Th(NO}_3\text{)}_4 + 2\,\text{H}_2\text{C}_2\text{O}_4
+    + 6\,\text{H}_2\text{O}
+    \longrightarrow
+    \text{Th(C}_2\text{O}_4\text{)}_2 \cdot 6\text{H}_2\text{O}\!\downarrow
+    + 4\,\text{HNO}_3
+    \label{eq:thorium}
+\end{equation}
+
+Precipitation of thorium oxalate sludge from aqueous solution.  The product
+is a fine, dense precipitate used in actinide separation chemistry.
+
+\subsection{Reaction~3 --- Thermal Decomposition (Salt \texorpdfstring{$\to$}{to} Gas + Powder)}
+
+\begin{equation}
+    2\,\text{Cu(NO}_3\text{)}_2
+    \longrightarrow
+    2\,\text{CuO}(s) + 4\,\text{NO}_2(g) + \text{O}_2(g)
+    \label{eq:copper}
+\end{equation}
+
+Thermal decomposition of copper(II) nitrate.  Produces a black CuO powder
+residue plus brown NO$_2$ gas and colourless O$_2$ gas.
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Thermodynamic Framework}
+\label{sec:thermo}
+% ═══════════════════════════════════════════════════════════════════════════
+
+All thermodynamic quantities are computed from tabulated standard enthalpies
+of formation ($\Delta H_f^\circ$) and Gibbs energies ($\Delta G_f^\circ$).
+
+\subsection{Enthalpy of Reaction}
+
+\begin{equation}
+    \Delta H_\text{rxn}^\circ
+    = \sum_{\text{products}} \nu_i \, \Delta H_{f,i}^\circ
+    - \sum_{\text{reactants}} \nu_j \, \Delta H_{f,j}^\circ
+    \label{eq:hess}
+\end{equation}
+
+\subsection{Gibbs Energy and Equilibrium}
+
+\begin{equation}
+    \Delta G_\text{rxn}^\circ
+    = \sum \nu_i \, \Delta G_{f,i}^\circ
+    - \sum \nu_j \, \Delta G_{f,j}^\circ
+\end{equation}
+
+\begin{equation}
+    K_\text{eq} = \exp\!\left(\frac{-\Delta G_\text{rxn}^\circ}{RT}\right)
+    \label{eq:keq}
+\end{equation}
+
+\subsection{Entropy of Reaction}
+
+\begin{equation}
+    \Delta S_\text{rxn}^\circ
+    = \frac{\Delta H_\text{rxn}^\circ - \Delta G_\text{rxn}^\circ}{T}
+    \label{eq:entropy}
+\end{equation}
+
+\subsection{Arrhenius Kinetics}
+
+\begin{equation}
+    k(T) = A \exp\!\left(\frac{-E_a}{RT}\right)
+    \label{eq:arrhenius}
+\end{equation}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Species Data Model}
+\label{sec:species}
+% ═══════════════════════════════════════════════════════════════════════════
+
+Each \texttt{ChemicalSpecies} carries:
+
+\begin{table}[h]
+\centering
+\caption{Species data fields}
+\label{tab:species}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Field & Units & Description \\
+\midrule
+\texttt{name}           & ---          & Human-readable name \\
+\texttt{formula}        & ---          & Molecular formula \\
+\texttt{phase}          & ---          & Solid / Liquid / Gas / Aqueous / Sludge \\
+\texttt{molecular\_weight} & g/mol    & Sum of atomic masses \\
+\texttt{density}        & g/cm$^3$    & Bulk density \\
+\texttt{delta\_Hf}      & kcal/mol    & Standard enthalpy of formation \\
+\texttt{delta\_Gf}      & kcal/mol    & Standard Gibbs energy \\
+\texttt{S\_std}         & cal/(mol$\cdot$K) & Standard entropy \\
+\texttt{Cp}             & cal/(mol$\cdot$K) & Heat capacity \\
+\texttt{lj\_sigma}      & \AA         & LJ $\sigma$ parameter \\
+\texttt{lj\_epsilon}    & kcal/mol    & LJ $\epsilon$ parameter \\
+\texttt{thermal\_cond}  & W/(m$\cdot$K) & Thermal conductivity \\
+\texttt{specific\_heat} & J/(g$\cdot$K) & Specific heat capacity \\
+\texttt{viscosity}      & Pa$\cdot$s  & Dynamic viscosity \\
+\texttt{dielectric}     & ---         & Relative permittivity \\
+\texttt{dipole\_moment} & Debye       & Electric dipole moment \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Bonding Prediction}
+\label{sec:bonding}
+% ═══════════════════════════════════════════════════════════════════════════
+
+Bonding predictions combine:
+
+\begin{enumerate}[label=\arabic*.]
+    \item \textbf{Electronegativity difference} --- Pauling's rule:
+          $\Delta\text{EN} > 1.7 \Rightarrow$ ionic character.
+    \item \textbf{Bond change tracking} --- explicit record of every bond
+          broken and formed, with energies.
+    \item \textbf{Environment-responsive state} --- $\eta$ at the time of
+          bond formation/breaking provides a structural context measure.
+\end{enumerate}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Mass Balance}
+\label{sec:balance}
+% ═══════════════════════════════════════════════════════════════════════════
+
+Every reaction is verified for mass conservation:
+
+\begin{equation}
+    \sum_{\text{reactants}} \nu_j \cdot n_{j,\text{elem}}
+    = \sum_{\text{products}} \nu_i \cdot n_{i,\text{elem}}
+    \quad \forall \; \text{elements}
+\end{equation}
+
+Tolerance: $|\Delta| < 10^{-6}$ moles per element.  By-products are
+tracked explicitly and included in the balance.
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{SolidWorks Engineering Output}
+\label{sec:solidworks}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\subsection{CFD Material Data (22-Element CSV)}
+
+Each species produces a 22-field record suitable for SolidWorks Flow
+Simulation import:
+
+\begin{table}[h]
+\centering
+\caption{22-element material property output}
+\label{tab:cfd}
+\begin{tabular}{@{}clll@{}}
+\toprule
+\# & Field & Units & Category \\
+\midrule
+1  & Species name      & ---          & Identity \\
+2  & Formula           & ---          & Identity \\
+3  & Phase             & ---          & Identity \\
+4  & Density           & g/cm$^3$    & Mechanical \\
+5  & Molecular weight  & g/mol       & Mechanical \\
+6  & Viscosity         & Pa$\cdot$s  & Mechanical \\
+7  & Surface tension   & N/m         & Mechanical \\
+8  & Temperature       & K           & Thermal \\
+9  & Thermal cond.     & W/(m$\cdot$K) & Thermal \\
+10 & Specific heat     & J/(g$\cdot$K) & Thermal \\
+11 & Cp                & J/(mol$\cdot$K) & Thermal \\
+12 & Melting point     & K           & Thermal \\
+13 & Boiling point     & K           & Thermal \\
+14 & $\Delta H_f$      & kcal/mol    & Thermodynamic \\
+15 & $\Delta G_f$      & kcal/mol    & Thermodynamic \\
+16 & $S^\circ$         & cal/(mol$\cdot$K) & Thermodynamic \\
+17 & $\Delta H_\text{rxn}$ & kcal/mol & Thermodynamic \\
+18 & $\varepsilon_r$   & ---         & Electrical \\
+19 & $\mu$ (dipole)    & Debye       & Electrical \\
+20 & $\sigma_\text{LJ}$ & \AA        & Atomistic \\
+21 & $\varepsilon_\text{LJ}$ & kcal/mol & Atomistic \\
+22 & $\langle\text{EN}\rangle$ & Pauling & Atomistic \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Material XML (.sldmat)}
+
+An XML material library file compatible with SolidWorks material import:
+
+\begin{lstlisting}[language=XML,caption={SolidWorks material XML format}]
+<material name="Benzene">
+  <physicalproperties>
+    <DENS value="876.5" units="kg/m^3"/>
+    <KX value="0.159" units="W/(m*K)"/>
+    <C value="1740" units="J/(kg*K)"/>
+    <MU value="0.000604" units="Pa*s"/>
+  </physicalproperties>
+</material>
+\end{lstlisting}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Implementation Summary}
+\label{sec:implementation}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\begin{table}[h]
+\centering
+\caption{Source file inventory}
+\label{tab:files}
+\begin{tabular}{@{}lll@{}}
+\toprule
+File & Purpose & Lines \\
+\midrule
+\texttt{chemistry/species.hpp}         & Species data model      & $\sim$210 \\
+\texttt{chemistry/reaction.hpp}        & Reaction framework      & $\sim$260 \\
+\texttt{chemistry/reaction\_library.hpp} & 3 built-in reactions  & $\sim$490 \\
+\texttt{chemistry/reaction\_engine.hpp}  & Simulation + export   & $\sim$440 \\
+\texttt{example\_universal\_reaction\_engine.cpp} & Main demo    & $\sim$190 \\
+\texttt{section\_universal\_reaction\_engine.tex} & This document & $\sim$280 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ═══════════════════════════════════════════════════════════════════════════
+\section{Dependencies}
+\label{sec:deps}
+% ═══════════════════════════════════════════════════════════════════════════
+
+\begin{table}[h]
+\centering
+\caption{Module dependencies}
+\label{tab:deps}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Module & Depends On \\
+\midrule
+\texttt{species.hpp}          & \texttt{atomistic/core/state.hpp} \\
+\texttt{reaction.hpp}         & \texttt{species.hpp} \\
+\texttt{reaction\_library.hpp} & \texttt{reaction.hpp} \\
+\texttt{reaction\_engine.hpp}  & \texttt{reaction\_library.hpp}, \texttt{seed\_bead\_stepper.hpp}, \\
+                                & \texttt{snapshot\_graph.hpp}, \texttt{excel\_export.hpp}, \\
+                                & \texttt{solidworks\_export.hpp} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

@@ -1,0 +1,19 @@
+{
+  "formula": "HF",
+  "seed": 504,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 1.120006,
+  "energy_per_atom": 0.560003,
+  "rms_force": 6.458023,
+  "max_force": 6.458023,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.360800,
+  "timestamp": "2026-03-28T13:07:27",
+  "xyz_file": "benchmark_v2\fast\structures\HF_s504.xyz"
+}

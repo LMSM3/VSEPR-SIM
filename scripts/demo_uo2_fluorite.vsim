@@ -1,0 +1,107 @@
+# scripts/demo_uo2_fluorite.vsim
+# =============================================================================
+# Beta-9 Gate B9-15 — Minimal UO2 fluorite relax script
+#
+# UO2 (uranium dioxide) is the canonical nuclear fuel material.
+# Crystal structure: fluorite (C1 prototype, Fm-3m space group).
+#   - U sits at the FCC corners and face centres
+#   - O sits in all 8 tetrahedral sites
+#   - Coordination: U is 8-fold (cube of O), O is 4-fold (tetrahedron of U)
+#
+# Registry resolution path:
+#   MaterialSection.prototype = "C1_UO2_fluorite"
+#   → RegistryResolver::resolve()
+#   → RegistryBundle {
+#       space_group         = "Fm-3m"
+#       basis               = "A:0,0,0; B:0.25,0.25,0.25; B:0.75,0.75,0.75"
+#       generator           = "ionic_fluorite"
+#       coordination        = 8
+#       material_class      = "ionic"
+#       default_run_mode    = "relax"
+#       default_solver      = "fire"
+#       default_forcefield  = "ewald_formal"
+#       default_export_profile = "research_report"
+#       geometry_source     = "lattice_builder"
+#   }
+#
+# This script satisfies B9-15: parse → resolve → validate succeeds end-to-end.
+# Run: vsper validate scripts/demo_uo2_fluorite.vsim
+# =============================================================================
+
+[project]
+name        = demo_uo2_fluorite
+version     = v5.0.0-beta.9
+seed_base   = 9015
+determinism = true
+
+# ── Material (Level 1 — explicit fluorite prototype) ─────────────────────────
+[material]
+formula   = "UO2"
+prototype = "C1_UO2_fluorite"    # direct key; no alias guessing
+cell      = "3x3x3"
+phase     = "solid"
+
+# ── Run ───────────────────────────────────────────────────────────────────────
+[run]
+mode         = "relax"
+max_steps    = 1200
+converge     = true
+output_level = "verbose"
+
+# ── PBC (fluorite is cubic periodic) ─────────────────────────────────────────
+[cell]
+type = "orthorhombic"
+lx   = 16.2    # UO2 lattice param ~5.47 Å; 3×5.47 ≈ 16.4 Å (approx)
+ly   = 16.2
+lz   = 16.2
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = false
+unwrap_for_diffusion = false
+
+# ── Simulation (Ewald required for formal-charge ionic system) ────────────────
+[simulation]
+fire_max_steps   = 1200
+fire_dt_fs       = 0.5
+periodic         = true
+formation_preset = "ceramic"
+use_ewald        = true
+ewald_alpha      = 0.3
+ewald_rcut       = 8.0
+ewald_kmax       = 5
+
+# ── Kernel ────────────────────────────────────────────────────────────────────
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+# ── Output — research_report profile (matches B9-9 default for ionic) ─────────
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+output_dir          = "out/demo_uo2"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_rdf_plot            = true

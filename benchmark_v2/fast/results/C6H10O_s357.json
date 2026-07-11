@@ -1,0 +1,19 @@
+{
+  "formula": "C6H10O",
+  "seed": 357,
+  "tier": "fast",
+  "num_atoms": 17,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 176192.627585,
+  "energy_per_atom": 10364.272211,
+  "rms_force": 262261.631938,
+  "max_force": 262261.631938,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.814000,
+  "timestamp": "2026-03-28T13:04:46",
+  "xyz_file": "benchmark_v2\fast\structures\C6H10O_s357.xyz"
+}

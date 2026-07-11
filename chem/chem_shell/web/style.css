@@ -1,0 +1,23 @@
+:root {
+  --bg: #0d1117; --fg: #c9d1d9; --accent: #58a6ff;
+  --card-bg: #161b22; --border: #30363d;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Consolas', 'Fira Code', monospace; background: var(--bg); color: var(--fg); padding: 2rem; }
+header h1 { font-size: 1.4rem; margin-bottom: 1.5rem; }
+.version { color: var(--accent); font-size: 0.9rem; }
+#reaction-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 1.5rem; max-width: 600px;
+  transition: border-color 0.4s;
+}
+.label { color: #8b949e; font-size: 0.75rem; text-transform: uppercase; margin-top: 0.8rem; }
+.value { font-size: 1.1rem; margin-top: 0.15rem; }
+footer { margin-top: 1rem; font-size: 0.7rem; color: #484f58; }
+
+/* animation hints */
+.anim-heat_burst         { border-color: #f85149; }
+.anim-fragment_scatter   { border-color: #d29922; }
+.anim-molecule_merge     { border-color: #3fb950; }
+.anim-ph_gradient        { border-color: #a371f7; }
+.anim-molecule_flow      { border-color: var(--accent); }

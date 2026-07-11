@@ -14,6 +14,7 @@ struct Atom {
     double   mass;    // Atomic mass (amu)
     uint8_t  lone_pairs;  // Number of lone pairs (for VSEPR, optional override)
     uint32_t flags;   // Bit flags for properties (frozen, constrained, etc.)
+    int8_t   formal_charge = 0;  // Formal charge (-4..+4); 0 = neutral
 };
 
 // ============================================================================

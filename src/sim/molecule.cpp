@@ -1,4 +1,5 @@
 #include "molecule.hpp"
+#include "../core/element_data.hpp"
 #include <stdexcept>
 #include <cmath>
 #include <sstream>
@@ -35,7 +36,7 @@ void Molecule::add_atom(uint8_t Z, double x, double y, double z, uint32_t flags)
     Atom atom;
     atom.id = next_id++;
     atom.Z = Z;
-    atom.mass = 0.0;  // TODO: Look up from periodic table
+    atom.mass = chemistry_db().get_mass(Z);  // Look up from element database
     atom.lone_pairs = 0;  // Default: no explicit lone pairs (will be computed by VSEPR)
     atom.flags = flags;
     

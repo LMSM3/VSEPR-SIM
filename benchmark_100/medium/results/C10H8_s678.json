@@ -1,0 +1,19 @@
+{
+  "formula": "C10H8",
+  "seed": 678,
+  "tier": "medium",
+  "num_atoms": 18,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 598768.640502,
+  "energy_per_atom": 33264.924472,
+  "rms_force": 912161.007432,
+  "max_force": 912161.007432,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 2.334500,
+  "timestamp": "2026-03-28T12:55:45",
+  "xyz_file": "benchmark_100\medium\structures\C10H8_s678.xyz"
+}

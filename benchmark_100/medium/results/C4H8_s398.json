@@ -1,0 +1,19 @@
+{
+  "formula": "C4H8",
+  "seed": 398,
+  "tier": "medium",
+  "num_atoms": 12,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 21167.938577,
+  "energy_per_atom": 1763.994881,
+  "rms_force": 36869.871078,
+  "max_force": 36869.871078,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 1.373400,
+  "timestamp": "2026-03-28T12:55:45",
+  "xyz_file": "benchmark_100\medium\structures\C4H8_s398.xyz"
+}

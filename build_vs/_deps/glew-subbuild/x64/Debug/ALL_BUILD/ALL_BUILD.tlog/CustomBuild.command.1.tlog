@@ -1,0 +1,10 @@
+^C:\R\VSPER-SIM\BUILD_VS\_DEPS\GLEW-SUBBUILD\CMAKELISTS.TXT
+setlocal
+C:\msys64\ucrt64\bin\cmake.exe -SC:/R/VSPER-SIM/build_vs/_deps/glew-subbuild -BC:/R/VSPER-SIM/build_vs/_deps/glew-subbuild --check-stamp-file C:/R/VSPER-SIM/build_vs/_deps/glew-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

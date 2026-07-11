@@ -353,21 +353,16 @@ def dist3(a, b):
 # ---------------------------------------------------------------------------
 
 # PubChem element symbol -> atomic number
-ELEM_Z = {
-    "H":1,"He":2,"Li":3,"Be":4,"B":5,"C":6,"N":7,"O":8,"F":9,"Ne":10,
-    "Na":11,"Mg":12,"Al":13,"Si":14,"P":15,"S":16,"Cl":17,"Ar":18,
-    "K":19,"Ca":20,"Sc":21,"Ti":22,"V":23,"Cr":24,"Mn":25,"Fe":26,
-    "Co":27,"Ni":28,"Cu":29,"Zn":30,"Ga":31,"Ge":32,"As":33,"Se":34,
-    "Br":35,"Kr":36,"Rb":37,"Sr":38,"I":53,"Cs":55,"Ba":56,
-}
-
-# Covalent radii (Angstrom) for bond detection
-COV_RADII = {1:0.31,6:0.76,7:0.71,8:0.66,9:0.57,11:1.66,12:1.41,
-             14:1.11,15:1.07,16:1.05,17:1.02,19:2.03,20:1.76,
-             35:1.20,53:1.39,55:2.44}
+# Read from pykernel.element_data (IUPAC standard mapping)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from pykernel.element_data import SYMBOL_TO_Z as ELEM_Z, covalent_radius as _kernel_cov
 
 def cov(Z):
-    return COV_RADII.get(Z, 1.20)
+    """Covalent radius by atomic number, read from C++ kernel."""
+    from pykernel.element_data import SYMBOLS, COVALENT_RADII
+    if 0 < Z < len(COVALENT_RADII) and COVALENT_RADII[Z] > 0:
+        return COVALENT_RADII[Z]
+    return 1.20
 
 def pubchem_get_bonds(compound_name, verbose=False):
     """

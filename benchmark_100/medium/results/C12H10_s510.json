@@ -1,0 +1,19 @@
+{
+  "formula": "C12H10",
+  "seed": 510,
+  "tier": "medium",
+  "num_atoms": 22,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 10537055.077740,
+  "energy_per_atom": 478957.048988,
+  "rms_force": 39562324.205848,
+  "max_force": 39562324.205848,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 3.702600,
+  "timestamp": "2026-03-28T12:54:36",
+  "xyz_file": "benchmark_100\medium\structures\C12H10_s510.xyz"
+}

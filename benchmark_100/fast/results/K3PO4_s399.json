@@ -1,0 +1,19 @@
+{
+  "formula": "K3PO4",
+  "seed": 399,
+  "tier": "fast",
+  "num_atoms": 8,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 1697.202913,
+  "energy_per_atom": 212.150364,
+  "rms_force": 2874.586310,
+  "max_force": 2874.586310,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.427100,
+  "timestamp": "2026-03-28T12:54:58",
+  "xyz_file": "benchmark_100\fast\structures\K3PO4_s399.xyz"
+}

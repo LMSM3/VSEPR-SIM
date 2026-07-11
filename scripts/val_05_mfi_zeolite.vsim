@@ -1,0 +1,111 @@
+# scripts/validation/val_05_mfi_zeolite.vsim
+# Priority 5 — MFI / ZSM-5 zeolite framework
+# Geometry: orthorhombic (Pnma), large porous aluminosilicate framework
+# Main modules: packing + pore topology + RDF
+# External target: IZA framework density, pore geometry
+# IZA data: framework density 17.9 T/1000 Å³ (T = Si or Al tetrahedral site)
+# Unit cell: a = 20.090 Å, b = 19.738 Å, c = 13.142 Å (pure silica MFI)
+# 96 Si + 192 O per unit cell = 288 atoms
+# Reference: IZA Structure Commission, MFI framework type
+# vsper validate scripts/validation/val_05_mfi_zeolite.vsim
+
+[project]
+name        = val_05_mfi_zeolite
+version     = v5.0.0-beta.8
+seed_base   = 8005
+determinism = true
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[cell]
+type    = orthorhombic
+lengths = 20.090, 19.738, 13.142
+units   = angstrom
+
+[boundary]
+x = periodic
+y = periodic
+z = periodic
+
+[pbc]
+minimum_image        = true
+wrap_positions       = after_step
+track_images         = false
+
+[species.Si]
+charge = +4.0
+mass   = 28.086
+
+[species.O]
+charge = -2.0
+mass   = 15.999
+
+[material]
+id      = mfi_zeolite
+formula = SiO2
+classes = framework_silicate,orthorhombic,zeolite,porous
+
+[material.structure]
+type     = cif_import
+# Confirm: CIF import pathway exists
+# If absent, use fractional_coords block with MFI Wyckoff positions from IZA
+source   = external/iza/MFI.cif
+elements = Si,O
+
+[material.structure.fallback]
+# If CIF import is absent: flag as PARTIAL, load a minimal 8T ring fragment
+type     = fragment
+note     = MFI_full_framework_requires_CIF_import
+
+[formation]
+mode        = fixed_lattice
+relax_steps = 0
+# Do not relax — framework topology validation is geometry-sensitive
+# Relaxation requires framework-quality force field not yet validated
+
+[analysis]
+packing_fraction    = true
+framework_density   = true
+pore_topology       = true
+pore_diameter       = true
+rdf                 = true
+rdf_pairs           = Si-O,Si-Si,O-O
+rdf_rmax            = 12.0
+rdf_bins            = 300
+coordination        = true
+topology            = true
+topology_rings      = true
+charge_neutrality   = true
+
+[expected]
+framework_density_T       = 17.9
+framework_density_tol     = 0.5
+# T-sites per 1000 Å³
+coordination_Si           = 4
+coordination_O            = 2
+bond_length_Si_O          = 1.590
+bond_length_tol           = 0.05
+pore_diameter_straight     = 5.6
+pore_diameter_zigzag       = 5.1
+pore_diameter_tol         = 0.3
+# MFI has two intersecting channel systems: straight (10-ring) and sinusoidal (10-ring)
+ring_size_mode            = 10
+charge_sum                = 0.0
+
+[run]
+mode  = static
+steps = 0
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+
+[report]
+title                   = val_05_mfi_zeolite
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true

@@ -1,0 +1,19 @@
+{
+  "formula": "FeS2",
+  "seed": 686,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 4.693512,
+  "energy_per_atom": 1.564504,
+  "rms_force": 13.617549,
+  "max_force": 13.617549,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.510000,
+  "timestamp": "2026-03-28T12:55:33",
+  "xyz_file": "benchmark_100\medium\structures\FeS2_s686.xyz"
+}

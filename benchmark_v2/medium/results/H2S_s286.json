@@ -1,0 +1,19 @@
+{
+  "formula": "H2S",
+  "seed": 286,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 0.298027,
+  "energy_per_atom": 0.099342,
+  "rms_force": 2.054613,
+  "max_force": 2.054613,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.482000,
+  "timestamp": "2026-03-28T13:06:39",
+  "xyz_file": "benchmark_v2\medium\structures\H2S_s286.xyz"
+}

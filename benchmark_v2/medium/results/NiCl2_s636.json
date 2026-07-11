@@ -1,0 +1,19 @@
+{
+  "formula": "NiCl2",
+  "seed": 636,
+  "tier": "medium",
+  "num_atoms": 3,
+  "steps_taken": 1000,
+  "max_steps": 1000,
+  "energy_kcal_mol": 0.988223,
+  "energy_per_atom": 0.329408,
+  "rms_force": 3.991430,
+  "max_force": 3.991430,
+  "alpha_final": 0.000005,
+  "dt_final": 0.100000,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.522500,
+  "timestamp": "2026-03-28T13:07:14",
+  "xyz_file": "benchmark_v2\medium\structures\NiCl2_s636.xyz"
+}

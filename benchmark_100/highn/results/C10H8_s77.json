@@ -1,0 +1,19 @@
+{
+  "formula": "C10H8",
+  "seed": 77,
+  "tier": "highn",
+  "num_atoms": 18,
+  "steps_taken": 9913,
+  "max_steps": 10000,
+  "energy_kcal_mol": -4.889660,
+  "energy_per_atom": -0.271648,
+  "rms_force": 0.048941,
+  "max_force": 0.048941,
+  "alpha_final": 0.000003,
+  "dt_final": 0.100000,
+  "converged": true,
+  "classification": "unstable",
+  "wall_time_ms": 15.775500,
+  "timestamp": "2026-03-28T12:56:22",
+  "xyz_file": "benchmark_100\highn\structures\C10H8_s77.xyz"
+}

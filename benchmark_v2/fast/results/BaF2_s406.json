@@ -1,0 +1,19 @@
+{
+  "formula": "BaF2",
+  "seed": 406,
+  "tier": "fast",
+  "num_atoms": 2,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 5.287900,
+  "energy_per_atom": 2.643950,
+  "rms_force": 27.884632,
+  "max_force": 27.884632,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.421000,
+  "timestamp": "2026-03-28T13:05:56",
+  "xyz_file": "benchmark_v2\fast\structures\BaF2_s406.xyz"
+}

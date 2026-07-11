@@ -1,0 +1,19 @@
+{
+  "formula": "ZnSO4",
+  "seed": 252,
+  "tier": "fast",
+  "num_atoms": 6,
+  "steps_taken": 50,
+  "max_steps": 50,
+  "energy_kcal_mol": 45.546321,
+  "energy_per_atom": 7.591054,
+  "rms_force": 94.584993,
+  "max_force": 94.584993,
+  "alpha_final": 0.063619,
+  "dt_final": 0.072890,
+  "converged": false,
+  "classification": "timeout",
+  "wall_time_ms": 0.436700,
+  "timestamp": "2026-03-28T12:55:27",
+  "xyz_file": "benchmark_100\fast\structures\ZnSO4_s252.xyz"
+}
