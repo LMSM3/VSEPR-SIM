@@ -1,11 +1,11 @@
 # VSEPR-SIM Development Progress Summary
-<!-- Compiled: 2026-06-19 | Branch: feature/wizard-full-module-expansion | v5.0.14 -->
+<!-- Compiled: 2026-07-03 | Branch: day84t-chemplus-declarative-vsepr | v5.14.1 -->
 
 ## Executive Summary
 
 | Metric | Value | Status |
 |--------|-------|--------|
-| **Current version** | v5.0.14 | ✅ Live |
+| **Current version** | v5.14.1 | ✅ Live |
 | **Build status** | 738 targets all clean | ✅ **100% on track** |
 | **Test coverage** | 167 CTest targets, 100% pass (0 failures) | ✅ **100% on track** |
 | **Desktop GUI** | Qt6 UI fully wired; desktop + launcher complete | ✅ **100% on track** |
@@ -170,7 +170,7 @@ installer/
 | Documentation current | ✅ PASS | VSIM_REFERENCE.md sync'd; WO-MF-01 ledger updated |
 | X-framework packaged | ✅ PASS | Consolidated audit binary; post-install alias ready |
 | Desktop ready | ⚠️ PARTIAL | UI code ready; Qt runtime not yet staged |
-| **Release blockers** | ✅ NONE | No critical path blockers for v5.0.14 |
+| **Release blockers** | ✅ NONE | No critical path blockers for v5.14.1 |
 
 ### For Next Phase (v5.13.4 / Day 74)
 | Task | Prerequisite | Status |
@@ -255,4 +255,4 @@ installer/
 
 **Summary:** The repository is **87% on critical path, 95% on essential features**. Build is clean, 167/167 tests passing, chemistry module fully audited and hardened. Ready to proceed to v5.13.4.
 
-*Last compiled: 2026-06-19 | Branch: feature/wizard-full-module-expansion | v5.0.14*
+*Last compiled: 2026-07-03 | Branch: day84t-chemplus-declarative-vsepr | v5.14.1*

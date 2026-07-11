@@ -12,7 +12,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Ninja")
         "Ninja is at: C:/msys64/ucrt64/bin/ninja.exe")
 endif()
 
-project(vsepr-sim VERSION 5.0.14.0 LANGUAGES C CXX)
+project(vsepr-sim VERSION 5.14.1 LANGUAGES C CXX)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
 
@@ -63,6 +63,7 @@ option(BUILD_APPS  "Build applications" ON)
 option(BUILD_VIS   "Build visualization tools (vsepr-view, vsepr_vis)" ON)
 option(BUILD_ADVANCED_RENDER "Build advanced 3D molecular renderer + data window (requires BUILD_VIS=ON)" OFF)
 option(BUILD_DEMOS "Build demo targets" OFF)
+option(BUILD_BGFX_DEMO "Build the standalone BGFX persistent-window demo" OFF)
 option(BUILD_VIEWER        "Build lightweight one-shot file viewer (WO-67-A1, requires BUILD_VIS=ON)" ON)
 option(BUILD_VIEWER_DAEMON "Build persistent viewer daemon (WO-67-A2, requires BUILD_VIS=ON)" OFF)
 
@@ -137,6 +138,10 @@ include(cmake/VisBuild.cmake)
 
 include(cmake/AdvancedRender.cmake)
 
+if(BUILD_BGFX_DEMO)
+    include(cmake/BgfxDemo.cmake)
+endif()
+
 # ============================================================================
 # Tests (after both parts so VIS targets are visible to test helpers)
 # ============================================================================
@@ -150,6 +155,44 @@ endif()
 # Bridge Beta (scaffold for next-gen architecture prerequisites)
 # ============================================================================
 add_subdirectory(bridge_beta)
+
+# ============================================================================
+# Install bundle payload
+# ============================================================================
+
+install(FILES
+    ${PROJECT_SOURCE_DIR}/README.md
+    ${PROJECT_SOURCE_DIR}/VSIM_REFERENCE.md
+    ${PROJECT_SOURCE_DIR}/VSIM_DEVELOPMENT.md
+    ${PROJECT_SOURCE_DIR}/CMakePresets.json
+    ${PROJECT_SOURCE_DIR}/build.ps1
+    DESTINATION .
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/vsim
+    DESTINATION include
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/data
+    DESTINATION .
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/docs
+    DESTINATION .
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/scripts
+    DESTINATION .
+    FILES_MATCHING
+        PATTERN "*.ps1"
+        PATTERN "*.sh"
+        PATTERN "*.py"
+        PATTERN "*.md"
+)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/resources
+    DESTINATION .
+)
 
 # ============================================================================
 # Summary

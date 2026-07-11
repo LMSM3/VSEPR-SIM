@@ -38,7 +38,7 @@ For each field: **name**, **type**, **default**, and what it does.
 ```toml
 [project]
 name        = "demo_03_graphite_stack"
-version     = "v5.0.14"
+version     = "v5.14.1"
 seed_base   = 3008
 determinism = true
 description = "5-layer AB Bernal graphite ERB modulation test"
@@ -432,6 +432,33 @@ Parsed into `VsimDocument::view_directives` as a `ViewDirective`. Unknown kinds 
 | Data | `data.batch.plan` | resolved `[batch.*]` plan | |
 | Data | `data.batch.ranked` | `ranked_candidates.tsv` | |
 | Data | `data.verify.matrix` | `failure_mode_matrix.tsv` | |
+
+---
+
+## `print_console` directive — WO-85A
+
+Top-level statement; a live-session / script-encoded console emitter — the VSIM equivalent of `Write-Host` / `echo` / `print`. Any number of occurrences are allowed at script root or inside any section. Parsed into `VsimDocument::console_prints` as a `ConsolePrint`.
+
+```vsim
+print_console "<message>"     # quotations optional
+print_console <message>       # unquoted form prints verbatim
+print_console                 # empty payload emits a blank line
+```
+
+**Semantics:**
+
+- Everything after the `print_console` keyword is the message.
+- A single surrounding pair of double quotes is stripped, so `print_console "hi"` and `print_console hi` both print `hi`.
+- Inner whitespace inside a quoted message is preserved.
+- Trailing `#` comments outside quotes are stripped; a `#` inside quotes is preserved.
+- Messages render in declaration order.
+
+**Rendering:** both front-ends emit a `[console]` block:
+
+- `vsepr run <script.vsim>` — after the identity summary, before the visual banner.
+- `vsepr classify <script.vsim>` — after the header, before the `[VSEPR]` block.
+
+**Guard:** a key assignment whose name merely starts with `print_console` (e.g. `print_console_note = ...`) is **not** captured — the keyword must be followed by whitespace, a quote, or end-of-line.
 
 ---
 
@@ -2234,7 +2261,7 @@ All tests passed (direct binary execution against `build_vview` viewer libs).
 
 > Bridge paper: `docs/theory/v5114_bridge_paper.md`
 > Notation reference: `docs/theory/identity_matrix_notation_reference.md`
-> Version: v5.0.14  |  Branch: v5.0.0-main
+> Version: v5.14.1  |  Branch: day84t-chemplus-declarative-vsepr
 
 ---
 
@@ -2423,7 +2450,7 @@ All four streams are grep-able, console-visible, and archived in JSONL. Console 
 
 ## WO-66N / WO-66O / WO-66P / WO-66Q  —  Constructor Objects, Diagnostics, Crystal, XBIT
 
-*v5.0.14 | branch: v5.0.0-main*
+*v5.14.1 | branch: day84t-chemplus-declarative-vsepr*
 
 ### Constructor objects — WO-66N
 

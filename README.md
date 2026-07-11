@@ -12,7 +12,7 @@ Script-driven simulation pipelines via the VSIM language. Reproducible by design
 
 ---
 
-> VSEPR-SIM v5.0.14 is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
+> VSEPR-SIM v5.14.1 is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
 
 ---
 
@@ -22,6 +22,7 @@ Script-driven simulation pipelines via the VSIM language. Reproducible by design
 |---|---|
 | Run a simulation script | [Quick Start](#quick-start) |
 | Write or understand VSIM scripts | [docs/VSIM_LANGUAGE_REFERENCE.md](docs/VSIM_LANGUAGE_REFERENCE.md) |
+| Follow a post-simulation automation workflow | [docs/POST_SIMULATION_AUTOMATION.md](docs/POST_SIMULATION_AUTOMATION.md) |
 | Understand the build system and folder layout | [TOUR.md](TOUR.md) |
 | File format reference | [docs/XYZ_FORMAT_REFERENCE.md](docs/XYZ_FORMAT_REFERENCE.md) |
 | Validation status | [docs/VALIDATION_REPORT.md](docs/VALIDATION_REPORT.md) |
@@ -67,7 +68,7 @@ A `.vsim` script replaces a sequence of CLI calls with a single, readable, versi
 ```vsim
 [project]
 name    = "water_nvt"
-version = "v5.0.14"
+version = "v5.14.1"
 
 [simulation]
 box_size_ang = 30.0
@@ -102,6 +103,8 @@ vsper run water_nvt.vsim
 Scripts are deterministic, hash-stamped, and fully logged. Every execution produces a provenance record and a set of output artifacts declared in `[export]`.
 
 **Full language reference:** [docs/VSIM_LANGUAGE_REFERENCE.md](docs/VSIM_LANGUAGE_REFERENCE.md)
+
+**Post-simulation automation example:** [examples/post_simulation_automation_demo.vsim](examples/post_simulation_automation_demo.vsim) and [docs/POST_SIMULATION_AUTOMATION.md](docs/POST_SIMULATION_AUTOMATION.md)
 
 ---
 

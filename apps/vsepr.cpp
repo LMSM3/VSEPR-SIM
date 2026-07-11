@@ -20,11 +20,15 @@
 #include "cli/actions.hpp"
 #include "cli/cg_commands.hpp"
 #include "cli/cmd_therm.hpp"
+#include "cli/script_expansion.hpp"
+#include "cli/cmd_classify.hpp"
 #include "cli/cmd_tui.hpp"
 #include "cli/cmd_validate.hpp"
 #include "cli/cmd_run_vsim.hpp"
 #include "cli/cmd_doctor_tests.hpp"
 #include "cli/cmd_x_suite.hpp"
+#include "cli/cmd_ui.hpp"
+#include "cli/cmd_batch.hpp"
 #include "cli/cmd_cache.hpp"
 #include "cli/cmd_mlprop.hpp"
 #include "cli/cmd_new_wizard.hpp"
@@ -101,7 +105,7 @@ static void show_welcome()
         << "\033[1;35m  ╔══════════════════════════════════════════════════════════════╗\033[0m\n"
         << "\033[1;35m  ║  \033[0m"
         << "\033[1;37mVSEPR-SIM\033[0m  "
-        << "\033[0;36mv5.1.4\033[0m"
+        << "\033[0;36mv5.14.1\033[0m"
         << "  \033[0;37m│  atomistic simulation & analysis platform\033[0m"
         << "\033[1;35m  ║\033[0m\n"
         << "\033[1;35m  ╚══════════════════════════════════════════════════════════════╝\033[0m\n";
@@ -187,6 +191,7 @@ static void show_welcome()
     welcome_section("SIMULATION  (primary workflow)");
     welcome_line("\033[0;32m", "  RUN     ", "vsepr run <script.vsim>",       "Execute a .vsim simulation script");
     welcome_line("\033[0;32m", "  RUN     ", "vsepr <script.vsim>",           "Short form — no subcommand needed");
+        welcome_line("\033[0;32m", "  BATCH   ", "vsepr batch [opts] *.vsim",     "Run multiple .vsim scripts in batch");
     welcome_line("\033[0;36m", "  CHECK   ", "vsepr validate <script.vsim>",  "Parse & validate without running");
     welcome_line("\033[0;36m", "  VIEW    ", "vsepr view <file>",             "Open .xyz / .xyzFull / .dynx viewer");
 
@@ -198,6 +203,8 @@ static void show_welcome()
     welcome_line("\033[0;35m", "  BENCH   ", "continual_runner",              "Continual formation engine");
 
     welcome_section("ANALYSIS  (modules)");
+    welcome_line("\033[0;36m", "  MODULE  ", "vsepr classify <script.vsim>",  "VSEPR + organic classify preview");
+    welcome_line("\033[0;36m", "  MODULE  ", "vsepr expand <script.vsim>",    "Script expansion candidate preview");
     welcome_line("\033[0;36m", "  MODULE  ", "vsepr gas   <cmd>",             "Gas-phase thermodynamics");
     welcome_line("\033[0;36m", "  MODULE  ", "vsepr gas2  <cmd>",             "Advanced EOS analysis");
     welcome_line("\033[0;36m", "  MODULE  ", "vsepr gas3  <cmd>",             "Quality pipeline & fitting");
@@ -246,7 +253,7 @@ static void show_welcome()
 
 void show_help() {
     std::cout << R"(
-VSEPR-SIM v5.1.4  |  atomistic simulation and analysis platform
+VSEPR-SIM v5.14.1  |  atomistic simulation and analysis platform
 
 USAGE
     vsepr <script.vsim>            Run a .vsim simulation script (short form)
@@ -429,13 +436,13 @@ int main(int argc, char** argv) {
 
         // Version flag
         if (cmd == "--version" || cmd == "-v" || cmd == "version") {
-            std::cout << "VSEPR-SIM v5.1.4\n";
+            std::cout << "VSEPR-SIM v5.14.1\n";
             return 0;
         }
 
         // Build-info flag
         if (cmd == "--build-info" || cmd == "build-info") {
-            std::cout << "VSEPR-SIM v5.1.4  |  C++23  |  branch: v5.0.0-main\n";
+            std::cout << "VSEPR-SIM v5.14.1  |  C++23  |  branch: day84t-chemplus-declarative-vsepr\n";
             std::cout << "  Compiler: " << __VERSION__ << "\n";
             return 0;
         }
@@ -454,7 +461,22 @@ int main(int argc, char** argv) {
             return vsepr::cli::cmd_validate(rest);
         }
 
-        // doctor  -  real installation health check (+ integratedtest / benchmark)
+        // ui <sub-command> [arg]  -  control the running desktop via IPC
+        if (cmd == "ui") {
+            std::vector<std::string> rest;
+            for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
+            vsepr::cli::UiCommand uiCmd;
+            return uiCmd.Execute(rest);
+        }
+
+        // batch [options] [script.vsim ...]  -  run multiple .vsim scripts
+        if (cmd == "batch") {
+            std::vector<std::string> rest;
+            for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
+            return vsepr::cli::cmd_batch(rest);
+        }
+
+        // doctor
         if (cmd == "doctor") {
             // Sub-commands: integratedtest, benchmark
             if (argc >= 3) {
@@ -483,7 +505,7 @@ int main(int argc, char** argv) {
             const std::string FAIL = "  [FAIL] ";
             const std::string WARN = "  [warn] ";
 
-            std::cout << "VSEPR-SIM v5.1.4  installation health\n" << SEP << "\n\n";
+            std::cout << "VSEPR-SIM v5.14.1  installation health\n" << SEP << "\n\n";
 
             int failures = 0;
             int warnings = 0;
@@ -863,6 +885,33 @@ int main(int argc, char** argv) {
             return therm.Execute(therm_args);
         }
 
+        // Preview script expansion without executing the script.
+        if (cmd == "expand") {
+            if (argc < 3) {
+                std::cerr << "Usage: vsepr expand <input.vsim>\n";
+                return 1;
+            }
+            return vsepr::cli::run_classify_preview(std::filesystem::path(argv[2]));
+        }
+
+        // Run VSEPR + OrganicCandidate classify preview on a .vsim formula
+        // WO-84E: optional --report-md <path> and --report-json <path> flags
+        if (cmd == "classify") {
+            if (argc < 3) {
+                std::cerr << "Usage: vsepr classify <input.vsim> [--report-md <out.md>] [--report-json <out.json>]\n";
+                return 1;
+            }
+            std::filesystem::path md_out, json_out;
+            for (int ai = 3; ai < argc - 1; ++ai) {
+                const std::string flag(argv[ai]);
+                if (flag == "--report-md")   md_out   = argv[ai + 1];
+                if (flag == "--report-json") json_out = argv[ai + 1];
+            }
+            return vsepr::cli::run_classify_preview(
+                std::filesystem::path(argv[2]), md_out, json_out
+            );
+        }
+
         // Route to lightweight visualization when argv[1] == "--viz"
         if (cmd == "--viz") {
 #ifdef BUILD_VISUALIZATION
@@ -962,3 +1011,4 @@ int main(int argc, char** argv) {
         return 1;
     }
 }
+

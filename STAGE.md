@@ -1,6 +1,6 @@
 # VSEPR-SIM — Master Stage & Gate Ledger
 
-> Updated: v5.0.14 | Branch: feature/wizard-full-module-expansion | Day 82 (v5.13 FROZEN)
+> Updated: v5.14.1 | Branch: day84t-chemplus-declarative-vsepr | Day 87 (finalization)
 
 ---
 
@@ -150,8 +150,8 @@ Full regression before tagging `v5.13.5`:
 
 ## Environment Notes
 
-- Branch: `feature/wizard-full-module-expansion`
-- Version: v5.0.14
+- Branch: `day84t-chemplus-declarative-vsepr`
+- Version: v5.14.1
 - Build: CMakePresets.json → Ninja / GCC 15.2 UCRT64 / C++23 / `build/`
 - Compiler: `C:/msys64/ucrt64/bin/g++.exe`
 - Build preset: `cmake --preset release`

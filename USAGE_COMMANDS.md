@@ -1,5 +1,5 @@
 # VSEPR-SIM Usage Command Reference
-<!-- v5.0.14 | branch: v5.0.0-main | Day 75 -->
+<!-- v5.14.1 | branch: day84t-chemplus-declarative-vsepr | Day 87 -->
 
 This file collects real, runnable commands for every major executable and
 subsystem in the VSEPR-SIM platform.  All paths assume you are working from
