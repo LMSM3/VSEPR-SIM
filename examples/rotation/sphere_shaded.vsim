@@ -1,0 +1,160 @@
+# =============================================================================
+# sphere_shaded.vsim
+#
+# Rotation demo — shaded and sampled sphere with full VSIM pipeline.
+#
+# This script runs a short NVT simulation on a spherical Ar cluster,
+# samples RDF and MSD, exports a shaded trajectory, and opens the
+# gl_overlay_cycle viewer so the density/coordination/energy panels cycle
+# while the sphere rotates.
+#
+# After this run completes, export the bundle with:
+#   xsim xport examples/rotation/sphere_shaded.x
+#
+# Run:
+#   xsim run examples/rotation/sphere_shaded.vsim
+#
+# Outputs:
+#   out/sphere_shaded_sim/             — live simulation artifacts
+#   runs/sphere_shaded/                — completed run directory (for .x)
+#
+# v5.0.14  |  stable+0.0.1  |  rotation examples
+# =============================================================================
+
+[project]
+name        = "sphere_shaded"
+version     = "v5.0.14"
+seed_base   = 4201
+determinism = true
+description = "Shaded and sampled rotating Ar sphere cluster demo"
+
+# ----------------------------------------------------------------------------
+# Material
+# ----------------------------------------------------------------------------
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+# ----------------------------------------------------------------------------
+# Simulation setup
+# ----------------------------------------------------------------------------
+[simulation]
+box_size_ang     = 20.0
+periodic         = false
+fire_max_steps   = 500
+fire_dt_fs       = 1.0
+formation_preset = "molecular"
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula       = "Ar"
+count         = 60            # enough beads to look clearly spherical
+temperature   = 80.0          # liquid-Ar regime — clusters tightly
+lattice       = "none"
+
+# ----------------------------------------------------------------------------
+# Run control
+# ----------------------------------------------------------------------------
+[run]
+mode         = "md_nvt"
+max_steps    = 800
+dt_fs        = 1.0
+temperature  = 80.0
+converge     = true
+output_level = "standard"
+
+# ----------------------------------------------------------------------------
+# Analysis — RDF and MSD sampled to paint the shading data
+# ----------------------------------------------------------------------------
+[analysis.structure]
+enabled              = true
+compute_coordination = true
+compute_packing      = true
+compute_displacement = true
+compute_anisotropy   = false
+neighbor_cutoff_A    = 4.5
+contact_cutoff_A     = 3.8
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 5
+min_frames_for_msd    = 10
+unwrap_pbc            = false
+rdf_cutoff_A          = 9.0
+msd_max_lag_frames    = 80
+
+[analysis.inference]
+enabled                    = true
+mode                       = "rule_based_61d"
+infer_packing_regime       = true
+infer_mobility_regime      = true
+infer_structural_stability = true
+infer_macro_readiness      = false
+
+# ----------------------------------------------------------------------------
+# Export — write run artifacts to out/ and to runs/ for .x pickup
+# ----------------------------------------------------------------------------
+[export]
+write_xyz                 = true
+write_xyzfull             = false
+write_analysis_json       = true
+write_summary_csv         = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = false
+write_symbolic_trace_json = false
+write_verify_report       = true
+compression               = "none"
+split_by_species          = false
+output_dir                = "out/sphere_shaded_sim"
+
+[export.visual]
+write_svg_figures         = false
+write_png_snapshots       = false
+write_rdf_svg             = true    # shading input — RDF of the Ar cluster
+write_energy_trace_svg    = true
+write_packing_heatmap_svg = true    # visual density shell map
+write_trajectory_gif      = false
+write_html_dashboard      = false
+visual_output_dir         = "figures"
+
+# ----------------------------------------------------------------------------
+# Visualizer — overlay cycle: density / coordination / energy panels
+#              while the sphere rotates
+# ----------------------------------------------------------------------------
+[visual]
+output_type            = "gl_overlay_cycle"  # cycles density / coord / energy
+animation_mode         = "static"
+render_interval        = 20
+show_convergence_trace = true
+show_bar_chart         = false
+show_event_timeline    = false
+show_symbolic_trace    = false
+show_steady_state_marker = true
+gl_auto_orbit          = false         # spin takes over when gl_spin = true
+gl_spin                = true
+gl_spin_axis           = "y"
+gl_spin_deg_per_s      = 35.0
+gl_show_axes           = true
+gl_window_width        = 1280
+gl_window_height       = 800
+pacing_ms              = 0
+overlay_cycle_interval = 300           # ms between panel switches
+
+# ----------------------------------------------------------------------------
+# Verification
+# ----------------------------------------------------------------------------
+[verify]
+enabled = true
+
+[verify.structure]
+enabled                 = true
+check_coordination      = false        # noble gas — no fixed coordination
+check_bond_length       = false
+
+[verify.mass]
+enabled   = true
+max_drift = 1e-10

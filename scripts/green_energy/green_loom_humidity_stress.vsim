@@ -1,0 +1,342 @@
+# @category Green Energy Applications
+# @title    Green Loom — humid flue-gas capture stress and breakthrough replay
+#
+# Declarative acceptance scenario.  The porous-capture kernel is future work;
+# this script establishes parser-valid configuration and replay-rich evidence.
+
+[project]
+name        = "green_loom_humidity_stress"
+version     = "v0.1.0"
+seed_base   = 51101
+determinism = true
+description = "High-humidity CO2 capture stress test for porous carbon/REE fibre"
+author      = "VSIM Green Energy Applications"
+
+[pillar]
+id                 = "green_loom_humidity_stress"
+name               = "Green Loom Humidity Stress"
+model              = "porous_fibre_capture"
+spatial_authority  = "gas_pore_surface_fibre"
+event_authority    = "transport_plus_stochastic_adsorption"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 96.0
+ly    = 96.0
+lz    = 160.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 4096
+temperature = 338.0
+lattice     = "graphitic_fibre_bundle"
+region      = "capture_fibre"
+
+[[simulation.molecule]]
+formula     = "CeO2"
+count       = 96
+temperature = 338.0
+lattice     = "surface_nanocluster"
+region      = "ree_active_sites"
+
+[[simulation.molecule]]
+formula     = "La2O3"
+count       = 64
+temperature = 338.0
+lattice     = "surface_nanocluster"
+region      = "ree_active_sites"
+
+[[simulation.molecule]]
+formula     = "CO2"
+count       = 420
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[[simulation.molecule]]
+formula     = "N2"
+count       = 1540
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[[simulation.molecule]]
+formula     = "H2O"
+count       = 360
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[environment]
+temperature = 338.0
+pressure    = 0.000101
+medium      = "high_humidity_post_combustion_gas"
+gravity     = false
+flow_axis   = "z"
+flow_speed  = 0.030
+
+[fibre]
+carbon_hybridization       = "sp2"
+bundle_porosity            = 0.58
+fibre_alignment            = 0.91
+micropore_fraction         = 0.34
+mesopore_fraction          = 0.28
+mean_pore_width_ang        = 7.0
+track_accessible_area      = true
+track_pore_blocking        = true
+track_axial_pressure_drop  = true
+
+[ree_sites]
+site_phases                = ["CeO2", "La2O3"]
+ce_fraction                = 0.60
+la_fraction                = 0.40
+loading_mass_fraction      = 0.085
+oxygen_vacancy_fraction    = 0.045
+site_dispersion            = 0.82
+track_carbonate_fraction   = true
+track_vacancy_occupancy    = true
+track_cluster_sintering    = true
+
+[species.registry]
+species = [
+	"CO2:gas",
+	"N2:gas",
+	"H2O:gas",
+	"site:C_pore_vacant",
+	"site:Ce_vacancy",
+	"site:La_vacant",
+	"CO2:C_physisorbed",
+	"H2O:C_physisorbed",
+	"CO2:Ce_carbonate_proxy",
+	"CO2:La_carbonate_proxy",
+	"H2O:REE_bound",
+	"CO2:desorbed"
+]
+
+[transport]
+model                    = "advection_diffusion_pore_network"
+diffusion_model          = "species_knudsen_plus_molecular"
+flow_solver              = "reduced_lattice_flux"
+pore_access_model        = "radius_energy_gate"
+pressure_drop_model      = "darcy_forchheimer_proxy"
+update_pore_access_every = 5
+reject_blocked_entry     = true
+
+[reaction.network]
+id                 = "green_loom_humidity_stress_v1"
+selection          = "transport_encounter_then_kinetic"
+rate_law           = "arrhenius"
+energy_model       = "tabulated_adsorption_proxy"
+spatial_index      = "pore_surface_graph"
+reject_on_overlap  = true
+reject_on_deficit  = true
+
+[[reaction.channel]]
+id                  = "carbon_pore_capture"
+reactants           = ["CO2:gas", "site:C_pore_vacant"]
+products            = ["CO2:C_physisorbed"]
+pre_exponential     = 2.8e11
+barrier_eV          = 0.055
+energy_delta_eV     = -0.24
+
+[[reaction.channel]]
+id                  = "carbon_water_competition"
+reactants           = ["H2O:gas", "site:C_pore_vacant"]
+products            = ["H2O:C_physisorbed"]
+pre_exponential     = 3.6e11
+barrier_eV          = 0.036
+energy_delta_eV     = -0.22
+
+[[reaction.channel]]
+id                  = "ceria_vacancy_capture"
+reactants           = ["CO2:gas", "site:Ce_vacancy"]
+products            = ["CO2:Ce_carbonate_proxy"]
+pre_exponential     = 7.0e10
+barrier_eV          = 0.21
+energy_delta_eV     = -0.74
+
+[[reaction.channel]]
+id                  = "ree_water_competition"
+reactants           = ["H2O:gas", "site:La_vacant"]
+products            = ["H2O:REE_bound"]
+pre_exponential     = 6.0e10
+barrier_eV          = 0.09
+energy_delta_eV     = -0.52
+
+[[reaction.channel]]
+id                  = "carbon_pore_regeneration"
+reactants           = ["CO2:C_physisorbed"]
+products            = ["CO2:desorbed", "site:C_pore_vacant"]
+pre_exponential     = 4.0e12
+barrier_eV          = 0.31
+energy_delta_eV     = 0.24
+
+[[reaction.stage]]
+id                  = "humid_capture"
+start_step          = 0
+end_step            = 4200
+active_reservoirs   = ["flue_gas_inlet"]
+environment_T_K     = 338.0
+pressure_proxy_GPa  = 0.000101
+
+[[reaction.stage]]
+id                  = "regenerate"
+start_step          = 4201
+end_step            = 5900
+active_reservoirs   = []
+environment_T_K     = 415.0
+pressure_proxy_GPa  = 0.000012
+remove_unbound      = ["CO2:gas", "N2:gas", "H2O:gas"]
+
+[cycle]
+count                         = 2
+reuse_final_structure         = true
+restore_feed_each_cycle       = true
+track_capacity_retention      = true
+track_regeneration_efficiency = true
+
+[simulation]
+fire_max_steps      = 250
+fire_dt_fs          = 0.5
+formation_preset    = "porous_fibre_capture"
+smooth_resim        = false
+neighbor_skin_ang   = 2.5
+rebuild_neighbors_n = 5
+
+[chemistry]
+chemistry           = "surface_capture_network"
+reaction_events     = true
+track_species_state = true
+event_registry      = true
+
+[run]
+mode          = "reactive_transport"
+max_steps     = 5900
+dt_fs         = 0.5
+temperature_K = 338.0
+converge      = false
+output_level  = "verbose"
+dense_record  = true
+
+[dense_record]
+energy_force_interval = 5
+max_records           = 1200
+initial_structure     = true
+final_structure       = true
+connectivity_before   = true
+connectivity_after    = true
+seed                  = true
+potential_checksum    = true
+terminal_gates        = true
+timing_split          = true
+potential_label       = "green_loom_porous_capture_test"
+
+[observe]
+metrics = [
+	"capture.CO2_capacity_mmol_g",
+	"capture.CO2_N2_selectivity",
+	"capture.breakthrough_fraction",
+	"capture.water_competition_fraction",
+	"capture.carbonate_fraction",
+	"transport.pore_accessible_fraction",
+	"transport.pressure_drop_proxy",
+	"regeneration.CO2_release_fraction",
+	"audit.element_residual",
+	"audit.energy_residual"
+]
+every_n_steps = 5
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["C", "O", "N", "Ce", "La", "H"]
+charge                = false
+energy                = "tracked_proxy"
+strict                = true
+check_every_n_steps   = 10
+relative_tolerance    = 1.0e-9
+absolute_tolerance    = 1.0e-11
+reject_invalid_event  = true
+
+[audit.acceptance]
+requirements = [
+	"CO2_capacity_peak > 0",
+	"CO2_N2_selectivity_peak > 1.0",
+	"water_competition_fraction_peak >= 0",
+	"regeneration_CO2_release_fraction > 0.70",
+	"max_abs_element_residual < 1.0e-9"
+]
+
+[export]
+output_dir                  = "out/green_energy/green_loom_humidity_stress"
+write_xyz                   = true
+write_xyzf                  = true
+write_xyzfull               = true
+write_analysis_json         = true
+write_metrics_tsv           = true
+write_report_md             = true
+write_events_json           = true
+write_manifest_json         = true
+write_dashboard_svg         = true
+snapshot_interval           = 5
+event_interval              = 1
+metrics_interval            = 5
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_html_dashboard   = true
+visual_output_dir      = "figures/green_loom_humidity_stress/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 5
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_event_timeline      = true
+show_energy_heatmap      = true
+show_bond_events         = true
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+live           = true
+
+show "scene.porous_fibre" target = "pillar.green_loom_humidity_stress" options = {
+	"color_by": "capture_state",
+	"show_gas_flow": true,
+	"show_pore_access": true,
+	"show_ree_clusters": true,
+	"show_breakthrough_front": true
+}
+
+show "data.history.timeseries" target = "run.history" options = {
+	"series": ["capture.CO2_capacity_mmol_g", "capture.water_competition_fraction", "capture.breakthrough_fraction", "transport.pore_accessible_fraction"],
+	"log_y": false
+}
+
+show "data.events.timeline" target = "kernel.events"
+show "data.scalar.panel" target = "run.summary"
+
+[open]
+enabled       = true
+mode          = "advanced"
+file          = "auto"
+source_format = "xyzf"
+
+[open.advanced]
+trajectory_controls = true
+data_inspector      = true
+event_overlay       = true
+bond_overlay        = true
+start_paused        = false
+default_frame       = 0

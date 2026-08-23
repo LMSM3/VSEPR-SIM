@@ -1,0 +1,52 @@
+# graphite_surface.vsim
+# =============================================================================
+# Demo 03 — Graphite AB-stacked surface slab
+# =============================================================================
+# Two-layer graphite slab: AB stacking, in-plane covalent bonds, van der Waals
+# interlayer coupling. FIRE lattice relaxation along c-axis.
+#
+# Run:  vsepr run scripts/demos/graphite_surface.vsim
+# =============================================================================
+
+[project]
+name        = "graphite_surface_demo"
+version     = "v5.1.4"
+seed_base   = 1003
+description = "Graphite AB-stacked slab — lattice relax + static analysis"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = true
+track_energy_path    = true
+track_structure_changes = true
+
+[crystal]
+formula         = "C"
+structure       = "graphite"
+layer_mode      = "AB"
+supercell_a     = 4
+supercell_b     = 4
+supercell_c     = 2
+slab            = true
+slab_layers     = 2
+
+[run]
+mode            = "crystal"
+num_steps       = 800
+dt              = 1.0
+integrator      = "fire_relax"
+sample_interval    = 100
+render_interval    = 100
+
+[export]
+xyz      = true
+xyzFull  = true
+dynx     = true
+report   = true
+
+[analysis]
+rmsd              = true
+energy_trace      = true
+defect_fraction   = true
+coordination      = true

@@ -1,0 +1,170 @@
+# E35 - External-validator comparison contract.
+# LAMMPS is a comparison mirror, not injected truth or an automatic authority.
+
+[project]
+name        = "e35_external_verification_contract"
+version     = "v5.14.1-examples-1"
+seed_base   = 35035
+determinism = true
+description = "NaCl empirical verification contract with external comparison thresholds"
+
+[example]
+catalog_id        = "E35"
+compatibility     = "PARSED_EXTERNAL_ADAPTER_REQUIRED"
+execution_surface = "vsepr validate; verification adapter"
+primary_reference = "VSIM_REFERENCE.md empirical verification sections"
+truth_boundary    = "external_results_validate_but_do_not_overwrite_kernel_state"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+phase     = "solid"
+
+[cell]
+type  = "orthorhombic"
+lx    = 22.52
+ly    = 22.52
+lz    = 22.52
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+box_size_ang     = 22.52
+periodic         = true
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+formation_preset = "ionic"
+use_ewald        = true
+ewald_alpha      = 0.30
+ewald_rcut       = 10.0
+ewald_kmax       = 6
+
+[[simulation.molecule]]
+formula       = "NaCl"
+count         = 64
+temperature_K = 300.0
+lattice       = "rocksalt"
+
+[run]
+mode         = "md"
+max_steps    = 2000
+dt_fs        = 1.0
+temperature  = 300.0
+pressure_GPa = 0.0
+converge     = false
+output_level = "standard"
+
+[environment]
+periodic    = true
+temperature = 300.0
+pressure    = 0.0
+medium      = "vacuum"
+
+[observe]
+metrics       = ["formation", "energy_map", "coordination"]
+output_format = "json"
+every_n_steps = 20
+
+[analysis.structure]
+enabled              = true
+compute_coordination = true
+compute_packing      = true
+compute_displacement = true
+neighbor_cutoff_A    = 3.2
+contact_cutoff_A     = 2.9
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 10
+min_frames_for_msd    = 20
+unwrap_pbc            = true
+
+[verify]
+enabled             = true
+profile             = "e35_nacl_external_comparison"
+target              = "lammps"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.815
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.815, 3.981, 4.876]
+peak_tolerance_A   = 0.25
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[verify.compare]
+energy       = true
+temperature  = true
+pressure     = true
+rdf          = true
+msd          = true
+diffusion    = true
+coordination = true
+rmsd         = true
+
+[verify.thresholds]
+energy_rel_error       = 0.05
+temperature_rel_error  = 0.05
+pressure_rel_error     = 0.10
+rdf_l1_error           = 0.15
+msd_rel_error          = 0.20
+diffusion_rel_error    = 0.25
+coordination_abs_error = 0.25
+rmsd_A                 = 0.20
+
+[verify.outputs]
+write_report        = true
+write_json          = true
+write_overlay_tables = true
+
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_xyzfull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+output_dir                 = "out/advanced_native/e35"
+
+[report]
+title                   = "E35 External Verification Contract"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type     = "none"
+gl_auto_orbit   = false
+render_interval = 20
+
+[open]
+enabled = false
+

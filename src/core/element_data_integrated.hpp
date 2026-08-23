@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 /**
  * element_data_integrated.hpp
  * ===========================
  * Chemistry-specific element database that INTEGRATES with periodic_db.hpp.
  *
  * NO DUPLICATION:
- * - Atomic masses, symbols, electronegativity → FROM periodic_db.hpp
- * - Chemistry metadata (bonding manifolds, valence patterns) → ADDED HERE
+ * - Atomic masses, symbols, electronegativity -> FROM periodic_db.hpp
+ * - Chemistry metadata (bonding manifolds, valence patterns) -> ADDED HERE
  *
  * Design principles:
  * - Single source of truth for periodic data (periodic_db.hpp)
@@ -361,7 +361,7 @@ inline void ChemistryElementDatabase::initialize_transition_metals() {
         1.22
     );
 
-    // Zirconium (40) — MSR / structural relevance
+    // Zirconium (40)  -  MSR / structural relevance
     chem_data_[40] = make(40, BondingManifold::COORDINATION,
         {{6,6,4,true},{8,8,4,false}},
         0.320, 4.00, 1.60
@@ -433,7 +433,7 @@ inline void ChemistryElementDatabase::initialize_transition_metals() {
     // Palladium (46)
     chem_data_[46] = make(46, BondingManifold::COORDINATION, {{4,4,2,true},{4,4,0,false}}, 0.350, 4.10, 1.31);
 
-    // Copper (Z=29) — adjust for anomalous behavior
+    // Copper (Z=29)  -  adjust for anomalous behavior
     chem_data_[29] = make(29, BondingManifold::COORDINATION,
         {{4, 4, 2, true},       // Cu(II) square planar
          {4, 4, 1, false},      // Cu(I) tetra
@@ -441,7 +441,7 @@ inline void ChemistryElementDatabase::initialize_transition_metals() {
         0.270, 3.80, 1.32
     );
 
-    // Zinc (Z=30) — similar adjustment
+    // Zinc (Z=30)  -  similar adjustment
     chem_data_[30] = make(30, BondingManifold::COORDINATION,
         {{4, 4, 2, true},       // Zn(II) tetra
          {6, 6, 2, false}},
@@ -459,7 +459,7 @@ inline void ChemistryElementDatabase::initialize_transition_metals() {
     chem_data_[76] = make(76, BondingManifold::COORDINATION, {{6,6,4,true},{6,6,6,false}}, 0.365, 4.12, 1.42);
     chem_data_[77] = make(77, BondingManifold::COORDINATION, {{6,6,3,true},{6,6,4,false}}, 0.370, 4.14, 1.42);
 
-    // ----- Lanthanides (57-71) — coarse coordination placeholders -----
+    // ----- Lanthanides (57-71)  -  coarse coordination placeholders -----
      for (uint8_t Z = 57; Z <= 71; ++Z) {
          chem_data_[Z] = make(Z, BondingManifold::COORDINATION, {{8,8,3,true},{8,8,2,false}}, 0.380, 4.10, 1.75);
      }

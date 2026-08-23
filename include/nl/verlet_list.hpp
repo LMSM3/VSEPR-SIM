@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * verlet_list.hpp — ERB-Aware Verlet Neighbor List
+ * verlet_list.hpp  -  ERB-Aware Verlet Neighbor List
  * =================================================
  *
  * A Verlet neighbor list designed specifically for the Environment-Responsive
@@ -9,14 +9,14 @@
  *   Each neighbor entry carries η_j (the environment state of the neighbor).
  *
  * This means modulation factors g_k(η_i, η_j) = 1 + γ_k · η̄ can be
- * evaluated directly from NL entries during the force/energy pass —
+ * evaluated directly from NL entries during the force/energy pass  - 
  * no O(N²) η scan required.
  *
  * Architecture:
  *
- *   VerletEntry   — {j, r_ij, eta_j, [dx,dy,dz]}
- *   VerletList    — per-bead neighbor lists + rebuild logic
- *   VerletBuilder — constructs VerletList from positions + η array
+ *   VerletEntry    -  {j, r_ij, eta_j, [dx,dy,dz]}
+ *   VerletList     -  per-bead neighbor lists + rebuild logic
+ *   VerletBuilder  -  constructs VerletList from positions + η array
  *
  * Rebuild trigger:
  *   Maximum displacement since last build > r_skin / 2.
@@ -32,8 +32,8 @@
  *   array. The η snapshot is valid until the next rebuild. This is correct
  *   because η evolves slowly compared to positions (ERB design rule).
  *
- * Reference: environment_coupling.hpp — fill_pair_modulation()
- *            energy_decomposition.hpp — PairInteraction
+ * Reference: environment_coupling.hpp  -  fill_pair_modulation()
+ *            energy_decomposition.hpp  -  PairInteraction
  *
  * WO-56C  |  v5.0.0-beta.7
  */
@@ -47,38 +47,38 @@
 namespace vsepr::nl {
 
 // ============================================================================
-// VerletEntry — one neighbor record
+// VerletEntry  -  one neighbor record
 // ============================================================================
 
 /**
  * A single neighbor entry in the Verlet list for bead i.
  *
  * Stores:
- *   j        — neighbor index
- *   r_ij     — distance at build time (Å) — used for rebuild threshold only
- *   eta_j    — environment state of bead j at build time (ERB η snapshot)
- *   dx,dy,dz — displacement vector r_j - r_i at build time (Å)
+ *   j         -  neighbor index
+ *   r_ij      -  distance at build time (Å)  -  used for rebuild threshold only
+ *   eta_j     -  environment state of bead j at build time (ERB η snapshot)
+ *   dx,dy,dz  -  displacement vector r_j - r_i at build time (Å)
  *
  * During force evaluation, the caller recomputes r_ij from current positions.
  * The stored r_ij is only used in needs_rebuild() displacement check.
  */
 struct VerletEntry {
 	uint32_t j       = 0;
-	float    r_ij    = 0.0f;   // Å — distance at build time
+	float    r_ij    = 0.0f;   // Å  -  distance at build time
 	float    eta_j   = 0.0f;   // ERB η snapshot of neighbor j
-	float    dx      = 0.0f;   // Å — r_j.x - r_i.x at build time
+	float    dx      = 0.0f;   // Å  -  r_j.x - r_i.x at build time
 	float    dy      = 0.0f;
 	float    dz      = 0.0f;
 };
 
 // ============================================================================
-// VerletParams — configuration
+// VerletParams  -  configuration
 // ============================================================================
 
 struct VerletParams {
-	float r_cutoff = 12.0f;   // Å — interaction cutoff (same as LJ/Coulomb)
-	float r_skin   = 2.0f;    // Å — skin distance; r_cutoff + r_skin = build cutoff
-	float eta_skin = 0.1f;    // η change threshold — triggers rebuild if |Δη_i| > eta_skin
+	float r_cutoff = 12.0f;   // Å  -  interaction cutoff (same as LJ/Coulomb)
+	float r_skin   = 2.0f;    // Å  -  skin distance; r_cutoff + r_skin = build cutoff
+	float eta_skin = 0.1f;    // η change threshold  -  triggers rebuild if |Δη_i| > eta_skin
 							   // (density-dependent rebuild: dense systems rebuild more often)
 
 	float build_cutoff() const { return r_cutoff + r_skin; }
@@ -86,7 +86,7 @@ struct VerletParams {
 };
 
 // ============================================================================
-// VerletList — the neighbor list for all beads
+// VerletList  -  the neighbor list for all beads
 // ============================================================================
 
 class VerletList {
@@ -103,7 +103,7 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// Build — (re)construct list from current positions and η array
+	// Build  -  (re)construct list from current positions and η array
 	// -----------------------------------------------------------------------
 
 	/**
@@ -136,11 +136,11 @@ public:
 
 				if (r2 < rc2) {
 					float r = std::sqrt(r2);
-					// Add i→j
+					// Add i->j
 					list.push_back({
 						static_cast<uint32_t>(j), r, eta[j], dx, dy, dz
 					});
-					// Add j→i (symmetric)
+					// Add j->i (symmetric)
 					neighbors_[j].push_back({
 						static_cast<uint32_t>(i), r, eta[i], -dx, -dy, -dz
 					});
@@ -150,7 +150,7 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// needs_rebuild — displacement + η drift check
+	// needs_rebuild  -  displacement + η drift check
 	// -----------------------------------------------------------------------
 
 	/**
@@ -195,7 +195,7 @@ public:
 	const VerletParams& params() const { return params_; }
 
 	/**
-	 * Total neighbor pairs stored (double-counted — both i→j and j→i).
+	 * Total neighbor pairs stored (double-counted  -  both i->j and j->i).
 	 */
 	size_t total_entries() const {
 		size_t n = 0;
@@ -204,7 +204,7 @@ public:
 	}
 
 	/**
-	 * Average neighbors per bead — useful for diagnostics / density reporting.
+	 * Average neighbors per bead  -  useful for diagnostics / density reporting.
 	 */
 	float avg_neighbors() const {
 		if (n_beads_ == 0) return 0.0f;
@@ -219,11 +219,11 @@ public:
 	 * Iterate all unique pairs (i, entry) for ERB force/energy evaluation.
 	 *
 	 * The callback receives:
-	 *   i       — bead index
-	 *   entry   — VerletEntry with j, r_ij (at build time), eta_j, dx,dy,dz
-	 *   eta_i   — η of bead i (from the η array passed to most recent build)
+	 *   i        -  bead index
+	 *   entry    -  VerletEntry with j, r_ij (at build time), eta_j, dx,dy,dz
+	 *   eta_i    -  η of bead i (from the η array passed to most recent build)
 	 *
-	 * Note: this iterates i→j only (not the symmetric j→i entry) to avoid
+	 * Note: this iterates i->j only (not the symmetric j->i entry) to avoid
 	 * double-counting in energy evaluation. Force evaluation should use the
 	 * full list (both directions) via neighbors(i) directly.
 	 *
@@ -262,7 +262,7 @@ private:
  *   g_k = 1 + γ_k · η̄,    η̄ = 0.5·(η_i + entry.eta_j)
  *
  * This is the direct NL integration point for environment_coupling.hpp.
- * No O(N²) lookup — η_j is already in the entry.
+ * No O(N²) lookup  -  η_j is already in the entry.
  *
  * @param gamma_k   Channel modulation parameter (gamma_steric, gamma_elec, or gamma_disp)
  * @param eta_i     η of bead i (from caller or NL ref_eta_)

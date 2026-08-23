@@ -1,5 +1,5 @@
-// ============================================================================
-// topology_graph.cpp — Glass Module: Topology Graph Builder
+﻿// ============================================================================
+// topology_graph.cpp  -  Glass Module: Topology Graph Builder
 // ============================================================================
 
 #include "topology_graph.hpp"
@@ -9,7 +9,7 @@ namespace vsepr {
 namespace glass {
 
 // -----------------------------------------------------------------------
-// Default covalent radii (Å) — Cordero 2008 compilation, truncated to
+// Default covalent radii (Å)  -  Cordero 2008 compilation, truncated to
 // the first 54 elements.  Unknown / heavy atoms fall back to 1.50.
 // -----------------------------------------------------------------------
 static constexpr float kCovalentRadii[] = {
@@ -77,7 +77,7 @@ float default_covalent_radius(uint16_t Z) {
 }
 
 // -----------------------------------------------------------------------
-// build_topology — from flat arrays
+// build_topology  -  from flat arrays
 // -----------------------------------------------------------------------
 GlassMolecule build_topology(
     const std::vector<int>&                          atomic_numbers,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * APPLICATION TEST: Thermal Formation vs Quench-Only
  * 
  * Validates that thermal annealing accesses lower-energy states
@@ -8,10 +8,10 @@
  * Target: Rutile-like octahedral coordination
  * 
  * Protocol A (Quench-only):
- *   Initial state → FIRE → Final state
+ *   Initial state -> FIRE -> Final state
  * 
  * Protocol B (Thermal formation):
- *   Initial state → Langevin (900 K) → Anneal (900→300 K) → FIRE → Final state
+ *   Initial state -> Langevin (900 K) -> Anneal (900->300 K) -> FIRE -> Final state
  * 
  * Metrics:
  *   1. Final energy (lower is better)
@@ -244,7 +244,7 @@ Result protocol_B_thermal_formation(int seed, double box_length) {
 
     dynamics.integrate(state, params_hot, rng);
 
-    // Step 2: Anneal from 600 K → 300 K
+    // Step 2: Anneal from 600 K -> 300 K
     int n_anneal_steps = 10;      // REDUCED steps
     for (int i = 0; i < n_anneal_steps; ++i) {
         double T_current = 600.0 - (300.0 * i / n_anneal_steps);
@@ -281,15 +281,15 @@ Result protocol_B_thermal_formation(int seed, double box_length) {
 // ============================================================================
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  APPLICATION TEST: Thermal Formation vs Quench-Only      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  APPLICATION TEST: Thermal Formation vs Quench-Only      |\n";
+    std::cout << "+===========================================================+\n\n";
 
     std::cout << "System: MgF₂ cluster (2 Mg + 6 F atoms)\n";
     std::cout << "Target: Rutile-like octahedral coordination (Mg coord ≈ 6)\n\n";
 
     const int n_seeds = 10;
-    const double box_length = 10.0;  // REDUCED from 15 → tighter confinement
+    const double box_length = 10.0;  // REDUCED from 15 -> tighter confinement
 
     std::vector<Result> results_A;
     std::vector<Result> results_B;
@@ -318,7 +318,7 @@ int main() {
     
     std::cout << "Running Protocol B (Thermal formation) for " << n_seeds << " seeds...\n";
     std::cout << "  Stage 1: Langevin at 600 K for 2.5 ps\n";
-    std::cout << "  Stage 2: Anneal 600 K → 300 K over 1 ps\n";
+    std::cout << "  Stage 2: Anneal 600 K -> 300 K over 1 ps\n";
     std::cout << "  Stage 3: FIRE quench\n\n";
     
     for (int seed = 0; seed < n_seeds; ++seed) {
@@ -337,9 +337,9 @@ int main() {
     // ANALYSIS
     // ========================================================================
     
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  ANALYSIS                                                  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  ANALYSIS                                                  |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // Compute statistics for Protocol A
     double E_mean_A = 0.0;
@@ -395,9 +395,9 @@ int main() {
     // VALIDATION
     // ========================================================================
     
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VALIDATION                                                ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  VALIDATION                                                |\n";
+    std::cout << "+===========================================================+\n\n";
     
     bool pass_energy = (E_mean_B < E_mean_A - 1.0);  // B reaches lower energy (>1 kcal/mol difference)
     bool pass_success = (success_rate_B >= success_rate_A);  // B has equal or higher success rate
@@ -430,14 +430,14 @@ int main() {
     bool overall_pass = pass_energy && pass_success && pass_min_energy;
     
     if (overall_pass) {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✅ TEST PASSED: Thermal formation beats quench-only     ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ✅ TEST PASSED: Thermal formation beats quench-only     |\n";
+        std::cout << "+===========================================================+\n";
         return 0;
     } else {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ❌ TEST FAILED: Thermal formation not better than quench║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ❌ TEST FAILED: Thermal formation not better than quench|\n";
+        std::cout << "+===========================================================+\n";
         return 1;
     }
 }

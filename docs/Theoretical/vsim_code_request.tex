@@ -1,0 +1,412 @@
+% =============================================================================
+%  vsim_code_request.tex
+%  Implementation Request — Bridge Layer
+%  CR-2026-01 · VSIM Internal · v5.2.0-internal
+% =============================================================================
+\documentclass[11pt, a4paper]{article}
+\usepackage{vsim_common}
+
+\hypersetup{
+  pdftitle={Code Request CR-2026-01 --- Bridge Layer Implementation},
+  pdfsubject={VSIM Internal --- v5.2.0-internal}
+}
+
+% =============================================================================
+\begin{document}
+% =============================================================================
+
+\thispagestyle{empty}
+
+\begin{center}
+  \eyebrow{VSIM Internal \textperiodcentered\ Code Request}\\[8pt]
+  {\LARGE\sffamily\bfseries Implementation Request --- Bridge Layer}\\[6pt]
+  {\normalsize\sffamily
+    Identity Entropy Output Layer \quad\textperiodcentered\quad
+    Formation Context Wiring \quad\textperiodcentered\quad
+    Coalescence Tracking}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\begin{tabular}{@{}L{3cm} L{4.8cm} L{3cm} L{4.2cm}@{}}
+  \code{Doc ID}    & \texttt{CR-2026-01}                    &
+  \code{Status}    & Open --- pending implementation \\
+  \code{Target}    & \texttt{v5.2.0-internal}               &
+  \code{Audience}  & VSEPR-SIM / VSIM developers \\
+  \code{Raised}    & 2026-05-31                             &
+  \code{Closed}    & --- \\
+\end{tabular}
+
+\vspace{8pt}
+\begin{infobox}
+  \textbf{Ref:} Theoretical--Simulation Bridge Project
+  (\texttt{vsim\_bridge\_doc.tex}) --- read that first.
+  This document assumes familiarity with \S\,1--10 of the bridge doc
+  and does not re-derive theory.
+\end{infobox}
+
+\noindent\rule{\linewidth}{2pt}
+\vspace{6pt}
+
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Summary}
+% =============================================================================
+
+The bridge doc defines what the identity entropy layer should do. This document converts
+that into ten concrete implementation tasks with priorities, interface contracts, open
+decisions, and acceptance criteria. Tasks are grouped into three priority tiers. \pzero\
+tasks are blocking for v5.2.0. \pone\ tasks complete the feature. \ptwo\ tasks can defer
+to a follow-on milestone.
+
+\vspace{8pt}
+\begin{center}
+\small\sffamily
+\begin{tabular}{@{} C{2.5cm} C{2.5cm} C{2.5cm} C{2.5cm} C{2.5cm} @{}}
+  \toprule
+  \textbf{Total tasks} & \textbf{P0 --- blocking} & \textbf{P1 --- required} &
+  \textbf{P2 --- deferrable} & \textbf{Open decisions} \\
+  \midrule
+  10 & 3 & 5 & 2 & 5 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\section{Implementation Tasks}
+% =============================================================================
+
+\begin{warnbox}
+  \textbf{Dependencies:} CR-03 and CR-04 must land before CR-05 through CR-09 can
+  be meaningfully tested. CR-01 must land before CR-07. CR-06 has a hard dependency
+  on DEC-05 being resolved.
+\end{warnbox}
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{1.1cm} L{7.8cm} L{1.2cm} C{1.1cm} C{1.4cm} @{}}
+  \rowcolor{skybg}
+  \textbf{ID} & \textbf{Task} & \textbf{Ref} & \textbf{Pri.} & \textbf{Status} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \texttt{CR-01} &
+    \textbf{Parse \code{[formation]} and \code{[formation.initial\_state]} into
+    \code{FormationContext}.}
+    Struct skeleton in \code{vsim/identity\_entropy.hpp}.
+    Fields: \code{method}, \code{history}, \code{formation\_time},
+    \code{temperature\_K}, \code{pressure\_Pa}, \code{phase},
+    \code{defect\_state}, \code{grain\_state}, \code{density}.
+    Absent sub-fields default to \code{"unknown"} / zero, not error.
+    & \S\,4, \S\,10 & \pzero & \spend \\[4pt]
+
+  \texttt{CR-02} &
+    \textbf{Formation validation pass --- mark runs with absent or incomplete
+    formation as \code{incomplete} in the validation layer.}
+    Applies to simulations with material types: solid, surface, gas, pipe, powder,
+    structural. Missing \code{[formation]} block produces a validation warning,
+    not a hard failure. Runs must still execute.
+    & \S\,4 & \pzero & \spend \\[4pt]
+
+  \texttt{CR-03} &
+    \textbf{Parse \code{[outputs.identity\_entropy]} config block and wire into
+    the export pipeline.}
+    Fields: \code{enabled}, \code{path}, \code{format}, \code{precision},
+    \code{attach\_to\_viewer}, \code{write\_per\_frame}, \code{write\_summary},
+    \code{variables}.
+    If \code{enabled = false} the block is parsed but no writer is instantiated.
+    Schema decision DEC-01 must be resolved before this lands.
+    & \S\,5 & \pzero & \spend \\[4pt]
+
+  \texttt{CR-04} &
+    \textbf{Implement \code{IEWriter} --- header, per-frame write, summary, close.}
+    Full implementation stub in \code{vsim/identity\_entropy.cpp} (bridge doc \S\,10).
+    \code{write(IERecord\&)} must call \code{sync()} before writing.
+    Writer must not throw after \code{close()} is called.
+    Buffer strategy to be confirmed per DEC-04.
+    & \S\,5, \S\,10 & \pzero & \spend \\[4pt]
+
+  \texttt{CR-05} &
+    \textbf{Populate all 12 \code{IERecord} fields per simulation frame.}
+    \code{J}, \code{dataloss}, \code{recoverability} have defined derivation rules.
+    \code{dataentropy}, \code{hidden\_activity}, and \code{projection\_loss}
+    require physics model input --- see DEC-02.
+    \code{state\_quota} maps to $Q_n$. \code{entropy\_flux} is the frame-delta of
+    identity entropy. Fields not yet computable emit \code{0.0} with flag bit set.
+    & \S\,6 & \pone & \spend \\[4pt]
+
+  \texttt{CR-06} &
+    \textbf{Wire \code{coalescence\_gate()} into the bonding/clustering event system.}
+    When the gate fires, emit nonzero \code{coalescence\_loss} and \code{residual}
+    into the \code{IERecord} for that frame. Gate is \emph{read-only} --- it must
+    not mutate particle state on fire. \code{coalescence\_residual()} provides the
+    scalar loss value. See DEC-05.
+    & \S\,7, \S\,10 & \pone & \spend \\[4pt]
+
+  \texttt{CR-07} &
+    \textbf{Implement \code{FormationContext::formation\_memory()} and wire its
+    result into \code{IERecord.formation\_memory} each frame.}
+    The heuristic in bridge doc \S\,10 scores six declared descriptors.
+    A real implementation should degrade $M_f$ over time as the system
+    thermalizes. The heuristic is the starting floor. Thermalization model is
+    out of scope for P1; static heuristic is sufficient to unblock.
+    & \S\,8, \S\,10 & \pone & \spend \\[4pt]
+
+  \texttt{CR-08} &
+    \textbf{Add \code{"identity\_entropy"} as a valid entry in
+    \code{[observe].track}.}
+    When present, the runtime activates identity entropy tracking.
+    If the entry is present but \code{[outputs.identity\_entropy]} is absent or
+    \code{enabled = false}, emit a validation warning (not a failure).
+    & \S\,9 & \pone & \spend \\[4pt]
+
+  \texttt{CR-09} &
+    \textbf{Per-frame vs summary-only write modes, controlled by
+    \code{write\_per\_frame} and \code{write\_summary} flags.}
+    \code{write\_per\_frame = false} + \code{write\_summary = true} produces
+    a summary-only \code{.ie} file.
+    Both false is a no-op that still creates the file with just the header.
+    Both true is the default full output.
+    & \S\,5 & \pone & \spend \\[4pt]
+
+  \texttt{CR-10} &
+    \textbf{Viewer overlay wiring when \code{attach\_to\_viewer = true}.}
+    The \code{.ie} file path should be registered with the viewer's overlay system.
+    Exact overlay API is viewer-team's call --- this task is just the registration
+    handoff from the export pipeline. Can ship without this; viewer overlay is not
+    required for the output layer to be useful.
+    & \S\,5 & \ptwo & \spend \\
+
+\end{longtable}
+\normalsize
+
+% =============================================================================
+\section{Interface Contracts}
+% =============================================================================
+
+These constraints must not be violated regardless of how tasks are subdivided
+internally. They follow directly from the bridge doc's core principle.
+
+\vspace{6pt}
+\begin{infobox}
+\small
+\begin{description}[leftmargin=2.4cm, style=sameline, font=\ttfamily\small]
+  \item[IC-01] Identity entropy variables (\code{J}, \code{dataloss}, all
+    \code{IERecord} fields) must never be written back into mutable simulation
+    state. They are derived output only.
+  \item[IC-02] The \code{coalescence\_gate()} function is read-only. A gate fire
+    produces a sidecar record. It does not create, remove, or modify particles.
+  \item[IC-03] Render state must not mutate truth state. The viewer overlay (CR-10)
+    reads from the \code{.ie} file; it does not feed back into the simulation kernel.
+  \item[IC-04] \code{FormationContext} is a runtime-only object. It must not be
+    serialised into \code{.dynx} or any ground-truth particle record.
+  \item[IC-05] \code{IEWriter::write(IERecord\&)} must call \code{sync()} before
+    writing. Callers must not pre-call \code{sync()} and assume the writer will skip
+    it --- double-sync is safe; missing sync is not.
+  \item[IC-06] A missing or disabled \code{[outputs.identity\_entropy]} block must
+    not degrade simulation performance. The code path must be a no-op when disabled.
+  \item[IC-07] \code{J} must be in the range $[0.0, 1.0]$ at all times. Clamp on
+    computation, not on write. Values outside range indicate a model error.
+\end{description}
+\end{infobox}
+
+% =============================================================================
+\section{Open Decisions}
+% =============================================================================
+
+These must be resolved before the tasks that depend on them can land.
+
+\vspace{6pt}
+\begin{description}[leftmargin=2cm, style=nextline, font=\sffamily\bfseries\small]
+
+  \item[DEC-01 \hfill \stbd]
+    Schema bracket: \code{[outputs.identity\_entropy]} or
+    \code{[export.identity\_entropy]}?\\
+    {\small The bridge doc deliberately deferred this. Pick one and stick to it.
+    Blocks CR-03. If the rest of the export system uses \code{[export.*]}
+    sub-tables, consistency suggests folding in. If \code{[outputs.*]} is the
+    new direction, keep it separate.}
+
+  \item[DEC-02 \hfill \stbd]
+    How are \code{dataentropy}, \code{hidden\_activity}, and
+    \code{projection\_loss} computed?\\
+    {\small These require a model of the projection operator from identity-space to
+    observable state. The bridge doc defines the concept but not the formula. Until
+    resolved, CR-05 emits \code{0.0} with flag bit \texttt{0x1} set. Blocks CR-05
+    (full), CR-06 (partial).}
+
+  \item[DEC-03 \hfill \stbd]
+    \code{lineage\_depth} tracking strategy: per-object chain or global lineage
+    registry?\\
+    {\small Each object could carry its own depth counter (simple, cheap, no global
+    state), or the runtime could maintain a lineage map keyed on identity ID
+    (accurate for re-coalesced objects, more memory). Blocks CR-05 for
+    \code{lineage\_depth} population.}
+
+  \item[DEC-04 \hfill \stbd]
+    \code{IEWriter} buffer strategy: stream per frame or accumulate $N$ frames
+    then flush?\\
+    {\small Streaming per frame is simpler and crash-safe. Buffering $N$ frames is
+    faster for large simulations. The summary pass already buffers all records in
+    memory --- if memory is a concern the summary could be a running accumulator.
+    Blocks CR-04 finalisation.}
+
+  \item[DEC-05 \hfill \stbd]
+    Definition of the projection operator $A_n$ for coalescence residual
+    computation.\\
+    {\small \code{coalescence\_residual()} takes caller-supplied
+    \code{projected\_identity} vector. Who computes the projection, and how?
+    The bridge doc defines
+    $R_{\text{coal}}^{(n)} = C_n - A_n(I^{\star}_{(n+1)})$
+    but $A_n$ is not yet specified. Blocks CR-06.}
+
+\end{description}
+
+% =============================================================================
+\section{Acceptance Criteria}
+% =============================================================================
+
+A milestone is shippable when all \pzero\ and \pone\ criteria below are checked off.
+\ptwo\ criteria are tracked but not required for v5.2.0.
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{1.3cm} C{0.7cm} L{10.5cm} C{1.1cm} @{}}
+  \rowcolor{skybg}
+  \textbf{ID} & \textbf{Tick} & \textbf{Criterion} & \textbf{Priority} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  AC-01 & \cb &
+    A surface deposition run with \code{[outputs.identity\_entropy] enabled = true}
+    produces a valid \code{.ie} file at the declared path.
+    & \pzero \\
+
+  AC-02 & \cb &
+    The \code{.ie} file contains a header row, at least one data row per frame,
+    and a \code{\# SUMMARY} block with \code{rows}, \code{mean\_J}, \code{min\_J},
+    and \code{coal\_events}.
+    & \pzero \\
+
+  AC-03 & \cb &
+    \code{J} is within $[0.0, 1.0]$ for all rows. \code{dataloss} equals
+    $1 - J$ to within \texttt{float64} tolerance.
+    \code{recoverability} equals $1 - \text{projection\_loss}$.
+    & \pone \\
+
+  AC-04 & \cb &
+    A run with all six formation descriptors declared produces
+    \code{formation\_memory = 1.0} on frame 0.
+    A run with no formation block produces \code{formation\_memory = 0.0}.
+    & \pone \\
+
+  AC-05 & \cb &
+    A run without a \code{[formation]} block executes successfully and
+    the validation report contains a \code{formation: incomplete} warning.
+    No hard failure is emitted.
+    & \pzero \\
+
+  AC-06 & \cb &
+    When a coalescence event fires, the corresponding frame row in the \code{.ie}
+    file has \code{coalescence\_loss > 0.0}. Frames without coalescence events
+    have \code{coalescence\_loss = 0.0}.
+    & \pone \\
+
+  AC-07 & \cb &
+    \code{[outputs.identity\_entropy] enabled = false} produces no \code{.ie}
+    file and no measurable performance overhead versus a run without the block.
+    & \pzero \\
+
+  AC-08 & \cb &
+    A script with \code{"identity\_entropy"} in \code{[observe].track} but no
+    \code{[outputs.identity\_entropy]} block emits a validation warning and
+    runs without error.
+    & \pone \\
+
+  AC-09 & \cb &
+    \code{write\_per\_frame = false} + \code{write\_summary = true} produces a
+    \code{.ie} file with only the header and \code{\# SUMMARY} block ---
+    no data rows.
+    & \pone \\
+
+  AC-10 & \cb &
+    With \code{attach\_to\_viewer = true}, the \code{.ie} file path is registered
+    with the viewer overlay system. The viewer can display per-identity entropy
+    values without the simulation re-running.
+    & \ptwo \\
+
+\end{longtable}
+\normalsize
+
+% =============================================================================
+\section{File Inventory}
+% =============================================================================
+
+New files introduced by this request. Existing files should not require structural
+changes beyond adding new parser branches and wiring calls.
+
+\vspace{6pt}
+\small
+\begin{tabular}{@{} L{4.5cm} L{2.5cm} L{5.0cm} L{2.5cm} @{}}
+  \rowcolor{skybg}
+  \textbf{File} & \textbf{Type} & \textbf{Contents} & \textbf{Tasks} \\
+  \toprule
+
+  \code{vsim/identity\_entropy.hpp} &
+    New header &
+    \code{FormationContext}, \code{IERecord}, \code{CoalescenceInput},
+    \code{coalescence\_gate()}, \code{coalescence\_residual()}, \code{IEWriter}.
+    Skeleton in bridge doc \S\,10. &
+    CR-01, 04, 06, 07 \\[4pt]
+
+  \code{vsim/identity\_entropy.cpp} &
+    New TU &
+    Implementations of all non-inline functions from the header.
+    Skeleton in bridge doc \S\,10. &
+    CR-04, 06, 07 \\[4pt]
+
+  \code{vsim/parser/} \code{formation\_parser.*} &
+    New parser module &
+    Reads \code{[formation]} and \code{[formation.initial\_state]} into
+    \code{FormationContext}. Follows existing parser conventions. &
+    CR-01 \\[4pt]
+
+  \code{vsim/export/} \code{ie\_export.*} &
+    New export module &
+    Reads \code{[outputs.identity\_entropy]} config, instantiates \code{IEWriter},
+    wires frame callbacks into existing export pipeline alongside \code{.dynx},
+    analysis JSON, etc. &
+    CR-03, 05, 08, 09 \\[4pt]
+
+  \code{vsim/validation/} \code{formation\_check.*} &
+    New validation check &
+    Emits \code{formation: incomplete} warning for runs missing
+    \code{[formation]}. Runs after config parse, before runtime init. &
+    CR-02 \\
+
+  \bottomrule
+\end{tabular}
+\normalsize
+
+\vspace{12pt}
+\begin{warnbox}
+  \textbf{Path convention:}
+  Module paths above follow the existing VSIM source tree convention and are
+  illustrative. Actual paths should follow whatever the team has established for v5.x.
+  Do not bikeshed the filenames; do bikeshed the interfaces.
+\end{warnbox}
+
+% =============================================================================
+\vspace{16pt}
+\noindent\rule{\linewidth}{0.5pt}
+{\small\sffamily\textcolor{gray}{CR-2026-01 \textperiodcentered\
+  VSIM Internal \textperiodcentered\ v5.2.0-internal
+  \textperiodcentered\ Ref: vsim\_bridge\_doc.tex}}
+
+\end{document}

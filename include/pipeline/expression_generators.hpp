@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * Necessary includes are missing.
  * 
- * expression_generators.hpp — Symbolic Expression Builders for Pipeline Stages
+ * expression_generators.hpp  -  Symbolic Expression Builders for Pipeline Stages
  * ==============================================================================
  *
  * Pure functions. Each returns a SymbolicTrace for one derived metric.

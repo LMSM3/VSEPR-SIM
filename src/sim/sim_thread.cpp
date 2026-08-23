@@ -10,13 +10,30 @@
 #include "vsepr/formula_parser.hpp"
 #include "pot/periodic_db.hpp"
 #include "graph_builder.hpp"
+#include "core/element_data.hpp"
 #include <iostream>
 #include <chrono>
 #include <variant>
 #include <algorithm>
 #include <cctype>
+#include <cmath>
+#include <optional>
 
 namespace vsepr {
+
+namespace {
+
+std::optional<double> numeric_parameter_value(const ParamValue& value) {
+    if (const auto* number = std::get_if<double>(&value)) {
+        return *number;
+    }
+    if (const auto* integer = std::get_if<int>(&value)) {
+        return static_cast<double>(*integer);
+    }
+    return std::nullopt;
+}
+
+} // namespace
 
 // ============================================================================
 // Construction & Lifecycle
@@ -33,6 +50,7 @@ SimulationThread::SimulationThread()
     // Load periodic table for dynamic formula parsing
     try {
         ptable_ = PeriodicTable::load_from_json_file("data/PeriodicTableJSON.json");
+        init_chemistry_db(&ptable_);
     } catch (const std::exception& e) {
         std::cerr << "Warning: Failed to load periodic table: " << e.what() << std::endl;
     }
@@ -89,6 +107,10 @@ FrameSnapshot SimulationThread::get_latest_frame() {
     return frame_buffer_.read();
 }
 
+FramePacket SimulationThread::get_latest_frame_packet() {
+    return frame_buffer_.read_packet();
+}
+
 void SimulationThread::send_result(const CmdResult& result) {
     if (command_router_) {
         if (!command_router_->result_queue().try_push(result)) {
@@ -103,41 +125,86 @@ void SimulationThread::send_result(const CmdResult& result) {
 
 void SimulationThread::run() {
     std::cout << "[SimThread] Main loop started\n";
-    
-    // Publish initial empty frame
+    reset_live_clock();
     publish_frame();
-    
-    auto last_frame_time = std::chrono::steady_clock::now();
-    const auto frame_interval = std::chrono::milliseconds(16);  // ~60 FPS max
+
+    auto last_wall_time = std::chrono::steady_clock::now();
     
     while (!should_stop_) {
-        // 1. Drain command queue
+        const auto now = std::chrono::steady_clock::now();
+        const double wall_seconds = std::clamp(
+            std::chrono::duration<double>(now - last_wall_time).count(),
+            0.0, LiveSimulationClock::kMaximumFrameSeconds);
+        last_wall_time = now;
+        live_real_time_seconds_ += wall_seconds;
+
         process_commands();
-        
-        // 2. Advance simulation (if running)
+
         if (sim_state_ && sim_state_->is_running() && !sim_state_->is_paused()) {
-            sim_state_->step();
-            frame_counter_++;
-            
-            // Publish frame periodically
-            if (frame_counter_ % sim_state_->params().publish_every == 0) {
-                publish_frame();
+            // Tick throughput is an active-simulation metric. Paused and
+            // bootstrap wall time remains visible through real_time_seconds.
+            tick_rate_window_seconds_ += wall_seconds;
+            const int due_ticks = live_clock_.consume_elapsed(wall_seconds);
+            for (int tick = 0; tick < due_ticks; ++tick) {
+                if (!advance_live_tick()) {
+                    break;
+                }
             }
-        } else {
-            // Idle - sleep a bit to avoid busy-wait
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
-        
-        // 3. Frame rate limiting (optional)
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_frame_time);
-        if (elapsed < frame_interval) {
-            std::this_thread::sleep_for(frame_interval - elapsed);
+
+        if (tick_rate_window_seconds_ >= 0.25) {
+            live_ticks_per_second_ = static_cast<double>(ticks_in_rate_window_) /
+                tick_rate_window_seconds_;
+            tick_rate_window_seconds_ = 0.0;
+            ticks_in_rate_window_ = 0;
         }
-        last_frame_time = now;
+
+        // The renderer is never throttled here.  This short sleep only keeps
+        // the worker from busy-spinning between fixed simulation ticks.
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     
     std::cout << "[SimThread] Main loop finished\n";
+}
+
+void SimulationThread::reset_live_clock() {
+    live_clock_.reset();
+    live_real_time_seconds_ = 0.0;
+    tick_rate_window_seconds_ = 0.0;
+    live_ticks_per_second_ = 0.0;
+    ticks_in_rate_window_ = 0;
+    scheduled_run_steps_ = -1;
+}
+
+bool SimulationThread::advance_live_tick() {
+    if (!sim_state_ || !sim_state_->is_running() || sim_state_->is_paused()) {
+        return false;
+    }
+
+    sim_state_->step();
+    live_clock_.complete_tick();
+    ++frame_counter_;
+    ++ticks_in_rate_window_;
+
+    if (scheduled_run_steps_ > 0) {
+        --scheduled_run_steps_;
+    }
+
+    const bool optimization_mode = sim_state_->mode() != SimMode::MD;
+    const bool converged = optimization_mode && sim_state_->molecule().num_atoms() > 0 &&
+        sim_state_->is_converged();
+    const bool iteration_limit = sim_state_->stats().iteration >= sim_state_->params().max_iterations;
+
+    if (converged || (scheduled_run_steps_ == 0 && scheduled_run_steps_ != -1)) {
+        sim_state_->pause();
+    } else if (iteration_limit) {
+        sim_state_->stop();
+    }
+
+    // Publish every completed simulation tick.  The renderer may consume a
+    // subset, but it can always distinguish a new physical state by sequence.
+    publish_frame();
+    return sim_state_->is_running() && !sim_state_->is_paused();
 }
 
 void SimulationThread::process_commands() {
@@ -178,6 +245,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
             std::cout << "[SimThread] Reset: " << arg.config_id << "\n";
             if (sim_state_) {
                 sim_state_->reset();
+                reset_live_clock();
                 publish_frame();
                 
                 auto elapsed = std::chrono::steady_clock::now() - start_time;
@@ -201,6 +269,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
             std::cout << "[SimThread] Load: " << arg.filepath << "\n";
             if (sim_state_) {
                 if (sim_state_->load_from_file(arg.filepath)) {
+                    reset_live_clock();
                     publish_frame();
                     
                     auto elapsed = std::chrono::steady_clock::now() - start_time;
@@ -249,6 +318,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
                 }
                 mol.generate_angles_from_bonds();
                 sim_state_->initialize(mol);
+                reset_live_clock();
                 publish_frame();
                 
                 auto elapsed = std::chrono::steady_clock::now() - start_time;
@@ -266,6 +336,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
                       << " n=" << arg.n_particles << " box=" << arg.box_x << "\n";
             if (sim_state_) {
                 sim_state_->spawn_particles(arg);
+                reset_live_clock();
                 publish_frame();
                 
                 auto elapsed = std::chrono::steady_clock::now() - start_time;
@@ -421,6 +492,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
                     
                     // Initialize simulation with new molecule
                     sim_state_->initialize(mol);
+                    reset_live_clock();
                     publish_frame();
                     
                     auto elapsed = std::chrono::steady_clock::now() - start_time;
@@ -442,6 +514,20 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
         else if constexpr (std::is_same_v<T, CmdSet>) {
             std::cout << "[SimThread] Set: " << arg.path << "\n";
             if (sim_state_) {
+                if (arg.path == "live.speed") {
+                    const auto speed = numeric_parameter_value(arg.value);
+                    if (!speed || !live_clock_.set_speed_multiplier(*speed)) {
+                        CmdResult result = CmdResult::error(envelope.cmd_id,
+                            "live.speed must be one of: 0.1, 0.5, 1, 2, 10");
+                        send_result(result);
+                        return;
+                    }
+                    publish_frame();
+                    CmdResult result = CmdResult::ok(envelope.cmd_id,
+                        "Live speed set to " + std::to_string(*speed) + "x");
+                    send_result(result);
+                    return;
+                }
                 sim_state_->set_param(arg.path, arg.value);
                 
                 // Convert ParamValue to string using std::visit
@@ -479,6 +565,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
         else if constexpr (std::is_same_v<T, CmdPause>) {
             std::cout << "[SimThread] Pause\n";
             if (sim_state_) {
+                scheduled_run_steps_ = -1;
                 sim_state_->pause();
                 publish_frame();
                 
@@ -489,6 +576,7 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
         else if constexpr (std::is_same_v<T, CmdResume>) {
             std::cout << "[SimThread] Resume\n";
             if (sim_state_) {
+                scheduled_run_steps_ = -1;
                 std::cout << "[SimThread]   - Num atoms: " << sim_state_->molecule().num_atoms() << "\n";
                 std::cout << "[SimThread]   - Current mode: " << static_cast<int>(sim_state_->mode()) << "\n";
                 sim_state_->resume();
@@ -503,11 +591,21 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
         else if constexpr (std::is_same_v<T, CmdSingleStep>) {
             std::cout << "[SimThread] Single step: " << arg.n_steps << "\n";
             if (sim_state_) {
-                sim_state_->advance(arg.n_steps);
+                scheduled_run_steps_ = -1;
+                int completed = 0;
+                for (int step = 0; step < arg.n_steps; ++step) {
+                    sim_state_->resume();
+                    const bool still_running = advance_live_tick();
+                    ++completed;
+                    if (!still_running) {
+                        break;
+                    }
+                }
+                sim_state_->pause();
                 publish_frame();
                 
                 CmdResult result = CmdResult::ok(envelope.cmd_id, 
-                    "Advanced " + std::to_string(arg.n_steps) + " steps");
+                    "Advanced " + std::to_string(completed) + " live tick(s)");
                 send_result(result);
             }
         }
@@ -515,8 +613,10 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
             std::cout << "[SimThread] Run: steps=" << arg.steps << "\n";
             if (sim_state_) {
                 if (arg.steps > 0) {
-                    sim_state_->advance(arg.steps);
+                    scheduled_run_steps_ = arg.steps;
+                    sim_state_->resume();
                 } else {
+                    scheduled_run_steps_ = -1;
                     sim_state_->resume();  // Run indefinitely
                 }
                 publish_frame();
@@ -554,6 +654,20 @@ void SimulationThread::handle_envelope(const CmdEnvelope& envelope) {
 void SimulationThread::publish_frame() {
     if (sim_state_) {
         FrameSnapshot snap = sim_state_->get_snapshot();
+        snap.live.fixed_tick_hz = 1.0 / LiveSimulationClock::kFixedTickSeconds;
+        // Publish a current partial window as well as completed 250 ms windows.
+        // A finite run can pause on its final tick before the next full window
+        // rollover, and the live telemetry should still report its real rate.
+        snap.live.ticks_per_second = (ticks_in_rate_window_ > 0 && tick_rate_window_seconds_ > 0.0)
+            ? static_cast<double>(ticks_in_rate_window_) / tick_rate_window_seconds_
+            : live_ticks_per_second_;
+        snap.live.simulation_time_seconds = live_clock_.simulation_time_seconds();
+        snap.live.real_time_seconds = live_real_time_seconds_;
+        snap.live.speed_multiplier = live_clock_.speed_multiplier();
+        snap.live.tick_count = live_clock_.tick_count();
+        snap.live.paused = sim_state_->is_paused();
+        snap.live.solver_converged = sim_state_->mode() != SimMode::MD &&
+            sim_state_->molecule().num_atoms() > 0 && sim_state_->is_converged();
         frame_buffer_.write(snap);
     }
 }
@@ -618,6 +732,7 @@ bool SimulationThread::build_from_composition(
         
         // Initialize simulation with new molecule
         sim_state_->initialize(mol);
+        reset_live_clock();
         publish_frame();
         
         // Add to custom defaults

@@ -1,5 +1,5 @@
-// =============================================================================
-// tests/vec3_type_audit.cpp — Day #56 Vec3 Unification Audit
+﻿// =============================================================================
+// tests/vec3_type_audit.cpp  -  Day #56 Vec3 Unification Audit
 // =============================================================================
 // Static assertions that enforce the single-Vec3-type rule.
 //
@@ -27,7 +27,7 @@
 #include "core/stats/online_stats.hpp"
 #include "core/stats/stationarity_gate.hpp"
 
-// ─── Vec3 alias audit ────────────────────────────────────────────────────────
+// --- Vec3 alias audit --------------------------------------------------------
 
 static_assert(std::is_same_v<atomistic::Vec3, vsepr::Vec3>,
 	"atomistic::Vec3 must be an alias for vsepr::Vec3 (Day #56)");
@@ -35,7 +35,7 @@ static_assert(std::is_same_v<atomistic::Vec3, vsepr::Vec3>,
 static_assert(std::is_same_v<vsepr::ufx::Vec3, vsepr::Vec3>,
 	"vsepr::ufx::Vec3 must be an alias for vsepr::Vec3 (Day #56)");
 
-// ─── OnlineStats smoke test ───────────────────────────────────────────────────
+// --- OnlineStats smoke test ---------------------------------------------------
 
 static void test_online_stats() {
 	vsepr::OnlineStats s;
@@ -57,18 +57,18 @@ static void test_online_stats() {
 	assert(s.count() == 0);
 }
 
-// ─── StationarityGate smoke test ─────────────────────────────────────────────
+// --- StationarityGate smoke test ---------------------------------------------
 
 static void test_stationarity_gate() {
 	vsepr::StationarityGate gate;
 	gate.min_samples = 10;
 	gate.relative_tolerance = 0.01;  // 1%
 
-	// Feed noisy values — gate should not open yet
+	// Feed noisy values  -  gate should not open yet
 	for (int i = 0; i < 9; ++i) gate.push(1.0 + 0.5 * (i % 3));
 	assert(!gate.ready() && "Gate opened before min_samples");
 
-	// Feed very stable values — gate should open
+	// Feed very stable values  -  gate should open
 	vsepr::StationarityGate stable_gate;
 	stable_gate.min_samples = 10;
 	stable_gate.relative_tolerance = 0.01;
@@ -76,7 +76,7 @@ static void test_stationarity_gate() {
 	assert(stable_gate.ready() && "Gate did not open on stable signal");
 }
 
-// ─── Vec3 operator smoke test ────────────────────────────────────────────────
+// --- Vec3 operator smoke test ------------------------------------------------
 
 static void test_vec3_ops() {
 	using vsepr::Vec3;

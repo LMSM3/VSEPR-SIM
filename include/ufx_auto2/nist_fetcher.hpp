@@ -1,4 +1,4 @@
-// include/ufx_auto2/nist_fetcher.hpp
+﻿// include/ufx_auto2/nist_fetcher.hpp
 // UFX_AUTO_2 Phase 5 -- NIST Chemistry WebBook Fetcher
 // VSEPR-SIM v5 beta8 -> beta9 target
 //
@@ -17,7 +17,7 @@ namespace vsepr::ufx {
 
 class NISTFetcher : public IWebFetcher {
 public:
-	// requests_per_second: default 1.0 — conservative for NIST HTML scraping
+	// requests_per_second: default 1.0  -  conservative for NIST HTML scraping
 	explicit NISTFetcher(double requests_per_second = 1.0);
 
 	WebResponse fetch(const WebQuery& query) override;

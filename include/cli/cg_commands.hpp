@@ -1,18 +1,18 @@
-#pragma once
+﻿#pragma once
 /**
- * cg_commands.hpp — Coarse-Grained CLI Command Layer
+ * cg_commands.hpp  -  Coarse-Grained CLI Command Layer
  *
  * Scientific operator console for the coarse-grained engine.
  * Provides five clean operations:
  *
- *   1. scene   — Load or build a scene (bead configurations)
- *   2. inspect — Inspect bead/system state
- *   3. env     — Run environment update pipeline
- *   4. interact — Evaluate interactions / step the system
- *   5. viz     — Launch lightweight visualization (stub)
+ *   1. scene    -  Load or build a scene (bead configurations)
+ *   2. inspect  -  Inspect bead/system state
+ *   3. env      -  Run environment update pipeline
+ *   4. interact  -  Evaluate interactions / step the system
+ *   5. viz      -  Launch lightweight visualization (stub)
  *
  * Architecture:
- *   CLI → cg_dispatch() → CGSystemState → kernel/environment engine
+ *   CLI -> cg_dispatch() -> CGSystemState -> kernel/environment engine
  *
  * Grammar:
  *   vsepr cg <action> [options]

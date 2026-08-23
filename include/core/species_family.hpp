@@ -1,13 +1,13 @@
-/**
+﻿/**
  * species_family.hpp
  * ------------------
  * Species Family Taxonomy and Entity Model for VSEPR-SIM.
  *
  * Defines the four-family classification:
- *   GAS     — noble, diatomic, polyatomic, refrigerant, fuel, mixture
- *   CRYSTAL — metal, ionic, covalent, actinide, defect crystal
- *   OM      — organometallics (large): transition-metal, actinide, Cp/arene, hybrid
- *   CM      — ceramics (medium): oxide, carbide, nitride, silicate, refractory, powder
+ *   GAS      -  noble, diatomic, polyatomic, refrigerant, fuel, mixture
+ *   CRYSTAL  -  metal, ionic, covalent, actinide, defect crystal
+ *   OM       -  organometallics (large): transition-metal, actinide, Cp/arene, hybrid
+ *   CM       -  ceramics (medium): oxide, carbide, nitride, silicate, refractory, powder
  *
  * Each SpeciesEntity carries:
  *   - family + subtype classification
@@ -24,10 +24,10 @@
  * every mapping deterministic and inspectable.
  *
  * Reference architecture:
- *   io/xyz_format.hpp      — XYZAtom, XYZBond, XYZMolecule
- *   data/Crystal.hpp       — LatticeVectors, Atom, Bond, Crystal
- *   gas2/gas2_species.hpp  — GasSpecies (transport + EOS data)
- *   truth/truth_state.hpp  — TruthState (reproducibility ledger)
+ *   io/xyz_format.hpp       -  XYZAtom, XYZBond, XYZMolecule
+ *   data/Crystal.hpp        -  LatticeVectors, Atom, Bond, Crystal
+ *   gas2/gas2_species.hpp   -  GasSpecies (transport + EOS data)
+ *   truth/truth_state.hpp   -  TruthState (reproducibility ledger)
  */
 
 #pragma once
@@ -189,9 +189,9 @@ inline const char* subfamily_name(SpeciesSubfamily sf) {
 // ============================================================================
 
 enum class ScaleClass {
-    SMALL,      // 1–10 atoms (single molecules, noble atoms)
-    MEDIUM,     // 10–100 atoms (small clusters, ceramic grains)
-    LARGE,      // 100–10000 atoms (crystals, organometallic complexes)
+    SMALL,      // 1-10 atoms (single molecules, noble atoms)
+    MEDIUM,     // 10-100 atoms (small clusters, ceramic grains)
+    LARGE,      // 100-10000 atoms (crystals, organometallic complexes)
     BULK        // >10000 atoms (supercells, bulk simulations)
 };
 
@@ -258,10 +258,10 @@ inline PhysicsEmphasis default_emphasis(SpeciesFamily f) {
 // ============================================================================
 
 enum class RecommendedFormat {
-    XYZ,    // .xyz  — static species geometry
-    XYZA,   // .xyzA — charge, velocity, force, energy
-    XYZC,   // .xyzC — restartable state (checkpoint)
-    XYZF    // .xyzF — multi-frame trajectories
+    XYZ,    // .xyz   -  static species geometry
+    XYZA,   // .xyzA  -  charge, velocity, force, energy
+    XYZC,   // .xyzC  -  restartable state (checkpoint)
+    XYZF    // .xyzF  -  multi-frame trajectories
 };
 
 inline const char* format_extension(RecommendedFormat f) {
@@ -331,17 +331,17 @@ struct ExternalLayer {
 };
 
 // ============================================================================
-// SpeciesEntity — the unified wrapper
+// SpeciesEntity  -  the unified wrapper
 // ============================================================================
 //
 // Composes:
-//   family     — GAS / CRYSTAL / ORGANOMETALLIC / CERAMIC
-//   subfamily  — fine-grained classification
-//   core       — atoms, bonds, geometry (via io::XYZMolecule interface)
-//   ext        — charges, velocities, forces, energy, PBC, coordination
-//   scale      — estimated atom count category
-//   emphasis   — which physics dominate
-//   formats    — recommended XYZ-family file formats
+//   family      -  GAS / CRYSTAL / ORGANOMETALLIC / CERAMIC
+//   subfamily   -  fine-grained classification
+//   core        -  atoms, bonds, geometry (via io::XYZMolecule interface)
+//   ext         -  charges, velocities, forces, energy, PBC, coordination
+//   scale       -  estimated atom count category
+//   emphasis    -  which physics dominate
+//   formats     -  recommended XYZ-family file formats
 //
 // This is a thin aggregation layer. It does NOT duplicate the data in
 // io::XYZMolecule or data::Crystal. The core field uses the same
@@ -425,7 +425,7 @@ struct SpeciesEntity {
 };
 
 // ============================================================================
-// Classification engine — deterministic family assignment
+// Classification engine  -  deterministic family assignment
 // ============================================================================
 //
 // Given a formula string, attempts to classify into family + subfamily.
@@ -689,7 +689,7 @@ inline SpeciesEntity classify(const std::string& formula, int atom_count = 1) {
 } // namespace classify
 
 // ============================================================================
-// Family database — the practical mapping table
+// Family database  -  the practical mapping table
 // ============================================================================
 
 struct FamilyDescriptor {
@@ -718,7 +718,7 @@ inline const std::vector<FamilyDescriptor>& family_descriptors() {
 }
 
 // ============================================================================
-// Subfamily registry — all subfamilies with parent + examples
+// Subfamily registry  -  all subfamilies with parent + examples
 // ============================================================================
 
 struct SubfamilyDescriptor {

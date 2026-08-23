@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * cmd_run_vsim.hpp — vsper run <script.vsim> subcommand
+ * cmd_run_vsim.hpp  -  vsper run <script.vsim> subcommand
  * ======================================================
  *
  * Parses a .vsim script, resolves the registry, runs the formation
@@ -11,9 +11,9 @@
  *   vsper run scripts/demo_03_graphite_stack.vsim
  *
  * Exit codes:
- *   0  — run completed (warnings may be present)
- *   1  — run failed (simulation / export error)
- *   2  — file not found / parse exception
+ *   0   -  run completed (warnings may be present)
+ *   1   -  run failed (simulation / export error)
+ *   2   -  file not found / parse exception
  *
  * WO-57D  |  v5.0.0-beta.7
  */

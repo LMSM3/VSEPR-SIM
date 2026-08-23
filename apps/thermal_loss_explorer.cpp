@@ -1,5 +1,5 @@
-/**
- * thermal_loss_explorer.cpp — Molten-salt / channel thermal loss analysis
+﻿/**
+ * thermal_loss_explorer.cpp  -  Molten-salt / channel thermal loss analysis
  * ======================================================================
  *
  * Tracks Tc (center), Th (hot wall / source), T_ambient, and cumulative

@@ -1,12 +1,12 @@
-/**
+﻿/**
  * test_scf_polarization.cpp
  * =========================
  * Phase 1 validation for the SCF induced-dipole polarization solver.
  *
  * Test groups:
  *
- *  A — Argon Dimer (Ar2)          pure induced-dipole response
- *  ─────────────────────────────────────────────────────────────
+ *  A  -  Argon Dimer (Ar2)          pure induced-dipole response
+ *  -------------------------------------------------------------
  *  A1  Field-off symmetry: no external source -> mu = 0
  *  A2  External field symmetry: field along bond, mu_0 ~= mu_1
  *      (charge at 500 A gives <2% asymmetry across the 4 A dimer)
@@ -14,8 +14,8 @@
  *  A4  Convergence rate vs separation (3, 4, 5, 7, 10 A)
  *  A5  50-seed determinism: any initial guess -> same result
  *
- *  B — Water Trimer (cyclic (H2O)3)   permanent dipoles + coupling
- *  ─────────────────────────────────────────────────────────────
+ *  B  -  Water Trimer (cyclic (H2O)3)   permanent dipoles + coupling
+ *  -------------------------------------------------------------
  *  B1  Converges within max_iter with default params
  *  B2  Induced dipoles non-zero; U_pol < 0 (stabilising)
  *  B3  50-seed determinism: same converged dipoles for all seeds
@@ -149,7 +149,7 @@ static void perturb_dipoles(State& s, uint64_t seed, double amp = 0.1) {
 }
 
 // ============================================================================
-// Group A — Argon dimer
+// Group A  -  Argon dimer
 // ============================================================================
 
 void test_A1_field_off() {
@@ -243,7 +243,7 @@ void test_A5_determinism_50seeds() {
 }
 
 // ============================================================================
-// Group B — Water trimer
+// Group B  -  Water trimer
 // ============================================================================
 
 void test_B1_convergence() {

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase3_isomer_validation.cpp
  * =============================
  * Phase 3 Retest: Isomerism Testing (cis/trans)
@@ -10,10 +10,10 @@
  * - Basin stability: 0.05 Å perturbation + re-optimization
  * 
  * PASS criteria:
- * - Identity: ∠Cl–Co–Cl stays 80–100° (cis) or 175–185° (trans)
+ * - Identity: ∠Cl-Co-Cl stays 80-100° (cis) or 175-185° (trans)
  * - Coordination: CN(Co) = 6 in all runs
  * - Geometry: metal-centered angles cluster near 90°/180° (octahedral)
- * - Distances: Co–N within 1.80–2.30 Å, Co–Cl within 2.00–2.80 Å
+ * - Distances: Co-N within 1.80-2.30 Å, Co-Cl within 2.00-2.80 Å
  * - Multi-minima: cis and trans converge to distinct basins
  * - Reproducibility: ≥ 80% of seeds converge to intended basin
  * - Stability: perturb + re-opt returns to same basin
@@ -37,13 +37,13 @@ using namespace vsepr;
 //=============================================================================
 
 void print_header(const std::string& title) {
-    std::cout << "\n╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ " << std::left << std::setw(60) << title << " ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==============================================================+\n";
+    std::cout << "| " << std::left << std::setw(60) << title << " |\n";
+    std::cout << "+==============================================================+\n\n";
 }
 
 void print_section(const std::string& title) {
-    std::cout << "\n─── " << title << " ───\n";
+    std::cout << "\n--- " << title << " ---\n";
 }
 
 struct GeometryMetrics {
@@ -291,7 +291,7 @@ void test_phase3_cis_trans() {
         if (seed < 3 || !converged_to_cis) {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": ∠Cl-Co-Cl = " << std::fixed << std::setprecision(1) << metrics.cl_co_cl_angle 
-                      << "° → " << classify_basin(metrics.cl_co_cl_angle)
+                      << "° -> " << classify_basin(metrics.cl_co_cl_angle)
                       << " (CN=" << metrics.coordination_number << ")\n";
         }
     }
@@ -346,7 +346,7 @@ void test_phase3_cis_trans() {
         if (seed < 3 || !converged_to_trans) {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": ∠Cl-Co-Cl = " << std::fixed << std::setprecision(1) << metrics.cl_co_cl_angle 
-                      << "° → " << classify_basin(metrics.cl_co_cl_angle)
+                      << "° -> " << classify_basin(metrics.cl_co_cl_angle)
                       << " (CN=" << metrics.coordination_number << ")\n";
         }
     }
@@ -380,13 +380,13 @@ void test_phase3_cis_trans() {
     
     std::cout << "\n";
     if (overall_pass) {
-        std::cout << "╔════════════════════════════════════════╗\n";
-        std::cout << "║  ✓ PHASE 3 PASS: Isomerism Validated  ║\n";
-        std::cout << "╚════════════════════════════════════════╝\n";
+        std::cout << "+========================================+\n";
+        std::cout << "|  ✓ PHASE 3 PASS: Isomerism Validated  |\n";
+        std::cout << "+========================================+\n";
     } else {
-        std::cout << "╔════════════════════════════════════════╗\n";
-        std::cout << "║  ✗ PHASE 3 FAIL: Issues detected      ║\n";
-        std::cout << "╚════════════════════════════════════════╝\n";
+        std::cout << "+========================================+\n";
+        std::cout << "|  ✗ PHASE 3 FAIL: Issues detected      |\n";
+        std::cout << "+========================================+\n";
     }
 }
 

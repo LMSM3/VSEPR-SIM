@@ -1,4 +1,4 @@
-/**
+﻿/**
  * XYZ Suite Tester
  * 
  * Production test harness for I/O API
@@ -108,9 +108,9 @@ private:
 // ============================================================================
 
 void print_header(const std::string& title) {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ " << std::left << std::setw(62) << title << " ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "| " << std::left << std::setw(62) << title << " |\n";
+    std::cout << "+================================================================+\n";
 }
 
 void print_section(const std::string& title) {
@@ -118,13 +118,13 @@ void print_section(const std::string& title) {
 }
 
 void print_metrics(const ResourceMetrics& metrics) {
-    std::cout << "│ Performance Metrics:\n";
-    std::cout << "│   Time:   " << std::fixed << std::setprecision(2) 
+    std::cout << "| Performance Metrics:\n";
+    std::cout << "|   Time:   " << std::fixed << std::setprecision(2) 
               << metrics.elapsed_time.count() / 1000.0 << " ms\n";
-    std::cout << "│   CPU:    " << std::setprecision(1) << metrics.cpu_percent << "%\n";
-    std::cout << "│   Memory: " << metrics.memory_mb << " MB\n";
+    std::cout << "|   CPU:    " << std::setprecision(1) << metrics.cpu_percent << "%\n";
+    std::cout << "|   Memory: " << metrics.memory_mb << " MB\n";
     if (metrics.gpu_utilization > 0.0) {
-        std::cout << "│   GPU:    " << metrics.gpu_utilization << "%\n";
+        std::cout << "|   GPU:    " << metrics.gpu_utilization << "%\n";
     }
     std::cout << "+" << std::string(64, '-') << "\n";
 }
@@ -137,14 +137,14 @@ void show_backend_structure(const io::XYZMolecule& mol) {
     print_section("Backend Data Structure");
     
     // Atom data
-    std::cout << "│ Atoms (" << mol.atoms.size() << "):\n";
-    std::cout << "│   Idx | Element | Position (Å)                    | ${RED}Charge\n";
+    std::cout << "| Atoms (" << mol.atoms.size() << "):\n";
+    std::cout << "|   Idx | Element | Position (Å)                    | ${RED}Charge\n";
     std::cout << "|   " << std::string(60, '-') << "\n";
 
     size_t display_limit = std::min(mol.atoms.size(), size_t(10));
     for (size_t i = 0; i < display_limit; ++i) {
         const auto& atom = mol.atoms[i];
-        std::cout << "│   " << std::setw(3) << i << " | "
+        std::cout << "|   " << std::setw(3) << i << " | "
                   << std::setw(7) << atom.element << " | ("
                   << std::setw(7) << std::fixed << std::setprecision(3) << atom.position[0] << ", "
                   << std::setw(7) << atom.position[1] << ", "
@@ -152,13 +152,13 @@ void show_backend_structure(const io::XYZMolecule& mol) {
                   << std::setw(6) << std::setprecision(2) << atom.charge << "\n";
     }
     if (mol.atoms.size() > display_limit) {
-        std::cout << "│   ... (" << (mol.atoms.size() - display_limit) << " more)\n";
+        std::cout << "|   ... (" << (mol.atoms.size() - display_limit) << " more)\n";
     }
     
     // Bond data
     if (!mol.bonds.empty()) {
-        std::cout << "│\n│ Bonds (" << mol.bonds.size() << "):\n";
-        std::cout << "│   Idx | Atom I | Atom J | Order | Length (Å)\n";
+        std::cout << "|\n| Bonds (" << mol.bonds.size() << "):\n";
+        std::cout << "|   Idx | Atom I | Atom J | Order | Length (Å)\n";
         std::cout << "|   " << std::string(60, '-') << "\n";
 
         size_t bond_limit = std::min(mol.bonds.size(), size_t(10));
@@ -172,30 +172,30 @@ void show_backend_structure(const io::XYZMolecule& mol) {
             double dz = a1.position[2] - a2.position[2];
             double length = std::sqrt(dx*dx + dy*dy + dz*dz);
             
-            std::cout << "│   " << std::setw(3) << i << " | "
+            std::cout << "|   " << std::setw(3) << i << " | "
                       << std::setw(6) << bond.atom_i << " | "
                       << std::setw(6) << bond.atom_j << " | "
                       << std::setw(5) << std::setprecision(1) << bond.bond_order << " | "
                       << std::setw(9) << std::setprecision(3) << length << "\n";
         }
         if (mol.bonds.size() > bond_limit) {
-            std::cout << "│   ... (" << (mol.bonds.size() - bond_limit) << " more)\n";
+            std::cout << "|   ... (" << (mol.bonds.size() - bond_limit) << " more)\n";
         }
     }
     
     // Computed properties
-    std::cout << "│\n│ Properties:\n";
-    std::cout << "│   Formula:     " << compute_formula(mol) << "\n";
-    std::cout << "│   Mol. Mass:   " << std::fixed << std::setprecision(3) 
+    std::cout << "|\n| Properties:\n";
+    std::cout << "|   Formula:     " << compute_formula(mol) << "\n";
+    std::cout << "|   Mol. Mass:   " << std::fixed << std::setprecision(3) 
               << compute_molecular_mass(mol) << " amu\n";
     
     auto com = compute_center_of_mass(mol);
-    std::cout << "│   Center Mass: (" 
+    std::cout << "|   Center Mass: (" 
               << std::setprecision(3) << com[0] << ", " 
               << com[1] << ", " << com[2] << ") Å\n";
     
     auto center = mol.get_center();
-    std::cout << "│   Centroid:    (" 
+    std::cout << "|   Centroid:    (" 
               << std::setprecision(3) << center[0] << ", " 
               << center[1] << ", " << center[2] << ") Å\n";
     
@@ -253,7 +253,7 @@ bool test_load_and_validate(const std::string& filepath, ResourceMonitor& monito
 }
 
 bool test_round_trip(const std::string& filepath, ResourceMonitor& monitor) {
-    print_section("Round-Trip Test (Load → Save → Reload)");
+    print_section("Round-Trip Test (Load -> Save -> Reload)");
     
     // Load original
     auto original = load_molecule(filepath, true);
@@ -273,7 +273,7 @@ bool test_round_trip(const std::string& filepath, ResourceMonitor& monitor) {
         std::cout << "❌ Save failed: " << save_status.message() << "\n";
         return false;
     }
-    std::cout << "│ Save: " << save_metrics.elapsed_time.count() / 1000.0 << " ms\n";
+    std::cout << "| Save: " << save_metrics.elapsed_time.count() / 1000.0 << " ms\n";
     
     // Reload
     monitor.start();
@@ -285,15 +285,15 @@ bool test_round_trip(const std::string& filepath, ResourceMonitor& monitor) {
         fs::remove(temp_file);
         return false;
     }
-    std::cout << "│ Reload: " << load_metrics.elapsed_time.count() / 1000.0 << " ms\n";
+    std::cout << "| Reload: " << load_metrics.elapsed_time.count() / 1000.0 << " ms\n";
     
     // Compare
     bool atoms_match = (original.value().atoms.size() == reloaded.value().atoms.size());
     bool formula_match = (compute_formula(original.value()) == compute_formula(reloaded.value()));
     
-    std::cout << "│\n│ Verification:\n";
-    std::cout << "│   Atom count:  " << (atoms_match ? "✓" : "❌") << "\n";
-    std::cout << "│   Formula:     " << (formula_match ? "✓" : "❌") << "\n";
+    std::cout << "|\n| Verification:\n";
+    std::cout << "|   Atom count:  " << (atoms_match ? "✓" : "❌") << "\n";
+    std::cout << "|   Formula:     " << (formula_match ? "✓" : "❌") << "\n";
     
     fs::remove(temp_file);
     std::cout << "+" << std::string(64, '-') << "\n";
@@ -312,14 +312,14 @@ bool test_bond_detection(const std::string& filepath, ResourceMonitor& monitor) 
     
     auto mol = mol_result.value();
     
-    std::cout << "│ Before detection: " << mol.bonds.size() << " bonds\n";
+    std::cout << "| Before detection: " << mol.bonds.size() << " bonds\n";
     
     monitor.start();
     int num_bonds = detect_bonds(mol, 1.2);
     auto metrics = monitor.stop();
     
-    std::cout << "│ After detection:  " << num_bonds << " bonds\n";
-    std::cout << "│ Detection time:   " << metrics.elapsed_time.count() / 1000.0 << " ms\n";
+    std::cout << "| After detection:  " << num_bonds << " bonds\n";
+    std::cout << "| Detection time:   " << metrics.elapsed_time.count() / 1000.0 << " ms\n";
     std::cout << "+" << std::string(64, '-') << "\n";
 
     return true;

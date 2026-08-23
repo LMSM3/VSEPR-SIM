@@ -1,0 +1,48 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# BUG_EXPOSER: static Matplotlib output without an interactive viewer
+# Run: vsepr run scripts/debugging/bug_exposer_matplotlib_png_only.vsim
+
+[project]
+name        = "bug_exposer_matplotlib_png_only"
+version     = "v5.14.1"
+seed_base   = 85002
+determinism = true
+description = "Regression script for PNG-only post-run visualization"
+
+[simulation]
+fire_max_steps   = 1
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "organic"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 1
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode            = "md"
+num_steps       = 1
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 1
+render_interval = 1
+
+[export]
+output_dir      = "out/bug_exposer_matplotlib_png_only"
+write_xyz       = true
+write_report_md = true
+
+[visual]
+output_type = "none"
+
+# Keep post-run publication configuration at the end of the script.
+[export.visual]
+write_png_snapshots = true
+visual_output_dir   = "out/bug_exposer_matplotlib_png_only/figures"
+

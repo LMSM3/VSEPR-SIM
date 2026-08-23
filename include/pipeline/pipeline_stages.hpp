@@ -1,21 +1,21 @@
-#pragma once
+﻿#pragma once
 /**
- * pipeline_stages.hpp — beta-7 Pipeline Stage Functions
+ * pipeline_stages.hpp  -  beta-7 Pipeline Stage Functions
  * ======================================================
  *
  * Inline implementations of all five transformation stages:
  *
- *   stage_fingerprint(FormationRecord)    → FingerprintRecord
- *   stage_cluster(FingerprintRecord, &registry) → ClusterRecord
- *   stage_analysis(ClusterRecord, FormationRecord) → AnalysisRecord
- *   stage_report(AnalysisRecord)          → ReportRecord
- *   stage_dashboard(vector<ReportRecord>, &registry, label) → DashboardRecord
+ *   stage_fingerprint(FormationRecord)    -> FingerprintRecord
+ *   stage_cluster(FingerprintRecord, &registry) -> ClusterRecord
+ *   stage_analysis(ClusterRecord, FormationRecord) -> AnalysisRecord
+ *   stage_report(AnalysisRecord)          -> ReportRecord
+ *   stage_dashboard(vector<ReportRecord>, &registry, label) -> DashboardRecord
  *
- *   run_pipeline(vector<FormationRecord>, label) → pair<vector<PipelineRecord>, DashboardRecord>
+ *   run_pipeline(vector<FormationRecord>, label) -> pair<vector<PipelineRecord>, DashboardRecord>
  *
  * Design rules:
  *   - No side-effects on FormationRecord or State.
- *   - All functions are pure transforms (inputs → output).
+ *   - All functions are pure transforms (inputs -> output).
  *   - Warnings are accumulated, never thrown.
  *   - NaN inputs are tolerated: replaced with 0.0 and flagged.
  *
@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -89,7 +90,7 @@ inline std::string jq(const std::string& s) {
 } // namespace detail
 
 // ============================================================================
-// Stage 1 — Fingerprint
+// Stage 1  -  Fingerprint
 // ============================================================================
 
 /**
@@ -98,7 +99,7 @@ inline std::string jq(const std::string& s) {
  * Extracts a fixed-length feature vector from a v4::FormationRecord.
  * All NaN fields are replaced with 0.0 (flagged via WarningCode).
  *
- * Feature layout  (FingerprintRecord::FEATURE_DIM == 8):
+ * Feature layout  (FingerprintRecord::FEATURE_DIM == 10):
  *   [0] final_energy
  *   [1] rms_force
  *   [2] avg_eta
@@ -107,10 +108,11 @@ inline std::string jq(const std::string& s) {
  *   [5] macro_rigidity
  *   [6] macro_ductility
  *   [7] log10(steps + 1)
+ *   [8] topology_hash_f  (normalised FNV hash of lattice_class + n_beads)
+ *   [9] coord_pat_hash_f (normalised FNV hash of n_l3_domains + avg_C bin + avg_eta bin)
  *
- * Normalization: none at this stage — ClusterRegistry epsilon is set
- * in feature-space units. Callers may normalize before passing to
- * stage_cluster if the registry uses normalized features.
+ * Features [8] and [9] carry structural identity so that isomers with
+ * identical thermodynamic scalars are still placed in separate clusters.
  */
 inline FingerprintRecord stage_fingerprint(const v4::FormationRecord& f) {
 	FingerprintRecord fp;
@@ -134,6 +136,26 @@ inline FingerprintRecord stage_fingerprint(const v4::FormationRecord& f) {
 	fill(6, f.macro_ductility);
 	fill(7, std::log10(static_cast<double>(f.steps) + 1.0));
 
+	// Feature [8]: topology fingerprint component.
+	// Encodes lattice class + bead count as a normalised float so that
+	// two structures with different lattice topology remain separable even
+	// when all thermodynamic scalars are equal.
+	fp.features[8] = static_cast<double>(fp.topology_hash & 0xFFFFFFFFULL) / 1e9;
+
+	// Feature [9]: structural coordination pattern hash.
+	// FNV-1a mix of n_l3_domains, discretised avg_C, and discretised avg_eta.
+	// Separates constitutional / coordination isomers with identical energies.
+	{
+		uint64_t h = 14695981039346656037ULL;
+		auto mix = [&](uint64_t x) {
+			h = (h ^ x) * 1099511628211ULL;
+		};
+		mix(static_cast<uint64_t>(f.n_l3_domains));
+		mix(static_cast<uint64_t>(std::isfinite(f.avg_C)   ? static_cast<int>(std::round(f.avg_C   * 10.0)) : -1));
+		mix(static_cast<uint64_t>(std::isfinite(f.avg_eta) ? static_cast<int>(std::round(f.avg_eta * 100.0)) : -1));
+		fp.features[9] = static_cast<double>(h & 0xFFFFFFFFULL) / 1e9;
+	}
+
 	if (!f.converged)
 		fp.warnings.push_back(WarningCode::NotConverged);
 	if (any_nan)
@@ -156,7 +178,7 @@ inline FingerprintRecord stage_fingerprint(const v4::FormationRecord& f) {
 }
 
 // ============================================================================
-// Stage 2 — Cluster
+// Stage 2  -  Cluster
 // ============================================================================
 
 /**
@@ -166,7 +188,7 @@ inline FingerprintRecord stage_fingerprint(const v4::FormationRecord& f) {
  * Returns a ClusterRecord with the cluster ID and a size snapshot.
  *
  * Cluster label heuristic (beta-7):
- *   topology_hash encodes lattice class → used to generate a readable label.
+ *   topology_hash encodes lattice class -> used to generate a readable label.
  *   Full label assignment from analysis context happens in stage_analysis.
  */
 inline ClusterRecord stage_cluster(const FingerprintRecord& fp,
@@ -175,7 +197,13 @@ inline ClusterRecord stage_cluster(const FingerprintRecord& fp,
 	cr.symbol      = fp.symbol;
 	cr.name        = fp.name;
 	cr.fingerprint = fp;
-	cr.warnings    = fp.warnings;
+	// Inherit upstream warnings deduplicated — prevents double-counting in dashboard
+	{
+		std::vector<WarningCode> deduped = fp.warnings;
+		std::sort(deduped.begin(), deduped.end());
+		deduped.erase(std::unique(deduped.begin(), deduped.end()), deduped.end());
+		cr.warnings = std::move(deduped);
+	}
 
 	cr.cluster_id = registry.assign(fp);
 
@@ -183,8 +211,10 @@ inline ClusterRecord stage_cluster(const FingerprintRecord& fp,
 	cr.cluster_size  = entry ? entry->count : 1;
 	cr.cluster_label = "";  // filled by stage_analysis
 
-	if (cr.cluster_size < 2)
-		cr.warnings.push_back(WarningCode::LowPopulation);
+	// LowPopulation is intentionally NOT emitted here.
+	// A new cluster always starts at size 1; emitting the warning at creation
+	// time guarantees every case gets flagged regardless of final cluster size.
+	// The finalization pass in run_pipeline emits it post-batch instead.
 
 	cr.trace.animations.push_back(
 		anim::cluster_assignment_pulse(cr.symbol, cr.cluster_id));
@@ -193,14 +223,14 @@ inline ClusterRecord stage_cluster(const FingerprintRecord& fp,
 }
 
 // ============================================================================
-// Stage 3 — Analysis
+// Stage 3  -  Analysis
 // ============================================================================
 
 /**
  * stage_analysis
  *
  * Interprets a ClusterRecord and its source FormationRecord to produce
- * the analysis layer. All conclusions are kept in AnalysisRecord — none
+ * the analysis layer. All conclusions are kept in AnalysisRecord  -  none
  * are written back into xyzFull or FormationRecord.
  */
 inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
@@ -209,7 +239,13 @@ inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
 	ar.symbol      = cr.symbol;
 	ar.name        = cr.name;
 	ar.cluster_id  = cr.cluster_id;
-	ar.warnings    = cr.warnings;
+	// Inherit upstream warnings deduplicated — prevents double-counting in dashboard
+	{
+		std::vector<WarningCode> deduped = cr.warnings;
+		std::sort(deduped.begin(), deduped.end());
+		deduped.erase(std::unique(deduped.begin(), deduped.end()), deduped.end());
+		ar.warnings = std::move(deduped);
+	}
 
 	// energy_per_bead
 	ar.energy_per_bead = (f.n_beads > 0 && std::isfinite(f.final_energy))
@@ -252,7 +288,7 @@ inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
 		0.3 * ar.packing_quality +
 		0.2 * detail::clamp01(1.0 - ar.defect_indicator * 10.0));
 
-	// cluster_label: lattice class + density tier — owned by AnalysisRecord
+	// cluster_label: lattice class + density tier  -  owned by AnalysisRecord
 	{
 		std::string tier = (ar.packing_quality > 0.5) ? "dense" : "sparse";
 		ar.cluster_label = ar.motif_class + "-" + tier;
@@ -300,7 +336,7 @@ inline AnalysisRecord stage_analysis(const ClusterRecord& cr,
 }
 
 // ============================================================================
-// Stage 4 — Report
+// Stage 4  -  Report
 // ============================================================================
 
 /**
@@ -313,7 +349,13 @@ inline ReportRecord stage_report(const AnalysisRecord& ar) {
 	ReportRecord rr;
 	rr.symbol   = ar.symbol;
 	rr.name     = ar.name;
-	rr.warnings = ar.warnings;
+	// Inherit upstream warnings deduplicated — prevents double-counting in dashboard
+	{
+		std::vector<WarningCode> deduped = ar.warnings;
+		std::sort(deduped.begin(), deduped.end());
+		deduped.erase(std::unique(deduped.begin(), deduped.end()), deduped.end());
+		rr.warnings = std::move(deduped);
+	}
 
 	if (ar.symbol.empty()) {
 		rr.warnings.push_back(WarningCode::ReportEmpty);
@@ -401,7 +443,7 @@ inline ReportRecord stage_report(const AnalysisRecord& ar) {
 }
 
 // ============================================================================
-// Stage 5 — Dashboard
+// Stage 5  -  Dashboard
 // ============================================================================
 
 /**
@@ -459,7 +501,7 @@ inline DashboardRecord stage_dashboard(const std::vector<ReportRecord>& reports,
 			{
 				std::istringstream ss(r.csv_row);
 				std::string tok;
-				// Simple split — interpretation field is quoted and may contain commas;
+				// Simple split  -  interpretation field is quoted and may contain commas;
 				// we only need the first 12 columns
 				bool in_quote = false;
 				std::string cur;
@@ -479,7 +521,7 @@ inline DashboardRecord stage_dashboard(const std::vector<ReportRecord>& reports,
 			// Truncate cluster_id to last 6 hex digits for readability
 			std::string cid = col(2);
 			if (cid.size() > 6) {
-				// Convert decimal string → hex suffix
+				// Convert decimal string -> hex suffix
 				try {
 					uint64_t id_val = std::stoull(cid);
 					std::ostringstream h;
@@ -548,7 +590,7 @@ inline DashboardRecord stage_dashboard(const std::vector<ReportRecord>& reports,
 }
 
 // ============================================================================
-// run_pipeline — convenience: run all 5 stages over a batch of formations
+// run_pipeline  -  convenience: run all 5 stages over a batch of formations
 // ============================================================================
 
 /**
@@ -587,6 +629,30 @@ run_pipeline(const std::vector<v4::FormationRecord>& formations,
 
 		all_reports.push_back(pr.report);
 		records.push_back(std::move(pr));
+	}
+
+	// Post-batch finalization: emit LowPopulation only for clusters that still
+	// have a single member after the full batch has been processed.
+	// This avoids flagging every new cluster at creation time (they always start
+	// at size 1 and grow as more cases are assigned).
+	{
+		// Build set of singleton cluster IDs
+		std::set<uint64_t> singletons;
+		for (const auto& e : registry.clusters) {
+			if (e.count < 2)
+				singletons.insert(e.id);
+		}
+		// Stamp LowPopulation onto report + dashboard warning lists for singletons
+		for (auto& pr : records) {
+			if (singletons.count(pr.cluster.cluster_id)) {
+				pr.report.warnings.push_back(WarningCode::LowPopulation);
+			}
+		}
+		// Rebuild all_reports to reflect the updated warning lists
+		all_reports.clear();
+		all_reports.reserve(records.size());
+		for (const auto& pr : records)
+			all_reports.push_back(pr.report);
 	}
 
 	DashboardRecord dash = stage_dashboard(all_reports, registry, run_label);

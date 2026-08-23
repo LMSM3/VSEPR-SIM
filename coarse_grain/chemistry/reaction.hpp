@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * reaction.hpp — Chemical Reaction Framework
+ * reaction.hpp  -  Chemical Reaction Framework
  *
  * Models complete chemical reactions with:
  *   - Reactants, products, by-products, catalysts
@@ -13,7 +13,7 @@
  * Supports three reaction archetypes:
  *   1. Organic synthesis with inorganic reagent (e.g. benzene nitration)
  *   2. Precipitation / sludge formation (e.g. thorium oxalate)
- *   3. Thermal decomposition (e.g. copper nitrate → CuO + gases)
+ *   3. Thermal decomposition (e.g. copper nitrate -> CuO + gases)
  *
  * Anti-black-box: every thermodynamic value, bond change, and mass
  * balance is explicitly inspectable and traceable.
@@ -57,7 +57,7 @@ inline const char* role_label(SpeciesRole r) {
 }
 
 // ============================================================================
-// Reaction Entry — species + stoichiometric coefficient + role
+// Reaction Entry  -  species + stoichiometric coefficient + role
 // ============================================================================
 
 struct ReactionEntry {
@@ -67,12 +67,12 @@ struct ReactionEntry {
 };
 
 // ============================================================================
-// Bond Change — bonds broken and formed during reaction
+// Bond Change  -  bonds broken and formed during reaction
 // ============================================================================
 
 struct BondChange {
-    std::string description;       // "C–H bond broken in benzene"
-    std::string atom_pair;         // "C–N" or "O–H"
+    std::string description;       // "C-H bond broken in benzene"
+    std::string atom_pair;         // "C-N" or "O-H"
     uint8_t     old_order{};       // Bond order before (0 = no bond)
     uint8_t     new_order{};       // Bond order after  (0 = no bond)
     BondType    bond_type{BondType::COVALENT};
@@ -103,7 +103,7 @@ struct ReactionThermalState {
     double total_gibbs{};              // Total Gibbs energy
 
     // Thermal transport
-    double thermal_conductivity{};     // W/(m·K) — mixture average
+    double thermal_conductivity{};     // W/(m·K)  -  mixture average
     double heat_capacity_mixture{};    // J/(mol·K)
     double viscosity_mixture{};        // Pa·s
 
@@ -117,7 +117,7 @@ struct ReactionThermalState {
 // ============================================================================
 
 struct MassBalance {
-    std::map<std::string, double> reactant_elements;   // Element → total moles
+    std::map<std::string, double> reactant_elements;   // Element -> total moles
     std::map<std::string, double> product_elements;
     std::map<std::string, double> imbalance;           // Should be ~0
 
@@ -134,7 +134,7 @@ struct MassBalance {
 // ============================================================================
 
 /**
- * ChemicalReaction — complete representation of a chemical reaction.
+ * ChemicalReaction  -  complete representation of a chemical reaction.
  *
  * Supports:
  *   - Full stoichiometry with mass balance verification
@@ -148,8 +148,8 @@ struct ChemicalReaction {
     // --- Identity ---
     std::string name;                  // "Nitration of benzene"
     std::string reaction_type;         // "Electrophilic aromatic substitution"
-    std::string equation;              // "C6H6 + HNO3 → C6H5NO2 + H2O"
-    std::string conditions;            // "H2SO4 catalyst, 50–60 °C"
+    std::string equation;              // "C6H6 + HNO3 -> C6H5NO2 + H2O"
+    std::string conditions;            // "H2SO4 catalyst, 50-60 °C"
 
     // --- Species ---
     std::vector<ReactionEntry> entries;

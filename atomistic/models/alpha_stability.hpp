@@ -1,21 +1,21 @@
-#pragma once
+﻿#pragma once
 /**
  * alpha_stability.hpp
  * ===================
  * Ties the alpha model into the nuclear stability module.
  *
- * Provides alpha_predict_checked() — a drop-in for alpha_predict() that
+ * Provides alpha_predict_checked()  -  a drop-in for alpha_predict() that
  * silently runs a nuclear stability check and returns an annotated result.
  *
  * The stability check:
  *   1. Computes StabilityInfo from Z (no external data).
  *   2. Tags the prediction with a confidence score [0,1].
  *   3. For superheavy/very-short-lived elements, flags the prediction
- *      as "theoretical" — not experimentally verifiable.
+ *      as "theoretical"  -  not experimentally verifiable.
  *   4. Detects if Z is at or near a magic proton number (extra stability)
  *      and reports it as a nuclear-shell bonus.
  *
- * This is the "undocumented stability check" — it runs silently inside
+ * This is the "undocumented stability check"  -  it runs silently inside
  * the prediction pipeline and doesn't alter the predicted value, only
  * annotates it.  The caller can choose to use the annotations or ignore them.
  *

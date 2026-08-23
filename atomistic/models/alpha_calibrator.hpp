@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * alpha_calibrator.hpp
  * ====================
@@ -6,19 +6,19 @@
  *
  * Architecture:
  *
- *   alpha_predict(Z)         ← offline fitted model (13 params, baked in)
- *         │
+ *   alpha_predict(Z)         <- offline fitted model (13 params, baked in)
+ *         |
  *         ▼
- *   AlphaCalibrator::get(Z)  ← returns override if set, else model value
- *         │
- *         ├── calibrate(Z, new_val):
- *         │     • computes delta = |new_val - current| / current
- *         │     • if delta <= ACCEPT_THRESHOLD (1%): accepts → override[Z] = new_val
- *         │     • if delta > ACCEPT_THRESHOLD: rejects, returns false
- *         │     • subsequent refinements are checked against the override,
- *         │       not the original model — enabling progressive convergence
- *         │
- *         └── alpha_predict_calibrated(Z) ← drop-in for alpha_predict(Z)
+ *   AlphaCalibrator::get(Z)  <- returns override if set, else model value
+ *         |
+ *         +-- calibrate(Z, new_val):
+ *         |     • computes delta = |new_val - current| / current
+ *         |     • if delta <= ACCEPT_THRESHOLD (1%): accepts -> override[Z] = new_val
+ *         |     • if delta > ACCEPT_THRESHOLD: rejects, returns false
+ *         |     • subsequent refinements are checked against the override,
+ *         |       not the original model  -  enabling progressive convergence
+ *         |
+ *         +-- alpha_predict_calibrated(Z) <- drop-in for alpha_predict(Z)
  *
  * Design decisions:
  *
@@ -88,7 +88,7 @@ struct CalibrateResult {
 
 class AlphaCalibrator {
 public:
-    // 1% acceptance threshold — class-level constant, overridable per instance
+    // 1% acceptance threshold  -  class-level constant, overridable per instance
     static constexpr double DEFAULT_THRESHOLD = 0.01;
 
     explicit AlphaCalibrator(double threshold = DEFAULT_THRESHOLD,
@@ -101,7 +101,7 @@ public:
         active_.fill(false);
     }
 
-    // ── Core API ─────────────────────────────────────────────────────────────
+    // -- Core API -------------------------------------------------------------
 
     /**
      * Attempt to calibrate element Z with a new polarizability value.
@@ -146,7 +146,7 @@ public:
         return alpha_predict(Z, params_);
     }
 
-    // ── Override management ───────────────────────────────────────────────
+    // -- Override management -----------------------------------------------
 
     /// Force-set an override, bypassing the threshold check.
     /// Use when you have a trusted high-quality experimental value.
@@ -154,7 +154,7 @@ public:
         if (Z == 0 || Z > 118 || alpha <= 0.0) return;
         overrides_[Z] = alpha;
         active_[Z]    = true;
-        // Note: does NOT increment counts_ — this is a forced set, not a
+        // Note: does NOT increment counts_  -  this is a forced set, not a
         // calibration event.
     }
 
@@ -173,7 +173,7 @@ public:
         counts_.fill(0u);
     }
 
-    // ── Introspection ─────────────────────────────────────────────────────
+    // -- Introspection -----------------------------------------------------
 
     bool     is_overridden(uint32_t Z)   const noexcept { return Z > 0 && Z <= 118 && active_[Z]; }
     uint32_t update_count(uint32_t Z)    const noexcept { return (Z > 0 && Z <= 118) ? counts_[Z] : 0u; }
@@ -187,7 +187,7 @@ public:
         return n;
     }
 
-    // ── Snapshot / restore ────────────────────────────────────────────────
+    // -- Snapshot / restore ------------------------------------------------
 
     struct Snapshot {
         std::array<double,   119> overrides;
@@ -207,7 +207,7 @@ public:
         threshold_  = s.threshold;
     }
 
-    // ── Diagnostics ───────────────────────────────────────────────────────
+    // -- Diagnostics -------------------------------------------------------
 
     /// Print a summary of all active overrides.
     void print_overrides(const char* prefix = "") const {
@@ -253,7 +253,7 @@ inline double alpha_predict_calibrated(uint32_t Z,
  *   atomistic::polarization::global_calibrator().calibrate(Z, val)
  * without passing a calibrator everywhere.
  *
- * The global calibrator is NOT used by alpha_predict() itself —
+ * The global calibrator is NOT used by alpha_predict() itself  - 
  * callers must explicitly pass it or use alpha_predict_calibrated().
  */
 inline AlphaCalibrator& global_calibrator() noexcept {

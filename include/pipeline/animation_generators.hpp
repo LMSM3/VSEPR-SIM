@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * animation_generators.hpp — Declarative Animation Cue Builders
+ * animation_generators.hpp  -  Declarative Animation Cue Builders
  * ==============================================================
  *
  * Pure functions that return AnimationCue structs describing what the
@@ -100,7 +100,7 @@ inline AnimationCue stability_gauge(
  * defect_warning_flash
  *
  * Flash the case node when defect_indicator crosses threshold.
- * Threshold check is performed by the caller — this cue is only
+ * Threshold check is performed by the caller  -  this cue is only
  * emitted when the caller determines it is warranted.
  */
 inline AnimationCue defect_warning_flash(

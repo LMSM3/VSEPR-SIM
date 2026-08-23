@@ -1,5 +1,5 @@
-/*
- * species_record.h — C clone of pykernel/species_record.py
+﻿/*
+ * species_record.h  -  C clone of pykernel/species_record.py
  * =========================================================
  *
  * Bit-for-bit functional clone of the Python species record schema and
@@ -7,24 +7,24 @@
  * path, no hidden state.
  *
  * Mirrors (exactly):
- *   SpeciesRecord          → species_rec_t
- *   ShomateRegion          → shomate_region_t  (+ cp / enthalpy / entropy)
- *   AtomEntry              → atom_entry_t
- *   StructureModel         → structure_model_t
- *   ReferenceState         → reference_state_t
- *   ThermoReference        → thermo_ref_t
- *   EngineFlags            → engine_flags_t
- *   parse_vsepr_text()     → species_parse_vsepr()
- *   to_vsepr_text()        → species_to_vsepr()
+ *   SpeciesRecord          -> species_rec_t
+ *   ShomateRegion          -> shomate_region_t  (+ cp / enthalpy / entropy)
+ *   AtomEntry              -> atom_entry_t
+ *   StructureModel         -> structure_model_t
+ *   ReferenceState         -> reference_state_t
+ *   ThermoReference        -> thermo_ref_t
+ *   EngineFlags            -> engine_flags_t
+ *   parse_vsepr_text()     -> species_parse_vsepr()
+ *   to_vsepr_text()        -> species_to_vsepr()
  *   cp() / enthalpy() /
- *   entropy() / gibbs()    → shomate_cp / shomate_H / shomate_S / shomate_G
+ *   entropy() / gibbs()    -> shomate_cp / shomate_H / shomate_S / shomate_G
  *
  * Chart / figure freeze:
- *   chart_palette_t        → frozen PALETTE from chart_helpers.py
- *   chart_line_csv()       → write a two-column CSV for a Cp(T) curve
- *   chart_multiline_csv()  → write multi-species comparison CSV
+ *   chart_palette_t        -> frozen PALETTE from chart_helpers.py
+ *   chart_line_csv()       -> write a two-column CSV for a Cp(T) curve
+ *   chart_multiline_csv()  -> write multi-species comparison CSV
  *
- * VSEPR-SIM 3.0.0 — report subsystem
+ * VSEPR-SIM 3.0.0  -  report subsystem
  */
 
 #pragma once
@@ -72,7 +72,7 @@ static const chart_color_t CHART_PALETTE[] = {
     { NULL,     NULL      }
 };
 
-/* PALETTE_CYCLE — ordered for multi-series charts */
+/* PALETTE_CYCLE  -  ordered for multi-series charts */
 static const char *CHART_PALETTE_CYCLE[] = {
     "#e74c3c","#2e86c1","#27ae60","#f39c12","#8e44ad",
     "#1abc9c","#e67e22","#3498db","#9b59b6","#1a5276",
@@ -113,7 +113,7 @@ static inline double shomate_S(const shomate_region_t *r, double T_K) {
 }
 
 static inline double shomate_G(const shomate_region_t *r, double T_K) {
-    /* G = H - T*S  (H in kJ/mol → convert to J for consistency, then back) */
+    /* G = H - T*S  (H in kJ/mol -> convert to J for consistency, then back) */
     double H_kJ = shomate_H(r, T_K);
     double S_J  = shomate_S(r, T_K);
     return H_kJ - T_K * S_J / 1000.0;   /* kJ/mol */
@@ -141,13 +141,13 @@ typedef struct {
  * Structure model  (mirrors StructureModel dataclass)
  * ====================================================================== */
 typedef struct {
-    char category[SR_STR_LEN];         /* diatomic, linear, tetrahedral … */
+    char category[SR_STR_LEN];         /* diatomic, linear, tetrahedral ... */
     int  vsepr_domain_count;
     char geometry[SR_STR_LEN];
     int  bond_order_hint;
     int  formal_charge;
     bool radical;
-    char symmetry_hint[SR_STR_LEN];    /* C2v, Td, Dinfh … */
+    char symmetry_hint[SR_STR_LEN];    /* C2v, Td, Dinfh ... */
 } structure_model_t;
 
 /* =========================================================================
@@ -214,7 +214,7 @@ typedef struct {
 } species_rec_t;
 
 /* =========================================================================
- * Shomate dispatch — evaluate property at T using correct region
+ * Shomate dispatch  -  evaluate property at T using correct region
  * ====================================================================== */
 static inline double species_cp(const species_rec_t *s, double T_K) {
     const shomate_region_t *r = shomate_region_for(s->regions, s->n_regions, T_K);
@@ -235,7 +235,7 @@ static inline double species_G(const species_rec_t *s, double T_K) {
 
 /* =========================================================================
  * VSEPR text serialiser  (mirrors to_vsepr_text())
- * Writes a SPECIES_BEGIN … SPECIES_END block to *fp*.
+ * Writes a SPECIES_BEGIN ... SPECIES_END block to *fp*.
  * ====================================================================== */
 static inline void species_to_vsepr(const species_rec_t *s, FILE *fp) {
     fprintf(fp, "SPECIES_BEGIN\n");
@@ -304,10 +304,10 @@ static inline void species_to_vsepr(const species_rec_t *s, FILE *fp) {
 }
 
 /* =========================================================================
- * Chart CSV helpers  (mirrors chart_helpers.py — frozen formatting)
+ * Chart CSV helpers  (mirrors chart_helpers.py  -  frozen formatting)
  *
- * chart_line_csv()       — single species Cp(T) curve as CSV
- * chart_multiline_csv()  — multiple species Cp(T) comparison CSV
+ * chart_line_csv()        -  single species Cp(T) curve as CSV
+ * chart_multiline_csv()   -  multiple species Cp(T) comparison CSV
  * ====================================================================== */
 
 static inline int chart_line_csv(const species_rec_t *s,
@@ -327,7 +327,7 @@ static inline int chart_line_csv(const species_rec_t *s,
 
 typedef struct {
     const species_rec_t *rec;
-    const char          *label;   /* NULL → use rec->formula */
+    const char          *label;   /* NULL -> use rec->formula */
 } chart_series_t;
 
 static inline int chart_multiline_csv(const chart_series_t *series, int n_series,

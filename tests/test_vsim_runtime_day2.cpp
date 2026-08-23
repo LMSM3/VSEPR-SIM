@@ -1,8 +1,8 @@
-// =============================================================================
-// tests/test_vsim_runtime_day2.cpp  —  VSIM Runtime Day #2 Tests (Group 27)
+﻿// =============================================================================
+// tests/test_vsim_runtime_day2.cpp   -   VSIM Runtime Day #2 Tests (Group 27)
 // =============================================================================
 //
-// Six behavioral tests for the VSIM scripting runtime — beta-10 milestone.
+// Six behavioral tests for the VSIM scripting runtime  -  beta-10 milestone.
 //
 //  1. test_cached_metric_guard        while guards read cached metric; O(1) guard eval
 //  2. test_batch_artifact_isolation   batch runs isolate artifacts per case
@@ -12,7 +12,7 @@
 //  6. test_open_closed_boundary_dispatch  closed/open/ambient systems route correctly
 //
 // Priority order matches user specification:
-//  5 → 2 → 3 → 4 → 1 → 6
+//  5 -> 2 -> 3 -> 4 -> 1 -> 6
 //
 // WO-56C  |  v5.0.0-beta.7.1  |  beta-10 milestone
 // =============================================================================
@@ -113,8 +113,8 @@ static void test_while_loop_safety_cap()
 
 	// Seed 5 events so the condition "variance D_var > 0.001" is true from
 	// the start. The emit_fn adds more high-variance events each iteration so
-	// the condition never converges — we rely entirely on max_iters.
-	fill_log(log, 5, 1, 100.0);   // large values → variance well above 0.001
+	// the condition never converges  -  we rely entirely on max_iters.
+	fill_log(log, 5, 1, 100.0);   // large values -> variance well above 0.001
 
 	VsimDocument doc;
 	doc.variance_cfg = make_variance_cfg("D_var", 0.001);
@@ -144,11 +144,11 @@ static void test_while_loop_safety_cap()
 	assert(iteration_count == guard.max_iters &&
 		"while_loop_safety_cap: loop did not run exactly max_iters iterations");
 
-	// Partial output must be preserved — log grew during capped loop
+	// Partial output must be preserved  -  log grew during capped loop
 	assert(events_after > events_before &&
 		"while_loop_safety_cap: partial events not preserved after safety cap");
 
-	// No crash — we reach here
+	// No crash  -  we reach here
 	std::puts("PASS  test_while_loop_safety_cap");
 }
 
@@ -202,11 +202,11 @@ static void test_batch_artifact_isolation()
 
 	VsimRuntime::run_batch(doc.batch_cfg, doc, log, emit_fn);
 
-	// run_batch clears the log before each run — captured size should be 0
+	// run_batch clears the log before each run  -  captured size should be 0
 	// (log is clean at the start of every batch run)
 	for (int i = 0; i < static_cast<int>(events_at_run_start.size()); ++i) {
 		assert(events_at_run_start[i] == 0 &&
-			"batch_artifact_isolation: log was not cleared before run — cross-contamination risk");
+			"batch_artifact_isolation: log was not cleared before run  -  cross-contamination risk");
 	}
 
 	// Three cases × 1 seed = 3 runs
@@ -221,15 +221,15 @@ static void test_batch_artifact_isolation()
 // 3. test_visual_decimation
 // =============================================================================
 // Verifies that a render interval of 100 frames across 1000 simulated frames
-// produces exactly 10 render outputs — not 1000, not 0.
+// produces exactly 10 render outputs  -  not 1000, not 0.
 //
-// The render dispatch is external (non-blocking) — simulated here by a
+// The render dispatch is external (non-blocking)  -  simulated here by a
 // counter that fires only when (frame % render_interval == 0) and frame > 0.
 //
 // Checks:
 //  - render count == floor(total_frames / render_interval)
 //  - frame IDs at render points are multiples of render_interval
-//  - no render fires at frame 0 (pre-first-step — nothing to show)
+//  - no render fires at frame 0 (pre-first-step  -  nothing to show)
 //  - total simulated frames == 1000
 // =============================================================================
 
@@ -286,13 +286,13 @@ static void test_visual_decimation()
 // Verifies that dN/dt is computed from stored population history (event
 // counters) rather than requiring a full particle scan.
 //
-// Scenario A — growth phase:   later frames have more events → dN/dt > 0
-// Scenario B — removal phase:  later frames have fewer events → dN/dt < 0
-// Scenario C — stable:         identical frame counts → dN/dt ≈ 0
+// Scenario A  -  growth phase:   later frames have more events -> dN/dt > 0
+// Scenario B  -  removal phase:  later frames have fewer events -> dN/dt < 0
+// Scenario C  -  stable:         identical frame counts -> dN/dt ≈ 0
 //
 // The KernelEventLog groups events by frame_id.  eval_n_evolution() calls
 // extract_population() which iterates the log once (O(N)) or reads a cached
-// count — NOT a per-frame full scan.
+// count  -  NOT a per-frame full scan.
 // =============================================================================
 
 static void test_N_evolution_event_counter()
@@ -301,7 +301,7 @@ static void test_N_evolution_event_counter()
 
 	// --- Scenario A: spawn events (growing population) ---
 	log.clear();
-	// Frame 0: 2 events, Frame 1: 4 events, Frame 2: 6 events → dN/dt > 0
+	// Frame 0: 2 events, Frame 1: 4 events, Frame 2: 6 events -> dN/dt > 0
 	auto add_frame = [&](uint64_t frame_id, int count, double val_base) {
 		for (int i = 0; i < count; ++i) {
 			KernelEvent ev;
@@ -384,7 +384,7 @@ static void test_cached_metric_guard()
 		ev.kind           = KernelEventKind::Formation;
 		ev.frame_id       = 0;
 		ev.source_formula = "Ar";
-		ev.result_value   = static_cast<double>(i) * 10.0;  // wide spread → high variance
+		ev.result_value   = static_cast<double>(i) * 10.0;  // wide spread -> high variance
 		ev.result_unit    = "kcal/mol";
 		ev.is_valid       = true;
 		log.record(ev);
@@ -405,11 +405,11 @@ static void test_cached_metric_guard()
 	int iterations_run = 0;
 
 	// Each emit_fn call replaces log contents with low-variance events.
-	// After the first call the guard condition becomes false → loop exits.
+	// After the first call the guard condition becomes false -> loop exits.
 	VsimRuntime::EmitFn emit_fn = [&](int n_steps, int seed_off) -> int {
 		++iterations_run;
 		log.clear();
-		// Inject near-constant events → variance ≈ 0 (well below 0.001)
+		// Inject near-constant events -> variance ≈ 0 (well below 0.001)
 		for (int i = 0; i < 20; ++i) {
 			KernelEvent ev;
 			ev.kind           = KernelEventKind::Formation;
@@ -431,7 +431,7 @@ static void test_cached_metric_guard()
 
 	// At least one iteration must have run (condition was true initially)
 	assert(iterations_run >= 1 &&
-		"cached_metric_guard: loop never entered — initial condition must be true");
+		"cached_metric_guard: loop never entered  -  initial condition must be true");
 
 	// Log must contain the low-variance events written by emit_fn
 	assert(log.size() == 20 &&
@@ -448,9 +448,9 @@ static void test_cached_metric_guard()
 //
 // Boundary rules encoded here (design-level assertions):
 //
-//   closed  → mass exchange (inlet/outlet spawn/remove) FORBIDDEN
-//   open    → inlet/outlet spawn/remove ALLOWED
-//   ambient → external coupling (heat/drag/pressure) ALLOWED;
+//   closed  -> mass exchange (inlet/outlet spawn/remove) FORBIDDEN
+//   open    -> inlet/outlet spawn/remove ALLOWED
+//   ambient -> external coupling (heat/drag/pressure) ALLOWED;
 //             mass exchange optional (only if ambient_open declared)
 //
 // This test validates the dispatch table logic that the runtime must enforce
@@ -549,7 +549,7 @@ static void test_open_closed_boundary_dispatch()
 
 
 // =============================================================================
-// main — priority order: 5, 2, 3, 4, 1, 6
+// main  -  priority order: 5, 2, 3, 4, 1, 6
 // =============================================================================
 
 int main()

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * planar_channel_generator.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Configuration (a): Planar electrode channel.
  * Two parallel planar electrodes separated by a gap H with DC voltage
@@ -31,9 +31,9 @@ namespace cad {
 // ============================================================================
 
 struct PlanarChannelParams {
-    double height    = 2.0e-3;    // H — electrode gap (m)
-    double width     = 10.0e-3;   // W — electrode span (m)
-    double length    = 40.0e-3;   // L_ch — electrode length (m)
+    double height    = 2.0e-3;    // H  -  electrode gap (m)
+    double width     = 10.0e-3;   // W  -  electrode span (m)
+    double length    = 40.0e-3;   // L_ch  -  electrode length (m)
     int    nx_divs   = 100;       // discretisation along length
     int    ny_divs   = 40;        // discretisation across gap
 };
@@ -52,8 +52,8 @@ inline PlanarChannelParams from_ehd_planar(const EHDParameters& p) {
 
 struct ChannelProfilePoint {
     double z;      // streamwise position (m)
-    double y_bot;  // bottom electrode y (m) — always 0 for planar
-    double y_top;  // top electrode y (m)    — always H for planar
+    double y_bot;  // bottom electrode y (m)  -  always 0 for planar
+    double y_top;  // top electrode y (m)     -  always H for planar
 };
 
 /**

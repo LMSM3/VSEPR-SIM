@@ -1,0 +1,4 @@
+﻿run_id,object_id,family,state,casting,Lambda_nm,E_value,UFF,CFF,primary_scale,z_scale_1,z_scale_2,z_scale_3,z_scale_4,z_scale_5,z_scale_6,eta_scale,gap_label,validation_status,source_type,iteration,prior_lambda_nm,prior_sigma_nm,prior_energy,prior_energy_sigma,updated_lambda_nm,updated_sigma_nm,updated_energy,next_run_family,next_run_state,notes
+SIM_RUN_0001,pi_7,pi_N,biological_pocket,field_field,1.18,-12.4,-10.1,0.71,S3,0,0,1,0,0,0,0.92,pending,pending,simulation,1,1.20,0.30,-13.1,1.5,,,,,,,First pi_7 continual record
+SIM_RUN_0002,HB_N,HB_N,crystal,force_force,0.275,-24.1,-22.0,0.85,S2,0,1,0,0,0,0,0.95,pending,pending,simulation,1,0.28,0.05,-25.0,3.0,,,,,,,HB_N crystal seed record
+SIM_RUN_0003,vdW_N,vdW_N,crystal,field_field,0.395,-4.3,-4.0,0.92,S3,0,0,1,0,0,0,0.88,pending,pending,simulation,1,0.40,0.10,-4.5,0.8,,,,,,,vdW_N crystal seed record

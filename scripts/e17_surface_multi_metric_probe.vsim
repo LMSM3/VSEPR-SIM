@@ -1,0 +1,69 @@
+# e17_surface_multi_metric_probe.vsim
+# =============================================================================
+# E17  --  Multi-Metric Single Probe (Mass + Energy Combined)
+#
+# Purpose: Show how a single surface probe can simultaneously compute
+#          multiple flux metrics on the same geometric plane.  This
+#          example activates both mass flux and energy flux, reducing
+#          the number of probe objects and improving analysis locality.
+#
+# Key concepts:
+#   compute_mass_flux = true  and  compute_energy_flux = true  together.
+#   A single output_tag holds all requested metrics in the sidecar.
+#   Useful for coupled transport phenomena (e.g. isotope separation).
+# =============================================================================
+
+[project]
+name        = "e17_surface_multi_metric"
+version     = "v5.0.14"
+seed_base   = 1700
+determinism = true
+
+[material]
+formula   = "Ne"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ne"
+count       = 640
+temperature = 600.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 6000
+dt_fs     = 1.5
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e17"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e17/surfaces"
+
+[[object.surface]]
+name                = "multi_metric_probe"
+geometry            = "rectangle"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+normal_x            = 1.0
+normal_y            = 0.0
+normal_z            = 0.0
+width               = 30.0
+height              = 30.0
+log_crossings       = true
+compute_flux        = true
+compute_mass_flux   = true
+compute_energy_flux = true
+output_tag          = "multi_metric"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 300

@@ -1,9 +1,9 @@
-/**
+﻿/**
  * tests/test_batch_parser.cpp
  * =============================
- * WO-VSIM-62C — Group 41: Batch Parser Tests
+ * WO-VSIM-62C  -  Group 41: Batch Parser Tests
  *
- * Tests P1–P18 from spec §10.
+ * Tests P1-P18 from spec §10.
  *
  * WO-VSIM-62C | beta-12
  */
@@ -22,7 +22,7 @@
 using namespace vsim::batch;
 using vsim::FormationStageKind;
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static int failures = 0;
 
@@ -39,7 +39,7 @@ static int failures = 0;
 #define EXPECT_EQ(a, b) EXPECT_TRUE((a) == (b))
 #define EXPECT_STR(a, b) EXPECT_TRUE(std::string(a) == std::string(b))
 
-// ── P1: Parse minimal inline study ───────────────────────────────────────────
+// -- P1: Parse minimal inline study -------------------------------------------
 
 static void test_P1() {
 	std::cout << "P1: minimal inline study\n";
@@ -61,7 +61,7 @@ type = "factorial"
 	EXPECT_STR(doc.design.type, "factorial");
 }
 
-// ── P2: Parse template study ─────────────────────────────────────────────────
+// -- P2: Parse template study -------------------------------------------------
 
 static void test_P2() {
 	std::cout << "P2: template study\n";
@@ -78,7 +78,7 @@ script = "scripts/base.vsim"
 	EXPECT_STR(doc.base.script, "scripts/base.vsim");
 }
 
-// ── P3: Parse static batch axis ───────────────────────────────────────────────
+// -- P3: Parse static batch axis -----------------------------------------------
 
 static void test_P3() {
 	std::cout << "P3: static batch axis\n";
@@ -107,7 +107,7 @@ units  = "K"
 	EXPECT_STR(ax.units,  "K");
 }
 
-// ── P4: Parse stochastic axis ─────────────────────────────────────────────────
+// -- P4: Parse stochastic axis -------------------------------------------------
 
 static void test_P4() {
 	std::cout << "P4: stochastic axis\n";
@@ -140,7 +140,7 @@ n_samples    = 5
 	EXPECT_TRUE(ax.n_samples == 5);
 }
 
-// ── P5: Parse formation axis ──────────────────────────────────────────────────
+// -- P5: Parse formation axis --------------------------------------------------
 
 static void test_P5() {
 	std::cout << "P5: formation axis\n";
@@ -172,7 +172,7 @@ values = ["slow_q"]
 	EXPECT_TRUE(doc.formation_library.count("slow_q") == 1);
 }
 
-// ── P6: Parse batch.case with dot-path overrides ─────────────────────────────
+// -- P6: Parse batch.case with dot-path overrides -----------------------------
 
 static void test_P6() {
 	std::cout << "P6: batch.case dot-path overrides\n";
@@ -196,7 +196,7 @@ material.solute_fraction = 0.0
 	EXPECT_STR(doc.cases[0].overrides.at("material.solute_fraction"), "0.0");
 }
 
-// ── P7: Parse [seed] all explicit ────────────────────────────────────────────
+// -- P7: Parse [seed] all explicit --------------------------------------------
 
 static void test_P7() {
 	std::cout << "P7: seed all explicit\n";
@@ -223,7 +223,7 @@ placement  = 17000
 	EXPECT_TRUE(doc.seed.placement  == 17000);
 }
 
-// ── P8: Parse [seed] foundation only ─────────────────────────────────────────
+// -- P8: Parse [seed] foundation only -----------------------------------------
 
 static void test_P8() {
 	std::cout << "P8: seed foundation only\n";
@@ -245,7 +245,7 @@ foundation = 6100
 	EXPECT_TRUE(doc.seed.placement == 0);
 }
 
-// ── P9: Parse [formation.library.*] ──────────────────────────────────────────
+// -- P9: Parse [formation.library.*] ------------------------------------------
 
 static void test_P9() {
 	std::cout << "P9: formation.library entry\n";
@@ -269,7 +269,7 @@ pressure_GPa = 0.0
 	EXPECT_TRUE(e.pressure_GPa == 0.0);
 }
 
-// ── P10: Parse formation.library stage — hold ─────────────────────────────────
+// -- P10: Parse formation.library stage  -  hold ---------------------------------
 
 static void test_P10() {
 	std::cout << "P10: formation stage hold\n";
@@ -297,7 +297,7 @@ duration_ps   = 20.0
 	EXPECT_TRUE(e.stages[0].duration_ps   == 20.0);
 }
 
-// ── P11: Parse formation stage — ramp ────────────────────────────────────────
+// -- P11: Parse formation stage  -  ramp ----------------------------------------
 
 static void test_P11() {
 	std::cout << "P11: formation stage ramp\n";
@@ -326,7 +326,7 @@ profile            = "linear"
 	EXPECT_STR(s.profile, "linear");
 }
 
-// ── P12: Parse formation stage — relax ───────────────────────────────────────
+// -- P12: Parse formation stage  -  relax ---------------------------------------
 
 static void test_P12() {
 	std::cout << "P12: formation stage relax\n";
@@ -352,7 +352,7 @@ converge  = true
 	EXPECT_TRUE(s.converge  == true);
 }
 
-// ── P13: Parse [batch.expand] ────────────────────────────────────────────────
+// -- P13: Parse [batch.expand] ------------------------------------------------
 
 static void test_P13() {
 	std::cout << "P13: batch.expand\n";
@@ -375,7 +375,7 @@ axes  = ["temperature", "pressure"]
 	EXPECT_STR(doc.expand.axes[1], "pressure");
 }
 
-// ── P14: Validate missing study.name ─────────────────────────────────────────
+// -- P14: Validate missing study.name -----------------------------------------
 
 static void test_P14() {
 	std::cout << "P14: validate missing study.name\n";
@@ -394,7 +394,7 @@ mode = "inline"
 	EXPECT_TRUE(found);
 }
 
-// ── P15: Validate stochastic axis missing seed_source ────────────────────────
+// -- P15: Validate stochastic axis missing seed_source ------------------------
 
 static void test_P15() {
 	std::cout << "P15: validate stochastic axis missing seed_source\n";
@@ -418,7 +418,7 @@ kind   = "stochastic"
 	EXPECT_TRUE(found);
 }
 
-// ── P16: Validate formation axis value not in library ────────────────────────
+// -- P16: Validate formation axis value not in library ------------------------
 
 static void test_P16() {
 	std::cout << "P16: validate formation axis value not in library\n";
@@ -443,7 +443,7 @@ values = ["nonexistent_protocol"]
 	EXPECT_TRUE(found);
 }
 
-// ── P17: Validate aggregate.verify enabled with empty group_by ───────────────
+// -- P17: Validate aggregate.verify enabled with empty group_by ---------------
 
 static void test_P17() {
 	std::cout << "P17: validate aggregate.verify enabled, group_by empty\n";
@@ -465,7 +465,7 @@ enabled = true
 	EXPECT_TRUE(found);
 }
 
-// ── P18: Parse multiple axes, no errors ──────────────────────────────────────
+// -- P18: Parse multiple axes, no errors --------------------------------------
 
 static void test_P18() {
 	std::cout << "P18: multi-axis parse, clean validate\n";
@@ -519,7 +519,7 @@ values = [0.01, 0.05, 0.10]
 	EXPECT_TRUE(resolved.resolved_placement == 7000 + 11000);
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
 	std::cout << "=== Group 41: Batch Parser Tests ===\n\n";

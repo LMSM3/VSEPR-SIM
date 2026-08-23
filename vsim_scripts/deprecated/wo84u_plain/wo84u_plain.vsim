@@ -1,0 +1,9 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name = wo84u_plain
+
+[formula]
+formula = BF3
+

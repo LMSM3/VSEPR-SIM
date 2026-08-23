@@ -1,0 +1,471 @@
+% =============================================================================
+%  vsim_bridge_audit.tex
+%  Bridge Layer Integration Audit
+%  AUD-2026-01 · VSIM Internal · v5.2.0-internal
+% =============================================================================
+\documentclass[11pt, a4paper]{article}
+\usepackage{vsim_common}
+
+\hypersetup{
+  pdftitle={Bridge Layer Integration Audit --- AUD-2026-01},
+  pdfsubject={VSIM Internal --- v5.2.0-internal}
+}
+
+% =============================================================================
+\begin{document}
+% =============================================================================
+
+\thispagestyle{empty}
+
+\begin{center}
+  \eyebrow{VSIM Internal \textperiodcentered\ Integration Audit}\\[8pt]
+  {\LARGE\sffamily\bfseries Bridge Layer Integration Audit}\\[6pt]
+  {\normalsize\sffamily
+    Identity Entropy Output \quad\textperiodcentered\quad
+    Formation Context \quad\textperiodcentered\quad
+    Coalescence Tracking \quad\textperiodcentered\quad
+    Parser / Runtime / Export}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\begin{tabular}{@{}L{3cm} L{4cm} L{3cm} L{4.5cm}@{}}
+  \code{Doc ID}       & \texttt{AUD-2026-01}            &
+  \code{Audit phase}  & \blank \\
+  \code{Ref: bridge}  & \texttt{vsim\_bridge\_doc.tex}  &
+  \code{Ref: CR}      & \texttt{vsim\_code\_request.tex · CR-2026-01} \\
+  \code{Target build} & \texttt{v5.2.0-internal}         &
+  \code{Auditor}      & \blank \\
+  \code{Date opened}  & 2026-05-31                       &
+  \code{Date closed}  & \blank \\
+\end{tabular}
+
+\vspace{8pt}
+\begin{infobox}
+  \small
+  Source of truth: \code{include/vsim/vsim\_document.hpp} \quad
+  Parser: \code{src/vsim/vsim\_parser.cpp} \quad
+  Runtime: \code{include/vsim/vsim\_runtime.hpp} \quad
+  Reference: \code{VSIM\_REFERENCE.md}
+\end{infobox}
+
+\noindent\rule{\linewidth}{2pt}
+\vspace{6pt}
+
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Audit Scope}
+% =============================================================================
+
+This audit tracks integration of the bridge layer --- new parser sections, runtime wiring,
+export artifacts, observer integration, and viewer overlay --- against the stable VSIM
+language as of \textbf{v5.0.2 / VSIM\_REFERENCE.md}. Status cells and developer notes
+are left blank for the implementing team to complete as tasks land. Tick checkboxes when
+verified against a real run.
+
+\begin{infobox}
+  \small\sffamily
+  \textbf{Legend:}\quad
+  \snew\ = does not exist in current reference \quad
+  \spend\ = task open \quad
+  \spass\ = verified \quad
+  \sfail\ = regression or blocked \quad
+  \sna\ = not applicable \quad
+  \stbd\ = decision pending
+\end{infobox}
+
+% =============================================================================
+\section{Parser Coverage Audit}
+% =============================================================================
+
+Cross-reference against \code{vsim\_parser.cpp} and \code{vsim\_document.hpp}.
+New bridge sections are marked \snew. All existing sections should already parse; verify
+they are not broken by the bridge changes.
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{3.5cm} L{3.0cm} C{1.5cm} C{1.8cm} C{0.8cm} L{2.5cm} L{2.0cm} @{}}
+  \rowcolor{skybg}
+  \textbf{Block / Section} & \textbf{Struct} & \textbf{Pre-bridge} &
+  \textbf{Post-bridge} & \textbf{\cb} & \textbf{Dev / PR} & \textbf{Notes} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \code{[project]}              & \code{ProjectSection}            & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[seed]}                 & \code{SeedSection}               & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[material]}             & \code{MaterialSection}           & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[run]}                  & \code{RunSection}                & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[environment]}          & \code{EnvironmentSection}        & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[export]}               & \code{ExportSection}             & \spass & \blankmd & \cb & \dash & DEC-01 may rename new sub-key \\
+  \code{[observe]}              & \code{ObserveSection}            & \spass & \blankmd & \cb & \dash & add \code{"identity\_entropy"} metric \\
+  \code{[variance]}             & \code{VarianceSection}           & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[kernel]}               & \code{raw\_sections}             & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[while]}                & \code{WhileSection}              & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[loop]}                 & \code{LoopSection}               & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[until]}                & \code{UntilSection}              & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[analysis.sampling]}    & \code{VsimSamplingSection}       & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[analysis.scale\_sampling]} & \code{VsimScaleSamplingSection} & \spass & \blankmd & \cb & \dash & no change expected \\
+  \code{[verify.*]}             & \code{VerifySection}             & \spass & \blankmd & \cb & \dash & no change expected \\
+  \midrule
+  \rowcolor{lavbg}
+  \code{[formation]}            & \code{FormationContext} \snew    & \sna   & \blankmd & \cb & \dash & CR-01 · new parser module \\
+  \rowcolor{lavbg}
+  \code{[formation.initial\_state]} & \code{FormationContext} \snew & \sna & \blankmd & \cb & \dash & CR-01 · sub-table of \code{[formation]} \\
+  \rowcolor{lavbg}
+  \code{[outputs.identity\_entropy]} & \code{IEOutputSection} \snew & \sna & \blankmd & \cb & \dash & CR-03 · DEC-01 bracket TBD \\
+
+\end{longtable}
+\normalsize
+
+% =============================================================================
+\section{Runtime Wire Audit}
+% =============================================================================
+
+Cross-reference against \code{VsimRuntime} in \code{vsim\_runtime.hpp}.
+Existing runtime functions are listed to confirm they remain undisturbed.
+Bridge functions are new and must be added.
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{4.2cm} L{1.8cm} C{1.5cm} C{1.8cm} C{0.8cm} L{1.8cm} L{2.4cm} @{}}
+  \rowcolor{skybg}
+  \textbf{Function / path} & \textbf{CR task} & \textbf{Pre-bridge} &
+  \textbf{Post-bridge} & \textbf{\cb} & \textbf{IC?} & \textbf{Notes} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \code{pace\_step()}           & ---      & \swired & \blankmd & \cb & \dash & no change expected \\
+  \code{pace\_resim()}          & ---      & \swired & \blankmd & \cb & \dash & no change expected \\
+  \code{run\_chemistry\_pass()} & ---      & \swired & \blankmd & \cb & \dash & coalescence gate hooks here (CR-06) \\
+  \code{eval\_variance()}       & ---      & \swired & \blankmd & \cb & \dash & no change expected \\
+  \code{eval\_n\_evolution()}   & ---      & \swired & \blankmd & \cb & \dash & no change expected \\
+  \code{run\_while\_guards()}   & ---      & \swired & \blankmd & \cb & \dash & no change expected \\
+  \code{run\_batch()}           & ---      & \swired & \blankmd & \cb & \dash & no change expected \\
+  \code{eval\_observe\_metrics()} & CR-08  & \swired & \blankmd & \cb & \dash & add \code{"identity\_entropy"} case \\
+  \midrule
+  \rowcolor{lavbg}
+  \code{load\_formation\_context()} & CR-01 & \sna & \blankmd & \cb & IC-04 & must not serialise to \code{.dynx} \\
+  \rowcolor{lavbg}
+  \code{validate\_formation()} & CR-02 & \sna & \blankmd & \cb & \dash & warning only --- must not block run \\
+  \rowcolor{lavbg}
+  \code{init\_ie\_writer()} & CR-03, 04 & \sna & \blankmd & \cb & IC-06 & no-op when disabled \\
+  \rowcolor{lavbg}
+  \code{populate\_ie\_record()} & CR-05 & \sna & \blankmd & \cb & IC-01 & must not mutate particle state \\
+  \rowcolor{lavbg}
+  \code{coalescence\_gate() hook} & CR-06 & \sna & \blankmd & \cb & IC-02 & read-only on fire \\
+  \rowcolor{lavbg}
+  \code{compute\_formation\_memory()} & CR-07 & \sna & \blankmd & \cb & \dash & wires into \code{IERecord.formation\_memory} \\
+  \rowcolor{lavbg}
+  \code{register\_ie\_viewer\_overlay()} & CR-10 & \sna & \blankmd & \cb & IC-03 & viewer reads \code{.ie}; never writes back \\
+
+\end{longtable}
+\normalsize
+
+% =============================================================================
+\section{Output Artifact Inventory}
+% =============================================================================
+
+Verify each artifact is present after a successful surface demo run
+(\code{identity\_entropy\_surface\_demo}, from bridge doc \S\,9).
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{2.4cm} L{1.0cm} L{2.8cm} L{2.4cm} C{0.9cm} C{1.1cm} C{1.2cm} L{2.0cm} @{}}
+  \rowcolor{skybg}
+  \textbf{Artifact} & \textbf{Type} & \textbf{Expected path} & \textbf{Export flag} &
+  \textbf{Exists} & \textbf{Non-empty} & \textbf{Viewer-safe} & \textbf{Notes} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  positions      & \code{.xyz}   & \code{output/run.xyz}             & \code{write\_xyz}              & \cb & \cb & \spass & ground truth; must not change \\
+  trajectory     & \code{.xyzf}  & \code{output/run.xyzf}            & \code{write\_xyzf}             & \cb & \cb & \spass & ground truth; must not change \\
+  analysis JSON  & \code{.json}  & \code{output/analysis.json}       & \code{write\_analysis\_json}   & \cb & \cb & \spass & no change expected \\
+  events JSONL   & \code{.jsonl} & \code{output/events.jsonl}        & \code{write\_events\_json}     & \cb & \cb & \spass & coalescence events should appear here \\
+  symbolic trace & \code{.json}  & \code{output/symbolic\_trace.json}& \code{write\_symbolic\_trace\_json} & \cb & \cb & \spass & no change expected \\
+  report         & \code{.md}    & \code{output/report.md}           & \code{write\_report\_md}       & \cb & \cb & \spass & no change expected \\
+  manifest       & \code{.json}  & \code{output/manifest.json}       & \code{write\_manifest\_json}   & \cb & \cb & \spass & should register \code{.ie} in registry \\
+  \midrule
+  \rowcolor{lavbg}
+  identity entropy sidecar \snew & \code{.ie} & \code{output/run.ie} &
+    \code{outputs.identity\_entropy.enabled} & \cb & \cb & \blankmd & IC-01: derived only \\
+
+\end{longtable}
+\normalsize
+
+\begin{warnbox}
+  \textbf{Viewer contract:}
+  The \code{.ie} file is an overlay sidecar, not a particle-state file.
+  It must satisfy \code{must\_not\_mutate\_state = true} per the viewer data contract
+  (\code{view\_contract.hpp}). Confirm this with the viewer team before CR-10 lands.
+\end{warnbox}
+
+% =============================================================================
+\section{.ie File Format Spot-Check}
+% =============================================================================
+
+After a demo run, open the \code{.ie} file and verify each structural property.
+Fill in the ``Observed'' column from the actual file.
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{4.5cm} L{4.5cm} L{2.5cm} C{0.8cm} L{2.0cm} @{}}
+  \rowcolor{skybg}
+  \textbf{Property} & \textbf{Expected} & \textbf{Observed} & \textbf{\cb} & \textbf{Notes} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  Header row present          & \code{frame identity\_id J dataloss \ldots} & \blankmd & \cb & \\
+  Column count                & 15                                           & \blankmd & \cb & frame + id + 12 vars + flags \\
+  \code{J} range              & $[0.0, 1.0]$ for all rows                    & \blankmd & \cb & IC-07: clamp enforced in kernel \\
+  \code{dataloss} invariant   & \code{dataloss = 1 - J}                      & \blankmd & \cb & enforced by \code{IERecord::sync()} \\
+  \code{recoverability} inv.  & \code{recoverability = 1 - projection\_loss} & \blankmd & \cb & enforced by \code{IERecord::sync()} \\
+  \code{formation\_memory} f0 & 1.0 (fully declared context)                 & \blankmd & \cb & AC-04 \\
+  \code{coalescence\_loss}    & $>0.0$ on event frame                        & \blankmd & \cb & AC-06 · requires DEC-05 resolved \\
+  SUMMARY block present       & \code{\# SUMMARY / \# rows / \# mean\_J \ldots} & \blankmd & \cb & AC-02 \\
+  File precision              & 6 decimal places                             & \blankmd & \cb & controlled by \code{precision} key \\
+  Row count matches frames    & rows = max\_steps / write cadence            & \blankmd & \cb & \code{write\_per\_frame = true} \\
+
+\end{longtable}
+\normalsize
+
+% =============================================================================
+\section{Existing Script Compatibility Matrix}
+% =============================================================================
+
+Run each existing script against the bridge build and verify no regressions.
+Fill each cell with \checkmark\ (pass), $\times$ (fail), or N/A.
+Parser errors, runtime crashes, and missing output files all count as failures.
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{5.0cm} C{1.1cm} C{1.5cm} C{1.5cm} C{1.3cm} C{1.6cm} L{1.5cm} L{1.3cm} @{}}
+  \rowcolor{skybg}
+  \textbf{Script} & \textbf{Parses} & \textbf{Runs to end} & \textbf{Outputs OK} &
+  \textbf{Verify\newline pass} & \textbf{No new\newline warnings} & \textbf{Run by} & \textbf{Date} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \code{suite\_metal\_steam\_properties.vsim} & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd \\
+  \code{suite\_gas\_plasma\_properties.vsim}  & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd \\
+  \code{demo\_day72\_nuclear\_clad.vsim}      & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd \\
+  \textit{[ add scripts here ]}               &          &          &          &          &          &          &          \\
+  \textit{[ add scripts here ]}               &          &          &          &          &          &          &          \\
+  \textit{identity\_entropy\_surface\_demo}   & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd & \blankmd \\
+
+\end{longtable}
+\normalsize
+
+\begin{warnbox}
+  \textbf{Regression priority:}
+  The three reference scripts (\code{suite\_metal\_steam}, \code{suite\_gas\_plasma},
+  \code{nuclear\_clad}) must all pass before any bridge task is marked complete.
+  These scripts have no \code{[formation]} block --- the parser must handle their
+  absence gracefully without emitting spurious warnings on non-applicable material types.
+\end{warnbox}
+
+% =============================================================================
+\section{Verification Run Log}
+% =============================================================================
+
+Record each verification run as tasks land. One row per run.
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} L{1.5cm} L{3.0cm} L{2.5cm} L{1.5cm} L{1.5cm} L{2.0cm} L{1.5cm} L{1.2cm} @{}}
+  \rowcolor{skybg}
+  \textbf{Run ID} & \textbf{Script} & \textbf{Build / branch} & \textbf{AC tested} &
+  \textbf{Result} & \textbf{Output dir} & \textbf{Run by} & \textbf{Date} \\
+  \toprule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \dash & \dash & \dash & \dash & \dash & \dash & \dash & \dash \\
+  \dash & \dash & \dash & \dash & \dash & \dash & \dash & \dash \\
+  \dash & \dash & \dash & \dash & \dash & \dash & \dash & \dash \\
+  \dash & \dash & \dash & \dash & \dash & \dash & \dash & \dash \\
+  \dash & \dash & \dash & \dash & \dash & \dash & \dash & \dash \\
+  \dash & \dash & \dash & \dash & \dash & \dash & \dash & \dash \\
+
+\end{longtable}
+\normalsize
+
+% =============================================================================
+\section{Open Issues Register}
+% =============================================================================
+
+Pre-populated from known open decisions (CR-2026-01). Add new issues as they surface.
+
+\vspace{6pt}
+
+% ── ISS-01 ────────────────────────────────────────────────────────────────────
+\begin{tcolorbox}[colback=white, colframe=black!20, arc=0pt, boxrule=0.5pt,
+  boxsep=5pt, left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \begin{tabular}{@{} l l l @{}}
+    \textbf{\small\ttfamily ISS-01} &
+    \textbf{\small Schema bracket for identity entropy output config} &
+    \stbd
+  \end{tabular}
+  \vspace{4pt}\\
+  {\small \code{[outputs.identity\_entropy]} vs \code{[export.identity\_entropy]}.
+    Must be resolved before CR-03 can land. Affects all downstream script examples
+    and the bridge doc \S\,9 demo script.}
+  \vspace{4pt}\\
+  {\scriptsize\sffamily
+    Ref: DEC-01 · CR-03 \quad
+    Owner: \blanksm \quad
+    Due: \blanksm \quad
+    Resolved: \blanksm}
+\end{tcolorbox}
+
+% ── ISS-02 ────────────────────────────────────────────────────────────────────
+\begin{tcolorbox}[colback=white, colframe=black!20, arc=0pt, boxrule=0.5pt,
+  boxsep=5pt, left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \begin{tabular}{@{} l l l @{}}
+    \textbf{\small\ttfamily ISS-02} &
+    \textbf{\small Formula for \code{dataentropy}, \code{hidden\_activity},
+      \code{projection\_loss}} &
+    \stbd
+  \end{tabular}
+  \vspace{4pt}\\
+  {\small Three of the twelve IE variables have no defined computation formula.
+    Until resolved, CR-05 emits \code{0.0} with flag bit \texttt{0x1}. Requires
+    physics model input. Blocks full variable set completion.}
+  \vspace{4pt}\\
+  {\scriptsize\sffamily
+    Ref: DEC-02 · CR-05 \quad
+    Owner: \blanksm \quad
+    Due: \blanksm \quad
+    Resolved: \blanksm}
+\end{tcolorbox}
+
+% ── ISS-03 ────────────────────────────────────────────────────────────────────
+\begin{tcolorbox}[colback=white, colframe=black!20, arc=0pt, boxrule=0.5pt,
+  boxsep=5pt, left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \begin{tabular}{@{} l l l @{}}
+    \textbf{\small\ttfamily ISS-03} &
+    \textbf{\small \code{lineage\_depth} tracking strategy} &
+    \stbd
+  \end{tabular}
+  \vspace{4pt}\\
+  {\small Per-object counter vs global lineage registry. Choice affects memory usage
+    in large runs and accuracy for re-coalesced objects.}
+  \vspace{4pt}\\
+  {\scriptsize\sffamily
+    Ref: DEC-03 · CR-05 \quad
+    Owner: \blanksm \quad
+    Due: \blanksm \quad
+    Resolved: \blanksm}
+\end{tcolorbox}
+
+% ── ISS-04 ────────────────────────────────────────────────────────────────────
+\begin{tcolorbox}[colback=white, colframe=black!20, arc=0pt, boxrule=0.5pt,
+  boxsep=5pt, left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \begin{tabular}{@{} l l l @{}}
+    \textbf{\small\ttfamily ISS-04} &
+    \textbf{\small Projection operator $A_n$ for coalescence residual} &
+    \stbd
+  \end{tabular}
+  \vspace{4pt}\\
+  {\small \code{coalescence\_residual()} takes caller-supplied
+    \code{projected\_identity} vector. Who computes the projection, and how?
+    Bridge doc defines $R_{\text{coal}}^{(n)} = C_n - A_n(I^{\star}_{(n+1)})$
+    but $A_n$ is not yet specified. Blocks CR-06 and AC-06.}
+  \vspace{4pt}\\
+  {\scriptsize\sffamily
+    Ref: DEC-05 · CR-06 \quad
+    Owner: \blanksm \quad
+    Due: \blanksm \quad
+    Resolved: \blanksm}
+\end{tcolorbox}
+
+% ── ISS-05 / ISS-06 (blank) ───────────────────────────────────────────────────
+\begin{tcolorbox}[colback=black!2, colframe=black!15, arc=0pt, boxrule=0.5pt,
+  boxsep=5pt, left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \begin{tabular}{@{} l l l @{}}
+    \textbf{\small\ttfamily ISS-05} &
+    \textbf{\small \blanklong} &
+    \spend
+  \end{tabular}
+  \vspace{4pt}\\
+  {\small\textit{[ fill in as issues surface ]}}
+  \vspace{4pt}\\
+  {\scriptsize\sffamily
+    Ref: \blanksm \quad
+    Owner: \blanksm \quad
+    Due: \blanksm \quad
+    Resolved: \blanksm}
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=black!2, colframe=black!15, arc=0pt, boxrule=0.5pt,
+  boxsep=5pt, left=8pt, right=8pt, top=6pt, bottom=6pt]
+  \begin{tabular}{@{} l l l @{}}
+    \textbf{\small\ttfamily ISS-06} &
+    \textbf{\small \blanklong} &
+    \spend
+  \end{tabular}
+  \vspace{4pt}\\
+  {\small\textit{[ fill in as issues surface ]}}
+  \vspace{4pt}\\
+  {\scriptsize\sffamily
+    Ref: \blanksm \quad
+    Owner: \blanksm \quad
+    Due: \blanksm \quad
+    Resolved: \blanksm}
+\end{tcolorbox}
+
+% =============================================================================
+\section{Sign-off}
+% =============================================================================
+
+This audit is considered closed when all \pzero\ and \pone\ acceptance criteria in
+CR-2026-01 are checked, the compatibility matrix shows no regressions, and the four
+pre-populated open issues are resolved or formally deferred. \ptwo\ items (CR-10, AC-10)
+may be deferred to a follow-on milestone with documented rationale.
+
+\vspace{16pt}
+\begin{tabular}{@{} L{6cm} L{1.5cm} L{6cm} L{1.5cm} @{}}
+  \textit{\small\sffamily Implementing developer} & & \textit{\small\sffamily Date} & \\[6pt]
+  \rule{6cm}{0.5pt} & & \rule{3cm}{0.5pt} & \\[18pt]
+
+  \textit{\small\sffamily Reviewer} & & \textit{\small\sffamily Date} & \\[6pt]
+  \rule{6cm}{0.5pt} & & \rule{3cm}{0.5pt} & \\[18pt]
+
+  \textit{\small\sffamily Integration lead} & & \textit{\small\sffamily Date} & \\[6pt]
+  \rule{6cm}{0.5pt} & & \rule{3cm}{0.5pt} & \\[18pt]
+
+  \textit{\small\sffamily Final audit status} & & \textit{\small\sffamily Build merged} & \\[6pt]
+  \rule{6cm}{0.5pt} & & \rule{3cm}{0.5pt} & \\
+\end{tabular}
+
+\vspace{20pt}
+\begin{infobox}
+  \small
+  \textbf{Next step (step 3):}
+  Scripting examples document --- canonical \code{.vsim} scripts demonstrating the
+  bridge integration at minimum, standard, and maximum instrumentation levels. Should
+  include: surface deposition (bridge doc \S\,9 demo), powder bed with coalescence
+  tracking, batch sweep with \code{formation} axis, and a nuclear cladding variant
+  adding identity entropy alongside the existing Day-72 script.
+\end{infobox}
+
+% =============================================================================
+\vspace{12pt}
+\noindent\rule{\linewidth}{0.5pt}
+{\small\sffamily\textcolor{gray}{AUD-2026-01 \textperiodcentered\
+  VSIM Internal \textperiodcentered\ v5.2.0-internal
+  \textperiodcentered\ Ref: vsim\_bridge\_doc.tex · vsim\_code\_request.tex}}
+
+\end{document}

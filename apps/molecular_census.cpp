@@ -1,4 +1,4 @@
-/**
+﻿/**
  * molecular-census: Deep Molecular Analysis CLI
  *
  * Collects 112+ atomistic data points on a molecule from a single primary
@@ -24,7 +24,7 @@
 
 static void print_usage() {
     std::cout << R"(
-molecular-census — Deep Molecular Analysis (112+ data points)
+molecular-census  -  Deep Molecular Analysis (112+ data points)
 
 Usage:
   molecular-census <formula> [options]

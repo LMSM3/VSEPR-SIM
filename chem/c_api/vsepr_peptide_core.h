@@ -1,4 +1,4 @@
-﻿/* vsepr_peptide_core.h  —  LEGACY FORWARDING SHIM
+﻿/* vsepr_peptide_core.h   -   LEGACY FORWARDING SHIM
  * ==================================================
  * This header is no longer the authoritative chemistry vocabulary.
  * It is kept only to preserve build compatibility for any consumer
@@ -60,7 +60,7 @@ typedef struct VSEPR_ChemAtom {
     int32_t residue_id;
     int32_t molecule_id;
     VSEPR_Hybridization       hybridization;
-    VSEPR_PeptideRole         chem_role;     /* was VSEPR_ChemRole — now peptide-domain */
+    VSEPR_PeptideRole         chem_role;     /* was VSEPR_ChemRole  -  now peptide-domain */
     double partial_charge;
     double covalent_radius_pm;
     double vdw_radius_pm;

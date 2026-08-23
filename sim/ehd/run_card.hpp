@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * run_card.hpp
  *
- * Electrohydrodynamic Simulation — Run Card I/O
+ * Electrohydrodynamic Simulation  -  Run Card I/O
  *
  * Serialises / deserialises the full EHD case specification to a structured
  * text format.  Each run card fully specifies a reproducible simulation case:
@@ -38,7 +38,7 @@ inline bool write_run_card(const EHDParameters& p,
     out << std::fixed << std::setprecision(6);
 
     out << "# ============================================================================\n";
-    out << "# EHD Run Card — Case: " << rc.case_id << "\n";
+    out << "# EHD Run Card  -  Case: " << rc.case_id << "\n";
     out << "# ============================================================================\n\n";
 
     out << "[case]\n";

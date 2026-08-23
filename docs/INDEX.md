@@ -81,6 +81,7 @@ for f in section*.tex; do pdflatex "$f"; done
 | File | Content |
 |------|---------|
 | `FILE_FORMATS.md` | XYZ / XYZA / XYZC / XYZF file format specification (Markdown) |
+| `POST_SIMULATION_AUTOMATION.md` | Script-first and desktop follow-up workflow for post-simulation automation |
 | `VALIDATION_REPORT.md` | 35-test validation campaign with results |
 | `BEAD_FIRE_REFERENCE.md` | FIRE algorithm reference for bead-level relaxation |
 | `cg_mapping_report.md` | Coarse-grained mapping report |
@@ -172,6 +173,7 @@ The Python kernel (`pykernel/`) provides scientific computation, automation, and
 
 | File | Content |
 |------|---------|
+| `docs/visual_stack/README.md` | Two-pronged EndoScript and Linux-native visual-stack methodology |
 | `docs/vis/ARCHITECTURE_DIAGRAM.md` | Visualization architecture overview |
 | `docs/vis/BALLSTICK_GUIDE.md` | Ball-and-stick rendering guide |
 | `docs/vis/RENDERER_FEATURES.md` | Renderer feature list |

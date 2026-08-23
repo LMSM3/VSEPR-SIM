@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_nuclear_stability.cpp
  * ==========================
  * Validates the ab-initio nuclear stability predictor and its integration
@@ -47,7 +47,7 @@ static int g_pass = 0, g_fail = 0;
 
 #define SECTION(s) std::printf("\n[%s]\n", (s))
 
-// ── S1: Magic numbers ───────────────────────────────────────────────────────
+// -- S1: Magic numbers -------------------------------------------------------
 
 static void test_S1() {
     SECTION("S1: Magic proton numbers");
@@ -68,7 +68,7 @@ static void test_S1() {
     }
 }
 
-// ── S2: Stable elements ─────────────────────────────────────────────────────
+// -- S2: Stable elements -----------------------------------------------------
 
 static void test_S2() {
     SECTION("S2: Stable elements Z=1-82 (minus Tc,Pm)");
@@ -90,10 +90,10 @@ static void test_S2() {
     CHECK(n_stable == 80, buf);
 }
 
-// ── S3: Tc and Pm ───────────────────────────────────────────────────────────
+// -- S3: Tc and Pm -----------------------------------------------------------
 
 static void test_S3() {
-    SECTION("S3: Tc (Z=43) and Pm (Z=61) — no stable isotopes");
+    SECTION("S3: Tc (Z=43) and Pm (Z=61)  -  no stable isotopes");
     auto tc = stability_of(43);
     auto pm = stability_of(61);
     CHECK(tc.cls == StabilityClass::Radioactive, "Tc is Radioactive");
@@ -102,27 +102,27 @@ static void test_S3() {
     CHECK(!pm.has_stable_isotope, "Pm has no stable isotope");
 }
 
-// ── S4: Bismuth ─────────────────────────────────────────────────────────────
+// -- S4: Bismuth -------------------------------------------------------------
 
 static void test_S4() {
-    SECTION("S4: Bi (Z=83) — PrimordialLong");
+    SECTION("S4: Bi (Z=83)  -  PrimordialLong");
     auto bi = stability_of(83);
     CHECK(bi.cls == StabilityClass::PrimordialLong, "Bi is PrimordialLong");
     CHECK(bi.dominant_decay == DecayType::Alpha, "Bi decays by alpha");
     CHECK(!bi.has_stable_isotope, "Bi has no truly stable isotope");
 }
 
-// ── S5: Th and U ────────────────────────────────────────────────────────────
+// -- S5: Th and U ------------------------------------------------------------
 
 static void test_S5() {
-    SECTION("S5: Th (Z=90) and U (Z=92) — PrimordialLong");
+    SECTION("S5: Th (Z=90) and U (Z=92)  -  PrimordialLong");
     auto th = stability_of(90);
     auto u  = stability_of(92);
     CHECK(th.cls == StabilityClass::PrimordialLong, "Th is PrimordialLong");
     CHECK(u.cls  == StabilityClass::PrimordialLong, "U is PrimordialLong");
 }
 
-// ── S6: Superheavy Z=112-118 ────────────────────────────────────────────────
+// -- S6: Superheavy Z=112-118 ------------------------------------------------
 
 static void test_S6() {
     SECTION("S6: Superheavy Z=112-118");
@@ -136,7 +136,7 @@ static void test_S6() {
     }
 }
 
-// ── S7: Most-stable-A spot-checks ───────────────────────────────────────────
+// -- S7: Most-stable-A spot-checks -------------------------------------------
 
 static void test_S7() {
     SECTION("S7: Most-stable-A predictions");
@@ -156,7 +156,7 @@ static void test_S7() {
     check_A(92, 238, 6, "U-238");
 }
 
-// ── S8: Binding energy per nucleon ──────────────────────────────────────────
+// -- S8: Binding energy per nucleon ------------------------------------------
 
 static void test_S8() {
     SECTION("S8: Binding energy per nucleon");
@@ -170,10 +170,10 @@ static void test_S8() {
 
     // B/A should peak around Fe and decrease for heavy elements
     double bpa_U = semf::binding_per_nucleon(92, 238);
-    CHECK(bpa_Fe > bpa_U, "B/A(Fe) > B/A(U) — iron peak");
+    CHECK(bpa_Fe > bpa_U, "B/A(Fe) > B/A(U)  -  iron peak");
 }
 
-// ── S9: Fissility ───────────────────────────────────────────────────────────
+// -- S9: Fissility -----------------------------------------------------------
 
 static void test_S9() {
     SECTION("S9: Fissility parameter");
@@ -185,7 +185,7 @@ static void test_S9() {
     CHECK(sg_info.fissility > 38.0, "Sg fissility > 38 (approaching SF threshold)");
 }
 
-// ── S10: Alpha confidence ───────────────────────────────────────────────────
+// -- S10: Alpha confidence ---------------------------------------------------
 
 static void test_S10() {
     SECTION("S10: Alpha prediction confidence");
@@ -196,7 +196,7 @@ static void test_S10() {
     CHECK(alpha_prediction_confidence(118) < 0.10, "Og (Z=118) confidence < 0.10");
 }
 
-// ── S11: alpha_predict_checked returns same alpha ───────────────────────────
+// -- S11: alpha_predict_checked returns same alpha ---------------------------
 
 static void test_S11() {
     SECTION("S11: alpha_predict_checked() == alpha_predict()");
@@ -213,7 +213,7 @@ static void test_S11() {
     CHECK(all_match, "alpha_predict_checked matches alpha_predict for all Z");
 }
 
-// ── S12: Theoretical flag ───────────────────────────────────────────────────
+// -- S12: Theoretical flag ---------------------------------------------------
 
 static void test_S12() {
     SECTION("S12: Theoretical flag");
@@ -237,7 +237,7 @@ static void test_S12() {
     }
 }
 
-// ── S13: Calibration threshold ──────────────────────────────────────────────
+// -- S13: Calibration threshold ----------------------------------------------
 
 static void test_S13() {
     SECTION("S13: Stability-aware calibration threshold");
@@ -246,11 +246,11 @@ static void test_S13() {
     std::printf("  C  (Z=6):  threshold = %.4f\n", t_C);
     std::printf("  Og (Z=118): threshold = %.4f\n", t_Og);
     CHECK(std::abs(t_C - 0.01) < 0.001, "C threshold ≈ 0.01 (stable)");
-    CHECK(t_Og > 0.05, "Og threshold > 0.05 (superheavy → widened)");
+    CHECK(t_Og > 0.05, "Og threshold > 0.05 (superheavy -> widened)");
     CHECK(t_Og <= 0.20, "Og threshold ≤ 0.20 (capped)");
 }
 
-// ── S14: Dominant decay for heavy elements ──────────────────────────────────
+// -- S14: Dominant decay for heavy elements ----------------------------------
 
 static void test_S14() {
     SECTION("S14: Dominant decay modes");
@@ -263,10 +263,10 @@ static void test_S14() {
     }
 }
 
-// ── S15: N/Z ratio increases ────────────────────────────────────────────────
+// -- S15: N/Z ratio increases ------------------------------------------------
 
 static void test_S15() {
-    SECTION("S15: Valley of stability — N/Z increases with Z");
+    SECTION("S15: Valley of stability  -  N/Z increases with Z");
     double prev_ratio = 0.0;
     int breaks = 0;
     for (uint32_t Z = 2; Z <= 100; Z += 10) {
@@ -279,11 +279,11 @@ static void test_S15() {
     CHECK(breaks <= 3, "N/Z ratio is mostly monotonically increasing");
 }
 
-// ── S16: Geiger-Nuttall trend ───────────────────────────────────────────────
+// -- S16: Geiger-Nuttall trend -----------------------------------------------
 
 static void test_S16() {
-    SECTION("S16: Geiger-Nuttall — Q_alpha increases with Z for α-emitters");
-    // The Viola-Seaborg formula: for similar Q values, higher Z → shorter t½.
+    SECTION("S16: Geiger-Nuttall  -  Q_alpha increases with Z for α-emitters");
+    // The Viola-Seaborg formula: for similar Q values, higher Z -> shorter t½.
     // But SEMF Q values have shell-correction noise, so test a wide Z gap.
     // Bi (Z=83) vs Og (Z=118): the superheavy should have shorter predicted t½.
     auto bi = stability_of(83);
@@ -303,7 +303,7 @@ static void test_S16() {
     CHECK(q_positive >= 14, "Most Z=84-100 have positive Q_alpha");
 }
 
-// ── S17: Full-table sweep ───────────────────────────────────────────────────
+// -- S17: Full-table sweep ---------------------------------------------------
 
 static void test_S17() {
     SECTION("S17: Full-table sweep Z=1-118");
@@ -325,11 +325,11 @@ static void test_S17() {
     CHECK(valid == 118, buf);
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 int main() {
     std::printf("============================================================\n");
-    std::printf(" Nuclear Stability Predictor — Ab Initio from Z\n");
+    std::printf(" Nuclear Stability Predictor  -  Ab Initio from Z\n");
     std::printf("============================================================\n");
 
     test_S1();

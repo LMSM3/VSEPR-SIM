@@ -1,0 +1,42 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name = "builder_distribution_preview"
+version = "1"
+seed_base = 42051
+determinism = true
+description = "Typed material and distribution expansion preview"
+
+[material]
+formula = "NaCl"
+structure = "rocksalt"
+cell = "2x2x2"
+phase = "solid"
+
+[distribution.substitution_sites]
+target = "material.bulk"
+species = "K"
+count = 2
+placement = "low_discrepancy"
+shape = "lattice_sites"
+center = [0.0, 0.0, 0.0]
+extent = [1.0, 1.0, 1.0]
+
+[run]
+mode = "single_point"
+max_steps = 1
+converge = false
+
+[observe]
+metrics = ["formation", "coordination"]
+output_format = "json"
+
+[export]
+write_report_md = true
+write_manifest_json = true
+output_dir = "out/improvement_acceptance/builder_distribution_preview"
+
+[visual]
+output_type = "none"
+

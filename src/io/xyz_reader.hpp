@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * xyz_reader.hpp -- Spec-compliant unified XYZ family reader
  * ===========================================================
@@ -17,7 +17,7 @@
  *      Caching the first frame's column layout globally is explicitly a bug.
  *   3. Property columns: charge(1), velocity(3), force(3), energy(1).
  *      Column order is fixed; omission from the right is allowed.
- *      Insufficient columns → zero-fill + XYZParseWarning::COLUMN_ZERO_FILL.
+ *      Insufficient columns -> zero-fill + XYZParseWarning::COLUMN_ZERO_FILL.
  */
 
 #include "xyz_unified.hpp"
@@ -33,7 +33,7 @@ namespace vsepr {
 namespace io {
 
 // ============================================================================
-// XYZReadError — hard parse failure
+// XYZReadError  -  hard parse failure
 // ============================================================================
 
 struct XYZReadError {
@@ -51,7 +51,7 @@ struct XYZReadError {
 };
 
 // ============================================================================
-// ParseContext — shared parse state for one reader session
+// ParseContext  -  shared parse state for one reader session
 // ============================================================================
 
 struct ParseContext {
@@ -77,7 +77,7 @@ inline std::string trim(const std::string& s) {
 	return s.substr(a, b - a + 1);
 }
 
-// Parse "properties=..." from comment line → vector of lowercase key names
+// Parse "properties=..." from comment line -> vector of lowercase key names
 // Spec: colon-separated list of keys
 // Examples: properties="charge:velocity"
 //           properties="charge:velocity:force:energy"
@@ -212,7 +212,7 @@ inline bool parse_atom_xyza(const std::string& line,
 			if (!read1(e)) warn_zero(prop);
 			out.e = e;
 		} else {
-			// Unknown property — consume no columns, emit warning
+			// Unknown property  -  consume no columns, emit warning
 			ctx.warnings.push_back({XYZWarnCode::UNKNOWN_PROPERTY, fi, li,
 									 "Unknown property key '" + prop + "'"});
 		}
@@ -427,7 +427,7 @@ inline XYZData read_xyzc(const std::string& path, ParseContext* ctx_out = nullpt
 		}
 		data.checkpoint = ck;
 	} else {
-		// No CHECKPOINT block — treat as plain .xyza, rewind via unget trick
+		// No CHECKPOINT block  -  treat as plain .xyza, rewind via unget trick
 		// We push the consumed line back by prepending to stream via sstream
 		ctx.errors.push_back({XYZReadError::NO_CHECKPOINT_HEADER,
 							   "Expected CHECKPOINT on line 1 of .xyzc file"});
@@ -451,6 +451,9 @@ inline XYZData read_xyzc(const std::string& path, ParseContext* ctx_out = nullpt
 inline XYZData read_xyzf(const std::string& path, ParseContext* ctx_out = nullptr) {
 	ParseContext ctx;
 	XYZData data;
+
+	// Read all lines upfront so seekg/tellg reliability on Windows text streams
+	// is not a concern.
 	std::ifstream in(path);
 	if (!in) {
 		ctx.errors.push_back({XYZReadError::IO_ERROR, "Cannot open: " + path});
@@ -458,40 +461,47 @@ inline XYZData read_xyzf(const std::string& path, ParseContext* ctx_out = nullpt
 		return data;
 	}
 
+	std::vector<std::string> all_lines;
+	{
+		std::string l;
+		while (std::getline(in, l)) {
+			// Strip Windows CRLF
+			if (!l.empty() && l.back() == '\r') l.pop_back();
+			all_lines.push_back(std::move(l));
+		}
+	}
+	in.close();
+
+	// Replay through a stringstream so parse_frame_xyza sees a normal stream.
+	std::ostringstream rebuilt;
+	for (const auto& l : all_lines) rebuilt << l << '\n';
+	std::istringstream ss(rebuilt.str());
+
 	int lineno = 0;
-	int fi = 0;
-	while (in.peek() != EOF) {
+	int fi     = 0;
+	while (ss.peek() != EOF) {
 		// Skip blank lines between frames
 		std::string peek_line;
-		auto save_pos = in.tellg();
-		if (!std::getline(in, peek_line)) break;
+		auto save_pos = ss.tellg();
+		if (!std::getline(ss, peek_line)) break;
 		++lineno;
 		peek_line = detail::trim(peek_line);
 		if (peek_line.empty()) continue;
 
-		// Try to parse as atom count (start of new frame)
-		int n_test = 0;
-		try { n_test = std::stoi(peek_line); }
+		// Validate atom count
+		try { std::stoi(peek_line); }
 		catch (...) { break; }
 
-		// Re-inject by seeking back and re-reading inside parse_frame_xyza
-		// We do this by constructing a temporary stream from the remainder
-		// Strategy: seek back to save_pos, then use parse_frame_xyza on the
-		// main stream — it will re-read the atom count line.
-		in.seekg(save_pos);
-		--lineno;  // undo the getline we peeked with
+		// Seek back so parse_frame_xyza can re-read the atom count line.
+		ss.seekg(save_pos);
+		--lineno;
 
 		XYZFrame frame;
-		// Per-frame independent parse: read_xyza if any properties= present,
-		// else read_xyz columns. We always call xyza parser which falls back
-		// gracefully to xyz-only when props is empty.
-		if (!detail::parse_frame_xyza(in, frame, ctx, fi, lineno)) {
-			// Soft: log error and continue to next frame
+		if (!detail::parse_frame_xyza(ss, frame, ctx, fi, lineno)) {
 			if (ctx.has_errors()) break;
 		}
 		data.frames.push_back(std::move(frame));
 		++fi;
-		(void)n_test;
 	}
 
 	if (ctx_out) *ctx_out = std::move(ctx);
@@ -499,7 +509,7 @@ inline XYZData read_xyzf(const std::string& path, ParseContext* ctx_out = nullpt
 }
 
 // ============================================================================
-// XYZFReader — streaming iterator for .xyzf (spec §9 reader API)
+// XYZFReader  -  streaming iterator for .xyzf (spec §9 reader API)
 // ============================================================================
 
 class XYZFReader {

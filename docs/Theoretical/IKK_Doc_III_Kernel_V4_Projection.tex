@@ -1,0 +1,482 @@
+% ============================================================================
+%  Kernel V4 — Bilinear Projection Form for Radial Density
+%  VSEPR-SIM Theoretical Division
+%  Classification: TOP SECRET (internal development document)
+%
+%  Subject: Corrected separability analysis, gradient/numerical form,
+%           matrix presolve form, and generalised bilinear projection
+%           engine for multi-channel radial density computation.
+%
+%  Compile: pdflatex (twice for ToC)
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+			headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+			urlcolor=blue]{hyperref}
+
+% --- Code style --------------------------------------------------------------
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  numberstyle=\tiny\color{codegray},
+  numbers=left, numbersep=6pt,
+  breaklines=true, frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b, showstringspaces=false,
+  tabsize=2
+}
+
+% --- Headers -----------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Kernel V4 — Bilinear Projection Form}}
+\fancyhead[R]{\small\textit{VSEPR-SIM / TOP SECRET}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section style -----------------------------------------------------------
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% --- Math convenience --------------------------------------------------------
+\newcommand{\Ri}[1]{R_{#1}^2(\mathbf{r})}          % R_k^2(r)
+\newcommand{\Rit}[2]{R_{#1}^2(\mathbf{r}_{#2})}     % R_k^2(r_i)
+\newcommand{\ez}{e_z(t)}
+\newcommand{\Bvec}{B(\mathbf{r})}
+\newcommand{\Dvec}{D(\mathbf{r})}
+\newcommand{\wvec}{\mathbf{w}(t)}
+\newcommand{\Rvec}{\mathbf{R}(\mathbf{r})}
+\newcommand{\Rgrid}{R_{\mathrm{grid}}}
+\newcommand{\Mmat}{\mathbf{M}}
+\newcommand{\evec}{\mathbf{e}(t)}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.2cm}
+  {\large\scshape VSEPR-SIM Theoretical Division\par}
+  \vspace{0.3cm}
+  {\small TOP SECRET — Internal Development Document\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries Kernel V4\par}
+  \vspace{0.4cm}
+  {\LARGE Bilinear Projection Form\\[0.2em]
+   for Radial Density\par}
+  \vspace{1.2cm}
+  {\normalsize
+	Corrected separability analysis\,|\,
+	Gradient/numerical caching form\,|\,\\[0.3em]
+	Matrix presolve form\,|\,
+	Generalised multi-channel projection engine\par}
+  \vspace{1.5cm}
+  {\normalsize VSEPR-SIM Development Day 64\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Correction: Separability in the Gradient Form}
+\label{sec:correction}
+% ============================================================================
+
+\subsection{The claim that needed fixing}
+
+An earlier version of the derivation stated that the gradient form
+\emph{destroys} separability of the density into spatial and temporal
+parts, and therefore cannot cache spatial structure. This is too strong.
+
+The gradient form hides the clean matrix structure, but separability
+is preserved. Define the \textbf{base density} and \textbf{difference density}:
+
+\begin{align}
+  \Bvec &= \tfrac{1}{2}\bigl[\Ri{1} + \Ri{2}\bigr]
+  \label{eq:B} \\[4pt]
+  \Dvec &= \tfrac{1}{2}\bigl[\Ri{1} - \Ri{2}\bigr]
+  \label{eq:D}
+\end{align}
+
+Then the full density is:
+
+\begin{equation}
+  \boxed{\rho(\mathbf{r},t) = \Bvec + \ez\,\Dvec}
+  \label{eq:rho_BD}
+\end{equation}
+
+This is already cacheable. Spatial derivatives separate cleanly:
+
+\begin{equation}
+  \nabla\rho(\mathbf{r},t) = \nabla\Bvec + \ez\,\nabla\Dvec
+  \label{eq:grad_rho}
+\end{equation}
+
+since $\ez$ carries no spatial dependence.
+
+\medskip
+\noindent\textbf{Corrected claim:}
+\begin{quote}
+  \itshape
+  The gradient form does not destroy separability; it merely hides the
+  clean matrix structure. The matrix form makes the separability
+  \emph{explicit} and \emph{generalisable}. The two claims are
+  complementary, not equivalent.
+\end{quote}
+
+% ============================================================================
+\section{Three Equivalent Forms}
+\label{sec:three_forms}
+% ============================================================================
+
+\subsection{Form 1 — Decomposed projection form (readable)}
+
+\begin{equation}
+  \rho(\mathbf{r},t)
+  = \tfrac{1}{2}\bigl[(1+\ez)\,\Ri{1} + (1-\ez)\,\Ri{2}\bigr]
+  \label{eq:form1}
+\end{equation}
+
+This is the most readable form. It shows directly that the two radial
+projection channels $R_1^2$ and $R_2^2$ are weighted by
+$(1\pm\ez)/2$, which sum to 1 when $\ez = 0$ (equal weight)
+and collapse to a single channel when $\ez = \pm 1$.
+
+\subsection{Form 2 — Expanded modulation form (numerical / caching)}
+
+Expand \eqref{eq:form1}:
+
+\begin{equation}
+  \rho(\mathbf{r},t)
+  = \underbrace{\tfrac{1}{2}\Ri{1} + \tfrac{1}{2}\Ri{2}}_{\Bvec}
+  + \ez\underbrace{\tfrac{1}{2}\bigl[\Ri{1}-\Ri{2}\bigr]}_{\Dvec}
+  \label{eq:form2_expand}
+\end{equation}
+
+giving \eqref{eq:rho_BD}.
+
+\medskip
+\noindent\textbf{Precomputed cache per grid point} $\mathbf{r}_i$:
+
+\begin{equation}
+  \bigl\{B_i,\; D_i,\; \nabla B_i,\; \nabla D_i\bigr\}
+  \label{eq:cache}
+\end{equation}
+
+\noindent\textbf{Runtime evaluation at time} $t$:
+
+\begin{align}
+  \rho_i(t)       &= B_i + \ez\,D_i          \label{eq:rt_rho} \\
+  \nabla\rho_i(t) &= \nabla B_i + \ez\,\nabla D_i  \label{eq:rt_grad}
+\end{align}
+
+This is the computationally useful statement: spatial precomputation is
+done once; each timestep costs two flops per grid point (one multiply,
+one add) for $\rho$, and $2d$ flops for $\nabla\rho$ in $d$ spatial
+dimensions.
+
+\subsection{Form 3 — Matrix presolve form (dot-product runtime)}
+
+Write the radial channel vector and time-weight vector:
+
+\begin{equation}
+  \Rvec =
+  \begin{bmatrix} \Ri{1} \\ \Ri{2} \end{bmatrix},
+  \qquad
+  \wvec = \tfrac{1}{2}
+  \begin{bmatrix} 1+\ez \\ 1-\ez \end{bmatrix}
+  \label{eq:Rw}
+\end{equation}
+
+Then:
+
+\begin{equation}
+  \boxed{\rho(\mathbf{r},t) = \Rvec^\top \wvec}
+  \label{eq:form3}
+\end{equation}
+
+Runtime cost for a single preloaded grid point: $O(1)$.
+
+% ============================================================================
+\section{Generalised Bilinear Projection Form}
+\label{sec:general}
+% ============================================================================
+
+For $n$ radial channels and $m+1$ temporal state channels, define:
+
+\begin{equation}
+  \Rvec =
+  \begin{bmatrix} \Ri{1} \\ \Ri{2} \\ \vdots \\ R_n^2(\mathbf{r}) \end{bmatrix}
+  \in \mathbb{R}^n,
+  \qquad
+  \evec =
+  \begin{bmatrix} 1 \\ e_1(t) \\ e_2(t) \\ \vdots \\ e_m(t) \end{bmatrix}
+  \in \mathbb{R}^{m+1}
+  \label{eq:Re_general}
+\end{equation}
+
+Let $\Mmat \in \mathbb{R}^{n \times (m+1)}$ be the \textbf{channel mixing matrix}
+that maps temporal state channels into radial-channel weights. Then:
+
+\begin{equation}
+  \boxed{\rho(\mathbf{r},t) = \Rvec^\top \Mmat\, \evec(t)}
+  \label{eq:bilinear}
+\end{equation}
+
+\medskip
+The two-channel case \eqref{eq:form3} is recovered with:
+\begin{equation}
+  \Mmat = \tfrac{1}{2}
+  \begin{bmatrix}
+	1 &  1 \\
+	1 & -1
+  \end{bmatrix},
+  \qquad
+  \evec(t) =
+  \begin{bmatrix} 1 \\ \ez \end{bmatrix}
+  \label{eq:M2}
+\end{equation}
+
+\medskip
+\noindent\textbf{Why this form matters for code architecture:}
+\begin{itemize}
+  \item $\Rvec$ and $\Mmat$ are fully spatial / static — precomputed
+	once before the time loop.
+  \item $\evec(t)$ is a small vector updated each step from
+	the temporal state kernel.
+  \item The inner product $\Rvec^\top \Mmat\,\evec$ at each grid point
+	is a dense matrix-vector product on a small system
+	($n \times (m+1)$ is typically $2$--$8 \times 2$--$8$).
+  \item This scales cleanly from a 2-channel toy case
+	to a multi-channel projection engine without restructuring.
+\end{itemize}
+
+% ============================================================================
+\section{Presolve Pipeline}
+\label{sec:pipeline}
+% ============================================================================
+
+\subsection{Offline presolve (done once)}
+
+For each spatial grid point $\mathbf{r}_i$, $i = 1, \ldots, N$:
+
+\begin{equation}
+  \mathbf{R}_i =
+  \begin{bmatrix} \Rit{1}{i} \\ \Rit{2}{i} \end{bmatrix}
+\end{equation}
+
+Assemble the grid matrix:
+
+\begin{equation}
+  \Rgrid \in \mathbb{R}^{N \times n},
+  \quad
+  [\Rgrid]_{i,k} = R_k^2(\mathbf{r}_i)
+\end{equation}
+
+Compute and cache $\Rgrid \Mmat$ (static, shape $N \times (m+1)$).
+
+\subsection{Runtime (each timestep)}
+
+Update $\evec(t)$ from the temporal state kernel, then:
+
+\begin{equation}
+  \bm{\rho}(t) = (\Rgrid \Mmat)\,\evec(t)
+  \label{eq:runtime_vec}
+\end{equation}
+
+\noindent\textbf{Cost analysis:}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Operation & Cost & Notes \\
+  \midrule
+  Precompute $\Rgrid \Mmat$  & $O(N n (m+1))$ & Once, offline \\
+  Update $\evec(t)$          & $O(m)$         & Temporal kernel \\
+  Evaluate $\bm{\rho}(t)$    & $O(N(m+1))$    & Matrix-vector product \\
+  Single-point lookup        & $O(m+1) \approx O(1)$ & After presolve \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+For the two-channel case $n = 2$, $m = 1$:
+runtime evaluation is $O(2N)$, or $O(1)$ per preloaded point.
+
+% ============================================================================
+\section{Reference Implementation}
+\label{sec:impl}
+% ============================================================================
+
+\subsection{Python (prototype)}
+
+\begin{lstlisting}[language=Python, caption={Kernel V4 two-channel presolve (Python)}]
+import numpy as np
+
+class KernelV4:
+	"""
+	Bilinear projection engine for radial density.
+	Two-channel case: rho(r,t) = R(r)^T w(t)
+	"""
+
+	def __init__(self, R1_grid: np.ndarray, R2_grid: np.ndarray):
+		"""
+		Parameters
+		----------
+		R1_grid : (N,) array of R1^2 values on the spatial grid
+		R2_grid : (N,) array of R2^2 values on the spatial grid
+		"""
+		# Spatial cache  [N x 2]
+		self.R_grid = np.stack([R1_grid, R2_grid], axis=1)
+
+		# Channel mixing matrix M  [2 x 2]
+		self.M = 0.5 * np.array([[1.0,  1.0],
+								  [1.0, -1.0]])
+
+		# Presolve:  R_grid @ M  is [N x 2], computed once
+		self._RM = self.R_grid @ self.M
+
+	def weight_vector(self, ez: float) -> np.ndarray:
+		"""Temporal weight vector e(t) = [1, ez]."""
+		return np.array([1.0, ez])
+
+	def density(self, ez: float) -> np.ndarray:
+		"""Runtime evaluation: rho(t) = (R_grid M) e(t).  Cost: O(2N)."""
+		return self._RM @ self.weight_vector(ez)
+
+	def density_single(self, i: int, ez: float) -> float:
+		"""Single-point lookup after presolve.  Cost: O(1)."""
+		return float(self._RM[i] @ self.weight_vector(ez))
+
+
+# --- Example usage -----------------------------------------------------------
+if __name__ == "__main__":
+	N = 1000
+	r = np.linspace(0.0, 5.0, N)
+
+	# Toy radial functions: hydrogen-like s-orbitals
+	R1 = np.exp(-r)             # R1^2 ~ exp(-2r), but use R1 for clarity
+	R2 = r * np.exp(-r / 2.0)
+
+	kernel = KernelV4(R1**2, R2**2)
+
+	# Time evolution: ez sweeps from -1 to 1
+	for ez in np.linspace(-1.0, 1.0, 5):
+		rho = kernel.density(ez)
+		print(f"ez={ez:+.2f}  rho[0]={rho[0]:.6f}  rho[-1]={rho[-1]:.6f}")
+\end{lstlisting}
+
+\subsection{C++ kernel hook (production sketch)}
+
+\begin{lstlisting}[language=C++, caption={Kernel V4 presolve hook (C++23)}]
+#pragma once
+#include <span>
+#include <vector>
+#include <array>
+#include <cstddef>
+
+namespace ikk {
+
+/// Two-channel bilinear projection kernel.
+/// rho(r,t) = R_grid * M * e(t)
+/// Presolve: cache R_grid * M offline.  Runtime: O(2N) matvec.
+class KernelV4 {
+public:
+	/// Presolve constructor.
+	/// r1sq, r2sq: R1^2 and R2^2 evaluated on the spatial grid, length N.
+	KernelV4(std::span<const double> r1sq,
+			 std::span<const double> r2sq)
+	{
+		const std::size_t N = r1sq.size();
+		rm_.resize(N);                  // rm_[i] = {B_i, D_i}
+
+		for (std::size_t i = 0; i < N; ++i) {
+			rm_[i][0] = 0.5 * (r1sq[i] + r2sq[i]);   // B_i
+			rm_[i][1] = 0.5 * (r1sq[i] - r2sq[i]);   // D_i
+		}
+	}
+
+	/// Full grid evaluation.  rho_out must have length N.
+	/// Cost: O(2N)
+	void density(double ez, std::span<double> rho_out) const noexcept {
+		for (std::size_t i = 0; i < rm_.size(); ++i)
+			rho_out[i] = rm_[i][0] + ez * rm_[i][1];
+	}
+
+	/// Single-point lookup after presolve.  Cost: O(1).
+	[[nodiscard]]
+	double density_at(std::size_t i, double ez) const noexcept {
+		return rm_[i][0] + ez * rm_[i][1];
+	}
+
+private:
+	/// Cached (R_grid * M): rm_[i] = {B_i, D_i}
+	std::vector<std::array<double, 2>> rm_;
+};
+
+} // namespace ikk
+\end{lstlisting}
+
+% ============================================================================
+\section{Summary}
+\label{sec:summary}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{llll}
+  \toprule
+  Form & Equation & Best for & Cache \\
+  \midrule
+  Decomposed projection  & \eqref{eq:form1}   & Reading, intuition        & No \\
+  Expanded modulation    & \eqref{eq:rho_BD}  & Gradient / finite-diff    & $B_i, D_i, \nabla B_i, \nabla D_i$ \\
+  Matrix presolve        & \eqref{eq:form3}   & Dot-product runtime       & $\mathbf{R}_i^\top$ \\
+  Generalised bilinear   & \eqref{eq:bilinear}& Multi-channel engine      & $\Rgrid \Mmat$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{1em}
+\noindent
+All four forms are algebraically equivalent for the two-channel case.
+The generalised bilinear form \eqref{eq:bilinear} is the target for
+production code because it is:
+
+\begin{itemize}
+  \item \textbf{Statically typed by shape}: $\Rgrid \in \mathbb{R}^{N \times n}$,
+	$\Mmat \in \mathbb{R}^{n \times (m+1)}$, $\evec \in \mathbb{R}^{m+1}$.
+  \item \textbf{BLAS-friendly}: the presolve is a single DGEMM;
+	the runtime step is a DGEMV.
+  \item \textbf{Channel-count agnostic}: adding a new radial or temporal
+	channel is a shape change in $\Rgrid$ or $\Mmat$,
+	not a restructuring of the kernel.
+\end{itemize}
+
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{Kernel V4 — VSEPR-SIM Theoretical Division.
+  Humanity survives another algebraic rearrangement.}
+\end{center}
+
+\end{document}

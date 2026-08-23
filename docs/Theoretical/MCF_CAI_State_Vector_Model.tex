@@ -1,0 +1,445 @@
+﻿% ============================================================================
+%  MCF-CAI State Vector Model
+%  Theoretical Framework Document  ---  v1.0
+%
+%  Purpose: Formal definition of the MCF-CAI 3x3 object state grid and its
+%           integration with IKK/MIR identity-information theory.
+%
+%  Status:  BLUE (newly introduced / provisional)
+%  Compile: pdflatex (twice for ToC)
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.1in, right=1.1in, headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{mathrsfs}
+\usepackage{booktabs, array, tabularx, longtable}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue, citecolor=black}
+
+% ---- Colours ----------------------------------------------------------------
+\definecolor{MacroBG}{HTML}{D4EDDA}
+\definecolor{MacroFG}{HTML}{155724}
+\definecolor{ChemBG}{HTML}{CCE5FF}
+\definecolor{ChemFG}{HTML}{004085}
+\definecolor{FundBG}{HTML}{F8D7DA}
+\definecolor{FundFG}{HTML}{721C24}
+\definecolor{CarrierBG}{HTML}{FFF3CD}
+\definecolor{ActionBG}{HTML}{FFE0B2}
+\definecolor{InfoBG}{HTML}{E2D9F3}
+
+% ---- Theorem environments ---------------------------------------------------
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\theoremstyle{plain}
+\newtheorem{prop}{Proposition}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{warning}{Warning}[section]
+
+% ---- MCF-CAI notation macros ------------------------------------------------
+
+% Scale layers
+\newcommand{\Macro}{\mathscr{M}}          % Macro layer
+\newcommand{\Chem}{\mathscr{C}}           % Chemical layer
+\newcommand{\Fund}{\mathscr{F}}           % Fundamental layer
+
+% CAI basis
+\newcommand{\Carrier}{_{\mathrm{C}}}      % Carrier/Configuration subscript
+\newcommand{\Action}{_{\mathrm{A}}}       % Action/Coupling subscript
+\newcommand{\Info}{_{\mathrm{I}}}         % Information/Entropy subscript
+
+% Cell notation M_{s,b}
+\newcommand{\MC}{\Macro_{\mathrm{C}}}
+\newcommand{\MA}{\Macro_{\mathrm{A}}}
+\newcommand{\MI}{\Macro_{\mathrm{I}}}
+\newcommand{\CC}{\Chem_{\mathrm{C}}}
+\newcommand{\CA}{\Chem_{\mathrm{A}}}
+\newcommand{\CI}{\Chem_{\mathrm{I}}}
+\newcommand{\FC}{\Fund_{\mathrm{C}}}
+\newcommand{\FA}{\Fund_{\mathrm{A}}}
+\newcommand{\FI}{\Fund_{\mathrm{I}}}
+
+% Full state vector
+\newcommand{\Vobj}{\mathcal{V}_{\mathrm{MCF}}^{\mathrm{CAI}}}
+
+% IKK symbols (from Notation Registry)
+\newcommand{\Dfrak}{\mathfrak{D}}
+\newcommand{\Ifrak}{\mathfrak{I}}
+\newcommand{\etaab}{\eta_{ab}}
+\newcommand{\Psihid}{|\Psi^{\mathrm{hid}}\rangle}
+
+% ---- Page style -------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small MCF-CAI State Vector Model v1.0}
+\lhead{\small VSPER-SIM Theoretical Framework}
+\cfoot{\thepage}
+
+% ============================================================================
+\begin{document}
+% ============================================================================
+
+\begin{center}
+  {\LARGE\bfseries MCF-CAI State Vector Model}\\[0.5em]
+  {\large Macro / Chemical / Fundamental $\;\times\;$ Carrier / Action / Information}\\[0.3em]
+  {\normalsize Theoretical Framework Document v1.0 \quad|\quad VSPER-SIM v5.0.0-main}\\[0.5em]
+  {\small Status: \colorbox{InfoBG}{BLUE --- Provisional / Newly Introduced}}
+\end{center}
+
+\vspace{0.5em}
+\noindent\rule{\linewidth}{2pt}
+\tableofcontents
+\noindent\rule{\linewidth}{1pt}
+\newpage
+
+% ============================================================================
+\section{Overview}
+% ============================================================================
+
+The MCF-CAI State Vector Model is a unified representational framework for
+simulated objects in VSPER-SIM. It combines two orthogonal classification axes
+into a single 3$\times$3 state grid:
+
+\begin{itemize}
+  \item \textbf{MCF} --- the vertical physical-layer axis: Macro, Chemical, Fundamental.
+        This defines \emph{where} state is stored.
+  \item \textbf{CAI} --- the horizontal identity-information basis: Carrier, Action, Information.
+        This defines \emph{how} identity, coupling, and entropy-loss are tracked
+        within each layer.
+\end{itemize}
+
+The compact equation form:
+\[
+  \boxed{
+    \Vobj =
+    \begin{bmatrix}
+      \MC & \MA & \MI \\
+      \CC & \CA & \CI \\
+      \FC & \FA & \FI
+    \end{bmatrix}
+  }
+\]
+
+Or equivalently as a tensor sum:
+\[
+  \Vobj = \sum_{s \in \{\Macro,\Chem,\Fund\}} \;\sum_{b \in \{C,A,I\}} V_{s,b}\; \mathbf{e}_s \otimes \mathbf{e}_b
+\]
+
+where $\mathbf{e}_s$ are the scale-layer basis vectors and $\mathbf{e}_b$ are the
+identity-basis vectors.
+
+\begin{remark}
+  MCF is the \emph{body plan}. CAI is the \emph{bookkeeping of identity and loss}.
+  Neither axis can be reduced to the other. Both are required to fully specify
+  the representational state of a simulated object.
+\end{remark}
+
+% ============================================================================
+\section{The MCF Axis --- Physical Layer Hierarchy}
+% ============================================================================
+
+The MCF axis names three nested physical description layers. They are not disjoint:
+a macro object contains chemical structure which contains fundamental degrees of
+freedom. Each layer has its own observables, mediators, and resolution limit ---
+i.e., each corresponds to a scale regime tuple $S_n = (D_n, M_n, L_n)$ from IKK IV.
+
+\begin{longtable}{p{2cm} p{4cm} p{7cm}}
+  \toprule
+  \textbf{Layer} & \textbf{IKK scale} & \textbf{Contents} \\
+  \midrule
+  \rowcolor{MacroBG}
+  $\Macro$ \quad Macro &
+  $S_{\mathrm{mat}}$ (material scale) &
+  Geometry, phase, grain structure, object boundary, bulk state,
+  mechanical properties, continuum fields \\[4pt]
+  \rowcolor{ChemBG}
+  $\Chem$ \quad Chemical &
+  $S_3$ (EM/spatial, atomistic) &
+  Atoms, ions, molecules, ligands, bonds, coordination structure,
+  element identity, orbital geometry \\[4pt]
+  \rowcolor{FundBG}
+  $\Fund$ \quad Fundamental &
+  $S_0$--$S_2$ (existence, colour, subatomic) &
+  Charge, spin proxy, nuclear state, isotope state, colour-force
+  bookkeeping, hidden-coordinate content \\
+  \bottomrule
+\end{longtable}
+
+\begin{warning}
+  $\Fund$ does not imply full QCD. At the VSPER-SIM simulation scale,
+  the fundamental layer is a \emph{proxy and bookkeeping layer} --- it tracks
+  charge, spin intensity, and colour-averaged interaction (\texttt{cai\_channel})
+  without a first-principles QCD kernel.
+\end{warning}
+
+% ============================================================================
+\section{The CAI Axis --- Identity-Information Basis}
+% ============================================================================
+
+\begin{warning}
+  \textbf{Namespace collision.}
+  The abbreviation \texttt{CAI} already exists in VSPER-SIM source as
+  \emph{Colour-Averaged Interaction} (force channel in \texttt{WO-VSEPR-SIM-EXTREME}).
+  In theoretical documents, the CAI identity-information basis is always written
+  in full or typeset in calligraphic/bold. The force channel is always written
+  \texttt{cai\_channel} in monospace. These must never be conflated.
+\end{warning}
+
+The CAI axis defines three roles that any quantity can play within a given layer:
+
+\begin{longtable}{p{2.5cm} p{3.5cm} p{7cm}}
+  \toprule
+  \textbf{Basis} & \textbf{Role} & \textbf{Contents} \\
+  \midrule
+  \rowcolor{CarrierBG}
+  $C$ \quad Carrier &
+  Configuration state &
+  The \emph{what is here} component. Structural, configurational, geometric.
+  This is the physical body of the object at this layer --- the vessel
+  that holds all other quantities. \\[4pt]
+  \rowcolor{ActionBG}
+  $A$ \quad Action &
+  Coupling / dynamics &
+  The \emph{what is happening} component. Forces, reactions, flows,
+  field couplings, phase transitions. The processes that change the
+  carrier state over time. \\[4pt]
+  \rowcolor{InfoBG}
+  $I$ \quad Information &
+  Entropy / identity loss &
+  The \emph{what was lost} component. Formation history, projection loss,
+  reaction pathway entropy, hidden-residual trace, recoverable identity
+  fraction $\Dfrak$. This basis maps directly to the IKK sidecar layer. \\
+  \bottomrule
+\end{longtable}
+
+The Information basis is the home of all IKK/MIR variables. It is never
+used as a force input. It is a derived audit layer tracking what identity
+content has been lost, preserved, or made unrecoverable as the simulation evolves.
+
+% ============================================================================
+\section{The Full 3x3 Grid --- Expanded Definitions}
+% ============================================================================
+
+\begin{longtable}{p{2.5cm} p{3.5cm} p{7cm}}
+  \toprule
+  \textbf{Cell} & \textbf{Name} & \textbf{Physical content} \\
+  \midrule
+  \rowcolor{MacroBG}
+  $\MC$ & Macro Carrier &
+  Position, orientation, phase, grain structure, object boundary,
+  bulk geometry, bounding volume \\[3pt]
+  \rowcolor{MacroBG}
+  $\MA$ & Macro Action &
+  Stress tensor, heat flux, flow velocity, fracture probability,
+  diffusion rate, deformation gradient \\[3pt]
+  \rowcolor{MacroBG}
+  $\MI$ & Macro Information &
+  Formation age, defect memory, measured macro state record,
+  lost structural information, coarse-graining residual \\[6pt]
+  \rowcolor{ChemBG}
+  $\CC$ & Chemical Carrier &
+  Atomic number $Z$, mass, bond topology, coordination structure,
+  molecular geometry, ligand set \\[3pt]
+  \rowcolor{ChemBG}
+  $\CA$ & Chemical Action &
+  Bond formation/breaking, reaction events, oxidation state change,
+  solvation, ionisation, catalytic step \\[3pt]
+  \rowcolor{ChemBG}
+  $\CI$ & Chemical Information &
+  Reaction pathway history, bond entropy loss, chemical distinguishability
+  $\Dfrak_{\mathrm{chem}}$, formation route record \\[6pt]
+  \rowcolor{FundBG}
+  $\FC$ & Fundamental Carrier &
+  Net charge $q$, spin proxy, nuclear state, isotope identity,
+  colour-force bookkeeping vector \\[3pt]
+  \rowcolor{FundBG}
+  $\FA$ & Fundamental Action &
+  Field coupling channels (EM, strong proxy, weak proxy), decay flag,
+  annihilation event, projection event \\[3pt]
+  \rowcolor{FundBG}
+  $\FI$ & Fundamental Information &
+  Hidden-coordinate residual $\Psihid$, projection loss $\Delta\Dfrak$,
+  entropy-loss trace, unrecovered identity content \\
+  \bottomrule
+\end{longtable}
+
+\begin{remark}
+  $\FI$ is the deepest cell. It is the simulation-layer representation of
+  $\mathfrak{I}_{\mathrm{true}} \setminus \mathfrak{I}_{\mathrm{top}}$ ---
+  the identity content that exists at the primitive layer but cannot be
+  recovered by any projection to the observable scale. In IKK IV terms:
+  \[
+    \FI \;\simeq\; |\Psi^{\mathrm{hid}}_{a\setminus b}\rangle
+    = \bigl(\mathbf{I} - \Pi_{a\leftarrow b}\bigr)|\Psi_a\rangle
+  \]
+\end{remark}
+
+% ============================================================================
+\section{Relation to IKK Theory}
+% ============================================================================
+
+The CAI Information column is the simulation entry point for the full IKK
+identity-information stack:
+
+\begin{align*}
+  \MI &\longleftrightarrow \text{IKK IV scale regime } S_{\mathrm{mat}}\text{: formation memory, coarse-graining loss} \\
+  \CI &\longleftrightarrow \text{IKK II: chemical distinguishability } \Dfrak_{\mathrm{chem}}\text{, projection loss} \\
+  \FI &\longleftrightarrow \text{IKK III: } \Psihid\text{, projection error } \varepsilon_{\mathfrak{I},ab}\text{, entropy trace}
+\end{align*}
+
+The IKK second law restated in MCF-CAI terms:
+
+\[
+  \Delta S > 0 \;\Longleftrightarrow\; \Delta\Dfrak < 0
+  \;\Longleftrightarrow\;
+  \text{Information column grows (more content lost)}
+\]
+
+The cross-scale projection chain maps directly onto the MCF sampling direction:
+
+\[
+  \Macro \xrightarrow{\;\text{resolve}\;} \Chem \xrightarrow{\;\text{resolve}\;} \Fund
+  \;\longrightarrow\; \FI\text{ (projection loss accumulated)}
+\]
+
+And the reverse inference (defect propagation) maps the other direction:
+
+\[
+  \Fund\text{ perturbation} \xrightarrow{\;\text{propagate}\;} \Chem\text{ instability}
+  \xrightarrow{\;\text{propagate}\;} \Macro\text{ defect}
+\]
+
+The $\Ifrak$-vector from WO-75B maps onto the CAI basis directly:
+
+\begin{align*}
+  I_{\mathrm{existence}} &\;\in\; \FC \\
+  I_{\mathrm{EM}}        &\;\in\; \FC \;\cup\; \CA \\
+  I_{\mathrm{spatial}}   &\;\in\; \CC \;\cup\; \MC \\
+  I_{\mathrm{temporal}}  &\;\in\; \MA \;\cup\; \CA \\
+  I_{\mathrm{internal}}  &\;\in\; \FC \\
+  \Dfrak\;\text{(overall)}&\;\in\; \MI \;\cup\; \CI \;\cup\; \FI
+\end{align*}
+
+% ============================================================================
+\section{VSIM Script Representation}
+% ============================================================================
+
+The VSIM object block directly encodes the 3$\times$3 grid as nested sections.
+Each cell maps to a TOML-style sub-block:
+
+\begin{verbatim}
+[object]
+name = "carbon_bead"
+
+[object.macro.carrier]
+position      = [0, 0, 0]
+phase         = "solid"
+geometry      = "sphere"
+
+[object.macro.action]
+stress        = [0, 0, 0]
+heat_flux     = [0, 0, 0]
+
+[object.macro.information]
+formation_age = 0.0
+defect_memory = 0.02
+
+[object.chemical.carrier]
+Z             = 6
+mass_amu      = 12.011
+bonds         = ["sigma", "pi"]
+
+[object.chemical.action]
+reaction_enabled  = true
+oxidation_state   = 0
+bond_exchange     = true
+
+[object.chemical.information]
+formation_route       = "graphitic_precursor"
+reaction_entropy_loss = 0.0
+
+[object.fundamental.carrier]
+charge       = 0
+spin_proxy   = 0.5
+colour_state = [0.33, 0.33, 0.33]
+
+[object.fundamental.action]
+field_coupling = ["electric", "strong_proxy"]
+decay_enabled  = false
+
+[object.fundamental.information]
+hidden_W        = 0.0
+projection_loss = 0.0
+entropy_loss    = 0.0
+\end{verbatim}
+
+\begin{remark}
+  The \texttt{[object.*.information]} blocks are \textbf{sidecar-layer fields only}.
+  They must never be used as force inputs or written back into ground-truth state.
+  They are parsed into \texttt{IdentitySidecarRecord} derivatives, not into the
+  particle kernel. This is the MCF-CAI encoding of the identity-sidecar doctrine
+  from \texttt{identity\_sidecar.hpp}.
+\end{remark}
+
+% ============================================================================
+\section{Notation Summary}
+% ============================================================================
+
+\begin{longtable}{p{3cm} p{4cm} p{6cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Name} & \textbf{Meaning} \\
+  \midrule
+  $\Vobj$   & MCF-CAI state vector  & Full 3$\times$3 object state grid \\
+  $\Macro$  & Macro layer           & $S_{\mathrm{mat}}$ scale, bulk/continuum \\
+  $\Chem$   & Chemical layer        & $S_3$ scale, atomistic/molecular \\
+  $\Fund$   & Fundamental layer     & $S_0$--$S_2$, charge/spin/colour proxy \\
+  $C$       & Carrier basis         & Configuration, structural state \\
+  $A$       & Action basis          & Coupling, dynamics, process \\
+  $I$       & Information basis     & Entropy, loss, identity audit \\
+  $\MC$--$\FI$ & Grid cells (9)     & Each layer $\times$ each basis \\
+  $\Dfrak$  & Distinguishability    & IKK Notation Registry; lives in $I$ column \\
+  $\Psihid$ & Hidden residual       & Lives in $\FI$ \\
+  $\Ifrak$  & Identity vector       & WO-75B; components distributed across $\FC$, $\CC$, $\MA$ \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Open Questions}
+% ============================================================================
+
+\begin{enumerate}
+  \item \textbf{Off-diagonal couplings.}
+    The 3$\times$3 grid treats each cell as independent. In reality,
+    $\CI$ feeds back into $\MA$ (reaction entropy drives macro flow).
+    A coupling tensor $T_{(s_1,b_1)(s_2,b_2)}$ is needed for full cross-cell dynamics.
+
+  \item \textbf{Information column dynamics.}
+    The $I$-column is currently static per frame. A time-evolution operator
+    for the information column (analogous to $\hat{U}_a$ in IKK III for the
+    $\Ifrak$-vector) is not yet defined.
+
+  \item \textbf{Partial resolution.}
+    A simulation may only have access to $\MC$ and $\CC$ (no fundamental
+    bookkeeping). How does the grid degrade gracefully when lower rows
+    are absent or null? A sparsity convention is needed.
+
+  \item \textbf{CAI namespace.}
+    The \texttt{CAI} abbreviation collision with \texttt{cai\_channel} (force)
+    must be formally resolved in the Notation Registry. Proposed resolution:
+    rename the force channel to \texttt{colour\_avg\_force} or \texttt{caf\_channel}
+    in all source, freeing \texttt{CAI} for the identity basis exclusively.
+\end{enumerate}
+
+\end{document}

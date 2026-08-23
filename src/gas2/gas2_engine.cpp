@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas2_engine.cpp
  * ---------------
  * Implementation of the gas2 unified engine, thermal report, and CLI dispatch.
@@ -23,27 +23,27 @@ namespace gas2 {
 std::string ThermalReport::format() const {
     std::ostringstream ss;
     ss << std::fixed;
-    ss << "┌─ Thermal Properties: " << formula << " at " << std::setprecision(1) << T_K << " K\n";
-    ss << "│\n";
-    ss << "│  Degrees of freedom:\n";
-    ss << "│    translational: " << dof.translational << "\n";
-    ss << "│    rotational:    " << dof.rotational << "\n";
-    ss << "│    vibrational:   " << dof.vibrational << " (2 per mode)\n";
-    ss << "│    classical f:   " << dof.total_classical << " (low T, vib frozen)\n";
-    ss << "│    full f:        " << dof.total_full << " (high T limit)\n";
-    ss << "│\n";
-    ss << "│  Heat capacity (from DOF, classical):\n";
+    ss << "+- Thermal Properties: " << formula << " at " << std::setprecision(1) << T_K << " K\n";
+    ss << "|\n";
+    ss << "|  Degrees of freedom:\n";
+    ss << "|    translational: " << dof.translational << "\n";
+    ss << "|    rotational:    " << dof.rotational << "\n";
+    ss << "|    vibrational:   " << dof.vibrational << " (2 per mode)\n";
+    ss << "|    classical f:   " << dof.total_classical << " (low T, vib frozen)\n";
+    ss << "|    full f:        " << dof.total_full << " (high T limit)\n";
+    ss << "|\n";
+    ss << "|  Heat capacity (from DOF, classical):\n";
     ss << std::setprecision(3);
-    ss << "│    Cv = " << Cv_calc << " J/(mol·K)   [tabulated: " << Cv_tabulated << "]\n";
-    ss << "│    Cp = " << Cp_calc << " J/(mol·K)   [tabulated: " << Cp_tabulated << "]\n";
-    ss << "│    γ  = " << gamma_calc << "           [tabulated: " << gamma_tabulated << "]\n";
-    ss << "│\n";
-    ss << "│  Sound speed:    " << std::setprecision(1) << c_sound << " m/s\n";
+    ss << "|    Cv = " << Cv_calc << " J/(mol·K)   [tabulated: " << Cv_tabulated << "]\n";
+    ss << "|    Cp = " << Cp_calc << " J/(mol·K)   [tabulated: " << Cp_tabulated << "]\n";
+    ss << "|    γ  = " << gamma_calc << "           [tabulated: " << gamma_tabulated << "]\n";
+    ss << "|\n";
+    ss << "|  Sound speed:    " << std::setprecision(1) << c_sound << " m/s\n";
     if (mu_JT != 0.0) {
-        ss << "│  Joule-Thomson:  " << std::setprecision(4) << (mu_JT * 1e5) << " K/bar\n";
-        ss << "│  T_inversion:    " << std::setprecision(0) << T_inversion << " K\n";
+        ss << "|  Joule-Thomson:  " << std::setprecision(4) << (mu_JT * 1e5) << " K/bar\n";
+        ss << "|  T_inversion:    " << std::setprecision(0) << T_inversion << " K\n";
     }
-    ss << "└\n";
+    ss << "+\n";
     return ss.str();
 }
 
@@ -62,7 +62,7 @@ Gas2Analysis analyze(const std::string& formula, double T_K, double P_atm,
 
     // Species lookup (molecular DB first, then monatomic nuclear fallback)
     a.species = find_species_or_monatomic(formula, a.monatomic_storage);
-    // Nuclear species reference — non-null when formula is an element symbol Z=2..102
+    // Nuclear species reference  -  non-null when formula is an element symbol Z=2..102
     a.nuclear_species_ref = nullptr;
     for (int Z = 2; Z <= 102; ++Z) {
         const NuclearSpecies* ns = nuclear_species_ptr(Z);
@@ -74,7 +74,7 @@ Gas2Analysis analyze(const std::string& formula, double T_K, double P_atm,
     double M_kg = a.species ? a.species->molar_mass_kg() : 0.028; // N2 fallback
     double d_m  = a.species ? a.species->d_kinetic_m()  : 3.64e-10;
 
-    // EOS — all three
+    // EOS  -  all three
     a.eos_ideal = ideal_gas(n_mol, T_K, a.P_Pa);
 
     if (a.species) {
@@ -160,7 +160,7 @@ ThermalReport thermal_report(const std::string& formula, double T_K) {
 }
 
 // ============================================================================
-// analyze_element() — atomic species sweep by Z
+// analyze_element()  -  atomic species sweep by Z
 // ============================================================================
 
 std::optional<Gas2Analysis> analyze_element(int Z, double T_K, double P_atm,
@@ -175,26 +175,26 @@ std::string Gas2Analysis::format_full_report() const {
     ss << std::fixed;
 
     ss << "\n\033[1;38;5;213m"
-       << "╔══════════════════════════════════════════════════════════════════════╗\n"
-       << "║  ⚛  gas2 Full Analysis                                             ║\n"
-       << "║     " << std::setw(65) << std::left << formula << "║\n"
-       << "╚══════════════════════════════════════════════════════════════════════╝\n"
+       << "+======================================================================+\n"
+       << "|  ⚛  gas2 Full Analysis                                             |\n"
+       << "|     " << std::setw(65) << std::left << formula << "|\n"
+       << "+======================================================================+\n"
        << "\033[0m\n";
 
     // Conditions
-    ss << "\033[38;5;75m┌─ Conditions\033[0m\n";
+    ss << "\033[38;5;75m+- Conditions\033[0m\n";
     ss << std::setprecision(2);
-    ss << "\033[38;5;250m│\033[0m  T = \033[1;38;5;214m" << T_K << " K\033[0m,  P = "
+    ss << "\033[38;5;250m|\033[0m  T = \033[1;38;5;214m" << T_K << " K\033[0m,  P = "
        << (P_Pa / atm_to_Pa) << " atm,  n = " << n_mol << " mol\n";
     if (species) {
-        ss << "\033[38;5;250m│\033[0m  \033[1;38;5;219m" << species->name << "\033[0m (" << species->formula << "),  M = "
+        ss << "\033[38;5;250m|\033[0m  \033[1;38;5;219m" << species->name << "\033[0m (" << species->formula << "),  M = "
            << std::setprecision(3) << species->molar_mass_g << " g/mol,  "
            << species->n_atoms << " atoms/molecule\n";
     }
-    ss << "\033[38;5;250m│\033[0m\n";
+    ss << "\033[38;5;250m|\033[0m\n";
 
     // EOS comparison with visual bars
-    ss << "\033[38;5;75m┌─ Equations of State\033[0m\n";
+    ss << "\033[38;5;75m+- Equations of State\033[0m\n";
     ss << std::setprecision(4);
     double v_max_eos = std::max({eos_ideal.V_L(), eos_vdw.V_L(), eos_rk.V_L()});
     if (v_max_eos <= 0) v_max_eos = 1.0;
@@ -203,22 +203,22 @@ std::string Gas2Analysis::format_full_report() const {
         if (len < 1) len = 1;
         std::ostringstream b;
         b << "\033[38;5;" << color << "m";
-        for (int i = 0; i < len; ++i) b << "█";
+        for (int i = 0; i < len; ++i) b << "#";
         b << "\033[0m";
         return b.str();
     };
-    ss << "\033[38;5;250m│\033[0m  Ideal     " << eos_bar(eos_ideal.V_L(), 75) << " "
+    ss << "\033[38;5;250m|\033[0m  Ideal     " << eos_bar(eos_ideal.V_L(), 75) << " "
        << eos_ideal.V_L() << " L  Z=" << eos_ideal.Z << "\n";
-    ss << "\033[38;5;250m│\033[0m  VdW       " << eos_bar(eos_vdw.V_L(), 156) << " "
+    ss << "\033[38;5;250m|\033[0m  VdW       " << eos_bar(eos_vdw.V_L(), 156) << " "
        << eos_vdw.V_L() << " L  Z=" << eos_vdw.Z
        << "  (" << eos_vdw.iterations << " iter)\n";
-    ss << "\033[38;5;250m│\033[0m  R-K       " << eos_bar(eos_rk.V_L(), 213) << " "
+    ss << "\033[38;5;250m|\033[0m  R-K       " << eos_bar(eos_rk.V_L(), 213) << " "
        << eos_rk.V_L() << " L  Z=" << eos_rk.Z
        << "  (" << eos_rk.iterations << " iter)\n";
-    ss << "\033[38;5;250m│\033[0m\n";
+    ss << "\033[38;5;250m|\033[0m\n";
 
     // Kinetic theory with speed comparison gauge
-    ss << "\033[38;5;75m┌─ Kinetic Theory\033[0m\n";
+    ss << "\033[38;5;75m+- Kinetic Theory\033[0m\n";
     ss << std::setprecision(1);
     double v_scale = (v_rms > 0) ? v_rms : 1.0;
     auto speed_gauge = [&](double v, int color) -> std::string {
@@ -226,76 +226,76 @@ std::string Gas2Analysis::format_full_report() const {
         if (len < 1) len = 1;
         std::ostringstream b;
         b << "\033[38;5;" << color << "m";
-        for (int i = 0; i < len; ++i) b << "━";
+        for (int i = 0; i < len; ++i) b << "-";
         b << "▸\033[0m";
         return b.str();
     };
-    ss << "\033[38;5;250m│\033[0m  v_mp   = " << std::setw(8) << v_mp << " m/s  " << speed_gauge(v_mp, 226) << "\n";
-    ss << "\033[38;5;250m│\033[0m  v_mean = " << std::setw(8) << v_mean << " m/s  " << speed_gauge(v_mean, 48) << "\n";
-    ss << "\033[38;5;250m│\033[0m  v_rms  = " << std::setw(8) << v_rms << " m/s  " << speed_gauge(v_rms, 196) << "\n";
+    ss << "\033[38;5;250m|\033[0m  v_mp   = " << std::setw(8) << v_mp << " m/s  " << speed_gauge(v_mp, 226) << "\n";
+    ss << "\033[38;5;250m|\033[0m  v_mean = " << std::setw(8) << v_mean << " m/s  " << speed_gauge(v_mean, 48) << "\n";
+    ss << "\033[38;5;250m|\033[0m  v_rms  = " << std::setw(8) << v_rms << " m/s  " << speed_gauge(v_rms, 196) << "\n";
     ss << std::scientific << std::setprecision(4);
-    ss << "\033[38;5;250m│\033[0m  KE_trans = \033[38;5;123m" << ke_translational << " J\033[0m   "
+    ss << "\033[38;5;250m|\033[0m  KE_trans = \033[38;5;123m" << ke_translational << " J\033[0m   "
        << std::fixed << std::setprecision(6) << (ke_translational / eV_to_J) << " eV   "
        << std::scientific << std::setprecision(4) << "\033[1;38;5;214m" << ke_translational_Eh << " Eh\033[0m\n";
-    ss << "\033[38;5;250m│\033[0m  KE_total = \033[38;5;123m" << ke_total << " J\033[0m   "
+    ss << "\033[38;5;250m|\033[0m  KE_total = \033[38;5;123m" << ke_total << " J\033[0m   "
        << std::fixed << std::setprecision(6) << (ke_total / eV_to_J) << " eV   "
        << std::scientific << std::setprecision(4) << "\033[1;38;5;214m" << ke_total_Eh << " Eh\033[0m"
        << "  (f=" << dof.total_classical << ")\n";
     ss << std::fixed << std::setprecision(1);
-    ss << "\033[38;5;250m│\033[0m  MFP     = " << (mean_free_path_m * 1e9) << " nm\n";
-    ss << "\033[38;5;250m│\033[0m  z_coll  = " << std::setprecision(3) << (collision_freq * 1e-9) << " GHz\n";
-    ss << "\033[38;5;250m│\033[0m\n";
+    ss << "\033[38;5;250m|\033[0m  MFP     = " << (mean_free_path_m * 1e9) << " nm\n";
+    ss << "\033[38;5;250m|\033[0m  z_coll  = " << std::setprecision(3) << (collision_freq * 1e-9) << " GHz\n";
+    ss << "\033[38;5;250m|\033[0m\n";
 
     // Transport
-    ss << "\033[38;5;75m┌─ Transport (Chapman-Enskog)\033[0m\n";
+    ss << "\033[38;5;75m+- Transport (Chapman-Enskog)\033[0m\n";
     ss << std::setprecision(2);
-    ss << "\033[38;5;250m│\033[0m  η (viscosity)  = " << (viscosity * 1e6) << " μPa·s";
+    ss << "\033[38;5;250m|\033[0m  η (viscosity)  = " << (viscosity * 1e6) << " μPa·s";
     if (species) {
         ss << "  \033[38;5;245m[tab: " << species->viscosity_uPas << "]\033[0m";
     }
     ss << "\n";
-    ss << "\033[38;5;250m│\033[0m  D (diffusion)  = " << std::setprecision(4) << (diffusion * 1e4) << " cm²/s\n";
-    ss << "\033[38;5;250m│\033[0m\n";
+    ss << "\033[38;5;250m|\033[0m  D (diffusion)  = " << std::setprecision(4) << (diffusion * 1e4) << " cm²/s\n";
+    ss << "\033[38;5;250m|\033[0m\n";
 
     // Heat with DOF visual
-    ss << "\033[38;5;75m┌─ Thermal\033[0m\n";
+    ss << "\033[38;5;75m+- Thermal\033[0m\n";
     ss << std::setprecision(3);
     // Visual DOF breakdown
-    ss << "\033[38;5;250m│\033[0m  DOF: ";
+    ss << "\033[38;5;250m|\033[0m  DOF: ";
     for (int i = 0; i < dof.translational; ++i) ss << "\033[38;5;196m●\033[0m";
     ss << " trans  ";
     for (int i = 0; i < dof.rotational; ++i) ss << "\033[38;5;48m●\033[0m";
     ss << " rot  ";
     if (dof.vibrational > 0) {
         for (int i = 0; i < std::min(dof.vibrational, 6); ++i) ss << "\033[38;5;226m●\033[0m";
-        if (dof.vibrational > 6) ss << "…";
+        if (dof.vibrational > 6) ss << "...";
         ss << " vib";
     }
     ss << "  = \033[1m" << dof.total_classical << "\033[0m classical";
     if (dof.total_full != dof.total_classical)
         ss << " (" << dof.total_full << " full)";
     ss << "\n";
-    ss << "\033[38;5;250m│\033[0m  Cv = " << Cv_calc << " J/(mol·K)";
+    ss << "\033[38;5;250m|\033[0m  Cv = " << Cv_calc << " J/(mol·K)";
     if (species) ss << "  \033[38;5;245m[tab: " << species->Cv_Jmol << "]\033[0m";
     ss << "\n";
-    ss << "\033[38;5;250m│\033[0m  Cp = " << Cp_calc << " J/(mol·K)";
+    ss << "\033[38;5;250m|\033[0m  Cp = " << Cp_calc << " J/(mol·K)";
     if (species) ss << "  \033[38;5;245m[tab: " << species->Cp_Jmol << "]\033[0m";
     ss << "\n";
-    ss << "\033[38;5;250m│\033[0m  γ  = \033[1m" << gamma_calc << "\033[0m";
+    ss << "\033[38;5;250m|\033[0m  γ  = \033[1m" << gamma_calc << "\033[0m";
     if (species) ss << "  \033[38;5;245m[tab: " << species->gamma << "]\033[0m";
     ss << "\n";
     ss << std::setprecision(1);
-    ss << "\033[38;5;250m│\033[0m  c_sound = " << c_sound << " m/s\n";
+    ss << "\033[38;5;250m|\033[0m  c_sound = " << c_sound << " m/s\n";
     if (species) {
         ss << std::setprecision(4);
-        ss << "\033[38;5;250m│\033[0m  μ_JT    = " << (mu_JT * 1e5) << " K/bar\n";
+        ss << "\033[38;5;250m|\033[0m  μ_JT    = " << (mu_JT * 1e5) << " K/bar\n";
         ss << std::setprecision(0);
-        ss << "\033[38;5;250m│\033[0m  T_inv   = " << T_inversion << " K";
+        ss << "\033[38;5;250m|\033[0m  T_inv   = " << T_inversion << " K";
         if (T_K < T_inversion) ss << "  \033[38;5;75m❄ cooling on expansion\033[0m";
         else ss << "  \033[38;5;196m🔥 heating on expansion\033[0m";
         ss << "\n";
     }
-    ss << "\033[38;5;250m└\033[0m\n";
+    ss << "\033[38;5;250m+\033[0m\n";
 
     return ss.str();
 }
@@ -346,8 +346,8 @@ std::string Gas2Analysis::to_json() const {
 
 static void show_gas2_help() {
     std::cout << R"(
-gas2 MODULE — Advanced Heat and Gas Analysis
-═════════════════════════════════════════════
+gas2 MODULE  -  Advanced Heat and Gas Analysis
+=============================================
 
 USAGE:
     vsepr gas2 <command> [options]
@@ -530,42 +530,42 @@ int gas2_dispatch(int argc, char** argv) {
 
         // ---- Header ----
         std::cout << "\n\033[1;38;5;213m"
-                  << "╔══════════════════════════════════════════════════════════════════════╗\n"
-                  << "║  ⚛  gas2 Maxwell-Boltzmann Sampling                                ║\n"
-                  << "║     " << std::setw(65) << std::left << formula << "║\n"
-                  << "╚══════════════════════════════════════════════════════════════════════╝\n"
+                  << "+======================================================================+\n"
+                  << "|  ⚛  gas2 Maxwell-Boltzmann Sampling                                |\n"
+                  << "|     " << std::setw(65) << std::left << formula << "|\n"
+                  << "+======================================================================+\n"
                   << "\033[0m\n";
 
         // ---- Conditions ----
-        std::cout << "\033[38;5;75m┌─ Conditions\033[0m\n";
-        std::cout << "\033[38;5;250m│\033[0m  Temperature:  \033[1;38;5;214m" << std::fixed << std::setprecision(2) << T << " K\033[0m\n";
-        std::cout << "\033[38;5;250m│\033[0m  Molar mass:   \033[38;5;250m" << (M_kg * 1000.0) << " g/mol\033[0m\n";
-        std::cout << "\033[38;5;250m│\033[0m  Samples:      \033[1;38;5;123m" << count << "\033[0m\n";
-        std::cout << "\033[38;5;250m│\033[0m  Seed:         \033[38;5;245m" << seed << "\033[0m\n";
+        std::cout << "\033[38;5;75m+- Conditions\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m  Temperature:  \033[1;38;5;214m" << std::fixed << std::setprecision(2) << T << " K\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m  Molar mass:   \033[38;5;250m" << (M_kg * 1000.0) << " g/mol\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m  Samples:      \033[1;38;5;123m" << count << "\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m  Seed:         \033[38;5;245m" << seed << "\033[0m\n";
         if (sp) {
-            std::cout << "\033[38;5;250m│\033[0m  Species:      \033[1;38;5;219m" << sp->name << "\033[0m\n";
+            std::cout << "\033[38;5;250m|\033[0m  Species:      \033[1;38;5;219m" << sp->name << "\033[0m\n";
         }
-        std::cout << "\033[38;5;250m│\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m\n";
 
         // ---- Speed Statistics ----
-        std::cout << "\033[38;5;75m┌─ Speed Statistics\033[0m\n";
+        std::cout << "\033[38;5;75m+- Speed Statistics\033[0m\n";
         std::cout << std::fixed << std::setprecision(1);
-        std::cout << "\033[38;5;250m│\033[0m                Sampled    Theoretical     Δ\n";
-        std::cout << "\033[38;5;250m│\033[0m  v_rms  = \033[1;38;5;156m" << std::setw(10) << rms_s
+        std::cout << "\033[38;5;250m|\033[0m                Sampled    Theoretical     Δ\n";
+        std::cout << "\033[38;5;250m|\033[0m  v_rms  = \033[1;38;5;156m" << std::setw(10) << rms_s
                   << "\033[0;38;5;245m  " << std::setw(10) << rms_th
                   << "\033[0m  " << std::setprecision(2) << std::showpos
                   << ((rms_s - rms_th) / rms_th * 100.0) << " %"
                   << std::noshowpos << "\n";
-        std::cout << "\033[38;5;250m│\033[0m  v_mean = \033[1;38;5;156m" << std::setprecision(1)
+        std::cout << "\033[38;5;250m|\033[0m  v_mean = \033[1;38;5;156m" << std::setprecision(1)
                   << std::setw(10) << mean_s
                   << "\033[0;38;5;245m  " << std::setw(10) << mean_th
                   << "\033[0m  " << std::setprecision(2) << std::showpos
                   << ((mean_s - mean_th) / mean_th * 100.0) << " %"
                   << std::noshowpos << "\n";
-        std::cout << "\033[38;5;250m│\033[0m  v_mp   = \033[38;5;245m" << std::setprecision(1)
-                  << std::setw(10) << "—"
+        std::cout << "\033[38;5;250m|\033[0m  v_mp   = \033[38;5;245m" << std::setprecision(1)
+                  << std::setw(10) << " - "
                   << "\033[0;38;5;245m  " << std::setw(10) << mp_th << "\033[0m  m/s\n";
-        std::cout << "\033[38;5;250m│\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m\n";
 
         // ---- Speed Distribution Histogram (terminal bar chart) ----
         const int n_bins = 40;
@@ -579,11 +579,11 @@ int gas2_dispatch(int argc, char** argv) {
         int hist_max = *std::max_element(hist.begin(), hist.end());
         if (hist_max == 0) hist_max = 1;
 
-        std::cout << "\033[38;5;75m┌─ Speed Distribution  f(v)                                    ┐\033[0m\n";
+        std::cout << "\033[38;5;75m+- Speed Distribution  f(v)                                    +\033[0m\n";
         // Column render (top to bottom)
         for (int row = bar_height; row >= 1; --row) {
             double threshold = static_cast<double>(row) / bar_height * hist_max;
-            std::cout << "\033[38;5;250m│\033[0m ";
+            std::cout << "\033[38;5;250m|\033[0m ";
             if (row == bar_height)
                 std::cout << std::setw(5) << hist_max << " ";
             else if (row == bar_height / 2)
@@ -613,10 +613,10 @@ int gas2_dispatch(int argc, char** argv) {
             std::cout << "\n";
         }
         // X-axis
-        std::cout << "\033[38;5;250m│\033[0m       ";
-        for (int b = 0; b < n_bins; ++b) std::cout << "\033[38;5;240m─\033[0m";
+        std::cout << "\033[38;5;250m|\033[0m       ";
+        for (int b = 0; b < n_bins; ++b) std::cout << "\033[38;5;240m-\033[0m";
         std::cout << "\n";
-        std::cout << "\033[38;5;250m│\033[0m       0";
+        std::cout << "\033[38;5;250m|\033[0m       0";
         std::cout << std::string(n_bins / 2 - 4, ' ');
         std::cout << std::fixed << std::setprecision(0) << (max_speed_val * 0.5);
         std::cout << std::string(n_bins / 2 - 5, ' ');
@@ -626,20 +626,20 @@ int gas2_dispatch(int argc, char** argv) {
         int mp_bin = static_cast<int>(mp_th / bin_width);
         int mn_bin = static_cast<int>(mean_s / bin_width);
         int rm_bin = static_cast<int>(rms_s / bin_width);
-        std::cout << "\033[38;5;250m│\033[0m       ";
+        std::cout << "\033[38;5;250m|\033[0m       ";
         for (int b = 0; b < n_bins; ++b) {
             if (b == mp_bin)      std::cout << "\033[38;5;226m▲\033[0m";
             else if (b == mn_bin) std::cout << "\033[38;5;48m▲\033[0m";
             else if (b == rm_bin) std::cout << "\033[38;5;196m▲\033[0m";
             else                  std::cout << " ";
         }
-        std::cout << "\n\033[38;5;250m│\033[0m\n";
+        std::cout << "\n\033[38;5;250m|\033[0m\n";
 
         // ---- Energy Sparkline (KE per sample, mini line) ----
         const int spark_w = 60;
-        std::cout << "\033[38;5;75m┌─ KE Sparkline (first " << spark_w << " samples)\033[0m\n";
-        std::cout << "\033[38;5;250m│\033[0m  ";
-        const char* spark_chars[] = {"▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
+        std::cout << "\033[38;5;75m+- KE Sparkline (first " << spark_w << " samples)\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m  ";
+        const char* spark_chars[] = {"▁", "▂", "▃", "▄", "▅", "▆", "▇", "#"};
         double ke_spark_max = 0.0;
         for (int i = 0; i < spark_w && i < static_cast<int>(samples.size()); ++i) {
             double ke = samples[i].ke(m_mol);
@@ -655,7 +655,7 @@ int gas2_dispatch(int argc, char** argv) {
             int ci = 22 + level * 6;
             std::cout << "\033[38;5;" << ci << "m" << spark_chars[level] << "\033[0m";
         }
-        std::cout << "\n\033[38;5;250m│\033[0m\n";
+        std::cout << "\n\033[38;5;250m|\033[0m\n";
 
         // ---- vx-vy Mini Scatter (small terminal grid) ----
         const int sc_size = 20;
@@ -671,9 +671,9 @@ int gas2_dispatch(int argc, char** argv) {
         if (sc_max == 0) sc_max = 1;
         const char* density_chars[] = {" ", "·", "∘", "○", "●", "◉", "◎", "⬤"};
 
-        std::cout << "\033[38;5;75m┌─ vx–vy  Velocity Scatter\033[0m\n";
+        std::cout << "\033[38;5;75m+- vx-vy  Velocity Scatter\033[0m\n";
         for (int row = 0; row < sc_size; ++row) {
-            std::cout << "\033[38;5;250m│\033[0m  ";
+            std::cout << "\033[38;5;250m|\033[0m  ";
             for (int col = 0; col < sc_size; ++col) {
                 int val = sc_grid[row * sc_size + col];
                 int level = static_cast<int>(static_cast<double>(val) / sc_max * 7.0);
@@ -693,25 +693,25 @@ int gas2_dispatch(int argc, char** argv) {
             else if (row == sc_size - 1) std::cout << "  -vy";
             std::cout << "\n";
         }
-        std::cout << "\033[38;5;250m│\033[0m  ";
-        for (int c = 0; c < sc_size; ++c) std::cout << "\033[38;5;240m─\033[0m";
+        std::cout << "\033[38;5;250m|\033[0m  ";
+        for (int c = 0; c < sc_size; ++c) std::cout << "\033[38;5;240m-\033[0m";
         std::cout << "\n";
-        std::cout << "\033[38;5;250m│\033[0m  -vx" << std::string(sc_size - 8, ' ') << "+vx\n";
-        std::cout << "\033[38;5;250m│\033[0m\n";
+        std::cout << "\033[38;5;250m|\033[0m  -vx" << std::string(sc_size - 8, ' ') << "+vx\n";
+        std::cout << "\033[38;5;250m|\033[0m\n";
 
         // ---- Accuracy verdict ----
         double err_pct = std::abs(rms_s - rms_th) / rms_th * 100.0;
-        std::cout << "\033[38;5;75m┌─ Verdict\033[0m\n";
+        std::cout << "\033[38;5;75m+- Verdict\033[0m\n";
         if (err_pct < 1.0) {
-            std::cout << "\033[38;5;250m│\033[0m  \033[38;5;48m✓ EXCELLENT\033[0m  RMS error " << std::setprecision(3) << err_pct << "%  ─  distribution well-sampled\n";
+            std::cout << "\033[38;5;250m|\033[0m  \033[38;5;48m✓ EXCELLENT\033[0m  RMS error " << std::setprecision(3) << err_pct << "%  -  distribution well-sampled\n";
         } else if (err_pct < 3.0) {
-            std::cout << "\033[38;5;250m│\033[0m  \033[38;5;226m✓ GOOD\033[0m       RMS error " << std::setprecision(3) << err_pct << "%  ─  within statistical noise\n";
+            std::cout << "\033[38;5;250m|\033[0m  \033[38;5;226m✓ GOOD\033[0m       RMS error " << std::setprecision(3) << err_pct << "%  -  within statistical noise\n";
         } else if (err_pct < 5.0) {
-            std::cout << "\033[38;5;250m│\033[0m  \033[38;5;214m○ FAIR\033[0m       RMS error " << std::setprecision(3) << err_pct << "%  ─  increase -N for better convergence\n";
+            std::cout << "\033[38;5;250m|\033[0m  \033[38;5;214m○ FAIR\033[0m       RMS error " << std::setprecision(3) << err_pct << "%  -  increase -N for better convergence\n";
         } else {
-            std::cout << "\033[38;5;250m│\033[0m  \033[38;5;196m✗ POOR\033[0m       RMS error " << std::setprecision(3) << err_pct << "%  ─  needs more samples\n";
+            std::cout << "\033[38;5;250m|\033[0m  \033[38;5;196m✗ POOR\033[0m       RMS error " << std::setprecision(3) << err_pct << "%  -  needs more samples\n";
         }
-        std::cout << "\033[38;5;250m└\033[0m\n\n";
+        std::cout << "\033[38;5;250m+\033[0m\n\n";
         return 0;
     }
 
@@ -947,7 +947,7 @@ int gas2_dispatch(int argc, char** argv) {
         const int hm_size = grid_size;  // vv and se map resolution
         const int shell_size = grid_size;
 
-        // Continuous frame loop — 48× slowdown via temperature crawl
+        // Continuous frame loop  -  48× slowdown via temperature crawl
         // Each frame: re-sample MB, bin, stream JSON
         const int n_frames = static_cast<int>(count);  // reuse -N for frame count
         const double T_step = 0.02;  // K per frame (slow crawl)

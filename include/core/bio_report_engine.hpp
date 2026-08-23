@@ -1,4 +1,4 @@
-/**
+﻿/**
  * bio_report_engine.hpp
  * ---------------------
  * Organic / biochemical report-generation engine for VSEPR-SIM.
@@ -9,11 +9,11 @@
  * UV-active flavonoids, developmental staging, and separation efficiency.
  *
  * Architecture:
- *   CompoundPropertyEngine  → curated tables of bio-organic molecules
- *   BioCaseGenerator        → floral / leaf / seasonal case assembly
- *   BioExperimentRunner     → pigment absorption, volatile kinetics, UV response, ...
- *   ReportWriter            → reuses core Markdown/CSV (domain-aware)
- *   BioAutonomousEngine     → orchestrator (mirrors AutonomousEngine for TMS)
+ *   CompoundPropertyEngine  -> curated tables of bio-organic molecules
+ *   BioCaseGenerator        -> floral / leaf / seasonal case assembly
+ *   BioExperimentRunner     -> pigment absorption, volatile kinetics, UV response, ...
+ *   ReportWriter            -> reuses core Markdown/CSV (domain-aware)
+ *   BioAutonomousEngine     -> orchestrator (mirrors AutonomousEngine for TMS)
  *
  * Reuses from core report_engine.hpp:
  *   ExperimentResult, DataPoint, TechnicalReport, ReportWriter, EngineConfig
@@ -43,7 +43,7 @@ enum class SystemDomain : int {
     FLORAL_VOLATILE  = 2,  // Scent and volatile release
     LEAF_SEASONAL    = 3,  // Seasonal pigment isolation (Chl a/b, carotenoid, anthocyanin)
     LEAF_STRUCTURE   = 4,  // Leaf microstructure transport/extraction
-    DEVELOPMENTAL    = 5,  // Bud → bloom → senescence staging
+    DEVELOPMENTAL    = 5,  // Bud -> bloom -> senescence staging
 };
 
 const char* domain_name(SystemDomain d);
@@ -119,7 +119,7 @@ enum class BioExperimentType : int {
     DEVELOPMENTAL_STAGING,           // compound abundance vs developmental stage
     UV_REFLECTANCE_PATTERN,          // UV-absorbing/reflecting petal regions
     SEPARATION_EFFICIENCY,           // extraction yield and selectivity
-    SEASONAL_PIGMENT_TRANSITION,     // Chl→Carotenoid→Anthocyanin over season
+    SEASONAL_PIGMENT_TRANSITION,     // Chl->Carotenoid->Anthocyanin over season
     SCENT_COMPOSITION_PROFILE,       // volatile family distribution at bloom
     PATHWAY_CONSTRAINT_ANALYSIS,     // biosynthetic pathway bottlenecks
 };

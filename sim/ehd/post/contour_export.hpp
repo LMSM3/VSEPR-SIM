@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * contour_export.hpp
  *
- * Electrohydrodynamic Simulation — Stage 5: Postprocessing
+ * Electrohydrodynamic Simulation  -  Stage 5: Postprocessing
  *
  * Exports scalar field data as structured CSV for contour / heatmap plotting.
  * Supported fields: velocity magnitude, pressure, potential, |E|, ρ_ion, c_i.

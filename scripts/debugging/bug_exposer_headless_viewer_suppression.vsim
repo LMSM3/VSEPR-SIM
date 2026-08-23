@@ -1,0 +1,58 @@
+# BUG_EXPOSER: DBG-VIS-002 headless viewer suppression
+# Validate: build/vsepr.exe validate scripts/debugging/bug_exposer_headless_viewer_suppression.vsim
+# Run:      build/vsepr.exe run scripts/debugging/bug_exposer_headless_viewer_suppression.vsim
+# Expected debug question: when [visual].output_type = "none", does a run that
+# writes XYZ still open the session-bound viewer?
+
+print_console "DBG-VIS-002: headless viewer suppression probe"
+print_console "Expected: write XYZ artifact without opening any viewer session"
+
+[project]
+name        = "bug_exposer_headless_viewer_suppression"
+version     = "v5.14.1-debug"
+seed_base   = 91004
+determinism = true
+description = "Minimal headless run proving whether visual none suppresses viewer launch"
+
+[material]
+formula   = "H2O"
+prototype = "water_molecule"
+phase     = "liquid"
+
+[simulation]
+box_size_ang     = 20.0
+periodic         = false
+fire_max_steps   = 1
+fire_dt_fs       = 0.5
+formation_preset = "molecular"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 1
+temperature_K = 298.15
+lattice       = "none"
+
+[environment]
+temperature = 298.15
+pressure    = 0.0
+medium      = "water"
+periodic    = false
+
+[run]
+mode         = "relax"
+max_steps    = 1
+dt_fs        = 0.5
+temperature  = 298.15
+converge     = false
+output_level = "verbose"
+
+[export]
+write_xyz           = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/debugging/headless_viewer_suppression"
+
+[visual]
+output_type     = "none"
+render_interval = 1
+

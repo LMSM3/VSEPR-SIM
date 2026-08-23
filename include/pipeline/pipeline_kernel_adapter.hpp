@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * pipeline_kernel_adapter.hpp — Pipeline → Central Kernel Bridge
+ * pipeline_kernel_adapter.hpp  -  Pipeline -> Central Kernel Bridge
  * ==============================================================
  *
  * Bridges the beta-7 pure-transform pipeline into the WO-56C kernel
@@ -36,7 +36,7 @@
 namespace vsepr::pipeline {
 
 // ============================================================================
-// Conversion: PipelineRecord → FormationEvent
+// Conversion: PipelineRecord -> FormationEvent
 // ============================================================================
 
 /**
@@ -46,17 +46,17 @@ namespace vsepr::pipeline {
  * suitable for registration in the central KernelEventLog.
  *
  * Forwarded fields:
- *   source_formula    ← symbol
- *   frame_id          ← 0 (formation events are pre-trajectory; caller may override)
- *   n_beads           ← formation.n_beads
- *   fire_steps        ← formation.steps
- *   converged         ← formation.converged
- *   final_energy      ← formation.final_energy
- *   packing_fraction  ← analysis.packing_quality (proxy)
- *   lattice_class     ← analysis.motif_class
- *   result_value      ← analysis.stability_score
- *   equation_symbolic ← first SymbolicTrace in analysis.trace (or summary)
- *   equation_numeric  ← substituted_expression of that trace
+ *   source_formula    <- symbol
+ *   frame_id          <- 0 (formation events are pre-trajectory; caller may override)
+ *   n_beads           <- formation.n_beads
+ *   fire_steps        <- formation.steps
+ *   converged         <- formation.converged
+ *   final_energy      <- formation.final_energy
+ *   packing_fraction  <- analysis.packing_quality (proxy)
+ *   lattice_class     <- analysis.motif_class
+ *   result_value      <- analysis.stability_score
+ *   equation_symbolic <- first SymbolicTrace in analysis.trace (or summary)
+ *   equation_numeric  <- substituted_expression of that trace
  */
 inline vsepr::kernel::FormationEvent from_pipeline_record(
 	const PipelineRecord& pr)

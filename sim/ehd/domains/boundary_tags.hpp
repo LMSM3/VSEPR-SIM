@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * boundary_tags.hpp
  *
- * Electrohydrodynamic Simulation — Stage 2: Domain Extraction
+ * Electrohydrodynamic Simulation  -  Stage 2: Domain Extraction
  *
  * Boundary condition template assembly.  Maps named surface regions to
  * physics-specific boundary conditions for flow, electric, and transport solves.

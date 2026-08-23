@@ -1,4 +1,4 @@
-/**
+﻿/**
  * chemistry_validation_test.cpp
  * ==============================
  * Validates chemistry-realistic simulation improvements:
@@ -26,7 +26,7 @@ using namespace vsepr;
 void test_hybridization() {
     std::cout << "\n=== TEST 1: Hybridization Detection ===\n";
     
-    // Methane: C with 4 single bonds → sp3
+    // Methane: C with 4 single bonds -> sp3
     {
         std::vector<uint8_t> orders = {1, 1, 1, 1};
         auto hyb = infer_hybridization(6, orders, 0);
@@ -38,7 +38,7 @@ void test_hybridization() {
         assert(std::abs(angle_deg - 109.5) < 0.1);
     }
     
-    // Ethene: C with 1 double + 2 single → sp2
+    // Ethene: C with 1 double + 2 single -> sp2
     {
         std::vector<uint8_t> orders = {2, 1, 1};
         auto hyb = infer_hybridization(6, orders, 0);
@@ -49,7 +49,7 @@ void test_hybridization() {
         assert(std::abs(angle_deg - 120.0) < 0.1);
     }
     
-    // Acetylene: C with 1 triple + 1 single → sp
+    // Acetylene: C with 1 triple + 1 single -> sp
     {
         std::vector<uint8_t> orders = {3, 1};
         auto hyb = infer_hybridization(6, orders, 0);
@@ -60,7 +60,7 @@ void test_hybridization() {
         assert(std::abs(angle_deg - 180.0) < 0.1);
     }
     
-    // Water: O with 2 single + 2 lone pairs → sp3 (bent)
+    // Water: O with 2 single + 2 lone pairs -> sp3 (bent)
     {
         std::vector<uint8_t> orders = {1, 1};
         auto hyb = infer_hybridization(8, orders, 2);
@@ -275,9 +275,9 @@ void test_torsion_parameters() {
 }
 
 int main() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Chemistry-Realistic Simulation Validation Tests       ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|  Chemistry-Realistic Simulation Validation Tests       |\n";
+    std::cout << "+==========================================================+\n";
     
     test_hybridization();
     test_valence();
@@ -286,10 +286,10 @@ int main() {
     test_torsion_deduplication();
     test_torsion_parameters();
     
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  ✓ ALL TESTS PASSED                                     ║\n";
-    std::cout << "║  Chemistry improvements validated successfully!         ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|  ✓ ALL TESTS PASSED                                     |\n";
+    std::cout << "|  Chemistry improvements validated successfully!         |\n";
+    std::cout << "+==========================================================+\n\n";
     
     std::cout << "Summary:\n";
     std::cout << "  • Hybridization detection: sp3/sp2/sp ✓\n";

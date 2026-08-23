@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../core/state.hpp"
 #include "../predict/properties.hpp"
 #include "heat_gate.hpp"
@@ -41,7 +41,7 @@ struct ReactionSite {
  * Reaction template: pattern-based reaction rules
  * 
  * Example: Nucleophilic substitution
- *   R-X + Nu⁻ → R-Nu + X⁻
+ *   R-X + Nu⁻ -> R-Nu + X⁻
  *   
  * Constraints:
  *   - X must have f⁻ > 0.3 (good leaving group)
@@ -79,7 +79,7 @@ struct ReactionTemplate {
 };
 
 /**
- * Proposed reaction: reactants → products with scoring
+ * Proposed reaction: reactants -> products with scoring
  */
 struct ProposedReaction {
     State reactant_A;
@@ -278,7 +278,7 @@ private:
 /**
  * Create SN2 nucleophilic substitution template
  * 
- * R-X + Nu⁻ → R-Nu + X⁻
+ * R-X + Nu⁻ -> R-Nu + X⁻
  * 
  * Constraints:
  *   - Backside attack (angle ~180°)
@@ -290,7 +290,7 @@ ReactionTemplate sn2_template();
 /**
  * Create electrophilic addition template (alkene + E⁺)
  * 
- * C=C + E⁺ → C-E-C⁺
+ * C=C + E⁺ -> C-E-C⁺
  * 
  * Constraints:
  *   - Double bond present
@@ -301,7 +301,7 @@ ReactionTemplate electrophilic_addition_template();
 /**
  * Create E2 elimination template
  * 
- * R-CH₂-CH₂-X + B⁻ → R-CH=CH₂ + HB + X⁻
+ * R-CH₂-CH₂-X + B⁻ -> R-CH=CH₂ + HB + X⁻
  * 
  * Constraints:
  *   - β-hydrogen present
@@ -312,7 +312,7 @@ ReactionTemplate e2_elimination_template();
 /**
  * Create Diels-Alder cycloaddition template
  * 
- * Diene + Dienophile → Cyclohexene
+ * Diene + Dienophile -> Cyclohexene
  * 
  * Constraints:
  *   - Conjugated diene (4 carbons)
@@ -324,7 +324,7 @@ ReactionTemplate diels_alder_template();
 /**
  * Create acid-base proton transfer template
  * 
- * HA + B⁻ → A⁻ + HB
+ * HA + B⁻ -> A⁻ + HB
  * 
  * Constraints:
  *   - pKa difference > 2

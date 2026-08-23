@@ -1,5 +1,5 @@
-/**
- * phase2_structural_energy.cpp — Phase 2: Structural Energy Physics
+﻿/**
+ * phase2_structural_energy.cpp  -  Phase 2: Structural Energy Physics
  *
  * Self-testing executable.  Constructs reference molecules the same way a
  * user loading an .xyz file would: element symbols + Cartesian coordinates
@@ -7,14 +7,14 @@
  * then evaluated with the LJ+Coulomb model.
  *
  * This exercises the FULL end-user pipeline:
- *   XYZMolecule → parsers::from_xyz() → State → model->eval() → EnergyTerms
+ *   XYZMolecule -> parsers::from_xyz() -> State -> model->eval() -> EnergyTerms
  *
  * Checks:
  *   2.1  Reference benchmark evaluations (H2, H2O, CH4, Ar2)
  *   2.2  Reproducibility across identical calls
- *   2.3  Controlled perturbation — bond stretch raises energy
- *   2.4  Local smoothness — energy sweep has no discontinuities
- *   2.5  Force–energy consistency on multi-atom systems
+ *   2.3  Controlled perturbation  -  bond stretch raises energy
+ *   2.4  Local smoothness  -  energy sweep has no discontinuities
+ *   2.5  Force-energy consistency on multi-atom systems
  */
 
 #include "atomistic/core/state.hpp"
@@ -81,7 +81,7 @@ static vsepr::io::XYZMolecule ref_H2()
     return make_mol({"H","H"}, {{{0,0,0}}, {{0.74,0,0}}});
 }
 
-// H2O: O–H 0.9584 Å, angle 104.45°
+// H2O: O-H 0.9584 Å, angle 104.45°
 static vsepr::io::XYZMolecule ref_H2O()
 {
     double r = 0.9584;
@@ -93,7 +93,7 @@ static vsepr::io::XYZMolecule ref_H2O()
     });
 }
 
-// CH4: tetrahedral, C–H 1.09 Å
+// CH4: tetrahedral, C-H 1.09 Å
 static vsepr::io::XYZMolecule ref_CH4()
 {
     double d = 1.09;
@@ -121,7 +121,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 2 — Structural Energy Physics\n");
+    std::printf("  Phase 2  -  Structural Energy Physics\n");
     std::printf("=============================================================\n\n");
 
     auto model = create_lj_coulomb_model();
@@ -160,12 +160,12 @@ int main()
 
         // Verify parser set atomic numbers correctly (not sequential IDs).
         State h2o = parse_and_eval(ref_H2O(), *model, mp);
-        check(h2o.type[0] == 8,  "H2O parser: O → type=8  (Z=8)");
-        check(h2o.type[1] == 1,  "H2O parser: H → type=1  (Z=1)");
+        check(h2o.type[0] == 8,  "H2O parser: O -> type=8  (Z=8)");
+        check(h2o.type[1] == 1,  "H2O parser: H -> type=1  (Z=1)");
 
         State ch4 = parse_and_eval(ref_CH4(), *model, mp);
-        check(ch4.type[0] == 6,  "CH4 parser: C → type=6  (Z=6)");
-        check(ch4.type[1] == 1,  "CH4 parser: H → type=1  (Z=1)");
+        check(ch4.type[0] == 6,  "CH4 parser: C -> type=6  (Z=6)");
+        check(ch4.type[1] == 1,  "CH4 parser: H -> type=1  (Z=1)");
     }
 
     // ------------------------------------------------------------------
@@ -184,7 +184,7 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 2.3  Controlled perturbation — stretching a bond raises energy
+    // 2.3  Controlled perturbation  -  stretching a bond raises energy
     // ------------------------------------------------------------------
     std::printf("\n--- 2.3 Controlled Perturbation (bond stretch) ---\n");
     {
@@ -216,7 +216,7 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 2.4  Local smoothness — energy sweep for Ar2
+    // 2.4  Local smoothness  -  energy sweep for Ar2
     // ------------------------------------------------------------------
     std::printf("\n--- 2.4 Local Smoothness (Ar2 distance sweep) ---\n");
     {
@@ -242,7 +242,7 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 2.5  Force–energy consistency on multi-atom system (H2O)
+    // 2.5  Force-energy consistency on multi-atom system (H2O)
     // ------------------------------------------------------------------
     std::printf("\n--- 2.5 Force-Energy Consistency (H2O, end-user pipeline) ---\n");
     {

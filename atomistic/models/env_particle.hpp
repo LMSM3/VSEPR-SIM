@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * env_particle.hpp  —  Environmental particle extension
+ * env_particle.hpp   -   Environmental particle extension
  * =====================================================
  * VSEPR-SIM 3.0.1
  *
@@ -10,8 +10,8 @@
  *   P_k = (id, kind, r_k, v_k, E_k, I_k, omega_k, chi_k, tau_k)
  *
  * Two particle kinds:
- *   SUN  — radiative energy packets (directional, intensity-weighted)
- *   WIND — advective momentum + transport disturbance packets
+ *   SUN   -  radiative energy packets (directional, intensity-weighted)
+ *   WIND  -  advective momentum + transport disturbance packets
  *
  * Plant-specific subsystems:
  *   - Sun deposition:   dE_sun  = A_proj * I * T * S_photo * Phi_shade
@@ -55,7 +55,7 @@ inline const char* kind_name(EnvParticleKind k) {
 }
 
 // ============================================================================
-// Environmental Particle  —  P_k = (id, kind, r, v, E, I, omega, chi, tau)
+// Environmental Particle   -   P_k = (id, kind, r, v, E, I, omega, chi, tau)
 // ============================================================================
 
 struct EnvParticle {
@@ -71,7 +71,7 @@ struct EnvParticle {
 };
 
 // ============================================================================
-// Bead Properties  —  local state for interaction kernels
+// Bead Properties   -   local state for interaction kernels
 // ============================================================================
 
 struct BeadProps {
@@ -85,7 +85,7 @@ struct BeadProps {
 };
 
 // ============================================================================
-// Shade Factor  —  Phi_shade(i, k) = 1 - occlusion_fraction
+// Shade Factor   -   Phi_shade(i, k) = 1 - occlusion_fraction
 // ============================================================================
 
 /// Simple geometric shade factor: fraction of particle i visible to
@@ -99,7 +99,7 @@ inline double shade_factor(const BeadProps& bead,
 }
 
 // ============================================================================
-// Plant Environment Response  —  composite output per bead
+// Plant Environment Response   -   composite output per bead
 // ============================================================================
 
 struct PlantEnvResponse {
@@ -167,7 +167,7 @@ inline double drying_kernel(const BeadProps& bead,
 // Unified Interaction
 // ============================================================================
 
-/// Compute full plant-environment response for one bead–particle pair.
+/// Compute full plant-environment response for one bead-particle pair.
 inline PlantEnvResponse interact_env_particle(
     const BeadProps& bead,
     const EnvParticle& p,
@@ -190,7 +190,7 @@ inline PlantEnvResponse interact_env_particle(
 }
 
 // ============================================================================
-// Root Chaos Factor  —  Gamma_i in [0.98, 1.8]
+// Root Chaos Factor   -   Gamma_i in [0.98, 1.8]
 // ============================================================================
 
 struct RootLocalState {
@@ -226,7 +226,7 @@ inline double root_chaos_factor(const RootLocalState& s,
 }
 
 // ============================================================================
-// Piecewise Polynomial Root Response  —  R_root(x)
+// Piecewise Polynomial Root Response   -   R_root(x)
 // ============================================================================
 
 struct PolySegment {
@@ -299,7 +299,7 @@ inline double root_growth_modifier(const RootLocalState& s,
 }
 
 // ============================================================================
-// Leaf Generation Gate  —  Heaviside step function
+// Leaf Generation Gate   -   Heaviside step function
 // ============================================================================
 
 struct LeafGateCoeffs {
@@ -352,7 +352,7 @@ inline double leaf_expansion_rate(const LeafLocalState& s,
 }
 
 // ============================================================================
-// Environmental Energy Decomposition  —  U_env = U_wind + U_sun + ...
+// Environmental Energy Decomposition   -   U_env = U_wind + U_sun + ...
 // ============================================================================
 
 struct EnvEnergyTerms {
@@ -383,7 +383,7 @@ inline EnvEnergyTerms accumulate_env(
 }
 
 // ============================================================================
-// Particle Lifetime  —  advect + decay
+// Particle Lifetime   -   advect + decay
 // ============================================================================
 
 /// Advance particle position by dt, decay lifetime.  Returns false if dead.

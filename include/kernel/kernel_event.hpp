@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * kernel_event.hpp — Central Kernel Event Hierarchy
+ * kernel_event.hpp  -  Central Kernel Event Hierarchy
  * ==================================================
  *
  * WO-56C: Every major computed event in VSEPR-SIM is a KernelEvent.
@@ -9,14 +9,14 @@
  *
  * Doctrine:
  *   xyz / xyzf / xyzFull
- *           ↓
+ *           v
  *   Central Kernel (routes calculation)
- *           ↓
+ *           v
  *   KernelEvent (symbolic + numeric trace)
- *           ↓
+ *           v
  *   KernelEventLog (append-only registry)
- *           ↓
- *   analysis layer → report → dashboard
+ *           v
+ *   analysis layer -> report -> dashboard
  *
  * Each KernelEvent stores:
  *   - what was calculated   (event_type, equation_symbolic)
@@ -24,15 +24,15 @@
  *   - which equation was used (equation_symbolic)
  *   - which values were substituted (equation_numeric)
  *   - what numeric answer resulted (result_value, result_unit)
- *   - a stable event ID     (event_id — monotonic uint64)
+ *   - a stable event ID     (event_id  -  monotonic uint64)
  *
  * Specializations:
- *   ReactionEvent         — A + B → C, ΔE
- *   ChemicalStateEvent    — bond / coordination / local energy change
- *   FormationEvent        — bead/lattice formation outcome
- *   DefectEvent           — vacancy, interstitial, substitution
- *   TransportEvent        — diffusion, ionic drift, permeation
- *   ContinualReportEvent  — script-declared metric snapshot (see .vsim [export])
+ *   ReactionEvent          -  A + B -> C, ΔE
+ *   ChemicalStateEvent     -  bond / coordination / local energy change
+ *   FormationEvent         -  bead/lattice formation outcome
+ *   DefectEvent            -  vacancy, interstitial, substitution
+ *   TransportEvent         -  diffusion, ionic drift, permeation
+ *   ContinualReportEvent   -  script-declared metric snapshot (see .vsim [export])
  *
  * Design rules:
  *   - All fields are public aggregates. No hidden state.
@@ -42,7 +42,7 @@
  *   - result_value is double. Unit is a plain string.
  *   - Timestamps are uint64_t simulation step counts (not wall clock).
  *
- * WO-56C  |  v5.0.0-beta.7
+ * WO-56C  |  v5.0.0-beta.7 
  */
 
 #include <cstdint>
@@ -57,7 +57,7 @@ namespace vsepr::kernel {
 
 enum class KernelEventKind : uint8_t {
 	Unknown          = 0,
-	Reaction         = 1,   // Chemical reaction: A + B → C
+	Reaction         = 1,   // Chemical reaction: A + B -> C
 	ChemicalState    = 2,   // Local chemistry change (bond, coordination)
 	Formation        = 3,   // Bead/lattice formation outcome
 	Defect           = 4,   // Structural defect (vacancy, interstitial, substitution)
@@ -78,7 +78,7 @@ inline const char* kind_name(KernelEventKind k) {
 }
 
 // ============================================================================
-// KernelEvent — base record
+// KernelEvent  -  base record
 // ============================================================================
 
 struct KernelEvent {
@@ -107,7 +107,7 @@ struct KernelEvent {
 };
 
 // ============================================================================
-// ReactionEvent — A + B → C, ΔE
+// ReactionEvent  -  A + B -> C, ΔE
 // ============================================================================
 
 /**
@@ -158,7 +158,7 @@ struct ReactionEvent : KernelEvent {
 };
 
 // ============================================================================
-// ChemicalStateEvent — local chemistry change
+// ChemicalStateEvent  -  local chemistry change
 // ============================================================================
 
 /**
@@ -194,13 +194,13 @@ struct ChemicalStateEvent : KernelEvent {
 };
 
 // ============================================================================
-// FormationEvent — bead/lattice formation outcome
+// FormationEvent  -  bead/lattice formation outcome
 // ============================================================================
 
 /**
  * Records the outcome of a formation run (beta-7 FormationOutput layer).
  *
- * Links to pipeline: FormationEvent → FingerprintRecord via event_id.
+ * Links to pipeline: FormationEvent -> FingerprintRecord via event_id.
  */
 struct FormationEvent : KernelEvent {
 	int         n_beads         = 0;
@@ -226,7 +226,7 @@ struct FormationEvent : KernelEvent {
 };
 
 // ============================================================================
-// DefectEvent — structural defect
+// DefectEvent  -  structural defect
 // ============================================================================
 
 enum class DefectType : uint8_t {
@@ -273,13 +273,13 @@ struct DefectEvent : KernelEvent {
 };
 
 // ============================================================================
-// TransportEvent — diffusion / drift / permeation
+// TransportEvent  -  diffusion / drift / permeation
 // ============================================================================
 
 struct TransportEvent : KernelEvent {
 	int         particle_id     = -1;
-	double      displacement_ang = 0.0;  // Å — total displacement
-	double      msd             = 0.0;   // Å² — mean squared displacement
+	double      displacement_ang = 0.0;  // Å  -  total displacement
+	double      msd             = 0.0;   // Å²  -  mean squared displacement
 	double      diffusivity     = 0.0;   // Å²/step (proxy)
 	std::string transport_mode;          // "diffusion", "drift", "permeation"
 
@@ -294,7 +294,7 @@ struct TransportEvent : KernelEvent {
 };
 
 // ============================================================================
-// ContinualReportEvent — rolling metric snapshot
+// ContinualReportEvent  -  rolling metric snapshot
 // ============================================================================
 
 /**
@@ -314,7 +314,7 @@ struct ContinualReportEvent : KernelEvent {
 	double temperature_K    = 0.0;
 	double packing_fraction = 0.0;   // η̄
 	double mean_coord_num   = 0.0;   // average coordination number
-	double rmsd_ang         = 0.0;   // Å — RMSD from reference
+	double rmsd_ang         = 0.0;   // Å  -  RMSD from reference
 	int    n_active_beads   = 0;
 	int    report_interval  = 1;     // steps between reports
 

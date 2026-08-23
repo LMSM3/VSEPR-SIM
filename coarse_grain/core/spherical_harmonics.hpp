@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * spherical_harmonics.hpp — Real Spherical Harmonics
+ * spherical_harmonics.hpp  -  Real Spherical Harmonics
  *
  * Provides evaluation of real spherical harmonics Y_ℓ^m(θ, φ) used
  * to compress anisotropic surface descriptors on coarse-grained beads.
@@ -8,8 +8,8 @@
  * Implementation:
  *   - Associated Legendre polynomials via stable upward recurrence.
  *   - Real form: cosine for m>0, sine for m<0, normalized.
- *   - Fixed API: ℓ_max = 4 → 25 basis functions (backward compatible).
- *   - Dynamic API: runtime-configurable ℓ_max → (ℓ_max+1)² functions.
+ *   - Fixed API: ℓ_max = 4 -> 25 basis functions (backward compatible).
+ *   - Dynamic API: runtime-configurable ℓ_max -> (ℓ_max+1)² functions.
  *
  * Anti-black-box: every coefficient index is deterministically mapped
  * via sh_index(ℓ, m), and all formulas are explicit in code.
@@ -178,7 +178,7 @@ inline double sh_anisotropy_ratio(const std::array<double, SH_NUM_COEFFS>& coeff
 }
 
 // ============================================================================
-// Dynamic API — Runtime-configurable ℓ_max
+// Dynamic API  -  Runtime-configurable ℓ_max
 // ============================================================================
 // These functions mirror the fixed-size API above but use std::vector
 // for coefficient storage, allowing arbitrary ℓ_max at runtime.

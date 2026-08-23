@@ -1,0 +1,160 @@
+# =============================================================================
+# IKK I — Schrödinger's Alternative
+# VSIM implementation: CH4 minimal relaxation
+#
+# Theory claim (IKK I):
+#   Waves are not primitive. A wave may be the projected observable form of
+#   persistent point-like identity. Particle-like identity is treated as more
+#   fundamental than wave substance.
+#
+# Computational test:
+#   Run a minimal CH4 relaxation from random initial positions with a fixed
+#   seed. The molecule forms deterministically — same seed, same result, every
+#   time. There is no wave function required to produce this outcome. The
+#   formation event is explained entirely by point-like identity carriers
+#   (C and H atoms) with persistent charges and mass, interacting through
+#   a forcefield that encodes pairwise identity, not wave collapse.
+#
+#   If the identity model (point particles + FIRE minimiser) converges to the
+#   correct tetrahedral geometry reproducibly:
+#     → formation does not require a wave-primitive explanation
+#     → the wave picture is a description of the outcome at a projected
+#       observation scale, not the mechanism
+#
+#   Falsification: if the geometry is wrong or non-reproducible across seeds,
+#   the point-identity model is insufficient for this system at this level.
+#
+# Traditional system: CH4 (methane)
+#   Textbook molecule. Exact tetrahedral geometry known. Bond lengths
+#   established. Simple enough that any failure is model failure, not
+#   system complexity.
+#
+# IKK I sections mapped:
+#   §1 Historical Setup     → [report] expected_trends documents the
+#                             wave-first alternative this run bypasses
+#   §2 Reversal Claim       → FIRE relax: no wavefunction, still converges
+#   §3 Point-Like Identity  → [[raw.object]] or [[simulation.molecule]]
+#                             species = point carriers
+#   §4 Wave as Projection   → [observe] spectral_response post-convergence
+#                             shows wave-like observable from point system
+#   §5 Against String       → [verify.structure] checks geometry is correct
+#                             without extended-object substrate
+#   §7 Interpretive Status  → [verify] profile = "ikk1_interpretation_test"
+# =============================================================================
+
+[project]
+name        = "ikk1_schrodinger_alternative_ch4"
+version     = "v5.0.0-beta.9"
+seed_base   = 101
+determinism = true    # IKK I §2: identity-first model must be fully deterministic
+
+# ---------------------------------------------------------------------------
+# Material
+# ---------------------------------------------------------------------------
+[material]
+formula   = "CH4"
+structure = "molecular"
+phase     = "gas"
+
+[run]
+mode         = "relax"
+max_steps    = 800
+converge     = true
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 0.0     # ground-state geometry: no thermal noise
+medium      = "vacuum"
+
+# ---------------------------------------------------------------------------
+# Simulation controls
+# Tersoff / LJ neutral for a covalent molecular system.
+# Registry resolves this automatically from material_class = molecular.
+# ---------------------------------------------------------------------------
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0    # auto-size from atom count
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "CH4"
+count       = 1
+temperature = 0.0
+
+# ---------------------------------------------------------------------------
+# Observables
+# [observe] spectral_response after convergence — IKK I §4.
+# The wave-like spectral structure is an output of the point-identity system,
+# not an input to it. That is the claim being demonstrated.
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "spectral_response", "coordination"]
+output_format = "json"
+every_n_steps = 50
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = false
+transport_events = false
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Verification
+# IKK I §5: correct tetrahedral geometry without wave-primitive substrate.
+# CH4 bond length: 1.09 Å. Coordination: 4 (C centre), 1 (H periphery).
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "ikk1_interpretation_test"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "CH4_molecular"
+expected_coordination        = 4
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.09
+nearest_neighbor_tolerance_A = 0.06
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz             = true
+write_analysis_json   = true
+write_metrics_tsv     = true
+write_report_md       = true
+write_events_json     = true
+write_symbolic_trace_json = true
+write_manifest_json   = true
+output_dir            = "out/ikk1_ch4"
+
+[report]
+title                   = "ikk1_schrodinger_alternative_ch4"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 25
+show_convergence_trace = true
+show_symbolic_trace    = true
+show_event_timeline    = true
+overlay_sequence       = energy_map,coordination,spectral_response

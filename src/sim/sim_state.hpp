@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * sim_state.hpp
  * -------------
@@ -56,7 +56,7 @@ struct SimParams {
     bool use_pbc = false;
     double box_size[3] = {10.0, 10.0, 10.0};
 
-    // Long-range Coulomb (Ewald summation) — requires use_pbc = true
+    // Long-range Coulomb (Ewald summation)  -  requires use_pbc = true
     bool   use_ewald      = false;
     double ewald_alpha    = 0.3;   // splitting parameter (Å⁻¹)
     double ewald_rcut     = 10.0;  // real-space cutoff (Å)

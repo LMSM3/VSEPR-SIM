@@ -1,4 +1,4 @@
-/**
+﻿/**
  * atomistic-sim: Additional simulation modes (MD, adaptive, prediction)
  * Part 2 of main implementation
  */
@@ -30,7 +30,7 @@ using namespace atomistic;
 // ============================================================================
 
 void mode_md_nve(const SimConfig& config) {
-    std::cout << "═══ MODE: Molecular Dynamics (NVE) ═══\n\n";
+    std::cout << "=== MODE: Molecular Dynamics (NVE) ===\n\n";
     
     vsepr::io::XYZReader reader;
     vsepr::io::XYZMolecule mol;
@@ -119,7 +119,7 @@ void mode_md_nve(const SimConfig& config) {
 // ============================================================================
 
 void mode_md_nvt(const SimConfig& config) {
-    std::cout << "═══ MODE: Molecular Dynamics (NVT) ═══\n\n";
+    std::cout << "=== MODE: Molecular Dynamics (NVT) ===\n\n";
     std::cout << "Temperature: " << config.temperature << " K\n";
     
     vsepr::io::XYZReader reader;
@@ -190,7 +190,7 @@ void mode_md_nvt(const SimConfig& config) {
 // ============================================================================
 
 void mode_adaptive(const SimConfig& config) {
-    std::cout << "═══ MODE: Adaptive Sampling ═══\n\n";
+    std::cout << "=== MODE: Adaptive Sampling ===\n\n";
     
     vsepr::io::XYZReader reader;
     vsepr::io::XYZMolecule mol;
@@ -258,7 +258,7 @@ void mode_adaptive(const SimConfig& config) {
 // ============================================================================
 
 void mode_predict(const SimConfig& config) {
-    std::cout << "═══ MODE: Property Prediction ═══\n\n";
+    std::cout << "=== MODE: Property Prediction ===\n\n";
     
     vsepr::io::XYZReader reader;
     vsepr::io::XYZMolecule mol;
@@ -334,7 +334,7 @@ void mode_predict(const SimConfig& config) {
 // ============================================================================
 
 void mode_reaction(const SimConfig& config) {
-    std::cout << "═══ MODE: Reaction Energy & Barrier ═══\n\n";
+    std::cout << "=== MODE: Reaction Energy & Barrier ===\n\n";
     
     if (config.merge_files.size() < 2) {
         std::cerr << "Error: Need at least 2 files (reactant and product)\n";
@@ -367,9 +367,9 @@ void mode_reaction(const SimConfig& config) {
     std::cout << "Predicted ΔE: " << delta_E << " kcal/mol\n";
     
     if (delta_E < 0) {
-        std::cout << "  → Exothermic reaction\n";
+        std::cout << "  -> Exothermic reaction\n";
     } else {
-        std::cout << "  → Endothermic reaction\n";
+        std::cout << "  -> Endothermic reaction\n";
     }
     
     // Predict activation barrier
@@ -393,7 +393,7 @@ void mode_reaction(const SimConfig& config) {
 // ============================================================================
 
 void mode_merge(const SimConfig& config) {
-    std::cout << "═══ MODE: Data Merging & Analysis ═══\n\n";
+    std::cout << "=== MODE: Data Merging & Analysis ===\n\n";
     
     if (config.merge_files.empty()) {
         std::cerr << "Error: No input directories specified\n";

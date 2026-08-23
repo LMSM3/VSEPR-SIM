@@ -1,0 +1,14 @@
+﻿{
+    "blocker":  "GCC C++ module dependency scanner",
+    "branch":  "day84t-chemplus-declarative-vsepr",
+    "binary_reported_version":  "5.15.0",
+    "snapshot_bytes":  4356653756,
+    "version":  "5.16.0",
+    "locked":  true,
+    "created_at":  "2026-08-05T15:06:12",
+    "snapshot_file_count":  45103,
+    "build_status":  "blocked",
+    "snapshot_path":  "C:\\FlowerOS\\V\\5.16.0",
+    "wo94a_regression":  "passing",
+    "source_status":  "frozen"
+}

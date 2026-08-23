@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * organic_candidate.hpp
  * =====================
@@ -14,9 +14,9 @@
  *   likely reactive sites.
  *
  * This header provides:
- *   1. OrganicFamily enum — chemical family tags (not decorative labels)
- *   2. OrganicCandidate struct — extended identity card for organics
- *   3. OrganicClassifier — derives family + descriptors from State
+ *   1. OrganicFamily enum  -  chemical family tags (not decorative labels)
+ *   2. OrganicCandidate struct  -  extended identity card for organics
+ *   3. OrganicClassifier  -  derives family + descriptors from State
  *
  * Design rules:
  *   - Organic family tags determine: likely bond patterns, steric
@@ -33,6 +33,7 @@
  */
 
 #include "../core/state.hpp"
+#include "providers.hpp"
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -89,6 +90,15 @@ enum class OrganicFamily : uint8_t {
 
 const char* organic_family_name(OrganicFamily f);
 
+// WO-83M: Origin of a family assignment
+enum class FamilySource : uint8_t {
+	Inferred  = 0,  // derived from geometry / element descriptors
+	Manual    = 1,  // explicitly set by caller / script metadata
+	Default   = 2   // no evidence; fell through to unknown
+};
+
+const char* to_string(FamilySource s);
+
 // ============================================================================
 // Organic candidate: the extended identity card
 // ============================================================================
@@ -102,24 +112,35 @@ const char* organic_family_name(OrganicFamily f);
  * All counts are non-negative integers.
  */
 struct OrganicCandidate {
-    // ── Identity ──────────────────────────────────────────────────────────
+    // -- Identity ----------------------------------------------------------
     std::string id_hash;                 // Deterministic hash of connectivity
     std::string formula;                 // Molecular formula (Hill order)
     OrganicFamily primary_family = OrganicFamily::UNKNOWN_ORGANIC;
     std::vector<OrganicFamily> families; // All applicable families
+    FamilySource  family_source  = FamilySource::Default; // WO-83M: origin of family tags
     std::vector<std::string> functional_groups;  // "hydroxyl", "carbonyl", etc.
 
-    // ── Topology counts ───────────────────────────────────────────────────
+    // -- Topology counts ---------------------------------------------------
     int ring_count            = 0;
     int aromatic_ring_count   = 0;
     int heteroatom_count      = 0;       // N, O, S, P, ... (non-C, non-H)
+
+    // -- Provider provenance (WO-84A) --------------------------------------
+    // Records whether provider-backed chemistry data influenced this
+    // candidate, so CLI/report layers can state provider vs fallback source.
+    bool provider_set_available = false; // any provider in the set was wired
+    bool used_provider_lone_pair = false; // VSEPR consumed lone-pair provider
+    bool used_fallback_lone_pair = false; // VSEPR used element/geometry fallback
+
+    // -- Lipid-like composite score (WO-83N) -------------------------------
+    double lipid_like_score   = 0.0;     // 0 = not lipid-like, 1 = strongly lipid-like
     int rotatable_bond_count  = 0;
     int chiral_centre_count   = 0;
     int sp3_count             = 0;
     int sp2_count             = 0;
     int sp_count              = 0;
 
-    // ── Chemistry-aware descriptors ───────────────────────────────────────
+    // -- Chemistry-aware descriptors ---------------------------------------
     double steric_score       = 0.0;     // 0 = unhindered, 1 = heavily blocked
     double polarity_score     = 0.0;     // 0 = nonpolar, 1 = strongly polar
     double hbond_donor_score  = 0.0;     // 0 = no donors, 1 = rich in OH/NH
@@ -127,15 +148,15 @@ struct OrganicCandidate {
     double conjugation_score  = 0.0;     // 0 = no conjugation, 1 = fully conjugated
     double strain_score       = 0.0;     // 0 = strain-free, 1 = severely strained
 
-    // ── Formation engine integration ──────────────────────────────────────
+    // -- Formation engine integration --------------------------------------
     double thermo_score       = 0.0;     // Thermodynamic stability
     double kinetic_score      = 0.0;     // Kinetic formation likelihood
     double packing_score      = 0.0;     // Crystal / liquid packing tendency
     double decomposition_risk = 0.0;     // 0 = stable, 1 = decomposes readily
     double final_score        = 0.0;     // Combined S_form from kinetic engine
 
-    // ── Reactive site map ─────────────────────────────────────────────────
-    // Index → descriptor pairs for atoms with notable reactivity
+    // -- Reactive site map -------------------------------------------------
+    // Index -> descriptor pairs for atoms with notable reactivity
     struct ReactiveSite {
         uint32_t atom_index;
         std::string element;
@@ -146,7 +167,7 @@ struct OrganicCandidate {
     };
     std::vector<ReactiveSite> reactive_sites;
 
-    // ── Donor / acceptor map ──────────────────────────────────────────────
+    // -- Donor / acceptor map ----------------------------------------------
     struct DonorAcceptor {
         uint32_t atom_index;
         bool is_donor;              // H-bond donor (OH, NH)
@@ -155,7 +176,7 @@ struct OrganicCandidate {
     };
     std::vector<DonorAcceptor> donor_acceptor_map;
 
-    // ── Local polarity map ────────────────────────────────────────────────
+    // -- Local polarity map ------------------------------------------------
     // Per-atom partial charge and polarity contribution
     struct PolaritySite {
         uint32_t atom_index;
@@ -164,7 +185,7 @@ struct OrganicCandidate {
     };
     std::vector<PolaritySite> polarity_map;
 
-    // ── Torsional profile (rotatable bonds) ───────────────────────────────
+    // -- Torsional profile (rotatable bonds) -------------------------------
     struct TorsionProfile {
         uint32_t bond_atom_a;
         uint32_t bond_atom_b;
@@ -189,6 +210,16 @@ struct OrganicCandidate {
 class OrganicClassifier {
 public:
     OrganicClassifier() = default;
+
+    // WO-84A: provider-aware construction.  A ProviderSet passed here is
+    // threaded into VSEPR (lone-pair provider) and future ring/bond-order
+    // logic.  Absent providers preserve deterministic fallback behaviour.
+    explicit OrganicClassifier(ProviderSet providers)
+        : providers_(std::move(providers)) {}
+
+    // Access the wired provider set (may be all-null).
+    const ProviderSet& providers() const { return providers_; }
+    void set_providers(ProviderSet providers) { providers_ = std::move(providers); }
 
     /**
      * Classify an atomistic state as an organic candidate.
@@ -270,7 +301,27 @@ public:
      * Estimate decomposition risk [0,1] from bond energies and strain.
      */
     double estimate_decomposition_risk(const State& state) const;
+
+    /**
+     * WO-83N: Compute composite lipid-like score [0,1].
+     * Evidence: long flexible chain, ester/carboxylic, polarity balance,
+     *           excess heteroatom penalty.
+     */
+    double compute_lipid_like_score(const State& state) const;
+
+private:
+    // WO-84A: optional chemistry providers.  Defaults to null() so a
+    // default-constructed classifier behaves exactly as before.
+    ProviderSet providers_ = ProviderSet::null();
 };
+
+// ============================================================================
+// WO-83Q: OrganicCandidate plain-text formatter
+// ============================================================================
+
+// Plain-text export of OrganicCandidate suitable for reports and tests.
+// Output is deterministic.
+std::string format_organic_candidate(const OrganicCandidate& c);
 
 } // namespace classify
 } // namespace atomistic

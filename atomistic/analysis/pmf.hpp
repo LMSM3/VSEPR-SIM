@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <vector>
 #include <string>
 
@@ -14,7 +14,7 @@ struct PairType {
     int type1;  // Atomic number (Z)
     int type2;  // Atomic number (Z)
 
-    // Parse from string (e.g., "Mg:F" → {12, 9})
+    // Parse from string (e.g., "Mg:F" -> {12, 9})
     static PairType from_string(const std::string& spec);
 
     // Format for filenames (e.g., "Mg_F")
@@ -82,7 +82,7 @@ public:
      * Input: RDF data from trajectory analysis
      * Output: PMF curve with extracted features
      * 
-     * PMF is shifted so that tail → 0 for meaningful basin depth comparison.
+     * PMF is shifted so that tail -> 0 for meaningful basin depth comparison.
      * g(r) = 0 bins are floored to g_min to avoid ln(0).
      */
     PMFResult compute_from_rdf(

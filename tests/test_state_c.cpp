@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_state_c.cpp
  *
  * Tests for the Dev Day ~42 revised notation: StateC, OutcomeState,
@@ -296,7 +296,7 @@ static void test_outcome_state_default() {
 }
 
 // ============================================================================
-// evolve() — full TransformConfig version
+// evolve()  -  full TransformConfig version
 // ============================================================================
 
 static void test_evolve_invalid_mass() {
@@ -380,7 +380,7 @@ static void test_evolve_with_state() {
 }
 
 // ============================================================================
-// evolve() — simplified (dt, level) signature
+// evolve()  -  simplified (dt, level) signature
 // ============================================================================
 
 static void test_evolve_simplified() {

@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * energy_units.hpp  —  Canonical Energy Unit System
+ * energy_units.hpp   -   Canonical Energy Unit System
  * ==================================================
  * VSEPR-SIM 3.0.1
  *
  * Design principle:
  *   Store energy once in a canonical unit (Hartree), then expose
  *   views in multiple unit systems.  No subsystem invents its own
- *   religion — one clean engine, three windows into the result.
+ *   religion  -  one clean engine, three windows into the result.
  *
  * Unit convention:
  *   Hartree  = computation layer     (quantum kernels, scoring)
@@ -136,13 +136,13 @@ inline double convert_energy(double value, EnergyUnit from, EnergyUnit to) {
 }
 
 // ============================================================================
-// Energy  —  canonical energy value with multi-unit access
+// Energy   -   canonical energy value with multi-unit access
 // ============================================================================
 
 struct Energy {
     double value_hartree = 0.0;
 
-    // ── Construction ──
+    // -- Construction --
 
     Energy() = default;
     explicit Energy(double ha) : value_hartree(ha) {}
@@ -157,7 +157,7 @@ struct Energy {
     static Energy from_kcalmol(double kcal)  { return from(kcal, EnergyUnit::KcalMol); }
     static Energy from_kjmol(double kj)      { return from(kj, EnergyUnit::KJMol); }
 
-    // ── Multi-unit access ──
+    // -- Multi-unit access --
 
     double as(EnergyUnit u) const {
         return vsepr::from_hartree(value_hartree, u);
@@ -168,7 +168,7 @@ struct Energy {
     double as_kcalmol() const { return as(EnergyUnit::KcalMol); }
     double as_kjmol()   const { return as(EnergyUnit::KJMol); }
 
-    // ── Thermal accessibility ──
+    // -- Thermal accessibility --
 
     // How many kB*T at a given temperature?
     double thermal_ratio(double T_kelvin = 298.15) const {
@@ -181,7 +181,7 @@ struct Energy {
         return thermal_ratio(T_kelvin) <= n_sigma;
     }
 
-    // ── Arithmetic ──
+    // -- Arithmetic --
 
     Energy operator+(const Energy& o) const { return Energy(value_hartree + o.value_hartree); }
     Energy operator-(const Energy& o) const { return Energy(value_hartree - o.value_hartree); }
@@ -193,7 +193,7 @@ struct Energy {
     Energy& operator-=(const Energy& o) { value_hartree -= o.value_hartree; return *this; }
     Energy& operator*=(double s)        { value_hartree *= s; return *this; }
 
-    // ── Comparison ──
+    // -- Comparison --
 
     bool operator<(const Energy& o)  const { return value_hartree < o.value_hartree; }
     bool operator>(const Energy& o)  const { return value_hartree > o.value_hartree; }
@@ -204,7 +204,7 @@ struct Energy {
     bool is_negative() const { return value_hartree < 0.0; }
     bool is_bound() const { return value_hartree < 0.0; }
 
-    // ── Formatting ──
+    // -- Formatting --
 
     // Format as "value unit" string
     std::string format(EnergyUnit u, int precision = 6) const;

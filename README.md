@@ -2,17 +2,23 @@
 
 # VSEPR-SIM
 
-**Deterministic Molecular and Materials Simulation**
+**Deterministic Molecular & Materials Simulation · VSPER Suite**
 
-Script-driven simulation pipelines via the VSIM language. Reproducible by design.
+[![Version](https://img.shields.io/badge/Version-v5.16.0-blue.svg)](.)
+[![C++23](https://img.shields.io/badge/C%2B%2B-23-blue.svg)](https://isocpp.org/)
+[![CMake](https://img.shields.io/badge/CMake-3.20+-blue.svg)](https://cmake.org/)
+[![Tests](https://img.shields.io/badge/Tests-197%2F197_PASS-brightgreen.svg)](docs/VALIDATION_REPORT.md)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[VSIM Reference](docs/VSIM_LANGUAGE_REFERENCE.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [File Formats](docs/XYZ_FORMAT_REFERENCE.md) • [Validation](docs/VALIDATION_REPORT.md) • [Tour](TOUR.md)
+*Script-driven simulation pipelines via the VSIM language. Reproducible by design.*
+
+[Quick Start](#quick-start) • [VSIM Reference](docs/VSIM_LANGUAGE_REFERENCE.md) • [Methodology](docs/METHODOLOGY_12PAGE.tex) • [File Formats](docs/XYZ_FORMAT_REFERENCE.md) • [Validation](docs/VALIDATION_REPORT.md) • [Tour](TOUR.md)
 
 </div>
 
 ---
 
-> VSEPR-SIM v5.14.1 is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
+> **VSEPR-SIM v5.16.0** is a deterministic molecular and materials simulation environment built around VSIM scripting, reproducible trajectory files, analysis-only property inference, and structured scientific reporting.
 
 ---
 
@@ -36,7 +42,7 @@ v5.0.14 marks the transition from disconnected simulation modules into an integr
 
 - **VSIM scripting language** — declarative setup, execution, analysis, and reporting in a single `.vsim` file
 - **`vsper` launcher** — canonical command-line entry point for running `.vsim` scripts post-install
-- **Qt 3D workstation** — interactive viewport for structure inspection and trajectory playback, opened automatically at end-of-run when `gl_auto_orbit = true`
+- **Qt C++ workstation pivot** — the supported interactive frontend is `vsepr-view`, a VTK data bridge with a Qt3D presentation layer. OpenGL/GLFW/ImGui and BGFX frontends have been deprecated from the active build and archived.
 - **Beta-7 pipeline integration** — `FormationOutput` flows through `KernelEventLog` into `DashboardRecord` and downstream reporting artifacts
 - **`.xyzf` trajectory playback** — multi-frame trajectory files written during simulation and replayed in the Qt workstation
 - **Gas-mixing MD demonstration** — four-corner directed injection of N₂, O₂, H₂O, and Ar converging to a mixed system at 1200 K, N > 1200 atoms
@@ -105,6 +111,28 @@ Scripts are deterministic, hash-stamped, and fully logged. Every execution produ
 **Full language reference:** [docs/VSIM_LANGUAGE_REFERENCE.md](docs/VSIM_LANGUAGE_REFERENCE.md)
 
 **Post-simulation automation example:** [examples/post_simulation_automation_demo.vsim](examples/post_simulation_automation_demo.vsim) and [docs/POST_SIMULATION_AUTOMATION.md](docs/POST_SIMULATION_AUTOMATION.md)
+
+### Day ~99 acceptance evidence
+
+The release preset builds the headless demo and viewer-contract artifacts even
+when OpenGL dependencies are unavailable. From the repository root:
+
+```sh
+cmake --preset release
+cmake --build build --parallel 4
+ctest --test-dir build --output-on-failure
+```
+
+The release verification currently reports **197/197 tests passed**. The
+headless viewer demo also reports **5/5 scenarios passed**.
+
+The canonical viewer fixture is `data/fixtures/nacl.xyz`; the lightweight
+viewer resolves it automatically when launched without a file argument. The
+focused acceptance set includes CLI help/version, EHD execution and benchmark,
+viewer data-contract/replay checks, and deterministic replay-hash validation.
+CUDA is reported explicitly during configuration and uses the CPU path when a
+CUDA compiler is not available; no GPU capability is claimed without a
+configured CUDA toolchain.
 
 ---
 

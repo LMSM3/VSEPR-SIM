@@ -1,4 +1,4 @@
-// Crystal.hpp - Immutable provenance + mutable caches
+﻿// Crystal.hpp - Immutable provenance + mutable caches
 // Represents a molecular/crystalline structure with full lineage
 
 #pragma once
@@ -11,9 +11,9 @@
 
 namespace vsepr::data {
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // File format types (xyzZ, xyzA, xyzC)
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 enum class XYZFormat {
     Z,  // Raw input (standard XYZ)
@@ -51,9 +51,9 @@ struct LatticeVectors {
     Vec3f a, b, c;           // Cell vectors (Angstroms)
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Construction provenance (for xyzC)
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 struct ConstructionStep {
     std::string name;        // "supercell", "relax", "cg"
@@ -66,9 +66,9 @@ struct ConstructionRecipe {
     std::string hash;        // SHA256 of source + steps
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Reserved slots for bulk/CG properties (xyzC)
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 struct BulkProperties {
     std::optional<float> density;          // g/cm³
@@ -89,41 +89,41 @@ struct ConstructionResults {
     std::string notes;
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Crystal: The Special Object
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 class Crystal {
 public:
-    // ─── Immutable source references ───
+    // --- Immutable source references ---
     std::string xyz_path;        // foo.xyz  (raw input)
     std::string xyzA_path;       // foo.xyzA (annotated)
     std::string xyzC_path;       // foo.xyzC (constructed)
     
-    // ─── Constructive state (if xyzC) ───
+    // --- Constructive state (if xyzC) ---
     std::optional<LatticeVectors> lattice;
     std::optional<std::array<int, 3>> replication; // nx, ny, nz
     std::optional<ConstructionRecipe> recipe;
     
-    // ─── Bulk/CG slots ───
+    // --- Bulk/CG slots ---
     BulkProperties bulk;
     CoarseGrainedProperties cg;
     ConstructionResults results;
     
-    // ─── Runtime caches (throwaway) ───
+    // --- Runtime caches (throwaway) ---
     mutable std::vector<Bond> inferred_bonds;
     mutable bool bonds_computed = false;
     
-    // ─── Core data ───
+    // --- Core data ---
     std::vector<Atom> atoms;
     std::string title;
     std::string units = "angstrom";
     
-    // ─── Metadata ───
+    // --- Metadata ---
     XYZFormat source_format;
     std::string created_utc;
     
-    // ─── Methods ───
+    // --- Methods ---
     static Crystal load_xyz(const std::string& path);
     static Crystal load_xyzA(const std::string& path);
     static Crystal load_xyzC(const std::string& path);
@@ -145,9 +145,9 @@ public:
     bool matches_hash(const std::string& h) const;
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // File I/O utilities
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 class XYZParser {
 public:
@@ -164,9 +164,9 @@ private:
     static std::string write_xyzC(const Crystal& c);
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Watch system (for --watch mode)
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 class CrystalWatcher {
 public:

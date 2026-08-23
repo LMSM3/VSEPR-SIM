@@ -1,0 +1,209 @@
+﻿% ============================================================================
+% WO-v513-QCD-Extreme.tex
+% v5.1.3~2 | WO-v513-QCD | branch: v5.0.0-main
+%
+% Light-dense equation companion to WO-v513-QCD-Extreme.md
+% Sections: T_A|B Scheduling, Cornell Potential, Color Force, Casimir Factors,
+%           Hadronization Gate, Confinement String, Capture/Emission Events
+% ============================================================================
+\documentclass[10pt, a4paper, oneside]{article}
+\usepackage[top=0.9in,bottom=0.9in,left=1.0in,right=1.0in,headheight=13pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.5em}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue]{hyperref}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM v5.1.3{\textasciitilde}2}}
+\fancyhead[R]{\small\textit{WO-v513-QCD-Extreme}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries WO-v513-QCD-Extreme}\\[0.3em]
+  {\large QCD Extreme-Environment Layer --- Equation Reference}\\[0.5em]
+  {\small v5.1.3{\textasciitilde}2 \quad|\quad branch: \texttt{v5.0.0-main}}
+\end{center}
+\vspace{0.5em}\hrule\vspace{1em}
+
+% ----------------------------------------------------------------------------
+\section{T\texorpdfstring{$_A|B$}{A|B} Dual-Timescale Scheduling}
+% ----------------------------------------------------------------------------
+
+\noindent Outer (bead/hadronic) step:
+\begin{equation}
+  \Delta t_B = 1\;\mathrm{fs} \qquad \text{(existing kernel step)}
+\end{equation}
+Inner QCD substep:
+\begin{equation}
+  \Delta t_A = \frac{\Delta t_B}{K}, \qquad K = 200 \;\text{(default)}
+\end{equation}
+Time-dilation mapping from physical to VSIM time:
+\begin{equation}
+  t_{\mathrm{VSIM}} = \tau_{\mathrm{scale}} \cdot t_{\mathrm{QCD}},
+  \qquad \tau_{\mathrm{scale}} = 10^{-3} \;\text{(1 fm/c} \to 10^{-3}\text{ fs)}
+\end{equation}
+Per T$_B$ step, $K$ T$_A$ substeps execute:
+\begin{equation}
+  \text{Loop: } k = 0,1,\ldots,K-1 \;\Rightarrow\; \text{accumulate forces,
+  integrate, check confinement gate}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\section{Cornell Potential}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  \boxed{V(r) = -\frac{\kappa}{r} + \sigma r}
+\end{equation}
+Radial force magnitude:
+\begin{equation}
+  F(r) = \left|\frac{\mathrm{d}V}{\mathrm{d}r}\right| = \frac{\kappa}{r^2} + \sigma
+\end{equation}
+Short-range cutoff:
+\begin{equation}
+  r_{\mathrm{eff}} = \max(r,\, r_{\min}), \qquad r_{\min} = 0.05\;\text{\AA{}}
+\end{equation}
+Default parameters (dimensionless VSIM analogs):
+\begin{equation}
+  \kappa = 0.52, \quad \sigma = 0.18, \quad r_{\mathrm{conf}} = 2.0\;\text{\AA{}}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\section{SU(3) Color Force}
+% ----------------------------------------------------------------------------
+
+Net force on particle $i$ from particle $j$:
+\begin{equation}
+  \mathbf{F}_{ij} = C_{ij} \cdot F(r_{ij})\,\hat{\mathbf{r}}_{ij}
+\end{equation}
+where $C_{ij}$ is the Casimir color factor (Section~\ref{sec:casimir}).
+
+Accumulated body force:
+\begin{equation}
+  \mathbf{F}_i = \sum_{j \neq i,\,j\,\mathrm{active}} \mathbf{F}_{ij}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\section{Casimir Color Factor}
+\label{sec:casimir}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  C(a,b) =
+  \begin{cases}
+    -\dfrac{4}{3} & \text{if } b = \bar{a} \quad \text{(color-anticolor complement; \textbf{attractive})} \\[6pt]
+    +\dfrac{1}{6} & \text{if } a = b \quad \text{(same color; repulsive)} \\[6pt]
+    -\dfrac{1}{6} & \text{otherwise (partial octet)}
+  \end{cases}
+\end{equation}
+
+\noindent Negative $C$ gives an attractive (inward) force along $\hat{\mathbf{r}}_{ij}$.
+
+% ----------------------------------------------------------------------------
+\section{Velocity-Verlet T\texorpdfstring{$_A$}{A} Substep}
+% ----------------------------------------------------------------------------
+
+Half-kick:
+\begin{equation}
+  \mathbf{v}_i \;\leftarrow\; \mathbf{v}_i + \tfrac{1}{2}\,\frac{\mathbf{F}_i}{m_i}\,\Delta t_A
+\end{equation}
+Full position step:
+\begin{equation}
+  \mathbf{x}_i \;\leftarrow\; \mathbf{x}_i + \mathbf{v}_i\,\Delta t_A
+\end{equation}
+Second half-kick (force approximated from current step):
+\begin{equation}
+  \mathbf{v}_i \;\leftarrow\; \mathbf{v}_i + \tfrac{1}{2}\,\frac{\mathbf{F}_i}{m_i}\,\Delta t_A
+\end{equation}
+Kinetic energy update:
+\begin{equation}
+  E_i^{\mathrm{kin}} = \tfrac{1}{2}\,m_i\,|\mathbf{v}_i|^2
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\section{Confinement and Hadronization Gate}
+% ----------------------------------------------------------------------------
+
+String length for a confined pair $(i,\,j)$:
+\begin{equation}
+  \ell_{ij} = \|\mathbf{x}_i - \mathbf{x}_j\|
+\end{equation}
+Hadronization trigger:
+\begin{equation}
+  \ell_{ij} > r_{\mathrm{conf}} \;\Longrightarrow\;
+  \text{deactivate } i,\,j;\quad n_{\mathrm{had}} \leftarrow n_{\mathrm{had}} + 1
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\section{Gluon Color Channels (Gell-Mann Basis)}
+% ----------------------------------------------------------------------------
+
+Eight channels indexed $g_0 \ldots g_7$; each carries a color--anticolor pair:
+\begin{equation}
+  g_k = (c_k^{\mathrm{src}},\, c_k^{\mathrm{dst}}),
+  \qquad k = 0,\ldots,7
+\end{equation}
+Gluon trail colour interpolation (viewport):
+\begin{equation}
+  \mathbf{c}_{\mathrm{trail}}(t) =
+  \mathbf{c}_{\mathrm{src}} + t\bigl(\mathbf{c}_{\mathrm{dst}}-\mathbf{c}_{\mathrm{src}}\bigr)
+  + \underbrace{e^{-20(t-\tfrac{1}{2})^2}}_{\text{midpoint flash}}\,
+    \bigl(\mathbf{1}-\mathbf{c}_{\mathrm{src}} - t(\mathbf{c}_{\mathrm{dst}}-\mathbf{c}_{\mathrm{src}})\bigr)\cdot 0.6
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\section{Quark Fractional Electric Charge}
+% ----------------------------------------------------------------------------
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Flavor & Code & $q$ (units of $e$) \\
+\midrule
+Up & $-7$ & $+\tfrac{2}{3}$ \\
+Down & $-8$ & $-\tfrac{1}{3}$ \\
+Strange & $-9$ & $-\tfrac{1}{3}$ \\
+Charm & $-10$ & $+\tfrac{2}{3}$ \\
+Bottom & $-11$ & $-\tfrac{1}{3}$ \\
+Top & $-12$ & $+\tfrac{2}{3}$ \\
+Gluon & $-13$ & $0$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ----------------------------------------------------------------------------
+\section{Confinement String Colour Gradient (Viewport)}
+% ----------------------------------------------------------------------------
+
+Normalized string tension:
+\begin{equation}
+  t_s = \min\!\left(\frac{\ell_{ij}}{r_{\mathrm{conf}}},\;1\right) \in [0,1]
+\end{equation}
+Blue (slack) to red (taut) to white (breaking) piecewise linear blend in RGB:
+\begin{equation}
+  \mathbf{c}_{\mathrm{string}}(t_s) =
+  \begin{cases}
+    \mathrm{lerp}\bigl(\text{blue}, \text{orange}, 2t_s\bigr) & t_s < 0.5 \\
+    \mathrm{lerp}\bigl(\text{orange}, \text{white}, 2t_s-1\bigr) & t_s \geq 0.5
+  \end{cases}
+\end{equation}
+
+\vfill
+\begin{center}
+  \rule{0.4\linewidth}{0.4pt}\\[0.5em]
+  \small WO-v513-QCD-Extreme \quad|\quad v5.1.3{\textasciitilde}2
+\end{center}
+
+\end{document}

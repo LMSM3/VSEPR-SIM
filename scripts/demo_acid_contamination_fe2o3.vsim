@@ -1,0 +1,415 @@
+# =============================================================================
+# Acid Contamination Reaction: Fe2O3 + H2SO4 -> Fe2(SO4)3 + H2O
+# =============================================================================
+# Chem+ bond-pattern pathway simulation with DissolutionEngine integration
+#
+# Core reaction (stoichiometric):
+#   [Fe2O3]^{Fe-O-Fe lattice}_{s} + 3[H2SO4]^{H+/HSO4-/SO4^2-}_{aq}
+#       -> [Fe2(SO4)3]^{Fe^3+.SO4^2-}_{aq} + 3[H2O]^{sigma}_{l}
+#
+# Expanded ionic form:
+#   [Fe2O3]^{oxide}_{s} + 6[H+]_{aq} + 3[SO4^2-]_{aq}
+#       -> 2[Fe^3+]_{aq} + 3[SO4^2-]_{aq} + 3[H2O]_{l}
+#
+# Multi-step bond-pattern pathway:
+#   1. [Fe-O-Fe]^{oxide lattice}_{s}           - Initial solid state
+#   2. [Fe-OH-Fe]^{protonated bridge}_{surface} - First protonation
+#   3. [Fe-OH]^{surface hydroxyl}_{surface}     - Bridge cleavage
+#   4. [Fe-OH2+]^{leaving group}_{surface}      - Second protonation
+#   5. [Fe(H2O)6^3+]^{aquo complex}_{aq}        - Dissolution + hydration
+#   6. [Fe-O-SO3]^{monodentate sulfate}_{aq}    - Ligand exchange
+#   7. [Fe-(O)2-SO2]^{bidentate sulfate}_{aq}   - Chelation
+#   8. [Fe-O-SO2-O-Fe]^{bridging sulfate}_{aq}  - Polymerization
+#
+# Uses: atomistic/reaction/dissolution.hpp (WO-56D)
+# WO-56C/56D | v5.0.0
+# =============================================================================
+
+[project]
+name        = "acid_contamination_fe2o3_h2so4"
+version     = "v5.0.0"
+seed_base   = 2024
+determinism = true
+description = "Fe2O3 + H2SO4 acid dissolution pathway with full speciation tracking"
+
+# -----------------------------------------------------------------------------
+# Material: Iron(III) oxide - hematite (alpha-Fe2O3, corundum structure)
+# -----------------------------------------------------------------------------
+[material]
+formula     = "Fe2O3"
+prototype   = "corundum"         # Corundum structure (R-3c)
+structure   = "hematite"         # Alias for corundum Fe2O3
+phase       = "solid"
+cell        = "3x3x2"            # Larger cell for better surface statistics
+
+# Crystallographic data (for reference - resolved by registry)
+# space_group = "R-3c"
+# a = 5.038 A, c = 13.772 A (hexagonal setting)
+
+# -----------------------------------------------------------------------------
+# Dissolution Module Configuration (WO-56D)
+# -----------------------------------------------------------------------------
+[dissolution]
+enabled = true
+engine  = "protonation_ladder"   # Multi-step protonation model
+
+# Protonation energetics (kcal/mol)
+dG_first_protonation  = -12.0    # M-O- + H+ -> M-OH
+dG_second_protonation = -8.0     # M-OH + H+ -> M-OH2+
+
+# Lattice cleavage barriers (kcal/mol)
+Ea_bridging_cleavage  = 25.0     # M-O-M bond breaking
+Ea_terminal_release   = 15.0     # M-O- detachment
+
+# Hydration shell formation (kcal/mol)
+dG_hydration_Fe3      = -105.0   # Fe3+ hexaaquo formation
+
+# Ligand exchange thermodynamics (kcal/mol)
+dG_sulfate_mono       = -3.5     # Monodentate SO4 binding
+dG_sulfate_bi         = -6.0     # Bidentate SO4 binding  
+dG_sulfate_bridge     = -8.5     # Bridging SO4 formation
+
+# Surface parameters
+site_density_per_nm2  = 5.0      # Reactive sites per nm^2
+
+# -----------------------------------------------------------------------------
+# Chemistry: Acid-base dissolution with speciation
+# -----------------------------------------------------------------------------
+[chemistry]
+chemistry            = "hydrolysis"   # Registry alias
+heat                 = -1             # Derive from environment.temperature
+reaction_events      = true
+track_species_state  = true
+event_registry       = true
+min_score_threshold  = 0.20
+max_reactions_per_step = 12
+
+# Reaction pathway specification (chem+ notation)
+# Each line is a micro-step in the dissolution mechanism
+pathway = """
+  # Stage 1: Surface protonation ladder
+  [Fe-O-Fe]^{bridging oxide}_{s} + [H+]_{aq} -> [Fe-OH-Fe]^{protonated bridge}_{surface}
+  [Fe-O-]^{terminal oxide}_{surface} + [H+]_{aq} -> [Fe-OH]^{hydroxyl}_{surface}
+  [Fe-OH]^{hydroxyl}_{surface} + [H+]_{aq} -> [Fe-OH2+]^{aqua leaving}_{surface}
+
+  # Stage 2: Lattice cleavage and dissolution
+  [Fe-OH2+]^{aqua leaving}_{surface} -> [Fe^3+]^{released}_{aq} + [H2O]_{l}
+  [Fe-OH-Fe]^{protonated bridge}_{surface} + [H+]_{aq} -> [Fe^3+]_{aq} + [Fe-OH]_{surface} + [H2O]_{l}
+
+  # Stage 3: Hydration shell formation
+  [Fe^3+]^{bare}_{aq} + 6[H2O]_{l} -> [Fe(H2O)6^3+]^{octahedral aquo}_{aq}
+
+  # Stage 4: Ferric hydrolysis (pH-dependent speciation)
+  [Fe(H2O)6^3+]_{aq} <-> [Fe(H2O)5OH^2+]^{hydroxo}_{aq} + [H+]_{aq}
+  [Fe(H2O)5OH^2+]_{aq} <-> [Fe(H2O)4(OH)2^+]^{dihydroxo}_{aq} + [H+]_{aq}
+
+  # Stage 5: Sulfate coordination (contamination speciation)
+  [Fe(H2O)6^3+]_{aq} + [SO4^2-]_{aq} <-> [Fe(H2O)6^3+...SO4^2-]^{outer sphere}_{aq}
+  [Fe(H2O)6^3+]_{aq} + [SO4^2-]_{aq} <-> [Fe(H2O)5(OSO3)^+]^{monodentate}_{aq} + [H2O]_{l}
+  [Fe(H2O)5(OSO3)^+]_{aq} <-> [Fe(H2O)4(O2SO2)^+]^{bidentate}_{aq} + [H2O]_{l}
+
+  # Stage 6: Bridging and polymerization
+  2[Fe(H2O)5(OSO3)^+]_{aq} <-> [Fe(H2O)4-O-SO2-O-Fe(H2O)4]^{4+}_{aq} + 2[H2O]_{l}
+
+  # Stage 7: Bisulfate pathway (strong acid)
+  [SO4^2-]_{aq} + [H+]_{aq} <-> [HSO4^-]_{aq}
+  [Fe^3+]_{aq} + [HSO4^-]_{aq} <-> [Fe-O-SO3H]^{bisulfate}_{aq}
+"""
+
+# =============================================================================
+# Species Definitions (full contamination pool)
+# =============================================================================
+
+# --- Solid substrate ---
+[[chemistry.species]]
+formula      = "Fe2O3"
+phase        = "solid"
+role         = "substrate"
+bond_pattern = "Fe-O-Fe"
+oxidation    = { Fe = 3, O = -2 }
+
+# --- Acid reagent ---
+[[chemistry.species]]
+formula      = "H2SO4"
+phase        = "aqueous"
+role         = "reagent"
+dissociation = ["H+", "HSO4-", "SO4^2-"]
+pKa          = [-3.0, 1.99]
+
+# --- Surface intermediates ---
+[[chemistry.species]]
+formula      = "Fe-OH"
+phase        = "surface"
+role         = "intermediate"
+bond_pattern = "Fe-OH"
+pKa          = 9.5
+
+[[chemistry.species]]
+formula      = "Fe-OH2+"
+phase        = "surface"
+role         = "intermediate"
+bond_pattern = "Fe-OH2+"
+lability     = 0.9
+
+# --- Aqueous ferric species ---
+[[chemistry.species]]
+formula      = "Fe(H2O)6^3+"
+phase        = "aqueous"
+role         = "intermediate"
+coordination = 6
+geometry     = "octahedral"
+color        = "yellow"
+log_beta     = 0.0
+
+[[chemistry.species]]
+formula      = "Fe(H2O)5OH^2+"
+phase        = "aqueous"
+role         = "intermediate"
+coordination = 6
+geometry     = "octahedral"
+pKa          = 2.2
+
+[[chemistry.species]]
+formula      = "Fe(H2O)4(OH)2^+"
+phase        = "aqueous"
+role         = "intermediate"
+coordination = 6
+geometry     = "octahedral"
+pKa          = 3.5
+
+# --- Sulfate-bound ferric species (contamination products) ---
+[[chemistry.species]]
+formula      = "FeSO4+"
+phase        = "aqueous"
+role         = "product"
+bond_pattern = "Fe-O-SO3"
+binding_mode = "monodentate"
+log_beta     = 4.04
+
+[[chemistry.species]]
+formula      = "Fe(SO4)2-"
+phase        = "aqueous"
+role         = "product"
+bond_pattern = "Fe-(OSO3)2"
+binding_mode = "bis-monodentate"
+log_beta     = 5.38
+
+[[chemistry.species]]
+formula      = "Fe2(SO4)3"
+phase        = "aqueous"
+role         = "product"
+bond_pattern = "Fe-mu-SO4-Fe"
+binding_mode = "bridging"
+
+# --- Bisulfate species ---
+[[chemistry.species]]
+formula      = "FeHSO4^2+"
+phase        = "aqueous"
+role         = "product"
+bond_pattern = "Fe-O-SO3H"
+note         = "Strong acid conditions only"
+
+# --- Byproduct ---
+[[chemistry.species]]
+formula      = "H2O"
+phase        = "liquid"
+role         = "product"
+note         = "Released during protonation and ligand exchange"
+
+# -----------------------------------------------------------------------------
+# Environment: Aqueous acidic medium
+# -----------------------------------------------------------------------------
+[environment]
+medium       = "water"
+temperature  = 298.15           # K (25 C)
+pressure     = 101.325          # kPa (1 atm)
+pH           = 1.0              # Strong acid - drives dissolution
+ionic_strength = 0.5            # mol/L - from H2SO4
+
+# Acid concentration
+[[environment.solute]]
+formula      = "H2SO4"
+concentration = 0.25            # mol/L (~ 2.5% w/v)
+activity_coeff = 0.85
+
+[[environment.solute]]
+formula      = "H+"
+concentration = 0.1             # mol/L (pH 1)
+
+[[environment.solute]]
+formula      = "SO4^2-"
+concentration = 0.15            # mol/L
+
+[[environment.solute]]
+formula      = "HSO4-"
+concentration = 0.10            # mol/L
+
+# -----------------------------------------------------------------------------
+# Simulation molecules
+# -----------------------------------------------------------------------------
+[[simulation.molecule]]
+formula     = "Fe2O3"
+count       = 8                 # 8 formula units = 16 Fe, 24 O
+temperature = 298.15
+lattice     = "corundum"
+
+[[simulation.molecule]]
+formula     = "H2SO4"
+count       = 24                # Stoichiometric excess (3:1 + extra)
+temperature = 298.15
+lattice     = "none"
+
+[[simulation.molecule]]
+formula     = "H2O"
+count       = 200               # Solvent molecules
+temperature = 298.15
+lattice     = "none"
+
+# -----------------------------------------------------------------------------
+# Run configuration
+# -----------------------------------------------------------------------------
+[run]
+mode          = "reactive_md"
+max_steps     = 5000            # Longer run for full pathway
+dt_fs         = 0.5             # 0.5 fs timestep
+temperature_K = 298.15
+converge      = false           # Reactive - track pathway, not equilibrium
+thermostat    = "nose_hoover"
+tau_T         = 100.0           # Thermostat coupling (fs)
+
+# -----------------------------------------------------------------------------
+# Analysis: Comprehensive contamination tracking
+# -----------------------------------------------------------------------------
+[analysis]
+compute_rdf            = true
+compute_coordination   = true
+compute_bond_orders    = true
+track_species_counts   = true
+track_bond_breaking    = true
+track_bond_forming     = true
+compute_speciation     = true   # Full speciation analysis
+
+# Contamination-specific metrics
+[[analysis.metric]]
+name      = "fe_dissolution_rate"
+type      = "species_flux"
+target    = "Fe^3+"
+unit      = "mol/m2/s"
+normalize = "surface_area"
+
+[[analysis.metric]]
+name      = "protonation_coverage"
+type      = "site_fraction"
+target    = "Fe-OH"
+reference = "surface_O"
+
+[[analysis.metric]]
+name      = "sulfate_binding_fraction"
+type      = "coordination_ratio"
+target    = "Fe-O-S"
+reference = "Fe_dissolved"
+
+[[analysis.metric]]
+name      = "outer_sphere_fraction"
+type      = "species_ratio"
+target    = "Fe^3+...SO4^2-"
+reference = "Fe_total_aq"
+
+[[analysis.metric]]
+name      = "bridging_sulfate_count"
+type      = "bond_count"
+target    = "Fe-O-SO2-O-Fe"
+
+[[analysis.metric]]
+name      = "mobile_fe_concentration"
+type      = "concentration"
+target    = "Fe_total_aq"
+unit      = "mol/L"
+
+# Speciation distribution
+[[analysis.speciation]]
+element = "Fe"
+phases  = ["solid", "surface", "aqueous"]
+oxidation_states = [2, 3]
+output_format = "distribution_table"
+
+# -----------------------------------------------------------------------------
+# Export: Full pathway documentation
+# -----------------------------------------------------------------------------
+[export]
+write_xyz               = true
+write_xyzf              = true
+write_analysis_json     = true
+write_events_json       = true
+write_report_md         = true
+write_dashboard_svg     = true
+write_manifest_json     = true
+write_metrics_tsv       = true
+write_symbolic_trace_json = true
+output_dir              = "out/acid_contamination_fe2o3"
+
+[export.visual]
+write_svg_figures       = true
+write_rdf_svg           = true
+write_energy_trace_svg  = true
+write_html_dashboard    = true
+
+# -----------------------------------------------------------------------------
+# Visualization: Interactive reaction pathway
+# -----------------------------------------------------------------------------
+[visual]
+output_type            = "gl_interactive"
+render_interval        = 10
+live_switch            = true
+
+# Terminal displays
+show_proxy_table       = true
+show_convergence_trace = true
+show_event_timeline    = true
+show_symbolic_trace    = true
+show_bar_chart         = true
+
+# GL options
+gl_show_axes           = true
+gl_show_neighbours     = true
+gl_window_width        = 1400
+gl_window_height       = 900
+gl_auto_orbit          = true
+gl_overlay_hold_s      = 3.0
+
+# Overlay sequence for dissolution pathway
+overlay_sequence = ["density", "coordination", "species_map", "bond_network"]
+
+# =============================================================================
+# Bond-Pattern Library (Chem+ Reference)
+# =============================================================================
+# Solid phase:
+#   [Fe-O-Fe]^{bridging oxide}_{s}
+#   [Fe-O-Fe-O-Fe]^{extended lattice}_{s}
+#
+# Surface intermediates:
+#   [Fe-O-]^{terminal oxide}_{surface}
+#   [Fe-OH]^{surface hydroxyl}_{surface}
+#   [Fe-OH2+]^{protonated leaving group}_{surface}
+#   [Fe-OH-Fe]^{protonated bridge}_{surface}
+#
+# Aqueous ferric:
+#   [Fe(H2O)6^3+]^{aquo complex, CN=6, octahedral}_{aq}
+#   [Fe(H2O)5OH^2+]^{monohydroxo}_{aq}
+#   [Fe(H2O)4(OH)2^+]^{dihydroxo}_{aq}
+#
+# Ion pairing:
+#   [Fe^3+...SO4^2-]^{outer sphere pair}_{aq}
+#
+# Inner-sphere sulfate:
+#   [Fe-O-SO3]^{monodentate sulfate}_{aq}
+#   [Fe-(O)2-SO2]^{bidentate sulfate, kappa2}_{aq}
+#   [Fe-O-SO2-O-Fe]^{bridging sulfate, mu}_{aq}
+#
+# Bisulfate:
+#   [Fe-O-SO3H]^{bisulfate associated}_{aq}
+#
+# Final contamination statement:
+#   [Fe2O3]^{Fe-O-Fe, immobile}_{s} + [H2SO4]^{H+/SO4^2-}_{aq}
+#     -> [Fe(H2O)6^3+, FeSO4+, Fe(SO4)2-, Fe-mu-SO4-Fe]^{mobile contamination}_{aq}
+# =============================================================================

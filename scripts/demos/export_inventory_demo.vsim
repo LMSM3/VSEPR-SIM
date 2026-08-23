@@ -1,0 +1,45 @@
+# Export inventory demonstration
+# Run: vsepr run scripts/demos/export_inventory_demo.vsim
+# The final [export] summary lists every generated artifact, its location, and size.
+
+[project]
+name        = "export_inventory_demo"
+version     = "v5.16.0"
+seed_base   = 85002
+determinism = true
+description = "Demonstrates artifact location, count, and size reporting"
+
+[simulation]
+fire_max_steps   = 10
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "organic"
+
+[[simulation.molecule]]
+formula       = "CH4"
+count         = 1
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode            = "md"
+num_steps       = 10
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 1
+render_interval = 1
+
+[export]
+output_dir          = "out/v516_integrated_runtime_cut/export_inventory"
+write_xyz           = true
+write_xyzfull       = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_events_json   = true
+write_report_md     = true
+write_manifest_json = true
+
+[visual]
+output_type = "terminal_chart"

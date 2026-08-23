@@ -1,16 +1,16 @@
-#pragma once
+﻿#pragma once
 /**
  * ehd.hpp
  *
- * Electrohydrodynamic Simulation — Unified Include
+ * Electrohydrodynamic Simulation  -  Unified Include
  *
  * Master header that pulls in all five EHD stages:
  *
- *   Stage 1 — CAD:     Parametric geometry (helix, tube, electrodes, STEP export)
- *   Stage 2 — Domain:  Domain extraction, named regions, boundary tags
- *   Stage 3 — Physics: Flow, electrostatics, ion transport, coupled solver
- *   Stage 4 — Mesh:    Mesh controls, inflation, adaptive refinement
- *   Stage 5 — Post:    Contour/streamline export, section probes, comparison tables
+ *   Stage 1  -  CAD:     Parametric geometry (helix, tube, electrodes, STEP export)
+ *   Stage 2  -  Domain:  Domain extraction, named regions, boundary tags
+ *   Stage 3  -  Physics: Flow, electrostatics, ion transport, coupled solver
+ *   Stage 4  -  Mesh:    Mesh controls, inflation, adaptive refinement
+ *   Stage 5  -  Post:    Contour/streamline export, section probes, comparison tables
  *
  * Plus: run-card I/O for reproducible case specification.
  *

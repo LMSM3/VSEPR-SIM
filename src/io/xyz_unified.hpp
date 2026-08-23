@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * xyz_unified.hpp -- Canonical XYZ family data model
  * ====================================================
@@ -32,19 +32,20 @@
 #include <sstream>
 #include <algorithm>
 #include "core/math_vec3.hpp"
+#include "pot/periodic_db.hpp"
 
 namespace vsepr {
 namespace io {
 
 // ============================================================================
-// Vec3 alias (Day #56 — unified via vsepr::Vec3)
+// Vec3 alias (Day #56  -  unified via vsepr::Vec3)
 // ============================================================================
 // XYZVec3 kept as an alias so existing call sites in xyz_reader.hpp and
 // elsewhere compile without modification.
 using XYZVec3 = vsepr::Vec3;
 
 // ============================================================================
-// AtomRecord — per-atom data for one frame
+// AtomRecord  -  per-atom data for one frame
 // ============================================================================
 //
 // Always present:  Z, x, y, z
@@ -85,7 +86,7 @@ struct XYZBox {
 };
 
 // ============================================================================
-// XYZFrame — one complete frame (any format)
+// XYZFrame  -  one complete frame (any format)
 // ============================================================================
 
 struct XYZFrame {
@@ -109,7 +110,7 @@ struct XYZFrame {
 };
 
 // ============================================================================
-// CheckpointState — .xyzc header block (spec §4)
+// CheckpointState  -  .xyzc header block (spec §4)
 // ============================================================================
 
 struct CheckpointState {
@@ -122,7 +123,7 @@ struct CheckpointState {
 };
 
 // ============================================================================
-// XYZData — unified container
+// XYZData  -  unified container
 // ============================================================================
 
 struct XYZData {
@@ -147,7 +148,7 @@ enum class XYZFormat {
 	UNKNOWN
 };
 
-// Detect from file extension only — caller is responsible for content check
+// Detect from file extension only  -  caller is responsible for content check
 inline XYZFormat detect_format_by_extension(const std::string& path) {
 	auto ext_start = path.rfind('.');
 	if (ext_start == std::string::npos) return XYZFormat::UNKNOWN;
@@ -174,11 +175,11 @@ inline const char* format_name(XYZFormat f) {
 }
 
 // ============================================================================
-// Parse warning (soft errors — spec §9)
+// Parse warning (soft errors  -  spec §9)
 // ============================================================================
 
 enum class XYZWarnCode {
-	COLUMN_ZERO_FILL,     // declared property but insufficient columns — zeroed
+	COLUMN_ZERO_FILL,     // declared property but insufficient columns  -  zeroed
 	UNKNOWN_PROPERTY,     // unrecognised key in properties= list
 	ENERGY_PARSE_FAIL,    // comment "E = ..." could not be parsed
 	TEMP_PARSE_FAIL,      // comment "T = ..." could not be parsed
@@ -290,52 +291,20 @@ inline std::optional<double> parse_comment_temperature(const std::string& commen
 }
 
 // ============================================================================
-// Element symbol → atomic number (essential subset)
+// Element symbol <-> atomic number via the authoritative elemental database
 // ============================================================================
 
 inline int symbol_to_Z(const std::string& sym) {
-	// Ordered by frequency in molecular simulations
-	static const std::pair<const char*, int> table[] = {
-		{"H",1},{"He",2},{"Li",3},{"Be",4},{"B",5},{"C",6},
-		{"N",7},{"O",8},{"F",9},{"Ne",10},{"Na",11},{"Mg",12},
-		{"Al",13},{"Si",14},{"P",15},{"S",16},{"Cl",17},{"Ar",18},
-		{"K",19},{"Ca",20},{"Sc",21},{"Ti",22},{"V",23},{"Cr",24},
-		{"Mn",25},{"Fe",26},{"Co",27},{"Ni",28},{"Cu",29},{"Zn",30},
-		{"Ga",31},{"Ge",32},{"As",33},{"Se",34},{"Br",35},{"Kr",36},
-		{"Rb",37},{"Sr",38},{"Y",39},{"Zr",40},{"Nb",41},{"Mo",42},
-		{"Tc",43},{"Ru",44},{"Rh",45},{"Pd",46},{"Ag",47},{"Cd",48},
-		{"In",49},{"Sn",50},{"Sb",51},{"Te",52},{"I",53},{"Xe",54},
-		{"Cs",55},{"Ba",56},{"La",57},{"Ce",58},{"Pr",59},{"Nd",60},
-		{"Pm",61},{"Sm",62},{"Eu",63},{"Gd",64},{"Tb",65},{"Dy",66},
-		{"Ho",67},{"Er",68},{"Tm",69},{"Yb",70},{"Lu",71},
-		{"Hf",72},{"Ta",73},{"W",74},{"Re",75},{"Os",76},{"Ir",77},
-		{"Pt",78},{"Au",79},{"Hg",80},{"Tl",81},{"Pb",82},{"Bi",83},
-		{"Po",84},{"At",85},{"Rn",86},
-		{"Ra",88},{"Ac",89},{"Th",90},{"Pa",91},{"U",92},
-		{"Np",93},{"Pu",94},{"Am",95},{"Cm",96},{"Bk",97},{"Cf",98},
-		{"Es",99},{"Fm",100},{"Md",101},{"No",102},{"Lr",103},
-	};
-	for (auto& [s, z] : table) if (sym == s) return z;
-	return 0;  // unknown
+	if (sym == "D" || sym == "T") return 1;
+	static const vsepr::PeriodicTable table = vsepr::PeriodicTable::load_default();
+	const auto* element = table.by_symbol(sym);
+	return element ? element->Z : 0;
 }
 
 inline std::string Z_to_symbol(int Z) {
-	static const char* table[] = {
-		"?",
-		"H","He","Li","Be","B","C","N","O","F","Ne",
-		"Na","Mg","Al","Si","P","S","Cl","Ar","K","Ca",
-		"Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn",
-		"Ga","Ge","As","Se","Br","Kr","Rb","Sr","Y","Zr",
-		"Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn",
-		"Sb","Te","I","Xe","Cs","Ba","La","Ce","Pr","Nd",
-		"Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb",
-		"Lu","Hf","Ta","W","Re","Os","Ir","Pt","Au","Hg",
-		"Tl","Pb","Bi","Po","At","Rn","Fr","Ra","Ac","Th",
-		"Pa","U","Np","Pu","Am","Cm","Bk","Cf","Es","Fm",
-		"Md","No","Lr"
-	};
-	if (Z >= 1 && Z <= 103) return table[Z];
-	return "X" + std::to_string(Z);
+	static const vsepr::PeriodicTable table = vsepr::PeriodicTable::load_default();
+	const auto* element = Z > 0 ? table.by_Z(static_cast<uint32_t>(Z)) : nullptr;
+	return element ? element->symbol : "?";
 }
 
 } // namespace io

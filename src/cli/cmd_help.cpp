@@ -1,4 +1,4 @@
-/**
+﻿/**
  * cmd_help.cpp
  * -----------
  * Help command - display usage and available commands.
@@ -53,10 +53,10 @@ int HelpCommand::Execute(const std::vector<std::string>& /*args*/) {
     Display::BlankLine();
     
     Display::Subheader("Quick Start");
-    std::cout << "  \033[32m▶\033[0m  \033[1mvsepr build random --watch\033[0m  \033[32m← Try this first!\033[0m\n"
+    std::cout << "  \033[32m▶\033[0m  \033[1mvsepr build random --watch\033[0m  \033[32m<- Try this first!\033[0m\n"
               << "     Generate random molecule with live 3D visualization\n"
               << "\n"
-              << "  \033[36m▶\033[0m  \033[1mvsepr therm --temperature 500\033[0m  \033[36m← Thermal analysis!\033[0m\n"
+              << "  \033[36m▶\033[0m  \033[1mvsepr therm --temperature 500\033[0m  \033[36m<- Thermal analysis!\033[0m\n"
               << "     Analyze thermal properties at 500 K with bonding decomposition\n"
               << "\n"
               << "  # Build water molecule and optimize geometry\n"

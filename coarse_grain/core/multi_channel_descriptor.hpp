@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * multi_channel_descriptor.hpp — Multi-Channel Anisotropic Surface Descriptor
+ * multi_channel_descriptor.hpp  -  Multi-Channel Anisotropic Surface Descriptor
  *
  * NOTE: <algorithm> is required for std::max(initializer_list) on all compilers.
  *
@@ -8,7 +8,7 @@
  * representation with independent spherical harmonic expansions
  * for distinct physical interaction channels:
  *
- *   S_B(θ,φ) → { S^(steric)(θ,φ), S^(elec)(θ,φ), S^(disp)(θ,φ) }
+ *   S_B(θ,φ) -> { S^(steric)(θ,φ), S^(elec)(θ,φ), S^(disp)(θ,φ) }
  *
  * Each channel has its own:
  *   - Runtime-configurable ℓ_max (higher order for complex structures)
@@ -32,7 +32,7 @@
 namespace coarse_grain {
 
 /**
- * DescriptorChannel — identifies the physical interaction type.
+ * DescriptorChannel  -  identifies the physical interaction type.
  *
  * Each channel captures a distinct contribution:
  *   STERIC:        geometric accessibility and excluded volume
@@ -59,7 +59,7 @@ inline const char* channel_name(DescriptorChannel ch) {
 }
 
 /**
- * ChannelDescriptor — one channel of the multi-channel surface.
+ * ChannelDescriptor  -  one channel of the multi-channel surface.
  *
  * Stores SH coefficients for a single physical channel at a
  * runtime-configurable angular resolution (ℓ_max).
@@ -142,7 +142,7 @@ struct ChannelDescriptor {
 };
 
 /**
- * MultiChannelDescriptor — vector-valued anisotropic surface representation.
+ * MultiChannelDescriptor  -  vector-valued anisotropic surface representation.
  *
  * Contains one ChannelDescriptor per physical channel (steric, electrostatic,
  * dispersion), each with independently configurable ℓ_max.
@@ -245,10 +245,10 @@ struct MultiChannelDescriptor {
      * of a single-channel descriptor. Adaptive complexity selection.
      *
      * Returns a recommended ℓ_max:
-     *   ratio < 0.1 → 2 (nearly isotropic)
-     *   ratio < 0.3 → 4 (moderate anisotropy)
-     *   ratio < 0.6 → 6 (strong anisotropy)
-     *   ratio ≥ 0.6 → 8 (complex anisotropy)
+     *   ratio < 0.1 -> 2 (nearly isotropic)
+     *   ratio < 0.3 -> 4 (moderate anisotropy)
+     *   ratio < 0.6 -> 6 (strong anisotropy)
+     *   ratio ≥ 0.6 -> 8 (complex anisotropy)
      */
     static int suggest_l_max(double anisotropy_ratio) {
         if (anisotropy_ratio < 0.1) return 2;

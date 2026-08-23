@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * bead_system.hpp — Coarse-Grained Bead System
+ * bead_system.hpp  -  Coarse-Grained Bead System
  *
  * The BeadSystem is the CG analogue of atomistic::State.
  * It holds the full collection of beads plus aggregate diagnostics.
@@ -21,7 +21,7 @@
 namespace coarse_grain {
 
 /**
- * Conservation report — verifiable mass/charge accounting.
+ * Conservation report  -  verifiable mass/charge accounting.
  */
 struct ConservationReport {
     double atomistic_total_mass{};
@@ -42,7 +42,7 @@ struct ConservationReport {
 };
 
 /**
- * Mapping diagnostics — per-bead quality metrics.
+ * Mapping diagnostics  -  per-bead quality metrics.
  */
 struct MappingDiagnostics {
     double mean_residual{};     // Average |COM - COG| across beads (Å)
@@ -54,7 +54,7 @@ struct MappingDiagnostics {
 };
 
 /**
- * BeadSystem — the full coarse-grained representation.
+ * BeadSystem  -  the full coarse-grained representation.
  */
 struct BeadSystem {
     std::vector<Bead>     beads;
@@ -119,7 +119,7 @@ struct BeadSystem {
     }
 
     /**
-     * Sanity check — mirrors atomistic::sane().
+     * Sanity check  -  mirrors atomistic::sane().
      *
      * Checks:
      *   1. At least one bead exists.

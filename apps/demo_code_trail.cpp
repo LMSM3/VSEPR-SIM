@@ -1,5 +1,5 @@
-/**
- * demo_code_trail.cpp  —  Code Trail Wind v0.1  —  Semi-Visual Demo
+﻿/**
+ * demo_code_trail.cpp   -   Code Trail Wind v0.1   -   Semi-Visual Demo
  * ====================================================================
  * VSEPR-SIM 3.0.1
  *
@@ -12,7 +12,7 @@
  *   3. Aggregate statistics panel
  *   4. Particle geometry diagram (ASCII)
  *
- * Self-contained — depends only on vsepr_trail (code_trail.hpp/cpp).
+ * Self-contained  -  depends only on vsepr_trail (code_trail.hpp/cpp).
  * No graphics libraries required.
  *
  * Build:
@@ -114,7 +114,7 @@ struct V3 {
 };
 
 // ============================================================================
-// LJ 6-12 walk-through — one pair, fully instrumented
+// LJ 6-12 walk-through  -  one pair, fully instrumented
 // ============================================================================
 
 static double lj_pair_trail(CodeTrail& trail, int i, int j,
@@ -176,7 +176,7 @@ static double lj_pair_trail(CodeTrail& trail, int i, int j,
 }
 
 // ============================================================================
-// Wind perturbation walk-through — single atom, fully instrumented
+// Wind perturbation walk-through  -  single atom, fully instrumented
 // ============================================================================
 
 static double wind_trail(CodeTrail& trail, int atom_idx,
@@ -225,8 +225,8 @@ static void render_step_playback(const CodeTrail& trail) {
         // Section break when source_tag changes
         if (e.source_tag != last_tag) {
             if (!last_tag.empty()) std::cout << "\n";
-            std::cout << ansi::YELLOW << "    ── " << e.source_tag
-                      << " ──" << ansi::RESET << "\n";
+            std::cout << ansi::YELLOW << "    -- " << e.source_tag
+                      << " --" << ansi::RESET << "\n";
             last_tag = e.source_tag;
         }
 
@@ -397,12 +397,12 @@ static void render_stats(const CodeTrail& trail) {
 // ============================================================================
 
 static void render_formula_sheet(const CodeTrail& trail) {
-    section("Formula Sheet (plain text — LaTeX in v0.2)");
+    section("Formula Sheet (plain text  -  LaTeX in v0.2)");
     std::cout << "\n";
 
     std::cout << ansi::DIM
               << "    Lennard-Jones 6-12 Pair Potential\n"
-              << "    ─────────────────────────────────\n" << ansi::RESET;
+              << "    ---------------------------------\n" << ansi::RESET;
 
     // Extract only the formula_notation fields that contain '='
     int eq_num = 1;
@@ -432,11 +432,11 @@ static void render_formula_sheet(const CodeTrail& trail) {
 
 int main() {
     std::cout << "\n";
-    boxed_header("Code Trail Wind v0.1  —  Semi-Visual Demo",
+    boxed_header("Code Trail Wind v0.1   -   Semi-Visual Demo",
                  "VSEPR-SIM 3.0.1  |  Deterministic Operation Audit");
     std::cout << "\n";
 
-    // ── Setup: 4-atom Ar cluster with LJ parameters ──
+    // -- Setup: 4-atom Ar cluster with LJ parameters --
     const double eps = 0.238;     // kcal/mol  (argon)
     const double sig = 3.4;       // Angstrom  (argon)
 
@@ -461,7 +461,7 @@ int main() {
         kv(labels[i], oss.str());
     }
 
-    // ── Record a full trail ──
+    // -- Record a full trail --
     CodeTrail trail("LJ_cluster_4Ar_plus_wind");
 
     // Phase 1: Parameter assignments
@@ -510,7 +510,7 @@ int main() {
             "U_total < 0  (bound state?)");
     }
 
-    // ── Render all panels ──
+    // -- Render all panels --
 
     render_geometry(pos, labels);
     render_step_playback(trail);
@@ -518,7 +518,7 @@ int main() {
     render_stats(trail);
     render_formula_sheet(trail);
 
-    // ── Flush CSV to disk ──
+    // -- Flush CSV to disk --
     const std::string csv_path = "code_trail_demo_output.csv";
     bool ok = trail.flush_csv(csv_path);
 

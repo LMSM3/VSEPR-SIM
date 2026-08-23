@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * anisotropic_potential.hpp — Orientation-Dependent Bead-Bead Interaction
+ * anisotropic_potential.hpp  -  Orientation-Dependent Bead-Bead Interaction
  *
  * Defines the interaction potential between two anisotropic beads:
  *
@@ -29,7 +29,7 @@
 namespace coarse_grain {
 
 /**
- * AnisotropicPotentialResult — decomposed energy from bead-bead interaction.
+ * AnisotropicPotentialResult  -  decomposed energy from bead-bead interaction.
  */
 struct AnisotropicPotentialResult {
     double E_isotropic{};       // Standard LJ contribution (kcal/mol)

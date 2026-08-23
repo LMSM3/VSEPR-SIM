@@ -1,5 +1,5 @@
-/**
- * test_property_pipeline_suite7.cpp — Suite #7: Property Learning Pipeline
+﻿/**
+ * test_property_pipeline_suite7.cpp  -  Suite #7: Property Learning Pipeline
  *
  * Validates the supervised learning pipeline that maps proxy distributions
  * and precursor channels to property-scale outputs.
@@ -20,7 +20,7 @@
  *   Monotone sweep, ordinal labels, end-to-end pipeline.
  *
  * Three-layer separation verified:
- *   Descriptor (upstream): no learned params, tested in Suites 5–6
+ *   Descriptor (upstream): no learned params, tested in Suites 5-6
  *   Calibration: model fitting from exported data only
  *   Inference: prediction from fitted model only
  *
@@ -141,7 +141,7 @@ static coarse_grain::pipeline::PropertyDatasetRow make_row(
 
 /**
  * Build a synthetic proxy summary for controlled testing
- * (no simulation needed — pure data construction).
+ * (no simulation needed  -  pure data construction).
  */
 static coarse_grain::EnsembleProxySummary make_synthetic_proxy(
     double cohesion = 0.5,
@@ -221,7 +221,7 @@ static coarse_grain::pipeline::PropertyDatasetRow make_synthetic_row(
 }
 
 // ============================================================================
-// Phase 7A — Dataset Construction
+// Phase 7A  -  Dataset Construction
 // ============================================================================
 
 static void phase_7a_dataset() {
@@ -253,22 +253,22 @@ static void phase_7a_dataset() {
         row.provenance.system_id = "test";
         row.precursor_state.source_bead_count = 64;
 
-        // No targets → invalid
-        check(!row.is_valid(), "7A.2a: no targets → invalid");
+        // No targets -> invalid
+        check(!row.is_valid(), "7A.2a: no targets -> invalid");
 
-        // Add unavailable target → still invalid
+        // Add unavailable target -> still invalid
         PropertyTarget tgt;
         tgt.available = false;
         tgt.value = std::numeric_limits<double>::quiet_NaN();
         row.targets.push_back({"missing_prop", tgt});
-        check(!row.is_valid(), "7A.2b: unavailable target → invalid");
+        check(!row.is_valid(), "7A.2b: unavailable target -> invalid");
 
-        // Add available target → valid
+        // Add available target -> valid
         PropertyTarget tgt2;
         tgt2.available = true;
         tgt2.value = 0.5;
         row.targets.push_back({"real_prop", tgt2});
-        check(row.is_valid(), "7A.2c: available target → valid");
+        check(row.is_valid(), "7A.2c: available target -> valid");
         check(row.count_available_targets() == 1, "7A.2d: count = 1");
     }
 
@@ -315,7 +315,7 @@ static void phase_7a_dataset() {
               "7A.4d: split_group from system_id");
     }
 
-    // ---- 7A.5: Empty system_id → invalid ----
+    // ---- 7A.5: Empty system_id -> invalid ----
     {
         std::printf("\n--- 7A.5: Empty system_id validation ---\n");
 
@@ -327,10 +327,10 @@ static void phase_7a_dataset() {
         tgt.value = 0.5;
         row.targets.push_back({"prop", tgt});
 
-        check(!row.is_valid(), "7A.5: empty system_id → invalid");
+        check(!row.is_valid(), "7A.5: empty system_id -> invalid");
     }
 
-    // ---- 7A.6: Zero bead count → invalid ----
+    // ---- 7A.6: Zero bead count -> invalid ----
     {
         std::printf("\n--- 7A.6: Zero bead count validation ---\n");
 
@@ -342,12 +342,12 @@ static void phase_7a_dataset() {
         tgt.value = 0.5;
         row.targets.push_back({"prop", tgt});
 
-        check(!row.is_valid(), "7A.6: zero bead count → invalid");
+        check(!row.is_valid(), "7A.6: zero bead count -> invalid");
     }
 }
 
 // ============================================================================
-// Phase 7B — Feature Vectorization
+// Phase 7B  -  Feature Vectorization
 // ============================================================================
 
 static void phase_7b_vectorization() {
@@ -465,9 +465,9 @@ static void phase_7b_vectorization() {
         check(gap_idx >= 0, "7B.4a: gap column found");
         if (gap_idx >= 0) {
             check(fv_zero.values[gap_idx] == 0.0,
-                  "7B.4b: Zero policy → 0.0 for NaN");
+                  "7B.4b: Zero policy -> 0.0 for NaN");
             check(std::isnan(fv_nan.values[gap_idx]),
-                  "7B.4c: NaN policy → NaN preserved");
+                  "7B.4c: NaN policy -> NaN preserved");
             check(fv_zero.n_imputed >= 1,
                   "7B.4d: imputation counted (zero)");
             check(fv_nan.n_imputed == 0,
@@ -515,7 +515,7 @@ static void phase_7b_vectorization() {
 }
 
 // ============================================================================
-// Phase 7C — Model Architecture (Tier 1 Linear Baseline)
+// Phase 7C  -  Model Architecture (Tier 1 Linear Baseline)
 // ============================================================================
 
 static void phase_7c_model() {
@@ -588,7 +588,7 @@ static void phase_7c_model() {
         check(w_rigidity > 0.0, "7C.2b: rigidity coeff positive");
         check(std::abs(w_rigidity) > std::abs(w_noise),
               "7C.2c: rigidity coeff > noise coeff");
-        check(std::isnan(w_missing), "7C.2d: missing feature → NaN");
+        check(std::isnan(w_missing), "7C.2d: missing feature -> NaN");
     }
 
     // ---- 7C.3: Prediction output ----
@@ -665,7 +665,7 @@ static void phase_7c_model() {
         for (int i = 0; i < 30; ++i) {
             FeatureVector fv;
             double x1 = static_cast<double>(i) / 30.0;
-            double x2 = 0.5;  // constant — no signal
+            double x2 = 0.5;  // constant  -  no signal
             fv.values = {x1, x2};
             fv.column_names = {"signal", "noise"};
             fv.valid = true;
@@ -704,8 +704,8 @@ static void phase_7c_model() {
 
         auto pred = predict_linear(empty_model, x);
 
-        check(pred.withheld, "7C.6a: unfitted → withheld");
-        check(std::isnan(pred.value), "7C.6b: unfitted → NaN value");
+        check(pred.withheld, "7C.6a: unfitted -> withheld");
+        check(std::isnan(pred.value), "7C.6b: unfitted -> NaN value");
     }
 
     // ---- 7C.7: Dimension mismatch returns withheld ----
@@ -730,12 +730,12 @@ static void phase_7c_model() {
         wrong_dim.valid = true;
 
         auto pred = predict_linear(model, wrong_dim);
-        check(pred.withheld, "7C.7: dimension mismatch → withheld");
+        check(pred.withheld, "7C.7: dimension mismatch -> withheld");
     }
 }
 
 // ============================================================================
-// Phase 7D — Evaluation and Split Discipline
+// Phase 7D  -  Evaluation and Split Discipline
 // ============================================================================
 
 static void phase_7d_evaluation() {
@@ -759,15 +759,15 @@ static void phase_7d_evaluation() {
         check(m.mae > 0 && m.mae < 0.2, "7D.1e: MAE in expected range");
     }
 
-    // ---- 7D.2: Perfect prediction → zero error ----
+    // ---- 7D.2: Perfect prediction -> zero error ----
     {
         std::printf("\n--- 7D.2: Perfect prediction ---\n");
 
         std::vector<double> v = {1.0, 2.0, 3.0, 4.0};
         auto m = evaluate_regression(v, v);
 
-        check(m.rmse < 1e-10, "7D.2a: perfect → RMSE ≈ 0");
-        check(m.mae < 1e-10, "7D.2b: perfect → MAE ≈ 0");
+        check(m.rmse < 1e-10, "7D.2a: perfect -> RMSE ≈ 0");
+        check(m.mae < 1e-10, "7D.2b: perfect -> MAE ≈ 0");
     }
 
     // ---- 7D.3: Spearman on monotone data ----
@@ -779,13 +779,13 @@ static void phase_7d_evaluation() {
 
         auto m = evaluate_regression(monotone_p, monotone_a);
         check(std::abs(m.spearman_rho - 1.0) < 0.01,
-              "7D.3a: monotone → Spearman ≈ 1.0");
+              "7D.3a: monotone -> Spearman ≈ 1.0");
 
         // Anti-monotone
         std::vector<double> anti_p = {5.0, 4.0, 3.0, 2.0, 1.0};
         auto m2 = evaluate_regression(anti_p, monotone_a);
         check(std::abs(m2.spearman_rho + 1.0) < 0.01,
-              "7D.3b: anti-monotone → Spearman ≈ -1.0");
+              "7D.3b: anti-monotone -> Spearman ≈ -1.0");
     }
 
     // ---- 7D.4: Pairwise accuracy ----
@@ -797,13 +797,13 @@ static void phase_7d_evaluation() {
         auto m = evaluate_regression(sorted_p, sorted_a);
 
         check(std::abs(m.pairwise_accuracy - 1.0) < 0.01,
-              "7D.4a: perfectly sorted → pairwise acc = 1.0");
+              "7D.4a: perfectly sorted -> pairwise acc = 1.0");
 
         // Reversed
         std::vector<double> rev_p = {4.0, 3.0, 2.0, 1.0};
         auto m2 = evaluate_regression(rev_p, sorted_a);
         check(m2.pairwise_accuracy < 0.1,
-              "7D.4b: reversed → pairwise acc ≈ 0");
+              "7D.4b: reversed -> pairwise acc ≈ 0");
     }
 
     // ---- 7D.5: Kendall tau ----
@@ -815,12 +815,12 @@ static void phase_7d_evaluation() {
         auto m = evaluate_regression(p, a);
 
         check(std::abs(m.kendall_tau - 1.0) < 0.01,
-              "7D.5a: concordant → tau = 1.0");
+              "7D.5a: concordant -> tau = 1.0");
 
         std::vector<double> rev_p = {5.0, 4.0, 3.0, 2.0, 1.0};
         auto m2 = evaluate_regression(rev_p, a);
         check(std::abs(m2.kendall_tau + 1.0) < 0.01,
-              "7D.5b: discordant → tau = -1.0");
+              "7D.5b: discordant -> tau = -1.0");
     }
 
     // ---- 7D.6: Grouped split discipline ----
@@ -872,7 +872,7 @@ static void phase_7d_evaluation() {
         bool all_in_one = (static_cast<int>(split.train_indices.size()) == 10)
                        || (static_cast<int>(split.val_indices.size()) == 10)
                        || (static_cast<int>(split.test_indices.size()) == 10);
-        check(all_in_one, "7D.7: single group → all in one partition");
+        check(all_in_one, "7D.7: single group -> all in one partition");
     }
 
     // ---- 7D.8: Insufficient data ----
@@ -883,12 +883,12 @@ static void phase_7d_evaluation() {
         std::vector<double> a = {1.0};
         auto m = evaluate_regression(p, a);
 
-        check(m.n_samples < 2, "7D.8: < 2 samples → metrics undefined");
+        check(m.n_samples < 2, "7D.8: < 2 samples -> metrics undefined");
     }
 }
 
 // ============================================================================
-// Phase 7E — Synthetic Supervision
+// Phase 7E  -  Synthetic Supervision
 // ============================================================================
 
 static void phase_7e_supervision() {
@@ -901,18 +901,18 @@ static void phase_7e_supervision() {
         std::printf("\n--- 7E.1: Ordinal labels ---\n");
 
         check(assign_ordinal_label(0.1) == OrdinalClass::Low,
-              "7E.1a: 0.1 → Low");
+              "7E.1a: 0.1 -> Low");
         check(assign_ordinal_label(0.5) == OrdinalClass::Medium,
-              "7E.1b: 0.5 → Medium");
+              "7E.1b: 0.5 -> Medium");
         check(assign_ordinal_label(0.8) == OrdinalClass::High,
-              "7E.1c: 0.8 → High");
+              "7E.1c: 0.8 -> High");
         check(assign_ordinal_label(0.33) == OrdinalClass::Medium,
-              "7E.1d: 0.33 → Medium (boundary)");
+              "7E.1d: 0.33 -> Medium (boundary)");
         check(assign_ordinal_label(0.67) == OrdinalClass::High,
-              "7E.1e: 0.67 → High (boundary)");
+              "7E.1e: 0.67 -> High (boundary)");
         check(assign_ordinal_label(std::numeric_limits<double>::quiet_NaN())
                   == OrdinalClass::Low,
-              "7E.1f: NaN → Low (safe default)");
+              "7E.1f: NaN -> Low (safe default)");
     }
 
     // ---- 7E.2: Monotone verification ----
@@ -990,7 +990,7 @@ static void phase_7e_supervision() {
         check(same_group, "7E.3e: sweep rows share split group");
     }
 
-    // ---- 7E.4: Sweep → vectorize → fit → predict monotone ----
+    // ---- 7E.4: Sweep -> vectorize -> fit -> predict monotone ----
     {
         std::printf("\n--- 7E.4: End-to-end sweep training ---\n");
 
@@ -1087,12 +1087,12 @@ static void phase_7e_supervision() {
         OrdinalClass rig_high = assign_ordinal_label(prec_high.rigidity_like.value);
 
         check(static_cast<int>(rig_high) >= static_cast<int>(rig_low),
-              "7E.5a: high-quality → higher ordinal");
+              "7E.5a: high-quality -> higher ordinal");
 
         // When rigidity_like is clearly high, label should be Medium or High
         if (prec_high.rigidity_like.valid) {
             check(rig_high != OrdinalClass::Low,
-                  "7E.5b: strong proxy → not Low ordinal");
+                  "7E.5b: strong proxy -> not Low ordinal");
         }
     }
 
@@ -1140,7 +1140,7 @@ static void phase_7e_supervision() {
 
 int main() {
     std::printf("Suite #7: Property Learning Pipeline\n");
-    std::printf("          Precursors → Dataset → Features → Model → Predictions\n");
+    std::printf("          Precursors -> Dataset -> Features -> Model -> Predictions\n");
     std::printf("================================================================\n");
 
     phase_7a_dataset();

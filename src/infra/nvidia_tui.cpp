@@ -1,11 +1,11 @@
-/**
+﻿/**
  * nvidia_tui.cpp
  * ---------------
  * Secret NVIDIA subsystem monitoring TUI and secret key handler.
  * Shells out to nvidia-smi for real-time GPU telemetry.
  * Cross-platform: Windows (primary), Linux, macOS.
  *
- * This module adds zero weight to the normal boot path — the TUI
+ * This module adds zero weight to the normal boot path  -  the TUI
  * code is only entered if the user presses a secret key during the
  * 2-second boot window.
  */
@@ -127,7 +127,7 @@ void sleep_ms(int ms) {
 #endif
 
 // ============================================================================
-// Shell execution (local copy — matches bootstrap_probe.cpp)
+// Shell execution (local copy  -  matches bootstrap_probe.cpp)
 // ============================================================================
 
 std::string shell_exec(const char* cmd) {
@@ -344,7 +344,7 @@ std::vector<GpuProcess> query_gpu_processes() {
                 GpuProcess p;
                 p.pid    = safe_int(f[0]);
                 p.name   = basename(f[1]);
-                p.mem_mb = safe_double(f[2]);  // [N/A] → 0
+                p.mem_mb = safe_double(f[2]);  // [N/A] -> 0
                 if (p.pid <= 0) continue;
                 // Skip permission-denied entries
                 if (p.name.find("Insufficient") != std::string::npos) continue;
@@ -545,7 +545,7 @@ const char* fan_color(int pct) {
 
 void draw_separator() {
     std::cout << COL_CYAN;
-    for (int i = 0; i < 64; i++) std::cout << "\xe2\x94\x80";  // ─ × 64
+    for (int i = 0; i < 64; i++) std::cout << "\xe2\x94\x80";  // - × 64
     std::cout << "\n" << COL_RESET;
 }
 

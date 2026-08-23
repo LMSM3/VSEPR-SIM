@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * bead_fire_csv_export.hpp — CSV Export for BeadFIRE Trajectory Data
+ * bead_fire_csv_export.hpp  -  CSV Export for BeadFIRE Trajectory Data
  *
  * Exports BeadFIREResult history to CSV format for visualization with Python scripts.
  *

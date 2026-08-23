@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/xyz/xyz_vec3.hpp
  * ========================
- * Public XYZVec3 type — the script-facing, file-facing, state-facing
+ * Public XYZVec3 type  -  the script-facing, file-facing, state-facing
  * coordinate type for the VSIM interpreter and xyz pipeline.
  *
  * XYZVec3 is the same layout as vsepr::Vec3. The two types are kept
@@ -18,15 +18,15 @@
 
 #include "core/math_vec3.hpp"  // vsepr::Vec3
 
-// ── XYZVec3 ──────────────────────────────────────────────────────────────────
+// -- XYZVec3 ------------------------------------------------------------------
 // Script/state-facing 3-D coordinate.  Fields are .x, .y, .z.
 // Coordinates are in angstrom unless otherwise noted at the call site.
 
 using XYZVec3 = vsepr::Vec3;
 
-// ── Int3 ─────────────────────────────────────────────────────────────────────
+// -- Int3 ---------------------------------------------------------------------
 // Script-facing integer triple.  Used for pbc.image_count return values.
-// Fields are .x, .y, .z  (NOT .ix, .iy, .iz — scripts don't know about
+// Fields are .x, .y, .z  (NOT .ix, .iy, .iz  -  scripts don't know about
 // internal ImageCount naming).
 
 struct Int3 {
@@ -35,7 +35,7 @@ struct Int3 {
 	int z = 0;
 };
 
-// ── XYZVec3 ↔ vsepr::Vec3 conversion helpers ─────────────────────────────────
+// -- XYZVec3 ↔ vsepr::Vec3 conversion helpers ---------------------------------
 // These are the ONLY place where XYZVec3 and vsepr::Vec3 meet.
 // They must not appear in the math layer or interpreter core.
 

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_verification.hpp
  * ======================================
- * WO-VSEPR-SIM-62B — Batch Verification Aggregation Types
+ * WO-VSEPR-SIM-62B  -  Batch Verification Aggregation Types
  *
  * Defines the data structures produced and consumed by the batch
  * verification aggregation kernel.  The kernel reads verify_report.json
@@ -26,12 +26,12 @@
 namespace vsim {
 namespace batch {
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // VerificationRunRecord
 //
 // Consumed from one run's verify_report.json.  Populated by the batch
 // aggregation kernel; never written back into the per-run folder.
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 struct VerificationRunRecord {
 	std::string run_id;
@@ -61,11 +61,11 @@ struct VerificationRunRecord {
 	std::map<std::string, std::string> axis_values;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // GroupedVerificationSummary
 //
 // One entry per unique combination of group_by axis values.
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 struct GroupedVerificationSummary {
 	// Keys that identify this group
@@ -90,13 +90,13 @@ struct GroupedVerificationSummary {
 	std::map<std::string, double> mean_errors;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // BatchVerificationSummary
 //
 // Batch-level aggregate produced after consuming all VerificationRunRecords.
 // Written to batch_verify_summary.tsv and embedded in
 // batch_empirical_report.md.
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 struct BatchVerificationSummary {
 	int total_runs   = 0;

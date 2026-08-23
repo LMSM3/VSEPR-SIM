@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * flow_model.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * Incompressible Navier-Stokes flow model for laminar channel flow.
  *

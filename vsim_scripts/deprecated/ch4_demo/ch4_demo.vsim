@@ -1,0 +1,42 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# Day 75-76 CH4 Formation Demo
+# Demonstrates the kernel that produced the internal artifacts:
+#   CH4.locked, CH4.geometry, CH4.energy_trace, CH4.convergence_report,
+#   CH4.pathways, CH4.pathway_scores, CH4.rejected_paths, CH4.accepted_state
+
+[project]
+name        = day75_76_CH4_demo
+version     = v5.0.2
+seed_base   = 101
+determinism = true
+description = "Day 75-76: CH4 formation kernel"
+
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = organic
+step_delay_ms    = 0
+
+[simulation.molecule]
+formula     = CH4
+count       = 1
+temperature = 0.0
+lattice     = none
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = out/day75_76/ch4
+
+[visual]
+output_type              = terminal_chart
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_snapshot_chart      = true
+render_interval          = 50
+

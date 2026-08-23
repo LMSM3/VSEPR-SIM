@@ -1,0 +1,45 @@
+# UC-6 fixture — Crystallographic Regression Suite
+# uc6_golden_suite.vsim
+# Purpose: Project-level dispatcher that sequences the 8 existing
+#          val_01..val_08 scripts. The harness (uc6_run.sh) invokes
+#          each val script directly; this fixture is the project wrapper
+#          that records the suite identity and tolerance policy.
+# Used by: tests/automation/uc6_run.sh
+# UC doc:  docs/uc/UC-6-crystallographic-regression.md
+# WO-MF:   MF-D01 MF-D02 MF-D03 MF-A06 MF-A07
+
+[project]
+name        = "uc6_golden_suite"
+version     = "v5.0.14"
+description = "UC-6 automation fixture: crystallographic regression over 8 val scripts"
+seed_base   = 0          # each sub-script uses its own seed (8001..8008)
+determinism = true
+
+# Suite registry
+# The harness reads this list to determine which scripts to run.
+# Order is fixed: simpler ionic crystals first, complex organic last.
+[suite]
+scripts = [
+	"scripts/val_01_caf2_fluorite.vsim",       # CaF2 -- Madelung + coordination
+	"scripts/val_02_zns_polymorphs.vsim",       # ZnS  -- polymorph Madelung pair
+	"scripts/val_03_rutile_tio2.vsim",          # TiO2 -- bond lengths + angles
+	"scripts/val_04_alpha_quartz_sio2.vsim",    # SiO2 -- Si-O network topology
+	"scripts/val_05_mfi_zeolite.vsim",          # SiO2 MFI -- pore geometry
+	"scripts/val_06_graphite_ab_stack.vsim",    # C    -- interlayer spacing
+	"scripts/val_07_fcc_argon.vsim",            # Ar   -- LJ equilibrium
+	"scripts/val_08_benzene_dimer_s22.vsim",    # C6H6 -- S22 dispersion
+]
+output_root = "out/uc6_golden_suite"
+fail_fast   = false       # run all scripts even if one regresses
+
+# Regression policy
+# tolerance_override = none  -- use each script's own [expected] _tol fields
+# regression_threshold = 2   -- percentage; supplementary check on top of _tol
+[suite.policy]
+tolerance_override       = "none"
+regression_threshold_pct = 2.0
+require_deterministic    = true
+
+# No [run] block -- suite dispatcher does not run a simulation directly.
+# No [export] block -- each sub-script manages its own output.
+# No [visual] block -- headless regression.

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * deep_verification.cpp
  * ---------------------
  * Automated continuous deep verification suite.
@@ -10,7 +10,7 @@
  *   D. Crystal geometry vs Wyckoff (30 structures)
  *   E. Molecule bond detection (9 molecules)
  *   F. Composite force-energy consistency (H2O, NH3, CH4, Ar2)
- *   G. Noble gas cluster FIRE — two-layer: descent + convergence quality
+ *   G. Noble gas cluster FIRE  -  two-layer: descent + convergence quality
  *   H. Full solvent dielectric sweep (19 CRC_104 solvents)
  *   N. Restoring-force scan: homonuclear dimers He2--Xe2 (compression+extension)
  *   Q. Relaxed crystal stability: 2x2x2 supercell FIRE + nn/overlap guard
@@ -475,7 +475,7 @@ static void suite_G(IModel& model, const ModelParams& mp)
     fp.epsU      = 1e-12;
 
     for (int N = 2; N <= 7; ++N) {
-        // Fibonacci sphere — deterministic, places all pairs at > r_min
+        // Fibonacci sphere  -  deterministic, places all pairs at > r_min
         vsepr::io::XYZMolecule m;
         const double R            = r_min * std::sqrt(static_cast<double>(N)) / SPHERE_SCALE;
         const double golden_angle = M_PI * (3.0 - std::sqrt(5.0));
@@ -581,7 +581,7 @@ static void suite_N(IModel& model, const ModelParams& mp)
     // Two physical checks:
     //   N1. Restoring direction: F_x on atom 0 must satisfy F_x * δ > 0
     //       (sign of force matches sign of displacement from equilibrium).
-    //       Derivation: F_x = +dU/dr; at r < r_min, dU/dr < 0 → F_x * (r-r_min) > 0.
+    //       Derivation: F_x = +dU/dr; at r < r_min, dU/dr < 0 -> F_x * (r-r_min) > 0.
     //
     //   N2. r_min is an energy minimum: U(r_min + δ) > U(r_min) for all δ ≠ 0.
     //       This directly verifies the analytic r_min value against the model.

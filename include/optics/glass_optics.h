@@ -1,5 +1,5 @@
-/*
- * glass_optics.h — Physical and reflective characteristics of glass
+﻿/*
+ * glass_optics.h  -  Physical and reflective characteristics of glass
  * =================================================================
  *
  * Permanent, hardcoded module implementing the ten optical physics
@@ -8,48 +8,48 @@
  * Models implemented (section numbers match the theoretical document):
  *
  *   §1  Beer-Lambert absorption + complex refractive index
- *           beer_lambert_I()       — intensity vs path length
- *           alpha_from_kappa()     — absorption coefficient from κ
+ *           beer_lambert_I()        -  intensity vs path length
+ *           alpha_from_kappa()      -  absorption coefficient from κ
  *
  *   §2  Pair distribution function (PDF / RDF)
- *           pdf_g()                — g(r) from dN/dr and number density
+ *           pdf_g()                 -  g(r) from dN/dr and number density
  *
- *   §3  Optical indicatrix — isotropy / anisotropy
- *           indicatrix_delta_n()   — birefringence from axis indices
- *           indicatrix_is_spherical() — isotropy check
+ *   §3  Optical indicatrix  -  isotropy / anisotropy
+ *           indicatrix_delta_n()    -  birefringence from axis indices
+ *           indicatrix_is_spherical()  -  isotropy check
  *
  *   §4  Rayleigh + Mie scattering regimes
- *           rayleigh_I_rel()       — relative Rayleigh intensity vs λ
- *           scatter_regime()       — classify scatterer size vs wavelength
+ *           rayleigh_I_rel()        -  relative Rayleigh intensity vs λ
+ *           scatter_regime()        -  classify scatterer size vs wavelength
  *
  *   §5  Photoelastic (stress-optic) effect
- *           stress_birefringence() — Δn = C(σ1 − σ2)
+ *           stress_birefringence()  -  Δn = C(σ1 − σ2)
  *
- *   §6  Urbach tail — temperature-dependent absorption edge
- *           urbach_alpha()         — exponential sub-gap absorption
+ *   §6  Urbach tail  -  temperature-dependent absorption edge
+ *           urbach_alpha()          -  exponential sub-gap absorption
  *
  *   §7  Varshni band-gap shift with temperature
- *           varshni_Eg()           — Eg(T) = Eg(0) − αT²/(T+β)
+ *           varshni_Eg()            -  Eg(T) = Eg(0) − αT²/(T+β)
  *
  *   §8  Ligand-field / crystal-field splitting vs bond length
- *           delta_oct()            — Δ_oct ∝ 1/R^5 (Tanabe-Sugano scaling)
+ *           delta_oct()             -  Δ_oct ∝ 1/R^5 (Tanabe-Sugano scaling)
  *
  *   §9  Thermo-optic coefficient via Lorentz-Lorenz
- *           lorentz_lorenz_n()     — n from N, α_e
- *           thermo_optic_dn_dT()   — dn/dT from density + polarizability change
+ *           lorentz_lorenz_n()      -  n from N, α_e
+ *           thermo_optic_dn_dT()    -  dn/dT from density + polarizability change
  *
  *   §10 Planck thermal emission with emissivity
- *           planck_L_lambda()      — spectral radiance L_λ(T)
- *           planck_peak_lambda()   — Wien displacement: λ_max = b/T
+ *           planck_L_lambda()       -  spectral radiance L_λ(T)
+ *           planck_peak_lambda()    -  Wien displacement: λ_max = b/T
  *
  * Utility:
- *           glass_optics_clarity_score() — composite 0-1 clarity metric
- *           glass_optics_print_summary() — formatted summary to FILE*
+ *           glass_optics_clarity_score()  -  composite 0-1 clarity metric
+ *           glass_optics_print_summary()  -  formatted summary to FILE*
  *
  * Physical constants are hardcoded and permanent.
- * All functions are pure — no global state, no heap allocation.
+ * All functions are pure  -  no global state, no heap allocation.
  *
- * VSEPR-SIM 3.0.0 — glass optics module.  DO NOT modify constants.
+ * VSEPR-SIM 3.0.0  -  glass optics module.  DO NOT modify constants.
  */
 
 #pragma once
@@ -66,7 +66,7 @@ extern "C" {
 #endif
 
 /* =========================================================================
- * Physical constants — hardcoded, permanent
+ * Physical constants  -  hardcoded, permanent
  * ====================================================================== */
 #define GO_h    6.62607015e-34   /* Planck constant          J·s          */
 #define GO_c    2.99792458e8     /* speed of light in vacuum m/s          */
@@ -86,7 +86,7 @@ typedef enum {
  * ====================================================================== */
 
 /*
- * beer_lambert_I — transmitted intensity at depth x (m).
+ * beer_lambert_I  -  transmitted intensity at depth x (m).
  *
  *   I(x) = I0 · exp(-α · x)
  *
@@ -101,7 +101,7 @@ static inline double beer_lambert_I(double I0, double alpha, double x)
 }
 
 /*
- * alpha_from_kappa — absorption coefficient from extinction coefficient κ.
+ * alpha_from_kappa  -  absorption coefficient from extinction coefficient κ.
  *
  *   α(λ) = 4π κ / λ
  *
@@ -119,7 +119,7 @@ static inline double alpha_from_kappa(double kappa, double lambda)
  * ====================================================================== */
 
 /*
- * pdf_g — radial distribution function value at separation r.
+ * pdf_g  -  radial distribution function value at separation r.
  *
  *   g(r) = (1 / (4π r² ρ)) · (dN/dr)
  *
@@ -140,7 +140,7 @@ static inline double pdf_g(double dN_dr, double r, double rho_number)
  * ====================================================================== */
 
 /*
- * indicatrix_delta_n — birefringence between two principal refractive indices.
+ * indicatrix_delta_n  -  birefringence between two principal refractive indices.
  *
  * @param n1  First principal index
  * @param n2  Second principal index
@@ -152,7 +152,7 @@ static inline double indicatrix_delta_n(double n1, double n2)
 }
 
 /*
- * indicatrix_is_spherical — returns true if all three principal indices match
+ * indicatrix_is_spherical  -  returns true if all three principal indices match
  *                           within tolerance tol (isotropic medium).
  *
  * @param nx, ny, nz  Principal refractive indices
@@ -169,9 +169,9 @@ static inline bool indicatrix_is_spherical(double nx, double ny, double nz,
  * ====================================================================== */
 
 /*
- * rayleigh_I_rel — Rayleigh scattered intensity relative to a reference λ0.
+ * rayleigh_I_rel  -  Rayleigh scattered intensity relative to a reference λ0.
  *
- *   I_scat ∝ λ⁻⁴  →  I(λ) / I(λ0) = (λ0/λ)^4
+ *   I_scat ∝ λ⁻⁴  ->  I(λ) / I(λ0) = (λ0/λ)^4
  *
  * @param lambda    Wavelength of interest (m)
  * @param lambda0   Reference wavelength (m)
@@ -184,12 +184,12 @@ static inline double rayleigh_I_rel(double lambda, double lambda0)
 }
 
 /*
- * scatter_regime — classify scatterer radius a vs wavelength λ.
+ * scatter_regime  -  classify scatterer radius a vs wavelength λ.
  *
  *   size parameter x = 2πa/λ
- *   x < 0.3  → Rayleigh
- *   x < 50   → Mie
- *   else     → Geometric
+ *   x < 0.3  -> Rayleigh
+ *   x < 50   -> Mie
+ *   else     -> Geometric
  */
 static inline go_scatter_regime_t scatter_regime(double a, double lambda)
 {
@@ -204,7 +204,7 @@ static inline go_scatter_regime_t scatter_regime(double a, double lambda)
  * ====================================================================== */
 
 /*
- * stress_birefringence — induced birefringence from principal stress difference.
+ * stress_birefringence  -  induced birefringence from principal stress difference.
  *
  *   Δn = C · (σ1 − σ2)
  *
@@ -220,11 +220,11 @@ static inline double stress_birefringence(double C,
 }
 
 /* =========================================================================
- * §6  Urbach tail — temperature-dependent sub-gap absorption
+ * §6  Urbach tail  -  temperature-dependent sub-gap absorption
  * ====================================================================== */
 
 /*
- * urbach_alpha — Urbach rule absorption coefficient.
+ * urbach_alpha  -  Urbach rule absorption coefficient.
  *
  *   α(E, T) = α0 · exp[(E − E0) / E_U(T)]
  *
@@ -245,7 +245,7 @@ static inline double urbach_alpha(double alpha0, double E,
  * ====================================================================== */
 
 /*
- * varshni_Eg — band gap at temperature T.
+ * varshni_Eg  -  band gap at temperature T.
  *
  *   Eg(T) = Eg(0) − α T² / (T + β)
  *
@@ -262,11 +262,11 @@ static inline double varshni_Eg(double Eg0, double alpha,
 }
 
 /* =========================================================================
- * §8  Ligand-field splitting — crystal-field Δ_oct scaling
+ * §8  Ligand-field splitting  -  crystal-field Δ_oct scaling
  * ====================================================================== */
 
 /*
- * delta_oct — relative crystal-field splitting vs metal-ligand distance R.
+ * delta_oct  -  relative crystal-field splitting vs metal-ligand distance R.
  *
  *   Δ_oct ∝ 1 / R^5
  *
@@ -290,7 +290,7 @@ static inline double delta_oct(double R, double R0)
  * ====================================================================== */
 
 /*
- * lorentz_lorenz_n — refractive index from Lorentz-Lorenz relation.
+ * lorentz_lorenz_n  -  refractive index from Lorentz-Lorenz relation.
  *
  *   (n²-1)/(n²+2) = (4π/3) · N · α_e
  *
@@ -311,7 +311,7 @@ static inline double lorentz_lorenz_n(double N_density, double alpha_e)
 }
 
 /*
- * thermo_optic_dn_dT — approximate dn/dT via Lorentz-Lorenz differencing.
+ * thermo_optic_dn_dT  -  approximate dn/dT via Lorentz-Lorenz differencing.
  *
  * Uses finite difference over a small temperature step dT:
  *
@@ -339,7 +339,7 @@ static inline double thermo_optic_dn_dT(double N, double dN_dT,
  * ====================================================================== */
 
 /*
- * planck_L_lambda — spectral radiance with emissivity.
+ * planck_L_lambda  -  spectral radiance with emissivity.
  *
  *   L_λ(T) = ε(λ,T) · [2hc² / λ⁵] · 1/(exp(hc/λkT) − 1)
  *
@@ -359,7 +359,7 @@ static inline double planck_L_lambda(double lambda, double T,
 }
 
 /*
- * planck_peak_lambda — Wien displacement: wavelength of maximum emission.
+ * planck_peak_lambda  -  Wien displacement: wavelength of maximum emission.
  *
  *   λ_max = b / T,  b = 2.897771955e-3 m·K
  *
@@ -399,7 +399,7 @@ static inline double glass_optics_clarity_score(
     double scatter  = 1.0 - fmin(1.0, rayleigh_I_rel(lambda_vis, lambda_ref)
                                        / rayleigh_I_rel(lambda_ref, lambda_ref));
     double bire     = fabs(stress_birefringence(C_stress_optic, delta_sigma, 0.0));
-    double bire_pen = fmax(0.0, 1.0 - bire * 1.0e6); /* 1e-6 Δn → zero penalty */
+    double bire_pen = fmax(0.0, 1.0 - bire * 1.0e6); /* 1e-6 Δn -> zero penalty */
 
     double score = T_abs * 0.6 + scatter * 0.2 + bire_pen * 0.2;
     return fmin(1.0, fmax(0.0, score));
@@ -417,9 +417,9 @@ static inline void glass_optics_print_summary(FILE *fp,
     double peak_nm   = planck_peak_lambda(T_K) * 1e9;
     double L         = planck_L_lambda(lambda_m, T_K, emissivity);
 
-    fprintf(fp, "═══════════════════════════════════════════════════\n");
+    fprintf(fp, "===================================================\n");
     fprintf(fp, "  VSEPR-SIM Glass Optics Summary\n");
-    fprintf(fp, "═══════════════════════════════════════════════════\n");
+    fprintf(fp, "===================================================\n");
     fprintf(fp, "  λ              = %.1f nm\n",  lambda_m * 1e9);
     fprintf(fp, "  T              = %.1f K\n",   T_K);
     fprintf(fp, "  n (real)       = %.4f\n",     n);
@@ -428,7 +428,7 @@ static inline void glass_optics_print_summary(FILE *fp,
     fprintf(fp, "  T(1 mm)        = %.6f\n",     I_ratio);
     fprintf(fp, "  Planck peak    = %.1f nm\n",  peak_nm);
     fprintf(fp, "  L_λ (ε=%.2f)  = %.4e W/m³/sr\n", emissivity, L);
-    fprintf(fp, "═══════════════════════════════════════════════════\n");
+    fprintf(fp, "===================================================\n");
 }
 
 #ifdef __cplusplus

@@ -1,0 +1,77 @@
+# BUG_EXPOSER: DBG-EXP-001 export artifact summary
+# Validate: build/vsepr.exe validate scripts/debugging/bug_exposer_export_summary.vsim
+# Run:      build/vsepr.exe run scripts/debugging/bug_exposer_export_summary.vsim
+# Expected debug question: after run, does the console identify output_dir,
+# artifact count, file names, and byte sizes?
+
+print_console "DBG-EXP-001: export summary probe"
+print_console "Expected: output_dir + artifact count + file names + byte sizes"
+
+[project]
+name        = "bug_exposer_export_summary"
+version     = "v5.14.1-debug"
+seed_base   = 91001
+determinism = true
+description = "Small script for checking post-run export summary reporting"
+
+[material]
+formula   = "H2O"
+prototype = "water_molecule"
+phase     = "liquid"
+
+[simulation]
+box_size_ang     = 20.0
+periodic         = false
+fire_max_steps   = 4
+fire_dt_fs       = 0.5
+formation_preset = "molecular"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 1
+temperature_K = 298.15
+lattice       = "none"
+
+[environment]
+temperature = 298.15
+pressure    = 0.0
+medium      = "water"
+periodic    = false
+
+[run]
+mode         = "relax"
+max_steps    = 4
+dt_fs        = 0.5
+temperature  = 298.15
+converge     = true
+output_level = "verbose"
+
+[observe]
+metrics       = ["formation", "energy"]
+output_format = "json"
+every_n_steps = 1
+
+[verify]
+enabled = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_events_json   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/debugging/export_summary"
+
+[report]
+title                 = "DBG-EXP-001 Export Summary Probe"
+include_material_cards = true
+include_metric_tables  = true
+
+[visual]
+output_type     = "none"
+render_interval = 1

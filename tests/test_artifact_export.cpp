@@ -1,18 +1,18 @@
-/**
- * test_artifact_export.cpp — Group 31: Phase 2 Artifact Export Gates
+﻿/**
+ * test_artifact_export.cpp  -  Group 31: Phase 2 Artifact Export Gates
  * ===================================================================
  *
  * Verifies that flush_pipeline_artifacts() produces all Phase 2 required
  * files in the correct folder layout for a real pipeline run.
  *
  * Gate structure:
- *   2A — ReportRecord export  (MD + JSON under reports/)
- *   2B — DashboardRecord SVG  (under reports/dashboard/)
- *   2C — JSONL audit chain    (under reports/audit/)
- *   2D — ExportSection flags  (write_analysis_json → pipeline_records.json)
- *   2E — Run manifest         (run_manifest.json)
- *   Bonus — SVG content validation (no placeholder status values)
- *   Bonus — JSONL parseable   (each line is a valid JSON object)
+ *   2A  -  ReportRecord export  (MD + JSON under reports/)
+ *   2B  -  DashboardRecord SVG  (under reports/dashboard/)
+ *   2C  -  JSONL audit chain    (under reports/audit/)
+ *   2D  -  ExportSection flags  (write_analysis_json -> pipeline_records.json)
+ *   2E  -  Run manifest         (run_manifest.json)
+ *   Bonus  -  SVG content validation (no placeholder status values)
+ *   Bonus  -  JSONL parseable   (each line is a valid JSON object)
  *
  * WO-56C / beta-7 Phase 2
  */
@@ -24,6 +24,7 @@
 
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -72,7 +73,7 @@ static void seed_log_and_run(KernelEventLog& log,
 }
 
 // ---------------------------------------------------------------------------
-// T1 — 2A: report MD and JSON written under reports/
+// T1  -  2A: report MD and JSON written under reports/
 // ---------------------------------------------------------------------------
 
 static void t1_report_md_and_json() {
@@ -108,12 +109,12 @@ static void t1_report_md_and_json() {
 	assert(js.find("\"n_cases\"") != std::string::npos
 		   && "T1: JSON must contain n_cases");
 
-	std::printf("  [PASS] T1 — 2A: report MD + JSON written to reports/\n");
+	std::printf("  [PASS] T1  -  2A: report MD + JSON written to reports/\n");
 	fs::remove_all(dir);
 }
 
 // ---------------------------------------------------------------------------
-// T2 — 2B: SVG dashboard written under reports/dashboard/
+// T2  -  2B: SVG dashboard written under reports/dashboard/
 // ---------------------------------------------------------------------------
 
 static void t2_svg_dashboard() {
@@ -144,12 +145,12 @@ static void t2_svg_dashboard() {
 	std::string png_marker = dir + "/reports/dashboard/beta7_dashboard.png.DEFERRED";
 	assert(fs::exists(png_marker) && "T2: PNG DEFERRED marker must exist");
 
-	std::printf("  [PASS] T2 — 2B: SVG dashboard written + PNG DEFERRED marker present\n");
+	std::printf("  [PASS] T2  -  2B: SVG dashboard written + PNG DEFERRED marker present\n");
 	fs::remove_all(dir);
 }
 
 // ---------------------------------------------------------------------------
-// T3 — 2C: JSONL audit written with all stage entries
+// T3  -  2C: JSONL audit written with all stage entries
 // ---------------------------------------------------------------------------
 
 static void t3_audit_jsonl() {
@@ -193,12 +194,12 @@ static void t3_audit_jsonl() {
 			   && "T3: each audit JSONL line must be a JSON object");
 	}
 
-	std::printf("  [PASS] T3 — 2C: audit JSONL written with all stages, no placeholders\n");
+	std::printf("  [PASS] T3  -  2C: audit JSONL written with all stages, no placeholders\n");
 	fs::remove_all(dir);
 }
 
 // ---------------------------------------------------------------------------
-// T4 — 2D: ExportSection flags → pipeline_records.json
+// T4  -  2D: ExportSection flags -> pipeline_records.json
 // ---------------------------------------------------------------------------
 
 static void t4_pipeline_records_json() {
@@ -219,12 +220,12 @@ static void t4_pipeline_records_json() {
 	std::string content = read_file(path);
 	assert(content.find("[") != std::string::npos && "T4: pipeline_records.json must be a JSON array");
 
-	std::printf("  [PASS] T4 — 2D: pipeline_records.json written via write_analysis_json\n");
+	std::printf("  [PASS] T4  -  2D: pipeline_records.json written via write_analysis_json\n");
 	fs::remove_all(dir);
 }
 
 // ---------------------------------------------------------------------------
-// T5 — 2E: run_manifest.json written and contains artifact paths
+// T5  -  2E: run_manifest.json written and contains artifact paths
 // ---------------------------------------------------------------------------
 
 static void t5_run_manifest() {
@@ -254,12 +255,12 @@ static void t5_run_manifest() {
 	assert(content.find("\"deferred\"") != std::string::npos
 		   && "T5: manifest must declare deferred PNG");
 
-	std::printf("  [PASS] T5 — 2E: run_manifest.json written with all artifact paths + deferred list\n");
+	std::printf("  [PASS] T5  -  2E: run_manifest.json written with all artifact paths + deferred list\n");
 	fs::remove_all(dir);
 }
 
 // ---------------------------------------------------------------------------
-// T6 — Full Phase 2 gate: all flags → all files present
+// T6  -  Full Phase 2 gate: all flags -> all files present
 // ---------------------------------------------------------------------------
 
 static void t6_full_phase2_gate() {
@@ -296,7 +297,7 @@ static void t6_full_phase2_gate() {
 	assert(dash.n_cases > 0    && "T6: DashboardRecord must have cases");
 	assert(dash.n_clusters > 0 && "T6: DashboardRecord must have clusters");
 
-	std::printf("  [PASS] T6 — Full Phase 2 gate: all artifacts present\n");
+	std::printf("  [PASS] T6  -  Full Phase 2 gate: all artifacts present\n");
 	fs::remove_all(dir);
 }
 
@@ -334,7 +335,7 @@ int main() {
 	std::printf("  [PASS] Missing optional outputs marked deferred, not silently ignored\n");
 	std::printf("\n  PHASE 2 COMPLETE: beta-7 pipeline artifacts exported to disk.\n\n");
 
-	// ── Beta-version release dashboards ──────────────────────────────────
+	// -- Beta-version release dashboards ----------------------------------
 	const int W = 50;
 	auto bar  = []() { std::printf("  +%s+\n", std::string(48, '-').c_str()); };
 	auto brow = [&](const char* label, const char* val) {

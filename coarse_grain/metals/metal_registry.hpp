@@ -1,15 +1,15 @@
-#pragma once
+﻿#pragma once
 /**
- * metal_registry.hpp — Canonical Metals Research Registry
+ * metal_registry.hpp  -  Canonical Metals Research Registry
  *
  * Authoritative per-element data for the metals research layer.
  * Covers FCC noble metals, FCC transition metals, BCC refractory metals,
- * and HCP-proxy metals — plus binary alloy pair descriptors.
+ * and HCP-proxy metals  -  plus binary alloy pair descriptors.
  *
  * Crystal structure abbreviations:
- *   FCC  — face-centred cubic  (CN_bulk = 12)
- *   BCC  — body-centred cubic  (CN_bulk = 8)
- *   HCP  — hexagonal close-packed (modelled as FCC proxy, CN_bulk = 12)
+ *   FCC   -  face-centred cubic  (CN_bulk = 12)
+ *   BCC   -  body-centred cubic  (CN_bulk = 8)
+ *   HCP   -  hexagonal close-packed (modelled as FCC proxy, CN_bulk = 12)
  *
  * All energies in kcal/mol (1 eV = 23.0605 kcal/mol).
  * All lengths in Angstrom.
@@ -33,17 +33,17 @@
 namespace coarse_grain {
 namespace metals {
 
-constexpr double EV_TO_KCAL = 23.0605;   // 1 eV → kcal/mol
-constexpr double J_M2_TO_KCAL_ANG2 = 1.4393e-3; // 1 J/m² → kcal/(mol·Å²)
+constexpr double EV_TO_KCAL = 23.0605;   // 1 eV -> kcal/mol
+constexpr double J_M2_TO_KCAL_ANG2 = 1.4393e-3; // 1 J/m² -> kcal/(mol·Å²)
 
 // ============================================================================
 // Crystal Structure
 // ============================================================================
 
 enum class CrystalStructure {
-    FCC,        ///< Face-centred cubic  — Au, Ag, Cu, Ni, Pt, Al, Pb
-    BCC,        ///< Body-centred cubic  — Fe, Cr, W, Mo, V, Nb, Ta
-    HCP         ///< Hexagonal close-packed (proxy) — Co, Ti, Zr, Mg
+    FCC,        ///< Face-centred cubic   -  Au, Ag, Cu, Ni, Pt, Al, Pb
+    BCC,        ///< Body-centred cubic   -  Fe, Cr, W, Mo, V, Nb, Ta
+    HCP         ///< Hexagonal close-packed (proxy)  -  Co, Ti, Zr, Mg
 };
 
 inline const char* crystal_structure_name(CrystalStructure cs) {
@@ -56,7 +56,7 @@ inline const char* crystal_structure_name(CrystalStructure cs) {
 }
 
 // ============================================================================
-// MetalRecord — single-element canonical data
+// MetalRecord  -  single-element canonical data
 // ============================================================================
 
 struct MetalRecord {
@@ -68,14 +68,14 @@ struct MetalRecord {
 
     // Structural
     double lattice_constant_ang{};      ///< a₀ (Å) at 300 K
-    double atomic_radius_ang{};         ///< Wigner–Seitz / metallic radius (Å)
+    double atomic_radius_ang{};         ///< Wigner-Seitz / metallic radius (Å)
     double atomic_mass_amu{};           ///< Standard atomic weight (amu)
     double bulk_CN{};                   ///< Bulk coordination number
     double surface_CN{};                ///< Mean surface coordination (mixed facets)
 
     // Energetic
     double cohesive_energy_ev{};        ///< E_coh per atom (eV, negative = bound)
-    double surface_energy_J_m2{};       ///< γ_surface (J/m²) — (111)/(110) mean
+    double surface_energy_J_m2{};       ///< γ_surface (J/m²)  -  (111)/(110) mean
     double edge_energy_ev{};            ///< Excess energy per edge atom (eV)
 
     // Thermal
@@ -86,7 +86,7 @@ struct MetalRecord {
 
     // Electronic (qualitative)
     double electronegativity_pauling{};  ///< χ_P (Pauling scale)
-    double work_function_ev{};           ///< φ (eV) — polycrystalline average
+    double work_function_ev{};           ///< φ (eV)  -  polycrystalline average
     double fermi_energy_ev{};            ///< E_F (eV)
 
     // Mechanical
@@ -100,9 +100,9 @@ struct MetalRecord {
     double lj_epsilon_kcal{};           ///< ε = |E_coh| / (CN_bulk / 2)
 
     // Research flags
-    bool is_noble_metal{false};          ///< Ag, Au, Pt, Pd — corrosion resistant
-    bool is_refractory{false};           ///< W, Mo, Re, Ta, Nb — high T_melt
-    bool is_magnetic{false};             ///< Fe, Co, Ni — ferromagnetic at 300 K
+    bool is_noble_metal{false};          ///< Ag, Au, Pt, Pd  -  corrosion resistant
+    bool is_refractory{false};           ///< W, Mo, Re, Ta, Nb  -  high T_melt
+    bool is_magnetic{false};             ///< Fe, Co, Ni  -  ferromagnetic at 300 K
     std::string source;                  ///< Primary bibliographic reference
 
     // Radiation interaction (Z-dependent, deterministic)
@@ -164,7 +164,7 @@ inline MetalRecord gold() {
     m.mu_mass_100keV_cm2g     = 5.16;   // NIST XCOM at 100 keV
     m.k_edge_keV              = 80.7;
     // Energetic: Au does not combust easily (noble)
-    m.heat_of_combustion_kJ_g = 0.0;    // Not applicable — noble metal
+    m.heat_of_combustion_kJ_g = 0.0;    // Not applicable  -  noble metal
     m.ignition_temperature_K  = 0.0;
     m.oxide_formation_enthalpy_eV = -0.32; // Au₂O₃ very weakly bound
     m.primary_oxide           = "Au2O3";
@@ -237,7 +237,7 @@ inline MetalRecord copper() {
     m.displacement_energy_ev  = 22.0;   // Cu displacement threshold
     m.mu_mass_100keV_cm2g     = 0.458;  // NIST XCOM
     m.k_edge_keV              = 8.98;
-    m.heat_of_combustion_kJ_g = 2.50;   // Cu → CuO
+    m.heat_of_combustion_kJ_g = 2.50;   // Cu -> CuO
     m.ignition_temperature_K  = 1173.0; // micron-scale powder
     m.oxide_formation_enthalpy_eV = -1.63; // CuO per Cu atom
     m.primary_oxide           = "CuO";
@@ -312,7 +312,7 @@ inline MetalRecord nickel() {
     m.displacement_energy_ev  = 23.0;
     m.mu_mass_100keV_cm2g     = 0.441;  // NIST XCOM
     m.k_edge_keV              = 8.33;
-    m.heat_of_combustion_kJ_g = 4.10;   // Ni → NiO
+    m.heat_of_combustion_kJ_g = 4.10;   // Ni -> NiO
     m.ignition_temperature_K  = 1223.0;
     m.oxide_formation_enthalpy_eV = -2.49; // NiO per Ni atom
     m.primary_oxide           = "NiO";
@@ -346,11 +346,11 @@ inline MetalRecord aluminium() {
     m.poisson_ratio          = 0.35;
     m.source = "Kittel8+CRC105";
     m.displacement_energy_ev  = 16.0;   // Al low E_d
-    m.mu_mass_100keV_cm2g     = 0.170;  // NIST XCOM — light Z
+    m.mu_mass_100keV_cm2g     = 0.170;  // NIST XCOM  -  light Z
     m.k_edge_keV              = 1.56;
-    m.heat_of_combustion_kJ_g = 31.07;  // Al → Al₂O₃, highest energy metal fuel
+    m.heat_of_combustion_kJ_g = 31.07;  // Al -> Al₂O₃, highest energy metal fuel
     m.ignition_temperature_K  = 933.0;  // near melting, micron powder
-    m.oxide_formation_enthalpy_eV = -5.82; // Al₂O₃ per 2Al → per atom = -2.91
+    m.oxide_formation_enthalpy_eV = -5.82; // Al₂O₃ per 2Al -> per atom = -2.91
     m.primary_oxide           = "Al2O3";
     m.flame_colour            = "brilliant white";
     fill_lj_params(m);
@@ -389,7 +389,7 @@ inline MetalRecord iron() {
     m.displacement_energy_ev  = 24.0;   // Fe BCC
     m.mu_mass_100keV_cm2g     = 0.372;  // NIST XCOM
     m.k_edge_keV              = 7.11;
-    m.heat_of_combustion_kJ_g = 7.38;   // Fe → Fe₂O₃ (thermite oxidant product)
+    m.heat_of_combustion_kJ_g = 7.38;   // Fe -> Fe₂O₃ (thermite oxidant product)
     m.ignition_temperature_K  = 588.0;  // iron powder ignites easily
     m.oxide_formation_enthalpy_eV = -2.76; // Fe₂O₃ per Fe atom
     m.primary_oxide           = "Fe2O3";
@@ -423,11 +423,11 @@ inline MetalRecord tungsten() {
     m.poisson_ratio          = 0.28;
     m.is_refractory          = true;
     m.source = "Kittel8+CRC105";
-    m.displacement_energy_ev  = 90.0;   // W — highest E_d of common metals
-    m.mu_mass_100keV_cm2g     = 4.44;   // NIST XCOM — high Z
+    m.displacement_energy_ev  = 90.0;   // W  -  highest E_d of common metals
+    m.mu_mass_100keV_cm2g     = 4.44;   // NIST XCOM  -  high Z
     m.k_edge_keV              = 69.5;
-    m.heat_of_combustion_kJ_g = 4.59;   // W → WO₃
-    m.ignition_temperature_K  = 1473.0; // refractory — hard to ignite
+    m.heat_of_combustion_kJ_g = 4.59;   // W -> WO₃
+    m.ignition_temperature_K  = 1473.0; // refractory  -  hard to ignite
     m.oxide_formation_enthalpy_eV = -2.85; // WO₃ per W
     m.primary_oxide           = "WO3";
     m.flame_colour            = "dull yellow";
@@ -463,7 +463,7 @@ inline MetalRecord molybdenum() {
     m.displacement_energy_ev  = 60.0;
     m.mu_mass_100keV_cm2g     = 1.93;   // NIST XCOM
     m.k_edge_keV              = 20.0;
-    m.heat_of_combustion_kJ_g = 5.88;   // Mo → MoO₃
+    m.heat_of_combustion_kJ_g = 5.88;   // Mo -> MoO₃
     m.ignition_temperature_K  = 1373.0;
     m.oxide_formation_enthalpy_eV = -2.47;
     m.primary_oxide           = "MoO3";
@@ -500,7 +500,7 @@ inline MetalRecord chromium() {
     m.displacement_energy_ev  = 28.0;
     m.mu_mass_100keV_cm2g     = 0.316;  // NIST XCOM
     m.k_edge_keV              = 5.99;
-    m.heat_of_combustion_kJ_g = 10.80;  // Cr → Cr₂O₃
+    m.heat_of_combustion_kJ_g = 10.80;  // Cr -> Cr₂O₃
     m.ignition_temperature_K  = 1173.0;
     m.oxide_formation_enthalpy_eV = -3.70; // Cr₂O₃ per Cr
     m.primary_oxide           = "Cr2O3";
@@ -541,7 +541,7 @@ inline MetalRecord titanium() {
     m.displacement_energy_ev  = 19.0;   // Ti HCP
     m.mu_mass_100keV_cm2g     = 0.271;  // NIST XCOM
     m.k_edge_keV              = 4.97;
-    m.heat_of_combustion_kJ_g = 19.70;  // Ti → TiO₂, very high energy
+    m.heat_of_combustion_kJ_g = 19.70;  // Ti -> TiO₂, very high energy
     m.ignition_temperature_K  = 1473.0; // needs high T to ignite
     m.oxide_formation_enthalpy_eV = -4.85; // TiO₂ per Ti
     m.primary_oxide           = "TiO2";
@@ -578,7 +578,7 @@ inline MetalRecord cobalt() {
     m.displacement_energy_ev  = 22.0;
     m.mu_mass_100keV_cm2g     = 0.410;  // NIST XCOM
     m.k_edge_keV              = 7.71;
-    m.heat_of_combustion_kJ_g = 5.00;   // Co → Co₃O₄
+    m.heat_of_combustion_kJ_g = 5.00;   // Co -> Co₃O₄
     m.ignition_temperature_K  = 1073.0;
     m.oxide_formation_enthalpy_eV = -2.10; // Co₃O₄ per Co
     m.primary_oxide           = "Co3O4";
@@ -637,9 +637,9 @@ inline const MetalRecord* find_metal(const std::vector<MetalRecord>& registry,
 // ============================================================================
 
 /**
- * AlloyPairDescriptor — mixing parameters for a binary A-B metal pair.
+ * AlloyPairDescriptor  -  mixing parameters for a binary A-B metal pair.
  *
- * Provides Lorentz–Berthelot cross parameters and a qualitative miscibility
+ * Provides Lorentz-Berthelot cross parameters and a qualitative miscibility
  * flag derived from electronegativity difference and atomic radius mismatch.
  *
  * Reference: Hume-Rothery rules for solid solution formation.
@@ -649,14 +649,14 @@ struct AlloyPairDescriptor {
     std::string symbol_B;
     std::string name;               ///< Common alloy name (e.g. "Cu-Ni Monel-like")
 
-    // Lorentz–Berthelot cross parameters
+    // Lorentz-Berthelot cross parameters
     double sigma_AB_ang{};          ///< σ_AB = (σ_A + σ_B) / 2
     double epsilon_AB_kcal{};       ///< ε_AB = √(ε_A · ε_B)
 
     // Hume-Rothery mixing indicators
-    double delta_r_frac{};          ///< |r_A - r_B| / r_A — radius mismatch
-    double delta_chi{};             ///< |χ_A - χ_B| — electronegativity diff
-    double delta_Ecoh_ev{};         ///< ||E_A| - |E_B|| — cohesive energy diff (eV)
+    double delta_r_frac{};          ///< |r_A - r_B| / r_A  -  radius mismatch
+    double delta_chi{};             ///< |χ_A - χ_B|  -  electronegativity diff
+    double delta_Ecoh_ev{};         ///< ||E_A| - |E_B||  -  cohesive energy diff (eV)
     bool hume_rothery_soluble{};    ///< true if δr < 15% AND δχ < 0.4
     std::string structure_compatibility; ///< e.g. "FCC-FCC" / "FCC-BCC"
 };

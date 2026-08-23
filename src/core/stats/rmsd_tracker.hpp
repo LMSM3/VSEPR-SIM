@@ -1,21 +1,21 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/core/stats/rmsd_tracker.hpp
 // =============================================================================
 // Tracks RMSD in two modes, both using the Kabsch-aligned RMSD from
 // src/analysis/kabsch.hpp so rotation and translation are factored out.
 //
-//   Mode A — RMSD to reference frame (RMSD_ref):
+//   Mode A  -  RMSD to reference frame (RMSD_ref):
 //     How far has the current structure moved from the original ideal state?
 //     Detects defect accumulation, disorder, diffusion, and lattice drift.
-//     Flat → structure is preserved.
-//     Rising → deforming, diffusing, or unstable.
+//     Flat -> structure is preserved.
+//     Rising -> deforming, diffusing, or unstable.
 //
-//   Mode B — RMSD between consecutive frames (RMSD_step):
+//   Mode B  -  RMSD between consecutive frames (RMSD_step):
 //     Is the structure still changing, or has it settled?
-//     Flat → system is stationary (feeds StationarityGate).
-//     Rising → still evolving.
-//     Spike → impact, decay event, or numerical failure.
+//     Flat -> system is stationary (feeds StationarityGate).
+//     Rising -> still evolving.
+//     Spike -> impact, decay event, or numerical failure.
 //
 // Anti-black-box: both RMSD values always inspectable.
 // Depends on: src/analysis/kabsch.hpp (which depends on Eigen via eigen_bridge)
@@ -97,7 +97,7 @@ public:
 		++frame;
 	}
 
-	/// True when rmsd_step has flattened below threshold — system likely settled.
+	/// True when rmsd_step has flattened below threshold  -  system likely settled.
 	bool is_settled(double threshold_angstrom = 0.01) const noexcept {
 		return has_previous_ && (rmsd_step < threshold_angstrom);
 	}

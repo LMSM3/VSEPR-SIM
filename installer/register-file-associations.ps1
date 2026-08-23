@@ -4,38 +4,48 @@
     Windows shell integration for VSEPR-SIM file types.
 
 .DESCRIPTION
-    Registers file-type behaviors under HKCU (no admin required).
-    All XYZ-family open commands route through open_vsim_file.cmd which
-    applies priority order: vsepr-sim.exe -> vsepr.exe -> pythonw popup.
+    Registers file-type behaviours under HKCU (no admin required).
 
-    .vsim          — Full takeover.  Double-click runs VSIM script.
-    .xyzFull/.xyzfull  — Full takeover.  Double-click opens Replay Viewer.
-    .vsxyz         — Full takeover.  Double-click opens VSIM coordinate viewer.
-    .xyza/.xyzA    — Full takeover.  Enriched atomistic frame.
-    .xyzc          — Full takeover.  Restartable checkpoint.
-    .xyzf/.xyzF    — Full takeover.  Multi-frame trajectory.
-    .xyz           — CONSERVATIVE.  Context-menu only; default handler unchanged.
+    .vsim          -- Full takeover.  Double-click: vsepr run "%1"
+                     Verbs: Open, Validate, Inspect
 
-    Opener priority (for all XYZ types):
-      1. vsepr-sim.exe open (3-D viewer / replay)
-      2. vsepr.exe open      (CLI inspect)
-      3. pythonw vsepr_xyz_popup.pyw  (coordinate popup)
-    This routing is implemented in open_vsim_file.cmd.
+    .dynx          -- Full takeover.  Double-click: vsepr view "%1"    (WO-72B)
+                     Verbs: Open (session archive viewer), Validate, Inspect
+
+    .X             -- Full takeover.  Double-click: vsepr x run "%1"   (WO-72A)
+                     Verbs: Open (run suite), Inspect, Validate
+
+    .xyzFull       -- Full takeover.  Double-click: vsepr view "%1"
+                     Verbs: Open (replay viewer), Inspect
+
+    .vsxyz         -- Full takeover.  vsepr open "%1"
+    .xyza/.xyzA    -- Full takeover.  vsepr open "%1"
+    .xyzc          -- Full takeover.  vsepr open "%1"
+    .xyzf/.xyzF    -- Full takeover.  vsepr open "%1"
+
+    .xyz           -- CONSERVATIVE.  Adds context-menu "Open with VSEPR-SIM" only.
+                     The user's existing default handler is PRESERVED.
 
 .PARAMETER BinaryPath
-    Full path to the installed vsepr.exe.
+    Full path to vsepr.exe.
     Default: %LOCALAPPDATA%\VSEPR-SIM\bin\vsepr.exe
 
 .PARAMETER Unregister
-    Remove all VSEPR-SIM file associations (uninstall mode).
+    Remove all VSEPR-SIM file associations.
 
-v5.0.0 | v5 packaging
+.PARAMETER DryRun
+    Print what would be registered without touching the registry.
+
+    Also invocable as: vsepr install register-associations --dry-run
+
+v5.1.4 | WO-72C
 #>
 
 [CmdletBinding()]
 param(
     [string] $BinaryPath = "",
-    [switch] $Unregister
+    [switch] $Unregister,
+    [switch] $DryRun
 )
 
 Set-StrictMode -Version Latest
@@ -52,12 +62,6 @@ if (-not $Unregister -and -not (Test-Path $BinaryPath)) {
 
 $ExeQ = "`"$BinaryPath`""   # quoted for registry command values
 
-# Universal opener cmd (lives next to the binary)
-# Priority: vsepr-sim.exe -> vsepr.exe -> pythonw popup
-$BinDir  = Split-Path $BinaryPath
-$OpenerCmd = Join-Path $BinDir "open_vsim_file.cmd"
-$OpenerQ   = if (Test-Path $OpenerCmd) { "`"$OpenerCmd`"" } else { $ExeQ }
-
 # ── Registry helpers ──────────────────────────────────────────────────────────
 function Reg-Set([string]$path, [string]$name, [string]$value) {
     if (-not (Test-Path "Registry::$path")) {
@@ -73,7 +77,58 @@ function Reg-Del([string]$path) {
     }
 }
 
+function Shell-Notify {
+    Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class ShellNotify3 {
+    [DllImport("shell32.dll")] public static extern void SHChangeNotify(
+        int wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
+}
+"@ -ErrorAction SilentlyContinue
+    try { [ShellNotify3]::SHChangeNotify(0x08000000, 0x0000, [IntPtr]::Zero, [IntPtr]::Zero) } catch { }
+}
+
+# Registers a full-takeover association:
+#   ProgID, DefaultIcon, default verb, Open command, optional extra verbs,
+#   and maps all listed extensions to the ProgID.
+function Register-FullTakeover {
+    param(
+        [string]   $ProgId,
+        [string]   $Description,
+        [string]   $DefaultVerb,
+        [string]   $OpenLabel,
+        [string]   $OpenCommand,
+        [string[]] $Extensions,
+        [hashtable]$ExtraVerbs = @{}
+    )
+    $base = "HKEY_CURRENT_USER\Software\Classes\$ProgId"
+    if ($DryRun) {
+        Write-Host ("  [dry] ProgID={0}  extensions={1}" -f $ProgId, ($Extensions -join ",")) -ForegroundColor DarkGray
+        return
+    }
+    Reg-Set $base                          "(default)"  $Description
+    Reg-Set "$base\DefaultIcon"            "(default)"  $IconPath
+    Reg-Set "$base\shell"                  "(default)"  $DefaultVerb
+    Reg-Set "$base\shell\Open"             "(default)"  $OpenLabel
+    Reg-Set "$base\shell\Open\command"     "(default)"  $OpenCommand
+    foreach ($verbName in $ExtraVerbs.Keys) {
+        $vd = $ExtraVerbs[$verbName]
+        Reg-Set "$base\shell\$verbName"             "(default)"  $vd.Label
+        Reg-Set "$base\shell\$verbName\command"     "(default)"  $vd.Command
+    }
+    foreach ($ext in $Extensions) {
+        Reg-Set "HKEY_CURRENT_USER\Software\Classes\$ext" "(default)" $ProgId
+    }
+}
+
 # ── Icon path (use exe itself as icon source if no .ico available) ────────────
+# -- Launcher: open_vsim_file.cmd routes double-clicks to mol_viewer.py -------
+$LauncherCmd = Join-Path $PSScriptRoot "bin\open_vsim_file.cmd"
+if (-not (Test-Path $LauncherCmd)) {
+    $LauncherCmd = Join-Path (Split-Path $BinaryPath) "open_vsim_file.cmd"
+}
+$LaunchQ = "`"$LauncherCmd`""
 $IconPath = $BinaryPath + ",0"
 $iconDir   = Join-Path (Split-Path $BinaryPath) "..\icons"
 foreach ($candidate in @("vsim.ico","vsepr.ico","vsepr-sim.ico")) {
@@ -87,206 +142,173 @@ foreach ($candidate in @("vsim.ico","vsepr.ico","vsepr-sim.ico")) {
 if ($Unregister) {
     Write-Host "Removing VSEPR-SIM file associations..." -ForegroundColor Cyan
 
-    # .vsim — remove ProgID and extension mapping
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\VSIMFile"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.vsim"
-
-    # .vsxyz — remove ProgID and extension mapping
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\VSIMVSXYZFile"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.vsxyz"
-
-    # .xyzFull / .xyzfull — remove ProgID and extension mapping
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\XYZFullFile"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyzFull"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyzfull"
-
-    # .xyz — remove only VSEPR's context-menu verb; never touch the default
-    $xyzContextKey = "HKEY_CURRENT_USER\Software\Classes\.xyz\shell\OpenWithVSEPRSIM"
-    Reg-Del $xyzContextKey
-
-    # .xyza / .xyzA / .xyzc / .xyzf / .xyzF — full takeover ProgIDs
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\VSIMXYZAFile"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyza"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyzA"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\VSIMXYZCFile"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyzc"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\VSIMXYZFFile"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyzf"
-    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyzF"
-
-    # Notify shell
-    if ([System.Environment]::OSVersion.Platform -eq "Win32NT") {
-        Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class ShellNotify {
-    [DllImport("shell32.dll")] public static extern void SHChangeNotify(
-        int wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
-}
-"@ -ErrorAction SilentlyContinue
-        try { [ShellNotify]::SHChangeNotify(0x08000000, 0x0000, [IntPtr]::Zero, [IntPtr]::Zero) }
-        catch { }
+    foreach ($prog in @("VSIMFile","VSIMDynxFile","VSIMXFile","XYZFullFile",
+                        "VSIMVSXYZFile","VSIMXYZAFile","VSIMXYZCFile","VSIMXYZFFile")) {
+        Reg-Del "HKEY_CURRENT_USER\Software\Classes\$prog"
     }
+    foreach ($ext in @(".vsim",".dynx",".X",".xyzFull",".xyzfull",
+                       ".vsxyz",".xyza",".xyzA",".xyzc",".xyzf",".xyzF")) {
+        Reg-Del "HKEY_CURRENT_USER\Software\Classes\$ext"
+    }
+    Reg-Del "HKEY_CURRENT_USER\Software\Classes\.xyz\shell\OpenWithVSEPRSIM"
 
+    if (-not $DryRun) { Shell-Notify }
     Write-Host "File associations removed." -ForegroundColor Green
     return
 }
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ============================================================================
 # REGISTER path
-# ─────────────────────────────────────────────────────────────────────────────
-Write-Host "Registering VSEPR-SIM file associations..." -ForegroundColor Cyan
-Write-Host ("  Binary: {0}" -f $BinaryPath)
-Write-Host ""
+# ============================================================================
+if ($DryRun) {
+    Write-Host "DRY RUN -- no registry changes will be made." -ForegroundColor Yellow
+    Write-Host ("  Binary would be: {0}" -f $BinaryPath)
+    Write-Host ""
+} else {
+    Write-Host "Registering VSEPR-SIM file associations..." -ForegroundColor Cyan
+    Write-Host ("  Binary: {0}" -f $BinaryPath)
+    Write-Host ""
+}
 
-# ── .vsim — full takeover ─────────────────────────────────────────────────────
-Write-Host "[1/3] .vsim  (VSIM script — full default takeover)"
+# -- 1/9  .vsim ---------------------------------------------------------------
+Write-Host "[1/9] .vsim  (VSIM script -- full default takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMFile" `
+    -Description "VSIM Script" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "$LaunchQ `"%1`"" `
+    -Extensions  @(".vsim") `
+    -ExtraVerbs  @{
+        Validate = @{ Label="Validate VSIM Script";   Command="$ExeQ validate `"%1`"" }
+        Inspect  = @{ Label="Inspect with VSEPR-SIM"; Command="$ExeQ inspect `"%1`"" }
+    }
+Write-Host "  [ok] .vsim -> VSIMFile  (double-click runs script)" -ForegroundColor Green
 
-# ProgID
-$vsimProg = "HKEY_CURRENT_USER\Software\Classes\VSIMFile"
-Reg-Set $vsimProg                          "(default)"    "VSIM Script"
-Reg-Set "$vsimProg\DefaultIcon"            "(default)"    $IconPath
-Reg-Set "$vsimProg\shell"                  "(default)"    "Open"
+# -- 2/9  .dynx  (WO-72B) ----------------------------------------------------
+Write-Host "[2/9] .dynx  (VSIM dynamic session archive -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMDynxFile" `
+    -Description "VSIM Session Archive" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".dynx") `
+    -ExtraVerbs  @{
+        Validate = @{ Label="Validate Session Archive"; Command="$ExeQ dynx validate `"%1`"" }
+        Inspect  = @{ Label="Inspect with VSEPR-SIM";   Command="$ExeQ dynx inspect `"%1`"" }
+    }
+Write-Host "  [ok] .dynx -> VSIMDynxFile  (double-click opens session archive viewer)" -ForegroundColor Green
 
-# Open verb (run the script)
-Reg-Set "$vsimProg\shell\Open"             "(default)"    "Open with VSEPR-SIM"
-Reg-Set "$vsimProg\shell\Open\command"     "(default)"    "$ExeQ run `"%1`""
+# -- 3/9  .X  (WO-72A) -------------------------------------------------------
+Write-Host "[3/9] .X  (VSIM suite bundle -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMXFile" `
+    -Description "VSIM Suite Bundle" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".X") `
+    -ExtraVerbs  @{
+        Inspect  = @{ Label="Inspect Suite";  Command="$ExeQ x inspect `"%1`"" }
+        Validate = @{ Label="Validate Suite"; Command="$ExeQ x validate `"%1`"" }
+    }
+Write-Host "  [ok] .X -> VSIMXFile  (double-click runs suite)" -ForegroundColor Green
 
-# Additional verbs
-Reg-Set "$vsimProg\shell\Validate"         "(default)"    "Validate VSIM Script"
-Reg-Set "$vsimProg\shell\Validate\command" "(default)"    "$ExeQ validate `"%1`""
+# -- 4/9  .xyzFull -----------------------------------------------------------
+Write-Host "[4/9] .xyzFull  (VSEPR replay file -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "XYZFullFile" `
+    -Description "VSEPR Replay File" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".xyzFull", ".xyzfull") `
+    -ExtraVerbs  @{
+        Inspect = @{ Label="Inspect with VSEPR-SIM"; Command="$ExeQ inspect `"%1`"" }
+    }
+Write-Host "  [ok] .xyzFull/.xyzfull -> XYZFullFile  (double-click opens replay viewer)" -ForegroundColor Green
 
-Reg-Set "$vsimProg\shell\Inspect"          "(default)"    "Inspect with VSEPR-SIM"
-Reg-Set "$vsimProg\shell\Inspect\command"  "(default)"    "$ExeQ inspect `"%1`""
-
-# Extension → ProgID mapping (sets double-click default)
-$vsimExt = "HKEY_CURRENT_USER\Software\Classes\.vsim"
-Reg-Set $vsimExt "(default)" "VSIMFile"
-
-Write-Host "  [ok] .vsim → VSIMFile (double-click runs script)" -ForegroundColor Green
-
-# ── .xyzFull — full takeover, replay viewer ───────────────────────────────────
-Write-Host "[2/3] .xyzFull  (VSEPR replay file — full default takeover)"
-
-$fullProg = "HKEY_CURRENT_USER\Software\Classes\XYZFullFile"
-Reg-Set $fullProg                           "(default)"   "VSEPR Replay File"
-Reg-Set "$fullProg\DefaultIcon"             "(default)"   $IconPath
-Reg-Set "$fullProg\shell"                   "(default)"   "Open"
-Reg-Set "$fullProg\shell\Open"              "(default)"   "Open in VSEPR Replay Viewer"
-Reg-Set "$fullProg\shell\Open\command"      "(default)"   "$OpenerQ `"%1`""
-Reg-Set "$fullProg\shell\Inspect"           "(default)"   "Inspect with VSEPR-SIM"
-Reg-Set "$fullProg\shell\Inspect\command"   "(default)"   "$ExeQ inspect `"%1`""
-
-$fullExt = "HKEY_CURRENT_USER\Software\Classes\.xyzFull"
-Reg-Set $fullExt "(default)" "XYZFullFile"
-Reg-Set "HKEY_CURRENT_USER\Software\Classes\.xyzfull" "(default)" "XYZFullFile"
-
-Write-Host "  [ok] .xyzFull/.xyzfull → XYZFullFile (double-click opens replay viewer)" -ForegroundColor Green
-
-# ── .vsxyz — VSEPR native coordinate format, full takeover ────────────────────────────
-Write-Host "[2b] .vsxyz  (VSEPR native XYZ — full default takeover)"
-
-$vsxyzProg = "HKEY_CURRENT_USER\Software\Classes\VSIMVSXYZFile"
-Reg-Set $vsxyzProg                           "(default)"   "VSEPR-SIM Coordinate File"
-Reg-Set "$vsxyzProg\DefaultIcon"             "(default)"   $IconPath
-Reg-Set "$vsxyzProg\shell"                   "(default)"   "Open"
-Reg-Set "$vsxyzProg\shell\Open"              "(default)"   "Open with VSEPR-SIM"
-Reg-Set "$vsxyzProg\shell\Open\command"      "(default)"   "$OpenerQ \"%1\""
-Reg-Set "$vsxyzProg\shell\Inspect"           "(default)"   "Inspect with VSEPR-SIM"
-Reg-Set "$vsxyzProg\shell\Inspect\command"   "(default)"   "$ExeQ inspect \"%1\""
-
-Reg-Set "HKEY_CURRENT_USER\Software\Classes\.vsxyz" "(default)" "VSIMVSXYZFile"
-Write-Host "  [ok] .vsxyz → VSIMVSXYZFile" -ForegroundColor Green
-
-# ── .xyz — context-menu only, NO default takeover ────────────────────────────
-Write-Host "[3/3] .xyz  (standard XYZ — context-menu 'Open with' only)"
-#
-# Strategy: write our verb ONLY under HKCU\Software\Classes\.xyz\shell\
-# The .xyz extension already has a user or system default (e.g. Notepad,
-# VESTA, OVITO).  We must not touch:
-#   HKCU\Software\Classes\.xyz\(default)         ← leaves existing ProgID alone
-#
-# What we add:
-#   HKCU\Software\Classes\.xyz\shell\OpenWithVSEPRSIM\
-#       (default)  = "Open with VSEPR-SIM"
-#       command\(default) = "vsepr-sim.exe" open "%1"
-#
+# -- 5/9  .xyz  (context-menu ONLY) ------------------------------------------
+Write-Host "[5/9] .xyz  (standard XYZ -- context-menu only, no default hijack)"
 $xyzVerb = "HKEY_CURRENT_USER\Software\Classes\.xyz\shell\OpenWithVSEPRSIM"
-Reg-Set $xyzVerb                    "(default)"  "Open with VSEPR-SIM"
-Reg-Set "$xyzVerb\command"          "(default)"  "$OpenerQ `"%1`""
+Reg-Set $xyzVerb            "(default)"  "Open with VSEPR-SIM"
+Reg-Set "$xyzVerb\command"  "(default)"  "$ExeQ open `"%1`""
+Write-Host "  [ok] .xyz -- context-menu added" -ForegroundColor Green
+Write-Host "  [ok] .xyz -- existing default handler is UNCHANGED" -ForegroundColor Green
 
-Write-Host "  [ok] .xyz — context-menu 'Open with VSEPR-SIM' added" -ForegroundColor Green
-Write-Host "  [ok] .xyz — existing default handler is UNCHANGED" -ForegroundColor Green
+# -- 6/9  .vsxyz -------------------------------------------------------------
+Write-Host "[6/9] .vsxyz  (VSEPR native coordinate file -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMVSXYZFile" `
+    -Description "VSEPR-SIM Coordinate File" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".vsxyz") `
+    -ExtraVerbs  @{
+        Inspect = @{ Label="Inspect with VSEPR-SIM"; Command="$ExeQ inspect `"%1`"" }
+    }
+Write-Host "  [ok] .vsxyz -> VSIMVSXYZFile" -ForegroundColor Green
 
-# ── .xyza — enriched atomistic frame (full takeover) ─────────────────────────
-Write-Host "[4/6] .xyza / .xyzA  (VSIM enriched atomistic frame — full takeover)"
+# -- 7/9  .xyza / .xyzA ------------------------------------------------------
+Write-Host "[7/9] .xyza / .xyzA  (VSIM enriched atomistic frame -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMXYZAFile" `
+    -Description "VSIM Enriched Atomistic Frame" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".xyza", ".xyzA") `
+    -ExtraVerbs  @{
+        Inspect = @{ Label="Inspect with VSEPR-SIM"; Command="$ExeQ inspect `"%1`"" }
+    }
+Write-Host "  [ok] .xyza/.xyzA -> VSIMXYZAFile" -ForegroundColor Green
 
-$xyzaProg = "HKEY_CURRENT_USER\Software\Classes\VSIMXYZAFile"
-Reg-Set $xyzaProg                          "(default)"    "VSIM Enriched Atomistic Frame"
-Reg-Set "$xyzaProg\DefaultIcon"            "(default)"    $IconPath
-Reg-Set "$xyzaProg\shell"                  "(default)"    "Open"
-Reg-Set "$xyzaProg\shell\Open"             "(default)"    "Open with VSEPR-SIM"
-Reg-Set "$xyzaProg\shell\Open\command"     "(default)"    "$OpenerQ `"%1`""
-Reg-Set "$xyzaProg\shell\Inspect"          "(default)"    "Inspect with VSEPR-SIM"
-Reg-Set "$xyzaProg\shell\Inspect\command"  "(default)"    "$ExeQ inspect `"%1`""
+# -- 8/9  .xyzc ---------------------------------------------------------------
+Write-Host "[8/9] .xyzc  (VSIM checkpoint -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMXYZCFile" `
+    -Description "VSIM Checkpoint File" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".xyzc") `
+    -ExtraVerbs  @{
+        Inspect = @{ Label="Inspect with VSEPR-SIM"; Command="$ExeQ inspect `"%1`"" }
+    }
+Write-Host "  [ok] .xyzc -> VSIMXYZCFile" -ForegroundColor Green
 
-foreach ($ext in @(".xyza", ".xyzA")) {
-    Reg-Set "HKEY_CURRENT_USER\Software\Classes\$ext" "(default)" "VSIMXYZAFile"
-}
-Write-Host "  [ok] .xyza/.xyzA → VSIMXYZAFile" -ForegroundColor Green
+# -- 9/9  .xyzf / .xyzF ------------------------------------------------------
+Write-Host "[9/9] .xyzf / .xyzF  (VSIM trajectory -- full takeover)"
+Register-FullTakeover `
+    -ProgId      "VSIMXYZFFile" `
+    -Description "VSIM Trajectory File" `
+    -DefaultVerb "Open" `
+    -OpenLabel   "Open in VSEPR-SIM 3D Viewer" `
+    -OpenCommand "`$LaunchQ `"%1`"" `
+    -Extensions  @(".xyzf", ".xyzF") `
+    -ExtraVerbs  @{
+        Inspect = @{ Label="Inspect with VSEPR-SIM"; Command="$ExeQ inspect `"%1`"" }
+    }
+Write-Host "  [ok] .xyzf/.xyzF -> VSIMXYZFFile" -ForegroundColor Green
 
-# ── .xyzc — restartable checkpoint (full takeover) ───────────────────────────
-Write-Host "[5/6] .xyzc  (VSIM restartable checkpoint — full takeover)"
-
-$xyzcProg = "HKEY_CURRENT_USER\Software\Classes\VSIMXYZCFile"
-Reg-Set $xyzcProg                          "(default)"    "VSIM Checkpoint File"
-Reg-Set "$xyzcProg\DefaultIcon"            "(default)"    $IconPath
-Reg-Set "$xyzcProg\shell"                  "(default)"    "Open"
-Reg-Set "$xyzcProg\shell\Open"             "(default)"    "Open with VSEPR-SIM"
-Reg-Set "$xyzcProg\shell\Open\command"     "(default)"    "$OpenerQ `"%1`""
-Reg-Set "$xyzcProg\shell\Inspect"          "(default)"    "Inspect with VSEPR-SIM"
-Reg-Set "$xyzcProg\shell\Inspect\command"  "(default)"    "$ExeQ inspect `"%1`""
-
-Reg-Set "HKEY_CURRENT_USER\Software\Classes\.xyzc" "(default)" "VSIMXYZCFile"
-Write-Host "  [ok] .xyzc → VSIMXYZCFile" -ForegroundColor Green
-
-# ── .xyzf — multi-frame trajectory (full takeover) ───────────────────────────
-Write-Host "[6/6] .xyzf / .xyzF  (VSIM multi-frame trajectory — full takeover)"
-
-$xyzfProg = "HKEY_CURRENT_USER\Software\Classes\VSIMXYZFFile"
-Reg-Set $xyzfProg                          "(default)"    "VSIM Trajectory File"
-Reg-Set "$xyzfProg\DefaultIcon"            "(default)"    $IconPath
-Reg-Set "$xyzfProg\shell"                  "(default)"    "Open"
-Reg-Set "$xyzfProg\shell\Open"             "(default)"    "Open with VSEPR-SIM"
-Reg-Set "$xyzfProg\shell\Open\command"     "(default)"    "$OpenerQ `"%1`""
-Reg-Set "$xyzfProg\shell\Inspect"          "(default)"    "Inspect with VSEPR-SIM"
-Reg-Set "$xyzfProg\shell\Inspect\command"  "(default)"    "$ExeQ inspect `"%1`""
-
-foreach ($ext in @(".xyzf", ".xyzF")) {
-    Reg-Set "HKEY_CURRENT_USER\Software\Classes\$ext" "(default)" "VSIMXYZFFile"
-}
-Write-Host "  [ok] .xyzf/.xyzF → VSIMXYZFFile" -ForegroundColor Green
-
-# ── Notify Windows Shell ──────────────────────────────────────────────────────
-Add-Type -TypeDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public class ShellNotify2 {
-    [DllImport("shell32.dll")] public static extern void SHChangeNotify(
-        int wEventId, uint uFlags, IntPtr dwItem1, IntPtr dwItem2);
-}
-"@ -ErrorAction SilentlyContinue
-try { [ShellNotify2]::SHChangeNotify(0x08000000, 0x0000, [IntPtr]::Zero, [IntPtr]::Zero) }
-catch { }
+# -- Notify Windows Shell ----------------------------------------------------
+if (-not $DryRun) { Shell-Notify }
 
 Write-Host ""
-Write-Host "File associations registered." -ForegroundColor Green
-Write-Host "  .vsim               -> double-click runs VSIM script"
-Write-Host "  .xyzFull/.xyzfull   -> double-click: priority opener (3-D viewer/CLI/popup)"
-Write-Host "  .vsxyz              -> double-click: priority opener (3-D viewer/CLI/popup)"
-Write-Host "  .xyza/.xyzA         -> double-click: priority opener"
-Write-Host "  .xyzc               -> double-click: priority opener"
-Write-Host "  .xyzf/.xyzF         -> double-click: priority opener"
-Write-Host "  .xyz                -> right-click: 'Open with VSEPR-SIM' (default unchanged)"
-Write-Host "  Opener priority: vsepr-sim.exe -> vsepr.exe -> pythonw popup" -ForegroundColor Gray
+if ($DryRun) {
+    Write-Host "Dry run complete -- no changes made." -ForegroundColor Yellow
+} else {
+    Write-Host "File associations registered." -ForegroundColor Green
+}
+Write-Host "  .vsim         -> double-click runs VSIM script"
+Write-Host "  .dynx         -> double-click opens session archive viewer  [WO-72B]"
+Write-Host "  .X            -> double-click runs suite bundle              [WO-72A]"
+Write-Host "  .xyzFull      -> double-click opens VSIM Replay Viewer"
+Write-Host "  .vsxyz        -> double-click opens coordinate viewer"
+Write-Host "  .xyza/.xyzA   -> double-click opens enriched atomistic preview"
+Write-Host "  .xyzc         -> double-click opens checkpoint preview"
+Write-Host "  .xyzf/.xyzF   -> double-click opens trajectory preview"
+Write-Host "  .xyz          -> right-click: Open with VSEPR-SIM (default unchanged)"
 Write-Host ""

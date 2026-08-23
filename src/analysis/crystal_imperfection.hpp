@@ -1,14 +1,14 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/analysis/crystal_imperfection.hpp
 // =============================================================================
 // Reference-based crystal imperfection analysis.
 //
 // Computes structural deviation from an ideal lattice reference frame.
-// All defect labels are analysis-only — nothing is stored in State.
+// All defect labels are analysis-only  -  nothing is stored in State.
 //
 // Metrics
-// ───────
+// -------
 //  RMSD_ref              Kabsch RMSD vs reference (shape deviation)
 //  RMSD_step             Kabsch RMSD between consecutive frames
 //  mean_displacement     average |r_i(t) - r_ref_i| without alignment
@@ -19,7 +19,7 @@
 //  N_excess              N_current - N_ref  (>0 = interstitial, <0 = vacancy)
 //  E_rel_drift           (E_total - E0) / |E0|
 //  stationary_flag       fed from external stationarity gate
-//  emergent_class        analysis label — never stored in state
+//  emergent_class        analysis label  -  never stored in state
 //
 // Emergent class vocabulary
 //   ideal_crystal         low residual, zero N_excess, low mismatch
@@ -47,20 +47,20 @@
 
 namespace vsepr::xtal {
 
-// ─────────────────────────────────────────────────────────────────────────────
-// CrystalImperfectionRow  — one row of the output table
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// CrystalImperfectionRow   -  one row of the output table
+// -----------------------------------------------------------------------------
 
 struct CrystalImperfectionRow {
 	uint64_t frame                = 0;
 	double   time                 = 0.0;
-	double   RMSD_ref             = 0.0;   // Å — Kabsch aligned
-	double   RMSD_step            = 0.0;   // Å — frame-to-frame Kabsch
-	double   mean_displacement    = 0.0;   // Å — raw site displacement
-	double   occupancy_mismatch   = 0.0;   // [0,1] — fraction of ref sites unoccupied
-	double   coordination_mismatch= 0.0;   // [0,1] — fraction of atoms with wrong CN
-	double   structural_residual  = 0.0;   // Å — RMS per-site deviation
-	double   defect_fraction      = 0.0;   // [0,1] — sites > defect_threshold
+	double   RMSD_ref             = 0.0;   // Å  -  Kabsch aligned
+	double   RMSD_step            = 0.0;   // Å  -  frame-to-frame Kabsch
+	double   mean_displacement    = 0.0;   // Å  -  raw site displacement
+	double   occupancy_mismatch   = 0.0;   // [0,1]  -  fraction of ref sites unoccupied
+	double   coordination_mismatch= 0.0;   // [0,1]  -  fraction of atoms with wrong CN
+	double   structural_residual  = 0.0;   // Å  -  RMS per-site deviation
+	double   defect_fraction      = 0.0;   // [0,1]  -  sites > defect_threshold
 	int      N_excess             = 0;     // N_current - N_ref
 	double   E_total              = 0.0;
 	double   E_rel_drift          = 0.0;
@@ -106,11 +106,11 @@ struct CrystalImperfectionRow {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// classify_imperfection()  — geometry + N_excess → analysis label
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// classify_imperfection()   -  geometry + N_excess -> analysis label
+// -----------------------------------------------------------------------------
 
-// classify_imperfection_pair() — returns {structure_class, identity_class}
+// classify_imperfection_pair()  -  returns {structure_class, identity_class}
 // structure_class: geometry verdict derived from displacements / N_excess
 // identity_class:  type/identity verdict derived from identity_mismatch_count
 //
@@ -127,7 +127,7 @@ inline std::pair<std::string,std::string> classify_imperfection_pair(
 		double defect_threshold    = 0.05,
 		double drift_threshold     = 0.05)
 {
-	// ── Structure class ───────────────────────────────────────────────────────
+	// -- Structure class -------------------------------------------------------
 	std::string sc;
 	if (std::abs(E_rel_drift) > drift_threshold)
 		sc = "unstable_crystal";
@@ -146,8 +146,8 @@ inline std::pair<std::string,std::string> classify_imperfection_pair(
 	else
 		sc = "ideal_crystal";
 
-	// ── Identity class ────────────────────────────────────────────────────────
-	// Derived purely from type comparison — does not require geometry distortion.
+	// -- Identity class --------------------------------------------------------
+	// Derived purely from type comparison  -  does not require geometry distortion.
 	std::string ic;
 	if (identity_mismatch_count > 0)
 		ic = "substitutional_site";
@@ -157,7 +157,7 @@ inline std::pair<std::string,std::string> classify_imperfection_pair(
 	return {sc, ic};
 }
 
-// classify_imperfection() — convenience wrapper that returns the combined
+// classify_imperfection()  -  convenience wrapper that returns the combined
 // emergent_class string used in the legacy single-field output.
 inline std::string classify_imperfection(
 		int    N_excess,
@@ -180,15 +180,15 @@ inline std::string classify_imperfection(
 	return sc + "|" + ic;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // CrystalImperfectionAnalyzer
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 struct CrystalImperfectionAnalyzer {
 	// Configuration (all public)
-	double r_occ          = 1.5;   // Å — site considered occupied if any atom within r_occ
-	double r_bond         = 5.0;   // Å — neighbor cutoff for coordination number
-	double defect_threshold = 0.5; // Å — site displacement to call a defect
+	double r_occ          = 1.5;   // Å  -  site considered occupied if any atom within r_occ
+	double r_bond         = 5.0;   // Å  -  neighbor cutoff for coordination number
+	double defect_threshold = 0.5; // Å  -  site displacement to call a defect
 	double E0             = 0.0;
 
 	// Reference state (ideal lattice)
@@ -236,7 +236,7 @@ struct CrystalImperfectionAnalyzer {
 		const int N_ref = static_cast<int>(ref_positions.size());
 		const int N_cur = static_cast<int>(cur.size());
 
-		// ── RMSD_ref — Kabsch on min(N_ref, N_cur) atoms ────────────────────
+		// -- RMSD_ref  -  Kabsch on min(N_ref, N_cur) atoms --------------------
 		// If sizes differ, we align the common atoms only.
 		if (N_ref > 0 && N_cur > 0) {
 			int N_common = std::min(N_ref, N_cur);
@@ -246,7 +246,7 @@ struct CrystalImperfectionAnalyzer {
 											 cur.begin() + N_common);
 			row.RMSD_ref = vsepr::analysis::kabsch_rmsd(ref_sub, cur_sub);
 
-			// RMSD_step — only meaningful if sizes match prev frame
+			// RMSD_step  -  only meaningful if sizes match prev frame
 			if (!prev_cur.empty() && static_cast<int>(prev_cur.size()) == N_cur) {
 				std::vector<vsepr::Vec3> prev_sub(prev_cur.begin(),
 												  prev_cur.begin() + N_common);
@@ -254,7 +254,7 @@ struct CrystalImperfectionAnalyzer {
 			}
 		}
 
-		// ── Mean displacement (no alignment) ─────────────────────────────────
+		// -- Mean displacement (no alignment) ---------------------------------
 		{
 			int N_common = std::min(N_ref, N_cur);
 			double sum_disp = 0.0;
@@ -267,7 +267,7 @@ struct CrystalImperfectionAnalyzer {
 			row.mean_displacement = (N_common > 0) ? sum_disp / N_common : 0.0;
 		}
 
-		// ── Structural residual + defect fraction (per-site) ─────────────────
+		// -- Structural residual + defect fraction (per-site) -----------------
 		{
 			double sum_sq = 0.0;
 			int    defect_count = 0;
@@ -286,7 +286,7 @@ struct CrystalImperfectionAnalyzer {
 				? static_cast<double>(defect_count) / N_common : 0.0;
 		}
 
-		// ── Occupancy mismatch — how many ref sites have no atom nearby ───────
+		// -- Occupancy mismatch  -  how many ref sites have no atom nearby -------
 		{
 			int unoccupied = 0;
 			for (int ri = 0; ri < N_ref; ++ri) {
@@ -303,7 +303,7 @@ struct CrystalImperfectionAnalyzer {
 				? static_cast<double>(unoccupied) / N_ref : 0.0;
 		}
 
-		// ── Coordination mismatch — atoms whose CN ≠ reference CN ────────────
+		// -- Coordination mismatch  -  atoms whose CN ≠ reference CN ------------
 		{
 			// Compute current CN for each atom
 			std::vector<int> cur_coord(static_cast<std::size_t>(N_cur), 0);
@@ -326,7 +326,7 @@ struct CrystalImperfectionAnalyzer {
 				? static_cast<double>(mismatch) / N_common : 0.0;
 		}
 
-		// ── Identity mismatch — sites where current type differs from reference ──
+		// -- Identity mismatch  -  sites where current type differs from reference --
 		// Requires ref_types to be populated (e.g. via set_reference_types).
 		// If ref_types is empty the count stays zero (no type information given).
 		{
@@ -339,7 +339,7 @@ struct CrystalImperfectionAnalyzer {
 			row.identity_mismatch_count = id_mis;
 		}
 
-		// ── Emergent class ────────────────────────────────────────────────────
+		// -- Emergent class ----------------------------------------------------
 		auto [sc, ic] = classify_imperfection_pair(
 			row.N_excess,
 			row.occupancy_mismatch,

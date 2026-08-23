@@ -1,4 +1,4 @@
-/**
+﻿/**
  * system_monitor.hpp
  * ===================
  * Real-time system monitoring for GPU, Network, Disk with CLI graphs
@@ -110,10 +110,10 @@ public:
         history_.clear();
     }
     
-    // Render as ASCII sparkline: ▁▂▃▄▅▆▇█
+    // Render as ASCII sparkline: ▁▂▃▄▅▆▇#
     std::string render(size_t width = 40) const;
     
-    // Render as bar: [████████░░] 80%
+    // Render as bar: [########░░] 80%
     static std::string render_bar(double percent, size_t width = 20);
     
     const std::vector<double>& history() const { return history_; }

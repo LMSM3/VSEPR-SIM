@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/manifest_loader.cpp
  * ==============================
- * WO-B9-001 — Batch Manifest Loader
+ * WO-B9-001  -  Batch Manifest Loader
  *
  * Minimal JSON parser for batch_manifest.json.
  * Handles: string, integer, boolean, array-of-string, array-of-object.
@@ -20,9 +20,9 @@
 namespace vsim {
 namespace batch {
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // Tokeniser helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 namespace {
 
@@ -130,7 +130,7 @@ static BatchManifestSweepAxis parse_sweep_axis(const std::string& s, size_t& pos
 		} else if (key == "values") {
 			ax.values = parse_string_array(s, pos);
 		} else {
-			// skip unknown value — scan past it
+			// skip unknown value  -  scan past it
 			pos = skip_ws(s, pos);
 			if (pos < s.size() && s[pos] == '"') parse_string(s, pos);
 			else if (pos < s.size() && (s[pos] == 't' || s[pos] == 'f')) parse_bool(s, pos);
@@ -161,9 +161,9 @@ static std::vector<BatchManifestSweepAxis> parse_sweep_array(const std::string& 
 
 } // anonymous namespace
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // Public API
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 bool load_manifest(const std::string& path,
 				   BatchManifestSection& out,
@@ -235,7 +235,7 @@ ManifestValidation validate_manifest(const BatchManifestSection& m) {
 		if (ax.param.empty())
 			v.errors.push_back("sweep axis has empty param name");
 		if (ax.values.empty())
-			v.warnings.push_back("sweep axis '" + ax.param + "' has no values — axis will be skipped");
+			v.warnings.push_back("sweep axis '" + ax.param + "' has no values  -  axis will be skipped");
 	}
 
 	if (!v.errors.empty()) v.ok = false;

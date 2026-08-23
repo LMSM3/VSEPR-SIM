@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * @file formula_parser.hpp
  * @brief Namespaced chemical formula parser with robust error handling
@@ -9,7 +9,7 @@
  * Namespace: vsepr::formula
  * 
  * Features:
- * - Parentheses support: Ca(OH)2 → Ca1O2H2
+ * - Parentheses support: Ca(OH)2 -> Ca1O2H2
  * - Multi-digit counts: C100H202
  * - Validation: checks for unknown elements
  * - Error messages: precise position and reason
@@ -36,7 +36,7 @@ namespace formula {
  * @brief Formula parsing result
  * 
  * Maps atomic number (Z) to count
- * Example: H2O → {1: 2, 8: 1}
+ * Example: H2O -> {1: 2, 8: 1}
  */
 using Composition = std::map<int, int>;
 
@@ -243,14 +243,14 @@ public:
  * 
  * @param formula Chemical formula string (e.g., "H2O", "Ca(OH)2", "C6H12O6")
  * @param periodic_table Periodic table for element lookup
- * @return Composition map (Z → count)
+ * @return Composition map (Z -> count)
  * @throws ParseError on invalid formula or unknown elements
  * 
  * Examples:
- *   parse("H2O", pt)      → {1: 2, 8: 1}
- *   parse("CH4", pt)      → {6: 1, 1: 4}
- *   parse("Ca(OH)2", pt)  → {20: 1, 8: 2, 1: 2}
- *   parse("C6H12O6", pt)  → {6: 6, 1: 12, 8: 6}
+ *   parse("H2O", pt)      -> {1: 2, 8: 1}
+ *   parse("CH4", pt)      -> {6: 1, 1: 4}
+ *   parse("Ca(OH)2", pt)  -> {20: 1, 8: 2, 1: 2}
+ *   parse("C6H12O6", pt)  -> {6: 6, 1: 12, 8: 6}
  */
 inline Composition parse(const std::string& formula, const PeriodicTable& periodic_table) {
     FormulaParser parser(formula, periodic_table);
@@ -276,13 +276,13 @@ inline bool validate(const std::string& formula, const PeriodicTable& periodic_t
 /**
  * @brief Convert composition back to normalized formula string
  * 
- * @param composition Atomic composition (Z → count)
- * @param periodic_table Periodic table for Z → symbol lookup
+ * @param composition Atomic composition (Z -> count)
+ * @param periodic_table Periodic table for Z -> symbol lookup
  * @return Normalized formula string (sorted by Z)
  * 
  * Example:
- *   {1: 2, 8: 1} → "H2O"
- *   {6: 1, 1: 4} → "CH4"
+ *   {1: 2, 8: 1} -> "H2O"
+ *   {6: 1, 1: 4} -> "CH4"
  */
 inline std::string to_formula(const Composition& composition, const PeriodicTable& periodic_table) {
     std::ostringstream oss;

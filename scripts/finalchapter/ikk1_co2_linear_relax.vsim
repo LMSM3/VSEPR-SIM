@@ -1,0 +1,183 @@
+# =============================================================================
+# IKK I -- Schrodinger's Alternative
+# VSIM implementation: CO2 minimal relaxation (linear geometry)
+#
+# Theory claim (IKK I):
+#   Waves are not primitive. Particle-like identity is more fundamental.
+#   The molecular geometry emerges from pairwise point-identity interactions.
+#
+# Computational test:
+#   Run a minimal CO2 relaxation from random initial positions with a fixed
+#   seed. CO2 adopts D_inf_h (linear) geometry:
+#
+#     Bond angle: 180.0 deg (linear)
+#     C=O bond length: 1.160 A
+#     Coordination (C): 2 (both oxygens)
+#     Coordination (O): 1 (only the carbon)
+#
+#   CO2 is the sharpest IKK I test for a sp-hybridised system:
+#   - It has the simplest possible non-tetrahedral point-identity structure
+#   - Linearity is a direct consequence of sp double-bond geometry
+#     (two sets of sigma+pi bonding, 180 deg apart)
+#   - The point-identity model must produce O=C=O = 180 deg from
+#     pairwise Coulomb + LJ forces alone, without orbital input
+#
+#   The partial charges on C and O drive the linear arrangement:
+#     q_C = +0.70 e, q_O = -0.35 e (each)
+#   The symmetric charge distribution means any deviation from 180 deg
+#   creates a net dipole, which the energy minimiser restores.
+#
+#   Falsification: if bond angle < 170 deg, the forcefield has broken
+#   D_inf_h symmetry spuriously. The identity model cannot explain
+#   linear geometry without a symmetric charge distribution.
+#
+# Comparison with IKK I CH4 and NH3:
+#   CH4:  Td, coord=4, angle=109.47, wave observable post-convergence
+#   NH3:  C3v, coord=3, angle=107.8, lone-pair depresses angle
+#   CO2:  D_inf_h, coord=2, angle=180.0, sp double-bond drives linearity
+#
+# IKK I sections mapped:
+#   S2 Reversal Claim       -> FIRE relax: no wavefunction, still converges
+#   S3 Point-Like Identity  -> q_C/q_O partial charges encode sp symmetry
+#   S4 Wave as Projection   -> spectral_response post-convergence:
+#                              CO2 asymmetric stretch (~2349 cm^-1 IR active)
+#                              is the wave-observable output
+#   S5 Against String       -> linear geometry verified without extended-
+#                              object substrate
+#
+# Physical reference for CO2:
+#   C=O bond length:   1.160 A
+#   O=C=O bond angle:  180.0 deg
+#   Coordination (C):  2
+#   Coordination (O):  1
+#   Symmetry:          D_inf_h
+#   IR-active mode:    asymmetric stretch at ~2349 cm^-1
+# =============================================================================
+
+[project]
+name        = "ikk1_co2_linear_relax"
+version     = "v5.1.13.5"
+seed_base   = 303
+determinism = true    # IKK I S2: deterministic formation from seeded identity
+
+# ---------------------------------------------------------------------------
+# Material
+# ---------------------------------------------------------------------------
+[material]
+formula   = "CO2"
+structure = "molecular"
+phase     = "gas"
+
+[run]
+mode         = "relax"
+max_steps    = 600
+converge     = true
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 0.0
+medium      = "vacuum"
+
+# ---------------------------------------------------------------------------
+# Simulation
+# formation_preset = "molecular": LJ-neutral + Coulomb from partial charges.
+# CO2 partial charges: q_C = +0.70, q_O = -0.35.
+# The symmetric O-C-O arrangement minimises the dipole to zero.
+# Any asymmetric configuration has higher Coulomb energy -> restoring force.
+# ---------------------------------------------------------------------------
+[simulation]
+fire_max_steps   = 600
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "CO2"
+count       = 1
+temperature = 0.0
+
+# ---------------------------------------------------------------------------
+# Observables
+# energy_map:       potential surface during approach to linearity
+# bond_angles:      primary test -- must reach 180.0 +/- 2.0 deg
+# bond_lengths:     C=O must reach 1.160 +/- 0.05 A
+# coordination:     C=2, O=1; different from CH4 (C=4) and NH3 (N=3)
+# spectral_response: CO2 asymmetric stretch (~2349 cm^-1) is the
+#                   wave-like observable that emerges post-convergence.
+#                   It is not an input to the formation event.
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "bond_angles", "bond_lengths", "coordination", "spectral_response"]
+output_format = "json"
+every_n_steps = 40
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = false
+transport_events = false
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Verification
+# IKK I S5: correct D_inf_h geometry without wave-primitive substrate.
+# Bond angle tolerance is tight: collapse to < 170 deg is a clear failure.
+# C coordination must be 2, not 3 or 4 -- sharp discriminator from NH3/CH4.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "ikk1_co2_linear_test"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "CO2_molecular"
+expected_coordination        = 2
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.160
+nearest_neighbor_tolerance_A = 0.05
+expected_bond_angle_deg      = 180.0
+bond_angle_tolerance_deg     = 2.0
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+write_verify_report       = true
+write_verify_tsv          = true
+output_dir                = "out/finalchapter/ikk1_co2"
+
+[report]
+title                   = "ikk1_co2_linear_relax"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 20
+show_convergence_trace = true
+show_symbolic_trace    = true
+show_event_timeline    = true
+overlay_sequence       = energy_map,bond_angles,bond_lengths,spectral_response

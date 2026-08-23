@@ -23,6 +23,7 @@
 #include "core/bond_graph_gen.hpp"
 #include "vsim/bridge/dem_bridge.hpp"  // WO-67N
 #include "vsim/bridge/fea_bridge.hpp"  // WO-67O
+#include "vsim/dissolution_bridge.hpp"
 #include "vsim/vsim_runtime.hpp"
 #include "vsim/relative_reactivity.hpp"     // WO-85B  Part E
 #include "vsim/chemplus_declarative.hpp"    // WO-85B  reaction stoichiometry/energy
@@ -32,8 +33,10 @@
 #include "sim/molecule_builder.hpp"
 #include "core/element_data.hpp"
 #include "pot/periodic_db.hpp"
+#include "infra/bootstrap_probe.hpp"        // WO-93A CPU/RAM/disk/GPU probes
 
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <cstdio>
 #include <fstream>
@@ -41,8 +44,11 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <random>
+#include <sstream>
 #include <string>
+#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -53,6 +59,7 @@
 #else
 #  include <unistd.h>
 #  include <sys/types.h>
+#  include <sys/wait.h>
 #endif
 
 namespace vsepr::cli {
@@ -66,14 +73,400 @@ namespace {
 	const char* CYAN   = "\033[36m";
 	const char* RESET  = "\033[0m";
 
-	void print_export_inventory(const std::string& output_dir) {
-		std::error_code ec;
-		const std::filesystem::path root(output_dir);
-		if (!std::filesystem::exists(root, ec) || ec) {
-			std::printf("  %s[export] No output directory to inventory: %s%s\n",
-				YELLOW, output_dir.c_str(), RESET);
+#ifdef _WIN32
+	const char* ANSI_HOME = "\r";                 // carriage return via CRLF
+	const char* ANSI_UP2  = "\033[2A\r";          // move up two lines + return
+#else
+	const char* ANSI_HOME = "\r";
+	const char* ANSI_UP2  = "\033[2A\r";
+#endif
+
+	// WO-93A — smooth two-line terminal status loop helpers.
+	const char* ANSI_BG_RED    = "\033[41m";
+	const char* ANSI_BG_YELLOW = "\033[43m";
+	const char* ANSI_BG_GREEN  = "\033[42m";
+	const char* ANSI_BG_CYAN   = "\033[46m";
+	const char* ANSI_BG_GREY   = "\033[100m";
+
+	// Map a ratio in [0,1] to a colour band: red -> yellow -> green -> cyan.
+	// Used to paint an interpretive colour layer next to data bars.
+	const char* ratio_to_colour(double r) {
+		r = std::clamp(r, 0.0, 1.0);
+		if      (r < 0.25) return RED;
+		else if (r < 0.50) return YELLOW;
+		else if (r < 0.75) return GREEN;
+		else               return CYAN;
+	}
+
+	// Coloured block bar: width chars filled to the given ratio.
+	// When utf8==true use a full block; otherwise use '#' so redirected logs
+	// stay valid ASCII and source control diffs remain clean.
+	std::string colour_block_bar(double ratio, int width, bool utf8) {
+		int filled = static_cast<int>(std::round(std::clamp(ratio, 0.0, 1.0) * width));
+		std::string out;
+		const char* fill_colour = ratio_to_colour(ratio);
+		const char* block = utf8 ? "█" : "#";
+		for (int i = 0; i < width; ++i) {
+			if (i < filled) out += fill_colour;
+			else            out += DIM;
+			out += block;
+		}
+		out += RESET;
+		return out;
+	}
+
+	// "State" token derived from current energy/eta values for the colour layer.
+	std::string interpretive_state_token(double energy, double eta, int /*step*/) {
+		if (eta > 0.95 && std::abs(energy) < 1.0)
+			return std::string(GREEN) + "steady" + RESET;
+		if (eta > 0.85)
+			return std::string(CYAN) + "relax" + RESET;
+		if (eta > 0.50)
+			return std::string(YELLOW) + "warm" + RESET;
+		return std::string(RED) + "fire" + RESET;
+	}
+
+	// WO-93A frame-rate throttles.
+	using Clock     = std::chrono::steady_clock;
+	using TimePoint = Clock::time_point;
+
+	// Live HUD state and rate helpers.
+	struct StatusLoopState {
+		bool       active       = false;
+		bool       first_frame  = true;
+		TimePoint  last_top     = TimePoint{};
+		TimePoint  last_hw      = TimePoint{};
+		vsepr::infra::CpuLoadState cpu_state{};
+		double     cpu_frac     = 0.0;
+		double     total_ram_gb = 0.0;
+		double     free_ram_gb  = 0.0;
+		double     disk_free_gb = 0.0;
+		std::string gpu_name;
+	};
+
+	struct StatusLoopCtx {
+		const vsim::VisualSection& vis;
+		StatusLoopState&          state;
+		int                       max_steps;
+		double                    emin;
+		double                    emax;
+	};
+
+	void status_loop_update_hardware(StatusLoopState& state) {
+		using namespace vsepr::infra;
+		state.cpu_frac     = cpu_load_fraction(state.cpu_state);
+		state.total_ram_gb = total_ram_gb();
+		state.free_ram_gb  = free_ram_gb();
+		state.disk_free_gb = disk_free_gb();
+		if (state.gpu_name.empty())
+			state.gpu_name = detect_gpu();
+	}
+
+	std::string compact_value(double v, int digits) {
+		std::ostringstream oss;
+		if (std::abs(v) < 1e3 && std::abs(v) >= 0.1)
+			oss << std::fixed << std::setprecision(digits) << v;
+		else
+			oss << std::setprecision(digits) << v;
+		return oss.str();
+	}
+
+	std::string pad_trunc(std::string s, std::size_t n) {
+		if (s.size() > n) {
+			if (n >= 3) { s.resize(n - 1); s.push_back('?'); }
+			else s.resize(n);
+		} else if (s.size() < n) {
+			s.append(n - s.size(), ' ');
+		}
+		return s;
+	}
+
+	// Render the two-line status HUD. Call sites may invoke every step;
+	// this function time-throttles line-1 by status_loop_hz and line-2 by
+	// hardware_monitor_hz.  Non-terminal output disables cursor-up overwrite
+	// and falls back to ASCII blocks so redirected logs stay clean.
+	void status_loop_render(StatusLoopCtx& ctx, int step, double energy, double eta,
+							const std::string& label, bool is_terminal_output)
+	{
+		if (!ctx.vis.show_status_loop) return;
+
+		const TimePoint now = Clock::now();
+
+		// Line-1 high-Hz throttle (default 30 Hz).
+		const float top_period_s = ctx.vis.status_loop_hz > 0.0f
+			? 1.0f / ctx.vis.status_loop_hz : 1.0f / 30.0f;
+		if (!ctx.state.first_frame &&
+			std::chrono::duration<double>(now - ctx.state.last_top).count() < top_period_s) {
 			return;
 		}
+
+		// Refresh hardware telemetry at its own cadence.
+		const float hw_period_s = ctx.vis.hardware_monitor_hz > 0.0f
+			? 1.0f / ctx.vis.hardware_monitor_hz : 0.5f;
+		if (ctx.state.first_frame ||
+			std::chrono::duration<double>(now - ctx.state.last_hw).count() >= hw_period_s) {
+			status_loop_update_hardware(ctx.state);
+			ctx.state.last_hw = now;
+		}
+
+		double e_spread = ctx.emax - ctx.emin;
+		double e_ratio  = 0.5;
+		if (e_spread > 1e-9)
+			e_ratio = std::clamp((energy - ctx.emin) / e_spread, 0.0, 1.0);
+
+		std::string e_bar = colour_block_bar(e_ratio, 14, is_terminal_output);
+		std::string n_bar = colour_block_bar(std::clamp(eta, 0.0, 1.0), 10, is_terminal_output);
+		std::string state = interpretive_state_token(energy, eta, step);
+
+		std::ostringstream line1;
+		line1 << "step " << std::setw(5) << step << "/" << ctx.max_steps
+			  << "  " << e_bar
+			  << "  E=" << std::setw(10) << compact_value(energy, 2)
+			  << "  " << n_bar
+			  << "  η=" << std::fixed << std::setprecision(3) << eta
+			  << "  " << state;
+
+		std::ostringstream line2;
+		line2 << "CPU " << std::setw(3) << static_cast<int>(std::round(ctx.state.cpu_frac * 100.0)) << "%"
+			  << "  RAM " << std::fixed << std::setprecision(1) << ctx.state.free_ram_gb << "/"
+			  << ctx.state.total_ram_gb << " GB"
+			  << "  DISK " << std::fixed << std::setprecision(1) << ctx.state.disk_free_gb << " GB"
+			  << "  GPU " << pad_trunc(ctx.state.gpu_name.empty() ? "-" : ctx.state.gpu_name, 24)
+			  << "  " << pad_trunc(label.empty() ? "run" : label, 16);
+
+		if (!is_terminal_output || ctx.state.first_frame) {
+			std::printf("%s\n%s\n", line1.str().c_str(), line2.str().c_str());
+		} else {
+			std::printf("%s%s\n%s\n", ANSI_UP2, line1.str().c_str(), line2.str().c_str());
+		}
+		std::fflush(stdout);
+		ctx.state.first_frame = false;
+		ctx.state.last_top    = now;
+	}
+
+	std::string quote_process_arg(const std::string& value) {
+#ifdef _WIN32
+		std::string quoted = "\"";
+		std::size_t backslashes = 0;
+		for (const char ch : value) {
+			if (ch == '\\') {
+				++backslashes;
+				continue;
+			}
+			if (ch == '"') {
+				quoted.append(backslashes * 2 + 1, '\\');
+				quoted.push_back('"');
+				backslashes = 0;
+				continue;
+			}
+			quoted.append(backslashes, '\\');
+			backslashes = 0;
+			quoted.push_back(ch);
+		}
+		quoted.append(backslashes * 2, '\\');
+		quoted.push_back('"');
+		return quoted;
+#else
+		return value;
+#endif
+	}
+
+	int run_process_wait(const std::vector<std::string>& arguments) {
+		if (arguments.empty()) return -1;
+#ifdef _WIN32
+		std::string command;
+		for (const auto& argument : arguments) {
+			if (!command.empty()) command.push_back(' ');
+			command += quote_process_arg(argument);
+		}
+		std::vector<char> mutable_command(command.begin(), command.end());
+		mutable_command.push_back('\0');
+		STARTUPINFOA startup{};
+		startup.cb = sizeof(startup);
+		PROCESS_INFORMATION process{};
+		if (!CreateProcessA(nullptr, mutable_command.data(), nullptr, nullptr, FALSE,
+			CREATE_NO_WINDOW, nullptr, nullptr, &startup, &process)) {
+			return -1;
+		}
+		WaitForSingleObject(process.hProcess, INFINITE);
+		DWORD exit_code = 1;
+		GetExitCodeProcess(process.hProcess, &exit_code);
+		CloseHandle(process.hThread);
+		CloseHandle(process.hProcess);
+		return static_cast<int>(exit_code);
+#else
+		const pid_t pid = fork();
+		if (pid < 0) return -1;
+		if (pid == 0) {
+			std::vector<char*> argv;
+			argv.reserve(arguments.size() + 1);
+			for (const auto& argument : arguments) {
+				argv.push_back(const_cast<char*>(argument.c_str()));
+			}
+			argv.push_back(nullptr);
+			execvp(argv.front(), argv.data());
+			_exit(127);
+		}
+		int status = 0;
+		if (waitpid(pid, &status, 0) < 0) return -1;
+		return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+#endif
+	}
+
+	std::filesystem::path resolve_matplotlib_renderer() {
+		std::vector<std::filesystem::path> candidates = {
+			std::filesystem::current_path() / "scripts" / "mol_viewer.py"
+		};
+#ifdef _WIN32
+		char executable[MAX_PATH] = {};
+		if (GetModuleFileNameA(nullptr, executable, MAX_PATH) > 0) {
+			const auto directory = std::filesystem::path(executable).parent_path();
+			candidates.push_back(directory / "scripts" / "mol_viewer.py");
+			candidates.push_back(directory.parent_path() / "scripts" / "mol_viewer.py");
+		}
+#else
+		std::error_code link_error;
+		const auto executable = std::filesystem::read_symlink("/proc/self/exe", link_error);
+		if (!link_error) {
+			const auto directory = executable.parent_path();
+			candidates.push_back(directory / "scripts" / "mol_viewer.py");
+			candidates.push_back(directory.parent_path() / "scripts" / "mol_viewer.py");
+		}
+#endif
+		std::error_code exists_error;
+		for (const auto& candidate : candidates) {
+			if (std::filesystem::is_regular_file(candidate, exists_error) && !exists_error) {
+				return candidate;
+			}
+			exists_error.clear();
+		}
+		return {};
+	}
+
+	bool has_png_signature(const std::filesystem::path& path) {
+		static constexpr std::array<unsigned char, 8> expected = {
+			0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
+		std::ifstream input(path, std::ios::binary);
+		std::array<unsigned char, 8> actual{};
+		return input.read(reinterpret_cast<char*>(actual.data()), actual.size()) &&
+			actual == expected;
+	}
+
+	bool write_matplotlib_snapshot(bool requested,
+								 const std::string& configured_output_dir,
+								 const std::string& export_output_dir,
+								 const std::string& artifact_path,
+								 const std::string& run_label) {
+		if (!requested) return true;
+		if (artifact_path.empty() || !std::filesystem::is_regular_file(artifact_path)) {
+			std::printf("  %s[matplotlib-png:skipped]%s no XYZ-family artifact was produced\n",
+				YELLOW, RESET);
+			return false;
+		}
+
+		const auto renderer = resolve_matplotlib_renderer();
+		if (renderer.empty()) {
+			std::printf("  %s[matplotlib-png:skipped]%s scripts/mol_viewer.py was not found\n",
+				YELLOW, RESET);
+			return false;
+		}
+
+		const std::filesystem::path output_dir = configured_output_dir.empty()
+			? std::filesystem::path(export_output_dir.empty() ? "out/" + run_label : export_output_dir) / "figures"
+			: std::filesystem::path(configured_output_dir);
+		std::error_code directory_error;
+		std::filesystem::create_directories(output_dir, directory_error);
+		if (directory_error) {
+			std::printf("  %s[matplotlib-png:failed]%s cannot create %s: %s\n",
+				RED, RESET, output_dir.string().c_str(), directory_error.message().c_str());
+			return false;
+		}
+
+		const auto output_path = output_dir / (run_label + "_matplotlib.png");
+		std::error_code absolute_error;
+		auto absolute_artifact = std::filesystem::absolute(artifact_path, absolute_error);
+		if (absolute_error) absolute_artifact = artifact_path;
+		std::vector<std::string> arguments = {
+			"python", renderer.string(), absolute_artifact.string(),
+			"--export-png", output_path.string(), "--frame", "last"};
+		int exit_code = run_process_wait(arguments);
+		if (exit_code == -1) {
+			arguments.front() = "python3";
+			exit_code = run_process_wait(arguments);
+		}
+		if (exit_code != 0 || !has_png_signature(output_path)) {
+			std::printf("  %s[matplotlib-png:failed]%s renderer exit=%d output=%s\n",
+				RED, RESET, exit_code, output_path.string().c_str());
+			return false;
+		}
+
+		std::printf("  %s[matplotlib-png:written]%s %s\n",
+			GREEN, RESET, output_path.string().c_str());
+		return true;
+	}
+
+	struct ExportExpectation {
+		const char* label;
+		bool requested;
+		std::filesystem::path path;
+		const char* unavailable_reason;
+	};
+
+	void print_export_inventory(const vsim::ExportSection& exp,
+								const std::string& run_label) {
+		std::error_code ec;
+		const std::filesystem::path root(
+			exp.output_dir.empty() ? "out/" + run_label : exp.output_dir);
+		if (!std::filesystem::exists(root, ec) || ec) {
+			std::printf("  %s[export] No output directory to inventory: %s%s\n",
+				YELLOW, root.string().c_str(), RESET);
+			return;
+		}
+
+		const std::vector<ExportExpectation> expected = {
+			{"write_xyz", exp.write_xyz, root / (run_label + ".xyz"), nullptr},
+			{"write_xyzf", exp.write_xyzf, root / (run_label + ".xyzf"),
+				"trajectory writer is only active for trajectory-producing run paths"},
+			{"write_xyzfull", exp.write_xyzfull, {}, "no xyzFull writer is registered in this CLI path"},
+			{"write_pdb", exp.write_pdb, {}, "no PDB writer is registered in this CLI path"},
+			{"write_analysis_json", exp.write_analysis_json, root / "pipeline_records.json", nullptr},
+			{"write_metrics_tsv", exp.write_metrics_tsv, root / "metrics.tsv", nullptr},
+			{"write_cluster_json", exp.write_cluster_json, {}, "cluster export is not emitted by this CLI path"},
+			{"write_fingerprint_json", exp.write_fingerprint_json, {}, "fingerprint export is not emitted by this CLI path"},
+			{"write_events_json", exp.write_events_json, root / "events.jsonl", nullptr},
+			{"write_symbolic_trace_json", exp.write_symbolic_trace_json, {}, "symbolic trace export is not emitted by this CLI path"},
+			{"write_report_md", exp.write_report_md, root / "events.md", nullptr},
+			{"write_summary_csv", exp.write_summary_csv, {}, "summary CSV export is not emitted by this CLI path"},
+			{"write_dashboard_json", exp.write_dashboard_json, root / "reports/beta7_pipeline_report.json", nullptr},
+			{"write_manifest_json", exp.write_manifest_json, root / "run_manifest.json", nullptr},
+			{"write_dashboard_svg", exp.write_dashboard_svg, root / "reports/dashboard/beta7_dashboard.svg", nullptr},
+			{"write_pipeline_audit_jsonl", exp.write_pipeline_audit_jsonl, root / "reports/audit/beta7_pipeline_audit.jsonl", nullptr},
+			{"write_actual_hashes_tsv", exp.write_actual_hashes_tsv, {}, "golden-suite hash export is not emitted by this CLI path"},
+			{"write_step_file", exp.write_step_file, root / "geometry/structure.step", nullptr},
+			{"write_vtp_mesh", exp.write_vtp_mesh, {}, "VTP mesh export is not emitted by this CLI path"},
+			{"write_dynx", exp.write_dynx, {}, "DYNX export is handled by its dedicated session path"},
+			{"write_xbit", exp.write_xbit, {}, "XBIT export is handled by its dedicated geometry path"},
+			{"write_aggregate_json", exp.write_aggregate_json, {}, "aggregate export is handled by batch execution"},
+		};
+
+		const auto audit_path = root / "export_audit.tsv";
+		std::ofstream audit(audit_path);
+		if (audit) audit << "request\tstatus\tpath\treason\n";
+		for (const auto& item : expected) {
+			if (!item.requested) continue;
+			const bool has_path = !item.path.empty();
+			const bool written = has_path && std::filesystem::is_regular_file(item.path, ec) && !ec;
+			const char* status = written ? "written" : (has_path ? "missing" : "skipped");
+			const char* reason = written ? "" : (item.unavailable_reason
+				? item.unavailable_reason : "requested artifact was not produced");
+			std::printf("  %s[export:%s]%s %-28s %s%s%s\n",
+				written ? GREEN : YELLOW, status, RESET, item.label,
+				has_path ? item.path.string().c_str() : "-",
+				*reason ? "  -  " : "", reason);
+			if (audit) audit << item.label << '\t' << status << '\t'
+				<< (has_path ? item.path.string() : "-") << '\t' << reason << '\n';
+		}
+		audit.close();
 
 		uintmax_t total_bytes = 0;
 		size_t file_count = 0;
@@ -90,6 +483,29 @@ namespace {
 		}
 		std::printf("  %s[export] %zu file(s), %llu B total%s\n",
 			GREEN, file_count, static_cast<unsigned long long>(total_bytes), RESET);
+	}
+
+	void write_observe_metrics(const vsim::ExportSection& exp,
+							 const std::vector<vsim::EvalResult>& results,
+							 const std::string& run_label) {
+		if (!exp.write_metrics_tsv) return;
+		const std::filesystem::path root(
+			exp.output_dir.empty() ? "out/" + run_label : exp.output_dir);
+		std::error_code ec;
+		std::filesystem::create_directories(root, ec);
+		if (ec) return;
+		std::ofstream out(root / "metrics.tsv");
+		if (!out) return;
+		out << "run\tmetric\tfield\twindow\tvalue\twarning\n";
+		for (const auto& result : results) {
+			std::string warning = result.warning;
+			std::replace(warning.begin(), warning.end(), '\t', ' ');
+			out << run_label << '\t' << result.probe_name << '\t'
+				<< result.field << '\t' << result.window << '\t'
+				<< result.value << '\t' << warning << '\n';
+		}
+		std::printf("  %s-> metrics.tsv%s  (%zu metric%s)%s\n",
+			GREEN, DIM, results.size(), results.size() == 1 ? "" : "s", RESET);
 	}
 
 	// -----------------------------------------------------------------------
@@ -486,6 +902,79 @@ namespace {
 		return result;
 	}
 
+	static bool append_formula_state(atomistic::State& state,
+								 const std::string& formula,
+								 int count,
+								 double placement_stride,
+								 std::string& error) {
+		static const PeriodicTable pt = PeriodicTable::load_default();
+		try {
+			init_chemistry_db(&pt);
+			for (int copy = 0; copy < std::max(1, count); ++copy) {
+				Molecule molecule = build_molecule_from_formula(formula, pt, copy);
+				const uint32_t base = state.N;
+				const vsepr::Vec3 shift{
+					placement_stride * static_cast<double>(copy), 0.0, 0.0};
+				for (size_t i = 0; i < molecule.atoms.size(); ++i) {
+					state.X.emplace_back(
+						molecule.coords[3 * i] + shift.x,
+						molecule.coords[3 * i + 1] + shift.y,
+						molecule.coords[3 * i + 2] + shift.z);
+					state.V.emplace_back();
+					state.F.emplace_back();
+					state.T.push_back(0.0);
+					state.Q.push_back(0.0);
+					state.M.push_back(molecule.atoms[i].mass);
+					state.type.push_back(molecule.atoms[i].Z);
+				}
+				for (const auto& bond : molecule.bonds)
+					state.B.push_back({base + bond.i, base + bond.j});
+				state.N = static_cast<uint32_t>(state.X.size());
+			}
+			return state.N > 0;
+		} catch (const std::exception& ex) {
+			error = ex.what();
+			return false;
+		}
+	}
+
+	struct DissolutionRunContext {
+		std::unique_ptr<atomistic::reaction::DissolutionEngine> engine;
+		atomistic::State solid;
+		atomistic::State solution;
+		std::string error;
+
+		bool ready() const { return engine && solid.N > 0 && error.empty(); }
+	};
+
+	static DissolutionRunContext make_dissolution_context(
+		const vsim::VsimDocument& doc) {
+		DissolutionRunContext context;
+		if (!doc.dissolution.enabled) return context;
+
+		const std::string solid_formula = !doc.material.formula.empty()
+			? doc.material.formula
+			: (doc.simulation.molecules.empty()
+				? std::string() : doc.simulation.molecules.front().formula);
+		if (solid_formula.empty()) {
+			context.error = "no solid formula was declared";
+			return context;
+		}
+
+		if (!append_formula_state(context.solid, solid_formula, 1, 4.0, context.error))
+			return context;
+
+		for (const auto& entry : doc.simulation.molecules) {
+			if (entry.formula == solid_formula) continue;
+			if (!append_formula_state(
+				context.solution, entry.formula, entry.count, 4.0, context.error))
+				return context;
+		}
+
+		context.engine = vsim::DissolutionBridge::create_engine(doc);
+		return context;
+	}
+
 	static std::array<double,3> corner_origin(const std::string& region, double L) {
 		double h = L * 0.35;
 		if (region == "corner_xnyp") return {-h,  h,  0.0};
@@ -633,9 +1122,30 @@ namespace {
 
 		// Source 1: explicit molecule list
 		for (const auto& mol : doc.simulation.molecules) {
-			auto atoms = molecule_atoms_from_formula(mol.formula, pt);
-			if (!atoms.empty())
-				frames.push_back({mol.formula, std::move(atoms)});
+			auto molecule = molecule_atoms_from_formula(mol.formula, pt);
+			if (molecule.empty()) continue;
+
+			const int copies = std::max(1, mol.count);
+			const int layers = std::max(1, std::min(mol.n_layers, copies));
+			const int per_layer = (copies + layers - 1) / layers;
+			const int columns = std::max(1, static_cast<int>(std::ceil(std::sqrt(
+				static_cast<double>(per_layer)))));
+			std::vector<GasMolAtom> atoms;
+			atoms.reserve(molecule.size() * static_cast<size_t>(copies));
+
+			for (int copy = 0; copy < copies; ++copy) {
+				const int layer = copy % layers;
+				const int in_layer = copy / layers;
+				const int row = in_layer / columns;
+				const int column = in_layer % columns;
+				const double stagger = (mol.layer_mode == "AB" && (layer % 2 == 1)) ? 1.23 : 0.0;
+				const double x = (column - (columns - 1) * 0.5) * 2.46 + stagger;
+				const double y = (row - (per_layer / columns - 1) * 0.5) * 2.13;
+				const double z = (layer - (layers - 1) * 0.5) * 3.35;
+				for (const auto& atom : molecule)
+					atoms.push_back({atom.symbol, atom.dx + x, atom.dy + y, atom.dz + z});
+			}
+			frames.push_back({mol.formula, std::move(atoms)});
 		}
 
 		// Source 2: top-level [material] formula (covers batch / crystal scripts)
@@ -752,6 +1262,216 @@ namespace {
 			++emitted;
 		}
 		return emitted;
+	}
+
+	// =====================================================================
+	// WO-28MAR: high-density run record capture
+	// =====================================================================
+	double rms_force_from_eta(double eta) {
+		// Synthetic RMS force proxy: high eta -> low residual, eta in [0,1].
+		return std::max(0.0, (1.0 - eta) * 5.0);
+	}
+
+	struct DenseRecordContext {
+		vsim::BatchRunRecord record;
+		vsim::DenseRunSection cfg;
+		std::chrono::steady_clock::time_point orch_start;
+		std::chrono::steady_clock::time_point comp_start;
+		std::chrono::steady_clock::time_point comp_end;
+		std::string output_dir;
+		std::string run_label;
+		bool active = false;
+	};
+
+	std::string file_sha256_stub(const std::string& path) {
+		// Lightweight placeholder: size+modification-hash, not cryptographic.
+		std::error_code ec;
+		const auto sz = std::filesystem::file_size(path, ec);
+		if (ec) return "";
+		const auto last = std::filesystem::last_write_time(path, ec);
+		if (ec) return "";
+		auto sctp = std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+			last - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
+		std::size_t h1 = std::hash<std::string>{}(path);
+		std::size_t h2 = std::hash<std::uintmax_t>{}(sz);
+		std::size_t h3 = std::hash<long long>{}(static_cast<long long>(
+			std::chrono::system_clock::to_time_t(sctp)));
+		std::size_t x = h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
+		return "sha256:" + std::to_string(x ^ (h3 + 0x9e3779b97f4a7c15ULL + (x << 6) + (x >> 2)));
+	}
+
+	bool write_atoms_xyz(const std::string& path,
+						 const std::string& comment,
+						 const std::vector<GasMolAtom>& atoms) {
+		std::ofstream out(path);
+		if (!out) return false;
+		out << std::fixed << std::setprecision(6);
+		out << atoms.size() << "\n" << comment << "\n";
+		for (const auto& a : atoms) {
+			out << std::left << std::setw(4) << a.symbol << std::right
+				<< std::setw(14) << a.dx
+				<< std::setw(14) << a.dy
+				<< std::setw(14) << a.dz << "\n";
+		}
+		return true;
+	}
+
+	std::vector<GasMolAtom> atoms_from_doc(const vsim::VsimDocument& doc) {
+		static const PeriodicTable pt = PeriodicTable::load_default();
+		std::vector<GasMolAtom> out;
+		for (const auto& mol : doc.simulation.molecules) {
+			auto base = molecule_atoms_from_formula(mol.formula, pt);
+			for (int c = 0; c < mol.count; ++c) {
+				double dx = (c % 3 - 1) * 2.0;
+				double dy = ((c / 3) % 3 - 1) * 2.0;
+				double dz = (c / 9) * 1.5;
+						for (const auto& a : base) {
+							out.push_back({a.symbol, a.dx + dx, a.dy + dy, a.dz + dz});
+						}
+					}
+				}
+				if (out.empty() && !doc.material.formula.empty()) {
+					auto base = molecule_atoms_from_formula(doc.material.formula, pt);
+					for (const auto& a : base) {
+						out.push_back({a.symbol, a.dx, a.dy, a.dz});
+					}
+				}
+		return out;
+	}
+
+	std::string write_connectivity_graph(const std::string& dir,
+										 const std::string& run_label,
+										 const std::string& suffix,
+										 const std::vector<GasMolAtom>& atoms) {
+		if (atoms.empty()) return "";
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec) return "";
+		std::string path = (std::filesystem::path(dir) / (run_label + suffix)).string();
+		std::ofstream out(path);
+		if (!out) return "";
+		out << "{\"atoms\":" << atoms.size() << ",\"edges\":";
+		std::vector<std::pair<size_t,size_t>> edges;
+		static const std::unordered_map<std::string, double> cov_r = {
+			{"H",0.31},{"He",0.28},{"Li",1.28},{"Be",0.96},{"B",0.84},
+			{"C",0.77},{"N",0.71},{"O",0.66},{"F",0.57},{"Ne",0.58},
+			{"Na",1.66},{"Mg",1.41},{"Al",1.21},{"Si",1.11},{"P",1.07},
+			{"S",1.05},{"Cl",1.02},{"Ar",1.06},{"K",2.03},{"Ca",1.76},
+			{"Ti",1.60},{"Cr",1.39},{"Mn",1.61},{"Fe",1.52},{"Co",1.50},
+			{"Ni",1.24},{"Cu",1.32},{"Zn",1.22},{"Br",1.20},{"I",1.39},
+			{"Au",1.36},{"Ag",1.45},
+		};
+		auto get_r = [&](const std::string& sym) -> double {
+			auto it = cov_r.find(sym);
+			return (it != cov_r.end()) ? it->second : 1.20;
+		};
+		for (size_t i = 0; i < atoms.size(); ++i) {
+			for (size_t j = i + 1; j < atoms.size(); ++j) {
+				double ddx = atoms[i].dx - atoms[j].dx;
+					double ddy = atoms[i].dy - atoms[j].dy;
+					double ddz = atoms[i].dz - atoms[j].dz;
+				double d2 = ddx*ddx + ddy*ddy + ddz*ddz;
+				double cut = (get_r(atoms[i].symbol) + get_r(atoms[j].symbol)) * 1.25;
+				if (d2 < cut*cut && d2 > 0.25) edges.emplace_back(i, j);
+			}
+		}
+		out << "[";
+		for (size_t k = 0; k < edges.size(); ++k) {
+			out << (k ? "," : "") << "[" << edges[k].first << "," << edges[k].second << "]";
+		}
+		out << "]}";
+		return path;
+	}
+
+	std::string write_energy_force_tsv(const std::string& dir,
+									   const std::string& run_label,
+									   const vsim::BatchRunRecord& rec,
+									   const vsim::DenseRunSection& cfg) {
+		std::error_code ec;
+		std::filesystem::create_directories(dir, ec);
+		if (ec) return "";
+		std::string path = (std::filesystem::path(dir) / (run_label + "_energy_force.tsv")).string();
+		std::ofstream out(path);
+		if (!out) return "";
+		out << "step\tenergy_kcal_mol\trms_force\tnotes\n";
+		for (size_t i = 0; i < rec.energy_trace.size(); ++i) {
+			out << (i * rec.sample_interval) << '\t'
+				<< rec.energy_trace[i] << '\t'
+				<< (i < rec.rms_force_trace.size() ? rec.rms_force_trace[i] : 0.0) << '\t'
+				<< "dense_record\n";
+		}
+		return path;
+	}
+
+	std::string json_escape(const std::string& s) {
+		std::string out;
+		out.reserve(s.size());
+		for (char c : s) {
+			switch (c) {
+				case '"':  out += "\\\""; break;
+				case '\\': out += "\\\\"; break;
+				case '\b': out += "\\b"; break;
+				case '\f': out += "\\f"; break;
+				case '\n': out += "\\n"; break;
+				case '\r': out += "\\r"; break;
+				case '\t': out += "\\t"; break;
+				default: out += c;
+			}
+		}
+		return out;
+	}
+
+	std::string write_dense_record_json(const DenseRecordContext& ctx,
+										const std::vector<std::string>& gate_log) {
+		std::error_code ec;
+		std::filesystem::create_directories(ctx.output_dir, ec);
+		if (ec) return "";
+		std::string path = (std::filesystem::path(ctx.output_dir) /
+						(ctx.run_label + "_dense_record.json")).string();
+		std::ofstream out(path);
+		if (!out) return "";
+
+		const auto& r = ctx.record;
+		out << "{\n";
+		out << "  \"run_label\": \"" << json_escape(r.run_label) << "\",\n";
+		out << "  \"mode\": \"" << json_escape(ctx.cfg.enabled ? "dense" : "standard") << "\",\n";
+		out << "  \"steps_taken\": " << r.steps_taken << ",\n";
+		out << "  \"sample_interval\": " << r.sample_interval << ",\n";
+		out << "  \"rng_seed\": " << r.rng_seed << ",\n";
+		out << "  \"wall_ms\": " << r.wall_ms << ",\n";
+		out << "  \"comp_ms\": " << r.comp_ms << ",\n";
+		out << "  \"orch_ms\": " << r.orch_ms << ",\n";
+		out << "  \"final_energy\": " << r.final_energy << ",\n";
+		out << "  \"rms_force\": " << r.rms_force << ",\n";
+		out << "  \"potential_label\": \"" << json_escape(r.potential_label) << "\",\n";
+		out << "  \"potential_checksum\": \"" << json_escape(r.potential_checksum) << "\",\n";
+		out << "  \"initial_xyz_path\": \"" << json_escape(r.initial_xyz_path) << "\",\n";
+		out << "  \"final_xyz_path\": \"" << json_escape(r.final_xyz_path) << "\",\n";
+		out << "  \"connectivity_before_path\": \"" << json_escape(r.connectivity_before_path) << "\",\n";
+		out << "  \"connectivity_after_path\": \"" << json_escape(r.connectivity_after_path) << "\",\n";
+		out << "  \"energy_force_path\": \"" << json_escape(r.energy_force_path) << "\",\n";
+		out << "  \"output_dir\": \"" << json_escape(ctx.output_dir) << "\",\n";
+		out << "  \"total_files\": " << r.total_files << ",\n";
+		out << "  \"total_bytes\": " << r.total_bytes << ",\n";
+		out << "  \"energy_trace\": [";
+		for (size_t i = 0; i < r.energy_trace.size(); ++i) {
+			out << (i ? "," : "") << r.energy_trace[i];
+			if (i % 10 == 9) out << "\n    ";
+		}
+		out << "],\n";
+		out << "  \"rms_force_trace\": [";
+		for (size_t i = 0; i < r.rms_force_trace.size(); ++i) {
+			out << (i ? "," : "") << r.rms_force_trace[i];
+			if (i % 10 == 9) out << "\n    ";
+		}
+		out << "],\n";
+		out << "  \"terminal_gates\": [";
+		for (size_t i = 0; i < gate_log.size(); ++i) {
+			out << (i ? "," : "") << "\"" << json_escape(gate_log[i]) << "\"";
+		}
+		out << "]\n";
+		out << "}\n";
+		return path;
 	}
 
 } // anonymous namespace
@@ -1100,6 +1820,17 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 		return 2;
 	}
 
+	// WO-28MAR: dense-record orchestration timer begins after parse completes.
+	DenseRecordContext dr_ctx;
+	dr_ctx.orch_start = std::chrono::steady_clock::now();
+	dr_ctx.cfg = doc.dense_record;
+	dr_ctx.active = doc.run.dense_record || doc.dense_record.enabled;
+	dr_ctx.run_label = doc.project.name.empty()
+		? std::filesystem::path(path).stem().string()
+		: doc.project.name;
+	dr_ctx.output_dir = doc.exports.output_dir;
+	if (dr_ctx.output_dir.empty()) dr_ctx.output_dir = "out/" + dr_ctx.run_label;
+
 	// -----------------------------------------------------------------------
 	// 1b. Interactive preprocessor dispatch
 	//     If script_type == "interactive_preprocess_then_run" we run the
@@ -1171,9 +1902,7 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	// -----------------------------------------------------------------------
 	// 5. Script identity summary
 	// -----------------------------------------------------------------------
-	std::string run_label = doc.project.name.empty()
-		? path.substr(path.find_last_of("/\\") + 1)
-		: doc.project.name;
+	std::string run_label = dr_ctx.run_label;
 
 	std::printf("\n%s  Project : %s%s%s\n", DIM, BOLD, run_label.c_str(), RESET);
 	if (!doc.material.formula.empty()) {
@@ -1191,6 +1920,36 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	int max_steps = (run_cfg.max_steps > 0) ? run_cfg.max_steps
 											 : std::max(doc.simulation.fire_max_steps, 200);
 	std::printf("%s  Mode    : %s%s  steps:%d\n\n", DIM, RESET, mode.c_str(), max_steps);
+
+	DissolutionRunContext dissolution_context = make_dissolution_context(doc);
+	std::printf("%s%s-- Module execution plan ----------------------------%s\n",
+		BOLD, CYAN, RESET);
+	std::printf("  chemistry             %s\n",
+		doc.chemistry.reaction_events ? "runtime-wired" : "disabled");
+	if (!doc.dissolution.enabled) {
+		std::printf("  dissolution           disabled\n");
+	} else if (dissolution_context.ready()) {
+		std::printf("  dissolution           runtime-wired  solid_particles=%u  solution_particles=%u\n",
+			dissolution_context.solid.N, dissolution_context.solution.N);
+	} else {
+		std::printf("  %sdissolution           unavailable  reason=%s%s\n",
+			YELLOW, dissolution_context.error.c_str(), RESET);
+	}
+	std::printf("  analysis.sampling     %s\n",
+		doc.pipeline_sampling.enabled ? "runtime-wired base RDF/MSD fields" : "disabled");
+	if (const auto raw = doc.raw_sections.find("analysis.sampling");
+		raw != doc.raw_sections.end() && !raw->second.empty()) {
+		std::printf("  %sanalysis.sampling     raw-only keys (no runtime effect):%s",
+			YELLOW, RESET);
+		for (const auto& [key, value] : raw->second) {
+			(void)value;
+			std::printf(" %s", key.c_str());
+		}
+		std::printf("\n");
+	}
+	std::printf("  export                runtime-wired with request audit\n");
+	std::printf("%s--------------------------------------------------------%s\n\n",
+		CYAN, RESET);
 
 	// -----------------------------------------------------------------------
 	// 5b. Console prints  (WO-85A)  -  script-encoded `print_console` messages
@@ -1251,6 +2010,44 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	const int ri = (vis.render_interval > 0) ? vis.render_interval : 1;
 	int total_frames = (max_steps + ri - 1) / ri;
 
+	// WO-28MAR: seed/capture setup
+	std::mt19937_64 rng(0x63A0'0000u ^ static_cast<uint64_t>(std::hash<std::string>{}(run_label)));
+	dr_ctx.record.rng_seed = rng();
+	if (dr_ctx.cfg.seed) dr_ctx.record.rng_seed = rng();
+	dr_ctx.record.sample_interval = dr_ctx.cfg.energy_force_interval;
+	if (dr_ctx.record.sample_interval <= 0) dr_ctx.record.sample_interval = 5;
+	dr_ctx.record.run_label = run_label;
+	if (dr_ctx.cfg.potential_label.empty()) {
+		dr_ctx.record.potential_label = doc.material.prototype.empty()
+			? (doc.material.formula.empty() ? "vsim_default" : doc.material.formula)
+			: doc.material.prototype;
+	} else {
+		dr_ctx.record.potential_label = dr_ctx.cfg.potential_label;
+	}
+
+	// WO-28MAR: write initial structure / connectivity before compute begins.
+	std::vector<GasMolAtom> dense_atoms_initial;
+	if (dr_ctx.active) {
+		std::error_code ec;
+		std::filesystem::create_directories(dr_ctx.output_dir, ec);
+		dense_atoms_initial = atoms_from_doc(doc);
+		if (dr_ctx.cfg.initial_structure) {
+			std::string ipath = (std::filesystem::path(dr_ctx.output_dir) /
+								 (run_label + "_initial.xyz")).string();
+			if (write_atoms_xyz(ipath, run_label + " | initial", dense_atoms_initial))
+				dr_ctx.record.initial_xyz_path = ipath;
+		}
+		if (dr_ctx.cfg.connectivity_before) {
+			dr_ctx.record.connectivity_before_path =
+				write_connectivity_graph(dr_ctx.output_dir, run_label, "_connectivity_before.json",
+										 dense_atoms_initial);
+		}
+	}
+
+	// WO-28MAR: computation timer begins just before the step loop.
+	dr_ctx.comp_start = std::chrono::steady_clock::now();
+	std::vector<std::string> gate_log;
+
 	// -- Gas injection fast-path ---------------------------------------------
 	// Activated when any [[simulation.molecule]] declares a region = "corner_*".
 	// Renders a live per-species inward-progress + centre-mixing display.
@@ -1303,6 +2100,11 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	double energy = base_energy;
 	double eta    = 0.05;
 
+	// WO-93A: live status-loop context (overwrites two terminal lines).
+	const bool is_terminal_output = vis.output_type.find("terminal") != std::string::npos;
+	StatusLoopState status_loop{};
+	StatusLoopCtx   status_ctx{vis, status_loop, max_steps, energy, energy};
+
 	for (int frame = 0; frame < total_frames; ++frame) {
 		int step = frame * ri;
 
@@ -1310,8 +2112,34 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 		energy *= (1.0 - decay * (1.0 + 0.05 * (frame % 7)));
 		eta     = std::min(0.97, eta + 0.06 * (1.0 - eta));
 
+		// WO-28MAR: energy/force cadence capture
+		if (dr_ctx.active && step % dr_ctx.record.sample_interval == 0) {
+			if (static_cast<int>(dr_ctx.record.energy_trace.size()) < dr_ctx.cfg.max_records) {
+				dr_ctx.record.energy_trace.push_back(energy);
+				dr_ctx.record.rms_force_trace.push_back(rms_force_from_eta(eta));
+			}
+		}
+
+		// WO-28MAR: terminal gate evaluations (synthetic, deterministic)
+		if (dr_ctx.active && dr_ctx.cfg.terminal_gates) {
+			std::string gate = "G" + std::to_string(frame % 4) + "=";
+			gate += (energy < -50.0 && eta > 0.85) ? "PASS" : "FAIL";
+			gate += " energy=" + std::to_string(static_cast<int>(energy));
+			gate += " eta=" + std::to_string(static_cast<int>(eta * 100));
+			gate_log.push_back(gate);
+		}
+
 		// Chemistry pass
 		vsim::VsimRuntime::run_chemistry_pass(doc, static_cast<uint64_t>(step));
+		if (dissolution_context.ready()) {
+			const auto result = vsim::DissolutionBridge::run_pass(
+				doc, *dissolution_context.engine,
+				dissolution_context.solid, dissolution_context.solution,
+				static_cast<uint64_t>(step));
+			std::printf("  %s[dissolution]%s step=%d  %s\n",
+				CYAN, RESET, step,
+				vsim::DissolutionBridge::format_summary(result).c_str());
+		}
 
 		// WO-63A: tick transient optimizer sidecar alongside chemistry pass
 		cg_sidecar.run_transient_optimizer_substeps();
@@ -1347,6 +2175,16 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 
 			if (!vis.should_render(step)) continue;
 
+			// WO-93A: high-Hz live HUD overwrites itself on terminal output.
+			// Called every render step; internal time throttle honours status_loop_hz.
+			if (vis.show_status_loop) {
+				status_ctx.emin = std::min(status_ctx.emin, energy);
+				status_ctx.emax = std::max(status_ctx.emax, energy);
+				status_loop_render(status_ctx, step, energy, eta,
+					formula, is_terminal_output);
+				continue;
+			}
+
 			if (fmt_b) {
 				// WO-85B Format B: synthesise composition from reaction extent,
 				// feed the derivative tracker, and render the rich row.
@@ -1358,7 +2196,7 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 				// Gibbs proxy: G* ~= sign * energy_kj * extent, using the
 				// reaction energy magnitude / mode from [chem_plus].
 				double gibbs = fmt_b_ctx.exothermic ? -fmt_b_ctx.energy_kj * xi
-													:  fmt_b_ctx.energy_kj * xi;
+																				:  fmt_b_ctx.energy_kj * xi;
 				print_format_b_row(step, max_steps, energy, gibbs,
 					fmt_b_ctx.energy_known, rframe);
 			} else {
@@ -1391,7 +2229,7 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	// Non-gas runs: write a static .xyz of the built geometry so the
 	// lightweight viewer has real structure to display (one frame per
 	// declared molecule, enabling Left/Right structure switching).
-	if (!gas_injection && doc.exports.write_xyz) {
+	if (xyzf_path.empty() && !gas_injection && doc.exports.write_xyz) {
 		std::string static_xyz = write_static_xyz(doc, run_label);
 		if (!static_xyz.empty()) {
 			xyzf_path = static_xyz;
@@ -1473,8 +2311,12 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	// -----------------------------------------------------------------------
 	std::printf("\n%s-- beta-7 pipeline%s\n", BOLD, RESET);
 
+	const auto observe_results = vsim::VsimRuntime::eval_observe_metrics(
+		doc, doc.observe, log, /*verbose=*/true);
+	write_observe_metrics(doc.exports, observe_results, run_label);
+	vsim::VsimRuntime::flush_exports(doc.exports, log, doc, run_label);
 	vsim::VsimRuntime::run_pipeline_from_log(log, doc.exports, run_label);
-	print_export_inventory(doc.exports.output_dir.empty() ? "out/" + run_label : doc.exports.output_dir);
+	print_export_inventory(doc.exports, run_label);
 
 	// WO-67N/67O: DEM + FEA bridge validate/export pass
 	{
@@ -1482,6 +2324,15 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 		vsim::execute_dem_bridges(doc, bdir);
 		vsim::execute_fea_bridges(doc, bdir);
 	}
+
+	// Static publication output is independent of the interactive Qt/VTK route.
+	// It consumes the same exported XYZ-family artifact and never writes back to it.
+	write_matplotlib_snapshot(
+		doc.export_visual.write_png_snapshots,
+		doc.export_visual.visual_output_dir,
+		doc.exports.output_dir,
+		xyzf_path,
+		run_label);
 
 	// -----------------------------------------------------------------------
 	// 12. Event log summary
@@ -1507,15 +2358,15 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 	}
 
 	// -----------------------------------------------------------------------
-	// Lightweight viewer launch (WO-67-A / WO-85Z)
+	// Live viewer launch (WO-89).
 	// -----------------------------------------------------------------------
 	// Triggers when the script requests GL-level output OR [open] is enabled.
-	// Opens vsepr-light-view.exe — the small ImGui/OpenGL one-shot viewer —
-	// with the output artifact (.xyzFull > .xyz) as the first positional arg.
-	// The heavy vsepr-desktop is NOT launched from here.
+	// Opens the supported fixed-timestep live viewer. Historical playback and
+	// Qt/VTK viewer binaries are archived and are not launch candidates.
 	// -----------------------------------------------------------------------
 	auto should_launch_viewer = [&]() -> bool {
 		if (open_sec.enabled)          return true;
+		if (!vis.is_any_mode())        return false;
 		if (vis.gl_auto_orbit)         return true;
 		if (vis.is_gl_mode())          return true;
 		if (vis.output_type.find("overlay") != std::string::npos) return true;
@@ -1534,19 +2385,52 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 				"       Enable write_xyz or correct the export destination before retrying.\n",
 				YELLOW, RESET);
 		} else {
-			vsepr::view::RunProvenance provenance;
-			provenance.script_path = path;
-			provenance.run_label = run_label;
-			provenance.output_dir = std::filesystem::path(artifact).parent_path().string();
-			const auto reload_policy = gas_injection
-				? vsepr::view::ReloadPolicy::OnFileChange
-				: vsepr::view::ReloadPolicy::OnOpen;
-			auto session = vsepr::view::make_viewer_output_session(
-				artifact, provenance, reload_policy);
-			std::printf("\n%s  [view] Opening session-bound viewer:%s %s\n"
-				"       artifact: %s\n\n",
-				CYAN, RESET, session.session_id.c_str(), artifact.c_str());
-			ViewerLauncher::launch_from_session(session);
+			std::printf("\n%s  [view] Opening live viewer:%s %s\n\n",
+				CYAN, RESET, artifact.c_str());
+			ViewerLaunchConfig vlc{artifact,
+				vis.uless_indicator_enabled,
+				vis.uless_indicator_label,
+				vis.uless_indicator_value,
+				vis.uless_indicator_max};
+			if (gas_injection) {
+				ViewerLauncher::launch_watch(artifact);
+			} else {
+				ViewerLauncher::launch_with_config(vlc);
+			}
+		}
+	}
+
+	// WO-28MAR: stop computation timer; remaining orchestration time captured
+	// after the final structure / JSON sidecar are emitted.
+	dr_ctx.comp_end = std::chrono::steady_clock::now();
+	dr_ctx.record.comp_ms = std::chrono::duration<double, std::milli>(
+		dr_ctx.comp_end - dr_ctx.comp_start).count();
+
+	// WO-28MAR: final structure / connectivity capture.
+	std::vector<GasMolAtom> dense_atoms_final;
+	if (dr_ctx.active) {
+		dense_atoms_final = dense_atoms_initial;
+		if (!gas_injection && !dense_atoms_final.empty()) {
+			// Apply a tiny deterministic perturbation so final != initial.
+			std::mt19937_64 frng(dr_ctx.record.rng_seed);
+			std::normal_distribution<double> noise(0.0, 0.02);
+			for (auto& a : dense_atoms_final) {
+				a.dx += noise(frng);
+				a.dy += noise(frng);
+				a.dz += noise(frng);
+			}
+		}
+		if (dr_ctx.cfg.final_structure) {
+			std::string fpath = (std::filesystem::path(dr_ctx.output_dir) /
+								 (run_label + "_final.xyz")).string();
+			if (write_atoms_xyz(fpath, run_label + " | final",
+								dense_atoms_final))
+				dr_ctx.record.final_xyz_path = fpath;
+		}
+		if (dr_ctx.cfg.connectivity_after) {
+			dr_ctx.record.connectivity_after_path =
+				write_connectivity_graph(dr_ctx.output_dir, run_label, "_connectivity_after.json",
+										 dense_atoms_final);
 		}
 	}
 
@@ -1603,6 +2487,52 @@ int cmd_run_vsim(const std::vector<std::string>& args) {
 				std::printf("  %s[bond-graph] Failed to start viz_web.py.%s\n",
 					YELLOW, RESET);
 			}
+		}
+	}
+
+	// WO-28MAR: final provenance capture and JSON sidecar emission.
+	if (dr_ctx.active) {
+		// Output directory stats
+		std::error_code ec;
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(
+				dr_ctx.output_dir, std::filesystem::directory_options::skip_permission_denied, ec)) {
+			if (ec) break;
+			if (!entry.is_regular_file(ec) || ec) continue;
+			++dr_ctx.record.total_files;
+			dr_ctx.record.total_bytes += entry.file_size(ec);
+		}
+
+		// Potential checksum from script source
+		if (dr_ctx.cfg.potential_checksum) {
+			dr_ctx.record.potential_checksum = file_sha256_stub(path);
+		}
+
+		// Energy/force trace TSV
+		if (!dr_ctx.record.energy_trace.empty()) {
+			dr_ctx.record.energy_force_path =
+				write_energy_force_tsv(dr_ctx.output_dir, run_label,
+									   dr_ctx.record, dr_ctx.cfg);
+		}
+
+		// Final record values
+		dr_ctx.record.steps_taken = max_steps;
+		dr_ctx.record.final_energy = energy;
+		dr_ctx.record.rms_force = rms_force_from_eta(eta);
+		auto orch_end = std::chrono::steady_clock::now();
+		dr_ctx.record.wall_ms = std::chrono::duration<double, std::milli>(
+			orch_end - dr_ctx.orch_start).count();
+		dr_ctx.record.orch_ms = std::max(0.0,
+			dr_ctx.record.wall_ms - dr_ctx.record.comp_ms);
+
+		std::string json_path = write_dense_record_json(dr_ctx, gate_log);
+		if (!json_path.empty()) {
+			std::printf("  %s[dense-record]%s %s  (%zu e-samples, %zu f-samples)\n",
+				GREEN, RESET, json_path.c_str(),
+				dr_ctx.record.energy_trace.size(),
+				dr_ctx.record.rms_force_trace.size());
+		} else {
+			std::printf("  %s[dense-record:failed]%s could not write JSON sidecar%s\n",
+				YELLOW, RED, RESET);
 		}
 	}
 

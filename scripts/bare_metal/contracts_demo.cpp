@@ -1,6 +1,6 @@
-/**
+﻿/**
  * contracts_demo.cpp
- * ──────────────────
+ * ------------------
  * C++26 bare-metal script #2: Runtime Contracts, Stacktrace,
  * and hot-reload-friendly shared-lib architecture.
  *
@@ -24,7 +24,7 @@
 #include <sstream>
 #include <cstring>
 
-// ── Stacktrace (C++23 / GCC 14 -lstdc++exp) ──────────────────────────────────
+// -- Stacktrace (C++23 / GCC 14 -lstdc++exp) ----------------------------------
 #if __has_include(<stacktrace>)
   #include <stacktrace>
   #define HAS_STACKTRACE 1
@@ -42,7 +42,7 @@ static void print_trace(const char* label) {
 #endif
 }
 
-// ── Contract emulation ────────────────────────────────────────────────────────
+// -- Contract emulation --------------------------------------------------------
 // C++26 [[pre: cond]] / [[post: cond]] syntax is not yet in GCC 14.
 // We emulate it as executable documentation that fires immediately on violation.
 
@@ -62,7 +62,7 @@ static void print_trace(const char* label) {
         std::abort();                                                         \
     }} while(0)
 
-// ── Contracted matrix element access ──────────────────────────────────────────
+// -- Contracted matrix element access ------------------------------------------
 auto get_element(const Matrix& m, size_t r, size_t c) -> double {
     // C++26 contract (emulated): [[pre: r < m.rows && c < m.cols]]
     CONTRACT_PRE(r < m.rows && c < m.cols);
@@ -72,7 +72,7 @@ auto get_element(const Matrix& m, size_t r, size_t c) -> double {
     return val;
 }
 
-// ── Contracted matrix multiply ────────────────────────────────────────────────
+// -- Contracted matrix multiply ------------------------------------------------
 auto safe_mat_mul(const Matrix& A, const Matrix& B) -> Matrix {
     CONTRACT_PRE(A.cols == B.rows);
     auto C = mat_mul(A, B);
@@ -80,7 +80,7 @@ auto safe_mat_mul(const Matrix& A, const Matrix& B) -> Matrix {
     return C;
 }
 
-// ── Contracted norm ───────────────────────────────────────────────────────────
+// -- Contracted norm -----------------------------------------------------------
 auto safe_norm(const Matrix& m) -> double {
     CONTRACT_PRE(m.size() > 0);
     double n = m.frobenius_norm();
@@ -88,9 +88,9 @@ auto safe_norm(const Matrix& m) -> double {
     return n;
 }
 
-// ── Demo: contracts in action ─────────────────────────────────────────────────
+// -- Demo: contracts in action -------------------------------------------------
 static void demo_contracts() {
-    std::cout << "\n── Runtime Contracts as Executable Documentation ───────\n";
+    std::cout << "\n-- Runtime Contracts as Executable Documentation -------\n";
 
     auto A = create_matrix(4, 4);
     std::mt19937 rng(42);
@@ -117,33 +117,33 @@ static void demo_contracts() {
     std::cout << "  Contracts: 6 checked, 0 violations\n";
 }
 
-// ── Demo: stacktrace ──────────────────────────────────────────────────────────
+// -- Demo: stacktrace ----------------------------------------------------------
 static void inner_function() { print_trace("inner_function call site"); }
 static void middle_function() { inner_function(); }
 static void outer_function() { middle_function(); }
 
 static void demo_stacktrace() {
-    std::cout << "\n── Native Stack Traces (C++23 <stacktrace>) ───────────\n";
+    std::cout << "\n-- Native Stack Traces (C++23 <stacktrace>) -----------\n";
     outer_function();
 }
 
-// ── Demo: hot-reload architecture ─────────────────────────────────────────────
+// -- Demo: hot-reload architecture ---------------------------------------------
 static void demo_hot_reload_concept() {
-    std::cout << "\n── Hot Reload Architecture (Shared Library Pattern) ────\n";
+    std::cout << "\n-- Hot Reload Architecture (Shared Library Pattern) ----\n";
     std::cout << "  Compile matrix_ops as shared lib:\n";
     std::cout << "    g++ -std=c++23 -shared -fPIC -O2 matrix_ops.cpp -o libmatrix.so\n";
     std::cout << "  Main program loads via dlopen():\n";
     std::cout << "    void* lib = dlopen(\"./libmatrix.so\", RTLD_NOW);\n";
     std::cout << "    auto create = (create_fn)dlsym(lib, \"create_matrix\");\n";
-    std::cout << "  Modify matrix_ops.cpp → recompile → dlclose + dlopen\n";
-    std::cout << "  → Functions update without restarting the process.\n";
+    std::cout << "  Modify matrix_ops.cpp -> recompile -> dlclose + dlopen\n";
+    std::cout << "  -> Functions update without restarting the process.\n";
     std::cout << "  Tools: Jet-Live, Live++, or manual dlopen cycle.\n";
     std::cout << "  ✓ Pattern documented (not executed in this demo)\n";
 }
 
-// ── Demo: erroneous behaviour trapping ────────────────────────────────────────
+// -- Demo: erroneous behaviour trapping ----------------------------------------
 static void demo_erroneous_pattern() {
-    std::cout << "\n── Erroneous Behaviour Pattern Init ────────────────────\n";
+    std::cout << "\n-- Erroneous Behaviour Pattern Init --------------------\n";
     std::cout << "  Compile flag: -ftrivial-auto-var-init=pattern\n";
     std::cout << "  GCC 14/15 scribbles 0xFE into uninitialised stack vars\n";
 
@@ -162,9 +162,9 @@ static void demo_erroneous_pattern() {
     std::cout << "  ✓ Predictable crash instead of silent corruption\n";
 }
 
-// ── Stress test with contracts ────────────────────────────────────────────────
+// -- Stress test with contracts ------------------------------------------------
 static void demo_stress_contracts() {
-    std::cout << "\n── Stress: 10000 Contracted Operations ─────────────────\n";
+    std::cout << "\n-- Stress: 10000 Contracted Operations -----------------\n";
 
     auto t0 = std::chrono::high_resolution_clock::now();
     size_t checks = 0;
@@ -194,11 +194,11 @@ static void demo_stress_contracts() {
 }
 
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║    VSEPR-SIM  Bare Metal Script #2                      ║\n";
-    std::cout << "║    C++26 Contracts · Stacktrace · Hot Reload            ║\n";
-    std::cout << "║    AlmaLinux 10 · GCC 14.3.1 · i9-13900K               ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==========================================================+\n";
+    std::cout << "|    VSEPR-SIM  Bare Metal Script #2                      |\n";
+    std::cout << "|    C++26 Contracts · Stacktrace · Hot Reload            |\n";
+    std::cout << "|    AlmaLinux 10 · GCC 14.3.1 · i9-13900K               |\n";
+    std::cout << "+==========================================================+\n";
 
     demo_contracts();
     demo_stacktrace();
@@ -206,6 +206,6 @@ int main() {
     demo_hot_reload_concept();
     demo_stress_contracts();
 
-    std::cout << "\n── Complete ────────────────────────────────────────────\n";
+    std::cout << "\n-- Complete --------------------------------------------\n";
     return 0;
 }

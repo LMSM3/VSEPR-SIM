@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_heat_gate.cpp
  * ------------------
  * Validation tests for the heat-gated reaction control system (SS8b).
@@ -102,24 +102,24 @@ void test_enable_weights() {
 }
 
 // ============================================================================
-// Test 4: Temperature → Heat Conversion (CRITICAL - Item #7)
+// Test 4: Temperature -> Heat Conversion (CRITICAL - Item #7)
 // ============================================================================
 void test_temperature_to_heat_conversion() {
     // Default slope = 1.5
 
-    // Cold regime: T < 167 K → h < 250 (organic mode)
-    CHECK(temperature_to_heat(100.0) < 250, "T=100K → h < 250");
-    CHECK(temperature_to_heat(166.0) < 250, "T=166K → h < 250");
+    // Cold regime: T < 167 K -> h < 250 (organic mode)
+    CHECK(temperature_to_heat(100.0) < 250, "T=100K -> h < 250");
+    CHECK(temperature_to_heat(166.0) < 250, "T=166K -> h < 250");
 
-    // Transitional regime: 167 K < T < 433 K → 250 ≤ h < 650
+    // Transitional regime: 167 K < T < 433 K -> 250 ≤ h < 650
     uint16_t h_mid = temperature_to_heat(300.0);  // Room temperature
-    CHECK(h_mid >= 250 && h_mid < 650, "T=300K → 250 ≤ h < 650 (transitional)");
+    CHECK(h_mid >= 250 && h_mid < 650, "T=300K -> 250 ≤ h < 650 (transitional)");
 
-    // Hot regime: T > 433 K → h ≥ 650 (full bio)
-    CHECK(temperature_to_heat(500.0) >= 650, "T=500K → h ≥ 650");
-    CHECK(temperature_to_heat(700.0) == 999, "T=700K → h = 999 (saturated)");
+    // Hot regime: T > 433 K -> h ≥ 650 (full bio)
+    CHECK(temperature_to_heat(500.0) >= 650, "T=500K -> h ≥ 650");
+    CHECK(temperature_to_heat(700.0) == 999, "T=700K -> h = 999 (saturated)");
 
-    // Monotonicity: higher T → higher h
+    // Monotonicity: higher T -> higher h
     for (double T = 0; T < 800; T += 50) {
         uint16_t h1 = temperature_to_heat(T);
         uint16_t h2 = temperature_to_heat(T + 50);
@@ -127,17 +127,17 @@ void test_temperature_to_heat_conversion() {
     }
 
     // Inverse mapping
-    CHECK_CLOSE(heat_to_temperature(0), 0.0, 0.1, "h=0 → T~0K");
-    CHECK_CLOSE(heat_to_temperature(375), 250.0, 1.0, "h=375 → T~250K");
-    CHECK_CLOSE(heat_to_temperature(999), 666.0, 1.0, "h=999 → T~666K");
+    CHECK_CLOSE(heat_to_temperature(0), 0.0, 0.1, "h=0 -> T~0K");
+    CHECK_CLOSE(heat_to_temperature(375), 250.0, 1.0, "h=375 -> T~250K");
+    CHECK_CLOSE(heat_to_temperature(999), 666.0, 1.0, "h=999 -> T~666K");
 
     // Controller integration
     HeatGateController ctrl;
     ctrl.set_heat_from_temperature(300.0);  // Room temperature
 
-    // At 300K, we expect h ~ 450 → transitional mode
+    // At 300K, we expect h ~ 450 -> transitional mode
     uint16_t h_rt = ctrl.config().heat_3;
-    CHECK(h_rt >= 250 && h_rt < 650, "Controller: T=300K → transitional mode");
+    CHECK(h_rt >= 250 && h_rt < 650, "Controller: T=300K -> transitional mode");
 
     // Mode index should be between 0 and 1
     double mode = ctrl.mode_index();
@@ -438,9 +438,9 @@ void test_bio_template_factories() {
 // ============================================================================
 
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════╗\n";
-    std::cout << "║  Heat-Gated Reaction Control Tests (SS8b)       ║\n";
-    std::cout << "╚══════════════════════════════════════════════════╝\n\n";
+    std::cout << "+==================================================+\n";
+    std::cout << "|  Heat-Gated Reaction Control Tests (SS8b)       |\n";
+    std::cout << "+==================================================+\n\n";
 
     test_heat_normalisation();
     test_gate_function();
@@ -456,10 +456,10 @@ int main() {
     test_engine_heat_integration();
     test_bio_template_factories();
 
-    std::cout << "\n────────────────────────────────────────────────────\n";
+    std::cout << "\n----------------------------------------------------\n";
     std::cout << "  PASSED: " << tests_passed << "\n";
     std::cout << "  FAILED: " << tests_failed << "\n";
-    std::cout << "────────────────────────────────────────────────────\n";
+    std::cout << "----------------------------------------------------\n";
 
     if (tests_failed == 0) {
         std::cout << "  ✓ ALL TESTS PASSED\n";

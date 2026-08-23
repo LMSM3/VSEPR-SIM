@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file test_formula_parser.cpp
  * @brief Comprehensive automated testing for formula parser
  * 
@@ -273,7 +273,7 @@ void test_utility_functions(const PeriodicTable& pt) {
     TEST("molecular_mass H2O") {
         auto comp = parse("H2O", pt);
         double mass = molecular_mass(comp, pt);
-        // H: ~1.008, O: ~15.999 → ~18.015
+        // H: ~1.008, O: ~15.999 -> ~18.015
         EXPECT_TRUE(mass > 17.0 && mass < 19.0);
     } END_TEST
     
@@ -397,7 +397,7 @@ void test_properties(const PeriodicTable& pt) {
                 ++success;
             } else {
                 std::cout << "\nRoundtrip failed: " << orig 
-                          << " → " << reconstructed << "\n";
+                          << " -> " << reconstructed << "\n";
             }
         }
         

@@ -1,0 +1,65 @@
+# e16_surface_energy_flux.vsim
+# =============================================================================
+# E16  --  Kinetic Energy Flux (Q) Through a Disk Probe
+#
+# Purpose: Computes the kinetic-energy flux Q = sum(0.5 m v^2) crossing
+#          a circular disk placed perpendicular to the Z axis.
+#          Models a thermal-energy measurement plane in a 3D Ar gas.
+#
+# Key concepts:
+#   geometry = "disk"  ->  circular probe; radius field controls size.
+#   compute_energy_flux = true  ->  Q metric in surface.json.
+#   normal_z = 1.0 orients the disk perpendicular to the Z axis.
+# =============================================================================
+
+[project]
+name        = "e16_surface_energy_flux"
+version     = "v5.0.14"
+seed_base   = 1600
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 1024
+temperature = 500.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 8000
+dt_fs     = 2.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e16"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e16/surfaces"
+
+[[object.surface]]
+name                 = "thermal_disk_z"
+geometry             = "disk"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 5.0
+normal_x             = 0.0
+normal_y             = 0.0
+normal_z             = 1.0
+radius               = 12.0
+log_crossings        = true
+compute_energy_flux  = true
+output_tag           = "Q_disk_z"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 400

@@ -1,5 +1,5 @@
-/**
- * test_orientation_coupling.cpp — Orientation-Coupled Interaction Tests
+﻿/**
+ * test_orientation_coupling.cpp  -  Orientation-Coupled Interaction Tests
  *
  * Validates the orientation-coupled interaction framework using benzene
  * dimer configurations as the canonical test case.

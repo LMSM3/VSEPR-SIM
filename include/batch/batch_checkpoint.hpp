@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_checkpoint.hpp
  * =====================================
- * WO-VSIM-62C — Checkpoint System
+ * WO-VSIM-62C  -  Checkpoint System
  *
  * Checkpoint file: <study.name>/batch_checkpoint.json
  *

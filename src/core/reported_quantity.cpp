@@ -1,5 +1,5 @@
-/**
- * reported_quantity.cpp  —  Physical quantity reporting implementation
+﻿/**
+ * reported_quantity.cpp   -   Physical quantity reporting implementation
  * =====================================================================
  * VSEPR-SIM 3.0.1
  *
@@ -281,7 +281,7 @@ std::string ReportedQuantity::format_report(int precision) const {
     oss << std::setprecision(precision);
 
     oss << "ReportedQuantity\n";
-    oss << "────────────────────────────────────────\n";
+    oss << "----------------------------------------\n";
 
     if (!label.empty())
         oss << "  Label:          " << label << "\n";
@@ -291,11 +291,11 @@ std::string ReportedQuantity::format_report(int precision) const {
     oss << "  Composition:    " << format_z_count() << "\n";
     oss << "  Total atoms:    " << total_atoms() << "\n";
     oss << "  Elements:       " << element_count() << "\n";
-    oss << "  ────────────────────────────────────\n";
+    oss << "  ------------------------------------\n";
     oss << "  Mass:           " << mass_g << " g\n";
     oss << "  Molar mass:     " << molar_mass_g_per_mol << " g/mol\n";
     oss << "  Amount:         " << amount_mol << " mol\n";
-    oss << "  ────────────────────────────────────\n";
+    oss << "  ------------------------------------\n";
     oss << "  Energy (Ha):    " << energy.as_hartree() << " Hartree\n";
     oss << "  Energy (eV):    " << energy.as_ev() << " eV\n";
     oss << "  Energy (kcal):  " << energy.as_kcalmol() << " kcal/mol\n";

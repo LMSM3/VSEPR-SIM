@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * sim_particles.hpp
  * =================
- * V1 — Particles N
+ * V1  -  Particles N
  * Scale Mission: Particles, Clouds, Lattice, and Pipe Gas 3
  *
  * Discrete particle engine for small-to-large N systems.
@@ -17,10 +17,10 @@
  *   X_i = {id, kind, r_i, v_i, a_i, m_i, q_i, σ_i, η_i, D_i, T_i, S_i}
  *
  * Stress bands (from mission work order):
- *   Instant    : N =   8–32      single-step, static check
- *   Short_50ms : N =  64–256     fixed dt, 1–10 steps
- *   Medium_5s  : N = 1e3–1e4     short trajectory, local statistics
- *   Long_5min  : N = 1e4–1e5     simplified kernels or N=1e3–1e4 rich history
+ *   Instant    : N =   8-32      single-step, static check
+ *   Short_50ms : N =  64-256     fixed dt, 1-10 steps
+ *   Medium_5s  : N = 1e3-1e4     short trajectory, local statistics
+ *   Long_5min  : N = 1e4-1e5     simplified kernels or N=1e3-1e4 rich history
  *
  * Deliverables:
  *   - deterministic benchmark set
@@ -29,9 +29,9 @@
  *   - exportable .xyza / .xyzf path data
  *
  * Integrates with:
- *   include/mission/mission_profile.hpp  — shared profile + entity layer
- *   include/physics/particle_id.hpp      — species code namespace
- *   include/core/species_family.hpp      — family classification
+ *   include/mission/mission_profile.hpp   -  shared profile + entity layer
+ *   include/physics/particle_id.hpp       -  species code namespace
+ *   include/core/species_family.hpp       -  family classification
  */
 
 #include "mission/mission_profile.hpp"
@@ -120,7 +120,7 @@ inline RuntimeProfile profile_for(MissionScale s) {
 }
 
 // ============================================================================
-// Particle record — one discrete particle in the engine
+// Particle record  -  one discrete particle in the engine
 // ============================================================================
 
 struct Particle {
@@ -187,7 +187,7 @@ inline ParticleSystem make_particle_system(
     };
 
     // Maxwell-Boltzmann σ_v = sqrt(kT/m)  [Å/ps units: kB=8.314e-3 kJ/(mol·K), m in amu]
-    // 1 amu·(Å/ps)² = 1.66054e-4 kJ/mol → kB = 8.314e-3 / 1.66054e-4 ≈ 50.07 amu·Å²/ps²/K/atom
+    // 1 amu·(Å/ps)² = 1.66054e-4 kJ/mol -> kB = 8.314e-3 / 1.66054e-4 ≈ 50.07 amu·Å²/ps²/K/atom
     const double kB_reduced = 0.008314462; // kJ/(mol·K)  (using kJ/mol convention throughout)
     const double sigma_v    = std::sqrt(kB_reduced * T_K / mass_amu);
 
@@ -220,7 +220,7 @@ inline ParticleSystem make_particle_system(
 }
 
 // ============================================================================
-// Steric exclusion channel — dyn_steric
+// Steric exclusion channel  -  dyn_steric
 // Applies a truncated WCA repulsion between all pairs within 2σ_ij cutoff.
 // Contract:
 //   Required state: position, sigma, mass
@@ -282,7 +282,7 @@ inline void apply_steric(ParticleSystem& sys) {
 }
 
 // ============================================================================
-// Kinematic update channel — dyn_kinematic
+// Kinematic update channel  -  dyn_kinematic
 // Velocity-Verlet first half + second half.
 // Contract:
 //   Required state: position, velocity, accel, mass, force
@@ -367,7 +367,7 @@ inline MobilityHistogram mobility_histogram(
 }
 
 // ============================================================================
-// Main run function — deterministic scheduler
+// Main run function  -  deterministic scheduler
 // ============================================================================
 
 inline MissionDeliverable run(ParticleSystem& sys) {
@@ -423,7 +423,7 @@ inline MissionDeliverable run(ParticleSystem& sys) {
 
 inline std::string report(const ParticleSystem& sys, const MissionDeliverable& d) {
     std::ostringstream o;
-    o << "\n  V1 Particles N — " << mission_scale_name(sys.profile.scale) << "\n";
+    o << "\n  V1 Particles N  -  " << mission_scale_name(sys.profile.scale) << "\n";
     o << "  " << std::string(60, '-') << "\n";
     o << "  Entities  : " << d.entity_count << "\n";
     o << "  Steps run : " << d.steps_run << "\n";
@@ -436,7 +436,7 @@ inline std::string report(const ParticleSystem& sys, const MissionDeliverable& d
     o << "  Mobility histogram (|v|):\n";
     for (std::size_t i = 0; i < h.counts.size(); ++i) {
         o << "    [" << std::setw(6) << std::fixed << std::setprecision(2)
-          << h.bin_edges[i] << " – " << h.bin_edges[i+1] << "]  ";
+          << h.bin_edges[i] << " - " << h.bin_edges[i+1] << "]  ";
         std::size_t bar = h.counts[i] * 30 / std::max(std::size_t{1},
             *std::max_element(h.counts.begin(), h.counts.end()));
         o << std::string(bar, '*') << "  (" << h.counts[i] << ")\n";

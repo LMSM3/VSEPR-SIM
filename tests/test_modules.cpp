@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_modules.cpp
  * ----------------
  * Verification tests for:
@@ -49,7 +49,7 @@ static int fail_count = 0;
 
 void test_registry_empty() {
     TEST("Registry starts with modules after builtin registration");
-    // Create a fresh test — builtins registered in main
+    // Create a fresh test  -  builtins registered in main
     auto& reg = vsepr::ModuleRegistry::instance();
     ASSERT_TRUE(reg.modules().size() >= 9, "Expected at least 9 builtin modules");
     PASS();
@@ -268,7 +268,7 @@ void test_speed_histogram() {
 }
 
 // ============================================================================
-// Live Server Tests (no actual socket — test snapshot generation)
+// Live Server Tests (no actual socket  -  test snapshot generation)
 // ============================================================================
 
 void test_snapshot_json() {
@@ -322,16 +322,16 @@ void test_server_config_defaults() {
 
 int main() {
     std::cout << "\n\033[1;35m"
-              << "╔════════════════════════════════════════════════════════════════╗\n"
-              << "║  Test Suite: Module Registry + Gas Module + Live Server       ║\n"
-              << "╚════════════════════════════════════════════════════════════════╝\n"
+              << "+================================================================+\n"
+              << "|  Test Suite: Module Registry + Gas Module + Live Server       |\n"
+              << "+================================================================+\n"
               << "\033[0m\n";
 
     // Register builtin modules first
     vsepr::modules::register_builtin_modules();
 
     // Module Registry tests
-    std::cout << "\033[1;36m┌─ Module Registry\033[0m\n";
+    std::cout << "\033[1;36m+- Module Registry\033[0m\n";
     test_registry_empty();
     test_registry_find_atomistic();
     test_registry_find_by_cli();
@@ -343,7 +343,7 @@ int main() {
     test_status_string();
 
     // Gas Module tests
-    std::cout << "\033[1;36m┌─ Gas Module\033[0m\n";
+    std::cout << "\033[1;36m+- Gas Module\033[0m\n";
     test_ideal_gas_stp();
     test_ideal_gas_pressure();
     test_rms_speed_ar();
@@ -361,14 +361,14 @@ int main() {
     test_speed_histogram();
 
     // Live Server tests
-    std::cout << "\033[1;36m┌─ Live Server\033[0m\n";
+    std::cout << "\033[1;36m+- Live Server\033[0m\n";
     test_snapshot_json();
     test_snapshot_sse();
     test_server_config_defaults();
 
     // Summary
     int total = pass_count + fail_count;
-    std::cout << "\n═══════════════════════════════════════════\n";
+    std::cout << "\n===========================================\n";
     if (fail_count == 0) {
         std::cout << "\033[0;32m✓ ALL " << total << " TESTS PASSED\033[0m ("
                   << pass_count << "/" << total << ")\n";
@@ -376,7 +376,7 @@ int main() {
         std::cout << "\033[0;31m✗ " << fail_count << " FAILED\033[0m, "
                   << pass_count << " passed (" << total << " total)\n";
     }
-    std::cout << "═══════════════════════════════════════════\n\n";
+    std::cout << "===========================================\n\n";
 
     return fail_count > 0 ? 1 : 0;
 }

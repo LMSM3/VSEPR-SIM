@@ -1,0 +1,1000 @@
+% ============================================================================
+%  Inverse Kaluza-Klein Scale Symmetry Framework
+%  Document II: Initial Draft
+%  Large independent import sections in TeX.
+%  Independent chains of equations and code.
+%  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% --- Geometry ----------------------------------------------------------------
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% --- Fonts / encoding --------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Math --------------------------------------------------------------------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{physics}
+
+% --- Code listings -----------------------------------------------------------
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  stringstyle=\color{orange},
+  numberstyle=\tiny\color{codegray},
+  numbers=left,
+  numbersep=8pt,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b,
+  showstringspaces=false,
+  tabsize=2
+}
+
+% --- Tables ------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% --- Graphics (for diagrams) -------------------------------------------------
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, fit, calc}
+
+% --- Lists -------------------------------------------------------------------
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% --- Headers / footers -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Inverse KK Scale Symmetry}}
+\fancyhead[R]{\small\textit{Doc II --- Initial Draft}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section formatting ------------------------------------------------------
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {\S\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}{1em}{}
+
+% --- Hyperlinks --------------------------------------------------------------
+\usepackage[
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue
+]{hyperref}
+
+% --- Theorem-like environments -----------------------------------------------
+\theoremstyle{definition}
+\newtheorem{axiom}{Axiom}[section]
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}{Proposition}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+% --- Custom operators --------------------------------------------------------
+\DeclareMathOperator{\Pack}{\Pi}
+\newcommand{\Id}{\mathcal{I}}
+\newcommand{\Res}{\mathcal{R}}
+\newcommand{\Proj}{P}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Inverse Kaluza-Klein Scale Symmetry\par}
+  \vspace{0.8cm}
+  {\LARGE Document II --- Initial Draft\par}
+  \vspace{0.5cm}
+  {\Large Independent import sections, equation chains, and code\par}
+  \vspace{1.5cm}
+  {\normalsize
+	This document is structured as a collection of independent sections,
+	each self-contained. Each section may be read, compiled, or imported
+	separately. Order is thematic, not logically required.
+  \par}
+  \vspace{1.5cm}
+  {\large VSEPR-SIM Theoretical Division\par}
+  {\large Development Day 64\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+%  IMPORT SECTION A
+%  Title: Framework Identity and Naming
+%  Status: Standalone
+% ============================================================================
+\section{Framework Identity and Naming}
+\label{sec:naming}
+
+% --- Begin standalone import block ------------------------------------------
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block A} \hfill \textit{standalone, no dependencies}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection*{The Direction of Inference}
+
+Standard Kaluza-Klein (KK) logic:
+\begin{equation}
+  \text{extra dimension}
+  \;\xrightarrow{\text{KK}}\;
+  \text{force behavior}
+  \tag{A.1}
+\end{equation}
+
+Inverse KK logic (this framework):
+\begin{equation}
+  \boxed{
+	\text{observed force-scale behavior}
+	\;\xrightarrow{\text{IKK}}\;
+	\text{implied dimensional permission}
+  }
+  \tag{A.2}
+\end{equation}
+
+The framework does not assume extra dimensions and then derive consequences.
+It starts from measured force-scale residuals and asks what dimensional
+permission structure would \emph{produce} those residuals as projections.
+
+\subsection*{Why ``Inverse''}
+
+The word ``inverse'' is not metaphorical. The mathematical arrow is
+literally reversed:
+\begin{center}
+  \begin{tikzpicture}[node distance=1.5cm, auto,
+	  box/.style={draw, rectangle, rounded corners, minimum width=3.5cm,
+				  minimum height=0.8cm, text centered}]
+	\node[box] (D) {Extra dimension $D$};
+	\node[box, right=2cm of D] (F) {Force behavior $F$};
+	\draw[->, thick, blue] (D) -- node[above]{\small KK} (F);
+	\draw[->, thick, red, dashed] (F) -- node[below]{\small IKK (this work)} (D);
+  \end{tikzpicture}
+\end{center}
+
+\noindent\rule{\linewidth}{0.4pt}
+% --- End standalone import block --------------------------------------------
+
+% ============================================================================
+%  IMPORT SECTION B
+%  Title: Scale Ladder --- Axiom Chain
+%  Status: Standalone
+% ============================================================================
+\section{Scale Ladder: Axiom Chain}
+\label{sec:axioms}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block B} \hfill \textit{standalone, no dependencies}
+\noindent\rule{\linewidth}{0.4pt}
+
+\begin{axiom}[Existence gate]
+  Every physical entity satisfies a binary existence condition:
+  \begin{equation}
+	E \in \{0, 1\}
+	\qquad S_0 = (\text{existence},\; \text{---},\; \lambda_\text{Planck})
+	\tag{B.1}
+  \end{equation}
+\end{axiom}
+
+\begin{axiom}[Scale entry]
+  Each scale level adds one degree of freedom, one mediator, and one
+  observational limit:
+  \begin{equation}
+	S_n = (D_n,\; M_n,\; L_n)
+	\tag{B.2}
+  \end{equation}
+\end{axiom}
+
+\begin{axiom}[Packing occurs]
+  Components at scale $n$ self-assemble into identities at scale $n+1$:
+  \begin{equation}
+	\mathbf{C}^{(n)} \xrightarrow{\;\Pi_n\;} \mathbf{I}^{(n+1)}
+	\tag{B.3}
+  \end{equation}
+  Packing is irreversible without energy cost $\geq E_\text{bind}$.
+\end{axiom}
+
+\begin{axiom}[Projection]
+  Observation at scale $S$ produces only:
+  \begin{equation}
+	\mathcal{O}_S = P_S(\mathcal{I})
+	\tag{B.4}
+  \end{equation}
+  The full identity $\mathcal{I}$ is not directly accessible.
+\end{axiom}
+
+\begin{axiom}[Residual existence]
+  The residual is the difference between the full identity content at
+  scale $S$ and what observation recovers:
+  \begin{equation}
+	\mathcal{R}_S = \mathcal{U}_S(\mathcal{I}) - \mathcal{E}_S(\mathcal{O}_S)
+	\tag{B.5}
+  \end{equation}
+  $\mathcal{R}_S = 0$ only if projection is perfectly injective at scale $S$.
+\end{axiom}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION C
+%  Title: Matrix Packing Chain
+%  Status: Standalone
+% ============================================================================
+\section{Matrix Packing Chain}
+\label{sec:packing}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block C} \hfill \textit{standalone, no dependencies}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection*{C.1 Quark to Particle}
+
+Quark component matrix for particle $p$:
+\begin{equation}
+  \mathbf{C}_q =
+  \begin{bmatrix}
+	q_1 & c_1 & \eta_1 \\
+	q_2 & c_2 & \eta_2 \\
+	q_3 & c_3 & \eta_3
+  \end{bmatrix}
+  \in \mathbb{R}^{3\times 3}
+  \tag{C.1}
+\end{equation}
+where columns are charge, color, and helicity channels.
+
+Packing to particle identity row-vector:
+\begin{equation}
+  \mathbf{I}_p = \begin{bmatrix} Q_p & M_p & S_p \end{bmatrix}
+  \in \mathbb{R}^{1\times 3}
+  \tag{C.2}
+\end{equation}
+
+Formal map:
+\begin{equation}
+  \mathbf{I}_p = \Pi_q(\mathbf{C}_q)
+  \qquad 3\times 3 \to 1\times 3
+  \tag{C.3}
+\end{equation}
+
+\subsection*{C.2 Recursive Packing Ladder}
+
+\begin{equation}
+  \underbrace{\text{quarks}}_{S_2}
+  \xrightarrow{\Pi_2}
+  \underbrace{\text{particles}}_{S_3}
+  \xrightarrow{\Pi_3}
+  \underbrace{\text{atoms}}_{S_3}
+  \xrightarrow{\Pi_3}
+  \underbrace{\text{molecules}}_{S_3}
+  \xrightarrow{\Pi_4}
+  \underbrace{\text{materials}}_{S_4}
+  \xrightarrow{\Pi_5}
+  \underbrace{\text{grav.\ systems}}_{S_5}
+  \xrightarrow{\Pi_D}
+  \underbrace{\text{dark residuals}}_{S_D}
+  \tag{C.4}
+\end{equation}
+
+\subsection*{C.3 Entropy as Packing Degeneracy}
+
+The entropy of a packed identity at scale $n$:
+\begin{equation}
+  \mathcal{S}_n = k_B \ln \Omega(\mathbf{I}^{(n)})
+  \tag{C.5}
+\end{equation}
+where $\Omega(\mathbf{I}^{(n)})$ counts the number of component
+configurations $\mathbf{C}^{(n-1)}$ that map to the same
+$\mathbf{I}^{(n)}$ under $\Pi_{n-1}$.
+
+\subsection*{C.4 Complexity}
+
+Stable packed identity plus structured residual:
+\begin{equation}
+  \mathcal{C}_n = f\!\left(\mathbf{I}^{(n+1)},\; \mathcal{R}_n\right)
+  \tag{C.6}
+\end{equation}
+
+High complexity requires both a non-trivial packed identity and a
+non-trivial residual. Pure structure with zero residual is simple.
+Pure noise with no packed identity is also simple. Complexity is the
+overlap.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION D
+%  Title: Cancellation and Hidden Intensity
+%  Status: Standalone
+% ============================================================================
+\section{Cancellation and Hidden Intensity}
+\label{sec:cancellation}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block D} \hfill \textit{standalone, no dependencies}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection*{D.1 The Rule}
+
+\begin{equation}
+  \boxed{
+	\text{net-zero packed value}
+	\;\neq\;
+	\text{no internal structure}
+  }
+  \tag{D.1}
+\end{equation}
+
+\subsection*{D.2 Observable and Hidden Channels}
+
+For a component vector $\mathbf{c}_j \in \mathbb{R}^m$:
+\begin{align}
+  I_j &= \bm{\alpha}^\top \mathbf{c}_j
+  \tag{D.2} \\
+  H_j &= \mathbf{c}_j^\top \mathbf{W}\, \mathbf{c}_j
+  \tag{D.3}
+\end{align}
+where $\bm{\alpha}$ is the projection weight vector and $\mathbf{W}$ is a
+positive-semi-definite weight matrix for the hidden channel.
+
+Hidden-active condition:
+\begin{equation}
+  I_j = 0, \quad H_j > 0
+  \tag{D.4}
+\end{equation}
+
+\subsection*{D.3 Neutron-Like Example}
+
+Charge projection ($\bm{\alpha} = [1, 1, 1]^\top$):
+\begin{equation}
+  I_\text{charge}
+  = +\tfrac{2}{3} + (-\tfrac{1}{3}) + (-\tfrac{1}{3})
+  = 0
+  \tag{D.5}
+\end{equation}
+
+Diagonal hidden intensity ($\mathbf{W} = \mathbf{I}_{3\times 3}$):
+\begin{equation}
+  H_\text{charge}
+  = \left(\tfrac{2}{3}\right)^2
+  + \left(\tfrac{1}{3}\right)^2
+  + \left(\tfrac{1}{3}\right)^2
+  = \tfrac{4}{9} + \tfrac{1}{9} + \tfrac{1}{9}
+  = \tfrac{6}{9}
+  = \tfrac{2}{3}
+  \neq 0
+  \tag{D.6}
+\end{equation}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION E
+%  Title: Dark Matter Kernel Equations
+%  Status: Standalone
+% ============================================================================
+\section{Dark Matter Kernel Equations}
+\label{sec:dark}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block E} \hfill \textit{standalone, no dependencies}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection*{E.1 Projection Gap Definition}
+
+\begin{align}
+  \rho_\text{dark}
+  &= \rho_G - \rho_\text{EM}
+  \tag{E.1} \\
+  &= P_G(\rho) - P_\text{EM}(\rho)
+  \tag{E.2}
+\end{align}
+
+\subsection*{E.2 Kernel Form}
+
+\begin{equation}
+  \boxed{
+	\rho_\text{dark}(x,y,z;\,t)
+	= \int \rho(x,y,z,w;\,t)
+	  \Bigl[K_G(w) - K_\text{EM}(w)\Bigr]\, dw
+  }
+  \tag{E.3}
+\end{equation}
+
+\subsection*{E.3 Kernel Properties (assumed)}
+
+Gravitational kernel: couples to all scales
+\begin{equation}
+  \int K_G(w)\, dw = 1
+  \tag{E.4}
+\end{equation}
+
+EM kernel: truncates above $L_\text{EM}$
+\begin{equation}
+  K_\text{EM}(w) \approx 0 \quad \text{for } w > L_\text{EM}
+  \tag{E.5}
+\end{equation}
+
+The integrand $[K_G(w) - K_\text{EM}(w)]$ is therefore non-zero precisely
+in the dark regime $w > L_\text{EM}$.
+
+\subsection*{E.4 Dark fraction}
+
+\begin{equation}
+  f_\text{dark} = \frac{\int_{L_\text{EM}}^\infty
+	\rho(x,y,z,w;\,t)\, K_G(w)\, dw}
+	{\int_0^\infty \rho(x,y,z,w;\,t)\, K_G(w)\, dw}
+  \tag{E.6}
+\end{equation}
+
+Observed dark-matter fraction from cosmological measurements:
+$f_\text{dark} \approx 0.27$.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION F
+%  Title: Effective Proper Time Chain
+%  Status: Standalone
+% ============================================================================
+\section{Effective Proper Time Chain}
+\label{sec:propertime}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block F} \hfill \textit{standalone; references import block B}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection*{F.1 Classical baseline}
+
+\begin{equation}
+  d\tau_\text{4D}
+  = dt\,\sqrt{
+	  1 - \frac{v^2}{c^2} + \frac{2\Phi_G}{c^2}
+	}
+  \tag{F.1}
+\end{equation}
+
+Integrated:
+\begin{equation}
+  \tau_\text{4D}
+  = \int_0^T dt\,\sqrt{
+	  1 - \frac{v^2(t)}{c^2} + \frac{2\Phi_G(t)}{c^2}
+	}
+  \tag{F.2}
+\end{equation}
+
+\subsection*{F.2 Quantum proper time (ion clock result)}
+
+\begin{equation}
+  \hat{\tau} \equiv \tau(\hat{x}, \hat{p})
+  \tag{F.3}
+\end{equation}
+
+Proper time becomes quantum-linked. The observable has spread:
+\begin{equation}
+  R_\tau = \hat{\tau} - \langle\hat{\tau}\rangle
+  \tag{F.4}
+\end{equation}
+
+\subsection*{F.3 Dark-scale extension}
+
+\begin{equation}
+  \boxed{
+	d\tau_\text{eff}
+	= dt\,\sqrt{
+		1 - \frac{v^2}{c^2} + \frac{2\Phi_G}{c^2} + \chi_w(w)
+	  }
+  }
+  \tag{F.5}
+\end{equation}
+
+Additive decomposition:
+\begin{equation}
+  d\tau_\text{eff} = d\tau_\text{4D} + d\tau_w
+  \tag{F.6}
+\end{equation}
+
+Limit check:
+\begin{equation}
+  \chi_w(w) \to 0 \implies d\tau_\text{eff} \to d\tau_\text{4D}
+  \tag{F.7}
+\end{equation}
+
+\subsection*{F.4 Proper-time identity bundle}
+
+\begin{equation}
+  \mathcal{I}_\tau
+  = \bigl(\hat{x},\; \hat{p},\; \hat{\tau},\; H_c,\; H_m,\; w\bigr)
+  \tag{F.8}
+\end{equation}
+
+Clock-motion relation particle:
+\begin{equation}
+  \mathcal{R}_{cm} = [0,\, 0,\, 0,\, 0 \mid \mathbf{T}_{cm}]
+  \tag{F.9}
+\end{equation}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION G
+%  Title: Entanglement Chain
+%  Status: Standalone
+% ============================================================================
+\section{Entanglement: Relation-Particle Chain}
+\label{sec:entanglement}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block G} \hfill \textit{standalone, no dependencies}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection*{G.1 Relation object}
+
+\begin{equation}
+  \mathcal{R}_{AB}
+  = \bigl[\underbrace{0,\; 0,\; 0,\; 0}_{\Delta x,\Delta y,\Delta z,\Delta t}
+	\;\big|\;
+	\mathbf{T}_{AB}\bigr]
+  \tag{G.1}
+\end{equation}
+
+\begin{equation}
+  \mathbf{T}_{AB} \in \{-1,\, 0,\, +1\}^m
+  \tag{G.2}
+\end{equation}
+
+\subsection*{G.2 Pair decomposition}
+
+\begin{equation}
+  \mathcal{I}_{AB}
+  \;\to\;
+  \mathcal{I}_A + \mathcal{I}_B + \mathcal{R}_{AB}
+  \tag{G.3}
+\end{equation}
+
+\subsection*{G.3 Measurement}
+
+\begin{align}
+  O_A &= P_a(\mathcal{I}_A,\, \mathcal{R}_{AB}) \tag{G.4} \\
+  O_B &= P_b(\mathcal{I}_B,\, \mathcal{R}_{AB}) \tag{G.5} \\
+  E(a,b) &= \langle O_A O_B \rangle \tag{G.6}
+\end{align}
+
+\subsection*{G.4 No-signal interpretation}
+
+$\mathcal{R}_{AB}$ is a fixed structure in identity-space. It does not
+propagate. Measurement at $A$ reads the relation; measurement at $B$
+reads the same relation. No signal travels.
+
+\begin{equation}
+  \text{real} \neq \text{spatially displaced}
+  \quad,\qquad
+  \text{deterministic} \neq \text{time-evolving signal}
+  \tag{G.7}
+\end{equation}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION H
+%  Title: Code --- Python numerical prototype
+%  Status: Standalone
+% ============================================================================
+\section{Code: Python Numerical Prototype}
+\label{sec:code-python}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block H} \hfill \textit{standalone, Python 3.10+}
+\noindent\rule{\linewidth}{0.4pt}
+
+The following code implements the core algebraic objects in a minimal
+self-contained Python prototype. No physics library is required.
+
+\begin{lstlisting}[language=Python, caption={Identity bundle and projection}]
+import numpy as np
+from dataclasses import dataclass, field
+from typing import Optional
+
+# --- Scale ladder entry ------------------------------------------------------
+
+@dataclass
+class ScaleEntry:
+	n:      int
+	label:  str
+	dof:    str          # degree of freedom name
+	mediator: str        # force carrier / mediator name
+	L_m:    float        # observational limit (metres)
+
+SCALE_LADDER = [
+	ScaleEntry(0, "S0", "existence",   "---",      1.616e-35),
+	ScaleEntry(1, "S1", "vector",      "---",      1e-19),
+	ScaleEntry(2, "S2", "angular",     "gluon",    1e-15),
+	ScaleEntry(3, "S3", "spatial",     "photon",   1e-10),
+	ScaleEntry(4, "S4", "time",        "W/Z",      1e-18),
+	ScaleEntry(5, "S5", "curvature",   "graviton", 1e26),
+	ScaleEntry(6, "SD", "dark",        "X_D",      float('inf')),
+]
+
+# --- Identity component ------------------------------------------------------
+
+@dataclass
+class Component:
+	"""One component of an identity bundle at a given scale."""
+	scale_n:  int
+	value:    np.ndarray   # shape (m,)  -- multi-channel
+	weight:   float = 1.0  # alpha_k for anchor computation
+
+# --- Identity bundle ---------------------------------------------------------
+
+@dataclass
+class IdentityBundle:
+	"""Full identity state I_i(t)."""
+	label:      str
+	components: list[Component] = field(default_factory=list)
+
+	def anchor(self) -> np.ndarray:
+		"""
+		Identity anchor A_i = (sum alpha_k * c_k) / (sum alpha_k)
+		Returns weighted mean of component values.
+		"""
+		total_w = sum(c.weight for c in self.components)
+		if total_w == 0.0:
+			raise ValueError("Zero total weight in anchor computation.")
+		return sum(c.weight * c.value for c in self.components) / total_w
+
+	def fuzz_radius(self, proj_indices=(0, 1, 2)) -> float:
+		"""
+		Fuzz radius at 3D spatial projection.
+		proj_indices: which component channels correspond to x,y,z.
+		"""
+		r_obs = self.anchor()[list(proj_indices)]
+		total_w = sum(c.weight for c in self.components)
+		sq_sum = sum(
+			c.weight * np.sum((c.value[list(proj_indices)] - r_obs)**2)
+			for c in self.components
+		)
+		return np.sqrt(sq_sum / total_w)
+
+# --- Projection operator -----------------------------------------------------
+
+def project_EM(bundle: IdentityBundle, L_EM: float) -> np.ndarray:
+	"""
+	P_EM: retain only components at scales with L_m <= L_EM.
+	Returns the projected anchor value.
+	"""
+	em_components = [
+		c for c in bundle.components
+		if SCALE_LADDER[c.scale_n].L_m <= L_EM
+	]
+	if not em_components:
+		return np.zeros_like(bundle.components[0].value)
+	total_w = sum(c.weight for c in em_components)
+	return sum(c.weight * c.value for c in em_components) / total_w
+
+# --- Dark density residual ---------------------------------------------------
+
+def dark_density_residual(
+	rho_full: np.ndarray,   # shape (Nw,)  density as function of w
+	w_grid:   np.ndarray,   # shape (Nw,)  w coordinate values
+	K_G:      np.ndarray,   # shape (Nw,)  gravitational kernel
+	K_EM:     np.ndarray,   # shape (Nw,)  EM kernel
+) -> float:
+	"""
+	rho_dark = integral rho(w) [K_G(w) - K_EM(w)] dw
+	Numerical trapezoidal integration.
+	"""
+	integrand = rho_full * (K_G - K_EM)
+	return float(np.trapz(integrand, w_grid))
+
+# --- Cancellation and hidden intensity ---------------------------------------
+
+def observable_channel(c_j: np.ndarray, alpha: np.ndarray) -> float:
+	"""I_j = alpha^T c_j"""
+	return float(alpha @ c_j)
+
+def hidden_intensity(c_j: np.ndarray, W: np.ndarray) -> float:
+	"""H_j = c_j^T W c_j"""
+	return float(c_j @ W @ c_j)
+
+def is_hidden_active(
+	c_j: np.ndarray,
+	alpha: np.ndarray,
+	W: np.ndarray,
+	tol: float = 1e-12
+) -> bool:
+	"""Returns True when I_j == 0 but H_j > 0."""
+	I = abs(observable_channel(c_j, alpha))
+	H = hidden_intensity(c_j, W)
+	return (I < tol) and (H > tol)
+
+# --- Effective proper time ---------------------------------------------------
+
+def dtau_eff(
+	dt:     float,
+	v:      float,
+	c:      float = 2.998e8,
+	Phi_G:  float = 0.0,
+	chi_w:  float = 0.0,
+) -> float:
+	"""
+	d tau_eff = dt * sqrt(1 - v^2/c^2 + 2*Phi_G/c^2 + chi_w)
+	chi_w: dark-scale metric correction (default 0 -> standard GR).
+	"""
+	arg = 1.0 - (v/c)**2 + 2.0*Phi_G/c**2 + chi_w
+	if arg < 0.0:
+		raise ValueError(f"Negative radicand in dtau_eff: {arg:.4e}")
+	return dt * np.sqrt(arg)
+
+# --- Relation particle -------------------------------------------------------
+
+@dataclass
+class RelationParticle:
+	"""
+	R_AB = [0, 0, 0, 0 | T_AB]
+	Spacetime displacement is zero. Relation vector T carries the content.
+	"""
+	T: np.ndarray  # shape (m,), values in {-1, 0, +1}
+
+	@property
+	def spacetime_displacement(self) -> np.ndarray:
+		return np.zeros(4)
+
+	def measure_A(self, I_A: IdentityBundle, projection_A) -> np.ndarray:
+		return projection_A(I_A, self)
+
+	def measure_B(self, I_B: IdentityBundle, projection_B) -> np.ndarray:
+		return projection_B(I_B, self)
+\end{lstlisting}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION I
+%  Title: Code --- VSIM kernel hook sketch (C++)
+%  Status: Standalone
+% ============================================================================
+\section{Code: VSIM Kernel Hook Sketch (C++)}
+\label{sec:code-cpp}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block I} \hfill \textit{standalone, C++23}
+\noindent\rule{\linewidth}{0.4pt}
+
+The following sketch shows how the theoretical objects above would be
+wired into the VSIM kernel event system (see WO-64A / WO-64B).
+
+\begin{lstlisting}[language=C++, caption={Identity anchor and hidden intensity
+  in VSIM kernel style}]
+// ikk_kernel_hook.hpp  --  WO-64 theoretical integration sketch
+// Compile as part of include/core/
+#pragma once
+
+#include <array>
+#include <cmath>
+#include <numeric>
+#include <span>
+#include <stdexcept>
+#include <vector>
+
+namespace ikk {
+
+// ---- Scale entry -----------------------------------------------------------
+
+struct ScaleEntry {
+	int         n;
+	const char* label;
+	const char* dof;
+	const char* mediator;
+	double      L_m;     // observational limit (m)
+};
+
+inline constexpr std::array<ScaleEntry, 7> kScaleLadder = {{
+	{0, "S0", "existence",  "---",     1.616e-35},
+	{1, "S1", "vector",     "---",     1.0e-19  },
+	{2, "S2", "angular",    "gluon",   1.0e-15  },
+	{3, "S3", "spatial",    "photon",  1.0e-10  },
+	{4, "S4", "time",       "W/Z",     1.0e-18  },
+	{5, "S5", "curvature",  "graviton",1.0e+26  },
+	{6, "SD", "dark",       "X_D",     1.0e+99  },
+}};
+
+// ---- Component -------------------------------------------------------------
+
+struct Component {
+	int                 scale_n;
+	std::vector<double> value;    // multi-channel value
+	double              weight = 1.0;
+};
+
+// ---- Identity anchor -------------------------------------------------------
+
+std::vector<double> identity_anchor(
+	std::span<const Component> components)
+{
+	if (components.empty())
+		throw std::runtime_error("ikk: empty component set");
+
+	const std::size_t m = components[0].value.size();
+	std::vector<double> acc(m, 0.0);
+	double total_w = 0.0;
+
+	for (const auto& c : components) {
+		total_w += c.weight;
+		for (std::size_t k = 0; k < m; ++k)
+			acc[k] += c.weight * c.value[k];
+	}
+	for (auto& v : acc) v /= total_w;
+	return acc;
+}
+
+// ---- Fuzz radius -----------------------------------------------------------
+
+double fuzz_radius(
+	std::span<const Component> components,
+	std::span<const std::size_t> proj_idx)   // which channels = 3D
+{
+	const auto anchor = identity_anchor(components);
+	double sq_sum = 0.0, total_w = 0.0;
+
+	for (const auto& c : components) {
+		total_w += c.weight;
+		double d2 = 0.0;
+		for (auto idx : proj_idx) {
+			double diff = c.value[idx] - anchor[idx];
+			d2 += diff * diff;
+		}
+		sq_sum += c.weight * d2;
+	}
+	return std::sqrt(sq_sum / total_w);
+}
+
+// ---- Observable channel and hidden intensity --------------------------------
+
+double observable_channel(
+	std::span<const double> c_j,
+	std::span<const double> alpha)
+{
+	return std::inner_product(c_j.begin(), c_j.end(),
+							   alpha.begin(), 0.0);
+}
+
+// W is m x m, row-major
+double hidden_intensity(
+	std::span<const double> c_j,
+	std::span<const double> W_flat,
+	std::size_t m)
+{
+	double result = 0.0;
+	for (std::size_t i = 0; i < m; ++i)
+		for (std::size_t j = 0; j < m; ++j)
+			result += c_j[i] * W_flat[i * m + j] * c_j[j];
+	return result;
+}
+
+bool is_hidden_active(
+	std::span<const double> c_j,
+	std::span<const double> alpha,
+	std::span<const double> W_flat,
+	std::size_t m,
+	double tol = 1.0e-12)
+{
+	const double I = std::abs(observable_channel(c_j, alpha));
+	const double H = hidden_intensity(c_j, W_flat, m);
+	return (I < tol) && (H > tol);
+}
+
+// ---- Effective proper time -------------------------------------------------
+
+double dtau_eff(
+	double dt,
+	double v,
+	double Phi_G  = 0.0,
+	double chi_w  = 0.0,
+	double c      = 2.99792458e8)
+{
+	const double arg = 1.0 - (v * v) / (c * c)
+					 + 2.0 * Phi_G / (c * c)
+					 + chi_w;
+	if (arg < 0.0)
+		throw std::runtime_error("ikk::dtau_eff: negative radicand");
+	return dt * std::sqrt(arg);
+}
+
+// ---- Dark density residual -------------------------------------------------
+
+double dark_density_residual(
+	std::span<const double> rho_w,    // density as function of w
+	std::span<const double> w_grid,   // w coordinate values
+	std::span<const double> K_G,      // gravitational kernel
+	std::span<const double> K_EM)     // EM kernel
+{
+	const std::size_t N = rho_w.size();
+	std::vector<double> integrand(N);
+	for (std::size_t i = 0; i < N; ++i)
+		integrand[i] = rho_w[i] * (K_G[i] - K_EM[i]);
+
+	// Trapezoidal rule
+	double result = 0.0;
+	for (std::size_t i = 0; i + 1 < N; ++i)
+		result += 0.5 * (integrand[i] + integrand[i+1])
+					  * (w_grid[i+1] - w_grid[i]);
+	return result;
+}
+
+}  // namespace ikk
+\end{lstlisting}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+%  IMPORT SECTION J
+%  Title: Open Variable Register
+%  Status: Ongoing --- updated each draft pass
+% ============================================================================
+\section{Open Variable Register}
+\label{sec:open-vars}
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block J} \hfill \textit{living document --- update each pass}
+\noindent\rule{\linewidth}{0.4pt}
+
+\begin{table}[h]
+  \centering
+  \begin{tabularx}{\linewidth}{l l X}
+	\toprule
+	Variable & Introduced & Status / constraint needed \\
+	\midrule
+	$\chi_w(w)$ & Eq.\ (F.5) &
+	  Dark-scale metric correction. Formally undefined. Needs physical
+	  derivation or phenomenological ansatz from clock-discrepancy data. \\
+	$K_G(w)$ & Eq.\ (E.3) &
+	  Gravitational projection kernel over dark coordinate. Known property:
+	  $\int K_G\,dw = 1$. Explicit form unknown. \\
+	$K_\text{EM}(w)$ & Eq.\ (E.3) &
+	  EM projection kernel. Known property: truncates above $L_\text{EM}$.
+	  Explicit form unknown. \\
+	$\Pi_n$ & Eq.\ (B.3) &
+	  Packing operator at scale $n$. Axiom only. Explicit construction
+	  at each scale level needed. \\
+	$\mathbf{T}_{AB}$ & Eq.\ (G.2) &
+	  Trinary relation vector. Space defined. Dynamics not defined. \\
+	$X_D$ & Table~\ref{tab:scale-ladder} &
+	  Dark mediator. Placeholder only. Mass, spin, coupling unknown. \\
+	$\hat{H}_w$ & Eq.\ (extended-TDSE) &
+	  Dark-scale Hamiltonian. Without explicit form, the theory has
+	  no new quantitative predictions at the QM level. \\
+	$\mathbf{W}$ & Eq.\ (D.3) &
+	  Hidden-intensity weight matrix. Must be PSD. Specific form
+	  for each interaction channel needed. \\
+	\bottomrule
+  \end{tabularx}
+  \caption{Open variables requiring further formalization.}
+  \label{tab:open-vars}
+\end{table}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+\end{document}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Surgical Langevin Debugging
  * 
  * Isolate the source of temperature explosion by:
@@ -31,9 +31,9 @@ double compute_temperature(const State& state) {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  SURGICAL LANGEVIN DEBUG                                  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  SURGICAL LANGEVIN DEBUG                                  |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // ONE ATOM TEST (no forces, no neighbors)
     State state;
@@ -88,15 +88,15 @@ int main() {
     std::cout << "\n";
     
     // TEST 1: NO NOISE (friction only)
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  TEST 1: Friction Only (No Noise)                        ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  TEST 1: Friction Only (No Noise)                        |\n";
+    std::cout << "+===========================================================+\n\n";
     
     State state1 = state;  // Copy
     
     std::cout << "Running 20 steps with friction only...\n";
     std::cout << "Step    v_x (Å/fs)    T (K)\n";
-    std::cout << "────────────────────────────────\n";
+    std::cout << "--------------------------------\n";
     
     for (int step = 0; step < 20; ++step) {
         // Friction only: v_new = a * v_old
@@ -123,9 +123,9 @@ int main() {
     std::cout << "\n";
     
     // TEST 2: FULL LANGEVIN (friction + noise)
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  TEST 2: Full Langevin (Friction + Noise)                ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  TEST 2: Full Langevin (Friction + Noise)                |\n";
+    std::cout << "+===========================================================+\n\n";
     
     State state2 = state;  // Fresh copy
     std::mt19937 rng(42);
@@ -133,7 +133,7 @@ int main() {
     
     std::cout << "Running 1000 steps with full Langevin...\n";
     std::cout << "Step    v_x (Å/fs)    T (K)      noise_x\n";
-    std::cout << "───────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------\n";
     
     std::vector<double> T_history;
     

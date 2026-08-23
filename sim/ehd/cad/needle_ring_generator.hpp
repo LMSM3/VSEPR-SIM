@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * needle_ring_generator.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Configuration (b): Needle-ring electrode for ion injection.
  * A sharp needle tip (cathode or anode) faces a ring electrode across a gap.
@@ -32,9 +32,9 @@ namespace cad {
 // ============================================================================
 
 struct NeedleRingParams {
-    double tip_radius     = 50.0e-6;   // r_tip (m) — needle tip curvature
-    double ring_radius    = 2.0e-3;    // R_ring (m) — ring inner radius
-    double gap            = 5.0e-3;    // d_gap (m) — needle tip to ring plane
+    double tip_radius     = 50.0e-6;   // r_tip (m)  -  needle tip curvature
+    double ring_radius    = 2.0e-3;    // R_ring (m)  -  ring inner radius
+    double gap            = 5.0e-3;    // d_gap (m)  -  needle tip to ring plane
     double needle_length  = 10.0e-3;   // total needle shaft length (m)
     double ring_thickness = 0.5e-3;    // ring cross-section thickness (m)
     int    ring_pts       = 72;        // angular resolution for ring
@@ -54,7 +54,7 @@ inline NeedleRingParams from_ehd_needle_ring(const EHDParameters& p) {
 // ============================================================================
 
 struct NeedleProfilePoint {
-    double z;      // axial position (m) — tip at z = 0
+    double z;      // axial position (m)  -  tip at z = 0
     double radius; // local needle radius at this z (m)
 };
 
@@ -84,7 +84,7 @@ inline std::vector<NeedleProfilePoint> generate_needle_profile(
             r = nr.tip_radius * std::cosh(z / nr.tip_radius);
             r = std::min(r, shaft_radius);
         } else {
-            // Shaft region — constant radius
+            // Shaft region  -  constant radius
             r = shaft_radius;
         }
         profile.push_back({z, r});

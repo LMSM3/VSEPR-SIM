@@ -1,5 +1,5 @@
-/**
- * code_trail.cpp  —  Code Trail Wind v0.1  (implementation)
+﻿/**
+ * code_trail.cpp   -   Code Trail Wind v0.1  (implementation)
  * ==========================================================
  * VSEPR-SIM 3.0.1
  *
@@ -41,7 +41,7 @@ std::string CodeTrail::escape_csv(const std::string& s) {
     return out;
 }
 
-// Format a double: NaN → "", otherwise full precision
+// Format a double: NaN -> "", otherwise full precision
 std::string CodeTrail::format_double(double v) {
     if (std::isnan(v)) return "";
     std::ostringstream oss;
@@ -59,7 +59,7 @@ std::string CodeTrail::csv_header() {
 }
 
 // ============================================================================
-// Entry → CSV row
+// Entry -> CSV row
 // ============================================================================
 
 std::string CodeTrail::entry_to_csv_row(const TrailEntry& e) {
@@ -121,7 +121,7 @@ std::string CodeTrail::to_csv_string() const {
     std::string out;
     out.reserve(entries_.size() * 200 + 512);
 
-    // File-level preamble comment block (# lines — ignored by spreadsheets)
+    // File-level preamble comment block (# lines  -  ignored by spreadsheets)
     out += "# Code Trail Wind v";
     out += CODE_TRAIL_VERSION;
     out += "\n";
@@ -168,7 +168,7 @@ bool CodeTrail::flush_csv(const std::string& filepath) const {
 }
 
 // ============================================================================
-// TrailWriter  —  streaming (low-memory) CSV writer
+// TrailWriter   -   streaming (low-memory) CSV writer
 // ============================================================================
 
 TrailWriter::TrailWriter(const std::string& filepath,

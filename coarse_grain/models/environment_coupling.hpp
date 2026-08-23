@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * environment_coupling.hpp — Kernel Modulation via Environment State
+ * environment_coupling.hpp  -  Kernel Modulation via Environment State
  *
  * Implements Option A (recommended) from the ERB specification:
  *
@@ -112,7 +112,7 @@ inline double modulated_channel_kernel(
 // ============================================================================
 
 /**
- * ModulationReport — per-channel modulation factors for inspection.
+ * ModulationReport  -  per-channel modulation factors for inspection.
  *
  * The scalar evaluation score G summarises the overall modulation
  * state as a single number suitable for thresholds, logging, and

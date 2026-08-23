@@ -1,5 +1,5 @@
-/**
- * test_pbc_fire.cpp — Acceptance tests: FIRE minimiser + PBC
+﻿/**
+ * test_pbc_fire.cpp  -  Acceptance tests: FIRE minimiser + PBC
  * ===========================================================
  *
  * Beta-8 gate: verify that the FIRE minimiser correctly applies PBC
@@ -8,8 +8,8 @@
  *
  * Tests:
  *   T1  BoxOrtho::wrap_coords called inside fire_velocity_verlet_step (smoke)
- *   T2  NaCl 2×2×2 — FIRE+PBC drives lattice RMSD below tolerance
- *   T3  EwaldSum — real+recip+self energy has correct sign and magnitude for
+ *   T2  NaCl 2×2×2  -  FIRE+PBC drives lattice RMSD below tolerance
+ *   T3  EwaldSum  -  real+recip+self energy has correct sign and magnitude for
  *       a 2-ion NaCl pair (known analytic value)
  *   T4  evaluate_ewald_forces() accumulates non-zero forces on charged atoms
  *
@@ -36,7 +36,7 @@ static void PASS(const char* name) {
 }
 
 static void FAIL(const char* name, const char* reason) {
-	std::cerr << "  [FAIL] " << name << " — " << reason << "\n";
+	std::cerr << "  [FAIL] " << name << "  -  " << reason << "\n";
 	std::exit(1);
 }
 
@@ -47,7 +47,7 @@ static double rms(const std::vector<double>& v) {
 }
 
 // ---------------------------------------------------------------------------
-// T1 — wrap_coords is idempotent after being called once
+// T1  -  wrap_coords is idempotent after being called once
 // ---------------------------------------------------------------------------
 static void test_T1_wrap_idempotent() {
 	BoxOrtho box(10.0, 10.0, 10.0);
@@ -76,7 +76,7 @@ static void test_T1_wrap_idempotent() {
 }
 
 // ---------------------------------------------------------------------------
-// T2 — delta() (MIC) gives the shortest displacement across PBC
+// T2  -  delta() (MIC) gives the shortest displacement across PBC
 // ---------------------------------------------------------------------------
 static void test_T2_mic() {
 	BoxOrtho box(10.0, 10.0, 10.0);
@@ -86,7 +86,7 @@ static void test_T2_mic() {
 
 	Vec3 dr = box.delta(ri, rj);    // rj - ri with MIC
 
-	// Direct: 0.5 - 9.5 = -9.0  →  MIC: -9.0 + 10 = +1.0
+	// Direct: 0.5 - 9.5 = -9.0  ->  MIC: -9.0 + 10 = +1.0
 	if (std::abs(dr.x - 1.0) > 1e-10)
 		FAIL("T2", "MIC displacement wrong");
 	if (std::abs(dr.norm() - 1.0) > 1e-10)
@@ -96,14 +96,14 @@ static void test_T2_mic() {
 }
 
 // ---------------------------------------------------------------------------
-// T3 — EwaldSum: energy of a 2-ion NaCl pair has correct sign
+// T3  -  EwaldSum: energy of a 2-ion NaCl pair has correct sign
 //        Na+ (q=+1) and Cl- (q=-1) should give NEGATIVE Coulomb energy
 // ---------------------------------------------------------------------------
 static void test_T3_ewald_sign() {
 	// Place Na+ at origin, Cl- at 2.81 Å (experimental NaCl bond length)
 	// Box must be large enough that rcut < L/2
 	const double r_NaCl = 2.81;   // Å
-	const double L      = 20.0;   // Å — well beyond 2*rcut
+	const double L      = 20.0;   // Å  -  well beyond 2*rcut
 
 	std::vector<double> coords  = { 0.0, 0.0, 0.0,  r_NaCl, 0.0, 0.0 };
 	std::vector<double> charges = { +1.0, -1.0 };
@@ -133,7 +133,7 @@ static void test_T3_ewald_sign() {
 }
 
 // ---------------------------------------------------------------------------
-// T4 — Forces from EwaldSum are non-zero and Newton's third law holds
+// T4  -  Forces from EwaldSum are non-zero and Newton's third law holds
 // ---------------------------------------------------------------------------
 static void test_T4_ewald_forces() {
 	const double L = 20.0;
@@ -166,7 +166,7 @@ static void test_T4_ewald_forces() {
 }
 
 // ---------------------------------------------------------------------------
-// T5 — dist2() with MIC is smaller than naive dist² when atoms straddle boundary
+// T5  -  dist2() with MIC is smaller than naive dist² when atoms straddle boundary
 // ---------------------------------------------------------------------------
 static void test_T5_mic_dist2() {
 	BoxOrtho box(10.0, 10.0, 10.0);

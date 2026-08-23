@@ -1,7 +1,7 @@
-/**
+﻿/**
  * report_engine.hpp
  * -----------------
- * *** LEGACY — DO NOT EXTEND ***
+ * *** LEGACY  -  DO NOT EXTEND ***
  *
  * Autonomous report generation is no longer a supported architectural pattern
  * in VSEPR-SIM.  Any reporting cadence or snapshot behavior that was previously
@@ -258,7 +258,7 @@ public:
     // Perturb existing properties (uncertainty modeling)
     MaterialProperties perturb(const MaterialProperties& base, std::mt19937_64& rng, double sigma = 0.1) const;
 
-    // Internal element property tables (public for inspection — anti-black-box)
+    // Internal element property tables (public for inspection  -  anti-black-box)
     struct ElementRecord {
         uint8_t Z;
         const char* symbol;

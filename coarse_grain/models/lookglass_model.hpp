@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 /**
- * lookglass_model.hpp — Lookglass Bidirectional Feedback Model
+ * lookglass_model.hpp  -  Lookglass Bidirectional Feedback Model
  *
  * The Lookglass Model extends the 6+9 Seed-Bead Stepper with a symmetric
  * backward pass that mirrors bead-layer information back into the seed
- * (atomistic) layer — creating a closed feedback loop.
+ * (atomistic) layer  -  creating a closed feedback loop.
  *
  * Name etymology:
  *   A lookglass (Lewis Carroll) shows you a reversed image of what you
@@ -13,19 +13,19 @@
  *
  * Architecture:
  *
- *   ┌──────────────────────────────────────────────────────────────────┐
- *   │  FORWARD PASS  (6+9 Seed-Bead Stepper, one tick)                 │
- *   │   [S1–S6]  →  [B1–B9]  →  SeedBeadStepRecord r_fwd              │
- *   └──────────────────────────────────────────────────────────────────┘
+ *   +------------------------------------------------------------------+
+ *   |  FORWARD PASS  (6+9 Seed-Bead Stepper, one tick)                 |
+ *   |   [S1-S6]  ->  [B1-B9]  ->  SeedBeadStepRecord r_fwd              |
+ *   +------------------------------------------------------------------+
  *                              ↕  mirror
- *   ┌──────────────────────────────────────────────────────────────────┐
- *   │  BACKWARD PASS  (Lookglass reflection, same tick)                │
- *   │   [L1] Bead → Atomistic position correction                      │
- *   │   [L2] Bead slow-state η → atomistic damping modulation          │
- *   │   [L3] Bead role weights → atomistic force scale correction       │
- *   │   [L4] Bead stability class → FIRE step-size guard               │
- *   │   [L5] Convergence mirror — halt both passes together             │
- *   └──────────────────────────────────────────────────────────────────┘
+ *   +------------------------------------------------------------------+
+ *   |  BACKWARD PASS  (Lookglass reflection, same tick)                |
+ *   |   [L1] Bead -> Atomistic position correction                      |
+ *   |   [L2] Bead slow-state η -> atomistic damping modulation          |
+ *   |   [L3] Bead role weights -> atomistic force scale correction       |
+ *   |   [L4] Bead stability class -> FIRE step-size guard               |
+ *   |   [L5] Convergence mirror  -  halt both passes together             |
+ *   +------------------------------------------------------------------+
  *
  * Backward-pass units:
  *
@@ -57,7 +57,7 @@
  *        advance purely in the forward direction.
  *
  * Anti-black-box: LookglassStepRecord captures all five backward units.
- * Deterministic: forward pass record + backward params → identical result.
+ * Deterministic: forward pass record + backward params -> identical result.
  *
  * Reference: docs/section_32bit_hourglass_lookglass.tex §3
  */
@@ -77,24 +77,24 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * LookglassParams — coupling constants for the five backward-pass units.
+ * LookglassParams  -  coupling constants for the five backward-pass units.
  */
 struct LookglassParams {
-    // ── L1: position coupling ─────────────────────────────────────────────────
-    double alpha_pos{0.05};     // Strength of CG → atomistic position nudge
+    // -- L1: position coupling -------------------------------------------------
+    double alpha_pos{0.05};     // Strength of CG -> atomistic position nudge
 
-    // ── L2: damping modulation ────────────────────────────────────────────────
-    double alpha_damp{0.3};     // η̄ → FIRE damping inflation factor
+    // -- L2: damping modulation ------------------------------------------------
+    double alpha_damp{0.3};     // η̄ -> FIRE damping inflation factor
     double gamma_base{0.1};     // Base FIRE damping (dimensionless)
 
-    // ── L3: force scale correction ────────────────────────────────────────────
-    double alpha_force{0.2};    // Role-weight → force scale correction
+    // -- L3: force scale correction --------------------------------------------
+    double alpha_force{0.2};    // Role-weight -> force scale correction
 
-    // ── L4: FIRE step-size guard ──────────────────────────────────────────────
-    double alpha_dt{0.5};       // Λ̄ → dt shrinkage factor
+    // -- L4: FIRE step-size guard ----------------------------------------------
+    double alpha_dt{0.5};       // Λ̄ -> dt shrinkage factor
     double dt_base{5.0};        // Base FIRE timestep (fs)
 
-    // ── L5: convergence tolerances ────────────────────────────────────────────
+    // -- L5: convergence tolerances --------------------------------------------
     double r_tol{0.001};        // Feedback displacement tolerance (Å)
     double eta_tol{1e-4};       // η̄ convergence tolerance
 };
@@ -104,7 +104,7 @@ struct LookglassParams {
 // ============================================================================
 
 /**
- * LookglassUnitStatus — which backward-pass units were active.
+ * LookglassUnitStatus  -  which backward-pass units were active.
  */
 struct LookglassUnitStatus {
     bool l1_pos_correction{};
@@ -115,7 +115,7 @@ struct LookglassUnitStatus {
 };
 
 /**
- * LookglassStepRecord — complete diagnostic for one lookglass tick.
+ * LookglassStepRecord  -  complete diagnostic for one lookglass tick.
  */
 struct LookglassStepRecord {
     uint64_t step_index{};
@@ -123,21 +123,21 @@ struct LookglassStepRecord {
     // Forward pass reference
     uint64_t forward_step_index{};
 
-    // ── L1 ────────────────────────────────────────────────────────────────────
+    // -- L1 --------------------------------------------------------------------
     double   max_pos_correction{};   // max |Δr_feedback| across beads (Å)
     double   mean_pos_correction{};  // mean |Δr_feedback| (Å)
 
-    // ── L2 ────────────────────────────────────────────────────────────────────
+    // -- L2 --------------------------------------------------------------------
     double   gamma_effective{};      // γ_base · (1 + α_damp · η̄)
 
-    // ── L3 ────────────────────────────────────────────────────────────────────
+    // -- L3 --------------------------------------------------------------------
     double   mean_force_scale{};     // Mean force scale factor applied
 
-    // ── L4 ────────────────────────────────────────────────────────────────────
+    // -- L4 --------------------------------------------------------------------
     double   dt_guarded{};           // Effective dt after stability guard (fs)
     double   lambda_mean{};          // Mean Λ̄ used for guard
 
-    // ── L5 ────────────────────────────────────────────────────────────────────
+    // -- L5 --------------------------------------------------------------------
     bool     feedback_converged{};   // |Δr| < r_tol
     bool     eta_converged{};        // |η̄ − η̄_prev| < eta_tol
     bool     lookglass_steady{};     // Both L5 conditions met
@@ -150,7 +150,7 @@ struct LookglassStepRecord {
 // ============================================================================
 
 /**
- * step_lookglass — apply one backward-pass tick to a BeadSystem.
+ * step_lookglass  -  apply one backward-pass tick to a BeadSystem.
  *
  * This function is called AFTER step_seed_bead() has produced a
  * SeedBeadStepRecord for the same tick.  It reads the forward diagnostics
@@ -175,7 +175,7 @@ inline LookglassStepRecord step_lookglass(
     const size_t N = sys.beads.size();
     if (N == 0) return rec;
 
-    // ── L1: position correction ───────────────────────────────────────────────
+    // -- L1: position correction -----------------------------------------------
     double sum_corr = 0.0;
     double max_corr = 0.0;
 
@@ -199,12 +199,12 @@ inline LookglassStepRecord step_lookglass(
     rec.mean_pos_correction = sum_corr / static_cast<double>(N);
     rec.status.l1_pos_correction = true;
 
-    // ── L2: damping modulation ────────────────────────────────────────────────
+    // -- L2: damping modulation ------------------------------------------------
     double eta_bar = fwd.avg_eta;
     rec.gamma_effective = params.gamma_base * (1.0 + params.alpha_damp * eta_bar);
     rec.status.l2_damp_modulation = true;
 
-    // ── L3: force scale correction ────────────────────────────────────────────
+    // -- L3: force scale correction --------------------------------------------
     double force_scale_sum = 0.0;
     for (const auto& bead : sys.beads) {
         auto rw = role_weights(bead.structural_role);
@@ -216,7 +216,7 @@ inline LookglassStepRecord step_lookglass(
     rec.mean_force_scale = force_scale_sum / static_cast<double>(N);
     rec.status.l3_force_scale = true;
 
-    // ── L4: FIRE step-size guard ──────────────────────────────────────────────
+    // -- L4: FIRE step-size guard ----------------------------------------------
     double lambda_sum = 0.0;
     for (const auto& bead : sys.beads)
         lambda_sum += static_cast<double>(bead.stability_class);
@@ -230,7 +230,7 @@ inline LookglassStepRecord step_lookglass(
     rec.dt_guarded = params.dt_base * guard;
     rec.status.l4_dt_guard = true;
 
-    // ── L5: convergence mirror ────────────────────────────────────────────────
+    // -- L5: convergence mirror ------------------------------------------------
     rec.feedback_converged = (max_corr < params.r_tol);
     rec.eta_converged      = (std::abs(eta_bar - eta_prev) < params.eta_tol);
     rec.lookglass_steady   = rec.feedback_converged && rec.eta_converged;
@@ -244,7 +244,7 @@ inline LookglassStepRecord step_lookglass(
 // ============================================================================
 
 /**
- * LookglassRunRecord — aggregate diagnostics over a full lookglass run.
+ * LookglassRunRecord  -  aggregate diagnostics over a full lookglass run.
  *
  * Collect one of these per simulation run to track how quickly the
  * backward pass converges and how strongly it perturbed the system.

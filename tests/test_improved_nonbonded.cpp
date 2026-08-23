@@ -1,4 +1,4 @@
-/*
+﻿/*
 test_improved_nonbonded.cpp
 ----------------------------
 Test element-specific LJ parameters on hypervalent compounds.
@@ -298,9 +298,9 @@ void test_mixing_rules() {
 }
 
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   Element-Specific LJ Parameters Validation Suite       ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==========================================================+\n";
+    std::cout << "|   Element-Specific LJ Parameters Validation Suite       |\n";
+    std::cout << "+==========================================================+\n";
     
     try {
         test_epsilon_database();
@@ -309,9 +309,9 @@ int main() {
         test_BrF5();
         test_IF5();
         
-        std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║   All Tests Complete                                     ║\n";
-        std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+==========================================================+\n";
+        std::cout << "|   All Tests Complete                                     |\n";
+        std::cout << "+==========================================================+\n";
         
         return 0;
     }

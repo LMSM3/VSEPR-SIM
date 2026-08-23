@@ -64,6 +64,25 @@ struct Element final {
 
 class PeriodicTable final {
 public:
+    static PeriodicTable load_default() {
+        const std::vector<std::string> candidates = {
+            "data/elements.physics.json",
+            "../data/elements.physics.json",
+            "data/PeriodicTableJSON.json",
+            "../data/PeriodicTableJSON.json"
+        };
+        std::string errors;
+        for (const auto& candidate : candidates) {
+            try {
+                return load_from_json_file(candidate);
+            } catch (const std::exception& e) {
+                if (!errors.empty()) errors += "; ";
+                errors += candidate + ": " + e.what();
+            }
+        }
+        throw std::runtime_error("PeriodicTable: no usable elemental database: " + errors);
+    }
+
     // Load from Bowserinator PeriodicTableJSON.json
     // Throws std::runtime_error on parse / IO issues.
     static PeriodicTable load_from_json_file(const std::string& path) {
@@ -134,6 +153,9 @@ public:
         }
 
         // Sort by Z for stable lookup
+        if (pt.elements_.empty())
+            throw std::runtime_error("PeriodicTable: elemental database contains no valid records");
+
         std::sort(pt.elements_.begin(), pt.elements_.end(),
                   [](const Element& a, const Element& b){ return a.Z < b.Z; });
 

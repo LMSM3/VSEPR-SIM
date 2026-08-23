@@ -1,0 +1,76 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/demo_17_wo66P_crystal_exports.vsim
+# VSEPR-SIM v5.1.4  |  Demo 17 -- WO-66P Crystal Constructor + Full Translation Exports
+# BCC alpha-iron (4x4x4 supercell) and FCC copper (3x3x3 supercell) crystals.
+# Full PBC, relaxation, and export pipeline: xyz, xyzFull, JSON, CIF proxy, XBIT.
+# Outputs: lattice parameter trace TSV, coordination histogram, RDF, energy trace.
+# Run: vsper run scripts/demo_17_wo66P_crystal_exports.vsim
+
+[project]
+name        = "demo_17_wo66P_crystal_exports"
+version     = "v5.1.4"
+seed_base   = 17001
+determinism = true
+description = "WO-66P BCC Fe + FCC Cu crystal pair -- full PBC relaxation and export suite"
+
+[objects]
+crystal.bcc_fe = CrystalModule(lattice = bcc, a = 2.8665, species = [Fe], supercell = [4, 4, 4], relax = true, pbc_x = true, pbc_y = true, pbc_z = true, translate_to_xyz = true, translate_to_json = true, xbit = auto)
+crystal.fcc_cu = CrystalModule(lattice = fcc, a = 3.6150, species = [Cu], supercell = [3, 3, 3], relax = true, pbc_x = true, pbc_y = true, pbc_z = true, translate_to_xyz = true, translate_to_json = true, xbit = auto)
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+[run]
+mode          = "relax"
+max_steps     = 1000
+dt_fs         = 0.5
+temperature_K = 300.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "coordination", "rdf", "lattice_parameter", "formation", "defects"]
+output_format = "json"
+every_n_steps = 50
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.tables]
+lattice_trace_tsv       = "reports/demo_17/lattice_parameter_trace.tsv"
+coordination_hist_tsv   = "reports/demo_17/coordination_histogram.tsv"
+energy_trace_tsv        = "reports/demo_17/energy_trace.tsv"
+rdf_bcc_fe_tsv          = "reports/demo_17/rdf_bcc_fe.tsv"
+rdf_fcc_cu_tsv          = "reports/demo_17/rdf_fcc_cu.tsv"
+defect_summary_tsv      = "reports/demo_17/defect_summary.tsv"
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_17/
+
+[visual]
+output_type              = "gl_crystal_grid"
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 25
+
+[open]
+enabled = false

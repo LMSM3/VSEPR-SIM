@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/batch_parser.cpp
  * ============================
- * WO-VSIM-62C — Batch Layer Parser Implementation
+ * WO-VSIM-62C  -  Batch Layer Parser Implementation
  *
  * Parses study-file (.vsim with [study]) into BatchDocument.
  * Follows the same tokenisation conventions as vsim_parser.cpp.
@@ -21,7 +21,7 @@
 namespace vsim {
 namespace batch {
 
-// ── public factory ────────────────────────────────────────────────────────────
+// -- public factory ------------------------------------------------------------
 
 BatchDocument BatchParser::parse_file(const std::string& path) {
 	std::ifstream f(path);
@@ -43,7 +43,7 @@ BatchDocument BatchParser::parse_string(const std::string& src,
 	p.flush_lib_stage();
 
 	// If base.mode = "inline", parse the same source as a VsimDocument
-	// (the study-specific sections are ignored by VsimParser — it skips unknowns)
+	// (the study-specific sections are ignored by VsimParser  -  it skips unknowns)
 	if (p.doc_.base.populated && p.doc_.base.mode == "inline") {
 		try {
 			p.doc_.inline_base = VsimParser::parse_string(src, source_path);
@@ -54,7 +54,7 @@ BatchDocument BatchParser::parse_string(const std::string& src,
 	return p.doc_;
 }
 
-// ── core parse loop ───────────────────────────────────────────────────────────
+// -- core parse loop -----------------------------------------------------------
 
 void BatchParser::parse_content(const std::string& src) {
 	std::istringstream stream(src);
@@ -68,7 +68,7 @@ void BatchParser::parse_content(const std::string& src) {
 			bool dbl = (clean.size() >= 2 && clean[1] == '[');
 			size_t start = dbl ? 2 : 1;
 			size_t end   = clean.rfind(dbl ? "]]" : "]");
-			if (end == std::string::npos) continue; // malformed — skip
+			if (end == std::string::npos) continue; // malformed  -  skip
 			std::string sec = trim(clean.substr(start, end - start));
 			in_double_bracket_ = dbl;
 			handle_section(sec);
@@ -85,7 +85,7 @@ void BatchParser::parse_content(const std::string& src) {
 	}
 }
 
-// ── section handler ───────────────────────────────────────────────────────────
+// -- section handler -----------------------------------------------------------
 
 void BatchParser::handle_section(const std::string& sec) {
 	// Flush open array entries before switching sections
@@ -108,7 +108,7 @@ void BatchParser::handle_section(const std::string& sec) {
 	if (sec == "batch.require") return;
 	if (sec == "seed") return;
 
-	// [[batch.axis]] — start a new axis entry
+	// [[batch.axis]]  -  start a new axis entry
 	if (sec == "batch.axis") {
 		flush_axis();
 		doc_.axes.emplace_back();
@@ -116,7 +116,7 @@ void BatchParser::handle_section(const std::string& sec) {
 		return;
 	}
 
-	// [[batch.case]] — start a new case entry
+	// [[batch.case]]  -  start a new case entry
 	if (sec == "batch.case") {
 		flush_case();
 		doc_.cases.emplace_back();
@@ -162,7 +162,7 @@ void BatchParser::handle_section(const std::string& sec) {
 	// so the inline_base VsimParser can read them.  We just track the section name.
 }
 
-// ── key-value handler ─────────────────────────────────────────────────────────
+// -- key-value handler ---------------------------------------------------------
 
 void BatchParser::handle_key_value(const std::string& key, const std::string& raw) {
 	const std::string& s = current_section_;
@@ -328,7 +328,7 @@ void BatchParser::handle_key_value(const std::string& key, const std::string& ra
 	// All other keys (material, run, etc.) are silently passed through for inline_base
 }
 
-// ── flush helpers ─────────────────────────────────────────────────────────────
+// -- flush helpers -------------------------------------------------------------
 
 void BatchParser::flush_axis() {
 	current_axis_ = nullptr;
@@ -343,7 +343,7 @@ void BatchParser::flush_lib_stage() {
 	current_stage_ = nullptr;
 }
 
-// ── validate ──────────────────────────────────────────────────────────────────
+// -- validate ------------------------------------------------------------------
 
 std::vector<std::string> BatchParser::validate(const BatchDocument& doc) {
 	std::vector<std::string> errors;
@@ -392,7 +392,7 @@ std::vector<std::string> BatchParser::validate(const BatchDocument& doc) {
 	return errors;
 }
 
-// ── string helpers ────────────────────────────────────────────────────────────
+// -- string helpers ------------------------------------------------------------
 
 std::string BatchParser::trim(const std::string& s) {
 	size_t a = s.find_first_not_of(" \t\r\n");

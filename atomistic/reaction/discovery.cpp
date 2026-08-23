@@ -1,4 +1,4 @@
-#include "discovery.hpp"
+﻿#include "discovery.hpp"
 #include "pot/periodic_db.hpp"
 #include <random>
 #include <fstream>
@@ -246,7 +246,7 @@ DiscoveryEngine::DiscoveryEngine(const DiscoveryConfig& config)
 }
 
 DiscoveryStats DiscoveryEngine::run_discovery_loop() {
-    std::cout << "═══ REACTION DISCOVERY LOOP ═══\n\n";
+    std::cout << "=== REACTION DISCOVERY LOOP ===\n\n";
     std::cout << "Configuration:\n";
     std::cout << "  Molecules per batch: " << config_.molecules_per_batch << "\n";
     std::cout << "  Max batches: " << config_.max_batches << "\n";
@@ -334,7 +334,7 @@ DiscoveryStats DiscoveryEngine::run_discovery_loop() {
     // Final statistics
     auto stats = database_.get_stats();
     
-    std::cout << "═══ DISCOVERY COMPLETE ═══\n\n";
+    std::cout << "=== DISCOVERY COMPLETE ===\n\n";
     std::cout << "Total reactions proposed: " << stats.reactions_proposed << "\n";
     std::cout << "Validated: " << stats.reactions_validated << "\n";
     std::cout << "Feasible: " << stats.reactions_feasible << "\n";

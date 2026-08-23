@@ -1,4 +1,4 @@
-// peptide_formation.cpp — Organic / Peptide Formation Engine implementation
+﻿// peptide_formation.cpp  -  Organic / Peptide Formation Engine implementation
 #include "peptide_formation.hpp"
 
 #include <algorithm>
@@ -87,7 +87,7 @@ auto OrganicRuleEngine::check_valence(const Atom& atom) const -> Result<void> {
     const auto* entry = lookup_valence(Z);
 
     if (!entry) {
-        // Unknown element — allow but don't validate
+        // Unknown element  -  allow but don't validate
         return {};
     }
 

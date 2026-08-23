@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_pbc_integration.cpp
  * 
  * Quick smoke test to verify PBC integration works
@@ -108,7 +108,7 @@ int main() {
         std::cout << "  Energy: " << state.E.total() << std::endl;
         std::cout << "  Force on atom 0: (" << state.F[0].x << ", " << state.F[0].y << ", " << state.F[0].z << ")" << std::endl;
         
-        // With MIC, atoms are actually 1 Å apart → strong repulsion
+        // With MIC, atoms are actually 1 Å apart -> strong repulsion
         // Force should be negative (push atom 0 in -x direction)
         if (state.F[0].x < 0) {
             std::cout << "  ✅ PASS (repulsive force via MIC)" << std::endl;

@@ -1,4 +1,4 @@
-// test_glycine.cpp — Unit tests for glycine residue validation
+﻿// test_glycine.cpp  -  Unit tests for glycine residue validation
 // Day 48A: Organic / Peptide Formation Core
 //
 // Tests:

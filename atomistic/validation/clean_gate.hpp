@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * clean_gate.hpp
  * ==============
@@ -58,7 +58,7 @@ namespace validation {
 // ============================================================================
 
 enum class GateTier : uint8_t {
-    CORE   = 0,   // Always run — identity, bounds, geometry
+    CORE   = 0,   // Always run  -  identity, bounds, geometry
     LOW    = 1,   // T1-T10:  formatting, bounds, species coverage
     MID    = 2,   // T11-T25: geometry plausibility, energy sign, bonding
     HIGH   = 3,   // T26-T50: partial relaxation, local stability, thermal
@@ -171,7 +171,7 @@ struct TemperatureWeights {
  *
  * Ts = a1*(T/Tref) + a2*(|dP/dT|/S_expected) + a3*phi_phase + a4*phi_noise
  *
- * This is NOT just temperature — it is thermal severity relative
+ * This is NOT just temperature  -  it is thermal severity relative
  * to the material/system.
  *
  * Classification bands:
@@ -267,7 +267,7 @@ inline const char* case_type_name(CaseType ct) {
 }
 
 // ============================================================================
-// Case data input — lightweight view for CleanGate
+// Case data input  -  lightweight view for CleanGate
 // ============================================================================
 
 struct CaseData {
@@ -312,7 +312,7 @@ struct CaseData {
 };
 
 // ============================================================================
-// CleanGate report — the output
+// CleanGate report  -  the output
 // ============================================================================
 
 struct CleanGateReport {
@@ -703,7 +703,7 @@ inline TemperatureComponents assess_temperature(const CaseData& c) {
     // Thermal noise from instability index
     tc.phi_thermal_noise = std::clamp(c.instability_index, 0.0, 1.0);
 
-    // Gradient and expected sensitivity — zeroed until external data provided
+    // Gradient and expected sensitivity  -  zeroed until external data provided
     tc.dP_dT_abs  = 0.0;
     tc.S_expected  = 1.0;
 
@@ -716,12 +716,12 @@ inline TemperatureComponents assess_temperature(const CaseData& c) {
  */
 inline double estimate_convergence_confidence(const CaseData& c) {
     if (!c.converged) {
-        // Didn't converge — confidence depends on how close
+        // Didn't converge  -  confidence depends on how close
         double fmax_score = std::clamp(1.0 - c.convergence_fmax / 0.1, 0.0, 0.5);
         return fmax_score;
     }
 
-    // Converged — confidence from residual force quality
+    // Converged  -  confidence from residual force quality
     double fmax_qual = std::clamp(1.0 - c.convergence_fmax / 0.01, 0.0, 1.0);
     double rms_qual  = std::clamp(1.0 - c.convergence_rms  / 0.005, 0.0, 1.0);
 
@@ -778,7 +778,7 @@ inline bool is_large_protein_case(const CaseData& c) {
 /**
  * Execute the sampled prerequisite modules against CaseData.
  *
- * This is a stub execution — each module's actual logic is evaluated
+ * This is a stub execution  -  each module's actual logic is evaluated
  * based on the summary signals in CaseData.  Real per-module evaluators
  * can be registered as callbacks in production use.
  *
@@ -853,7 +853,7 @@ inline PrereqResult run_sampled_prereqs(
                 c.temperature_K > 0.9 * c.melting_point_K) {
                 m.passed = false;
                 m.score  = 0.4;
-                m.detail = "T near melting point — thermal instability likely";
+                m.detail = "T near melting point  -  thermal instability likely";
             }
         }
         // Default: pass with quality from symmetry/compactness
@@ -880,7 +880,7 @@ inline PrereqResult run_sampled_prereqs(
 }
 
 // ============================================================================
-// run_clean_gate — the main entry point
+// run_clean_gate  -  the main entry point
 // ============================================================================
 
 /**

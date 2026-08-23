@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unified Molecular File System API
  *
  * Single entry point for all molecular structure I/O operations.
@@ -394,7 +394,7 @@ Result<std::vector<XYZMolecule>> load_directory(
  * Uses {basename}_{index}.{ext} naming scheme.
  *
  * Example: save_batch("output/water", molecules)
- *          → output/water_0.xyz, output/water_1.xyz, ...
+ *          -> output/water_0.xyz, output/water_1.xyz, ...
  */
 Status save_batch(
     const std::string& basename,

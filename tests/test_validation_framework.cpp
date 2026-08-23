@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_validation_framework.cpp
  * ==============================
  * Demonstrates the comprehensive validation framework
@@ -16,9 +16,9 @@ using namespace vsepr;
 using namespace vsepr::validation;
 
 void print_report(const ValidationReport& report, const std::string& test_name) {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  " << std::left << std::setw(61) << test_name << "║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+===============================================================+\n";
+    std::cout << "|  " << std::left << std::setw(61) << test_name << "|\n";
+    std::cout << "+===============================================================+\n";
     
     std::cout << report.summary() << "\n\n";
     
@@ -262,11 +262,11 @@ void test_full_molecule_validation() {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║                                                               ║\n";
-    std::cout << "║     Molecular Validation Framework Test Suite v2.3.1         ║\n";
-    std::cout << "║                                                               ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===============================================================+\n";
+    std::cout << "|                                                               |\n";
+    std::cout << "|     Molecular Validation Framework Test Suite v2.3.1         |\n";
+    std::cout << "|                                                               |\n";
+    std::cout << "+===============================================================+\n";
     
     test_symbol_case();
     test_valence_envelope();
@@ -277,9 +277,9 @@ int main() {
     test_optimization_integrity();
     test_full_molecule_validation();
     
-    std::cout << "\n╔═══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  All validation tests complete!                               ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===============================================================+\n";
+    std::cout << "|  All validation tests complete!                               |\n";
+    std::cout << "+===============================================================+\n\n";
     
     return 0;
 }

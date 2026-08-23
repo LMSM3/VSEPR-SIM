@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * property_calibration.hpp — Property Calibration and Target Legitimacy
+ * property_calibration.hpp  -  Property Calibration and Target Legitimacy
  *
  * Disciplined framework for mapping precursor channels to a small,
  * defensible set of property-scale outputs, with explicit calibration
@@ -10,19 +10,19 @@
  *
  * Architecture position:
  *   Environment-state evaluation
- *       ↓
+ *       v
  *   Ensemble statistics / spatial field summaries   (ensemble_proxy.hpp)
- *       ↓
- *   Macroscopic response proxies → precursors        (macro_precursor.hpp)
- *       ↓
+ *       v
+ *   Macroscopic response proxies -> precursors        (macro_precursor.hpp)
+ *       v
  *   Property learning pipeline                       (property_pipeline.hpp)
- *       ↓
- *   Property calibration and target legitimacy        ← this module
+ *       v
+ *   Property calibration and target legitimacy        <- this module
  *
  * THREE-LAYER SEPARATION (strict):
- *   1. Descriptor layer  — computes proxy/precursor. NO learned params.
- *   2. Calibration layer — fits model, profiles, curricula. NO simulation.
- *   3. Inference layer   — applies calibrated model. NO fitting/simulation.
+ *   1. Descriptor layer   -  computes proxy/precursor. NO learned params.
+ *   2. Calibration layer  -  fits model, profiles, curricula. NO simulation.
+ *   3. Inference layer    -  applies calibrated model. NO fitting/simulation.
  *
  * Implementation phases (strict dependency order):
  *   8A: Property family selection
@@ -56,7 +56,7 @@ namespace coarse_grain::calibration {
 // ============================================================================
 
 /**
- * PropertyFamily — first-wave target identifiers.
+ * PropertyFamily  -  first-wave target identifiers.
  *
  * The -like suffix is retained throughout proxy-only and
  * calibrated-relative states.  It may only be dropped when a target
@@ -99,17 +99,17 @@ inline PropertyFamily property_family_from_index(int i) {
 // ============================================================================
 
 /**
- * SignExpectation — expected direction of a feature's influence
+ * SignExpectation  -  expected direction of a feature's influence
  * on a property target.
  */
 enum class SignExpectation {
-    Positive,   // increasing feature → increasing target
-    Negative,   // increasing feature → decreasing target
+    Positive,   // increasing feature -> increasing target
+    Negative,   // increasing feature -> decreasing target
     Neutral     // no expected directional relationship
 };
 
 /**
- * FeatureSignSpec — one feature's expected sign relationship.
+ * FeatureSignSpec  -  one feature's expected sign relationship.
  */
 struct FeatureSignSpec {
     std::string feature_name;
@@ -117,7 +117,7 @@ struct FeatureSignSpec {
 };
 
 /**
- * TargetContract — formal specification for a property target.
+ * TargetContract  -  formal specification for a property target.
  *
  * Records what the property means, which precursor channels drive it
  * in a positive or negative direction, what constitutes a valid output
@@ -163,7 +163,7 @@ struct TargetContract {
                 return true;  // Neutral
             }
         }
-        return true;  // not listed → no constraint
+        return true;  // not listed -> no constraint
     }
 
     /**
@@ -305,7 +305,7 @@ inline TargetContract make_contract(PropertyFamily f) {
 // ============================================================================
 
 /**
- * CalibrationProfile — per-target calibration layer.
+ * CalibrationProfile  -  per-target calibration layer.
  *
  * Provides a calibrated interpretation for each target without
  * modifying the descriptor or precursor computation code.
@@ -364,7 +364,7 @@ inline CalibrationProfile default_profile(PropertyFamily f) {
 // ============================================================================
 
 /**
- * SupervisionRegime — the supervision under which a prediction was produced.
+ * SupervisionRegime  -  the supervision under which a prediction was produced.
  *
  * Must be recorded in prediction provenance and reported alongside
  * the output.
@@ -389,7 +389,7 @@ inline const char* supervision_regime_name(SupervisionRegime r) {
 // ============================================================================
 
 /**
- * PredictionStatus — output state of a calibrated prediction.
+ * PredictionStatus  -  output state of a calibrated prediction.
  */
 enum class PredictionStatus {
     Accepted,       // Total and all component confidences above threshold
@@ -407,7 +407,7 @@ inline const char* prediction_status_name(PredictionStatus s) {
 }
 
 /**
- * ConfidenceDecomposition — five named confidence components.
+ * ConfidenceDecomposition  -  five named confidence components.
  *
  * Total confidence = product of all five.
  * Individual floors are enforced independently.
@@ -441,7 +441,7 @@ struct ConfidenceDecomposition {
 };
 
 /**
- * CalibratedPrediction — full output with provenance.
+ * CalibratedPrediction  -  full output with provenance.
  */
 struct CalibratedPrediction {
     double value = std::numeric_limits<double>::quiet_NaN();
@@ -601,7 +601,7 @@ inline void split_attributions(
 }
 
 /**
- * calibrated_predict — full calibrated prediction with decomposed confidence.
+ * calibrated_predict  -  full calibrated prediction with decomposed confidence.
  */
 inline CalibratedPrediction calibrated_predict(
     const pipeline::LinearModelCoefficients& model,
@@ -645,7 +645,7 @@ inline CalibratedPrediction calibrated_predict(
 // ============================================================================
 
 /**
- * FeatureEnvelope — z-score envelope from training data.
+ * FeatureEnvelope  -  z-score envelope from training data.
  *
  * For each feature dimension, stores mean and std from the
  * training partition.
@@ -659,7 +659,7 @@ struct FeatureEnvelope {
 };
 
 /**
- * OODResult — outcome of an out-of-distribution check.
+ * OODResult  -  outcome of an out-of-distribution check.
  */
 struct OODResult {
     bool extrapolating         = false;
@@ -722,7 +722,7 @@ inline OODResult check_ood(
     const std::vector<std::string>& dominant_features)
 {
     OODResult result;
-    if (!envelope.populated) return result;  // no envelope → pass
+    if (!envelope.populated) return result;  // no envelope -> pass
 
     int p = static_cast<int>(envelope.means.size());
     if (static_cast<int>(fv.values.size()) != p) {
@@ -778,7 +778,7 @@ inline void apply_ood(CalibratedPrediction& pred, const OODResult& ood) {
 // ============================================================================
 
 /**
- * CurriculumSweep — a controlled perturbation sweep for a specific
+ * CurriculumSweep  -  a controlled perturbation sweep for a specific
  * property family, with regime labeling.
  */
 struct CurriculumSweep {
@@ -934,7 +934,7 @@ inline CurriculumSweep build_brittleness_curriculum(int n_steps = 10) {
         ps.cohesion_proxy = 0.5;
         ps.uniformity_proxy = 0.5;
         ps.texture_proxy = 0.33;
-        ps.stabilization_proxy = 0.5 * (1.0 - t);  // lower stab → more brittle
+        ps.stabilization_proxy = 0.5 * (1.0 - t);  // lower stab -> more brittle
         ps.surface_sensitivity_proxy = t;
         ps.mean_rho_hat = 0.5;
         ps.mean_eta = 0.5 * (1.0 - t);
@@ -983,7 +983,7 @@ inline CurriculumSweep build_brittleness_curriculum(int n_steps = 10) {
 // ============================================================================
 
 /**
- * LegitimacyState — legitimacy state for a property target.
+ * LegitimacyState  -  legitimacy state for a property target.
  *
  * ProxyOnly:           -like suffix, contract/synthetic only
  * CalibratedRelative:  -like suffix, monotonicity+signs+domain
@@ -1005,7 +1005,7 @@ inline const char* legitimacy_state_name(LegitimacyState s) {
 }
 
 /**
- * PromotionEvidence — evidence gathered during promotion evaluation.
+ * PromotionEvidence  -  evidence gathered during promotion evaluation.
  */
 struct PromotionEvidence {
     bool monotonicity_preserved  = false;
@@ -1019,7 +1019,7 @@ struct PromotionEvidence {
 };
 
 /**
- * DemotionCheck — checks performed to detect demotion conditions.
+ * DemotionCheck  -  checks performed to detect demotion conditions.
  */
 struct DemotionCheck {
     bool calibration_drift_detected    = false;
@@ -1036,7 +1036,7 @@ struct DemotionCheck {
 };
 
 /**
- * TargetLegitimacy — current legitimacy state for a target with
+ * TargetLegitimacy  -  current legitimacy state for a target with
  * promotion/demotion provenance.
  */
 struct TargetLegitimacy {

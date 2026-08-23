@@ -1,0 +1,19 @@
+field_name,type,required,description,example
+continual_run_id,string,yes,Unique run identifier for this continual refinement record,CONTINUAL_RUN_0001
+parent_run_id,string,no,ID of the run that generated this one (null for generation 0),CONTINUAL_RUN_0000
+generation_index,integer,yes,Which iteration of the refinement loop produced this record,1
+source_type,string,yes,"Origin of this record: simulation / imported_data / comparison",simulation
+object_id,string,yes,Interaction object identifier,pi_7
+family,string,yes,"Interaction family: pi_N / HB_N / vdW_N / sign_halo / etc.",pi_N
+substance_primary_state,string,yes,"Physical/material state of the parent substance: gas / plasma / liquid / solution / crystal / amorphous_solid / surface_adsorbed / interface_bound / biological_pocket / molten_salt / supercritical_fluid / macro_composite",solution
+primary_scale,string,yes,Dominant recovered length scale: S1 / S2 / S3 / S4 / S5 / S6,S3
+casting_primary,string,yes,"Primary casting mode: field_field / force_force / field_force / force_field",field_field
+Lambda_prior_nm,float,yes,Prior estimate of recovered length scale before this run (nm),1.10
+Lambda_sim_nm,float,no,Recovered length scale from simulation output (nm),1.18
+Lambda_data_nm,float,no,Length scale from imported empirical data (nm; null if unavailable),pending
+Lambda_solved_nm,float,no,Uncertainty-weighted solved length scale after comparison (nm),pending
+E_sim,float,no,Interaction energy from simulation,pending
+E_data,float,no,Interaction energy from empirical data,pending
+gap_label,string,no,"Assigned gap classification: good_match / scale_shift / energy_shift / overextended_field / underresolved_scale / missing_vdw_many_body / missing_sign_halo / bad_state_prior / bad_screening / force_mismatch / orientation_failure / topology_sensitive / resolution_failure / insufficient_data",pending
+confidence_score,float,no,"Composite confidence in solved values: Q_X = r_X * exp(-MAE_X / tau_X) * C_coverage; range [0, 1]",0.62
+next_action,string,no,Next recommended run family or action based on gap label,pending

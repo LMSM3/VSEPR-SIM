@@ -1,4 +1,4 @@
-/**
+﻿/**
  * example_copper_alloy_pipe_network.cpp
  *
  * Demonstration: random copper-base alloy at chaos factor χ = 1.25,
@@ -9,7 +9,7 @@
  *   2. Place alloy beads on FCC lattice     (alloy::alloy_to_bead_system)
  *   3. Run L2↔L4 boundary check            (layer_stack::evaluate_boundary)
  *   4. Generate Vec3×Vec3 pipe network      (pipe_network::generate_pipe_network)
- *   5. Bind alloy material to each segment  (segment.alloy_bead_index → AlloyBeadRecord)
+ *   5. Bind alloy material to each segment  (segment.alloy_bead_index -> AlloyBeadRecord)
  *   6. Print beam tensors and network stats
  *
  * Exits 0 on success.
@@ -28,12 +28,12 @@ using namespace alloy;
 using namespace pipe_network;
 using namespace layer_stack;
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static void section(const char* title) {
-    std::printf("\n╔══════════════════════════════════════════════════════════\n");
-    std::printf("║  %s\n", title);
-    std::printf("╚══════════════════════════════════════════════════════════\n");
+    std::printf("\n+==========================================================\n");
+    std::printf("|  %s\n", title);
+    std::printf("+==========================================================\n");
 }
 
 static void check(bool cond, const char* msg) {
@@ -52,10 +52,10 @@ static void print_mat3(const char* label, const Mat3& M) {
                     M.m[i][0], M.m[i][1], M.m[i][2]);
 }
 
-// ── Step 1: Alloy generation ───────────────────────────────────────────────────
+// -- Step 1: Alloy generation ---------------------------------------------------
 
 static AlloyComposition run_alloy_generation() {
-    section("Step 1 — Random Cu-base Alloy  (χ = 1.25)");
+    section("Step 1  -  Random Cu-base Alloy  (χ = 1.25)");
 
     ChaosFactor chaos;
     chaos.chi = 1.25;
@@ -119,10 +119,10 @@ static AlloyComposition run_alloy_generation() {
     return alloy;
 }
 
-// ── Step 2: FCC lattice placement + bead system ───────────────────────────────
+// -- Step 2: FCC lattice placement + bead system -------------------------------
 
 static coarse_grain::BeadSystem run_bead_placement(const AlloyComposition& alloy) {
-    section("Step 2 — FCC Lattice Placement → BeadSystem");
+    section("Step 2  -  FCC Lattice Placement -> BeadSystem");
 
     coarse_grain::BeadSystem sys = alloy_to_bead_system(alloy, /*seed=*/42);
 
@@ -143,12 +143,12 @@ static coarse_grain::BeadSystem run_bead_placement(const AlloyComposition& alloy
     return sys;
 }
 
-// ── Step 3: L2↔L4 boundary check on the alloy system ─────────────────────────
+// -- Step 3: L2↔L4 boundary check on the alloy system -------------------------
 
 static void run_boundary_check(coarse_grain::BeadSystem& sys,
                                const AlloyComposition& alloy)
 {
-    section("Step 3 — L2↔L4 Boundary Check");
+    section("Step 3  -  L2↔L4 Boundary Check");
 
     // Build L2 states from alloy records
     std::vector<L2_AtomisticState> l2_states;
@@ -190,10 +190,10 @@ static void run_boundary_check(coarse_grain::BeadSystem& sys,
     check(report.n_phase_mixed   == 0,             "No mixed-phase beads (solid alloy)");
 }
 
-// ── Step 4+5: Vec3×Vec3 pipe network generation ───────────────────────────────
+// -- Step 4+5: Vec3×Vec3 pipe network generation -------------------------------
 
 static PipeNetwork run_network_generation(const AlloyComposition& alloy) {
-    section("Step 4+5 — Vec3×Vec3 Complex Random Pipe Network  (χ = 1.25)");
+    section("Step 4+5  -  Vec3×Vec3 Complex Random Pipe Network  (χ = 1.25)");
 
     NetworkChaos chaos;
     chaos.chi = 1.25;
@@ -228,7 +228,7 @@ static PipeNetwork run_network_generation(const AlloyComposition& alloy) {
     std::printf("  Alloy fraction:  %.3f\n",   net.alloy_segment_fraction);
 
     // Print first 8 segments: Vec3×Vec3 + beam tensor
-    std::printf("\n  First 8 segments — Vec3×Vec3 and Beam Tensor B:\n");
+    std::printf("\n  First 8 segments  -  Vec3×Vec3 and Beam Tensor B:\n");
     for (uint32_t i = 0; i < std::min(8u, net.n_segments); ++i) {
         const auto& s = net.segments[i];
 
@@ -237,7 +237,7 @@ static PipeNetwork run_network_generation(const AlloyComposition& alloy) {
             std::min(s.alloy_bead_index,
                      static_cast<uint32_t>(alloy.beads.size()-1))];
 
-        std::printf("\n  ── Segment %u  (nodes %u→%u)  %s  loop=%s\n",
+        std::printf("\n  -- Segment %u  (nodes %u->%u)  %s  loop=%s\n",
                     s.segment_id, s.node_from, s.node_to,
                     s.material_label.empty() ? bead_rec.symbol.c_str()
                                              : s.material_label.c_str(),
@@ -287,23 +287,23 @@ static PipeNetwork run_network_generation(const AlloyComposition& alloy) {
     return net;
 }
 
-// ── Step 6: Joint alloy + network report ─────────────────────────────────────
+// -- Step 6: Joint alloy + network report -------------------------------------
 
 static void run_joint_report(const AlloyComposition& alloy,
                              const PipeNetwork&       net)
 {
-    section("Step 6 — Joint Alloy + Network Report");
+    section("Step 6  -  Joint Alloy + Network Report");
 
     std::printf("  Material system:  %s\n", alloy.name.c_str());
     std::printf("  Network topology: %s\n", net.name.c_str());
     std::printf("\n");
 
     // Alloy summary table
-    std::printf("  ┌─────────────────────────────────────────────────────┐\n");
-    std::printf("  │  Cu-base alloy composition  (χ=1.25, 64 beads)     │\n");
-    std::printf("  ├──────┬──────┬──────────┬────────────┬──────────────┤\n");
-    std::printf("  │  Z   │  El  │  x_f     │  ε (mean)  │  role        │\n");
-    std::printf("  ├──────┼──────┼──────────┼────────────┼──────────────┤\n");
+    std::printf("  +-----------------------------------------------------+\n");
+    std::printf("  |  Cu-base alloy composition  (χ=1.25, 64 beads)     |\n");
+    std::printf("  +------┬------┬----------┬------------┬--------------┤\n");
+    std::printf("  |  Z   |  El  |  x_f     |  ε (mean)  |  role        |\n");
+    std::printf("  +------┼------┼----------┼------------┼--------------┤\n");
     for (int i = 0; i < 10; ++i) {
         if (alloy.mole_fraction[static_cast<size_t>(i)] < 0.005) continue;
         const auto& er = CU_ALLOY_POOL[static_cast<size_t>(i)];
@@ -312,13 +312,13 @@ static void run_joint_report(const AlloyComposition& alloy,
         for (auto& b : alloy.beads)
             if (b.Z == er.Z) { sum_e += b.epsilon; cnt++; }
         double mean_e = (cnt > 0) ? sum_e / cnt : 0.0;
-        std::printf("  │ %4u │  %-2s  │  %.4f  │  %.4f    │  %-12s │\n",
+        std::printf("  | %4u |  %-2s  |  %.4f  |  %.4f    |  %-12s |\n",
                     er.Z, er.symbol,
                     alloy.mole_fraction[static_cast<size_t>(i)],
                     mean_e,
                     er.role_hint);
     }
-    std::printf("  └──────┴──────┴──────────┴────────────┴──────────────┘\n");
+    std::printf("  +------┴------┴----------┴------------┴--------------+\n");
 
     // Count segments by dominant alloy element
     std::printf("\n  Pipe network material distribution:\n");
@@ -366,10 +366,10 @@ static void run_joint_report(const AlloyComposition& alloy,
                 net.network_beam_tensor.trace());
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
-    std::printf("VSEPR-SIM — Random Copper Alloy × Vec3×Vec3 Pipe Network\n");
+    std::printf("VSEPR-SIM  -  Random Copper Alloy × Vec3×Vec3 Pipe Network\n");
     std::printf("  Chaos factor χ = 1.25  |  FCC lattice  |  Beam tensor\n");
     std::printf("=============================================================\n");
 

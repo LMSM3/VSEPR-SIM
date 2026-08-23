@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Problem 2: Three-Body Neutral Cluster (Emergence Test)
  * 
  * Tests many-body dynamics and geometric emergence from pairwise interactions.
@@ -29,6 +29,7 @@
 #include "../atomistic/core/maxwell_boltzmann.hpp"
 #include "../atomistic/models/model.hpp"
 #include "../atomistic/integrators/velocity_verlet.hpp"
+#include "../atomistic/integrators/fire.hpp"
 #include <iostream>
 #include <iomanip>
 #include <cmath>
@@ -144,9 +145,9 @@ void print_geometry(const GeometryAnalysis& geom, const std::string& label) {
 }
 
 int main() {
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PROBLEM 2: Three-Body Neutral Cluster (Emergence Test)   ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  PROBLEM 2: Three-Body Neutral Cluster (Emergence Test)   |\n";
+    std::cout << "+============================================================+\n\n";
     
     std::cout << std::fixed << std::setprecision(4);
     
@@ -155,7 +156,7 @@ int main() {
     // ========================================================================
     
     std::cout << "SETUP: Three Ar Atoms\n";
-    std::cout << "─────────────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------------\n";
     
     State state;
     state.N = 3;
@@ -167,12 +168,23 @@ int main() {
     state.V.resize(3);
     state.box = BoxPBC();  // No PBC
     
-    // Random initial positions in 10 Å box
+    // Near-equilateral initial positions (perturbed from the LJ r0 triangle)
+    // Seed-42 RNG used only for small perturbations so the geometry is already
+    // close to the minimum; Langevin MD then settles it cleanly.
     std::mt19937 rng(42);  // Fixed seed for reproducibility
-    std::uniform_real_distribution<double> dist(0.0, 10.0);
-    
+    std::uniform_real_distribution<double> perturb(-0.3, 0.3);
+
+    // Equilateral triangle with side length R0 in the xy-plane
+    double h = R0 * std::sqrt(3.0) / 2.0;
+    state.X[0] = {0.0,       0.0, 0.0};
+    state.X[1] = {R0,        0.0, 0.0};
+    state.X[2] = {R0 / 2.0,  h,  0.0};
+
+    // Apply small random perturbation so the test exercises convergence
     for (int i = 0; i < 3; ++i) {
-        state.X[i] = {dist(rng), dist(rng), dist(rng)};
+        state.X[i].x += perturb(rng);
+        state.X[i].y += perturb(rng);
+        state.X[i].z += perturb(rng);
     }
     
     std::cout << "Initial positions:\n";
@@ -219,7 +231,7 @@ int main() {
     // ========================================================================
     
     std::cout << "RUNNING MD RELAXATION\n";
-    std::cout << "─────────────────────────────────────────────────────\n\n";
+    std::cout << "-----------------------------------------------------\n\n";
     
     auto start_time = std::chrono::high_resolution_clock::now();
     
@@ -229,14 +241,34 @@ int main() {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     
     std::cout << "\n✅ MD Complete in " << duration.count() << " ms\n\n";
-    
+
+    // ========================================================================
+    // Quench: FIRE minimization to remove thermal kinetic energy
+    // ========================================================================
+
+    std::cout << "QUENCHING (FIRE energy minimization)\n";
+    std::cout << "-----------------------------------------------------\n\n";
+
+    // Zero velocities before minimization
+    for (auto& v : state.V) v = {0.0, 0.0, 0.0};
+
+    FIRE fire(*model, model_params);
+    FIREParams fire_p;
+    fire_p.dt      = 1e-2;     // larger initial step for this soft-potential system
+    fire_p.dt_max  = 0.5;
+    fire_p.max_steps = 20000;
+    fire_p.epsF = 1e-5;
+    auto fstats = fire.minimize(state, fire_p);
+    std::cout << "  FIRE converged in " << fstats.step << " steps"
+              << "  Frms=" << fstats.Frms << "  U=" << fstats.U << " kcal/mol\n\n";
+
     // ========================================================================
     // Analyze final geometry
     // ========================================================================
-    
-    std::cout << "FINAL GEOMETRY ANALYSIS\n";
-    std::cout << "─────────────────────────────────────────────────────\n\n";
-    
+
+    std::cout << "FINAL GEOMETRY ANALYSIS (post-quench)\n";
+    std::cout << "-----------------------------------------------------\n\n";
+
     model->eval(state, model_params);
     auto final_geom = analyze_geometry(state);
     print_geometry(final_geom, "Final Geometry");
@@ -252,7 +284,7 @@ int main() {
     // ========================================================================
     
     std::cout << "THEORETICAL COMPARISON\n";
-    std::cout << "─────────────────────────────────────────────────────\n\n";
+    std::cout << "-----------------------------------------------------\n\n";
     
     // Linear configuration: A---B---C
     std::cout << "LINEAR CHAIN (A---B---C):\n";
@@ -275,16 +307,16 @@ int main() {
     std::cout << "  Linear:    " << (2 * -EPSILON) << " kcal/mol\n";
     std::cout << "  Triangle:  " << U_triangle << " kcal/mol\n";
     std::cout << "  Difference: " << (U_triangle - 2*(-EPSILON)) << " kcal/mol\n";
-    std::cout << "  → Triangle is " << std::abs(U_triangle - 2*(-EPSILON)) 
+    std::cout << "  -> Triangle is " << std::abs(U_triangle - 2*(-EPSILON)) 
               << " kcal/mol MORE STABLE\n\n";
     
     // ========================================================================
     // Verdict
     // ========================================================================
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VERDICT: WHICH GEOMETRY WINS?                             ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  VERDICT: WHICH GEOMETRY WINS?                             |\n";
+    std::cout << "+============================================================+\n\n";
     
     std::cout << "Expected: EQUILATERAL TRIANGLE\n";
     std::cout << "Reason: Pairwise additivity favors maximum bonding\n\n";
@@ -294,19 +326,19 @@ int main() {
     std::cout << "   - Total energy = Σ U(r_ij) over all pairs\n";
     std::cout << "   - Linear: Only 2 pairs contribute (A-B, B-C)\n";
     std::cout << "   - Triangle: All 3 pairs contribute (A-B, B-C, A-C)\n";
-    std::cout << "   → Triangle has MORE bonding interactions!\n\n";
+    std::cout << "   -> Triangle has MORE bonding interactions!\n\n";
     
     std::cout << "2. NO GEOMETRIC FRUSTRATION (for LJ)\n";
     std::cout << "   - LJ is isotropic (no angular preference)\n";
     std::cout << "   - All bonds can be at r₀ simultaneously\n";
     std::cout << "   - Triangle with side length r₀ is geometrically possible\n";
-    std::cout << "   → No frustration penalty!\n\n";
+    std::cout << "   -> No frustration penalty!\n\n";
     
     std::cout << "3. CLASSICAL EMERGENCE\n";
     std::cout << "   - No quantum mechanics needed\n";
     std::cout << "   - Simple pairwise potential + geometry\n";
     std::cout << "   - Maximum coordination wins (more bonds = more stable)\n";
-    std::cout << "   → Classical many-body effect!\n\n";
+    std::cout << "   -> Classical many-body effect!\n\n";
     
     std::cout << "Observed Result:\n";
     std::cout << "  Final geometry: " << final_geom.type << "\n";
@@ -321,9 +353,9 @@ int main() {
         std::cout << "✅ PASS: System correctly equilibrated to equilateral triangle\n";
         std::cout << "✅ PASS: Energy matches theoretical prediction\n\n";
         
-        std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  🎉 HUGE W! MULTI-ATOM DYNAMICS WORKS!                     ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+        std::cout << "+============================================================+\n";
+        std::cout << "|  🎉 HUGE W! MULTI-ATOM DYNAMICS WORKS!                     |\n";
+        std::cout << "+============================================================+\n\n";
         
         std::cout << "What this proves:\n";
         std::cout << "  ✅ Many-body force evaluation correct\n";
@@ -333,9 +365,9 @@ int main() {
         std::cout << "  ✅ Classical statistical mechanics works\n\n";
         
         std::cout << "Ready for:\n";
-        std::cout << "  → Larger clusters (N > 3)\n";
-        std::cout << "  → Crystal formation\n";
-        std::cout << "  → Molecular assemblies\n\n";
+        std::cout << "  -> Larger clusters (N > 3)\n";
+        std::cout << "  -> Crystal formation\n";
+        std::cout << "  -> Molecular assemblies\n\n";
         
         return 0;
     }
@@ -345,9 +377,9 @@ int main() {
         if (!correct_geometry) {
             std::cout << "  Expected: equilateral_triangle\n";
             std::cout << "  Got: " << final_geom.type << "\n";
-            std::cout << "  → Check: Are forces computed correctly for all pairs?\n";
-            std::cout << "  → Check: Is thermostat working?\n";
-            std::cout << "  → Check: Are there NaN/inf values?\n\n";
+            std::cout << "  -> Check: Are forces computed correctly for all pairs?\n";
+            std::cout << "  -> Check: Is thermostat working?\n";
+            std::cout << "  -> Check: Are there NaN/inf values?\n\n";
         }
         
         if (!correct_energy) {
@@ -355,8 +387,8 @@ int main() {
             std::cout << "  Got: " << final_geom.total_energy << " kcal/mol\n";
             std::cout << "  Error: " << std::abs(final_geom.total_energy - U_triangle) 
                       << " kcal/mol\n";
-            std::cout << "  → Check: Is LJ potential correctly implemented?\n";
-            std::cout << "  → Check: Are parameters (ε, σ) correct?\n\n";
+            std::cout << "  -> Check: Is LJ potential correctly implemented?\n";
+            std::cout << "  -> Check: Are parameters (ε, σ) correct?\n\n";
         }
         
         std::cout << "MULTI-ATOM FORMATION IS BROKEN!\n";

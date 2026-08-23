@@ -1,4 +1,4 @@
-// src/ufx_auto2/pubchem_fetcher.cpp
+﻿// src/ufx_auto2/pubchem_fetcher.cpp
 // UFX_AUTO_2 Phase 5 -- PubChem PUG REST Fetcher Implementation
 // VSEPR-SIM v5 beta8 -> beta9 target
 
@@ -176,7 +176,7 @@ std::string PubChemFetcher::sha256_hex_(const std::string& data) {
 
 // ============================================================================
 // parse_response_
-// Minimal JSON string search — no full JSON parser dependency.
+// Minimal JSON string search  -  no full JSON parser dependency.
 // Extracts the first numeric value for the requested PUG property.
 // ============================================================================
 

@@ -1,4 +1,4 @@
-// valence_tables.hpp — Deterministic valence and electronegativity lookup tables
+﻿// valence_tables.hpp  -  Deterministic valence and electronegativity lookup tables
 // Data-driven (no hardcoded Z arrays), constexpr where possible
 #pragma once
 

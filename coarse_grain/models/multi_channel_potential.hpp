@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * multi_channel_potential.hpp — Channel-Coupled Bead-Bead Interaction
+ * multi_channel_potential.hpp  -  Channel-Coupled Bead-Bead Interaction
  *
  * Extends the single-channel anisotropic potential to a multi-channel
  * formulation where each physical channel (steric, electrostatic,
@@ -28,7 +28,7 @@
 namespace coarse_grain {
 
 /**
- * ChannelKernel — per-channel radial kernel and coupling weight.
+ * ChannelKernel  -  per-channel radial kernel and coupling weight.
  *
  * Each channel has its own:
  *   - lambda:  coupling strength (dimensionless)
@@ -40,7 +40,7 @@ struct ChannelKernel {
 };
 
 /**
- * MultiChannelPotentialParams — parameters for multi-channel interaction.
+ * MultiChannelPotentialParams  -  parameters for multi-channel interaction.
  */
 struct MultiChannelPotentialParams {
     double sigma{};       // LJ sigma (Å)
@@ -53,7 +53,7 @@ struct MultiChannelPotentialParams {
 };
 
 /**
- * MultiChannelPotentialResult — decomposed energy output.
+ * MultiChannelPotentialResult  -  decomposed energy output.
  */
 struct MultiChannelPotentialResult {
     double E_isotropic{};         // Standard LJ 12-6 contribution

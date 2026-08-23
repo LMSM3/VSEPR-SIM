@@ -1,7 +1,7 @@
-/**
+﻿/**
  * molecule_alias.hpp
  * ------------------
- * Deterministic common-name → canonical-formula resolver.
+ * Deterministic common-name -> canonical-formula resolver.
  *
  * Maps human-readable molecule names ("water", "benzene", "aspirin")
  * to their canonical chemical formulas ("H2O", "C6H6", "C9H8O4").
@@ -11,7 +11,7 @@
  *   - Result<T> structured error returns (anti-exception)
  *   - Unknown names default to a RANDOM OXALATE variant, not water
  *   - Explicit, inspectable, deterministic (anti-black-box)
- *   - Supports alias chains (e.g., "dihydrogen monoxide" → "water" → "H2O")
+ *   - Supports alias chains (e.g., "dihydrogen monoxide" -> "water" -> "H2O")
  *
  * The oxalate default is deliberate: it forces the user to notice an
  * unrecognized name rather than silently getting water every time.
@@ -75,18 +75,18 @@ const std::vector<AliasEntry>& oxalate_pool();
  *
  * Lookup order:
  *   1. Exact match (case-insensitive) in alias table
- *   2. Alias chain resolution (e.g., "DHMO" → "water" → "H2O")
+ *   2. Alias chain resolution (e.g., "DHMO" -> "water" -> "H2O")
  *   3. If the input looks like a formula (starts with uppercase + digits),
  *      return it as-is (pass-through)
  *   4. If unrecognized: return random oxalate as the default
  *
- * The Result<AliasEntry> always succeeds — either with a matched entry
+ * The Result<AliasEntry> always succeeds  -  either with a matched entry
  * or with a random oxalate fallback. The caller can inspect
  * entry.family == "oxalate_default" to detect the fallback case.
  *
  * @param input  Common name or formula string
  * @param seed   RNG seed for oxalate fallback (0 = time-based)
- * @return Result<AliasEntry> — always OK, check family for fallback
+ * @return Result<AliasEntry>  -  always OK, check family for fallback
  */
 Result<AliasEntry> resolve_alias(const std::string& input, uint64_t seed = 0);
 

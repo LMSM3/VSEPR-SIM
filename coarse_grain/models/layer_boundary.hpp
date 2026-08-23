@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * layer_boundary.hpp — L2 ↔ L4 Phase Transition Boundary
+ * layer_boundary.hpp  -  L2 ↔ L4 Phase Transition Boundary
  *
  * This is where most simulations cheat or break.
  *
  * The L2 ↔ L4 boundary is the interface where atomic behaviour (discrete
  * particle physics, quantum-derived ε, explicit bonding) transitions into
  * coarse-grained bulk behaviour (phase fields, density order parameters,
- * collective interactions).  It is not a sharp line — it is a controlled
+ * collective interactions).  It is not a sharp line  -  it is a controlled
  * approximation zone that must be made explicit rather than hidden.
  *
  * What "cheating" looks like at this boundary:
@@ -17,7 +17,7 @@
  *     (e.g. Fe³⁺ lumped with O²⁻ into a neutral bead loses the Coulomb)
  *   - Pretending phase is single-valued when a bead straddles a phase boundary
  *   - Using a fixed structural role Σ across the phase transition when the
- *     bonding topology actually changes (metallic Fe → ionic Fe³⁺)
+ *     bonding topology actually changes (metallic Fe -> ionic Fe³⁺)
  *
  * What this module provides instead:
  *
@@ -43,9 +43,9 @@
  *        physics?  High residual = the CG mapping is losing information here.
  *
  * Anti-black-box: every approximation is recorded with its magnitude.
- * Deterministic: same inputs → same boundary record.
+ * Deterministic: same inputs -> same boundary record.
  *
- * Reference: docs/section_layer_stack.tex §4 — "The Hard Boundary"
+ * Reference: docs/section_layer_stack.tex §4  -  "The Hard Boundary"
  */
 
 #include "include/layer_stack.hpp"
@@ -65,10 +65,10 @@ namespace layer_stack {
 
 struct BoundaryParams {
     // B1: energy consistency
-    double energy_tol_kcal{2.0};      // kcal/mol — acceptable L2↔L4 energy gap
+    double energy_tol_kcal{2.0};      // kcal/mol  -  acceptable L2↔L4 energy gap
 
     // B2: charge conservation
-    double charge_tol_e{0.05};        // e — acceptable charge non-conservation per bead
+    double charge_tol_e{0.05};        // e  -  acceptable charge non-conservation per bead
 
     // B3: phase coherence
     bool   allow_mixed_phase{false};  // true = flag but do not reject
@@ -77,7 +77,7 @@ struct BoundaryParams {
     bool   recompute_sigma{true};     // Re-classify Σ_i at boundary from Q and Z
 
     // B5: residual threshold for flagging high-error beads
-    double residual_warn{0.15};       // 0–1 scale; >0.15 is flagged
+    double residual_warn{0.15};       // 0-1 scale; >0.15 is flagged
 };
 
 // ============================================================================
@@ -145,7 +145,7 @@ struct BoundaryReport {
 // ============================================================================
 
 /**
- * evaluate_boundary — run all five boundary checks for a BeadSystem against
+ * evaluate_boundary  -  run all five boundary checks for a BeadSystem against
  * its L2 atomistic parent states.
  *
  * @param bead_sys    The L4 bead system.
@@ -186,7 +186,7 @@ inline BoundaryReport evaluate_boundary(
         const auto& bead   = bead_sys.beads[i];
         const auto& l2     = l2_states[i];
 
-        // ── B1: Energy consistency ────────────────────────────────────────────
+        // -- B1: Energy consistency --------------------------------------------
         // L2 energy: LJ 12-6 + Coulomb for this bead vs all others
         double e_l2 = 0.0;
         for (size_t j = 0; j < N; ++j) {
@@ -242,7 +242,7 @@ inline BoundaryReport evaluate_boundary(
         if (rec.energy_gap > report.max_energy_gap) report.max_energy_gap = rec.energy_gap;
         sum_energy_gap += rec.energy_gap;
 
-        // ── B2: Charge conservation ───────────────────────────────────────────
+        // -- B2: Charge conservation -------------------------------------------
         rec.charge_l2_sum = l2.Q;        // pre-aggregated sum from caller
         rec.charge_l4     = bead.charge;
         rec.charge_error  = std::abs(rec.charge_l4 - rec.charge_l2_sum);
@@ -251,7 +251,7 @@ inline BoundaryReport evaluate_boundary(
         if (rec.charge_error > report.max_charge_error) report.max_charge_error = rec.charge_error;
         sum_charge_err += rec.charge_error;
 
-        // ── B3: Phase coherence ───────────────────────────────────────────────
+        // -- B3: Phase coherence -----------------------------------------------
         if (i < atom_phases.size() && !atom_phases[i].empty()) {
             const auto& phases = atom_phases[i];
             auto first = phases[0];
@@ -267,7 +267,7 @@ inline BoundaryReport evaluate_boundary(
             }
         }
 
-        // ── B4: Structural role re-evaluation ─────────────────────────────────
+        // -- B4: Structural role re-evaluation ---------------------------------
         rec.sigma_l4 = bead.structural_role;
         if (params.recompute_sigma) {
             // Re-classify from Q and Z
@@ -295,7 +295,7 @@ inline BoundaryReport evaluate_boundary(
             rec.sigma_l2 = rec.sigma_l4;
         }
 
-        // ── B5: Mapping residual ──────────────────────────────────────────────
+        // -- B5: Mapping residual ----------------------------------------------
         double e_scale = std::max(std::abs(rec.energy_l2), 1e-6);
         double e_term  = std::min(rec.energy_gap / e_scale, 1.0);
         double q_term  = std::min(rec.charge_error / (std::abs(rec.charge_l2_sum) + 0.1), 1.0);

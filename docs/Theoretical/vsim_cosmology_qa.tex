@@ -1,0 +1,289 @@
+% =============================================================================
+%  vsim_cosmology_qa.tex
+%  Cosmology Q&A — Open Questions and Current Understanding
+%  Internal working document · v5.2.0-internal context
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage{vsim_common}
+
+% Q&A specific layout
+\usepackage{mdframed}
+
+% Answer space rule
+\newcommand{\answerspace}[1][4cm]{%
+  \vspace{4pt}%
+  \noindent\textcolor{gray!40}{\rule{\linewidth}{0.3pt}}\\[-2pt]%
+  \vspace{#1}%
+  \noindent\textcolor{gray!40}{\rule{\linewidth}{0.3pt}}%
+  \vspace{6pt}%
+}
+
+% Partial answer (some text, then space)
+\newcommand{\partialanswer}[2][3cm]{%
+  \vspace{4pt}%
+  \noindent\textcolor{gray!40}{\rule{\linewidth}{0.3pt}}\\[4pt]%
+  {\small\color{black!70} #2}%
+  \vspace{#1}%
+  \noindent\textcolor{gray!40}{\rule{\linewidth}{0.3pt}}%
+  \vspace{6pt}%
+}
+
+% Question counter
+\newcounter{qnum}[section]
+\newcommand{\Q}[1]{%
+  \stepcounter{qnum}%
+  \vspace{10pt}%
+  \noindent{\sffamily\bfseries Q\thesection.\theqnum\quad #1}%
+  \vspace{4pt}\par%
+}
+
+% Status tag for questions
+\newcommand{\qstatus}[1]{\hfill\stbd}
+\newcommand{\qopen}{\hfill\snew}
+\newcommand{\qsettled}{\hfill\spass}
+\newcommand{\qscope}{\hfill\sna}  % out of scope
+
+% Note box (used for context/scope notes)
+\newenvironment{scopenote}{%
+  \begin{warnbox}\small\itshape%
+}{%
+  \end{warnbox}%
+}
+
+\hypersetup{pdftitle={Cosmology Q\&A},pdfsubject={VSIM Internal context document}}
+
+% =============================================================================
+\begin{document}
+% =============================================================================
+
+\thispagestyle{empty}
+
+\begin{center}
+  \eyebrow{VSIM Internal \textperiodcentered\ Working Document}\\[8pt]
+  {\LARGE\sffamily\bfseries Cosmology Q\&A}\\[6pt]
+  {\normalsize\sffamily
+    Current Understanding \quad\textperiodcentered\quad
+    Open Questions \quad\textperiodcentered\quad
+    Theoretical Scope Notes}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\begin{tabular}{@{}L{2.8cm} L{9cm}@{}}
+  \code{Doc ID}    & QA-COSM-2026-01 \\
+  \code{Status}    & Working draft --- nearly blank \\
+  \code{Audience}  & Internal \\
+  \code{Context}   & Background reference for identity/scale framework \\
+  \code{Date}      & 2026-06-01 \\
+\end{tabular}
+
+\vspace{10pt}
+\begin{infobox}
+  \small\sffamily
+  \textbf{How to use this document.}\quad
+  Questions are grouped by topic. Each has a status tag:
+  \spass\ = settled consensus \quad
+  \stbd\ = active research \quad
+  \snew\ = open / speculative \quad
+  \sna\ = out of scope for this project.\\[4pt]
+  Answer spaces are intentionally blank or partially filled.
+  Fill them in as understanding develops.
+  Scope notes flag where a question does or does not bear on the VSIM identity framework.
+\end{infobox}
+
+\noindent\rule{\linewidth}{2pt}\vspace{6pt}
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Origins and Structure of the Universe}
+% =============================================================================
+
+\Q{What does the Big Bang Theory propose?}\qsettled
+
+\partialanswer[2.5cm]{%
+  The leading explanation for the origin of the universe. Proposes that approximately
+  \textbf{13.8 billion years ago} the universe began as an infinitely hot and dense
+  singularity and has been expanding and cooling ever since. Supported by the Hubble
+  expansion, CMB radiation, and Big Bang nucleosynthesis predictions.
+}
+
+\Q{Is the universe still expanding?}\qsettled
+
+\partialanswer[2.5cm]{%
+  Yes. Observations of distant galaxies show recession velocities proportional to
+  distance (Hubble's law). The rate of expansion is described by the Hubble constant
+  $H_0 \approx 67$--$74\ \text{km\,s}^{-1}\text{Mpc}^{-1}$ (current measurement tension unresolved).
+}
+
+\Q{What is the cosmic microwave background radiation (CMB)?}\qsettled
+
+\partialanswer[2.5cm]{%
+  Residual thermal radiation from approximately 380,000 years after the Big Bang,
+  when the universe cooled enough for protons and electrons to combine into neutral
+  hydrogen (recombination epoch). The CMB fills the observable universe uniformly
+  at $T \approx 2.725\ \text{K}$ and carries an imprint of density fluctuations that
+  seeded large-scale structure.
+}
+
+\Q{How does the CMB relate to the identity/scale framework?}\qopen
+
+\begin{scopenote}
+  Peripheral scope. The CMB encodes information about the early universe's state
+  that cannot be recovered at later scales --- a physical analogue of formation memory
+  ($M_f$) and projection loss. Worth noting conceptually; not a current modelling target.
+\end{scopenote}
+\answerspace[3cm]
+
+% =============================================================================
+\section{Dark Energy}
+% =============================================================================
+
+\Q{What is dark energy?}\stbd
+
+\partialanswer[3cm]{%
+  A mysterious component responsible for the \textbf{accelerated expansion} of the
+  universe, first confirmed by Type Ia supernova observations in 1998.
+  Makes up approximately \textbf{68\%} of the universe's total energy density.
+  Leading candidates: cosmological constant $\Lambda$ (vacuum energy),
+  quintessence (dynamic scalar field), or modified gravity. Nature unknown.
+}
+
+\Q{Why does dark energy cause acceleration rather than deceleration?}\stbd
+
+\answerspace[4.5cm]
+
+\Q{Could dark energy change over time?}\snew
+
+\answerspace[4.5cm]
+
+\Q{What is the equation of state parameter $w$ for dark energy, and what does it constrain?}\stbd
+
+\partialanswer[3cm]{%
+  $w = P / \rho c^2$ where $P$ is pressure and $\rho$ the energy density.
+  For a cosmological constant, $w = -1$. Current observations constrain
+  $w \approx -1.0 \pm 0.05$. If $w < -1$ (phantom energy), the universe may end
+  in a ``Big Rip.''
+}
+
+% =============================================================================
+\section{Dark Matter}
+% =============================================================================
+
+\Q{What is dark matter?}\stbd
+
+\partialanswer[3cm]{%
+  An invisible, non-luminous form of matter inferred from gravitational effects:
+  galaxy rotation curves, gravitational lensing, galaxy cluster dynamics, and
+  large-scale structure formation. Makes up approximately \textbf{27\%} of the
+  universe's mass-energy budget. Has not been directly detected. Leading candidates:
+  WIMPs, axions, sterile neutrinos, primordial black holes.
+}
+
+\Q{How is dark matter distributed in galaxies?}\stbd
+
+\answerspace[4cm]
+
+\Q{What experiments are currently searching for dark matter directly?}\stbd
+
+\answerspace[4cm]
+
+\Q{Could dark matter and dark energy be related phenomena?}\snew
+
+\answerspace[4cm]
+
+\Q{Does dark matter interact with ordinary matter via any force other than gravity?}\stbd
+
+\answerspace[4cm]
+
+% =============================================================================
+\section{Open Problems}
+% =============================================================================
+
+\Q{What caused the matter-antimatter asymmetry?}\snew
+
+\partialanswer[3cm]{%
+  The universe is observed to be dominated by matter. The Standard Model predicts
+  nearly equal amounts of matter and antimatter should have been produced at the
+  Big Bang --- yet almost all antimatter has annihilated, leaving a residual matter
+  excess of roughly $10^{-9}$ per photon. The source of this CP violation beyond
+  the Standard Model is unknown. Related to baryogenesis and leptogenesis models.
+}
+
+\Q{What is the fate of the universe?}\snew
+
+\partialanswer[3.5cm]{%
+  Depends on the nature of dark energy and $w$:\\[4pt]
+  \begin{tabular}{@{}ll@{}}
+    $w = -1$ (constant $\Lambda$) & Continued accelerated expansion; heat death \\
+    $w > -1$ (quintessence)       & Expansion decelerates eventually \\
+    $w < -1$ (phantom energy)     & ``Big Rip'' --- all structures torn apart \\
+    $\Omega_\text{total} > 1$     & ``Big Crunch'' --- eventual re-collapse \\
+  \end{tabular}
+}
+
+\Q{How did gravity shape the universe during its first fraction of a second?}\snew
+
+\partialanswer[3cm]{%
+  During the Planck epoch ($t < 10^{-43}\ \text{s}$), quantum gravitational effects
+  dominated. At the GUT epoch ($t \sim 10^{-36}\ \text{s}$), inflation likely occurred ---
+  exponential expansion driven by a scalar inflaton field --- smoothing the universe
+  and amplifying quantum fluctuations into the density seeds observed in the CMB.
+  The precise mechanism is unknown; quantum gravity is not yet unified with the
+  Standard Model.
+}
+
+\Q{Did gravitational particles (gravitons) always exist?}\qscope
+
+\begin{scopenote}
+  Out of scope for this project's immediate modelling targets, but noted here for
+  completeness. This is an ongoing open question in quantum gravity. The graviton
+  is the hypothetical force-carrier of gravity in a quantum field theory framework;
+  it has not been directly detected. Whether gravitational degrees of freedom
+  existed in any form prior to the Planck epoch is model-dependent (string theory,
+  loop quantum gravity, causal dynamical triangulations each give different pictures).
+  Not a claim this framework needs to adjudicate.
+\end{scopenote}
+\answerspace[3cm]
+
+\Q{What happened before the Big Bang?}\snew
+
+\answerspace[5cm]
+
+\Q{Is the observable universe all there is?}\snew
+
+\answerspace[4cm]
+
+% =============================================================================
+\section{Framework Relevance Notes}
+% =============================================================================
+
+\Q{Which cosmological concepts map most directly onto the identity/scale framework?}\stbd
+
+\partialanswer[4cm]{%
+  Provisional mapping for internal reference only:
+
+  \vspace{6pt}
+  \begin{tabular}{@{}L{5cm} L{7.5cm}@{}}
+    \textbf{Cosmological concept} & \textbf{Framework analogue} \\
+    \toprule
+    CMB information content       & Formation memory $M_f$ at maximum (early universe) \\
+    Projection into observable    & Scale projection / coalescence residual $R_{\text{coal}}$ \\
+    Matter-antimatter asymmetry   & Identity distinguishability $J_i$ at birth \\
+    Dark matter (unobservable)    & Hidden activity / residual structure $R_i$ \\
+    Hubble tension                & Variance in $Q_n$ across scale levels \\
+    \bottomrule
+  \end{tabular}
+}
+
+\Q{What additional cosmological questions should be tracked here?}\stbd
+
+\answerspace[5cm]
+
+% =============================================================================
+\vspace{16pt}
+\noindent\rule{\linewidth}{0.5pt}
+{\small\sffamily\textcolor{gray}{QA-COSM-2026-01 \textperiodcentered\
+  VSIM Internal \textperiodcentered\ Working draft \textperiodcentered\
+  Nearly blank --- fill in as understanding develops}}
+\end{document}

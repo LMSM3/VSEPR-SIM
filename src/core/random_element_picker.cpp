@@ -1,9 +1,9 @@
-/**
+﻿/**
  * random_element_picker.cpp
  * =========================
- * Seeded random element selection — three modes.
+ * Seeded random element selection  -  three modes.
  *
- * Deterministic: same seed, same pool, same weights → same sequence.
+ * Deterministic: same seed, same pool, same weights -> same sequence.
  * Every pick is logged. Every seed is traceable.
  */
 
@@ -103,7 +103,7 @@ void RandomElementPicker::set_weights(const std::vector<double>& weights) {
 // ============================================================================
 
 // Minimal JSON key-value extractor for { "key": number } pairs.
-// Not a general parser — only handles the element_weights.json format.
+// Not a general parser  -  only handles the element_weights.json format.
 // Avoids adding nlohmann/json as a dependency for this translation unit.
 
 static std::string extract_block(const std::string& json, const std::string& key) {

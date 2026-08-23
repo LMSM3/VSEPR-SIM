@@ -31,13 +31,17 @@ function(vsepr_add_test)
     if(T_LABELS)
         set_tests_properties(${T_NAME} PROPERTIES LABELS "${T_LABELS}")
     endif()
+
 endfunction()
 
 # Helper: VIZ support for CG test targets
+# The only supported viewer is vsepr-view (VTK + Qt3D). There is no legacy
+# vsepr_vis static library; tests that need the viewer artifact consumer can
+# depend on the vsepr-view executable as a build-only dependency.
 function(add_test_viz_support target)
-    if(VSEPR_VIS_READY AND TARGET ${target})
-        target_compile_definitions(${target} PRIVATE BUILD_VISUALIZATION)
-        target_link_libraries(${target} vsepr_vis)
+    if(VSEPR_VIS_READY AND TARGET ${target} AND TARGET vsepr-view)
+        target_compile_definitions(${target} PRIVATE VSEPR_VIEWER_AVAILABLE)
+        add_dependencies(${target} vsepr-view)
     endif()
 endfunction()
 
@@ -50,7 +54,8 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/data" AND NOT EXISTS "${CMAKE_BINARY_DIR}/data")
         # Symbolic link failed (no privilege) — fall back to a directory junction on Windows
         if(WIN32)
             execute_process(
-                COMMAND cmd /c mklink /J "${CMAKE_BINARY_DIR}/data" "${CMAKE_SOURCE_DIR}/data"
+                COMMAND powershell.exe -NoProfile -NonInteractive -Command
+                    "New-Item -ItemType Junction -Path '${CMAKE_BINARY_DIR}/data' -Target '${CMAKE_SOURCE_DIR}/data' | Out-Null"
                 RESULT_VARIABLE _mklink_result)
             if(_mklink_result)
                 message(WARNING "Could not create data junction: ${_mklink_result}. Tests needing runtime data may fail.")
@@ -59,6 +64,16 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/data" AND NOT EXISTS "${CMAKE_BINARY_DIR}/data")
             message(WARNING "Could not create data symlink: ${_link_result}")
         endif()
     endif()
+
+endif()
+
+# Keep runtime data available even when symlink/junction creation is blocked.
+# CTest executes from the binary directory, so the fallback must provide the
+# same data contract as the source-tree path.
+if(EXISTS "${CMAKE_SOURCE_DIR}/data/element_weights.json"
+   AND NOT EXISTS "${CMAKE_BINARY_DIR}/data/element_weights.json")
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/data")
+    file(COPY "${CMAKE_SOURCE_DIR}/data/" DESTINATION "${CMAKE_BINARY_DIR}/data")
 endif()
 
 # ============================================================================
@@ -346,6 +361,11 @@ target_link_libraries(test_experiment_match atomistic)
 target_include_directories(test_experiment_match PRIVATE ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME ExperimentMatchTest TARGET test_experiment_match LABELS atomistic)
 
+add_executable(test_eam_sutton_chen test_eam_sutton_chen.cpp)
+target_link_libraries(test_eam_sutton_chen vsepr_core)
+target_include_directories(test_eam_sutton_chen PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME EAMSuttonChenMetalHostTest TARGET test_eam_sutton_chen LABELS atomistic eam metal quick)
+
 add_executable(test_classify_compile_status test_classify_compile_status.cpp)
 target_link_libraries(test_classify_compile_status atomistic)
 target_include_directories(test_classify_compile_status PRIVATE ${PROJECT_SOURCE_DIR})
@@ -385,6 +405,11 @@ add_executable(test_classify_safe_defaults test_classify_safe_defaults.cpp)
 target_link_libraries(test_classify_safe_defaults atomistic)
 target_include_directories(test_classify_safe_defaults PRIVATE ${PROJECT_SOURCE_DIR})
 vsepr_add_test(NAME ClassifySafeDefaultsTest TARGET test_classify_safe_defaults LABELS atomistic classify quick)
+
+add_executable(test_script_enrichment test_script_enrichment.cpp)
+target_link_libraries(test_script_enrichment atomistic)
+target_include_directories(test_script_enrichment PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME ScriptEnrichmentTest TARGET test_script_enrichment LABELS atomistic classify quick)
 
 # ============================================================================
 # Group 7: Coarse-Grained Mapping & Descriptors
@@ -883,6 +908,54 @@ target_link_libraries(test_pbc_vsim_parser PRIVATE vsepr_chem)
 vsepr_add_test(NAME PBCVsimParserTest TARGET test_pbc_vsim_parser
     LABELS pbc vsim parser scripting beta8 quick)
 
+# Green Loom companion scripts — parser, dense replay, and explicit end-of-run view gate.
+add_executable(test_green_loom_vsim_parser test_green_loom_vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser_pillars.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/bridge/bridge_parse.cpp)
+target_include_directories(test_green_loom_vsim_parser PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_green_loom_vsim_parser PRIVATE vsepr_chem)
+vsepr_add_test(NAME GreenLoomVsimParserTest TARGET test_green_loom_vsim_parser
+    LABELS green_energy green_loom vsim parser replay visualization quick)
+
+# WO-93A: status-loop [visual] schema round-trip.
+add_executable(test_wo93a_status_loop test_wo93a_status_loop.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser_pillars.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/bridge/bridge_parse.cpp)
+target_include_directories(test_wo93a_status_loop PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_wo93a_status_loop PRIVATE vsepr_chem)
+vsepr_add_test(NAME WO93AStatusLoopTest TARGET test_wo93a_status_loop
+    LABELS vsim visual status_loop wo93a parser quick)
+
+# WO-94A: gas-injection trajectory (.xyzf) end-to-end coverage.
+add_executable(test_wo94a_gas_trajectory test_wo94a_gas_trajectory.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser_pillars.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/bridge/bridge_parse.cpp)
+target_include_directories(test_wo94a_gas_trajectory PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_wo94a_gas_trajectory PRIVATE vsepr_chem)
+vsepr_add_test(NAME WO94AGasTrajectoryTest TARGET test_wo94a_gas_trajectory
+    LABELS vsim gas trajectory xyzf wo94a runtime)
+
+# WO-28MAR: high-density run-record parser coverage.
+add_executable(test_dense_record_vsim test_dense_record_vsim.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser_pillars.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/bridge/bridge_parse.cpp)
+target_include_directories(test_dense_record_vsim PRIVATE
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_dense_record_vsim PRIVATE vsepr_chem)
+vsepr_add_test(NAME DenseRecordVsimParserTest TARGET test_dense_record_vsim
+    LABELS vsim parser dense_record provenance quick)
+
 add_executable(test_pbc_bindings test_pbc_bindings.cpp
     ${PROJECT_SOURCE_DIR}/src/vsim/bindings/pbc_bindings.cpp)
 target_include_directories(test_pbc_bindings PRIVATE
@@ -1169,6 +1242,48 @@ target_include_directories(test_xyza_dynamic_state PRIVATE
 target_link_libraries(test_xyza_dynamic_state PRIVATE vsepr_io vsepr_core)
 vsepr_add_test(NAME XyzaDynamicStateGroup48 TARGET test_xyza_dynamic_state
     LABELS xyza dynamic_state io wo-66a XyzaDynamic)
+
+# ChronoDay 89 — fixed live tick scheduling and visual-only electron domains.
+add_executable(test_live_simulation_visuals
+    ${PROJECT_SOURCE_DIR}/tests/test_live_simulation_visuals.cpp
+)
+target_include_directories(test_live_simulation_visuals PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(test_live_simulation_visuals PRIVATE
+    atomistic
+    vsepr_core
+    vsepr_multiscale
+)
+vsepr_add_test(NAME LiveSimulationVisualsGroup89 TARGET test_live_simulation_visuals
+    LABELS visual live_simulation electron_domains chronoday89 quick)
+
+add_executable(test_live_simulation_thread
+    ${PROJECT_SOURCE_DIR}/tests/test_live_simulation_thread.cpp
+    ${PROJECT_SOURCE_DIR}/src/sim/sim_thread.cpp
+    ${PROJECT_SOURCE_DIR}/src/command_router.cpp
+    ${PROJECT_SOURCE_DIR}/src/vis/command_parser.cpp
+)
+target_include_directories(test_live_simulation_thread PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(test_live_simulation_thread PRIVATE vsepr_sim vsepr_core)
+vsepr_add_test(NAME LiveSimulationThreadGroup89 TARGET test_live_simulation_thread
+    LABELS live_simulation fixed_tick command_router chronoday89 quick)
+
+# Group 91 -- Dynamic object geometry-to-continuum foundation
+add_executable(test_dynamic_object_phase1 test_dynamic_object_phase1.cpp)
+target_include_directories(test_dynamic_object_phase1 PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(test_dynamic_object_phase1 PRIVATE vsepr_multiscale vsepr_core)
+vsepr_add_test(NAME DynamicObjectPhase1Group91 TARGET test_dynamic_object_phase1
+    LABELS core multiscale geometry sdf objects quick wo91)
 
 # ============================================================================
 # WO-BRIDGE-65 — Classical MD / Python-Empirical Bridge (Groups 49-52)
@@ -1861,6 +1976,10 @@ add_executable(test_vsepr_observe_sink
     ${PROJECT_SOURCE_DIR}/tests/test_vsepr_observe_sink.cpp
     ${PROJECT_SOURCE_DIR}/atomistic/classify/vsepr.cpp
     ${PROJECT_SOURCE_DIR}/atomistic/classify/organic_candidate.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/ring_detector.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/ring_provider.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/bond_order_provider.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/aromaticity.cpp
 )
 target_include_directories(test_vsepr_observe_sink PRIVATE
     ${PROJECT_SOURCE_DIR}/include
@@ -1883,6 +2002,10 @@ add_executable(test_chemplus_declarative
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
     ${PROJECT_SOURCE_DIR}/atomistic/classify/vsepr.cpp
     ${PROJECT_SOURCE_DIR}/atomistic/classify/organic_candidate.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/ring_detector.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/ring_provider.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/bond_order_provider.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/aromaticity.cpp
 )
 target_include_directories(test_chemplus_declarative PRIVATE
     ${PROJECT_SOURCE_DIR}/include
@@ -1905,6 +2028,10 @@ add_executable(test_chemplus_cli
     ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
     ${PROJECT_SOURCE_DIR}/atomistic/classify/vsepr.cpp
     ${PROJECT_SOURCE_DIR}/atomistic/classify/organic_candidate.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/ring_detector.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/ring_provider.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/bond_order_provider.cpp
+    ${PROJECT_SOURCE_DIR}/atomistic/classify/aromaticity.cpp
 )
 target_include_directories(test_chemplus_cli PRIVATE
     ${PROJECT_SOURCE_DIR}/include
@@ -1917,3 +2044,323 @@ target_link_libraries(test_chemplus_cli PRIVATE
     vsepr_core)
 vsepr_add_test(NAME ChemPlusCliGroup92 TARGET test_chemplus_cli
     LABELS chemplus cli classify wo-84u quick)
+
+# ============================================================================
+# Group 93  --  WO-85A: print_console kernel primitive
+# ============================================================================
+
+add_executable(test_print_console
+    ${PROJECT_SOURCE_DIR}/tests/test_print_console.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+set_target_properties(test_print_console PROPERTIES
+    AUTOMOC OFF AUTORCC OFF AUTOUIC OFF WIN32_EXECUTABLE OFF)
+target_include_directories(test_print_console PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_print_console PRIVATE
+    vsepr_chem
+    vsepr_core)
+if(MINGW)
+    target_link_options(test_print_console PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME PrintConsoleGroup93 TARGET test_print_console
+    LABELS vsim parser print_console wo-85a quick)
+
+# ============================================================================
+# Group 94  --  WO-85B: output-format selection + relative reactivity
+# ============================================================================
+
+add_executable(test_output_format
+    ${PROJECT_SOURCE_DIR}/tests/test_output_format.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+set_target_properties(test_output_format PROPERTIES
+    AUTOMOC OFF AUTORCC OFF AUTOUIC OFF WIN32_EXECUTABLE OFF)
+target_include_directories(test_output_format PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_output_format PRIVATE
+    vsepr_chem
+    vsepr_core)
+if(MINGW)
+    target_link_options(test_output_format PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME OutputFormatGroup94 TARGET test_output_format
+    LABELS vsim parser output_format reactivity wo-85b quick)
+
+# ============================================================================
+# Group 95  --  WO-85C: stress test while loops under new output formats
+# ============================================================================
+
+add_executable(test_stress_while_loops
+    ${PROJECT_SOURCE_DIR}/tests/test_stress_while_loops.cpp
+    ${PROJECT_SOURCE_DIR}/src/vsim/vsim_parser.cpp
+)
+set_target_properties(test_stress_while_loops PROPERTIES
+    AUTOMOC OFF AUTORCC OFF AUTOUIC OFF WIN32_EXECUTABLE OFF)
+target_include_directories(test_stress_while_loops PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(test_stress_while_loops PRIVATE
+    vsepr_chem
+    vsepr_core)
+if(MINGW)
+    target_link_options(test_stress_while_loops PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME StressLoopsGroup95 TARGET test_stress_while_loops
+    LABELS vsim loop stress reactivity wo-85c quick)
+
+# ============================================================================
+# Group 96  --  UC-6: Golden Suite Dispatcher (bash automation, tolerance gate)
+# Group 97  --  UC-7: Resolved SiO2 Pipe Bridge validation (bash automation)
+# ----------------------------------------------------------------------------
+# These are shell-driven regression gates, not C++ unit executables. They run
+# build/vsepr.exe against curated fixtures and gate on exit code, NaN/Inf, and
+# expected output tokens. Registered only when a bash interpreter is available.
+#
+# On Windows prefer a MSYS2 / Git bash that can resolve native C:\ paths; the
+# WSL bash (typically first on PATH) cannot cd into the Windows source tree and
+# would fail these tests. Search MSYS2/Git locations first, then fall back to
+# whatever bash is on PATH.
+# ============================================================================
+find_program(UC_BASH_EXECUTABLE
+    NAMES bash
+    HINTS
+        "C:/msys64/usr/bin"
+        "$ENV{SystemDrive}/msys64/usr/bin"
+        "C:/Program Files/Git/bin"
+        "C:/Program Files/Git/usr/bin"
+        "$ENV{ProgramFiles}/Git/bin"
+        "$ENV{ProgramFiles}/Git/usr/bin"
+    NO_DEFAULT_PATH
+)
+if(NOT UC_BASH_EXECUTABLE)
+    # Fall back to any bash on PATH (POSIX hosts, or Windows with only WSL).
+    find_program(UC_BASH_EXECUTABLE bash)
+endif()
+if(UC_BASH_EXECUTABLE)
+    add_test(
+        NAME uc6_golden_suite_dispatcher
+        COMMAND ${UC_BASH_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/run_uc6_golden_suite.sh
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+    set_tests_properties(uc6_golden_suite_dispatcher PROPERTIES
+        LABELS "vsim;golden;dispatcher;uc6;wo-85;quick")
+
+    add_test(
+        NAME uc7_resolved_sio2_pipe_validation
+        COMMAND ${UC_BASH_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/run_uc7_pipe_validation.sh
+        WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    )
+    set_tests_properties(uc7_resolved_sio2_pipe_validation PROPERTIES
+        LABELS "vsim;pipe;bridge;sio2;uc7;wo-85;quick")
+else()
+    message(STATUS "bash not found -- skipping UC-6/UC-7 bash regression tests (Groups 96/97)")
+endif()
+
+# ============================================================================
+# Group 99  --  WO-84A: ProviderSet wiring into VSEPR + OrganicClassifier
+# ============================================================================
+# Verifies ProviderSet is actually consumed by the analysis path: available
+# lone-pair providers override deterministic element/geometry fallback, missing
+# providers do not crash, and OrganicClassifier threads providers into VSEPR.
+# ============================================================================
+
+add_executable(test_provider_wiring ${PROJECT_SOURCE_DIR}/tests/test_provider_wiring.cpp)
+target_link_libraries(test_provider_wiring atomistic)
+target_include_directories(test_provider_wiring PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_provider_wiring PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME ProviderWiringGroup99 TARGET test_provider_wiring
+    LABELS atomistic classify provider wo-84a quick)
+
+# ============================================================================
+# Group 100  --  WO-84B: ElementLonePairProvider (noble-gas aware geometry)
+# ============================================================================
+# Verifies element-based lone-pair inference drives VSEPR geometry:
+# H2O bent, NH3 trigonal pyramidal, XeF2 linear, XeF4 square planar, XeF6
+# expanded (no tetrahedral collapse), KrF2 linear.  Transition metals use a
+# conservative zero-lone-pair fallback.
+# ============================================================================
+
+add_executable(test_element_lone_pair_provider ${PROJECT_SOURCE_DIR}/tests/test_element_lone_pair_provider.cpp)
+target_link_libraries(test_element_lone_pair_provider atomistic)
+target_include_directories(test_element_lone_pair_provider PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_element_lone_pair_provider PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME ElementLonePairGroup100 TARGET test_element_lone_pair_provider
+    LABELS atomistic classify vsepr lone_pair wo-84b quick)
+
+# ============================================================================
+# Group 101  --  WO-84C: RingProvider + State-based ring detection
+# ============================================================================
+# Verifies SSSR-lite ring detection over the heavy-atom graph: benzene and
+# cyclohexane report one 6-ring, cyclopropane a strained 3-ring, naphthalene
+# two fused rings, and linear hexane zero rings.  Ring bonds are excluded from
+# rotatable-bond counts, and OrganicClassifier consumes a wired RingProvider.
+# ============================================================================
+
+add_executable(test_ring_provider ${PROJECT_SOURCE_DIR}/tests/test_ring_provider.cpp)
+target_link_libraries(test_ring_provider atomistic)
+target_include_directories(test_ring_provider PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_ring_provider PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME RingProviderGroup101 TARGET test_ring_provider
+    LABELS atomistic classify ring wo-84c quick)
+
+# ============================================================================
+# Group 102  --  WO-84D: BondOrderProvider + Huckel aromaticity gate
+# ============================================================================
+# Two executables:
+#   test_bond_order_provider  -- valence-deficit bond orders (single/double/
+#                                triple, carbonyl, benzene Kekule pattern).
+#   test_aromaticity          -- Huckel 4n+2 gate (benzene aromatic, pyridine
+#                                heteroaromatic, cyclobutadiene antiaromatic,
+#                                saturated/acyclic non-aromatic) plus the d8
+#                                square-planar VSEPR disambiguation branch.
+# ============================================================================
+
+add_executable(test_bond_order_provider ${PROJECT_SOURCE_DIR}/tests/test_bond_order_provider.cpp)
+target_link_libraries(test_bond_order_provider atomistic)
+target_include_directories(test_bond_order_provider PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_bond_order_provider PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME BondOrderGroup102 TARGET test_bond_order_provider
+    LABELS atomistic classify bond_order wo-84d quick)
+
+add_executable(test_aromaticity ${PROJECT_SOURCE_DIR}/tests/test_aromaticity.cpp)
+target_link_libraries(test_aromaticity atomistic)
+target_include_directories(test_aromaticity PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_aromaticity PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME AromaticityGroup102 TARGET test_aromaticity
+    LABELS atomistic classify aromaticity wo-84d quick)
+
+# ============================================================================
+# Group 103  --  WO-84E: JSON-lite + Markdown report export
+#
+# 103a: VSEPRReport JSON-lite (vsepr_to_json, lone_pair_source, central_site_index)
+# 103b: OrganicCandidate JSON-lite + SceneHints + Markdown report
+# ============================================================================
+
+add_executable(test_vsepr_export ${PROJECT_SOURCE_DIR}/tests/test_vsepr_export.cpp)
+target_link_libraries(test_vsepr_export atomistic)
+target_include_directories(test_vsepr_export PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_vsepr_export PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME VseprExportGroup103a TARGET test_vsepr_export
+    LABELS atomistic export vsepr json-lite wo-84e quick)
+
+add_executable(test_organic_candidate_export ${PROJECT_SOURCE_DIR}/tests/test_organic_candidate_export.cpp)
+target_link_libraries(test_organic_candidate_export atomistic)
+target_include_directories(test_organic_candidate_export PRIVATE ${PROJECT_SOURCE_DIR})
+if(MINGW)
+    target_link_options(test_organic_candidate_export PRIVATE -mconsole -Wl,--subsystem,console -Wl,--entry,mainCRTStartup)
+endif()
+vsepr_add_test(NAME OrganicExportGroup103b TARGET test_organic_candidate_export
+    LABELS atomistic export organic json-lite markdown scene-hints wo-84e quick)
+
+# Script-first VSIM acceptance gate. This keeps the operator-visible debugging
+# probes in CTest without duplicating their assertions in C++.
+if(TARGET vsepr)
+    find_program(VSIM_POWERSHELL_EXECUTABLE
+        NAMES pwsh powershell powershell.exe
+        HINTS
+            "$ENV{SystemRoot}/System32/WindowsPowerShell/v1.0"
+            "$ENV{ProgramFiles}/PowerShell/7"
+    )
+    if(VSIM_POWERSHELL_EXECUTABLE)
+        add_test(
+            NAME VsimDebuggingAcceptance
+            COMMAND ${VSIM_POWERSHELL_EXECUTABLE}
+                -NoProfile
+                -ExecutionPolicy Bypass
+                -File "${PROJECT_SOURCE_DIR}/scripts/debugging/run_acceptance.ps1"
+                -Executable "$<TARGET_FILE:vsepr>"
+            WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+        )
+        set_tests_properties(VsimDebuggingAcceptance PROPERTIES
+            LABELS "vsim;acceptance;debugging;script;quick")
+    else()
+        message(STATUS "PowerShell not found -- skipping VSIM debugging acceptance CTest gate")
+    endif()
+endif()
+
+# Release acceptance smoke tests. These run without a GUI and keep the
+# command-line entry point visible in CTest.
+if(TARGET vsepr)
+    add_test(NAME CLIHelpSmoke COMMAND vsepr --help
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    set_tests_properties(CLIHelpSmoke PROPERTIES LABELS "cli;smoke;release")
+    add_test(NAME CLIVersionSmoke COMMAND vsepr --version
+             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    set_tests_properties(CLIVersionSmoke PROPERTIES LABELS "cli;smoke;release")
+endif()
+
+# Day 89 D-G: VTK + Qt3D viewer artifact boundary and parity.
+# Produces the renderer-neutral stress fixture and validates it through the
+# Python artifact contract test. If the VTK + Qt3D viewer built, also ask it
+# to validate the same package and report scene/count/bounds.
+if(TARGET dual-backend-3d-data)
+    set(DAY89_ARTIFACT_DIR "${CMAKE_BINARY_DIR}/out/day89_dg_recheck")
+    add_test(NAME Day89ArtifactProducer
+        COMMAND dual-backend-3d-data --headless --output out/day89_dg_recheck --stress-particles 1331
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    set_tests_properties(Day89ArtifactProducer PROPERTIES
+        LABELS "day89;visual;artifact;producer;wo-84d")
+
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME Day89ArtifactContract
+            COMMAND Python3::Interpreter
+                "${PROJECT_SOURCE_DIR}/tests/test_dual_backend_3d_artifacts.py"
+                "${DAY89_ARTIFACT_DIR}" --stress
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        set_tests_properties(Day89ArtifactContract PROPERTIES
+            LABELS "day89;visual;artifact;contract;wo-84e"
+            DEPENDS Day89ArtifactProducer)
+    endif()
+
+    if(TARGET vsepr-view)
+        add_test(NAME Day89ViewerValidation
+            COMMAND vsepr-view --artifact "${DAY89_ARTIFACT_DIR}" --scene 4 --validate-only
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        set_tests_properties(Day89ViewerValidation PROPERTIES
+            LABELS "day89;visual;viewer;vtk;qt3d;wo-84f;wo-84g"
+            DEPENDS Day89ArtifactProducer)
+
+        add_test(NAME Day89UlessIndicatorCli
+            COMMAND vsepr-view --artifact "${DAY89_ARTIFACT_DIR}" --scene 4 --validate-only
+                --uless-indicator --uless-label obs --uless-value 0.75 --uless-max 1.0
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        set_tests_properties(Day89UlessIndicatorCli PROPERTIES
+            LABELS "day89;visual;viewer;uless;wo-84f"
+            DEPENDS Day89ArtifactProducer)
+    else()
+        add_test(NAME Day89ViewerCapabilityBlocked
+            COMMAND ${CMAKE_COMMAND} -E echo
+                "Day89 VTK+Qt3D viewer blocked: Qt3D components not available in this toolchain"
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        set_tests_properties(Day89ViewerCapabilityBlocked PROPERTIES
+            LABELS "day89;visual;viewer;blocked;wo-84d;wo-84e;wo-84f;wo-84g")
+    endif()
+endif()
+
+# Uless indicator model unit test (header-only, always available)
+add_executable(test_uless_indicator ${PROJECT_SOURCE_DIR}/tests/test_uless_indicator.cpp)
+target_include_directories(test_uless_indicator PRIVATE ${PROJECT_SOURCE_DIR})
+vsepr_add_test(NAME UlessIndicatorModel TARGET test_uless_indicator
+    LABELS day89 uless visual core quick)

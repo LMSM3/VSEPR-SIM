@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * surface_mapper.hpp — Probe-Based Surface Descriptor Generator
+ * surface_mapper.hpp  -  Probe-Based Surface Descriptor Generator
  *
  * Computes anisotropic surface descriptors for coarse-grained beads
  * by sampling a probe potential on a spherical shell around the bead
@@ -31,7 +31,7 @@
 namespace coarse_grain {
 
 /**
- * SurfaceMapperConfig — controls the surface sampling process.
+ * SurfaceMapperConfig  -  controls the surface sampling process.
  */
 struct SurfaceMapperConfig {
     int    n_samples    = 100;    // Number of probe directions on sphere
@@ -40,7 +40,7 @@ struct SurfaceMapperConfig {
 };
 
 /**
- * SurfaceMapper — stateless, deterministic surface descriptor generator.
+ * SurfaceMapper  -  stateless, deterministic surface descriptor generator.
  *
  * Usage:
  *   SurfaceMapper mapper;
@@ -70,7 +70,7 @@ public:
         desc.frame = compute_inertia_frame(state.X, state.M, indices, com);
 
         if (indices.size() < 2) {
-            // Single atom → isotropic descriptor
+            // Single atom -> isotropic descriptor
             desc.coeffs[0] = std::sqrt(4.0 * M_PI);  // Uniform unit sphere
             return desc;
         }

@@ -540,7 +540,7 @@ int main(int argc, char** argv) {
         print_run_summary(log);
 
         if (show_visual) {
-            // Load the graphite stack script — the richest [visual] config
+            // Load the graphite stack script  -  the richest [visual] config
             // Falls back to a sensible default if the file is not present
             vsim::VsimDocument vdoc;
             try {

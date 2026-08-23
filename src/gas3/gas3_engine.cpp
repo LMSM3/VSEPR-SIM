@@ -1,7 +1,7 @@
-/**
+﻿/**
  * gas3_engine.cpp
  * ---------------
- * Gas3 Module Implementation — CLI dispatch, pipeline execution.
+ * Gas3 Module Implementation  -  CLI dispatch, pipeline execution.
  */
 
 #include "gas3/gas3_engine.hpp"
@@ -276,7 +276,7 @@ COMMANDS:
     sweep         Linear deterministic sweep with CSV/HTML output
     random        Random sampling stress test
     pipeline      Full quality pipeline (linear + random + adaptive + fit + report)
-    tui [FORMULA] Interactive terminal UI — species browser, analysis, live sweep
+    tui [FORMULA] Interactive terminal UI  -  species browser, analysis, live sweep
     help          Show this help
 
 OPTIONS:

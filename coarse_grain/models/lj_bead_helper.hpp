@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * lj_bead_helper.hpp — Environment-Modulated Lennard-Jones Force for Beads
+ * lj_bead_helper.hpp  -  Environment-Modulated Lennard-Jones Force for Beads
  * ========================================================================
  *
  * Reusable LJ 12-6 pairwise force with per-channel kernel modulation.

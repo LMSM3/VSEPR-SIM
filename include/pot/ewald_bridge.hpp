@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * ewald_bridge.hpp — State → EwaldSum adapter
+ * ewald_bridge.hpp  -  State -> EwaldSum adapter
  * =============================================
  *
  * Bridges atomistic::State (Vec3 positions, BoxOrtho box) to the flat-array
@@ -9,7 +9,7 @@
  * Why this exists:
  *   EwaldSum takes flat double arrays for maximum performance and portability.
  *   State carries vector<Vec3> positions.
- *   This adapter is the only place that translates between the two — no other
+ *   This adapter is the only place that translates between the two  -  no other
  *   code should duplicate the flattening logic.
  *
  * Usage:
@@ -45,7 +45,7 @@
 namespace vsepr::pot {
 
 // ---------------------------------------------------------------------------
-// flatten_positions — Vec3 array → flat double array
+// flatten_positions  -  Vec3 array -> flat double array
 // ---------------------------------------------------------------------------
 
 inline std::vector<double> flatten_positions(const atomistic::State& s)
@@ -61,7 +61,7 @@ inline std::vector<double> flatten_positions(const atomistic::State& s)
 }
 
 // ---------------------------------------------------------------------------
-// unflatten_forces — accumulate flat force array back into State::F
+// unflatten_forces  -  accumulate flat force array back into State::F
 // ---------------------------------------------------------------------------
 
 inline void unflatten_forces(const std::vector<double>& flat,
@@ -75,7 +75,7 @@ inline void unflatten_forces(const std::vector<double>& flat,
 }
 
 // ---------------------------------------------------------------------------
-// ewald_energy — Coulomb energy only, no force update
+// ewald_energy  -  Coulomb energy only, no force update
 // ---------------------------------------------------------------------------
 
 inline double ewald_energy(const atomistic::State& s,
@@ -94,7 +94,7 @@ inline double ewald_energy(const atomistic::State& s,
 }
 
 // ---------------------------------------------------------------------------
-// ewald_eval — Coulomb energy + forces accumulated into state.F
+// ewald_eval  -  Coulomb energy + forces accumulated into state.F
 //
 // Forces are ACCUMULATED (+=), not replaced.
 // Zero state.F before calling if a clean Ewald-only pass is needed.

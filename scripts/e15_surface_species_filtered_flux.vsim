@@ -1,0 +1,82 @@
+# e15_surface_species_filtered_flux.vsim
+# =============================================================================
+# E15  --  Species-Filtered Flux Through a Rectangular Probe
+#
+# Purpose: Demonstrates selective species counting.  Only Na+ ions are
+#          tracked through the surface; Cl- ions are ignored.
+#          Useful for modelling selective-permeability membranes.
+#
+# Key concepts:
+#   species_filter = ["Na"]  ->  only particles tagged "Na" are counted.
+#   Multiple surfaces may use different filters for comparative analysis.
+#   compute_mass_flux = true  adds mass-weighted crossings to the sidecar.
+# =============================================================================
+
+[project]
+name        = "e15_surface_species_filtered"
+version     = "v5.0.14"
+seed_base   = 1500
+determinism = true
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+cell      = "6x6x4"
+phase     = "solid"
+
+[run]
+mode      = "md"
+max_steps = 4000
+dt_fs     = 1.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e15"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e15/surfaces"
+
+# Na-only probe
+[[object.surface]]
+name                = "na_membrane"
+geometry            = "rectangle"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+normal_x            = 0.0
+normal_y            = 1.0
+normal_z            = 0.0
+width               = 25.0
+height              = 20.0
+log_crossings       = true
+compute_flux        = true
+compute_mass_flux   = true
+species_filter      = ["Na"]
+output_tag          = "phi_Na"
+
+# Cl-only probe (comparative)
+[[object.surface]]
+name                = "cl_membrane"
+geometry            = "rectangle"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+normal_x            = 0.0
+normal_y            = 1.0
+normal_z            = 0.0
+width               = 25.0
+height              = 20.0
+log_crossings       = true
+compute_flux        = true
+compute_mass_flux   = true
+species_filter      = ["Cl"]
+output_tag          = "phi_Cl"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 200

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * VSEPR-Sim Subsystem Integration Demo
  * Demonstrates deterministic metallic simulation calls from main system
  * MatLabForC++ style external package integration
@@ -18,9 +18,9 @@ using namespace vsepr::subsystem;
 
 void print_header(const std::string& title) {
     std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ " << std::left << std::setw(62) << title << " ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+================================================================+\n";
+    std::cout << "| " << std::left << std::setw(62) << title << " |\n";
+    std::cout << "+================================================================+\n";
 }
 
 void print_properties(const MechanicalProperties& props) {
@@ -283,13 +283,13 @@ void demo_batch_processing() {
 
 int main() {
     std::cout << "\n";
-    std::cout << "████████████████████████████████████████████████████████████████\n";
-    std::cout << "█                                                              █\n";
-    std::cout << "█   VSEPR-Sim Subsystem Integration Demo                      █\n";
-    std::cout << "█   Deterministic Metallic Simulation Package                 █\n";
-    std::cout << "█   MatLabForC++ Style External Package Integration           █\n";
-    std::cout << "█                                                              █\n";
-    std::cout << "████████████████████████████████████████████████████████████████\n";
+    std::cout << "################################################################\n";
+    std::cout << "#                                                              #\n";
+    std::cout << "#   VSEPR-Sim Subsystem Integration Demo                      #\n";
+    std::cout << "#   Deterministic Metallic Simulation Package                 #\n";
+    std::cout << "#   MatLabForC++ Style External Package Integration           #\n";
+    std::cout << "#                                                              #\n";
+    std::cout << "################################################################\n";
     
     try {
         demo_database_queries();
@@ -300,9 +300,9 @@ int main() {
         demo_batch_processing();
         
         std::cout << "\n";
-        std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║ All Demos Completed Successfully! ✅                          ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+        std::cout << "+================================================================+\n";
+        std::cout << "| All Demos Completed Successfully! ✅                          |\n";
+        std::cout << "+================================================================+\n";
         std::cout << "\n";
         
     } catch (const std::exception& e) {

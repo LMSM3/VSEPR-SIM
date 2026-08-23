@@ -1,4 +1,4 @@
-/**
+﻿/**
  * APPLICATION VALIDATION SUITE - Formation Pipeline
  * 
  * Comprehensive tests for Section E of Formation Pipeline Checklist:
@@ -286,9 +286,9 @@ TestResult run_emergence_test(int seed) {
 }
 
 void test_E1_emergence() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  E1: EMERGENCE TEST (10 independent runs)                 ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  E1: EMERGENCE TEST (10 independent runs)                 |\n";
+    std::cout << "+===========================================================+\n\n";
     
     std::vector<TestResult> results;
     
@@ -371,9 +371,9 @@ void test_E1_emergence() {
 // ============================================================================
 
 void test_E2_stability() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  E2: STABILITY TEST (heating cycle)                       ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  E2: STABILITY TEST (heating cycle)                       |\n";
+    std::cout << "+===========================================================+\n\n";
     
     const int N = 64;
     const double box_length = 15.0;
@@ -469,9 +469,9 @@ void test_E2_stability() {
 // ============================================================================
 
 void test_E3_parameter_grid() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  E3: PARAMETER SANITY (5×5 T/ρ grid)                      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  E3: PARAMETER SANITY (5×5 T/ρ grid)                      |\n";
+    std::cout << "+===========================================================+\n\n";
     
     const int N = 64;
     std::vector<double> temperatures = {50.0, 100.0, 200.0, 400.0, 800.0};
@@ -583,19 +583,19 @@ void test_E3_parameter_grid() {
 // ============================================================================
 
 int main(int argc, char** argv) {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  APPLICATION VALIDATION SUITE - Formation Pipeline        ║\n";
-    std::cout << "║  Section E: Application Tests (Target: ~99% Pass Rate)    ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  APPLICATION VALIDATION SUITE - Formation Pipeline        |\n";
+    std::cout << "|  Section E: Application Tests (Target: ~99% Pass Rate)    |\n";
+    std::cout << "+===========================================================+\n";
     
     // Run all tests
     test_E1_emergence();
     test_E2_stability();
     test_E3_parameter_grid();
     
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  APPLICATION VALIDATION COMPLETE                          ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  APPLICATION VALIDATION COMPLETE                          |\n";
+    std::cout << "+===========================================================+\n\n";
     
     return 0;
 }

@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * reported_quantity.hpp  —  Physical Quantity Reporting Layer
+ * reported_quantity.hpp   -   Physical Quantity Reporting Layer
  * ============================================================
  * VSEPR-SIM 3.0.1
  *
@@ -9,10 +9,10 @@
  *   must convert final material quantities back into physical reporting
  *   units.  At minimum, outputs include:
  *
- *     m_g       — total mass in grams
- *     E_Ha      — energy in Hartrees (with multi-unit views)
- *     Z_count   — atomic-number-resolved composition summary
- *     n_mol     — amount of substance in moles
+ *     m_g        -  total mass in grams
+ *     E_Ha       -  energy in Hartrees (with multi-unit views)
+ *     Z_count    -  atomic-number-resolved composition summary
+ *     n_mol      -  amount of substance in moles
  *
  *   Internal reduced forms are permitted only inside the kernel and
  *   must NOT be the final reported state.
@@ -47,24 +47,24 @@ namespace vsepr {
 using ZCountMap = std::map<int, std::size_t>;   // Z -> count
 
 // ============================================================================
-// ReportedQuantity  —  physical quantities for any tracked object
+// ReportedQuantity   -   physical quantities for any tracked object
 // ============================================================================
 
 struct ReportedQuantity {
-    // ── Required report fields (per specification) ──
+    // -- Required report fields (per specification) --
 
     double       mass_g          = 0.0;     // Total mass in grams
     Energy       energy;                     // Canonical energy (Hartree internal)
     double       amount_mol      = 0.0;     // Amount of substance in moles
     ZCountMap    z_count;                    // Atomic number -> count
 
-    // ── Optional metadata ──
+    // -- Optional metadata --
 
     std::string  label;                      // Human-readable name ("water", "Ar cluster")
     std::string  formula;                    // Chemical formula ("H2O", "Ar4")
     double       molar_mass_g_per_mol = 0.0; // Computed or provided molar mass
 
-    // ── Derived accessors ──
+    // -- Derived accessors --
 
     // Total atom count
     std::size_t total_atoms() const {
@@ -88,7 +88,7 @@ struct ReportedQuantity {
         return !z_count.empty() && mass_g > 0.0;
     }
 
-    // ── Construction helpers ──
+    // -- Construction helpers --
 
     // Build from a flat list of atomic numbers and a per-atom mass table
     static ReportedQuantity from_composition(
@@ -102,7 +102,7 @@ struct ReportedQuantity {
         const std::vector<double>& mass_table_amu,
         const Energy& total_energy = Energy());
 
-    // ── Formatting ──
+    // -- Formatting --
 
     // Render a full report block (multi-line, human-readable)
     std::string format_report(int precision = 6) const;

@@ -1,5 +1,5 @@
-// =============================================================================
-// tests/test_batch_verification.cpp   Group 40 — Batch Verification Aggregation
+﻿// =============================================================================
+// tests/test_batch_verification.cpp   Group 40  -  Batch Verification Aggregation
 // =============================================================================
 //
 // Unit tests for the WO-VSEPR-SIM-62B batch verification aggregation kernel.
@@ -8,28 +8,28 @@
 // and gate evaluation pipeline.
 //
 // Coverage:
-//   B1  Single-run PASS record — overall_pass_rate = 1.0
-//   B2  Single-run FAIL record — overall_pass_rate = 0.0
-//   B3  Single-run MISSING record — counts as failure
-//   B4  Single-run WARN record — empirical_ready = true, warned_runs = 1
-//   B5  Mixed batch (PASS/FAIL/WARN/MISSING) — correct counts and rates
-//   B6  Gate pass — all pass rates above thresholds
-//   B7  Gate fail — overall_pass_rate below min_overall_pass_rate
-//   B8  Gate fail — mass_pass_rate below min_mass_pass_rate
-//   B9  Grouped aggregation — two groups produce correct per-group rates
-//   B10 Failure mode classification — FAIL_MASS_CONSERVATION assigned
-//   B11 Failure mode classification — FAIL_RDF_REFERENCE assigned
-//   B12 Failure mode classification — FAIL_OUTPUT_MISSING on MISSING status
-//   B13 write_batch_verify_summary — produces non-empty file
-//   B14 write_batch_verify_matrix  — produces non-empty file
-//   B15 write_batch_failure_modes  — sorted by count descending
-//   B16 write_batch_empirical_report — gate_failure_reason in output
-//   B17 BatchRunRecord verify fields — empirical_ready wired correctly
-//   B18 is_warning helper — WARN_* codes return true, FAIL_* return false
-//   B19 to_string — round-trips all BatchFailureMode codes
+//   B1  Single-run PASS record  -  overall_pass_rate = 1.0
+//   B2  Single-run FAIL record  -  overall_pass_rate = 0.0
+//   B3  Single-run MISSING record  -  counts as failure
+//   B4  Single-run WARN record  -  empirical_ready = true, warned_runs = 1
+//   B5  Mixed batch (PASS/FAIL/WARN/MISSING)  -  correct counts and rates
+//   B6  Gate pass  -  all pass rates above thresholds
+//   B7  Gate fail  -  overall_pass_rate below min_overall_pass_rate
+//   B8  Gate fail  -  mass_pass_rate below min_mass_pass_rate
+//   B9  Grouped aggregation  -  two groups produce correct per-group rates
+//   B10 Failure mode classification  -  FAIL_MASS_CONSERVATION assigned
+//   B11 Failure mode classification  -  FAIL_RDF_REFERENCE assigned
+//   B12 Failure mode classification  -  FAIL_OUTPUT_MISSING on MISSING status
+//   B13 write_batch_verify_summary  -  produces non-empty file
+//   B14 write_batch_verify_matrix   -  produces non-empty file
+//   B15 write_batch_failure_modes   -  sorted by count descending
+//   B16 write_batch_empirical_report  -  gate_failure_reason in output
+//   B17 BatchRunRecord verify fields  -  empirical_ready wired correctly
+//   B18 is_warning helper  -  WARN_* codes return true, FAIL_* return false
+//   B19 to_string  -  round-trips all BatchFailureMode codes
 //   B20 BatchVerifyPolicySection defaults
 //
-// Style: assert() + printf pattern, same as Groups 36–39.
+// Style: assert() + printf pattern, same as Groups 36-39.
 //
 // WO-VSEPR-SIM-62B | Group 40 | v5.0.0-beta.12
 // =============================================================================
@@ -50,7 +50,7 @@
 using namespace vsim::batch;
 using namespace vsim;
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static VerificationRunRecord make_pass(const std::string& id,
 									   const std::map<std::string,std::string>& axes = {}) {
@@ -115,7 +115,7 @@ static std::string file_contents(const std::string& path) {
 						std::istreambuf_iterator<char>());
 }
 
-// ── tests ─────────────────────────────────────────────────────────────────────
+// -- tests ---------------------------------------------------------------------
 
 static void B1() {
 	std::vector<VerificationRunRecord> recs = { make_pass("run_0001") };
@@ -124,7 +124,7 @@ static void B1() {
 	assert(sum.passed_runs  == 1);
 	assert(sum.failed_runs  == 0);
 	assert(std::abs(sum.overall_pass_rate - 1.0) < 1e-9);
-	printf("[PASS] B1 — single PASS record\n");
+	printf("[PASS] B1  -  single PASS record\n");
 }
 
 static void B2() {
@@ -135,7 +135,7 @@ static void B2() {
 	assert(sum.total_runs  == 1);
 	assert(sum.failed_runs == 1);
 	assert(std::abs(sum.overall_pass_rate - 0.0) < 1e-9);
-	printf("[PASS] B2 — single FAIL record\n");
+	printf("[PASS] B2  -  single FAIL record\n");
 }
 
 static void B3() {
@@ -144,7 +144,7 @@ static void B3() {
 	assert(sum.missing_runs == 1);
 	assert(sum.failed_runs  == 1);
 	assert(std::abs(sum.overall_pass_rate - 0.0) < 1e-9);
-	printf("[PASS] B3 — MISSING counts as failure\n");
+	printf("[PASS] B3  -  MISSING counts as failure\n");
 }
 
 static void B4() {
@@ -153,7 +153,7 @@ static void B4() {
 	assert(sum.warned_runs == 1);
 	assert(sum.failed_runs == 0);
 	assert(std::abs(sum.overall_pass_rate - 1.0) < 1e-9); // WARN counts as pass
-	printf("[PASS] B4 — WARN counted as passing, warned_runs = 1\n");
+	printf("[PASS] B4  -  WARN counted as passing, warned_runs = 1\n");
 }
 
 static void B5() {
@@ -172,7 +172,7 @@ static void B5() {
 	double expected_rate = 4.0 / 6.0;
 	assert(std::abs(sum.overall_pass_rate - expected_rate) < 1e-6);
 	(void)expected_rate;
-	printf("[PASS] B5 — mixed batch counts and rates correct\n");
+	printf("[PASS] B5  -  mixed batch counts and rates correct\n");
 }
 
 static void B6() {
@@ -186,11 +186,11 @@ static void B6() {
 	evaluate_gates(sum, gates);
 	assert(sum.batch_empirical_ready == true);
 	assert(sum.gate_failure_reason.empty());
-	printf("[PASS] B6 — gate passes when rates are sufficient\n");
+	printf("[PASS] B6  -  gate passes when rates are sufficient\n");
 }
 
 static void B7() {
-	// 5 PASS, 5 FAIL → overall_pass_rate = 0.50, below 0.90 gate
+	// 5 PASS, 5 FAIL -> overall_pass_rate = 0.50, below 0.90 gate
 	std::vector<VerificationRunRecord> recs;
 	for (int i = 0; i < 5; ++i) recs.push_back(make_pass("p" + std::to_string(i)));
 	for (int i = 0; i < 5; ++i) recs.push_back(make_fail("f" + std::to_string(i)));
@@ -200,7 +200,7 @@ static void B7() {
 	evaluate_gates(sum, gates);
 	assert(sum.batch_empirical_ready == false);
 	assert(!sum.gate_failure_reason.empty());
-	printf("[PASS] B7 — gate fails when overall_pass_rate below threshold\n");
+	printf("[PASS] B7  -  gate fails when overall_pass_rate below threshold\n");
 }
 
 static void B8() {
@@ -213,7 +213,7 @@ static void B8() {
 	gates.min_mass_pass_rate = 1.0;
 	evaluate_gates(sum, gates);
 	assert(sum.batch_empirical_ready == false);
-	printf("[PASS] B8 — gate fails when mass_pass_rate below 1.0\n");
+	printf("[PASS] B8  -  gate fails when mass_pass_rate below 1.0\n");
 }
 
 static void B9() {
@@ -241,7 +241,7 @@ static void B9() {
 			assert(std::abs(g.pass_rate - 0.5) < 1e-9);
 		}
 	}
-	printf("[PASS] B9 — grouped aggregation produces correct per-group rates\n");
+	printf("[PASS] B9  -  grouped aggregation produces correct per-group rates\n");
 }
 
 static void B10() {
@@ -251,7 +251,7 @@ static void B10() {
 	for (const auto& fm : rec.failure_modes)
 		if (fm == to_string(BatchFailureMode::FAIL_MASS_CONSERVATION)) found = true;
 	assert(found);
-	printf("[PASS] B10 — FAIL_MASS_CONSERVATION classified for mass failure\n");
+	printf("[PASS] B10  -  FAIL_MASS_CONSERVATION classified for mass failure\n");
 }
 
 static void B11() {
@@ -261,7 +261,7 @@ static void B11() {
 	for (const auto& fm : rec.failure_modes)
 		if (fm == to_string(BatchFailureMode::FAIL_RDF_REFERENCE)) found = true;
 	assert(found);
-	printf("[PASS] B11 — FAIL_RDF_REFERENCE classified for RDF failure\n");
+	printf("[PASS] B11  -  FAIL_RDF_REFERENCE classified for RDF failure\n");
 }
 
 static void B12() {
@@ -270,7 +270,7 @@ static void B12() {
 	for (const auto& fm : rec.failure_modes)
 		if (fm == to_string(BatchFailureMode::FAIL_OUTPUT_MISSING)) found = true;
 	assert(found);
-	printf("[PASS] B12 — FAIL_OUTPUT_MISSING on MISSING status\n");
+	printf("[PASS] B12  -  FAIL_OUTPUT_MISSING on MISSING status\n");
 }
 
 static void B13() {
@@ -279,7 +279,7 @@ static void B13() {
 	const std::string path = "test_batch_verify_summary.tsv";
 	write_batch_verify_summary(sum, path);
 	assert(!file_contents(path).empty());
-	printf("[PASS] B13 — write_batch_verify_summary produces output\n");
+	printf("[PASS] B13  -  write_batch_verify_summary produces output\n");
 }
 
 static void B14() {
@@ -288,7 +288,7 @@ static void B14() {
 	const std::string path = "test_batch_verify_matrix.tsv";
 	write_batch_verify_matrix(sum, path);
 	assert(!file_contents(path).empty());
-	printf("[PASS] B14 — write_batch_verify_matrix produces output\n");
+	printf("[PASS] B14  -  write_batch_verify_matrix produces output\n");
 }
 
 static void B15() {
@@ -308,7 +308,7 @@ static void B15() {
 	assert(mass_pos != std::string::npos);
 	assert(rdf_pos < mass_pos);
 	(void)rdf_pos; (void)mass_pos;
-	printf("[PASS] B15 — batch_failure_modes sorted by count descending\n");
+	printf("[PASS] B15  -  batch_failure_modes sorted by count descending\n");
 }
 
 static void B16() {
@@ -323,7 +323,7 @@ static void B16() {
 	std::string content = file_contents(path);
 	assert(content.find("batch_empirical_ready: false") != std::string::npos);
 	assert(content.find("overall_pass_rate") != std::string::npos);
-	printf("[PASS] B16 — batch_empirical_report contains gate_failure_reason\n");
+	printf("[PASS] B16  -  batch_empirical_report contains gate_failure_reason\n");
 }
 
 static void B17() {
@@ -335,7 +335,7 @@ static void B17() {
 	rec2.verify_status  = "FAIL";
 	rec2.empirical_ready = false;
 	assert(rec2.empirical_ready == false);
-	printf("[PASS] B17 — BatchRunRecord verify fields compile and assign\n");
+	printf("[PASS] B17  -  BatchRunRecord verify fields compile and assign\n");
 }
 
 static void B18() {
@@ -345,7 +345,7 @@ static void B18() {
 	assert(!is_warning(BatchFailureMode::FAIL_MASS_CONSERVATION));
 	assert(!is_warning(BatchFailureMode::FAIL_RDF_REFERENCE));
 	assert(!is_warning(BatchFailureMode::FAIL_RUNTIME_CRASH));
-	printf("[PASS] B18 — is_warning helper correct for all codes\n");
+	printf("[PASS] B18  -  is_warning helper correct for all codes\n");
 }
 
 static void B19() {
@@ -370,7 +370,7 @@ static void B19() {
 		assert(std::strcmp(s, "UNKNOWN") != 0);
 		(void)s;
 	}
-	printf("[PASS] B19 — to_string round-trips all BatchFailureMode codes\n");
+	printf("[PASS] B19  -  to_string round-trips all BatchFailureMode codes\n");
 }
 
 static void B20() {
@@ -378,13 +378,13 @@ static void B20() {
 	assert(p.on_run_fail          == "continue");
 	assert(p.on_check_fail        == "record");
 	assert(p.save_resolved_scripts == true);
-	printf("[PASS] B20 — BatchVerifyPolicySection defaults correct\n");
+	printf("[PASS] B20  -  BatchVerifyPolicySection defaults correct\n");
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
-	printf("=== Group 40 — Batch Verification Aggregation ===\n\n");
+	printf("=== Group 40  -  Batch Verification Aggregation ===\n\n");
 
 	B1();  B2();  B3();  B4();  B5();
 	B6();  B7();  B8();  B9();  B10();

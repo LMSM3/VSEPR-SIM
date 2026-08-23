@@ -1,0 +1,197 @@
+# =============================================================================
+# audit_vsim_ctl_batch_dynx_pipeline.vsim
+# VSEPR-SIM Day #68 — Audit Script 2 (implement second)
+#
+# Target:
+#   Validate VSIM-CTL as typed wrapper-only control layer over deterministic MD.
+#
+# Audit focus:
+#   - declarative config + scripted control
+#   - stochastic and latin_hypercube expansion
+#   - script_plan.json emission
+#   - resolved_config.vsim emission
+#   - per-run Dynx export
+#   - aggregate report
+#   - deterministic seed behaviour
+#
+# Unique audit target:
+#   same script + same seed + same kernel config => same plan hash
+#
+# VSIM_REFERENCE: WO-VSIM-DAY68-AUDIT / Group 71
+# =============================================================================
+
+[project]
+name        = "audit_vsim_ctl_batch_dynx_pipeline"
+version     = "v5.1.X-day68"
+seed_base   = 68003
+determinism = true
+description = "VSIM-CTL batch + Dynx orchestration audit"
+
+[material]
+formula      = "Ar"
+model        = "single_species_gas"
+count        = 64
+mass_source  = "periodic_table"
+charge       = 0.0
+
+[environment]
+boundary       = "periodic"
+box            = [40.0, 40.0, 40.0]
+temperature_K  = 300.0
+pressure_atm   = 1.0
+
+[kernel]
+model         = "legacy_md"
+integrator    = "velocity_verlet"
+dt            = 0.002
+steps         = 2000
+deterministic = true
+seed          = 68003
+
+[kernel.trace]
+enabled              = true
+interval             = 20
+write_energy_terms   = true
+write_force_channels = false
+write_state          = false
+
+[batch]
+enabled      = true
+max_parallel = 1
+export_each  = true
+aggregate    = true
+
+[[batch.axis]]
+name         = "temperature_K"
+kind         = "stochastic"
+distribution = "uniform"
+min          = 250.0
+max          = 750.0
+samples      = 6
+seed_offset  = 11
+
+[[batch.axis]]
+name         = "density_scale"
+kind         = "stochastic"
+distribution = "normal"
+mean         = 1.0
+stddev       = 0.10
+samples      = 6
+truncate_min = 0.75
+truncate_max = 1.25
+seed_offset  = 17
+
+[batch.design]
+type    = "latin_hypercube"
+samples = 6
+seed    = 68003
+
+[export]
+dynx           = true
+summary_csv    = true
+report         = true
+aggregate_json = true
+
+[report]
+enabled            = true
+format             = "markdown"
+title              = "VSIM-CTL Batch Dynx Pipeline Audit"
+include_summary    = true
+include_validation = true
+include_artifacts  = true
+
+[script]
+const force_profiles = [
+	"inertial",
+	"repulsion_only"
+]
+
+require(batch.enabled == true)
+require(batch.max_parallel == 1)
+require(kernel.deterministic == true)
+
+artifact.manifest.write("out/vsim_ctl_batch_dynx/manifest.json")
+artifact.script_plan.enable("out/vsim_ctl_batch_dynx/script_plan.json")
+artifact.config.export_resolved("out/vsim_ctl_batch_dynx/resolved_config.vsim")
+
+batch.expand()
+batch.validate_design()
+batch.export_resolved("out/vsim_ctl_batch_dynx/resolved_batch.json")
+
+gate.begin("batch_expansion_determinism")
+
+metrics.capture_batch_design()
+
+gate.assert(metrics.batch.samples == 6)
+gate.assert(metrics.batch.design == "latin_hypercube")
+gate.assert(metrics.batch.seed_reproducible == true)
+gate.assert(metrics.batch.duplicate_jobs == 0)
+gate.assert(metrics.batch.invalid_axis_values == 0)
+
+gate.end()
+
+for job in batch.jobs {
+
+	for profile in force_profiles {
+
+		gate.begin("job_${job.index}_${profile}")
+
+		runtime.reset(scope = "case")
+
+		set environment.temperature_K = job.temperature_K
+		set material.density_scale = job.density_scale
+
+		kernel.channel.reset()
+
+		if profile == "inertial" {
+			kernel.channel.reset()
+		}
+
+		if profile == "repulsion_only" {
+			kernel.channel.enable("repulsion", weight = 1.0)
+		}
+
+		artifact.dynx.enable(profile = "batch_session")
+		artifact.dynx.include("positions")
+		artifact.dynx.include("velocities")
+		artifact.dynx.include("energy_terms")
+		artifact.dynx.include("events")
+
+		runtime.run_case("job_${job.index}_${profile}")
+
+		metrics.capture()
+
+		gate.assert(metrics.energy.has_nan == false)
+		gate.assert(metrics.energy.has_inf == false)
+		gate.assert(metrics.run.completed == true)
+		gate.assert(metrics.dynx.frame_count > 0)
+		gate.assert(metrics.dynx.monotonic_time == true)
+
+		artifact.dynx.validate()
+		artifact.dynx.export("out/vsim_ctl_batch_dynx/runs/job_${job.index}/${profile}/run.dynx")
+
+		metrics.export("out/vsim_ctl_batch_dynx/runs/job_${job.index}/${profile}/metrics.tsv")
+
+		gate.end()
+	}
+}
+
+batch.aggregate()
+batch.export_aggregate("out/vsim_ctl_batch_dynx/aggregate_summary.csv")
+batch.export_aggregate_json("out/vsim_ctl_batch_dynx/aggregate_summary.json")
+
+gate.begin("plan_hash_reproducibility")
+
+artifact.script_plan.finalize()
+metrics.capture_plan_hash()
+
+gate.assert(metrics.plan.hash_present == true)
+gate.assert(metrics.plan.hash_reproducible == true)
+gate.assert(metrics.plan.unknown_namespaces == 0)
+gate.assert(metrics.plan.unknown_commands == 0)
+gate.assert(metrics.plan.direct_particle_mutations == 0)
+
+gate.end()
+
+artifact.report.write("out/vsim_ctl_batch_dynx/report.md")
+artifact.manifest.finalize()

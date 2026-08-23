@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * graph_topology.hpp — Bead Interaction Graph G = (V, E)
+ * graph_topology.hpp  -  Bead Interaction Graph G = (V, E)
  *
  * Implements the formal graph-theoretic structure for the bead system:
  *
@@ -16,8 +16,8 @@
  *
  * The graph provides:
  *   - Adjacency structure for pairwise interaction enumeration
- *   - Degree distribution → maps to coordination number C_B
- *   - Laplacian spectrum → structural connectivity analysis
+ *   - Degree distribution -> maps to coordination number C_B
+ *   - Laplacian spectrum -> structural connectivity analysis
  *   - Neighbour lists for efficient O(N) force evaluation
  *
  * This is the combinatorial substrate for:
@@ -60,7 +60,7 @@ struct Edge {
 // ============================================================================
 
 /**
- * InteractionGraph — the combinatorial backbone of the bead system.
+ * InteractionGraph  -  the combinatorial backbone of the bead system.
  *
  * Vertices = beads (indexed 0..N-1).
  * Edges = pairs within r_cutoff, undirected but stored as (i < j) canonical.
@@ -225,7 +225,7 @@ inline InteractionGraph build_graph(
 // ============================================================================
 
 /**
- * GraphDiagnostics — summary statistics for the interaction graph.
+ * GraphDiagnostics  -  summary statistics for the interaction graph.
  */
 struct GraphDiagnostics {
     uint32_t N{};                   ///< |V|

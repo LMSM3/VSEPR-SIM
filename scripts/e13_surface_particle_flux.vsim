@@ -1,0 +1,66 @@
+# e13_surface_particle_flux.vsim
+# =============================================================================
+# E13  --  Particle Number Flux (Phi) Through a Rectangular Probe
+#
+# Purpose: Measures the particle-crossing flux Phi through a single
+#          rectangular surface placed at the channel mid-plane of a
+#          Lennard-Jones gas.  Output: crossings/step/area in surface.json.
+#
+# Key concepts:
+#   compute_flux = true  ->  Phi = net signed crossings / (area * step)
+#   log_crossings tracks every individual crossing event with step index.
+#   species_filter limits counting to a named subset of particles.
+# =============================================================================
+
+[project]
+name        = "e13_surface_particle_flux"
+version     = "v5.0.14"
+seed_base   = 1300
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 512
+temperature = 300.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 5000
+dt_fs     = 2.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e13"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e13/surfaces"
+
+[[object.surface]]
+name            = "channel_probe"
+geometry        = "rectangle"
+center_x        = 0.0
+center_y        = 0.0
+center_z        = 0.0
+normal_x        = 1.0
+normal_y        = 0.0
+normal_z        = 0.0
+width           = 30.0
+height          = 30.0
+log_crossings   = true
+compute_flux    = true
+output_tag      = "phi_channel"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 250

@@ -1,9 +1,9 @@
-/**
+﻿/**
  * tests/test_batch_expander.cpp
  * ===============================
- * WO-VSIM-62C — Group 42: Batch Expander Tests
+ * WO-VSIM-62C  -  Group 42: Batch Expander Tests
  *
- * Tests E1–E10 from spec §10.
+ * Tests E1-E10 from spec §10.
  *
  * WO-VSIM-62C | beta-12
  */
@@ -38,7 +38,7 @@ static int failures = 0;
 #define EXPECT_EQ(a, b) EXPECT_TRUE((a) == (b))
 #define EXPECT_STR(a, b) EXPECT_TRUE(std::string(a) == std::string(b))
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static BatchDocument make_2axis_doc() {
 	const std::string src = R"(
@@ -70,10 +70,10 @@ values = [0.0, 1.0, 2.0]
 	return BatchParser::parse_string(src);
 }
 
-// ── E1: 2-axis factorial → 6 specs ───────────────────────────────────────────
+// -- E1: 2-axis factorial -> 6 specs -------------------------------------------
 
 static void test_E1() {
-	std::cout << "E1: 2-axis factorial (2×3) → 6 specs\n";
+	std::cout << "E1: 2-axis factorial (2×3) -> 6 specs\n";
 	auto doc = make_2axis_doc();
 	std::vector<std::string> warnings;
 	auto specs = BatchExpander::expand(doc, warnings);
@@ -82,10 +82,10 @@ static void test_E1() {
 	EXPECT_STR(specs[5].run_id, "run_0006");
 }
 
-// ── E2: 1 axis × 3 replicates → 3 specs ─────────────────────────────────────
+// -- E2: 1 axis × 3 replicates -> 3 specs -------------------------------------
 
 static void test_E2() {
-	std::cout << "E2: 1 axis × 3 replicates → 3 specs\n";
+	std::cout << "E2: 1 axis × 3 replicates -> 3 specs\n";
 	const std::string src = R"(
 [study]
 name = "rep_test"
@@ -115,10 +115,10 @@ values = [300]
 	EXPECT_TRUE(specs[2].replicate == 2);
 }
 
-// ── E3: seed_policy = "split" → seeds differ by 1 ────────────────────────────
+// -- E3: seed_policy = "split" -> seeds differ by 1 ----------------------------
 
 static void test_E3() {
-	std::cout << "E3: seed_policy=split → seeds differ by 1\n";
+	std::cout << "E3: seed_policy=split -> seeds differ by 1\n";
 	const std::string src = R"(
 [study]
 name = "split_test"
@@ -150,10 +150,10 @@ values = [300]
 	EXPECT_TRUE(d2 == d0 + 2);
 }
 
-// ── E4: seed_policy = "shift" → seeds differ by 1000 ─────────────────────────
+// -- E4: seed_policy = "shift" -> seeds differ by 1000 -------------------------
 
 static void test_E4() {
-	std::cout << "E4: seed_policy=shift → seeds differ by 1000\n";
+	std::cout << "E4: seed_policy=shift -> seeds differ by 1000\n";
 	const std::string src = R"(
 [study]
 name = "shift_test"
@@ -183,10 +183,10 @@ values = [300]
 	EXPECT_TRUE(d1 == d0 + 1000);
 }
 
-// ── E5: SeedResolver derives sub-seeds correctly ─────────────────────────────
+// -- E5: SeedResolver derives sub-seeds correctly -----------------------------
 
 static void test_E5() {
-	std::cout << "E5: SeedResolver foundation → derived sub-seeds\n";
+	std::cout << "E5: SeedResolver foundation -> derived sub-seeds\n";
 	SeedSection declared;
 	declared.foundation = 6100;
 	auto resolved = SeedResolver::resolve(declared);
@@ -196,10 +196,10 @@ static void test_E5() {
 	EXPECT_TRUE(resolved.resolved_placement == 6100 + 11000);
 }
 
-// ── E6: SeedResolver explicit non-zero → preserved ───────────────────────────
+// -- E6: SeedResolver explicit non-zero -> preserved ---------------------------
 
 static void test_E6() {
-	std::cout << "E6: SeedResolver explicit non-zero → preserved\n";
+	std::cout << "E6: SeedResolver explicit non-zero -> preserved\n";
 	SeedSection declared;
 	declared.foundation = 1;
 	declared.defect     = 9999;
@@ -213,7 +213,7 @@ static void test_E6() {
 	EXPECT_TRUE(resolved.resolved_placement == 6666);
 }
 
-// ── E7: [batch.expand] cases × axes ──────────────────────────────────────────
+// -- E7: [batch.expand] cases × axes ------------------------------------------
 
 static void test_E7() {
 	std::cout << "E7: expand cases × axes\n";
@@ -253,7 +253,7 @@ name = "case_b"
 	EXPECT_TRUE(specs.size() == 8);
 }
 
-// ── E8: Case override wins over inline base ───────────────────────────────────
+// -- E8: Case override wins over inline base -----------------------------------
 
 static void test_E8() {
 	std::cout << "E8: case override wins over inline base\n";
@@ -287,7 +287,7 @@ material.solute_fraction = 0.01
 	EXPECT_STR(specs[0].axis_values.at("material.solute_fraction"), "0.01");
 }
 
-// ── E9: Axis value wins over case override ────────────────────────────────────
+// -- E9: Axis value wins over case override ------------------------------------
 
 static void test_E9() {
 	std::cout << "E9: axis value wins over case override\n";
@@ -323,7 +323,7 @@ environment.temperature = 100
 	EXPECT_STR(specs[0].axis_values.at("environment.temperature"), "700");
 }
 
-// ── E10: batch_plan.tsv written correctly ────────────────────────────────────
+// -- E10: batch_plan.tsv written correctly ------------------------------------
 
 static void test_E10() {
 	std::cout << "E10: batch_plan.tsv written correctly\n";
@@ -345,7 +345,7 @@ static void test_E10() {
 	std::remove(tmp.c_str());
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
 	std::cout << "=== Group 42: Batch Expander Tests ===\n\n";

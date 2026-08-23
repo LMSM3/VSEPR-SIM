@@ -1,0 +1,8 @@
+{
+  "schema": "vsepr.loop-98-mutation-proposal.v1",
+  "parent_version": "v001",
+  "version": "v002",
+  "mutation": "Vary the bounded kernel command only after explicit review",
+  "auto_apply": false,
+  "created_at": "2026-07-17T10:29:13.786916+00:00"
+}

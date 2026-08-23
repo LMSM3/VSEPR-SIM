@@ -1,0 +1,1111 @@
+
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage[top=0.85in,bottom=0.85in,left=0.95in,right=0.95in,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,array,tabularx,longtable}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
+
+\setlist{leftmargin=1.4em,itemsep=0.25em,topsep=0.25em}
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.8em}{}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+
+%% ================================================================
+%%  MACRO SET --- EVM-V v1.0
+%%  Harmonised with IKK II v2.0, IKK III v2.0, IKK IV v1.0
+%% ================================================================
+
+%% ---- Identity objects (IKK registry) ----
+\newcommand{\Ia}{I_a}
+\newcommand{\Itrue}{\mathfrak{I}_{\mathrm{true}}}
+\newcommand{\Ihat}{\widehat{I}_{a|b}}
+
+%% ---- Typed spaces ----
+\newcommand{\Osp}{\mathcal{O}_b}
+\newcommand{\Pab}{\mathcal{P}_{a\to b}}
+\newcommand{\Rresid}{\mathfrak{R}_{a|b}}
+
+%% ---- Observed accelerations ----
+\newcommand{\aobs}{a_{\mathrm{obs}}}
+\newcommand{\abar}{a_{\mathrm{bar}}}
+\newcommand{\aPi}{a_{\Pi}}
+\newcommand{\aMOND}{a_{\mathrm{MOND}}}
+\newcommand{\aPiM}{a_{\Pi,\mathrm{MOND}}}
+\newcommand{\ascale}{a_s}
+
+%% ---- Velocities ----
+\newcommand{\vobs}{v_{\mathrm{obs}}}
+\newcommand{\vbar}{v_{\mathrm{bar}}}
+\newcommand{\vPi}{v_{\Pi}}
+\newcommand{\vmod}{v_{\mathrm{model}}}
+\newcommand{\vgas}{v_{\mathrm{gas}}}
+\newcommand{\vdisk}{v_{\mathrm{disk}}}
+\newcommand{\vbulge}{v_{\mathrm{bulge}}}
+\newcommand{\vcirc}{v_{\mathrm{circ}}}
+\newcommand{\vN}{v_N}
+\newcommand{\vfive}{v_5}
+
+%% ---- Model parameters ----
+\newcommand{\LamPi}{\Lambda_{\Pi}}
+\newcommand{\pzero}{p_0}
+\newcommand{\rc}{r_c}
+\newcommand{\rzero}{r_0}
+
+%% ---- Hidden momentum ----
+\newcommand{\pu}{p_u}
+\newcommand{\pw}{p_w}      % deprecated; kept for Looking Up cross-references only
+
+%% ---- Scale coordinate ----
+\newcommand{\usc}{u}                    % log-scale chart u = ln(l/l_0)
+\newcommand{\ellz}{\ell_0}             % reference scale
+
+%% ---- Projection efficiency ----
+\newcommand{\etaPi}{\eta_{\Pi}}
+\newcommand{\etaab}{\eta_{ab}}
+
+%% ---- Gate function ----
+\newcommand{\GPi}{G_{\Pi}}
+
+%% ---- Mass-to-light ratios ----
+\newcommand{\Upsdisk}{\Upsilon_{\mathrm{disk}}}
+\newcommand{\Upsbulge}{\Upsilon_{\mathrm{bulge}}}
+
+%% ---- Baryonic densities ----
+\newcommand{\Sbar}{\Sigma_{\mathrm{bar}}}
+\newcommand{\rhobar}{\rho_{\mathrm{bar}}}
+\newcommand{\rhoNFW}{\rho_{\mathrm{NFW}}}
+
+%% ---- Galaxy structure ----
+\newcommand{\Mstar}{M_{\star}}
+\newcommand{\fgas}{f_{\mathrm{gas}}}
+\newcommand{\Rd}{R_d}
+
+%% ---- Standard shorthands ----
+\newcommand{\Oh}{\mathcal{O}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+
+%% ================================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Inverse Kaluza-Klein Framework --- EVM Paper Set}}
+\fancyhead[R]{\small\textit{EVM-V v1.0}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{1.1cm}
+{\large\scshape VSEPR-SIM Theoretical Division / EVM Paper Set\par}
+\vspace{1.1cm}
+{\Huge\bfseries EVM-V\par}
+\vspace{0.35cm}
+{\Large\bfseries Galactic Rotation Residuals as Projection-Access Signals\par}
+\vspace{0.2cm}
+{\large Version 1.0\par}
+\vspace{1.5cm}
+
+\begin{abstract}
+\noindent
+This paper develops EVM-V, the first large-scale observational evidence-mapping
+document for the Inverse Kaluza-Klein Scale Symmetry framework. The preceding
+\emph{Looking Up} paper proposed that galactic rotation anomalies may be interpreted
+not as direct evidence for unseen matter alone, nor as a purely empirical modification
+of Newtonian dynamics, but as a projection-residual effect associated with inaccessible
+scale-depth structure. In that formulation, the observed radial acceleration contains a
+baryonic Newtonian term plus an additional fifth-force-like contribution sourced by
+hidden-axis momentum and activated only at galactic scales.
+
+The present paper does not claim discovery of a new force. Instead, it defines a
+reproducible data-analysis program for testing whether galactic residual accelerations
+can be mapped onto a projection-access model. The central empirical object is
+\[
+    \aPi(r) = \aobs(r) - \abar(r),
+\]
+where $\aobs = \vobs^2/r$ is the observed centripetal acceleration and
+$\abar = \vbar^2/r$ is the acceleration predicted from baryonic matter alone.
+The paper treats the SPARC database as the primary benchmark, which contains 175
+disk galaxies with \emph{Spitzer} 3.6\,$\mu$m photometry, high-quality
+H\,\textsc{i}/H$\alpha$ rotation curves, and mass models suitable for baryonic
+acceleration reconstruction.
+
+EVM-V compares three interpretations of the residual: conventional dark matter halo
+fitting, MOND-like phenomenological acceleration laws, and IKK projection-residual
+dynamics. The immediate goal is not to outperform $\Lambda$CDM or MOND, but to
+determine whether the projection-residual model yields stable population-level
+parameters, physically meaningful correlations, and non-arbitrary failure conditions.
+A model is considered scientifically useful only if its universal parameters remain
+stable across galaxies and its residual structure cannot be reduced to a disguised halo
+fit.
+
+\medskip
+\noindent\textbf{Keywords:}
+galactic rotation curves; SPARC; radial acceleration relation; MOND; dark matter;
+fifth force; projection residual; Inverse Kaluza-Klein; scale symmetry; baryonic
+acceleration; hidden-axis momentum; effective force law.
+\end{abstract}
+\end{titlepage}
+
+%% ================================================================
+\section{Introduction}
+%% ================================================================
+
+The rotation-curve problem is one of the cleanest observational failures of naive
+baryonic Newtonian dynamics. In spiral and irregular disk galaxies, observed orbital
+velocities often remain approximately flat at large radii instead of declining as
+expected from visible mass alone. The standard interpretation is that galaxies are
+embedded in extended dark matter halos. This interpretation is mathematically productive
+and cosmologically powerful, but the underlying non-baryonic particle has not been
+directly detected. Modified gravity approaches, including MOND, instead treat the
+discrepancy as a modification of the acceleration law at low acceleration. The SPARC
+database and the radial acceleration relation have made this comparison unusually sharp
+because they connect observed acceleration and baryonic acceleration across thousands of
+resolved galactic radii.
+
+The earlier \emph{Looking Up} paper proposed a third interpretive route. Instead of
+treating the missing acceleration as either invisible mass or a primitive modification
+to gravity, it framed the anomaly as an unresolved projection residual. In the language
+of IKK, ordinary observation does not recover full physical identity:
+\[
+    \Osp^{(a)} = \Pab[\Ia], \qquad \Osp^{(a)} \neq \Ia.
+\]
+The observable object is a projection, not the primitive identity. The IKK notation
+registry explicitly preserves this distinction through the canonical rule
+\[
+    \Itrue \;\neq\; I_{\mathrm{top}} \;\neq\; \Osp^{(a)}.
+\]
+This distinction matters because a residual in galactic dynamics can be treated not as
+a free excuse term, but as the mismatch between gravitationally inferred structure and
+electromagnetically resolved structure.
+
+The prior \emph{Looking Up} model introduced hidden-axis momentum
+\[
+    p_w^{(i)} = m_i\,\frac{dw_i}{d\tau}
+\]
+as the effective fifth-force charge, and proposed a logarithmic radial acceleration
+contribution which behaves as a $1/r$ acceleration at galactic radii, contributing an
+approximately constant term to $v^2(r)$.
+
+EVM-V reframes this result as a data-analysis protocol, not a declaration of victory.
+Its central question is:
+\begin{quote}
+\textit{Can galactic acceleration residuals be mapped onto stable projection-access
+dynamics?}
+\end{quote}
+That is a useful question. It does not require pretending dark matter is dead, MOND is
+complete, or the fifth force has descended from the heavens carrying a grant proposal.
+
+%% ================================================================
+\section{Relation to \emph{Looking Up}}
+%% ================================================================
+
+The \emph{Looking Up} paper developed a fifth-dimensional momentum framework for
+galactic rotation without invoking particle dark matter. Its abstract framed dark-sector
+signatures as ``gravitationally visible but electromagnetically unresolved identity
+content,'' i.e.\ a projection gap rather than invisible matter.
+
+The present paper differs in purpose.
+
+\emph{Looking Up} proposed a mechanism:
+\[
+    v^2(r) = \vN^2(r) + \vfive^2(r).
+\]
+EVM-V proposes an evidence pipeline:
+\[
+    \text{data}
+    \;\to\; \aobs
+    \;\to\; \abar
+    \;\to\; \aPi
+    \;\to\; \text{model comparison}
+    \;\to\; \text{parameter stability}
+    \;\to\; \text{failure conditions.}
+\]
+The paper therefore has a narrower and more scientific burden. It asks whether the
+fifth-force-like term from \emph{Looking Up} can survive direct comparison against
+SPARC rotation curves, the radial acceleration relation, MOND-like scaling, and
+conventional dark matter halo fits.
+
+The earlier paper already identified the correct primary benchmark: SPARC
+rotation-curve fitting, radial acceleration relation analysis, compact-system screening
+tests, population tests, and morphological correlations. EVM-V expands those into a
+full research design.
+
+%% ================================================================
+\section{Notation and Framework Alignment}
+%% ================================================================
+
+The notation used here follows the IKK registry where possible.
+
+\subsection{Identity and projection}
+
+Let $\Ia$ denote primitive or source identity at scale $S_a$. Observation at scale
+$S_b$ produces
+\[
+    \Osp^{(a)} = \Pab[\Ia],
+\]
+where $\Pab$ is the projection operator from source scale $S_a$ into observable scale
+$S_b$. The registry gives the canonical operational form as
+\[
+    \Pab = \mathcal{M}_b \circ \mathcal{R}_b \circ \mathcal{C}_{ab},
+\]
+or, in simple form,
+\[
+    \Pab = \mathcal{R}_b \circ \mathcal{C}_{ab},
+\]
+where $\mathcal{C}_{ab}$ is the cross-scale coupling rule and $\mathcal{R}_b$ is the
+resolution operator of observing scale $S_b$.
+
+\subsection{Scale coordinate}
+
+The legacy coordinate $w$ appears in \emph{Looking Up} because that paper was written
+before the current notation registry stabilised. In this paper, the preferred coordinate
+is
+\[
+    \usc = \ln\!\left(\frac{\ell}{\ellz}\right),
+\]
+where $\ell$ is the relevant physical scale and $\ellz$ is a reference scale. The
+registry marks $\usc$ as the accepted logarithmic scale coordinate and marks $w$ as
+deprecated in new writing.
+
+To preserve continuity with \emph{Looking Up}, we write $\pu$ as the modernised analogue
+of hidden-axis momentum, with the understanding that it descends from the earlier $\pw$
+construction:
+\[
+    \pw \;\longrightarrow\; \pu.
+\]
+The replacement is conceptual as well as symbolic. The fifth direction is no longer
+treated as an ordinary hidden spatial coordinate. It is a scale-access coordinate
+governing how identity content becomes dynamically visible or invisible under projection.
+
+\subsection{Residual acceleration}
+
+The observable acceleration residual is defined as
+\[
+    \aPi(r) = \aobs(r) - \abar(r).
+\]
+The symbol $\Pi$ is used here only as a typed residual label, not as a generic
+projection operator. The notation registry explicitly warns against bare $\Pi$ because
+of projection and chemistry collisions. Tiny symbol hygiene, gigantic reduction in
+future suffering.
+
+%% ================================================================
+\section{Physical Hypothesis}
+%% ================================================================
+
+The working hypothesis of EVM-V is:
+\[
+    \aobs(r) = \abar(r) + \aPi(r,\usc),
+\]
+where $\aPi(r,\usc)$ is an effective projection-residual acceleration.
+
+This is not initially claimed to be a fundamental force in the Standard Model sense.
+It is a fifth-force-like term in the limited phenomenological sense that it contributes
+an additional acceleration:
+\[
+    F_{\mathrm{eff}} = m\,\aobs = m\,\abar + m\,\aPi.
+\]
+The interpretation is:
+\begin{quote}
+\textit{The residual is observable; the ontology of the residual is inferred.}
+\end{quote}
+This is the central scientific posture of the paper. The residual acceleration can be
+measured from rotation-curve and baryonic-mass data. The claim that it reflects
+projection-access structure is a model interpretation, and that interpretation must earn
+credibility through parameter stability, cross-galaxy consistency, and comparison with
+existing alternatives.
+
+%% ================================================================
+\section{Empirical Baseline: Rotation Curves and the RAR}
+%% ================================================================
+
+\subsection{Observed acceleration}
+
+For each galaxy, the observed centripetal acceleration at radius $r_j$ is
+\[
+    \aobs(r_j) = \frac{\vobs^2(r_j)}{r_j}.
+\]
+The observational inputs are radius, observed velocity, and velocity uncertainty:
+\[
+    \bigl\{r_j,\;\vobs(r_j),\;\sigma_v(r_j)\bigr\}_{j=1}^{N}.
+\]
+
+\subsection{Baryonic acceleration}
+
+The baryonic velocity contribution is decomposed as
+\[
+    \vbar^2(r) = \vgas^2(r) + \Upsdisk\,\vdisk^2(r) + \Upsbulge\,\vbulge^2(r),
+\]
+where $\Upsdisk$ and $\Upsbulge$ are stellar mass-to-light ratios. The baryonic
+acceleration is
+\[
+    \abar(r) = \frac{\vbar^2(r)}{r}.
+\]
+This is why SPARC is the natural first benchmark: it provides rotation curves and
+baryonic mass models for 175 disk galaxies across wide ranges of stellar mass, surface
+brightness, and gas fraction.
+
+\subsection{Radial acceleration relation}
+
+The empirical radial acceleration relation connects $\aobs$ and $\abar$ across resolved
+radii in disk galaxies. McGaugh, Lelli, and Schombert reported a tight relation using
+SPARC data, making it one of the most direct targets for any projection-residual theory.
+
+The EVM-V model must therefore be tested against both individual rotation curves and
+the population-level relation
+\[
+    \aobs = f(\abar).
+\]
+A model that fits individual galaxies but destroys the radial acceleration relation is
+not a success. It is just a mathematical ferret loose in the data.
+
+%% ================================================================
+\section{MOND as Phenomenological Baseline}
+%% ================================================================
+
+MOND provides the most relevant phenomenological comparison because it already treats
+the anomaly as an acceleration-scale effect. In the deep-MOND regime,
+\[
+    \aMOND \approx \sqrt{a_0\,\abar},
+\]
+where $a_0$ is the characteristic acceleration scale.
+
+The corresponding MOND residual is
+\[
+    \aPiM(r) = \aMOND(r) - \abar(r).
+\]
+EVM-V uses this not as an assumption, but as a benchmark. The IKK projection-residual
+model should reproduce MOND-like behaviour in the regime where MOND is empirically
+successful:
+\[
+    \aPi(r,\usc) \approx \aPiM(r) \quad \text{when } \abar \ll a_0.
+\]
+The interpretation differs:
+\begin{quote}
+MOND describes the low-acceleration law.\\[2pt]
+IKK attempts to explain \emph{why} a scale-access law appears.
+\end{quote}
+This is the correct relationship. EVM-V is not ``MOND but with extra mist.'' It is a
+proposed ontological mapping beneath MOND-like phenomenology. Whether that mapping is
+worth anything depends on the analysis.
+
+Li et al.\ fitted the radial acceleration relation to individual SPARC galaxies and
+found that allowing galaxy-to-galaxy variation in the acceleration scale did not improve
+the fits, which strengthens the burden on any IKK-like model: any additional
+scale-access parameter must either reduce to a nearly universal value or be
+independently tied to observable structure.
+
+%% ================================================================
+\section{Projection-Residual Model}
+%% ================================================================
+
+\subsection{Minimal residual form}
+
+The minimal EVM-V acceleration model is
+\[
+    \aobs(r) = \abar(r) + \aPi(r,\usc).
+\]
+A direct descendant of \emph{Looking Up} is
+\[
+    \aPi(r,\usc) = \LamPi\,\ln\!\left(1 + \frac{|\pu(r)|}{\pzero}\right)
+    \frac{\GPi(r)}{r + \rc},
+\]
+where
+\[
+    \GPi(r) = \frac{1}{1 + e^{-k(r-\rzero)}}.
+\]
+This gives the full form:
+\[
+    \aPi(r,\usc) = \LamPi\,\ln\!\left(1 + \frac{|\pu(r)|}{\pzero}\right)
+    \cdot\frac{1}{1 + e^{-k(r-\rzero)}}
+    \cdot\frac{1}{r+\rc}.
+\]
+The corresponding velocity contribution is
+\[
+    \vPi^2(r) = r\,\aPi(r,\usc),
+\]
+so that
+\[
+    \vmod^2(r) = \vbar^2(r) + \vPi^2(r).
+\]
+This is the modern-notation version of the \emph{Looking Up} rotation-curve equation,
+where the fifth-force velocity term was written with $\Lambda_5$, $\pw$, $\pzero$,
+$\rzero$, $k$, and $\rc$.
+
+\subsection{Outer-disk limit}
+
+At large galactic radii, $r \gg \rzero$ and $r \gg \rc$, so $\GPi(r) \to 1$ and
+$r/(r+\rc) \to 1$. Then
+\[
+    \vPi^2(r) \approx \LamPi\,\ln\!\left(1 + \frac{|\pu(r)|}{\pzero}\right).
+\]
+If $\pu(r)$ varies slowly across the outer disk, $\vPi^2$ is approximately constant,
+producing flat rotation curves. This is exactly the key result of the original
+\emph{Looking Up} derivation.
+
+\subsection{Projection-access interpretation}
+
+The term $\pu(r)$ is not directly observed. It is a proxy for scale-access momentum
+or hidden projection activity. Formally,
+\[
+    \pu(r) \sim \frac{\partial \Ia}{\partial \usc},
+\]
+meaning it measures how strongly the identity content changes along the scale-access
+coordinate. This should not be oversold. It is a modelling bridge, not a measured
+microscopic quantity.
+
+Define a projection-access efficiency $\etaPi(r,\usc) \in [0,1]$, and write the
+residual more generally as
+\[
+    \aPi(r,\usc) = \etaPi(r,\usc)\,\ascale(r),
+\]
+where $\ascale(r)$ is the scale-residual acceleration kernel. The logarithmic
+fifth-momentum model is then one candidate specification:
+\[
+    \etaPi(r,\usc)\,\ascale(r)
+    = \LamPi\,\ln\!\left(1+\frac{|\pu(r)|}{\pzero}\right)
+      \GPi(r)\,\frac{1}{r+\rc}.
+\]
+The notation registry currently treats $\etaab$ as a provisional projection efficiency
+or coupling strength, which fits this use but requires explicit definition in this paper.
+
+%% ================================================================
+\section{Hidden-Momentum Proxy Models}
+%% ================================================================
+
+The single largest modelling risk is $\pu(r)$. If it is freely chosen per galaxy, the
+model degenerates into a disguised halo fit. The prior \emph{Looking Up} paper already
+identified this as the hidden-momentum proxy problem.
+
+EVM-V therefore defines four proxy tiers.
+
+\subsubsection*{Tier I: Circular-kinematic proxy}
+\[
+    |\pu(r)| = \alpha_u\,\Mstar\,\vcirc(r).
+\]
+Simplest model. Ties scale-access momentum to local circular motion. Risks circularity
+because $\vcirc$ is close to the observable being fitted. Use only as a baseline
+sanity check.
+
+\subsubsection*{Tier II: Surface-density proxy}
+\[
+    |\pu(r)| = \alpha_u\,\Sbar(r)\,\vbar(r).
+\]
+Here $\Sbar(r)$ is the baryonic surface density. Ties the residual to local baryonic
+structure. This is the preferred first serious proxy.
+
+\subsubsection*{Tier III: Momentum-flux proxy}
+\[
+    |\pu(r)| = \alpha_u\,\rhobar(r)\,\vbar(r).
+\]
+Treats hidden-axis sourcing as related to local baryonic momentum density. More
+physically motivated but requires assumptions about vertical disk structure and
+density reconstruction.
+
+\subsubsection*{Tier IV: Morphology-conditioned proxy}
+\[
+    |\pu(r)| = \alpha_u\,f\!\left(\Sbar,\,\Mstar,\,\fgas,\,\Rd,\,\mathrm{morph.}\right)
+    \vbar(r).
+\]
+Should be used only after Tiers I--III are evaluated. Otherwise the model will do what
+models love doing when unsupervised: eat degrees of freedom and call it insight.
+
+%% ================================================================
+\section{Data Sources}
+%% ================================================================
+
+\subsection{Primary dataset: SPARC}
+
+The primary dataset is SPARC, which contains 175 nearby late-type galaxies with
+\emph{Spitzer} 3.6\,$\mu$m photometry and high-quality H\,\textsc{i}/H$\alpha$
+rotation curves. Required SPARC fields per data point:
+\[
+    r_j,\;\vobs(r_j),\;\sigma_v(r_j),\;\vgas(r_j),\;\vdisk(r_j),\;\vbulge(r_j),
+    \;L_{3.6},\;D,\;i.
+\]
+Here $D$ is distance and $i$ is inclination.
+
+\subsection{Derived quantities}
+
+For each data point:
+\begin{align}
+    \aobs(r_j) &= \frac{\vobs^2(r_j)}{r_j}, \\[4pt]
+    \vbar^2(r_j) &= \vgas^2(r_j)
+        + \Upsdisk\,\vdisk^2(r_j) + \Upsbulge\,\vbulge^2(r_j), \\[4pt]
+    \abar(r_j) &= \frac{\vbar^2(r_j)}{r_j}, \\[4pt]
+    \aPi^{\,\mathrm{data}}(r_j) &= \aobs(r_j) - \abar(r_j).
+\end{align}
+
+\subsection{Velocity uncertainty propagation}
+
+Velocity uncertainty propagates to acceleration as
+\[
+    \sigma_{\aobs} = \frac{2\vobs\,\sigma_v}{r}.
+\]
+Uncertainty from stellar mass-to-light ratios $\Upsdisk$, $\Upsbulge$ must also be
+included as systematic floors on $\abar$.
+
+\subsection{Future dataset expansion}
+
+BIG-SPARC has been proposed as a much larger successor database, targeting approximately
+4000 galaxies using H\,\textsc{i} data cubes from public telescope archives and
+near-infrared photometry from WISE. EVM-V begins with SPARC because it is established
+and manageable. BIG-SPARC belongs in EVM-VI or a later population-scale validation
+paper, assuming the model survives initial contact with reality. Harsh environment,
+reality.
+
+%% ================================================================
+\section{Analysis Pipeline}
+%% ================================================================
+
+\subsection{Preprocessing}
+
+For each galaxy:
+\begin{enumerate}
+  \item Load SPARC rotation-curve and mass-model data.
+  \item Remove flagged or low-quality points according to SPARC quality metadata.
+  \item Convert radii to SI units or use consistent astrophysical units
+        (kpc, km\,s$^{-1}$, m\,s$^{-2}$).
+  \item Compute $\vbar$, $\aobs$, $\abar$, and $\aPi^{\mathrm{data}}$.
+  \item Propagate velocity uncertainties to $\sigma_{\aobs}$.
+  \item Include uncertainty from mass-to-light ratios $\Upsdisk$, $\Upsbulge$ as
+        systematic floors on $\abar$.
+\end{enumerate}
+
+\subsection{Baseline residual extraction}
+
+Compute
+\[
+    \Delta v^2(r) = \vobs^2(r) - \vbar^2(r)
+\]
+and
+\[
+    \aPi^{\mathrm{data}}(r) = \frac{\Delta v^2(r)}{r}.
+\]
+This gives the empirical residual without assuming IKK, MOND, or halo structure.
+
+\subsection{Model fitting}
+
+Fit
+\[
+    \vmod^2(r;\,\Theta) = \vbar^2(r)
+    + \LamPi\,r\,\ln\!\left(1+\frac{|\pu(r)|}{\pzero}\right)
+      \GPi(r)\,\frac{1}{r+\rc}.
+\]
+Parameter vector:
+\[
+    \Theta = \{\LamPi,\;\pzero,\;\rc,\;\rzero,\;k,\;\alpha_u\}.
+\]
+Depending on proxy tier, $\alpha_u$ may be universal, galaxy-class-dependent, or
+absorbed into $\pzero$. Minimise
+\[
+    \chi^2(\Theta) = \sum_{j=1}^{N}
+    \left[\frac{\vobs(r_j) - \vmod(r_j;\,\Theta)}{\sigma_v(r_j)}\right]^2.
+\]
+Also compute acceleration-space loss:
+\[
+    \chi^2_a(\Theta) = \sum_{j=1}^{N}
+    \left[\frac{\aobs(r_j) - a_{\mathrm{model}}(r_j;\,\Theta)}{\sigma_{a,j}}\right]^2.
+\]
+Both should be reported because velocity-space and acceleration-space fitting can weight
+data differently.
+
+\subsection{Comparison models}
+
+For each galaxy, compare against:
+\begin{enumerate}
+  \item \textbf{Newtonian baryons only}: $\vmod^2 = \vbar^2$.
+  \item \textbf{MOND/RAR}: $\aMOND = \nu({\abar}/{a_0})\,\abar$, with a chosen
+        interpolation function $\nu$.
+  \item \textbf{Dark matter halo}: At minimum NFW,
+        $\rhoNFW(r) = \rho_s\bigl[(r/r_s)(1+r/r_s)^2\bigr]^{-1}$;
+        optionally Burkert or Einasto profiles.
+  \item \textbf{IKK projection-residual}: $\vmod^2 = \vbar^2 + \vPi^2$.
+\end{enumerate}
+
+\subsection{Model-selection metrics}
+
+Report $\chi^2_\nu$, AIC, BIC, $\Delta$AIC, $\Delta$BIC, where
+\[
+    \mathrm{AIC} = 2k - 2\ln\mathcal{L}, \qquad
+    \mathrm{BIC} = k\ln N - 2\ln\mathcal{L}.
+\]
+This matters because the projection model must not win merely by having more knobs.
+Humanity already invented epicycles once. We do not need a premium subscription version.
+
+%% ================================================================
+\section{Population-Level Tests}
+%% ================================================================
+
+A galaxy-by-galaxy fit is insufficient. The decisive test is whether the model has
+stable population-level structure.
+
+\subsection{Universal parameter stability}
+
+The parameters $\LamPi$, $\pzero$, $\rc$ should be approximately universal or should
+vary according to a physically justified predictor. Define the population stability
+statistic:
+\[
+    S_\theta = \frac{\mathrm{std}[\log_{10}\theta_g]}
+                    {\sigma_{\theta,\mathrm{allowed}}},
+\]
+where $\theta_g$ is the fitted value for galaxy $g$. A parameter passes if
+$S_\theta \leq 1$. A practical criterion is
+\[
+    \max_g(\theta_g)\,/\,\min_g(\theta_g) < 3
+    \quad\text{(strong stability)}
+\]
+and $< 10$ for weak admissibility. Beyond that, the model starts wearing a fake halo
+moustache.
+
+\subsection{Correlation with galaxy properties}
+
+If parameters vary, variation must correlate with observables: $\Mstar$,
+$M_{\mathrm{gas}}$, $\fgas$, $\Rd$, $\Sigma_0$, surface brightness, morphology. For
+each parameter $\theta$, test:
+\[
+    \log\theta = \beta_0 + \beta_1\log\Mstar + \beta_2\log\fgas
+    + \beta_3\log\Rd + \epsilon.
+\]
+No correlation plus high variation means failure.
+
+\subsection{RAR preservation}
+
+The projection-residual model must preserve the observed tightness of the RAR. Define
+residuals:
+\[
+    \delta_{\mathrm{RAR}} = \log\aobs - \log a_{\mathrm{model}}.
+\]
+Report $\sigma_{\mathrm{RAR}} = \mathrm{std}(\delta_{\mathrm{RAR}})$. A serious IKK
+model should approach the scatter achieved by empirical RAR/MOND-style fits. Li et al.\
+found small residual scatter when fitting the RAR to SPARC galaxies, so EVM-V must
+treat that as a high bar, not a decorative citation.
+
+%% ================================================================
+\section{Screening and Compact-System Consistency}
+%% ================================================================
+
+The original \emph{Looking Up} model uses a radial sigmoid gate
+\[
+    \GPi(r) = \frac{1}{1 + e^{-k(r-\rzero)}}
+\]
+to suppress the fifth-force-like contribution below galactic scales. EVM-V must turn
+this into a testable consistency requirement.
+
+\subsection{Solar-system constraint}
+
+For solar-system radii, $r \ll \rzero$, so $\GPi(r) \approx 0$. The model must satisfy
+\[
+    |\aPi(r_{\mathrm{solar}})| \ll a_{\mathrm{bound}},
+\]
+where $a_{\mathrm{bound}}$ is the tightest available experimental bound on anomalous
+accelerations at solar-system scales.
+
+\subsection{Wide-binary and dwarf-galaxy transition zone}
+
+The danger zone is not molecular dynamics. The danger zone is intermediate gravitational
+systems: $r \sim 10^{-3}$ to $10^1$\,kpc. The model must specify whether the
+transition is determined by absolute radius, system mass, acceleration scale,
+environmental density, or scale coordinate $\usc$.
+
+A pure radius gate may be too crude. A more defensible gate is
+$\GPi = \GPi(\usc,\,\abar,\,\Sbar)$ rather than $\GPi = \GPi(r)$ alone. A
+radius-only gate is mathematically convenient but physically suspicious. Nature rarely
+respects our desire for easy logistic functions, rude little universe that it is.
+
+%% ================================================================
+\section{Cluster-Scale Consistency}
+%% ================================================================
+
+Galaxy clusters are the hardest test for modified-gravity and fifth-force-like
+frameworks. The \emph{Looking Up} paper explicitly notes that the Bullet Cluster creates
+a major constraint because the lensing mass follows the collisionless galaxies rather
+than the X-ray gas, even though the gas contains much of the baryonic mass.
+
+EVM-V therefore requires a separate cluster analysis. The model must explain why
+$\aPi^{\mathrm{cluster}}$, or the equivalent lensing residual, follows collisionless
+stellar components rather than collisional gas.
+
+Possible mechanisms include:
+\begin{itemize}
+  \item $\pu$ is sourced primarily by collisionless stellar or compact-object components.
+  \item Gas thermalisation suppresses coherent scale-access momentum.
+  \item Projection residuals couple to identity persistence rather than raw baryonic mass.
+  \item The IKK residual explains galaxy rotation curves but not cluster lensing,
+        requiring ordinary dark matter or another sector at cluster scales.
+\end{itemize}
+The fourth option must remain allowed. Better an honest hybrid model than a grand
+unified failure balloon.
+
+%% ================================================================
+\section{Failure Conditions}
+%% ================================================================
+
+EVM-V must define failure conditions before fitting the data. Otherwise the analysis
+becomes astrology with better typography.
+
+\begin{definition}[Weakened]
+The model is \emph{weakened} if $\LamPi$, $\pzero$, $\rc$ vary by more than an order
+of magnitude across galaxies without correlation to physical observables.
+\end{definition}
+
+\begin{definition}[Strongly weakened]
+The model is \emph{strongly weakened} if $\mathrm{BIC}_{\mathrm{IKK}} >
+\mathrm{BIC}_{\mathrm{MOND}}$ and $\mathrm{BIC}_{\mathrm{IKK}} >
+\mathrm{BIC}_{\mathrm{NFW}}$ for most galaxies despite having comparable or greater
+parameter freedom.
+\end{definition}
+
+\begin{definition}[Rotation-model falsification]
+The model is \emph{falsified as a useful first-order rotation model} if $\vmod(r)$
+cannot match SPARC rotation curves at the level achieved by standard halo models even
+with more parameters.
+\end{definition}
+
+\begin{definition}[Descriptive curve fitting]
+The model is \emph{reclassified as descriptive curve fitting} if $\pu(r)$ must be
+independently hand-shaped for every galaxy with no population-level structure.
+\end{definition}
+
+\begin{definition}[Theoretically weakened]
+The model is \emph{theoretically weakened} if $\GPi(r)$ must be manually adjusted to
+avoid solar-system and compact-system constraints rather than emerging from the scale
+interval structure of IKK IV.
+\end{definition}
+
+\begin{definition}[Cluster-incomplete]
+The model is \emph{cluster-incomplete} if it cannot explain lensing offsets in merging
+clusters without invoking a completely separate dark matter sector with no principled
+boundary from the galactic sector.
+\end{definition}
+
+These are not admissions of defeat. They are guardrails. Without them, the theory
+becomes immortal in the worst possible way: impossible to kill because it never actually
+stands anywhere.
+
+%% ================================================================
+\section{Proposed Figures and Tables}
+%% ================================================================
+
+\paragraph{Figure~1 --- EVM-V inference chain.}
+\[
+    \vobs(r) \;\to\; \aobs(r) \;\to\; \abar(r) \;\to\; \aPi(r)
+    \;\to\; \text{IKK\,/\,MOND\,/\,halo comparison.}
+\]
+
+\paragraph{Figure~2 --- Projection-residual interpretation.}
+Show $\Itrue \to \Pab \to \Osp^{(a)}$ with a residual branch
+$\Rresid = \Itrue - \Ihat$.
+
+\paragraph{Figure~3 --- Rotation curve decomposition.}
+Plot $\vobs$, $\vbar$, $\vPi$, $\vmod$ for representative SPARC galaxies at a range
+of stellar masses and surface brightnesses.
+
+\paragraph{Figure~4 --- RAR comparison.}
+Plot $\aobs$ vs.\ $\abar$ with curves for the empirical RAR, MOND, and the IKK
+residual model overlaid.
+
+\paragraph{Figure~5 --- Parameter stability.}
+Plot fitted $\LamPi$, $\pzero$, and $\rc$ across all galaxies with bootstrap confidence
+intervals, ordered by stellar mass.
+
+\bigskip
+\begin{longtable}{@{}p{2.8cm}p{2.2cm}p{2.5cm}p{3.0cm}p{3.0cm}@{}}
+\caption{Model comparison summary\label{tab:models}}\\
+\toprule
+\textbf{Model} & \textbf{Free params} & \textbf{Data inputs}
+  & \textbf{Main strength} & \textbf{Main failure mode}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Model} & \textbf{Free params} & \textbf{Data inputs}
+  & \textbf{Main strength} & \textbf{Main failure mode}\\
+\midrule
+\endhead
+\midrule\multicolumn{5}{r}{\small(continued\ldots)}\\
+\endfoot
+\bottomrule
+\endlastfoot
+Baryons only  & 0--2  & SPARC mass model     & Minimal                    & Fails outer curves \\[4pt]
+MOND/RAR      & 1--2  & $\abar$              & Tight empirical law        & Cluster/cosmology stress \\[4pt]
+NFW halo      & 2+    & Halo profile         & Cosmology-compatible       & Halo--baryon tuning \\[4pt]
+IKK residual  & 4--6  & Baryons + $\pu$ proxy & Ontological residual map  & Proxy degeneracy \\
+\end{longtable}
+
+\bigskip
+\begin{longtable}{@{}p{1.2cm}p{3.5cm}p{3.5cm}p{4.0cm}@{}}
+\caption{Hidden-momentum proxy hierarchy\label{tab:proxies}}\\
+\toprule
+\textbf{Tier} & \textbf{Proxy} & \textbf{Risk} & \textbf{Recommended use}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Tier} & \textbf{Proxy} & \textbf{Risk} & \textbf{Recommended use}\\
+\midrule
+\endhead
+\bottomrule
+\endlastfoot
+I   & $\Mstar\vcirc$               & Circularity                      & Baseline only \\[4pt]
+II  & $\Sbar\vbar$                  & Surface-density assumptions       & First serious model \\[4pt]
+III & $\rhobar\vbar$                & Vertical structure assumptions    & Advanced \\[4pt]
+IV  & Morphology-conditioned        & Overfitting                       & Only after Tier II/III \\
+\end{longtable}
+
+%% ================================================================
+\section{Minimal Reproducible Computational Workflow}
+%% ================================================================
+
+A first implementation should produce the following files per galaxy:
+\begin{verbatim}
+galaxy_id/
+  input/
+    sparc_rotation_curve.csv
+    sparc_mass_model.csv
+  derived/
+    acceleration_table.csv
+    residual_table.csv
+  fits/
+    baryon_only_fit.json
+    mond_fit.json
+    nfw_fit.json
+    ikk_projection_fit.json
+  figures/
+    rotation_curve_decomposition.png
+    acceleration_relation.png
+    residual_profile.png
+  report/
+    galaxy_summary.md
+\end{verbatim}
+
+Minimum table schema (one row per resolved radius):
+\begin{verbatim}
+r_kpc, v_obs_kms, sigma_v_kms,
+v_gas_kms, v_disk_kms, v_bulge_kms, v_bar_kms,
+a_obs, a_bar, a_residual,
+p_u_proxy, v_model_ikk, v_model_mond, v_model_nfw
+\end{verbatim}
+
+Population-level outputs:
+\begin{verbatim}
+population_parameter_stability.csv
+model_comparison_AIC_BIC.csv
+rar_residuals.csv
+morphology_correlation_summary.csv
+failure_flags.csv
+\end{verbatim}
+
+The most important file is \texttt{failure\_flags.csv}, because apparently someone has
+to protect the theory from its own optimism.
+
+%% ================================================================
+\section{Discussion}
+%% ================================================================
+
+EVM-V does not prove the IKK interpretation. Its contribution is methodological. It
+converts the \emph{Looking Up} framework from a theoretical proposal into a structured
+observational programme.
+
+\subsection{Outcome classification}
+
+\paragraph{Strongest outcome.}
+The model fits SPARC rotation curves competitively, $\LamPi$, $\pzero$, and $\rc$
+remain approximately stable (variation within a factor of 3 across the sample), the
+RAR scatter is preserved or reduced relative to the MOND baseline, and the cluster
+transition can be located at a principled scale boundary. In this outcome, the
+projection-residual interpretation earns the right to be taken seriously as a candidate
+framework alongside MOND and $\Lambda$CDM. It does not win by default, but it passes
+the minimum bar for scientific credibility.
+
+\paragraph{Intermediate outcome.}
+The model fits most SPARC galaxies acceptably, but $\LamPi$, $\pzero$, $\rc$ show
+structured variation correlated with galaxy mass, gas fraction, or surface brightness.
+In this case the model is a useful phenomenological classifier: it maps different galaxy
+populations onto different projection regimes and predicts where the residual is large,
+small, or anomalous. This outcome is scientifically interesting but requires an
+explanation of why projection efficiency varies with observable morphological properties.
+It establishes population-level phenomenology that may or may not reflect a deeper
+mechanism.
+
+\paragraph{Weak outcome.}
+Parameters vary by more than an order of magnitude without physical correlation.
+Fitting is acceptable for individual galaxies but requires galaxy-by-galaxy $\pu$
+tuning equivalent to choosing a halo profile. In this case the IKK residual model has
+not added anything over standard halo fitting. It has only added vocabulary.
+
+\paragraph{Falsification outcome.}
+The model cannot reproduce SPARC rotation curves at the level of NFW halo fits even
+with more parameters, or BIC is substantially worse despite equal parameter freedom.
+This outcome would demote EVM-V from a projection-access programme to a falsified
+application. It would not falsify the abstract IKK projection framework --- which is
+structural, not tied to any one dynamical application --- but it would sever the
+\emph{Looking Up} bridge from the formal theory to astrophysical data.
+
+\subsection{Relationship to MOND}
+
+The projection-residual framework makes a different ontological claim than MOND, but
+it must reproduce MOND-like phenomenology in the regimes where MOND succeeds. The
+natural consistency requirement is that the outer-disk flat-rotation limit of the IKK
+model recovers the deep-MOND scaling $\aMOND \approx \sqrt{a_0\abar}$. Whether this
+requires fine-tuning of $\LamPi$ and $\pzero$ to match $a_0$, or whether it emerges
+naturally from the projection-access structure, is a key diagnostic. If the former, the
+model is a reparametrisation of MOND rather than an explanation of it.
+
+\subsection{Relationship to dark matter}
+
+Halo fits introduce spatially distributed mass profiles. Projection residuals introduce
+a scale-access coupling that does not require extra mass. The two frameworks are
+phenomenologically distinguishable only where they predict different radial acceleration
+profiles, RAR scatter patterns, or cluster-scale behaviour. EVM-V is specifically
+designed to identify those distinguishing observables. If no such observable can be
+found at the SPARC level, the two frameworks are empirically degenerate at galactic
+rotation-curve scales, and the competition must move to cluster lensing, galaxy
+formation statistics, or direct detection programmes.
+
+\subsection{Fifth-force interpretation and theoretical coherence}
+
+The term $\aPi(r,\usc)$ is described throughout as a ``fifth-force-like'' contribution.
+This language is deliberately cautious. The IKK framework does not introduce a new
+force in the gauge-theory sense. It introduces a projection-access coupling that
+produces an effective force at scales where the coupling is non-negligible. The
+distinction matters: a gauge force requires a mediator particle and a conserved charge
+detectable in particle physics. A projection coupling requires neither, but it also
+provides fewer experimental handles.
+
+The theoretical coherence requirement is that $\aPi(r,\usc)$ must connect smoothly to
+the formal projection operator machinery of IKK I--IV. Specifically, $\pu(r)$ must be
+expressible as a functional of the projection access efficiency $\etaab$, and the
+$\GPi(r)$ gate must be derivable from the scale interval structure of IKK IV rather
+than chosen purely for curve-fitting convenience. Achieving that connection is a
+later-stage theoretical task; EVM-V opens the empirical space that makes such a
+connection worth pursuing.
+
+\subsection{The proxy problem is the central risk}
+
+The honest assessment is that $\pu(r)$ is the weakest element of the current
+formulation. It is a theoretical quantity with no direct observable. The four proxy
+tiers defined in Section~8 are operational stand-ins with varying degrees of physical
+motivation. The Tier~I proxy is almost certainly too close to the observable to be
+informative. The Tier~II proxy is the most defensible first candidate. The real test of
+the framework is whether Tier~II or~III proxies, applied uniformly, produce stable
+parameters across the SPARC sample. If they do not, the model has a proxy problem it
+cannot escape without additional theoretical input specifying what physical process
+sources $\pu$.
+
+%% ================================================================
+\section{Conclusion}
+%% ================================================================
+
+EVM-V defines a reproducible observational programme for testing whether galactic
+rotation-curve residuals can be mapped onto a projection-access model derived from the
+IKK framework. Its primary deliverables are:
+
+\begin{enumerate}
+  \item A precise definition of the empirical residual
+        $\aPi(r) = \aobs(r) - \abar(r)$ and a reproducible pipeline for computing
+        it from SPARC data.
+  \item A minimal four-to-six-parameter velocity model with an explicit
+        hidden-momentum proxy hierarchy and a regime gate, descended from the
+        \emph{Looking Up} construction.
+  \item A four-model comparison framework (baryons only, MOND/RAR, NFW halo, IKK
+        residual) with AIC/BIC model-selection metrics.
+  \item Population-level stability tests for $\LamPi$, $\pzero$, $\rc$ with explicit
+        stability thresholds and correlation tests against galaxy observables.
+  \item Six named failure conditions that must be evaluated before any positive claim
+        is made.
+  \item A minimal reproducible workflow schema specifying per-galaxy and
+        population-level output files.
+\end{enumerate}
+
+The failure conditions are not secondary. They are the primary scientific contribution.
+A theory that specifies how it can be shown wrong is a scientific theory. A theory that
+does not is a narrative. EVM-V insists on the former.
+
+The expected next step is EVM-VI, which would apply this pipeline to the full SPARC
+sample and report results. Whether that paper finds stability, structured variation, or
+falsification is genuinely unknown. That is the point.
+
+%% ================================================================
+%%  APPENDIX: SYMBOL TABLE
+%% ================================================================
+
+\appendix
+\section{Symbol Table}
+
+\begin{longtable}{@{}p{4.0cm}p{6.5cm}p{2.0cm}@{}}
+\caption{Principal symbols and their definitions\label{tab:symbols}}\\
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Section}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Symbol} & \textbf{Meaning} & \textbf{Section}\\
+\midrule
+\endhead
+\midrule\multicolumn{3}{r}{\small(continued\ldots)}\\
+\endfoot
+\bottomrule
+\endlastfoot
+%% IKK framework
+$\Ia$           & Source identity at scale $S_a$                     & \S3.1 \\[2pt]
+$\Itrue$        & Primitive identity (fraktur)                        & \S3.1 \\[2pt]
+$\Pab$          & Projection operator $S_a \to S_b$                   & \S3.1 \\[2pt]
+$\Osp^{(a)}$    & Observable at scale $S_b$ of source $a$             & \S3.1 \\[2pt]
+$\Rresid$       & Projection residual $\Itrue - \Ihat$                & \S3.3 \\[6pt]
+%% Kinematics
+$r$             & Galactic radius                                     & \S5.1 \\[2pt]
+$\vobs(r)$      & Observed circular velocity                          & \S5.1 \\[2pt]
+$\sigma_v(r)$   & Velocity measurement uncertainty                    & \S5.1 \\[2pt]
+$\vbar(r)$      & Baryonic model velocity                             & \S5.2 \\[2pt]
+$\vgas,\vdisk,\vbulge$ & Gas, disk, bulge velocity components          & \S5.2 \\[2pt]
+$\Upsdisk,\Upsbulge$   & Stellar mass-to-light ratios                  & \S5.2 \\[6pt]
+%% Accelerations
+$\aobs(r)$      & Observed centripetal acceleration                   & \S5.1 \\[2pt]
+$\abar(r)$      & Baryonic Newtonian acceleration                     & \S5.2 \\[2pt]
+$\aPi(r,\usc)$  & Projection-residual acceleration                    & \S3.3 \\[2pt]
+$a_0$           & MOND characteristic acceleration scale              & \S6   \\[2pt]
+$\aMOND(r)$     & MOND acceleration                                   & \S6   \\[6pt]
+%% Scale coordinate
+$\usc = \ln(\ell/\ellz)$ & Logarithmic scale coordinate              & \S3.2 \\[2pt]
+$\ellz$         & Reference scale                                     & \S3.2 \\[2pt]
+$\pw$           & Legacy hidden-axis momentum (deprecated)            & \S3.2 \\[2pt]
+$\pu(r)$        & Modernised scale-access momentum proxy              & \S3.2 \\[2pt]
+$\etaPi(r,\usc)$ & Projection-access efficiency                       & \S7.3 \\[2pt]
+$\ascale(r)$    & Scale-residual acceleration kernel                  & \S7.3 \\[6pt]
+%% Model parameters
+$\LamPi$        & Projection-residual amplitude                       & \S7.1 \\[2pt]
+$\pzero$        & Hidden-momentum normalisation scale                 & \S7.1 \\[2pt]
+$\rc$           & Core suppression radius                             & \S7.1 \\[2pt]
+$\rzero$        & Gate activation radius                              & \S7.1 \\[2pt]
+$k$             & Gate steepness                                      & \S7.1 \\[2pt]
+$\alpha_u$      & Proxy calibration coefficient                       & \S8   \\[2pt]
+$\GPi(r)$       & Sigmoid activation gate                             & \S7.1 \\[6pt]
+%% Galaxy observables
+$\Sbar(r)$      & Baryonic surface density                            & \S8   \\[2pt]
+$\rhobar(r)$    & Baryonic volume density                             & \S8   \\[2pt]
+$\Mstar$        & Stellar mass                                        & \S8   \\[2pt]
+$\fgas$         & Gas fraction                                        & \S8   \\[2pt]
+$\Rd$           & Disk scale length                                   & \S8   \\[6pt]
+%% Statistics
+$\chi^2,\chi^2_\nu$ & Chi-squared, reduced chi-squared               & \S10.3 \\[2pt]
+AIC, BIC        & Akaike, Bayesian information criteria               & \S10.5 \\[2pt]
+$S_\theta$      & Population stability statistic                      & \S11.1 \\[2pt]
+$\sigma_{\mathrm{RAR}}$ & RAR scatter                                & \S11.3 \\
+\end{longtable}
+
+\end{document}

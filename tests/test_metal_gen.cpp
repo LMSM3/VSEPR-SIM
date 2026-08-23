@@ -1,24 +1,24 @@
-/**
+﻿/**
  * test_metal_gen.cpp -- Stress test for src/gen/ metal/alloy supercell generator
  * ================================================================================
  * VSEPR-SIM  |  branch: v5.0.0-beta.7-step-attempt
  *
  * Test categories:
- *   1.  Preset database — all four presets present, required fields populated
- *   2.  Atom count correctness — BCC/FCC/HCP/B2 supercell sizing math
- *   3.  Coordinate bounds — all atoms inside supercell box
- *   4.  Species fractions — alloy occupancy cycle matches declared composition
- *   5.  XYZFrame invariants — N == atoms.size(), has_* flags, box PBC
- *   6.  Per-atom fields — charge, velocity, energy present on every atom
- *   7.  Determinism — identical frames from two independent build calls
- *   8.  Thermal trajectory — correct frame count, T values, velocity scaling
- *   9.  STEP AP203 output — header tokens, CARTESIAN_POINT count, terminator
- *  10.  geometry_map.json structure — required keys present per material
- *  11.  Scaling stress — supercells up to 8x8x8 without abort/overflow
- *  12.  Energy accumulation — total frame energy == N * ref_energy_per_atom
- *  13.  Zero-temperature trajectory frame — all velocities exactly zero
- *  14.  HCP geometry — c/a ratio preserved, hex-plane atom spacing correct
- *  15.  B2 ordering — Ni and Ti strictly alternate on body-centre sites
+ *   1.  Preset database  -  all four presets present, required fields populated
+ *   2.  Atom count correctness  -  BCC/FCC/HCP/B2 supercell sizing math
+ *   3.  Coordinate bounds  -  all atoms inside supercell box
+ *   4.  Species fractions  -  alloy occupancy cycle matches declared composition
+ *   5.  XYZFrame invariants  -  N == atoms.size(), has_* flags, box PBC
+ *   6.  Per-atom fields  -  charge, velocity, energy present on every atom
+ *   7.  Determinism  -  identical frames from two independent build calls
+ *   8.  Thermal trajectory  -  correct frame count, T values, velocity scaling
+ *   9.  STEP AP203 output  -  header tokens, CARTESIAN_POINT count, terminator
+ *  10.  geometry_map.json structure  -  required keys present per material
+ *  11.  Scaling stress  -  supercells up to 8x8x8 without abort/overflow
+ *  12.  Energy accumulation  -  total frame energy == N * ref_energy_per_atom
+ *  13.  Zero-temperature trajectory frame  -  all velocities exactly zero
+ *  14.  HCP geometry  -  c/a ratio preserved, hex-plane atom spacing correct
+ *  15.  B2 ordering  -  Ni and Ti strictly alternate on body-centre sites
  */
 
 #include "../src/gen/metal_presets.hpp"
@@ -39,7 +39,7 @@
 using namespace vsepr::gen;
 using namespace vsepr::io;
 
-// ─── tiny test harness ───────────────────────────────────────────────────────
+// --- tiny test harness -------------------------------------------------------
 static int g_pass = 0, g_fail = 0;
 
 #define CHECK(cond, msg) do { \
@@ -52,10 +52,10 @@ static int g_pass = 0, g_fail = 0;
 	msg << " (" << (a) << " vs " << (b) << ")")
 
 static void section(const char* name) {
-	std::cout << "\n── " << name << " ──\n";
+	std::cout << "\n-- " << name << " --\n";
 }
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// --- helpers -----------------------------------------------------------------
 static int expected_atoms(const MaterialPreset& mat, int nx, int ny, int nz) {
 	int sites_per_cell = 0;
 	switch (mat.lattice) {
@@ -74,9 +74,9 @@ static int count_species(const XYZFrame& f, const std::string& sym) {
 	return n;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 1. Preset database
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_presets() {
 	section("1. Preset database");
 	auto db = default_presets();
@@ -93,8 +93,8 @@ static void test_presets() {
 	for (const auto& m : db) {
 		CHECK(!m.name.empty(),         m.tag + ": name not empty");
 		CHECK(!m.tag.empty(),          m.tag + ": tag not empty");
-		CHECK(m.a > 1.0 && m.a < 10.0, m.tag + ": plausible a (1–10 Å)");
-		CHECK(m.c > 1.0 && m.c < 10.0, m.tag + ": plausible c (1–10 Å)");
+		CHECK(m.a > 1.0 && m.a < 10.0, m.tag + ": plausible a (1-10 Å)");
+		CHECK(m.c > 1.0 && m.c < 10.0, m.tag + ": plausible c (1-10 Å)");
 		CHECK(m.density_gcc > 0.5,     m.tag + ": density > 0.5 g/cc");
 		CHECK(!m.basis.empty(),        m.tag + ": basis not empty");
 		CHECK(!m.composition.empty(),  m.tag + ": composition label present");
@@ -105,9 +105,9 @@ static void test_presets() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 2. Atom count correctness
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_atom_counts() {
 	section("2. Atom count correctness");
 	auto db = default_presets();
@@ -129,9 +129,9 @@ static void test_atom_counts() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 3. Coordinate bounds
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_coordinate_bounds() {
 	section("3. Coordinate bounds");
 	auto db = default_presets();
@@ -176,9 +176,9 @@ static void test_coordinate_bounds() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 4. Species fractions (alloy occupancy)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_species_fractions() {
 	section("4. Species fractions");
 
@@ -239,9 +239,9 @@ static void test_species_fractions() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 5. XYZFrame invariants
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_frame_invariants() {
 	section("5. XYZFrame invariants");
 	auto db = default_presets();
@@ -264,9 +264,9 @@ static void test_frame_invariants() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 6. Per-atom fields
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_per_atom_fields() {
 	section("6. Per-atom fields");
 	auto db = default_presets();
@@ -297,9 +297,9 @@ static void test_per_atom_fields() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 7. Determinism
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_determinism() {
 	section("7. Determinism");
 	auto db = default_presets();
@@ -321,9 +321,9 @@ static void test_determinism() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 8. Thermal trajectory
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_thermal_trajectory() {
 	section("8. Thermal trajectory");
 	auto db = default_presets();
@@ -369,9 +369,9 @@ static void test_thermal_trajectory() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 9. STEP AP203 output
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_step_output() {
 	section("9. STEP AP203 output");
 	auto db = default_presets();
@@ -396,7 +396,7 @@ static void test_step_output() {
 		CHECK(s.find("CONFIG_CONTROL_DESIGN") != std::string::npos,
 			mat.tag + ": AP203 schema declared");
 
-		// Count CARTESIAN_POINT lines — must equal N
+		// Count CARTESIAN_POINT lines  -  must equal N
 		int cp_count = 0;
 		std::istringstream ss(s);
 		std::string line;
@@ -418,9 +418,9 @@ static void test_step_output() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 10. geometry_map.json structure (in-memory simulation)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_geometry_map_structure() {
 	section("10. geometry_map.json required keys");
 	// We don't invoke metal_gen.cpp's main(), so we validate the JSON content
@@ -443,9 +443,9 @@ static void test_geometry_map_structure() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 11. Scaling stress — 8x8x8 supercells, no crash, no overflow
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// 11. Scaling stress  -  8x8x8 supercells, no crash, no overflow
+// -----------------------------------------------------------------------------
 static void test_scaling_stress() {
 	section("11. Scaling stress (up to 8x8x8)");
 	auto db = default_presets();
@@ -478,9 +478,9 @@ static void test_scaling_stress() {
 			  << " atoms)\n";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 12. Energy accumulation
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_energy_accumulation() {
 	section("12. Energy accumulation");
 	auto db = default_presets();
@@ -503,9 +503,9 @@ static void test_energy_accumulation() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 13. Zero-temperature velocities (direct build_supercell path)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_zero_velocity_at_build() {
 	section("13. Zero velocity at build time");
 	auto db = default_presets();
@@ -521,9 +521,9 @@ static void test_zero_velocity_at_build() {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 14. HCP geometry: c/a ratio and nearest-neighbour distances
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_hcp_geometry() {
 	section("14. HCP geometry");
 	auto db = default_presets();
@@ -559,19 +559,19 @@ static void test_hcp_geometry() {
 	CHECK_NEAR(ca, 1.582, 0.05, "Ti64: c/a ≈ 1.58 (ideal HCP = 1.633)");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // 15. B2 ordering: body-centre sites must alternate Ni/Ti strictly
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 static void test_b2_ordering() {
 	section("15. B2 site ordering");
 	auto db = default_presets();
 	const auto& niti = *std::find_if(db.begin(), db.end(),
 						[](const auto& m){ return m.tag == "NiTi_B2"; });
 
-	auto f = build_supercell(niti, 3, 3, 3, false);  // apply_cycle=false → use basis directly
+	auto f = build_supercell(niti, 3, 3, 3, false);  // apply_cycle=false -> use basis directly
 
 	// In a B2 supercell, atoms come in pairs (corner, body-centre).
-	// Even-indexed atoms → motif[0] → Ni, odd-indexed → motif[1] → Ti.
+	// Even-indexed atoms -> motif[0] -> Ni, odd-indexed -> motif[1] -> Ti.
 	int wrong = 0;
 	for (int i = 0; i < f.N; ++i) {
 		const std::string& expected_sym = (i % 2 == 0) ? "Ni" : "Ti";
@@ -580,14 +580,14 @@ static void test_b2_ordering() {
 	CHECK(wrong == 0, "NiTi B2: even/odd alternation (Ni corner, Ti body-centre)");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // main
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 int main() {
-	std::cout << "═══════════════════════════════════════════════════\n";
+	std::cout << "===================================================\n";
 	std::cout << "  VSEPR-SIM  |  test_metal_gen stress suite\n";
 	std::cout << "  branch: v5.0.0-beta.7-step-attempt\n";
-	std::cout << "═══════════════════════════════════════════════════\n";
+	std::cout << "===================================================\n";
 
 	test_presets();
 	test_atom_counts();
@@ -605,9 +605,9 @@ int main() {
 	test_hcp_geometry();
 	test_b2_ordering();
 
-	std::cout << "\n═══════════════════════════════════════════════════\n";
+	std::cout << "\n===================================================\n";
 	std::cout << "  PASSED: " << g_pass << "   FAILED: " << g_fail << "\n";
-	std::cout << "═══════════════════════════════════════════════════\n";
+	std::cout << "===================================================\n";
 
 	return (g_fail == 0) ? 0 : 1;
 }

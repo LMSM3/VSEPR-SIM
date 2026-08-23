@@ -1,4 +1,4 @@
-/**
+﻿/**
  * decay_chains.cpp
  * ================
  * Implementation of the four natural radioactive decay series
@@ -64,7 +64,7 @@ std::string decay_mode_to_symbol(DecayMode mode) {
         case DecayMode::BetaPlus: return "β⁺";
         case DecayMode::ElectronCapture: return "EC";
         case DecayMode::Fission: return "SF";
-        case DecayMode::Stable: return "—";
+        case DecayMode::Stable: return " - ";
         default: return "?";
     }
 }
@@ -163,7 +163,7 @@ DecayNuclide NaturalDecaySeries::make_nuclide(
 }
 
 // ============================================================================
-// 1. THORIUM SERIES (4n): Th-232 → Pb-208
+// 1. THORIUM SERIES (4n): Th-232 -> Pb-208
 // ============================================================================
 
 void NaturalDecaySeries::initialize_thorium_series() {
@@ -197,7 +197,7 @@ void NaturalDecaySeries::initialize_thorium_series() {
 }
 
 // ============================================================================
-// 2. NEPTUNIUM SERIES (4n+1): Np-237 → Bi-209 [EXTINCT]
+// 2. NEPTUNIUM SERIES (4n+1): Np-237 -> Bi-209 [EXTINCT]
 // ============================================================================
 
 void NaturalDecaySeries::initialize_neptunium_series() {
@@ -232,7 +232,7 @@ void NaturalDecaySeries::initialize_neptunium_series() {
 }
 
 // ============================================================================
-// 3. URANIUM SERIES (4n+2): U-238 → Pb-206
+// 3. URANIUM SERIES (4n+2): U-238 -> Pb-206
 // ============================================================================
 
 void NaturalDecaySeries::initialize_uranium_series() {
@@ -270,7 +270,7 @@ void NaturalDecaySeries::initialize_uranium_series() {
 }
 
 // ============================================================================
-// 4. ACTINIUM SERIES (4n+3): U-235 → Pb-207
+// 4. ACTINIUM SERIES (4n+3): U-235 -> Pb-207
 // ============================================================================
 
 void NaturalDecaySeries::initialize_actinium_series() {

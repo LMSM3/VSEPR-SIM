@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * metal_presets.hpp -- Static material database for metal/alloy generators
  * =========================================================================
@@ -24,7 +24,7 @@ namespace vsepr {
 namespace gen {
 
 // ---------------------------------------------------------------------------
-// Site descriptor — one Wyckoff / basis site in the primitive cell
+// Site descriptor  -  one Wyckoff / basis site in the primitive cell
 // ---------------------------------------------------------------------------
 struct SiteDesc {
 	std::string symbol;   // element symbol
@@ -39,7 +39,7 @@ struct SiteDesc {
 enum class LatticeType { BCC, FCC, HCP, B2 };
 
 // ---------------------------------------------------------------------------
-// MaterialPreset — everything needed to build a supercell
+// MaterialPreset  -  everything needed to build a supercell
 // ---------------------------------------------------------------------------
 struct MaterialPreset {
 	std::string  name;          // human-readable label
@@ -68,7 +68,7 @@ inline std::vector<MaterialPreset> default_presets() {
 	std::vector<MaterialPreset> db;
 
 	// ------------------------------------------------------------------
-	// 1. Nitinol — NiTi, B2 (CsCl-type ordered BCC)
+	// 1. Nitinol  -  NiTi, B2 (CsCl-type ordered BCC)
 	//    a = 3.015 Å  (experimental 300 K)
 	//    B2: Ni at (0,0,0), Ti at (0.5,0.5,0.5)
 	// ------------------------------------------------------------------
@@ -91,7 +91,7 @@ inline std::vector<MaterialPreset> default_presets() {
 	}
 
 	// ------------------------------------------------------------------
-	// 2. Tungsten — W, BCC pure metal
+	// 2. Tungsten  -  W, BCC pure metal
 	//    a = 3.165 Å  (experimental)
 	// ------------------------------------------------------------------
 	{
@@ -112,7 +112,7 @@ inline std::vector<MaterialPreset> default_presets() {
 	}
 
 	// ------------------------------------------------------------------
-	// 3. Inconel 625 — Ni-Cr-Mo-Nb FCC superalloy
+	// 3. Inconel 625  -  Ni-Cr-Mo-Nb FCC superalloy
 	//    Nominal: Ni~61%, Cr~22%, Mo~9%, Nb~4%, Fe~4% (simplified to 4-site)
 	//    a = 3.575 Å  (Ni FCC baseline; Cr/Mo/Nb substitute on same FCC sites)
 	//    Site substitution cycles: Ni Ni Ni Cr Mo Nb (per 6 FCC atoms tiled)
@@ -143,7 +143,7 @@ inline std::vector<MaterialPreset> default_presets() {
 	}
 
 	// ------------------------------------------------------------------
-	// 4. Ti-6Al-4V — HCP aerospace alloy
+	// 4. Ti-6Al-4V  -  HCP aerospace alloy
 	//    a = 2.921 Å, c = 4.620 Å  (α-phase, 300 K)
 	//    HCP basis: (0,0,0) and (1/3,2/3,1/2)
 	//    Alloy cycle: Ti Ti Ti Al V  (per 5 HCP atoms)
@@ -167,7 +167,7 @@ inline std::vector<MaterialPreset> default_presets() {
 		// Alloy occupancy cycle (applied after supercell tiling, before output)
 		// Encoded separately so the builder can substitute on demand.
 		// Format: { symbol, Z, charge }
-		// "Ti Ti Ti Ti Ti Ti Al Al V V" → 60% Ti, 20% Al, 20% V (per 10)
+		// "Ti Ti Ti Ti Ti Ti Al Al V V" -> 60% Ti, 20% Al, 20% V (per 10)
 		db.back().composition += " | cycle: Ti*6 Al*2 V*2 per 10 atoms";
 		db.push_back(std::move(m));
 	}

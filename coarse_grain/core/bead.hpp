@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * bead.hpp — Coarse-Grained Bead
+ * bead.hpp  -  Coarse-Grained Bead
  *
  * A bead is the fundamental unit in the coarse-grained representation.
  * Each bead maps to a group of atomistic particles and carries aggregate
  * physical properties (mass, charge, position, type).
  *
  * Design:  Plain-old-data with named accessors.
- * Philosophy: Anti-black-box — every field is inspectable, every mapping
+ * Philosophy: Anti-black-box  -  every field is inspectable, every mapping
  *             is traceable back to the parent atom group.
  */
 
@@ -29,8 +29,8 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * StructuralRole — discrete structural prior encoding dominant bonding
- * topology, as specified in §0 Identity–State Decomposition Framework.
+ * StructuralRole  -  discrete structural prior encoding dominant bonding
+ * topology, as specified in §0 Identity-State Decomposition Framework.
  *
  *   Σ_i ∈ {0, 1, 2, 3, 4}
  *
@@ -59,7 +59,7 @@ inline const char* structural_role_name(StructuralRole role) {
 }
 
 /**
- * StructuralRoleWeights — per-channel interaction weight bias derived
+ * StructuralRoleWeights  -  per-channel interaction weight bias derived
  * from the structural role Σ_i.
  *
  * Each role produces a triplet (w_steric, w_electrostatic, w_dispersion)
@@ -84,7 +84,7 @@ struct StructuralRoleWeights {
 /**
  * Derive channel weight biases from a structural role.
  *
- * Returns weights in [0.1, 1.5] range — they multiply the existing
+ * Returns weights in [0.1, 1.5] range  -  they multiply the existing
  * lambda_k coupling constants, never zeroing a channel completely.
  */
 inline StructuralRoleWeights role_weights(StructuralRole role) {
@@ -107,7 +107,7 @@ inline StructuralRoleWeights role_weights(StructuralRole role) {
 
         case StructuralRole::Mixed:
         default:
-            // No prior — equal weighting
+            // No prior  -  equal weighting
             return {1.0, 1.0, 1.0};
     }
 }
@@ -137,7 +137,7 @@ inline StructuralRoleWeights combined_role_weights(
 // ============================================================================
 
 /**
- * StabilityClass — statistical persistence under thermal and
+ * StabilityClass  -  statistical persistence under thermal and
  * configurational perturbation.
  *
  *   Λ_i = argmax_k P_i(survival | ΔE, T, t)
@@ -166,13 +166,13 @@ inline const char* stability_class_name(StabilityClass sc) {
 // ============================================================================
 
 /**
- * BeadType — classification tag for a bead.
+ * BeadType  -  classification tag for a bead.
  *
  * Examples:
- *   "BB"   — backbone bead (polymer)
- *   "SC1"  — side-chain bead 1
- *   "W"    — water bead (4:1 mapping)
- *   "ION"  — ionic bead
+ *   "BB"    -  backbone bead (polymer)
+ *   "SC1"   -  side-chain bead 1
+ *   "W"     -  water bead (4:1 mapping)
+ *   "ION"   -  ionic bead
  */
 struct BeadType {
     std::string name;          // Human-readable label
@@ -182,7 +182,7 @@ struct BeadType {
 };
 
 /**
- * Bead — one coarse-grained site.
+ * Bead  -  one coarse-grained site.
  *
  * Stores both the CG-level state AND the provenance (parent atom indices).
  * This is the anti-black-box contract: you can always trace a bead back
@@ -196,7 +196,7 @@ struct Bead {
     double          charge{};       // Sum of parent atom charges (e)
     uint32_t        type_id{};      // Index into BeadType table
 
-    // --- Identity–State Decomposition (§0) ---
+    // --- Identity-State Decomposition (§0) ---
     StructuralRole  structural_role{StructuralRole::Mixed};  // Σ_i: bonding topology prior
     StabilityClass  stability_class{StabilityClass::AmbientStable}; // Λ_i: persistence class
 
@@ -251,11 +251,11 @@ enum class ProjectionMode {
  *
  * Classification heuristic based on Z values of the constituent atoms:
  *
- *   - All noble gases (Z ∈ {2,10,18,36,54,86})           → Inert
- *   - Contains alkali/alkaline earth + halogen/chalcogen   → IonicDominant
- *   - All atoms are non-metals (Z ∈ {1,5,6,7,8,9,14,...}) → DirectionalCovalent
- *   - Contains transition metals (21≤Z≤30, 39≤Z≤48, ...)  → Metallic
- *   - Otherwise                                            → Mixed
+ *   - All noble gases (Z ∈ {2,10,18,36,54,86})           -> Inert
+ *   - Contains alkali/alkaline earth + halogen/chalcogen   -> IonicDominant
+ *   - All atoms are non-metals (Z ∈ {1,5,6,7,8,9,14,...}) -> DirectionalCovalent
+ *   - Contains transition metals (21≤Z≤30, 39≤Z≤48, ...)  -> Metallic
+ *   - Otherwise                                            -> Mixed
  *
  * @param atomic_numbers  The Z values of atoms in the bead's parent group
  * @return The inferred structural role

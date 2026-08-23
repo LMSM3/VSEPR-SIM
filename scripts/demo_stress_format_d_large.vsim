@@ -1,0 +1,11 @@
+[features]
+output_format = D
+[project]
+name = stress_d_large
+[material]
+formula = CH4
+[run]
+max_steps = 500
+[visual]
+output_type = terminal_chart
+render_interval = 50

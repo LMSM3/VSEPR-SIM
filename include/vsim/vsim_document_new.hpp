@@ -1,6 +1,6 @@
 ﻿#pragma once
 /**
- * vsim_document.hpp — Parsed representation of a .vsim run script
+ * vsim_document.hpp  -  Parsed representation of a .vsim run script
  * ================================================================
  *
  * A .vsim file is a TOML-subset declarative script that describes a
@@ -9,20 +9,20 @@
  *
  * Canonical section order:
  *
- *   [project]          — name, version, seed, determinism
- *   [simulation]       — molecules, formation schedule, temperature
- *   [export]           — data file outputs (xyz, json, tsv, md, ...)
- *   [export.visual]    — rendered artifact outputs (svg, png, html, gif, webgl, ...)
- *   [visual]           — interactive display modes (terminal, GL, web)
- *   [defaults.run]     — default run settings merged into every [test.*]
- *   [defaults.analysis]— default analysis flags merged into every [test.*]
- *   [test.<name>]      — golden test entry (structure, group, formula, geometry)
- *   [test.<name>.run]  — per-test run overrides
- *   [test.<name>.analysis] — per-test analysis flags
- *   [suite]            — group-based test selection, run modes, ordering
- *   [suite.limits]     — per-test timeout, fail_fast, continue_on_warning
- *   [suite.smoke]      — fast smoke subset (groups + purpose)
- *   [report]           — report content flags (manifest, hashes, mismatches)
+ *   [project]           -  name, version, seed, determinism
+ *   [simulation]        -  molecules, formation schedule, temperature
+ *   [export]            -  data file outputs (xyz, json, tsv, md, ...)
+ *   [export.visual]     -  rendered artifact outputs (svg, png, html, gif, webgl, ...)
+ *   [visual]            -  interactive display modes (terminal, GL, web)
+ *   [defaults.run]      -  default run settings merged into every [test.*]
+ *   [defaults.analysis] -  default analysis flags merged into every [test.*]
+ *   [test.<name>]       -  golden test entry (structure, group, formula, geometry)
+ *   [test.<name>.run]   -  per-test run overrides
+ *   [test.<name>.analysis]  -  per-test analysis flags
+ *   [suite]             -  group-based test selection, run modes, ordering
+ *   [suite.limits]      -  per-test timeout, fail_fast, continue_on_warning
+ *   [suite.smoke]       -  fast smoke subset (groups + purpose)
+ *   [report]            -  report content flags (manifest, hashes, mismatches)
  *
  * The document model is a plain aggregate. No hidden state, no
  * virtual dispatch. Every field has a clear default and is
@@ -44,7 +44,7 @@
 namespace vsim {
 
 // ============================================================================
-// [cell] section — simulation box geometry
+// [cell] section  -  simulation box geometry
 //
 // Defines the orthorhombic periodic cell used for PBC runs.
 // Only type = "orthorhombic" is supported in beta-8.
@@ -63,7 +63,7 @@ struct CellSection {
 };
 
 // ============================================================================
-// [boundary] section — per-axis boundary mode
+// [boundary] section  -  per-axis boundary mode
 //
 // Values: "periodic" | "open" | "reflective" (reserved) | "absorbing" (reserved)
 // Compact form: mode = "periodic", axes = "x,y,z"
@@ -86,7 +86,7 @@ struct BoundarySection {
 };
 
 // ============================================================================
-// [pbc] section — PBC runtime options
+// [pbc] section  -  PBC runtime options
 //
 // WO-VSEPR-SIM-57B
 // ============================================================================
@@ -94,7 +94,7 @@ struct BoundarySection {
 // When to remap particle positions into [0, L)
 enum class WrapMode {
 	Never,
-	AfterStep,    // default — wrap after every integration step
+	AfterStep,    // default  -  wrap after every integration step
 	AfterForce,
 	OnExport
 };
@@ -117,7 +117,7 @@ struct ProjectSection {
 	std::string name;                    // e.g. "demo_03_graphite_stack"
 	std::string version;                 // e.g. "v5.0.0-beta.8"
 	uint64_t    seed_base    = 0;        // Base RNG seed for reproducibility
-	bool        determinism  = true;     // Always true — field kept for schema completeness
+	bool        determinism  = true;     // Always true  -  field kept for schema completeness
 	std::string description;             // Optional human note
 
 	bool has_name()    const { return !name.empty(); }
@@ -125,7 +125,7 @@ struct ProjectSection {
 };
 
 // ============================================================================
-// [simulation] section — molecule / system spec
+// [simulation] section  -  molecule / system spec
 // ============================================================================
 
 struct MoleculeEntry {
@@ -144,7 +144,7 @@ struct SimulationSection {
 	double box_size_ang     = 50.0;         // Cubic box edge (Å); 0 = auto
 	bool   periodic         = false;        // Periodic boundary conditions
 
-	// ── Ewald summation (ionic PBC systems) ─────────────────────────────────
+	// -- Ewald summation (ionic PBC systems) ---------------------------------
 	bool   use_ewald        = false;        // Enable Ewald long-range Coulomb
 	double ewald_alpha      = 0.3;          // Splitting parameter (Å⁻¹)
 	double ewald_rcut       = 10.0;         // Real-space cutoff (Å)
@@ -152,29 +152,29 @@ struct SimulationSection {
 
 	std::string formation_preset;           // Named preset: "metal", "polymer", "ceramic", etc.
 
-	// ── UX pacing ────────────────────────────────────────────────────────────
+	// -- UX pacing ------------------------------------------------------------
 	int    step_delay_ms    = 0;   // Artificial sleep between FIRE steps (ms); 0 = off
-	int    resim_delay_ms   = 400; // Pause before a resim (ms) — lets user see the diff
+	int    resim_delay_ms   = 400; // Pause before a resim (ms)  -  lets user see the diff
 	bool   smooth_resim     = true;// Fade event spine between resims (terminal animation)
 };
 
 // ============================================================================
-// [visual.external] section — output-side visual requests
+// [visual.external] section  -  output-side visual requests
 //
 // Allows scripts to request rendered output artifacts from the current
 // simulation state WITHOUT performing any physics. Output only.
 //
 // render_targets values:
-//   "state_current"     — render current particle positions as SVG/PNG
-//   "trajectory_last"   — render last N frames of trajectory
-//   "energy_trace"      — energy-per-step trace
-//   "rdf"               — radial distribution function
-//   "defect_map"        — defect site overlay
-//   "cluster_scatter"   — cluster assignment scatter
-//   "packing_heatmap"   — packing fraction heatmap
-//   "overlay_cycle"     — full overlay-cycle figure
-//   "dashboard"         — HTML dashboard
-//   "report"            — HTML report
+//   "state_current"      -  render current particle positions as SVG/PNG
+//   "trajectory_last"    -  render last N frames of trajectory
+//   "energy_trace"       -  energy-per-step trace
+//   "rdf"                -  radial distribution function
+//   "defect_map"         -  defect site overlay
+//   "cluster_scatter"    -  cluster assignment scatter
+//   "packing_heatmap"    -  packing fraction heatmap
+//   "overlay_cycle"      -  full overlay-cycle figure
+//   "dashboard"          -  HTML dashboard
+//   "report"             -  HTML report
 //
 // export_format values: "svg" | "png" | "html" | "auto"
 // ============================================================================
@@ -198,27 +198,27 @@ struct VisualExternalSection {
 };
 
 // ============================================================================
-// [variance] section — statistical spread / instability measurements
+// [variance] section  -  statistical spread / instability measurements
 //
 // Declares variance probes that the runtime evaluates over the event log.
 //
 // field values:
-//   "energy.total"      — total potential energy per frame
-//   "position.x/y/z"   — coordinate component across particles
-//   "displacement"      — per-particle displacement from initial position
-//   "eta"               — order parameter per frame
-//   "coordination"      — avg coordination number per frame
-//   "result"            — event result_value series
+//   "energy.total"       -  total potential energy per frame
+//   "position.x/y/z"    -  coordinate component across particles
+//   "displacement"       -  per-particle displacement from initial position
+//   "eta"                -  order parameter per frame
+//   "coordination"       -  avg coordination number per frame
+//   "result"             -  event result_value series
 //
 // window:
-//   "all"               — all recorded frames
-//   "last N"            — last N frames
-//   "frames M..N"       — frame range
+//   "all"                -  all recorded frames
+//   "last N"             -  last N frames
+//   "frames M..N"        -  frame range
 // ============================================================================
 
 struct VarianceProbe {
 	std::string name;       // user label, e.g. "energy_var"
-	std::string field;      // what to measure: "energy.total", "displacement", …
+	std::string field;      // what to measure: "energy.total", "displacement", ...
 	std::string window;     // "all" | "last 50" | "frames 10..200"
 	double      threshold   = 0.0;    // used by while-loop guard; 0 = no guard
 	std::string particle_group;       // optional: filter to named group
@@ -230,25 +230,25 @@ struct VarianceSection {
 };
 
 // ============================================================================
-// [N_evolution] section — population growth-rate tracking
+// [N_evolution] section  -  population growth-rate tracking
 //
 // Tracks dN/dt (discrete: ΔN/Δt) for named entity populations.
 //
 // target values:
-//   "cluster_count"     — number of clusters
-//   "defect_count"      — number of defect sites
-//   "particle_count"    — total particle count
-//   "event_count"       — total kernel events emitted
-//   "vapor"/"solid"     — particles in a given phase label
+//   "cluster_count"      -  number of clusters
+//   "defect_count"       -  number of defect sites
+//   "particle_count"     -  total particle count
+//   "event_count"        -  total kernel events emitted
+//   "vapor"/"solid"      -  particles in a given phase label
 //
-// window: same as variance — "all" | "last N" | "frames M..N"
+// window: same as variance  -  "all" | "last N" | "frames M..N"
 // ============================================================================
 
 struct NEvolutionProbe {
 	std::string name;       // user label, e.g. "cluster_growth"
-	std::string target;     // what population: "cluster_count", "defect_count", …
+	std::string target;     // what population: "cluster_count", "defect_count", ...
 	std::string window;     // frame window
-	std::string where_type; // optional filter: "vapor", "solid", …
+	std::string where_type; // optional filter: "vapor", "solid", ...
 	double      threshold   = 0.0;   // for while-loop guard
 };
 
@@ -258,7 +258,7 @@ struct NEvolutionSection {
 };
 
 // ============================================================================
-// [while] section — conditional simulation continuation
+// [while] section  -  conditional simulation continuation
 //
 // Declares one or more while-loop guards.  The runtime evaluates the
 // condition BEFORE each iteration and continues until it is false or
@@ -289,7 +289,7 @@ struct WhileSection {
 };
 
 // ============================================================================
-// [batch] section — parameter sweeps and queued job sets
+// [batch] section  -  parameter sweeps and queued job sets
 //
 // Declares batch jobs: named groups of runs with parameter variation.
 //
@@ -302,7 +302,7 @@ struct WhileSection {
 
 struct BatchJob {
 	std::string name;                   // job label, e.g. "crystal_imperfection_sweep"
-	std::map<std::string,std::vector<std::string>> sweep_params; // key → value list
+	std::map<std::string,std::vector<std::string>> sweep_params; // key -> value list
 	std::vector<std::string> per_run_actions;  // actions after each run
 	int   seed_count  = 1;             // seeds per parameter combination
 	bool  export_each = false;         // export artifacts for every run
@@ -317,32 +317,32 @@ struct BatchSection {
 
 
 struct ExportSection {
-	// ── Atomistic state ─────────────────────────────────────────────────────
+	// -- Atomistic state -----------------------------------------------------
 	bool write_xyz                 = true;   // Static final particle positions
 	bool write_xyzf                = false;  // Multi-frame trajectory (XYZF format)
 	bool write_xyzfull             = false;  // Full state history (xyzFull doctrine)
 	bool write_pdb                 = false;  // PDB format for external viewers (VESTA, VMD)
 
-	// ── Analysis layer ───────────────────────────────────────────────────────
+	// -- Analysis layer -------------------------------------------------------
 	bool write_analysis_json       = false;  // Derived metrics (AnalysisRecord)
 	bool write_metrics_tsv         = false;  // Tab-separated per-run metric table
 	bool write_cluster_json        = false;  // ClusterRecord assignments
 	bool write_fingerprint_json    = false;  // FingerprintRecord feature vectors
 
-	// ── Kernel event spine ──────────────────────────────────────────────────
+	// -- Kernel event spine --------------------------------------------------
 	bool write_events_json         = false;  // KernelEventLog (JSON Lines)
 	bool write_symbolic_trace_json = false;  // SymbolicTrace per-event
 
-	// ── Reporting layer ─────────────────────────────────────────────────────
+	// -- Reporting layer -----------------------------------------------------
 	bool write_report_md           = false;  // Human-readable Markdown summary
 	bool write_summary_csv         = false;  // Per-run summary CSV
 	bool write_dashboard_json      = false;  // DashboardRecord (beta-7 pipeline)
 	bool write_manifest_json       = false;  // Run manifest with artifact registry
-	bool write_dashboard_svg       = false;  // beta-7 pipeline dashboard (SVG — text, diffable)
+	bool write_dashboard_svg       = false;  // beta-7 pipeline dashboard (SVG  -  text, diffable)
 	bool write_pipeline_audit_jsonl = false; // Stage-by-stage audit JSONL (2C gate)
 	bool write_actual_hashes_tsv   = false;  // Golden suite: captured actual hashes TSV
 
-	// ── Engineering geometry ────────────────────────────────────────────────
+	// -- Engineering geometry ------------------------------------------------
 	bool write_step_file           = false;  // STEP geometry (engineering truth sidecar)
 	bool write_vtp_mesh            = false;  // VTK PolyData mesh for ParaView
 
@@ -350,22 +350,22 @@ struct ExportSection {
 };
 
 // ============================================================================
-// [export.visual] section — rendered visual artifact outputs
+// [export.visual] section  -  rendered visual artifact outputs
 //
 // These are files rendered FROM the simulation data.
-// They are sidecar artifacts — not ground-truth state.
+// They are sidecar artifacts  -  not ground-truth state.
 //
 // output_format values per flag (used by renderer dispatch):
-//   svg    — scalable vector, always available
-//   png    — raster, requires stb_image_write or Cairo
-//   html   — self-contained HTML with embedded JS charts
-//   gif    — animated GIF of trajectory (requires gifenc or ffmpeg pipe)
-//   webgl  — WebGL viewer bundle (from webgl_streamer)
-//   sse    — SSE event stream descriptor (from vsepr_live)
+//   svg     -  scalable vector, always available
+//   png     -  raster, requires stb_image_write or Cairo
+//   html    -  self-contained HTML with embedded JS charts
+//   gif     -  animated GIF of trajectory (requires gifenc or ffmpeg pipe)
+//   webgl   -  WebGL viewer bundle (from webgl_streamer)
+//   sse     -  SSE event stream descriptor (from vsepr_live)
 // ============================================================================
 
 struct ExportVisualSection {
-	// ── Static figure exports ────────────────────────────────────────────────
+	// -- Static figure exports ------------------------------------------------
 	bool write_svg_figures         = false;  // Per-material SVG metric figures
 	bool write_png_snapshots       = false;  // PNG molecular snapshot (requires GL or OSMesa)
 	bool write_rdf_svg             = false;  // Radial distribution function plot (SVG)
@@ -374,19 +374,19 @@ struct ExportVisualSection {
 	bool write_defect_map_svg      = false;  // Defect site map overlay (SVG)
 	bool write_cluster_map_svg     = false;  // Cluster assignment scatter (SVG)
 
-	// ── Animated exports ─────────────────────────────────────────────────────
+	// -- Animated exports -----------------------------------------------------
 	bool write_trajectory_gif      = false;  // Animated GIF of trajectory playback
-	bool write_overlay_cycle_gif   = false;  // Animated GIF of overlay cycle (density→coord→...)
+	bool write_overlay_cycle_gif   = false;  // Animated GIF of overlay cycle (density->coord->...)
 	int  gif_frame_skip            = 10;     // Emit every Nth frame into GIF
 	int  gif_delay_cs              = 8;      // GIF frame delay (centiseconds)
 
-	// ── Web / streaming exports ──────────────────────────────────────────────
+	// -- Web / streaming exports ----------------------------------------------
 	bool write_html_dashboard      = false;  // Self-contained HTML dashboard (JS charts)
 	bool write_webgl_bundle        = false;  // WebGL viewer bundle (webgl_streamer path)
 	bool write_sse_descriptor      = false;  // SSE stream config (vsepr_live path)
 	int  sse_port                  = 99998;  // Port for SSE / HTTP server
 
-	// ── Composite document ───────────────────────────────────────────────────
+	// -- Composite document ---------------------------------------------------
 	bool write_report_pdf          = false;  // PDF report (requires LaTeX / pandoc)
 	bool write_report_html         = false;  // HTML report (standalone, no server needed)
 
@@ -404,7 +404,7 @@ struct ExportVisualSection {
 };
 
 // ============================================================================
-// [visual] section — interactive display modes
+// [visual] section  -  interactive display modes
 //
 // Declares what the runner should show DURING and AFTER the simulation.
 // Separated from [export.visual] which controls rendered FILE artifacts.
@@ -412,48 +412,48 @@ struct ExportVisualSection {
 // output_type catalog:
 //
 //   Terminal (always available, no GL dependency):
-//     "none"                   — silent; no display
-//     "terminal_chart"         — live per-step convergence trace + proxy table
+//     "none"                    -  silent; no display
+//     "terminal_chart"          -  live per-step convergence trace + proxy table
 //                                Source: cg_anim_demo (Pattern A) + metal_sim
-//     "terminal_snapshot"      — post-run energy/eta bar-chart
+//     "terminal_snapshot"       -  post-run energy/eta bar-chart
 //                                Source: seed_bead_demo / SnapshotGraphCollector (Pattern B)
-//     "terminal_overlay_cycle" — full 6-panel kernel_viz_demo layout
+//     "terminal_overlay_cycle"  -  full 6-panel kernel_viz_demo layout
 //                                (timeline, bars, symbolic trace, pipeline trace,
 //                                 animation cues, audit table)
-//     "terminal_rdf"           — ASCII radial distribution function plot
-//     "terminal_energy_heatmap"— 2D ASCII energy landscape heatmap
-//     "terminal_defect_map"    — ASCII defect site map (grid projection)
-//     "terminal_phase_diagram" — ASCII phase field snapshot
+//     "terminal_rdf"            -  ASCII radial distribution function plot
+//     "terminal_energy_heatmap" -  2D ASCII energy landscape heatmap
+//     "terminal_defect_map"     -  ASCII defect site map (grid projection)
+//     "terminal_phase_diagram"  -  ASCII phase field snapshot
 //
 //   OpenGL (requires BUILD_VISUALIZATION):
-//     "gl_overlay_cycle"       — CGVizViewer: density→coord→eta→orient auto-cycle
+//     "gl_overlay_cycle"        -  CGVizViewer: density->coord->eta->orient auto-cycle
 //                                Source: cg_anim_demo VizConfig command sequence
-//     "gl_live_60fps"          — SeedBeadViewer 60fps FIRE live view
+//     "gl_live_60fps"           -  SeedBeadViewer 60fps FIRE live view
 //                                Source: seed_bead_demo BUILD_VISUALIZATION path
-//     "gl_crystal_grid"        — CrystalGrid viewer (crystal-viewer.cpp)
-//     "gl_interactive"         — Full interactive-viewer with ImGui panels
+//     "gl_crystal_grid"         -  CrystalGrid viewer (crystal-viewer.cpp)
+//     "gl_interactive"          -  Full interactive-viewer with ImGui panels
 //
 //   Web / streaming (no GL; requires network):
-//     "web_dashboard"          — HTTP server with auto-updating HTML dashboard
+//     "web_dashboard"           -  HTTP server with auto-updating HTML dashboard
 //                                Source: vsepr_live / live_server.hpp
-//     "sse_stream"             — SSE event stream to external client
-//     "webgl_viewer"           — WebGL streamer bundle (webgl_streamer.cpp)
+//     "sse_stream"              -  SSE event stream to external client
+//     "webgl_viewer"            -  WebGL streamer bundle (webgl_streamer.cpp)
 //
 // animation_mode values (terminal paths only):
-//   "none"    — static table; print once after run
-//   "spark"   — live per-step single-char spark-line during FIRE loop
-//   "bar"     — bar chart redrawn at each convergence checkpoint
-//   "overlay" — full overlay-cycle reprint at each steady-state event
+//   "none"     -  static table; print once after run
+//   "spark"    -  live per-step single-char spark-line during FIRE loop
+//   "bar"      -  bar chart redrawn at each convergence checkpoint
+//   "overlay"  -  full overlay-cycle reprint at each steady-state event
 // ============================================================================
 
 struct VisualSection {
-	// ── Primary output type ──────────────────────────────────────────────────
+	// -- Primary output type --------------------------------------------------
 	std::string output_type    = "none";   // See catalog above
 
-	// ── Animation mode (terminal paths) ─────────────────────────────────────
+	// -- Animation mode (terminal paths) -------------------------------------
 	std::string animation_mode = "none";   // none | spark | bar | overlay
 
-	// ── Terminal display flags ───────────────────────────────────────────────
+	// -- Terminal display flags -----------------------------------------------
 	// Shared across all terminal_* output types.
 	bool show_proxy_table         = true;  // EnsembleProxy summary table (Pattern A)
 	bool show_convergence_trace   = true;  // Live per-step trace row (metal_sim pattern)
@@ -469,7 +469,7 @@ struct VisualSection {
 	bool show_defect_map          = false; // ASCII defect site grid projection
 	bool show_phase_field         = false; // ASCII phase field snapshot
 
-	// ── GL options (forwarded to CGVizViewer / SeedBeadViewer) ───────────────
+	// -- GL options (forwarded to CGVizViewer / SeedBeadViewer) ---------------
 	bool  gl_show_axes        = true;
 	bool  gl_show_neighbours  = true;
 	float gl_overlay_hold_s   = 2.5f;  // Seconds per overlay pane
@@ -482,13 +482,13 @@ struct VisualSection {
 		"density", "coordination", "memory", "orient_order"
 	};
 
-	// ── Web / streaming options ──────────────────────────────────────────────
+	// -- Web / streaming options ----------------------------------------------
 	int  web_port             = 99998; // HTTP / SSE server port
 	bool web_auto_open        = false; // Open browser tab automatically
 
-	// ── Render cadence ──────────────────────────────────────────────────────
+	// -- Render cadence ------------------------------------------------------
 	// How often simulation output / render events are emitted.
-	// render_interval = N  →  emit a render frame every N simulation steps.
+	// render_interval = N  ->  emit a render frame every N simulation steps.
 	// Orthogonal to display_fps (which controls live UI refresh rate).
 	int render_interval = 1;   // steps; <= 0 is treated as 1
 
@@ -497,7 +497,7 @@ struct VisualSection {
 		return (step % ri) == 0;
 	}
 
-	// ── Classifiers ─────────────────────────────────────────────────────────
+	// -- Classifiers ---------------------------------------------------------
 	bool is_terminal_mode() const {
 		return output_type == "terminal_chart"
 			|| output_type == "terminal_snapshot"
@@ -563,7 +563,7 @@ struct GoldenTestAnalysis {
 	bool static_susceptibility = false;
 };
 
-// One entry in the golden test registry — one [test.<name>] block
+// One entry in the golden test registry  -  one [test.<name>] block
 struct GoldenTestEntry {
 	std::string name;
 	std::string group;          // molecule | ionic_crystal | metallic_crystal | ...
@@ -608,10 +608,10 @@ struct GoldenTestEntry {
 	GoldenTestRunConfig  run;
 	GoldenTestAnalysis   analysis;
 
-	// Expected hash — empty means not yet captured (not PLACEHOLDER, just absent)
+	// Expected hash  -  empty means not yet captured (not PLACEHOLDER, just absent)
 	std::string expected_hash;
 
-	// Skip metadata — empty skip_reason means not skipped
+	// Skip metadata  -  empty skip_reason means not skipped
 	std::string skip_reason;
 	std::string skip_target;
 	bool        skip_blocks_release = false;
@@ -651,7 +651,7 @@ struct GoldenReportSection {
 };
 
 // ============================================================================
-// [post_step] section — script block executed after each simulation step
+// [post_step] section  -  script block executed after each simulation step
 //
 // The script_block is a newline-separated sequence of VSIM interpreter
 // expressions (assignments, pbc.* calls, particle.* calls).  It is
@@ -669,11 +669,11 @@ struct PostStepSection {
 };
 
 // ============================================================================
-// WO-VSIM-03B — Intent-based structure authoring (Level 0–4)
+// WO-VSIM-03B  -  Intent-based structure authoring (Level 0-4)
 // ============================================================================
 
-// Structure alias map — resolves casual hints to deterministic prototype keys.
-// "rocksalt" → "B1_NaCl", "diamond" → "A4_Si", etc.
+// Structure alias map  -  resolves casual hints to deterministic prototype keys.
+// "rocksalt" -> "B1_NaCl", "diamond" -> "A4_Si", etc.
 // Only called during parsing; the resolved prototype is stored in MaterialSection.
 [[nodiscard]] inline std::string_view resolve_structure_alias(std::string_view hint) noexcept {
     if (hint == "rocksalt" || hint == "rock_salt" || hint == "halite" || hint == "nacl")
@@ -747,10 +747,10 @@ struct PostStepSection {
     if (hint == "granular_column")    return "premacro_granular_column";
     if (hint == "fiber_bundle")       return "premacro_fiber_bundle";
     if (hint == "pipe_flow")          return "premacro_pipe_flow";
-    return hint;   // unknown → pass through verbatim
+    return hint;   // unknown -> pass through verbatim
 }
 
-// ── Level 0 / 1: [material] ──────────────────────────────────────────────────
+// -- Level 0 / 1: [material] --------------------------------------------------
 //
 // Declares the material identity and structural intent.
 // Level 0:  formula + structure (alias resolved to prototype)
@@ -784,15 +784,15 @@ struct MaterialSection {
     }
 };
 
-// ── Level 0: [run] ───────────────────────────────────────────────────────────
+// -- Level 0: [run] -----------------------------------------------------------
 //
 // Declares the run mode and top-level controls.
 // mode values: "relax", "md", "npt", "nvt", "nve", "scan", "single_point"
 //
 struct RunSection {
-    std::string mode;              // Required: "relax", "md", "npt", …
+    std::string mode;              // Required: "relax", "md", "npt", ...
     int         max_steps  = 500;  // Step / iteration limit
-    double      dt_fs      = 1.0;  // Timestep (fs) — ignored for "relax"
+    double      dt_fs      = 1.0;  // Timestep (fs)  -  ignored for "relax"
     double      temperature_K = 300.0;
     double      pressure_GPa  = 0.0;   // For NPT
     bool        converge   = true;     // Stop early on convergence
@@ -801,19 +801,19 @@ struct RunSection {
     bool has_mode() const { return !mode.empty(); }
 };
 
-// ── Level 2: [environment] ───────────────────────────────────────────────────
+// -- Level 2: [environment] ---------------------------------------------------
 struct EnvironmentSection {
     bool   periodic     = false;
     double temperature  = 300.0;   // K
     double pressure     = 0.0;     // GPa
-    std::string medium;            // "vacuum", "water", "argon_gas", …
-    double humidity     = 0.0;     // 0–1 fraction
+    std::string medium;            // "vacuum", "water", "argon_gas", ...
+    double humidity     = 0.0;     // 0-1 fraction
     double field_x      = 0.0;    // External E-field components (V/Å)
     double field_y      = 0.0;
     double field_z      = 0.0;
 };
 
-// ── Level 2: [excite.*] ──────────────────────────────────────────────────────
+// -- Level 2: [excite.*] ------------------------------------------------------
 // Each named excite subsection (e.g. [excite.laser]) becomes one ExciteEntry.
 //
 struct ExciteEntry {
@@ -837,14 +837,14 @@ struct ExciteSection {
     }
 };
 
-// ── Level 2: [observe] ───────────────────────────────────────────────────────
+// -- Level 2: [observe] -------------------------------------------------------
 struct ObserveSection {
     std::vector<std::string> metrics;  // e.g. ["energy_map","interference","spectral_response"]
     std::string output_format = "auto"; // "csv", "json", "svg", "auto"
     int         every_n_steps = 1;     // Observation cadence
 };
 
-// ── Level 3: [[override.particle]] ──────────────────────────────────────────
+// -- Level 3: [[override.particle]] ------------------------------------------
 // Array-of-tables: selectively mutate specific particles before or during run.
 //
 struct ParticleOverrideEntry {
@@ -859,8 +859,8 @@ struct ParticleOverrideEntry {
     bool   has_charge   = false;
 };
 
-// ── Level 4: [[raw.object]] ─────────────────────────────────────────────────
-// Explicit particle injection — tests, importers, file bridges, debugging only.
+// -- Level 4: [[raw.object]] -------------------------------------------------
+// Explicit particle injection  -  tests, importers, file bridges, debugging only.
 //
 struct RawObjectEntry {
     std::string id;                 // Arbitrary label: "debug_particle_001"
@@ -873,18 +873,18 @@ struct RawObjectEntry {
 };
 
 // ============================================================================
-// VsimDocument — full parsed .vsim file
+// VsimDocument  -  full parsed .vsim file
 // ============================================================================
 
 struct VsimDocument {
 	std::string         source_path;
 	ProjectSection      project;
 	SimulationSection   simulation;
-	CellSection         cell;         // [cell]     — WO-57B
-	BoundarySection     boundary;     // [boundary] — WO-57B
-	PBCSection          pbc;          // [pbc]      — WO-57B
+	CellSection         cell;         // [cell]      -  WO-57B
+	BoundarySection     boundary;     // [boundary]  -  WO-57B
+	PBCSection          pbc;          // [pbc]       -  WO-57B
 
-	// WO-VSIM-03B — intent-based authoring
+	// WO-VSIM-03B  -  intent-based authoring
 	MaterialSection     material;                       // [material]
 	RunSection          run;                            // [run]
 	EnvironmentSection  environment;                    // [environment]
@@ -900,9 +900,9 @@ struct VsimDocument {
 	NEvolutionSection   n_evolution_cfg;
 	WhileSection        while_cfg;
 	BatchSection        batch_cfg;
-	PostStepSection     post_step;    // [post_step] — WO-57E
+	PostStepSection     post_step;    // [post_step]  -  WO-57E
 
-	// Golden test suite — populated by [defaults.*], [test.*], [suite], [report]
+	// Golden test suite  -  populated by [defaults.*], [test.*], [suite], [report]
 	GoldenDefaultsSection               golden_defaults;
 	std::vector<GoldenTestEntry>        golden_tests;
 	SuiteSection                        suite;
@@ -931,7 +931,7 @@ struct VsimDocument {
 			r.error("[project] name is required");
 
 		if (simulation.molecules.empty())
-			r.warn("[simulation] no molecules specified — empty run");
+			r.warn("[simulation] no molecules specified  -  empty run");
 
 		for (const auto& mol : simulation.molecules) {
 			if (mol.formula.empty())
@@ -950,13 +950,13 @@ struct VsimDocument {
 
 		// WO-VSIM-03B validations
 		if (material.has_formula() && simulation.molecules.empty()) {
-			// [material] used without [simulation] — that is fine, no error
+			// [material] used without [simulation]  -  that is fine, no error
 		}
 		if (run.has_mode()) {
 			const std::string& m = run.mode;
 			if (m != "relax" && m != "md" && m != "npt" && m != "nvt" &&
 				m != "nve"   && m != "scan" && m != "single_point")
-				r.warn("[run] mode '" + m + "' is unrecognized — will pass through to runtime");
+				r.warn("[run] mode '" + m + "' is unrecognized  -  will pass through to runtime");
 			if (run.max_steps < 1)
 				r.error("[run] max_steps must be >= 1");
 		}
@@ -966,7 +966,7 @@ struct VsimDocument {
 		}
 
 		if (!exports.output_dir.empty()) {
-			// output_dir is informational — no filesystem check at parse time
+			// output_dir is informational  -  no filesystem check at parse time
 		}
 
 		return r;

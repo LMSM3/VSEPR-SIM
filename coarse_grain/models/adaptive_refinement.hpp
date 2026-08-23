@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * adaptive_refinement.hpp — Bead-Level Adaptive Resolution
+ * adaptive_refinement.hpp  -  Bead-Level Adaptive Resolution
  *
  * Implements the Anisotropic Bead Model specification §5:
  *
@@ -17,7 +17,7 @@
  * Anti-black-box: all residuals, promotion decisions, and ℓ_max
  * changes are recorded in the AdaptationResult struct.
  *
- * Reference: "Anisotropic Bead Model — Implementation Specification"
+ * Reference: "Anisotropic Bead Model  -  Implementation Specification"
  *            section of section_anisotropic_beads.tex
  */
 
@@ -33,7 +33,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * AdaptConfig — parameters controlling the adapt_bead loop.
+ * AdaptConfig  -  parameters controlling the adapt_bead loop.
  */
 struct AdaptConfig {
     double error_threshold{0.05};   // ε_tol: promote if residual exceeds this
@@ -46,7 +46,7 @@ struct AdaptConfig {
 // ============================================================================
 
 /**
- * ChannelAdaptRecord — records what happened to a single channel.
+ * ChannelAdaptRecord  -  records what happened to a single channel.
  */
 struct ChannelAdaptRecord {
     int l_max_before{};
@@ -60,7 +60,7 @@ struct ChannelAdaptRecord {
 // ============================================================================
 
 /**
- * AdaptationResult — records the outcome of adapt_bead().
+ * AdaptationResult  -  records the outcome of adapt_bead().
  */
 struct AdaptationResult {
     ChannelAdaptRecord steric;

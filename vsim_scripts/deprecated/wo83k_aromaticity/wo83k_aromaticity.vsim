@@ -1,0 +1,45 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83k_aromaticity.vsim
+# Tier C — native replacement for repro_wo83k_missing_aromaticity.py
+#
+# DEFERRED WO-84D: Hückel 4n+2 aromaticity check not implemented.
+#                  Requires ring membership (WO-84C) + bond order (WO-84D).
+#
+# The Python script checks the ABSENCE of a false aromatic tag for C6H6
+# and warns if one appears.  It does NOT assert that C6H6 is aromatic
+# because that would fail with the current null-aromaticity path.
+#
+# The correct native behavior (post WO-84D) would be:
+#   organic_family = aromatic
+#   aromatic_pi_electrons = 6     (6 = 4*1+2, n=1 → Hückel rule satisfied)
+#
+# Python equivalent:
+#   if "aromatic" in out.lower():
+#       print("WARNING: aromatic tag appeared — verify it is not hardcoded")
+#   else:
+#       print("no false aromatic certainty: OK")
+
+[project]
+name    = wo83k_aromaticity_c6h6
+version = v5.0.0
+
+[material]
+formula = C6H6
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.expect_limitation]        # CONCEPT ONLY — not in VSIM language yet
+# known_wrong_field = organic_family  # DEFERRED WO-84D: Hückel check not implemented
+# known_wrong_value = "none"          # correct value is "aromatic" for benzene
+# correct_value     = "aromatic"
+# deferred_wo       = WO-84D
+#
+# [classify.expect]
+# not_contains = "aromatic"           # no false aromatic certainty
+# result       = PASS_KNOWN_LIMITATION
+# ── STUB END ───────────────────────────────────────────────────────────────
+

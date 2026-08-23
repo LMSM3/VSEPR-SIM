@@ -1,5 +1,5 @@
-/**
- * test_wind_tui.cpp — Wind particle + Crystal TUI tests
+﻿/**
+ * test_wind_tui.cpp  -  Wind particle + Crystal TUI tests
  * VSEPR-SIM 3.0.0
  *
  * T1: Wind force is additive to state.F and state.E.Uext
@@ -27,7 +27,7 @@ using namespace atomistic::perturbation;
 using namespace atomistic::tui;
 using namespace atomistic::crystal;
 
-// ── Helpers ──
+// -- Helpers --
 
 static State make_test_state(int N, double spacing = 2.0) {
     State s;
@@ -52,7 +52,7 @@ static State make_test_state(int N, double spacing = 2.0) {
     return s;
 }
 
-// ── T1: Wind force is additive ──
+// -- T1: Wind force is additive --
 
 static void test_wind_additive() {
     State s = make_test_state(8);
@@ -78,7 +78,7 @@ static void test_wind_additive() {
     std::printf("  T1 PASS: wind force is additive\n");
 }
 
-// ── T2: Force clamp ──
+// -- T2: Force clamp --
 
 static void test_force_clamp() {
     State s = make_test_state(4);
@@ -98,7 +98,7 @@ static void test_force_clamp() {
     std::printf("  T2 PASS: force clamp respects F_max\n");
 }
 
-// ── T3: Ramp schedule ──
+// -- T3: Ramp schedule --
 
 static void test_ramp_schedule() {
     State s = make_test_state(4);
@@ -108,7 +108,7 @@ static void test_ramp_schedule() {
     wind.params.F_max      = 5.0;
     wind.params.ramp_steps = 100;
 
-    // At step 0, ramp = 0 → no force
+    // At step 0, ramp = 0 -> no force
     assert(wind.ramp_fraction() < 1e-10);
 
     // Apply 50 steps
@@ -135,7 +135,7 @@ static void test_ramp_schedule() {
     std::printf("  T3 PASS: ramp schedule reaches full strength\n");
 }
 
-// ── T4: dt_factor headroom ──
+// -- T4: dt_factor headroom --
 
 static void test_dt_headroom() {
     WindParticle wind;
@@ -149,7 +149,7 @@ static void test_dt_headroom() {
     std::printf("  T4 PASS: dt_factor headroom correct\n");
 }
 
-// ── T5: Gaussian envelope taper ──
+// -- T5: Gaussian envelope taper --
 
 static void test_gaussian_taper() {
     State s;
@@ -181,7 +181,7 @@ static void test_gaussian_taper() {
     std::printf("  T5 PASS: Gaussian envelope tapers force\n");
 }
 
-// ── T6: TUI snapshot capture ──
+// -- T6: TUI snapshot capture --
 
 static void test_snapshot_capture() {
     State s = make_test_state(8, 3.0);
@@ -208,7 +208,7 @@ static void test_snapshot_capture() {
     std::printf("  T6 PASS: TUI snapshot populates all fields\n");
 }
 
-// ── T7: TUI renders non-empty ANSI ──
+// -- T7: TUI renders non-empty ANSI --
 
 static void test_tui_render() {
     State s = make_test_state(8, 3.0);
@@ -227,7 +227,7 @@ static void test_tui_render() {
     std::printf("  T7 PASS: TUI renders ANSI with math panel\n");
 }
 
-// ── T8: Wind + lattice round-trip ──
+// -- T8: Wind + lattice round-trip --
 
 static void test_wind_lattice_roundtrip() {
     // Build a NaCl-like state

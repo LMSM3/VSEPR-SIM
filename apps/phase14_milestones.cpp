@@ -1,5 +1,5 @@
-/**
- * phase14_milestones.cpp — Five Milestone Verification
+﻿/**
+ * phase14_milestones.cpp  -  Five Milestone Verification
  *
  * M1: Coulomb re-enablement with dielectric screening
  * M2: UFF-matched bonded parameters (geometry-derived r0, element-aware kb)
@@ -230,7 +230,7 @@ static void milestone_2()
               "H2O: O-H contracted toward r0=0.96 from 1.15");
     }
 
-    // 2c. CH4: element-aware kb — C-H should be stiffer than C-C
+    // 2c. CH4: element-aware kb  -  C-H should be stiffer than C-C
     std::printf("\n  2c. CH4 element-aware force constants\n");
     {
         vsepr::io::XYZMolecule m;
@@ -377,7 +377,7 @@ static void milestone_4()
         m.atoms.emplace_back("Ar", 2.1, 1.2, 3.3);
         m.atoms.emplace_back("Ar",-1.0, 2.0, 1.5);
         State s = parse(m);
-        auto model = create_composite_model(s);  // no bonds → pure LJ
+        auto model = create_composite_model(s);  // no bonds -> pure LJ
         ModelParams mp; mp.rc = 12.0;
         model->eval(s, mp);
         double U0 = s.E.total();
@@ -400,7 +400,7 @@ static void milestone_4()
         auto sc = construct_supercell(uc, 3, 3, 3);
         State& s = sc.state;
         s.F.resize(s.N, {0,0,0});
-        // No bonds → composite is pure LJ, same as Phase 5
+        // No bonds -> composite is pure LJ, same as Phase 5
         auto model = create_composite_model(s);
         ModelParams mp; mp.rc = 10.0;
         model->eval(s, mp);
@@ -410,8 +410,8 @@ static void milestone_4()
         check(std::abs(U0) < 100.0, "BCC Fe composite: |U| < 100 (near equilibrium)");
     }
 
-    // 4c. Diamond Si — declared limitation
-    std::printf("\n  4c. Diamond Si — declared limitation\n");
+    // 4c. Diamond Si  -  declared limitation
+    std::printf("\n  4c. Diamond Si  -  declared limitation\n");
     {
         auto uc = presets::silicon_diamond();
         State s = uc.to_state();
@@ -555,7 +555,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 14 — Five-Milestone Verification\n");
+    std::printf("  Phase 14  -  Five-Milestone Verification\n");
     std::printf("=============================================================\n");
 
     milestone_1();

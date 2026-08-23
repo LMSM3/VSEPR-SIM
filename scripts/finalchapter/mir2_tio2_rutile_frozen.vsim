@@ -1,0 +1,251 @@
+# =============================================================================
+# MIR II -- Frozen-State Recovery
+# VSIM implementation: TiO2 rutile, asymmetric coordination frozen snapshot
+#
+# Theory claim (MIR II):
+#   A frozen physical state can be represented by the recoverable identity
+#   content it preserves, not merely by its visible coordinates.
+#   P5 = [x, p, q, s, D] -- position, momentum, charge, spin-proxy, recoverable-D.
+#   Entropy is recoverability loss, not merely disorder.
+#   A frozen state is not the whole identity history -- it is a snapshot.
+#
+# Why TiO2 rutile for MIR II?
+#   TiO2 (rutile, C4 prototype, space group P4_2/mnm) has asymmetric
+#   coordination:
+#     Ti:  octahedral, coordination 6
+#     O:   trigonal-planar, coordination 3
+#
+#   This asymmetry is crucial for MIR II:
+#     - Both Ti and O identities exist in the same crystal
+#     - They have different recoverable content in a frozen snapshot:
+#         Ti: 6 nearest neighbours are recoverable (octahedral cage)
+#         O:  3 nearest neighbours are recoverable (trigonal plane)
+#     - If the frozen-state recovery flattens both to the same depth,
+#       the projection is losing the coordination asymmetry -- an MIR II
+#       recoverability loss event
+#
+#   MIR II S4: entropy as recoverability loss.
+#     Compare field_projection for Ti-centred vs O-centred RVE windows.
+#     If both give the same spatial_cv, the snapshot has lost the
+#     coordination difference -- entropy has degraded the recovery.
+#
+#   MIR II S6: R vs C recovery.
+#     In R: the full P5 state for every Ti and O exists.
+#     In C: we store what the kernel logged.
+#     The gap = projection loss = analogue of R vs C recovery asymmetry.
+#
+# Workflow:
+#   Phase 1 [while]:  equilibrate TiO2 at 300 K until energy variance settles
+#   Phase 2 [run]:    single_point -- freeze the equilibrated frame
+#   Phase 3 [analysis.*]: extract structural record from frozen state
+#   Phase 4 [verify.*]:   check recoverable content against known ground truth
+#
+# Physical reference for TiO2 rutile:
+#   Space group:       P4_2/mnm (C4 prototype)
+#   Lattice:           a = 4.594 A, c = 2.959 A
+#   Ti-O bond length:  1.944 A
+#   Coordination(Ti):  6 (octahedral)
+#   Coordination(O):   3 (trigonal planar)
+#   RDF peaks:         1.944 A (Ti-O), 2.959 A (O-O along c), 3.570 A (Ti-Ti)
+# =============================================================================
+
+[project]
+name        = "mir2_tio2_rutile_frozen"
+version     = "v5.1.13.5"
+seed_base   = 5050
+determinism = true
+
+[material]
+formula   = "TiO2"
+prototype = "C4_TiO2"
+cell      = "4x4x6"    # extends c more than a/b -- rutile is elongated along c
+
+# ---------------------------------------------------------------------------
+# Phase 1: equilibrate at 300 K
+# MIR II S1: frozen-state concept -- need a well-defined state to freeze.
+# The while gate ensures we freeze at a representative equilibrium,
+# not at a transient burst during thermalisation.
+# ---------------------------------------------------------------------------
+[while]
+name          = "thermal_equilibration"
+condition     = "energy_var > 0.008"
+max_iters     = 15
+body_steps    = 400
+measure       = energy_var
+iter_delay_ms = 0
+
+[variance]
+energy_var = "energy.total" "last 80" 0.008
+
+# ---------------------------------------------------------------------------
+# Phase 2: frozen-state snapshot
+# MIR II S1: "what a system contains when evolution is paused"
+# single_point = no integration step. The frame is frozen.
+# P5 = [x, p, q, s, D] encoded in the XYZ + charge field at this frame.
+# ---------------------------------------------------------------------------
+[run]
+mode         = "single_point"
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 300
+pressure    = 0.0
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[simulation]
+fire_max_steps = 600
+fire_dt_fs     = 1.0
+periodic       = true
+use_ewald      = true
+ewald_alpha    = 0.25
+ewald_rcut     = 10.0
+ewald_kmax     = 6
+
+# ---------------------------------------------------------------------------
+# Phase 3: full structural record from frozen state
+# MIR II S4: the depth of recovery at each scale is eta_{ab}
+#   eta(small window, Ti-centred) >> eta(large window)  -> locally recoverable
+#   eta(small window, O-centred)  <  eta(Ti-centred)    -> coordination
+#                                                          asymmetry preserved
+#
+# MIR II S6: what the kernel logged vs what scale_sampling recovers
+# The gap is the C-side projection loss.
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 10]    # finer along c axis
+# RVE windows: Ti-O bond, unit cell, 2x cell, supercell edge
+rve_window_lengths_A             = [1.94, 4.59, 9.18, 18.38]
+rve_windows_per_level            = 8
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 48
+spatial_cv_threshold             = 0.28
+temporal_drift_threshold         = 0.12
+scale_drift_threshold            = 0.22
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 4.0
+contact_cutoff_A  = 2.2
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = false    # single_point: no dynamics, no MSD
+min_frames_for_motion = 1
+min_frames_for_msd    = 1
+unwrap_pbc            = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Observables -- P5 extraction from frozen snapshot
+# energy_map:    V(r) = instantaneous potential surface -- closest to P5 x+q
+# coordination:  must recover Ti=6, O=3 asymmetry from frozen snapshot
+# rdf:           recoverable structural fingerprint of the frozen state
+# bond_lengths:  Ti-O = 1.944 A -- preserved or degraded by entropy?
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "coordination", "rdf", "bond_lengths"]
+output_format = "json"
+every_n_steps = 1    # single_point: only one frame, so this fires once
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Phase 4: Verification -- how much is recoverable?
+#
+# MIR II S4: entropy as recoverability loss.
+# If the frozen snapshot recovers:
+#   - coordination Ti=6, O=3    -> P5 coordination content is intact
+#   - RDF peaks at 1.944 A      -> nearest-neighbour identity is intact
+#   - RDF peaks at 2.959, 3.570 -> second/third-shell identity intact
+#   - mass conserved            -> D (recoverable mass) is conserved
+#
+# If coordination collapses (Ti != 6 or O != 3):
+#   -> entropy has degraded the frozen snapshot beyond recovery threshold
+#   -> recoverability loss is measurable, not just theoretical
+#
+# Note: coordination_tolerance = 0 means the expected value must be exactly
+# met as a mean. If the snapshot is near-defect, tolerance should be loosened.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "mir2_tio2_rutile_recovery"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "C4_TiO2"
+expected_coordination        = 6
+coordination_tolerance       = 1
+expected_nearest_neighbor_A  = 1.944
+nearest_neighbor_tolerance_A = 0.12
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.944, 2.959, 3.570]
+peak_tolerance_A   = 0.22
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_dashboard_svg        = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+write_verify_report        = true
+write_verify_tsv           = true
+output_dir                 = "out/finalchapter/mir2_tio2"
+
+[report]
+title                   = "mir2_tio2_rutile_frozen"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 1
+show_proxy_table         = true
+show_convergence_trace   = false
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,coordination,rdf

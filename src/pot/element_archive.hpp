@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /*
 element_archive.hpp
 -------------------
-Centralized element property archive for Z=1–110 (H through Ds).
+Centralized element property archive for Z=1-110 (H through Ds).
 
 Consolidates all four kernel data pipes into a single queryable record:
   - Atomic mass        (IUPAC 2021 standard atomic weights)
@@ -12,7 +12,7 @@ Consolidates all four kernel data pipes into a single queryable record:
 
 The last 8 elements (Rg Z=111 through Og Z=118) are excluded from the
 archive because their physical/chemical property data is almost entirely
-estimated — no experimentally confirmed radii, masses, or meaningful
+estimated  -  no experimentally confirmed radii, masses, or meaningful
 color assignments exist for superheavy elements beyond Ds (Z=110).
 
 This header is the authoritative cross-reference point.  Each value is
@@ -33,13 +33,13 @@ Anti-black-box: every number traces to its originating kernel header.
 namespace vsepr {
 namespace archive {
 
-// Archive boundary — elements Z=1 through Z=110 (Ds)
+// Archive boundary  -  elements Z=1 through Z=110 (Ds)
 constexpr uint8_t ARCHIVE_Z_MIN = 1;
 constexpr uint8_t ARCHIVE_Z_MAX = 110;
 constexpr uint8_t ARCHIVE_COUNT = ARCHIVE_Z_MAX;  // 110 elements
 
 // ============================================================================
-// Element symbols (IUPAC standard, Z=0–110)
+// Element symbols (IUPAC standard, Z=0-110)
 // ============================================================================
 
 constexpr const char* ELEMENT_SYMBOLS[] = {
@@ -65,7 +65,7 @@ constexpr const char* ELEMENT_SYMBOLS[] = {
 };
 
 // ============================================================================
-// Element names (Z=0–110)
+// Element names (Z=0-110)
 // ============================================================================
 
 constexpr const char* ELEMENT_NAMES[] = {
@@ -107,7 +107,7 @@ constexpr const char* ELEMENT_NAMES[] = {
 };
 
 // ============================================================================
-// CPK colors for archive elements (Jmol scheme, RGB 0.0–1.0)
+// CPK colors for archive elements (Jmol scheme, RGB 0.0-1.0)
 // Forwarded from renderer_base.cpp's static table via constexpr.
 // ============================================================================
 
@@ -116,7 +116,7 @@ struct CPKColor {
 };
 
 // Compiled from the Jmol CPK table in src/vis/renderer_base.cpp
-// Z=0–110 (index 0 = unknown / magenta fallback)
+// Z=0-110 (index 0 = unknown / magenta fallback)
 constexpr std::array<CPKColor, 111> ARCHIVE_CPK_COLORS = {{
     {1.00f, 0.08f, 0.58f}, // 0 - Unknown (magenta)
     {1.00f, 1.00f, 1.00f}, // 1 - H
@@ -242,11 +242,11 @@ struct ElementRecord {
     double atomic_mass;       // Da (amu), from atomic_masses.hpp
     double covalent_radius;   // Å, from covalent_radii.hpp
     double vdw_radius;        // Å, from vdw_radii.hpp
-    CPKColor cpk;             // RGB 0.0–1.0, from renderer_base.cpp
+    CPKColor cpk;             // RGB 0.0-1.0, from renderer_base.cpp
 };
 
 // ============================================================================
-// Query API — all data forwarded from kernel source arrays
+// Query API  -  all data forwarded from kernel source arrays
 // ============================================================================
 
 inline bool is_archived(uint8_t Z) {
@@ -279,7 +279,7 @@ inline const char* get_archive_name(uint8_t Z) {
 }
 
 // ============================================================================
-// Integrity helpers — for compile-time and runtime validation
+// Integrity helpers  -  for compile-time and runtime validation
 // ============================================================================
 
 // Verify all archive elements have non-zero data in every pipe

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * organic_formula_parser.hpp - Organic syntax -> canonical molecular formula
  *
  * Translates human-authored organic shorthand into standard molecular formulas.
@@ -85,7 +85,7 @@ struct ResidueFormula {
 	char        one_letter;
 	const char* three_letter;
 	const char* name;
-	// Residue formula (not free amino acid — already minus H2O for chain linkage)
+	// Residue formula (not free amino acid  -  already minus H2O for chain linkage)
 	int C, H, N, O, S;
 };
 

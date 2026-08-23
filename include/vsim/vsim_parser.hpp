@@ -109,6 +109,8 @@ private:
 	void apply_visual_workspace_key(const std::string& key, const Value& val, int line_no);
 	void apply_room_key(const std::string& key, const Value& val, int line_no);
 	void parse_show_directive(const std::string& line, int line_no);
+	void parse_print_console_directive(const std::string& line, int line_no);  // WO-85A
+	void apply_features_key(const std::string& key, const Value& val, int line_no);  // WO-85B
 	void apply_open_key(const std::string& key, const Value& val, int line_no);
 	void apply_open_advanced_key(const std::string& key, const Value& val, int line_no);
 	void apply_variance_key(const std::string& key, const Value& val, int line_no);
@@ -123,7 +125,9 @@ private:
 
 	// WO-VSIM-03B: intent-based authoring appliers
 	void apply_material_key(const std::string& key, const Value& val, int line_no);
+	void apply_distribution_key(const std::string& key, const Value& val, int line_no);
 	void apply_run_key(const std::string& key, const Value& val, int line_no);
+	void apply_dense_record_key(const std::string& key, const Value& val, int line_no);  // WO-28MAR
 	void apply_environment_key(const std::string& key, const Value& val, int line_no);
 	void apply_chemistry_key(const std::string& key, const Value& val, int line_no);
 	void apply_chemplus_key(const std::string& key, const Value& val, int line_no);  // WO-84T
@@ -242,7 +246,25 @@ private:
 	// Surface Analysis Examples — [[object.surface]] parser
 	void apply_surface_key(const std::string& key, const Value& val, int line_no);
 
-	Value parse_value(const std::string& raw, int line_no);
+	// WO-89 PILLARS appliers
+	void apply_pillar_key(const std::string& key, const Value& val, int line_no);
+	void apply_species_registry_key(const std::string& key, const Value& val, int line_no);
+	void apply_reaction_network_key(const std::string& key, const Value& val, int line_no);
+	void apply_reaction_channel_key(const std::string& key, const Value& val, int line_no);
+	void apply_reaction_passivation_key(const std::string& key, const Value& val, int line_no);
+	void apply_reaction_stage_key(const std::string& key, const Value& val, int line_no);
+	void apply_metal_center_key(const std::string& key, const Value& val, int line_no);
+	void apply_descriptor_electronic_key(const std::string& key, const Value& val, int line_no);
+	void apply_catalysis_key(const std::string& key, const Value& val, int line_no);
+	void apply_thermodynamics_key(const std::string& key, const Value& val, int line_no);
+	void apply_ignition_key(const std::string& key, const Value& val, int line_no);
+	void apply_audit_conservation_key(const std::string& key, const Value& val, int line_no);
+	void apply_audit_state_rules_key(const std::string& key, const Value& val, int line_no);
+	void apply_audit_acceptance_key(const std::string& key, const Value& val, int line_no);
+
+
+
+	Value parse_value(std::string raw, int line_no);
 	std::string strip_comment(const std::string& line);
 	std::string trim(const std::string& s);
 
@@ -253,6 +275,7 @@ private:
 
 	// WO-VSIM-03B parse state
 	std::string   current_excite_type_;        // active [excite.<type>] subtype (empty = none)
+	std::string   current_distribution_name_;  // active [distribution.<name>] card
 	bool          in_override_particle_ = false; // inside [[override.particle]] block
 	bool          in_raw_object_        = false; // inside [[raw.object]] block
 
@@ -274,6 +297,10 @@ private:
 
 	// Surface Analysis Examples — [[object.surface]] parse state
 	bool in_surface_block_ { false };  // inside [[object.surface]] block
+
+	// WO-89 PILLARS parse state
+	bool in_reaction_channel_ { false };  // inside [[reaction.channel]] block
+	bool in_reaction_stage_   { false };  // inside [[reaction.stage]] block
 };
 
 } // namespace vsim

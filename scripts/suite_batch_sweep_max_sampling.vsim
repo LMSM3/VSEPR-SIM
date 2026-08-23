@@ -1,0 +1,200 @@
+﻿# scripts/suite_batch_sweep_max_sampling.vsim
+# =============================================================================
+#  MULTI-MATERIAL BATCH SWEEP  -  MAX SAMPLING
+#  Run: VSEPR scripts/suite_batch_sweep_max_sampling.vsim
+# =============================================================================
+#
+#  Sweeps four material + phase combinations in a batch grid:
+#    Fe BCC  |  H2O steam  |  Ar gas  |  Al2O3 oxide
+#  across temperature and formation-preset axes.
+#
+#  For each case the full max_sampling export profile is applied.
+#  ThermalProbe and FieldProbe are enabled globally via batch defaults.
+#
+#  This script tests the batch + loop + probe pipeline end-to-end.
+#
+#  Output tree:
+#    out/batch_sweep_max/
+#      runs/<case_id>/  per-case xyz, analysis, metrics, figures
+#      aggregate/       aggregate_verify, score, manifest
+# =============================================================================
+
+[project]
+name        = "batch_sweep_max_sampling"
+version     = "v5.0.2"
+seed_base   = 10000
+description = "Multi-material batch sweep using max_sampling export and thermal/field probes."
+
+[seed]
+foundation = 10000
+defect     = 10003
+formation  = 10006
+thermal    = 10008
+placement  = 10011
+
+# =============================================================================
+#  GLOBAL DEFAULTS applied to every batch case
+# =============================================================================
+
+[defaults.run]
+mode         = "md"
+max_steps    = 3000
+dt_fs        = 1.0
+converge     = true
+output_level = "verbose"
+
+[defaults.analysis]
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+# =============================================================================
+#  THERMAL PROBE  -  applied globally across all batch cases
+# =============================================================================
+
+[thermal_probe]
+enabled                     = true
+compute_gradient            = true
+compute_heat_flux           = true
+compute_conductivity_proxy  = true
+compute_local_temperature   = true
+compute_temperature_variance = true
+compute_heat_capacity_proxy = false
+every_n_steps               = 50
+gradient_dx                 = 1.5
+region_bins                 = 6
+output_format               = "json"
+
+# =============================================================================
+#  FIELD PROBE  -  applied globally across all batch cases
+# =============================================================================
+
+[field_probe]
+enabled                    = true
+compute_stress_tensor      = true
+compute_stress_eigenvalues = true
+compute_von_mises          = true
+compute_density_field      = true
+compute_pressure_field     = true
+compute_velocity_field     = false
+every_n_steps              = 50
+output_format              = "json"
+
+# =============================================================================
+#  BATCH EXPAND  -  4 materials x 3 temperatures = 12 cases
+# =============================================================================
+
+[batch.expand]
+export_profile  = "max_sampling"
+visual_profile  = "max_sampling_visual"
+
+[[batch.axis]]
+name   = "formula"
+values = ["Fe", "H2O", "Ar", "Al2O3"]
+
+[[batch.axis]]
+name   = "temperature"
+values = [500, 1000, 2000]
+
+# =============================================================================
+#  ANALYSIS PIPELINE  (shared)
+# =============================================================================
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 10
+unwrap_pbc            = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]
+min_particles_for_scale_sampling = 32
+rve_windows_per_level            = 12
+rve_window_placement             = "stratified"
+spatial_cv_threshold             = 0.18
+temporal_drift_threshold         = 0.10
+scale_drift_threshold            = 0.14
+
+[analysis.structure]
+enabled = true
+
+[analysis.inference]
+enabled                    = true
+mode                       = "rule_based_61d"
+infer_packing_regime       = true
+infer_mobility_regime      = true
+infer_anisotropy_regime    = true
+infer_structural_stability = true
+infer_macro_readiness      = false
+
+# =============================================================================
+#  BATCH AGGREGATE VERIFY
+# =============================================================================
+
+[batch.aggregate_verify]
+mass_conservation      = true
+relative_tolerance     = 1e-9
+cross_case_rdf_compare = true
+rdf_tolerance_A        = 0.30
+
+# =============================================================================
+#  BATCH SCORE
+# =============================================================================
+
+[batch.score]
+metric      = "energy_variance"
+weight_rdf  = 0.35
+weight_msd  = 0.35
+weight_struct = 0.30
+
+# =============================================================================
+#  EXPORT (batch-level; per-case inherits from export_profile)
+# =============================================================================
+
+[export]
+output_dir = "out/batch_sweep_max"
+
+[output]
+output_dir    = "out/batch_sweep_max/pipeline"
+output_prefix = "batch_sweep"
+write_structure_json      = true
+write_sampling_json       = true
+write_scale_sampling_json = true
+write_inference_json      = true
+write_sampling_manifest   = true
+
+# =============================================================================
+#  VISUAL
+# =============================================================================
+
+[visual]
+output_type   = "terminal_overlay_cycle"
+animation_mode = "overlay"
+render_interval = 50
+show_proxy_table = true
+show_convergence_trace = true
+show_bar_chart = true
+show_rdf_plot  = true
+show_phase_field = true
+gl_window_width  = 1440
+gl_window_height = 900
+
+[visual.external]
+enabled         = true
+render_interval = 100
+export_format   = "svg"
+show_progress   = true
+
+# =============================================================================
+#  REPORT
+# =============================================================================
+
+[report]
+title                  = "batch_sweep_max_sampling"
+include_material_cards = true

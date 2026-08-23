@@ -1,0 +1,62 @@
+# e12_surface_probe_minimal.vsim
+# =============================================================================
+# E12  --  Minimal Rectangular Surface Probe
+#
+# Purpose: Demonstrates the simplest possible [[object.surface]] usage.
+#          A single axis-aligned rectangular probe counts every particle
+#          crossing the XZ mid-plane of a small NaCl crystal during a
+#          short MD run.  No flux metric is computed; crossing count only.
+#
+# Doctrine:
+#   Surfaces are analysis-only probes.  They never alter force kernels,
+#   particle positions, or truth-state output files.
+#   A surface count is appended to the .surface.json sidecar, not .xyz.
+# =============================================================================
+
+[project]
+name        = "e12_surface_probe_minimal"
+version     = "v5.0.14"
+seed_base   = 1200
+determinism = true
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+cell      = "4x4x4"
+phase     = "solid"
+
+[run]
+mode      = "md"
+max_steps = 2000
+dt_fs     = 1.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = false
+output_dir          = "out/e12"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e12/surfaces"
+
+[[object.surface]]
+name          = "midplane_XZ"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 0.0
+normal_y      = 1.0
+normal_z      = 0.0
+width         = 20.0
+height        = 20.0
+log_crossings = true
+compute_flux  = false
+output_tag    = "surf_midXZ"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 100

@@ -1,0 +1,36 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# day84_scene_compiler_goal.vsim
+# Day 84 -- Long-Term Goal 1: Chemical Scene Compiler
+# Status: GOAL_ONLY
+
+print_console "Day 84 -- VSEPR Revival Arc"
+print_console "Work Order: Day84-SceneCompiler"
+print_console "Status: GOAL_ONLY"
+print_console "Purpose: define the chemical scene compiler transformation target"
+print_console "Expected: raw atoms/bonds -> inferred molecules -> lone pairs -> VSEPR geometry ->"
+print_console "           rings -> bond order -> aromatic systems -> adsorbates -> residues ->"
+print_console "           surface-bound fragments -> reportable chemical scene"
+print_console ""
+print_console "This is not isolated molecule classification."
+print_console "This is chemical scene understanding."
+print_console ""
+print_console "Current pipeline status (Day 84 A-E):"
+print_console "  VSEPR provider wiring    -> WO-84A COMPLETE (Group 99)"
+print_console "  Lone-pair provider       -> WO-84B COMPLETE (Group 100)"
+print_console "  Ring detection           -> WO-84C COMPLETE (Group 101)"
+print_console "  Bond order + aromaticity -> WO-84D COMPLETE (Group 102)"
+print_console "  Export + report          -> WO-84E COMPLETE (Group 103)"
+print_console ""
+print_console "Remaining scene-compiler milestones (WO-84V and beyond):"
+print_console "  Organic/VSEPR crosslink      -> WO-84V (PLANNED)"
+print_console "  Molecule inference from raw atoms  -> FUTURE"
+print_console "  Adsorbate/surface site binding     -> FUTURE"
+print_console "  Residue layer stratification       -> FUTURE"
+print_console ""
+print_console "Known gaps:"
+print_console "  resolved_object_binding not implemented"
+print_console "  surface_site_geometry not resolved"
+print_console "  adsorbate_host_distance classification not implemented"
+

@@ -1,23 +1,23 @@
-/**
- * test_code_trail.cpp  —  Code Trail Wind v0.1 — verification tests
+﻿/**
+ * test_code_trail.cpp   -   Code Trail Wind v0.1  -  verification tests
  * ==================================================================
  * VSEPR-SIM 3.0.1
  *
  * Tests:
- *   T1 : basic binary recording — step counter, field values
- *   T2 : unary recording — NaN rhs, correct result
- *   T3 : assign recording — formula_notation auto-generated
- *   T4 : compare recording — bool stored as 1.0 / 0.0
- *   T5 : custom recording — lhs/rhs NaN, formula carries meaning
+ *   T1 : basic binary recording  -  step counter, field values
+ *   T2 : unary recording  -  NaN rhs, correct result
+ *   T3 : assign recording  -  formula_notation auto-generated
+ *   T4 : compare recording  -  bool stored as 1.0 / 0.0
+ *   T5 : custom recording  -  lhs/rhs NaN, formula carries meaning
  *   T6 : TrailScope tag push/pop
- *   T7 : stats aggregation — counts per OpKind
- *   T8 : CSV string output — header present, row count correct
- *   T9 : flush_csv — file written, readable back
- *   T10: reset — clears entries, resets step counter
- *   T11: TrailWriter streaming — file opened, rows written
- *   T12: LJ pair walk-through — realistic force calculation trail
- *   T13: accumulator chain — running energy sum across steps
- *   T14: CSV escape — commas/quotes in formula_notation survive round-trip
+ *   T7 : stats aggregation  -  counts per OpKind
+ *   T8 : CSV string output  -  header present, row count correct
+ *   T9 : flush_csv  -  file written, readable back
+ *   T10: reset  -  clears entries, resets step counter
+ *   T11: TrailWriter streaming  -  file opened, rows written
+ *   T12: LJ pair walk-through  -  realistic force calculation trail
+ *   T13: accumulator chain  -  running energy sum across steps
+ *   T14: CSV escape  -  commas/quotes in formula_notation survive round-trip
  *
  * Build:
  *   Registered via CMake target: test_code_trail
@@ -131,8 +131,8 @@ static void test_compare_recording() {
 
     ASSERT(t.entries().size() == 2);
     ASSERT(t.entries()[0].kind   == OpKind::COMPARE);
-    ASSERT_NEAR(t.entries()[0].result, 1.0, 1e-15);   // true  → 1.0
-    ASSERT_NEAR(t.entries()[1].result, 0.0, 1e-15);   // false → 0.0
+    ASSERT_NEAR(t.entries()[0].result, 1.0, 1e-15);   // true  -> 1.0
+    ASSERT_NEAR(t.entries()[1].result, 0.0, 1e-15);   // false -> 0.0
 }
 
 // ============================================================================
@@ -161,7 +161,7 @@ static void test_custom_recording() {
 static void test_trail_scope() {
     CodeTrail t("t6_scope");
 
-    // Outside scope — no active tag
+    // Outside scope  -  no active tag
     t.record_binary("add", 1.0, 2.0, 3.0, 3.0);
     ASSERT(t.entries()[0].source_tag.empty());
 
@@ -170,12 +170,12 @@ static void test_trail_scope() {
         t.record_binary("multiply", 3.0, 4.0, 12.0, 12.0);
         ASSERT(t.entries()[1].source_tag == "bond_calc");
 
-        // Nested explicit tag — scope tag wins
+        // Nested explicit tag  -  scope tag wins
         t.record_unary("sqrt", 12.0, std::sqrt(12.0), std::sqrt(12.0));
         ASSERT(t.entries()[2].source_tag == "bond_calc");
     }
 
-    // After scope — tag cleared
+    // After scope  -  tag cleared
     t.record_binary("subtract", 10.0, 3.0, 7.0, 7.0);
     ASSERT(t.entries()[3].source_tag.empty());
 }
@@ -237,7 +237,7 @@ static void test_csv_string_output() {
 }
 
 // ============================================================================
-// T9: flush_csv — file written and readable back
+// T9: flush_csv  -  file written and readable back
 // ============================================================================
 
 static void test_flush_csv() {
@@ -263,7 +263,7 @@ static void test_flush_csv() {
 }
 
 // ============================================================================
-// T10: reset — clears entries, resets step counter
+// T10: reset  -  clears entries, resets step counter
 // ============================================================================
 
 static void test_reset() {
@@ -309,7 +309,7 @@ static void test_trail_writer() {
 }
 
 // ============================================================================
-// T12: LJ pair walk-through  —  realistic force calculation trail
+// T12: LJ pair walk-through   -   realistic force calculation trail
 // ============================================================================
 //
 // Lennard-Jones potential:
@@ -376,7 +376,7 @@ static void test_lj_pair_walkthrough() {
 }
 
 // ============================================================================
-// T13: accumulator chain — running energy sum
+// T13: accumulator chain  -  running energy sum
 // ============================================================================
 
 static void test_accumulator_chain() {
@@ -417,12 +417,12 @@ static void test_accumulator_chain() {
 }
 
 // ============================================================================
-// T14: CSV escape — commas/quotes in formula_notation
+// T14: CSV escape  -  commas/quotes in formula_notation
 // ============================================================================
 
 static void test_csv_escape() {
     CodeTrail t("t14_escape");
-    // Formula notation with commas and quotes — must survive CSV round-trip
+    // Formula notation with commas and quotes  -  must survive CSV round-trip
     t.record_custom("test_op", 1.0, 1.0,
                     "f(a, b) = \"a + b\"",
                     "units, mixed", "ctx,tag");
@@ -433,7 +433,7 @@ static void test_csv_escape() {
     ASSERT_STR_CONTAINS(csv, "f(a, b)");
     ASSERT_STR_CONTAINS(csv, "a + b");
 
-    // Parse back — find the single data row (not a comment or header)
+    // Parse back  -  find the single data row (not a comment or header)
     std::istringstream ss(csv);
     std::string line;
     int data_rows = 0;
@@ -454,9 +454,9 @@ static void test_csv_escape() {
 
 int main() {
     std::cout << "\n";
-    std::cout << "  ╔══════════════════════════════════════════════╗\n";
-    std::cout << "  ║  Code Trail Wind v0.1  —  Verification Tests ║\n";
-    std::cout << "  ╚══════════════════════════════════════════════╝\n\n";
+    std::cout << "  +==============================================+\n";
+    std::cout << "  |  Code Trail Wind v0.1   -   Verification Tests |\n";
+    std::cout << "  +==============================================+\n\n";
 
     TEST(basic_binary)
     TEST(unary_recording)
@@ -473,7 +473,7 @@ int main() {
     TEST(accumulator_chain)
     TEST(csv_escape)
 
-    std::cout << "\n  ──────────────────────────────────────────────\n";
+    std::cout << "\n  ----------------------------------------------\n";
     std::cout << "  Results: " << g_passed << " passed, " << g_failed << " failed\n";
 
     if (g_failed == 0) {

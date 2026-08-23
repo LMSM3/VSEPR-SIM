@@ -1,24 +1,24 @@
-#pragma once
+﻿#pragma once
 /**
- * solidworks_export.hpp — SolidWorks-Compatible Data Export
+ * solidworks_export.hpp  -  SolidWorks-Compatible Data Export
  *
  * Exports bead positions and trajectories in formats that SolidWorks
  * can import directly:
  *
- *   1. .sldcrv — Curve Through XYZ Points
+ *   1. .sldcrv  -  Curve Through XYZ Points
  *      SolidWorks path: Insert > Curve > Curve Through XYZ Points
  *      Format: tab-delimited X Y Z, one point per line
  *
- *   2. .xyz — Standard XYZ point cloud
+ *   2. .xyz  -  Standard XYZ point cloud
  *      SolidWorks path: File > Open > set type to "All Files"
  *      Format: N atoms, comment, atom X Y Z lines
  *
- *   3. .csv — Coordinate CSV with metadata columns
+ *   3. .csv  -  Coordinate CSV with metadata columns
  *      SolidWorks path: Insert > Curve > Curve Through XYZ Points
  *      (after converting columns, or via macro)
  *
  * Anti-black-box: coordinates are direct copies of simulation positions.
- * Deterministic: same snapshot → identical output files.
+ * Deterministic: same snapshot -> identical output files.
  *
  * Reference: copilot-instructions.md §9.1 (report-ready outputs)
  */
@@ -121,7 +121,7 @@ inline bool export_solidworks_xyz(
     if (!out.is_open()) return false;
 
     out << snap.positions.size() << "\n";
-    out << title << " — final structure at step " << snap.step_index
+    out << title << "  -  final structure at step " << snap.step_index
         << " | E=" << std::fixed << std::setprecision(4) << snap.total_energy
         << " kcal/mol | F_rms=" << snap.rms_force << "\n";
 
@@ -180,11 +180,11 @@ inline bool export_solidworks_csv(
  * Export all SolidWorks-compatible formats at once.
  *
  * Creates:
- *   <prefix>_structure.sldcrv   — final-frame curve points
- *   <prefix>_structure.xyz      — final-frame XYZ point cloud
- *   <prefix>_points.csv         — final-frame CSV with metadata
+ *   <prefix>_structure.sldcrv    -  final-frame curve points
+ *   <prefix>_structure.xyz       -  final-frame XYZ point cloud
+ *   <prefix>_points.csv          -  final-frame CSV with metadata
  *
- * Returns the number of files successfully written (0–3).
+ * Returns the number of files successfully written (0-3).
  */
 inline int export_all_solidworks(
     const std::string& prefix,

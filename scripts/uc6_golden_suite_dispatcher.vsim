@@ -1,0 +1,53 @@
+# ============================================================================
+# UC-6 Golden Suite Dispatcher Fixture
+# scripts/uc6_golden_suite_dispatcher.vsim
+# ----------------------------------------------------------------------------
+# Purpose: Meta-runner fixture (NOT a physics script). Declares the Day-85 core
+#          golden regression set, the dispatch policy, tolerance budget, and the
+#          checks + export layout consumed by tests/run_uc6_golden_suite.sh.
+# Used by: tests/run_uc6_golden_suite.sh  (CTest Group 96)
+# UC doc:  docs/uc/UC-6-golden-suite-dispatcher.md
+# WO-MF:   MF-G-001 MF-G-008 MF-G-009
+# ============================================================================
+
+[meta]
+name = "UC-6 Golden Suite Dispatcher"
+use_case = "UC-6"
+day = "85"
+mode = "golden_dispatch"
+
+[golden_suite]
+enabled = true
+suite_name = "day85_core_regression"
+
+scripts = [
+  "scripts/demo_stress_format_a_small.vsim",
+  "scripts/demo_stress_format_b_medium.vsim",
+  "scripts/demo_stress_format_d_large.vsim",
+  "scripts/demo_stress_gas_injection.vsim"
+]
+
+[dispatch]
+continue_on_failure = false
+capture_stdout = true
+capture_stderr = true
+write_per_script_report = true
+
+[tolerance]
+enabled = true
+default_relative = 1.0e-6
+default_absolute = 1.0e-9
+allow_textual_format_drift = false
+
+[checks]
+reject_nan = true
+reject_inf = true
+require_energy = true
+require_frame_count = true
+require_exit_zero = true
+
+[export]
+directory = "exports/uc6_golden_suite"
+write_summary = true
+write_json = true
+write_diff = true

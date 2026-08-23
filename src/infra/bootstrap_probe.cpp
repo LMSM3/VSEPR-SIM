@@ -1,4 +1,4 @@
-/**
+﻿/**
  * bootstrap_probe.cpp
  * -------------------
  * Implementation of hardware check and infrastructure initialization.
@@ -47,6 +47,9 @@ constexpr double RAM_FAIL_GB  = 1.5;
 constexpr double DISK_WARN_GB = 10.0;
 constexpr double DISK_FAIL_GB = 2.0;
 
+} // anonymous namespace
+
+// Public telemetry helpers (external linkage for runtime overlays like WO-93A)
 double total_ram_gb() {
 #ifdef _WIN32
     MEMORYSTATUSEX ms{};
@@ -88,6 +91,59 @@ double free_ram_gb() {
     return 0.0;
 }
 
+// ---- CPU load snapshot (idle vs total, thread-safe poseable) -------------
+// Returns CPU percent in [0,1]. Caller provides previous state; pass same
+// struct back on the next call. Initial call returns 0 and seeds state.
+double cpu_load_fraction(CpuLoadState& state) {
+    double out = 0.0;
+#ifdef _WIN32
+    FILETIME idle_ft{}, kernel_ft{}, user_ft{};
+    if (GetSystemTimes(&idle_ft, &kernel_ft, &user_ft)) {
+        auto to_ull = [](const FILETIME& ft) -> unsigned long long {
+            return (static_cast<unsigned long long>(ft.dwHighDateTime) << 32)
+                   | static_cast<unsigned long long>(ft.dwLowDateTime);
+        };
+        unsigned long long idle   = to_ull(idle_ft);
+        unsigned long long kernel = to_ull(kernel_ft);
+        unsigned long long user   = to_ull(user_ft);
+        unsigned long long total  = kernel + user;
+        if (state.seeded) {
+            unsigned long long d_total = total - (state.kernel + state.user);
+            unsigned long long d_idle  = idle - state.idle;
+            if (d_total > 0) out = 1.0 - static_cast<double>(d_idle) / static_cast<double>(d_total);
+        }
+        state.idle   = idle;
+        state.kernel = kernel;
+        state.user   = user;
+        state.seeded = true;
+    }
+#elif defined(__linux__)
+    std::ifstream procstat("/proc/stat");
+    std::string line;
+    if (std::getline(procstat, line)) {
+        // line: "cpu  user nice system idle iowait irq softirq steal guest guest_nice"
+        std::istringstream ss(line);
+        std::string label; ss >> label;
+        unsigned long long v[10] = {};
+        for (int i = 0; i < 10 && ss; ++i) ss >> v[i];
+        unsigned long long idle  = v[3] + v[4];
+        unsigned long long total = 0;
+        for (int i = 0; i < 10; ++i) total += v[i];
+        if (state.seeded) {
+            unsigned long long d_total = total - state.total;
+            unsigned long long d_idle  = idle - state.idle;
+            if (d_total > 0) out = 1.0 - static_cast<double>(d_idle) / static_cast<double>(d_total);
+        }
+        state.idle  = idle;
+        state.total = total;
+        state.seeded = true;
+    }
+#elif defined(__APPLE__)
+    // No cheap single-call kernel API; leave 0.0
+#endif
+    return std::clamp(out, 0.0, 1.0);
+}
+
 double disk_free_gb() {
     std::error_code ec;
     auto info = fs::space(fs::current_path(), ec);
@@ -95,6 +151,8 @@ double disk_free_gb() {
         return static_cast<double>(info.available) / GB;
     return 0.0;
 }
+
+namespace {  // internal helpers for run_hardware_check
 
 // ---- Shell execution helper ------------------------------------------------
 // Runs a command via popen, captures first line of stdout, trims whitespace.
@@ -129,16 +187,18 @@ std::string shell_exec(const char* cmd) {
     return result;
 }
 
+} // anonymous namespace
+
 // ---- GPU detection ---------------------------------------------------------
 // Strategy (ordered by specificity):
-//   1. nvidia-smi  — fast, reliable when NVIDIA driver is installed
+//   1. nvidia-smi   -  fast, reliable when NVIDIA driver is installed
 //   2. Windows: powershell Get-CimInstance (replaces deprecated wmic)
 //      Fallback: wmic path win32_VideoController
 //   3. Linux: lspci grep VGA
 //   4. macOS: system_profiler SPDisplaysDataType
 //   5. Environment variable heuristic (last resort)
 //
-// Each attempt is guarded — if the command is missing or fails, we move on.
+// Each attempt is guarded  -  if the command is missing or fails, we move on.
 
 std::string detect_gpu() {
     std::string name;
@@ -164,7 +224,7 @@ std::string detect_gpu() {
     // --- wmic fallback (deprecated but still present on older builds) ---
     name = shell_exec("wmic path win32_VideoController get Name /value 2>nul");
     if (!name.empty()) {
-        // wmic output is "Name=NVIDIA GeForce RTX 4080\r\n" — extract value
+        // wmic output is "Name=NVIDIA GeForce RTX 4080\r\n"  -  extract value
         auto eq = name.find('=');
         if (eq != std::string::npos) {
             name = name.substr(eq + 1);
@@ -210,6 +270,8 @@ std::string detect_gpu() {
     return "";  // genuinely not detected
 }
 
+namespace {  // internal helpers for run_hardware_check
+
 bool cuda_available() {
 #ifdef VSEPR_HAS_CUDA
     return true;
@@ -235,6 +297,7 @@ fs::path session_root() {
 }
 
 } // anonymous namespace
+
 
 // ============================================================================
 // run_hardware_check
@@ -354,7 +417,7 @@ BootstrapReport initialize_infrastructure() {
         r.config_loaded = true;
         push("Config loaded", "yes");
     } else {
-        // Generate default config — never crash
+        // Generate default config  -  never crash
         std::error_code ec;
         fs::create_directories(session_root(), ec);
         if (!ec) {
@@ -429,7 +492,7 @@ BootstrapReport initialize_infrastructure() {
             r.level = StatusLevel::Warn;
     }
 
-    // --- IPC channel (standby — placeholder for future IPC) ---
+    // --- IPC channel (standby  -  placeholder for future IPC) ---
     r.ipc_channel_ok = true;
     push("IPC channel", "standby");
 

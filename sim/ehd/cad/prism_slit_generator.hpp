@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * prism_slit_generator.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Configuration (d): Triangular prism slit-electrode for cross-flow.
  * An array of triangular prism electrodes separated by narrow slits
@@ -32,10 +32,10 @@ namespace cad {
 // ============================================================================
 
 struct PrismSlitParams {
-    double slit_width   = 1.5e-3;   // w_slit (m) — gap between prisms
-    double slit_depth   = 5.0e-3;   // d_slit (m) — flow-through depth
-    double prism_base   = 3.0e-3;   // b (m) — triangular base width
-    double prism_height = 4.0e-3;   // h (m) — triangular height (apex to base)
+    double slit_width   = 1.5e-3;   // w_slit (m)  -  gap between prisms
+    double slit_depth   = 5.0e-3;   // d_slit (m)  -  flow-through depth
+    double prism_base   = 3.0e-3;   // b (m)  -  triangular base width
+    double prism_height = 4.0e-3;   // h (m)  -  triangular height (apex to base)
     int    prism_count  = 4;        // number of prisms in array
     int    pts_per_edge = 20;       // discretisation per triangle edge
 };
@@ -101,17 +101,17 @@ inline std::vector<Vec3> generate_prism_outline(
                 a.z + t * (b.z - a.z)};
     };
 
-    // Edge: base_left → apex
+    // Edge: base_left -> apex
     for (int i = 0; i < pts_per_edge; ++i) {
         double t = static_cast<double>(i) / pts_per_edge;
         outline.push_back(lerp(tri.base_left, tri.apex, t));
     }
-    // Edge: apex → base_right
+    // Edge: apex -> base_right
     for (int i = 0; i < pts_per_edge; ++i) {
         double t = static_cast<double>(i) / pts_per_edge;
         outline.push_back(lerp(tri.apex, tri.base_right, t));
     }
-    // Edge: base_right → base_left
+    // Edge: base_right -> base_left
     for (int i = 0; i < pts_per_edge; ++i) {
         double t = static_cast<double>(i) / pts_per_edge;
         outline.push_back(lerp(tri.base_right, tri.base_left, t));

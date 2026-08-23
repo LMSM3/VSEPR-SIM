@@ -1,4 +1,4 @@
-/**
+﻿/**
  * live_server.cpp
  * ---------------
  * Zero-input HTTP live analysis server implementation.
@@ -293,7 +293,7 @@ es.onmessage = function(e) {
   document.getElementById('trail').textContent = d.trail_id;
   const log = document.getElementById('log');
   log.innerHTML = '[' + d.timestamp + '] ' + d.formula + ' @ ' +
-    d.temperature_K.toFixed(0) + 'K, ' + d.pressure_atm.toFixed(1) + 'atm → v_rms=' +
+    d.temperature_K.toFixed(0) + 'K, ' + d.pressure_atm.toFixed(1) + 'atm -> v_rms=' +
     d.rms_speed_ms.toFixed(0) + ' m/s\n' + log.innerHTML;
 };
 </script>
@@ -429,9 +429,9 @@ int LiveServer::run() {
     }
 
     std::cout << "\033[1;35m"
-              << "╔════════════════════════════════════════════════════════════════╗\n"
-              << "║  VSEPR-SIM Live Analysis Server                               ║\n"
-              << "╚════════════════════════════════════════════════════════════════╝\n"
+              << "+================================================================+\n"
+              << "|  VSEPR-SIM Live Analysis Server                               |\n"
+              << "+================================================================+\n"
               << "\033[0m\n";
     std::cout << "  \033[0;32m●\033[0m Listening on http://localhost:" << config_.port << "\n";
     std::cout << "  \033[0;36mℹ\033[0m Dashboard:  http://localhost:" << config_.port << "/\n";
@@ -456,7 +456,7 @@ int LiveServer::run() {
               << " @ " << std::fixed << std::setprecision(0)
               << latest_.temperature_K << "K, "
               << std::setprecision(1) << latest_.pressure_atm << "atm"
-              << " → v_rms=" << std::setprecision(0)
+              << " -> v_rms=" << std::setprecision(0)
               << latest_.rms_speed_ms << " m/s\n";
 
     while (!g_shutdown_requested.load()) {
@@ -488,7 +488,7 @@ int LiveServer::run() {
                       << " @ " << std::fixed << std::setprecision(0)
                       << latest_.temperature_K << "K, "
                       << std::setprecision(1) << latest_.pressure_atm << "atm"
-                      << " → v_rms=" << std::setprecision(0)
+                      << " -> v_rms=" << std::setprecision(0)
                       << latest_.rms_speed_ms << " m/s\n";
         }
 
@@ -551,7 +551,7 @@ int serve_dispatch(int argc, char** argv) {
         } else if (arg == "--help" || arg == "-h") {
             std::cout << R"(
 VSEPR-SIM Live Analysis Server
-═══════════════════════════════
+===============================
 
 USAGE:
     vsepr serve [options]

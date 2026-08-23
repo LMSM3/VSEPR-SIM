@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * scene_factory.hpp — Backward-compatible aggregator header
+ * scene_factory.hpp  -  Backward-compatible aggregator header
  *
  * This header includes the split test infrastructure:
  *   - scene_builders.hpp: SceneBead, Xorshift32, scene generators,

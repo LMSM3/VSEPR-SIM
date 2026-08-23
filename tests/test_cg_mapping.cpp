@@ -1,5 +1,5 @@
-/**
- * test_cg_mapping.cpp — Coarse-Grained Mapping Pipeline Test
+﻿/**
+ * test_cg_mapping.cpp  -  Coarse-Grained Mapping Pipeline Test
  *
  * Exercises:
  *   1. Construct a small atomistic State (ethanol: C2H6O)
@@ -42,9 +42,9 @@
 //  Bonds: 0-1, 0-2, 0-3, 0-4, 4-5, 4-6, 4-7, 7-8
 //
 //  Mapping scheme (3 beads):
-//    Bead 0: "CH3"  → atoms {0,1,2,3}
-//    Bead 1: "CH2"  → atoms {4,5,6}
-//    Bead 2: "OH"   → atoms {7,8}
+//    Bead 0: "CH3"  -> atoms {0,1,2,3}
+//    Bead 1: "CH2"  -> atoms {4,5,6}
+//    Bead 2: "OH"   -> atoms {7,8}
 //
 
 static atomistic::State make_ethanol() {
@@ -105,7 +105,7 @@ static coarse_grain::MappingScheme make_ethanol_scheme() {
     MappingScheme scheme;
     scheme.name = "Ethanol 3-bead (CH3/CH2/OH)";
 
-    // Bead 0: CH3 → atoms {0,1,2,3}
+    // Bead 0: CH3 -> atoms {0,1,2,3}
     MappingRule r0;
     r0.rule_id = 0;
     r0.label = "CH3";
@@ -114,7 +114,7 @@ static coarse_grain::MappingScheme make_ethanol_scheme() {
     r0.selector.indices = {0, 1, 2, 3};
     scheme.rules.push_back(r0);
 
-    // Bead 1: CH2 → atoms {4,5,6}
+    // Bead 1: CH2 -> atoms {4,5,6}
     MappingRule r1;
     r1.rule_id = 1;
     r1.label = "CH2";
@@ -123,7 +123,7 @@ static coarse_grain::MappingScheme make_ethanol_scheme() {
     r1.selector.indices = {4, 5, 6};
     scheme.rules.push_back(r1);
 
-    // Bead 2: OH → atoms {7,8}
+    // Bead 2: OH -> atoms {7,8}
     MappingRule r2;
     r2.rule_id = 2;
     r2.label = "OH";
@@ -142,9 +142,9 @@ static coarse_grain::MappingScheme make_ethanol_scheme() {
 int main() {
     using namespace coarse_grain;
 
-    std::cout << "╔══════════════════════════════════════════════════╗\n";
-    std::cout << "║    Coarse-Grained Mapping Pipeline Test         ║\n";
-    std::cout << "╚══════════════════════════════════════════════════╝\n\n";
+    std::cout << "+==================================================+\n";
+    std::cout << "|    Coarse-Grained Mapping Pipeline Test         |\n";
+    std::cout << "+==================================================+\n\n";
 
     int pass = 0;
     int fail = 0;
@@ -277,9 +277,9 @@ int main() {
     std::cout << "\n" << report << "\n";
 
     // --- Summary ---
-    std::cout << "══════════════════════════════════════════════════\n";
+    std::cout << "==================================================\n";
     std::cout << "  Results: " << pass << " passed, " << fail << " failed\n";
-    std::cout << "══════════════════════════════════════════════════\n";
+    std::cout << "==================================================\n";
 
     return (fail == 0) ? 0 : 1;
 }

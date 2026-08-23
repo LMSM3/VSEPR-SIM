@@ -51,6 +51,7 @@
 #include "vsim/analysis/mcf_cai.hpp"
 
 #include <array>
+#include <cctype>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -809,6 +810,24 @@ struct BatchRunRecord {
 	int         steps_taken  = 0;
 	double      wall_ms      = 0.0;   // wall time for this run (ms)
 
+	// WO-28MAR – dense provenance captured when dense_record.enabled=true
+	std::string run_label;                       // label used for output files
+	std::string initial_xyz_path;                // initial structure path
+	std::string final_xyz_path;                  // final structure path
+	std::string connectivity_before_path;        // pre-run connectivity graph
+	std::string connectivity_after_path;         // post-run connectivity graph
+	std::string energy_force_path;               // energy/force trace sidecar
+	std::vector<double> energy_trace;            // cadence energy samples (kcal/mol)
+	std::vector<double> rms_force_trace;         // cadence RMS force samples
+	int         sample_interval = 0;             // steps between samples
+	uint64_t    rng_seed        = 0;             // actual seed used
+	std::string potential_checksum;              // hash or fingerprint of potential
+	std::string potential_label;                 // human-readable potential name
+	double      comp_ms         = 0.0;           // computation wall time (ms)
+	double      orch_ms         = 0.0;           // orchestration/provenance wall time (ms)
+	std::size_t total_files     = 0;             // files in output dir
+	uintmax_t   total_bytes     = 0;             // bytes in output dir
+
 	// Scoring
 	double      score_energy      = 0.0;
 	double      score_convergence = 0.0;
@@ -893,6 +912,11 @@ struct ExportSection {
 	bool write_dynx                = false;  // Dynx session archive
 	bool write_xbit                = false;  // XBIT geometry binding file
 	bool write_aggregate_json      = false;  // Batch aggregate summary JSON
+
+	// -- WO-89 PILLARS output cadence ---------------------------------------
+	int  snapshot_interval         = 1;      // steps between trajectory snapshots
+	int  event_interval            = 1;      // steps between event-log writes
+	int  metrics_interval          = 1;      // steps between metric samples
 
 	std::string output_dir;                  // Output directory (default: out/<name>/)
 };
@@ -1088,6 +1112,23 @@ struct VisualSection {
 	// Orthogonal to display_fps (which controls live UI refresh rate).
 	int render_interval = 1;   // steps; <= 0 is treated as 1
 
+	// -- Uless observation-length indicator (WO-89 Uless visual) -------------
+	// Renders a vertical bar in the top-left corner showing a single X.XX
+	// precision value. The exact meaning of the metric is caller-defined.
+	bool        uless_indicator_enabled = false;
+	std::string uless_indicator_label   = "obs";
+	double      uless_indicator_value   = 0.0;     // current value for display
+	double      uless_indicator_max     = 1.0;     // upper bound; ratio clamped to [0,1]
+
+	// -- WO-93A: smooth two-line terminal status loop ------------------------
+	// Renders a two-line live HUD in terminal_* output paths:
+	//   line 1 = step | energy bar | eta bar | state label (high Hz)
+	//   line 2 = CPU / RAM / disk / GPU (medium Hz)
+	// Each render overwrites the prior frame with cursor-up ANSI moves.
+	bool        show_status_loop       = false;
+	float       status_loop_hz         = 30.0f;    // line-1 max updates/sec
+	float       hardware_monitor_hz    = 2.0f;     // line-2 max updates/sec
+
 	// -- Live-switch feed ----------------------------------------------------
 	// Derived from the element carousel pattern in demo_molecule.hpp:
 	// when the kernel transitions between simulation phases or data sources
@@ -1256,6 +1297,82 @@ struct ViewDirective {
 };
 
 // ============================================================================
+// ConsolePrint  -  parsed from `print_console "<message>"` top-level directive
+// Stored on VsimDocument::console_prints (WO-85A)
+//
+// A live-session / script-encoded console emitter -- the VSIM equivalent of
+// Write-Host / echo / print.  Quotations around the message are optional:
+//   print_console "Hello world"   -> Hello world
+//   print_console Hello world     -> Hello world
+// Surrounding double quotes, if present, are stripped.  Empty messages emit a
+// blank line.  Directives render in declaration order as a [console] block.
+// ============================================================================
+
+struct ConsolePrint {
+	std::string message;   // the text to emit (quotes already stripped)
+	int         line = 0;  // 1-based source line for diagnostics
+};
+
+// ============================================================================
+// FeaturesSection  -  kernel feature toggles / output-format selection  (WO-85B)
+// Parsed from a top-level [features] section (or the alias
+// [features.outputformat]) and stored on VsimDocument::features.
+//
+// output_format selects which terminal viewer layout `vsepr run` emits for the
+// single-formula synthetic step loop.  The kernel default is "A" (the legacy
+// convergence-proxy behaviour) so existing scripts are unaffected; scripts may
+// override it declaratively:
+//
+//   [features]
+//   output_format = "B"        # rich composition + thermal + Gibbs + reactivity
+//
+//   [features.outputformat]    # alias form the same knob (single-key section)
+//   mode = "B"
+//
+// Catalog:
+//   "A"  -  Default proxy/convergence viewer (legacy; unchanged).
+//   "B"  -  Rich per-step table: step | E(thermal) | Gibbs* | % composition |
+//           ... | relative reactivity (rightmost, Part E derivative column).
+//   "C"  -  Reserved.  Falls back to "A" with a one-line note.
+//   "D"  -  Legacy convergence step-trace row (the pre-85B format).
+//   "ideal" -  Reserved for WO-85G (not yet implemented; treated as "A").
+//
+// The value is normalised to a single upper-case letter (or "ideal") by the
+// parser; unknown tokens degrade gracefully to "A".
+// ============================================================================
+
+struct FeaturesSection {
+	std::string output_format = "A";   // "A" | "B" | "C" | "D" | "ideal"
+	bool        present       = false; // true when a [features]* section appears
+
+	// Canonical helpers  -------------------------------------------------------
+	bool is_default()  const { return output_format == "A"; }
+	bool is_format_b() const { return output_format == "B"; }
+	bool is_format_d() const { return output_format == "D"; }
+	bool is_reserved() const { return output_format == "C" || output_format == "ideal"; }
+
+	// Normalise an arbitrary user token to the supported vocabulary.
+	// Accepts "b", "B", "format_b", "formatB" -> "B".
+	// Unknown -> "A".
+	static std::string normalize(std::string tok) {
+		for (auto& c : tok)
+			c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+		// strip common prefixes / separators
+		auto has = [&](const char* s) { return tok.find(s) != std::string::npos; };
+		if (has("ideal")) return "ideal";
+		// last single letter wins (handles "format_b", "b", "mode_d", ...)
+		for (auto it = tok.rbegin(); it != tok.rend(); ++it) {
+			char c = *it;
+			if (c == 'a') return "A";
+			if (c == 'b') return "B";
+			if (c == 'c') return "C";
+			if (c == 'd') return "D";
+		}
+		return "A";
+	}
+};
+
+// ============================================================================
 // Golden test document types
 // Populated by [defaults.*], [test.*], [suite], [report] sections
 // ============================================================================
@@ -1379,6 +1496,173 @@ struct GoldenReportSection {
 	bool include_hash_mismatches      = true;
 	bool include_placeholder_failures = false;
 	bool include_smoke_tests          = true;
+};
+
+// ============================================================================
+// Three Metallic Pillars extensions (WO-89 PILLARS)
+// ============================================================================
+
+struct PillarSection {
+	bool present = false;
+	std::string id;
+	std::string name;
+	std::string model;
+	std::string spatial_authority;
+	std::string event_authority;
+	std::string conservation_mode;
+};
+
+struct SpeciesRegistrySection {
+	bool present = false;
+	std::vector<std::string> species;
+};
+
+struct ReactionChannelEntry {
+	std::string id;
+	std::string stage;
+	std::string from_state;
+	std::string to_state;
+	std::vector<std::string> reactants;
+	std::vector<std::string> products;
+	std::string third_body;
+	std::string binding_mode;
+	std::string neighbor_rule;
+	std::string geometry_from;
+	std::string geometry_to;
+	double pre_exponential = 0.0;
+	double barrier_eV = 0.0;
+	double energy_delta_eV = 0.0;
+	double temperature_power = 0.0;
+	double site_radius_ang = 0.0;
+	int    coordination_delta = 0;
+	int    electron_delta_proxy = 0;
+	int    oxidation_state_delta = 0;
+	int    max_depth_layers = 0;
+	bool   increments_turnover = false;
+	bool   enabled = true;
+};
+
+struct ReactionNetworkSection {
+	bool present = false;
+	std::string id;
+	std::string selection;
+	std::string rate_law;
+	std::string energy_model;
+	std::string spatial_index;
+	std::string collision_model;
+	bool three_body_support = false;
+	bool reject_on_overlap = true;
+	bool reject_on_deficit = true;
+	std::vector<ReactionChannelEntry> channels;
+};
+
+struct ReactionPassivationSection {
+	bool present = false;
+	std::string metric;
+	std::string model;
+	double alpha_per_layer = 0.0;
+	double minimum_accessibility = 0.0;
+	std::vector<std::string> affects_channels;
+};
+
+struct ReactionStageEntry {
+	std::string id;
+	int start_step = 0;
+	int end_step = 0;
+	double environment_T_K = 0.0;
+	double pressure_proxy_GPa = 0.0;
+	std::vector<std::string> active_reservoirs;
+	std::vector<std::string> remove_unbound;
+};
+
+struct MetalCenterSection {
+	bool present = false;
+	std::string element;
+	int formal_charge_initial = 0;
+	int oxidation_state_initial = 0;
+	int electron_count_initial = 0;
+	int coordination_limit = 0;
+	std::string reference_geometry;
+	std::vector<std::string> active_geometry_set;
+	std::string state_equivalence;
+	bool track_ligand_field = false;
+	bool track_steric_load = false;
+	bool track_donation_proxy = false;
+	bool track_backbonding_proxy = false;
+};
+
+struct DescriptorElectronicSection {
+	bool present = false;
+	std::string model;
+	std::string calibration;
+	bool formal_charge = false;
+	bool oxidation_state = false;
+	bool electron_count_proxy = false;
+	bool ligand_field_proxy_eV = false;
+	bool donation_proxy = false;
+	bool backbonding_proxy = false;
+	bool bond_order_proxy = false;
+	bool publish_as_wavefunction = false;
+};
+
+struct CatalysisSection {
+	bool present = false;
+	int active_center_count = 0;
+	std::string turnover_event;
+	std::string product_species;
+	std::string recovered_state;
+	std::vector<std::string> state_equivalence_fields;
+	bool exact_coordinate_return = false;
+	int stall_window_steps = 0;
+};
+
+struct ThermodynamicsSection {
+	bool present = false;
+	std::string pressure_model;
+	std::string temperature_model;
+	std::string heat_capacity_model;
+	double reaction_heat_coupling = 0.0;
+	bool radiative_loss_enabled = false;
+	bool wall_loss_enabled = false;
+	double minimum_temperature_K = 0.0;
+	double maximum_temperature_K = 0.0;
+};
+
+struct IgnitionSection {
+	bool present = false;
+	std::string metric;
+	int baseline_window_steps = 0;
+	double threshold_delta_K = 0.0;
+	std::string secondary_metric;
+	double secondary_threshold = 0.0;
+	bool record_ignition_delay = false;
+};
+
+struct AuditConservationSection {
+	bool present = false;
+	std::vector<std::string> elements;
+	bool charge = false;
+	std::string energy;
+	bool strict = true;
+	int check_every_n_steps = 0;
+	double relative_tolerance = 0.0;
+	double absolute_tolerance = 0.0;
+	bool reject_invalid_event = true;
+};
+
+struct AuditStateRulesSection {
+	bool present = false;
+	int coordination_min = 0;
+	int coordination_max = 0;
+	std::vector<int> allowed_oxidation_states;
+	std::vector<int> allowed_formal_charges;
+	std::vector<std::string> allowed_geometry_classes;
+	bool reject_impossible_transition = true;
+};
+
+struct AuditAcceptanceSection {
+	bool present = false;
+	std::vector<std::string> requirements;
 };
 
 // ============================================================================
@@ -1565,6 +1849,17 @@ struct MaterialSection {
     std::string cell;             // Supercell spec: "4x4x4", "2x2x1", or scalar Å
     std::string phase;            // "solid", "liquid", "gas", "amorphous"
 
+    // Declaration provenance used by expansion/audit tooling. These flags
+    // distinguish script-authored fields from values resolved from aliases.
+    bool formula_declared     = false;
+    bool prototype_declared   = false;
+    bool structure_declared   = false;
+    bool space_group_declared = false;
+    bool lattice_declared     = false;
+    bool basis_declared       = false;
+    bool cell_declared        = false;
+    bool phase_declared       = false;
+
     bool has_formula()     const { return !formula.empty(); }
     bool has_prototype()   const { return !prototype.empty(); }
     bool has_basis()       const { return !basis.empty(); }
@@ -1577,6 +1872,34 @@ struct MaterialSection {
         if (!structure.empty())
             return std::string(resolve_structure_alias(structure));
         return "";
+    }
+};
+
+// -- Builder distribution intent --------------------------------------------
+// A named [distribution.<name>] card describes placement intent without
+// mutating physical state. The expansion preview audits these records; a future
+// scheduler may execute only distributions whose target and placement policy
+// are supported explicitly.
+struct DistributionSection {
+    std::string name;
+    std::string target;
+    std::string species;
+    int         count = 0;
+    std::string placement;
+    std::string shape;
+
+    XYZVec3 center{};
+    XYZVec3 extent{};
+    XYZVec3 velocity_mean{};
+    XYZVec3 velocity_spread{};
+    bool has_center          = false;
+    bool has_extent          = false;
+    bool has_velocity_mean   = false;
+    bool has_velocity_spread = false;
+
+    bool minimally_complete() const {
+        return !name.empty() && !target.empty() && !species.empty()
+            && count > 0 && !placement.empty();
     }
 };
 
@@ -1593,8 +1916,27 @@ struct RunSection {
     double      pressure_GPa  = 0.0;   // For NPT
     bool        converge   = true;     // Stop early on convergence
     std::string output_level = "standard"; // "minimal", "standard", "verbose"
+    bool        dense_record = false;  // WO-28MAR: enable high-data-density run record
 
     bool has_mode() const { return !mode.empty(); }
+};
+
+// -- [dense_record] section  --------------------------------------------------
+// WO-28MAR: controls the high-density run record emitted next to run artifacts.
+//
+struct DenseRunSection {
+    bool  enabled                 = false;
+    int   energy_force_interval   = 5;      // steps between energy/force samples
+    int   max_records             = 10000;  // hard cap on per-step samples
+    bool  initial_structure       = true;   // write initial XYZ before step loop
+    bool  final_structure         = true;   // write final XYZ after step loop
+    bool  connectivity_before     = true;   // write connectivity before relaxation
+    bool  connectivity_after      = true;   // write connectivity after relaxation
+    bool  seed                    = true;   // include random seed in record
+    bool  potential_checksum      = true;   // include potential/parameter checksum
+    bool  terminal_gates          = true;   // record every terminal gate evaluation
+    bool  timing_split            = true;   // computation vs orchestration wall time
+    std::string potential_label;            // optional human-readable potential name
 };
 
 // -- Level 2: [environment] ---------------------------------------------------
@@ -2668,7 +3010,9 @@ struct VsimDocument {
 
 	// WO-VSIM-03B  -  intent-based authoring
 	MaterialSection     material;                       // [material]
+	std::map<std::string, DistributionSection> distributions; // [distribution.<name>]
 	RunSection          run;                            // [run]
+	DenseRunSection     dense_record;                   // [dense_record]  WO-28MAR
 	EnvironmentSection  environment;                    // [environment]
 	ChemistrySection    chemistry;                      // [chemistry] / [system]
 	ChemPlusSection     chem_plus;                      // [chem_plus]  WO-84T
@@ -2721,6 +3065,8 @@ struct VsimDocument {
 	VisualWorkspaceSection visual_workspace;        // [visual.workspace]
 	RoomSection            room;                    // [room]
 	std::vector<ViewDirective> view_directives;     // `show` top-level directives
+	std::vector<ConsolePrint>  console_prints;      // `print_console` directives  WO-85A
+	FeaturesSection            features;            // [features] output-format select  WO-85B
 	OpenSection         open;                 // [open] / [open.advanced]
 	VarianceSection     variance_cfg;
 	NEvolutionSection   n_evolution_cfg;
@@ -2795,6 +3141,21 @@ struct VsimDocument {
 	SuiteSection                        suite;
 	GoldenReportSection                 golden_report;
 
+	// Three Metallic Pillars sections (WO-89 PILLARS)
+	PillarSection                pillar;
+	SpeciesRegistrySection       species_registry;
+	ReactionNetworkSection       reaction_network;
+	ReactionPassivationSection   reaction_passivation;
+	std::vector<ReactionStageEntry> reaction_stages;
+	MetalCenterSection           metal_center;
+	DescriptorElectronicSection  descriptor_electronic;
+	CatalysisSection             catalysis;
+	ThermodynamicsSection        thermodynamics;
+	IgnitionSection              ignition;
+	AuditConservationSection     audit_conservation;
+	AuditStateRulesSection       audit_state_rules;
+	AuditAcceptanceSection       audit_acceptance;
+
 	// Raw key-value store for unknown/extension sections (forward-compatible)
 	std::map<std::string, std::map<std::string, Value>> raw_sections;
 
@@ -2838,6 +3199,17 @@ struct VsimDocument {
 		// WO-VSIM-03B validations
 		if (material.has_formula() && simulation.molecules.empty()) {
 			// [material] used without [simulation]  -  that is fine, no error
+		}
+		for (const auto& [name, distribution] : distributions) {
+			const std::string prefix = "[distribution." + name + "] ";
+			if (distribution.target.empty())
+				r.warn(prefix + "target is missing; rule remains preview-only");
+			if (distribution.species.empty())
+				r.warn(prefix + "species is missing; rule remains preview-only");
+			if (distribution.count < 1)
+				r.warn(prefix + "count must be >= 1 for future execution");
+			if (distribution.placement.empty())
+				r.warn(prefix + "placement is missing; rule remains preview-only");
 		}
 		if (run.has_mode()) {
 			const std::string& m = run.mode;
@@ -2885,6 +3257,15 @@ struct VsimDocument {
 		s += "    fire_max_steps = " + std::to_string(simulation.fire_max_steps) + "\n";
 		s += "    box_size_ang   = " + std::to_string((int)simulation.box_size_ang) + "\n";
 		s += "    periodic       = " + std::string(simulation.periodic ? "true" : "false") + "\n";
+		if (!distributions.empty()) {
+			s += "  [distribution.*]\n";
+			for (const auto& [name, distribution] : distributions) {
+				s += "    " + name + "  target=" + distribution.target
+					+ "  species=" + distribution.species
+					+ "  count=" + std::to_string(distribution.count)
+					+ "  placement=" + distribution.placement + "\n";
+			}
+		}
 		auto flag = [](bool b) -> const char* { return b ? "yes" : "no"; };
 		s += "  [export]\n";
 		s += "    xyz                    = " + std::string(flag(exports.write_xyz))                 + "\n";

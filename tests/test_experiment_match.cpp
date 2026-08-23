@@ -1,8 +1,8 @@
-/**
+﻿/**
  * test_experiment_match.cpp
  * -------------------------
  * Validates the experimental data-matching module for the near-atomistic
- * nanoparticle regime (4–6 nm).
+ * nanoparticle regime (4-6 nm).
  *
  * Tests:
  *   T1  Site classification (bulk / surface / edge / vertex)
@@ -274,7 +274,7 @@ static void test_reference_sanity() {
 
 int main() {
     std::cout << "============================================================\n";
-    std::cout << " Experimental Data Matching — Near-Atomistic Regime (4-6nm)\n";
+    std::cout << " Experimental Data Matching  -  Near-Atomistic Regime (4-6nm)\n";
     std::cout << "============================================================\n";
 
     test_site_classification();

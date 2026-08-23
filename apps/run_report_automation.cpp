@@ -1,17 +1,17 @@
-/**
- * run_report_automation.cpp — Unified Report Automation Runner
+﻿/**
+ * run_report_automation.cpp  -  Unified Report Automation Runner
  *
  * Exercises ALL user-side report functions in a single deterministic run:
  *
- *   1. bead_fire_report_md()           → Markdown string
- *   2. write_bead_fire_report()        → .md file
- *   3. bead_fire_summary()             → console summary
- *   4. write_bead_fire_csv()           → .csv trajectory file
- *   5. fire_report_md()                → atomistic FIRE report
- *   6. export_excel_xml()              → Excel XML spreadsheet
- *   7. export_solidworks_sldcrv()      → SolidWorks curve file
- *   8. SnapshotGraphCollector exports  → timeseries + snapshot CSVs
- *   9. assemble_seed_bead_report()     → full seed-bead Markdown
+ *   1. bead_fire_report_md()           -> Markdown string
+ *   2. write_bead_fire_report()        -> .md file
+ *   3. bead_fire_summary()             -> console summary
+ *   4. write_bead_fire_csv()           -> .csv trajectory file
+ *   5. fire_report_md()                -> atomistic FIRE report
+ *   6. export_excel_xml()              -> Excel XML spreadsheet
+ *   7. export_solidworks_sldcrv()      -> SolidWorks curve file
+ *   8. SnapshotGraphCollector exports  -> timeseries + snapshot CSVs
+ *   9. assemble_seed_bead_report()     -> full seed-bead Markdown
  *
  * Usage:
  *   ./run_report_automation [output_directory]
@@ -20,7 +20,7 @@
  * Every file written is logged to stdout for traceability.
  *
  * Anti-black-box: every report function is called with explicit synthetic data.
- * Deterministic: same binary → identical outputs.
+ * Deterministic: same binary -> identical outputs.
  *
  * Reference: .github/copilot-instructions.md §2, §5, §9
  */
@@ -47,22 +47,22 @@ namespace fs = std::filesystem;
 // ============================================================================
 
 /**
- * build_synthetic_fire_result — 10,000-iteration multi-cycle FIRE trajectory.
+ * build_synthetic_fire_result  -  10,000-iteration multi-cycle FIRE trajectory.
  *
  * Generates a long-run FIRE minimization with many convergence cycles:
  *   - 10,000 total iterations
  *   - Frames recorded at ~1 Hz (every 10-12 steps)
  *   - 8 beads with evolving positions per frame
  *   - Multiple perturbation/reconvergence cycles (thermal kicks)
- *   - Deterministic: same binary → identical trajectory
+ *   - Deterministic: same binary -> identical trajectory
  *
  * Physics model:
  *   Each cycle starts with a perturbation (lattice thermal kick) that
  *   disrupts the converged state, followed by FIRE relaxation back to
  *   a (slightly shifted) minimum.  This models annealing / sampling.
  *
- * Frame rate:  ~1 Hz → record every FRAME_STRIDE steps.
- *              With FRAME_STRIDE=10 and 10,000 iterations → 1,000 frames.
+ * Frame rate:  ~1 Hz -> record every FRAME_STRIDE steps.
+ *              With FRAME_STRIDE=10 and 10,000 iterations -> 1,000 frames.
  *
  * Crystal lattice context:
  *   Bead positions are placed on an FCC-like ring in Angstrom.
@@ -94,7 +94,7 @@ static coarse_grain::BeadFIREResult build_synthetic_fire_result() {
     double U_prev = -20.0;
 
     for (int i = 0; i < TOTAL_ITERS; ++i) {
-        // ── Cycle-local coordinate ──
+        // -- Cycle-local coordinate --
         int    cycle      = i / CYCLE_LEN;
         int    local      = i % CYCLE_LEN;
         double t_local    = static_cast<double>(local);
@@ -110,7 +110,7 @@ static coarse_grain::BeadFIREResult build_synthetic_fire_result() {
             kick = std::exp(-0.5 * (t_local / kick_sigma) * (t_local / kick_sigma));
         }
 
-        // ── Energy (smooth decay per cycle + kick) ──
+        // -- Energy (smooth decay per cycle + kick) --
         double decay_tau = 40.0 + 5.0 * (cycle % 4);  // vary per cycle
         double U_base = -20.0 + well_shift
                         - 80.0 * (1.0 - std::exp(-t_local / decay_tau));
@@ -121,11 +121,11 @@ static coarse_grain::BeadFIREResult build_synthetic_fire_result() {
         double U_elec  = 0.45 * U_total;
         double U_disp  = 0.15 * U_total;
 
-        // ── Forces (exponential decay + kick spike) ──
+        // -- Forces (exponential decay + kick spike) --
         double Frms = 5.0 * std::exp(-t_local / 30.0) + 8.0 * kick + 1e-4;
         double Fmax = 2.5 * Frms + 3e-4;
 
-        // ── FIRE parameters ──
+        // -- FIRE parameters --
         double alpha = 0.1 * std::exp(-t_local / 60.0) + 0.05 * kick;
         double dt    = 1.0 + 9.0 * (1.0 - std::exp(-t_local / 50.0));
         if (kick > 0.01) dt *= (1.0 - 0.7 * kick);  // dt cuts on perturbation
@@ -133,7 +133,7 @@ static coarse_grain::BeadFIREResult build_synthetic_fire_result() {
         double dU_per_bead = (U_total - U_prev) / N_BEADS;
         U_prev = U_total;
 
-        // ── Frame sampling at ~1 Hz ──
+        // -- Frame sampling at ~1 Hz --
         // Record every FRAME_STRIDE steps, plus first and last
         bool record_frame = (i % FRAME_STRIDE == 0) || (i == TOTAL_ITERS - 1);
         if (!record_frame) continue;
@@ -150,7 +150,7 @@ static coarse_grain::BeadFIREResult build_synthetic_fire_result() {
         step.dt               = dt;
         step.dU_per_bead      = dU_per_bead;
 
-        // ── Bead positions (FCC-ring in Angstrom) ──
+        // -- Bead positions (FCC-ring in Angstrom) --
         for (int b = 0; b < N_BEADS; ++b) {
             double angle  = 2.0 * M_PI * b / N_BEADS;
             double radius = 5.0 - 0.5 * (1.0 - std::exp(-t_local / 40.0))
@@ -262,12 +262,12 @@ static int run_all_reports(const std::string& out_dir) {
         if (success) {
             ++pass;
             std::cout << "[✓] " << label;
-            if (!path.empty()) std::cout << " → " << path;
+            if (!path.empty()) std::cout << " -> " << path;
             std::cout << "\n";
         } else {
             ++fail;
             std::cerr << "[✗] " << label;
-            if (!path.empty()) std::cerr << " → " << path;
+            if (!path.empty()) std::cerr << " -> " << path;
             std::cerr << "\n";
         }
     };
@@ -286,7 +286,7 @@ static int run_all_reports(const std::string& out_dir) {
     }
 
     // ====================================================================
-    // 2. BeadFIRE report → file
+    // 2. BeadFIRE report -> file
     // ====================================================================
     {
         auto result = build_synthetic_fire_result();
@@ -330,11 +330,11 @@ static int run_all_reports(const std::string& out_dir) {
         std::string path = out_dir + "/atomistic_fire_report.md";
         std::ofstream f(path);
         if (f.is_open()) { f << report; f.close(); }
-        ok("atomistic FIRE report → file", f.good(), path);
+        ok("atomistic FIRE report -> file", f.good(), path);
     }
 
     // ====================================================================
-    // 6. SnapshotGraphCollector — timeseries CSV
+    // 6. SnapshotGraphCollector  -  timeseries CSV
     // ====================================================================
     {
         auto collector = build_synthetic_collector();
@@ -344,7 +344,7 @@ static int run_all_reports(const std::string& out_dir) {
     }
 
     // ====================================================================
-    // 7. SnapshotGraphCollector — snapshot CSV
+    // 7. SnapshotGraphCollector  -  snapshot CSV
     // ====================================================================
     {
         auto collector = build_synthetic_collector();
@@ -398,11 +398,11 @@ static int run_all_reports(const std::string& out_dir) {
     // Summary
     // ====================================================================
     std::cout << "\n";
-    std::cout << "═══════════════════════════════════════════════════════\n";
+    std::cout << "=======================================================\n";
     std::cout << "  Report Automation Complete\n";
     std::cout << "  Passed: " << pass << "  Failed: " << fail << "\n";
     std::cout << "  Output: " << out_dir << "/\n";
-    std::cout << "═══════════════════════════════════════════════════════\n";
+    std::cout << "=======================================================\n";
 
     return (fail == 0) ? 0 : 1;
 }
@@ -412,10 +412,10 @@ static int run_all_reports(const std::string& out_dir) {
 // ============================================================================
 
 int main(int argc, char* argv[]) {
-    std::cout << "╔═══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VSEPR-SIM Report Automation Runner                          ║\n";
-    std::cout << "║  Running all user-side report functions                       ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===============================================================+\n";
+    std::cout << "|  VSEPR-SIM Report Automation Runner                          |\n";
+    std::cout << "|  Running all user-side report functions                       |\n";
+    std::cout << "+===============================================================+\n\n";
 
     std::string out_dir = (argc > 1) ? argv[1] : "report_outputs";
 

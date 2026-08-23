@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * cuda_kernels.hpp
  * ----------------
@@ -65,14 +65,14 @@ float cuda_compute_nonbonded_energy(
 );
 
 // ============================================================================
-// Force Computation (Gradients) — unlocks GPU-accelerated FIRE / MD
+// Force Computation (Gradients)  -  unlocks GPU-accelerated FIRE / MD
 // ============================================================================
 
 /**
  * Compute nonbonded forces (gradients) and energy simultaneously on GPU.
  *
  * Forces are computed via the analytical gradient of U_LJ + U_Coul.
- * The force and energy pass is a single kernel launch — no extra cost
+ * The force and energy pass is a single kernel launch  -  no extra cost
  * for getting energy alongside forces.
  *
  * @param h_coords           Host array [3*num_atoms] of (x,y,z) coordinates (Å)
@@ -80,11 +80,11 @@ float cuda_compute_nonbonded_energy(
  * @param h_exclusions       Host array [num_atoms * max_excl] of excluded atom indices
  * @param num_exclusions_per_atom  Maximum exclusions per atom
  * @param num_atoms          Number of atoms
- * @param h_forces_out       Host array [3*num_atoms] — forces OUTPUT (kcal/mol/Å)
+ * @param h_forces_out       Host array [3*num_atoms]  -  forces OUTPUT (kcal/mol/Å)
  * @return Total nonbonded energy (kcal/mol)
  *
  * Caller must call cuda_set_charges() before this function.
- * Output forces are ACCUMULATED into h_forces_out — zero it first if needed.
+ * Output forces are ACCUMULATED into h_forces_out  -  zero it first if needed.
  */
 float cuda_compute_nonbonded_forces(
     const float* h_coords,

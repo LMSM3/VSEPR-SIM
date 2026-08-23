@@ -1,4 +1,4 @@
-/**
+﻿/**
  * live_server.hpp
  * ---------------
  * Zero-Input HTTP Live Analysis Server.
@@ -10,7 +10,7 @@
  *   - HTML dashboard at /
  *   - Server status at /status
  *
- * Uses raw POSIX/Winsock sockets — no external HTTP library needed.
+ * Uses raw POSIX/Winsock sockets  -  no external HTTP library needed.
  * The analysis loop runs the report engine and gas module to produce
  * scientifically interesting random output every cycle.
  *

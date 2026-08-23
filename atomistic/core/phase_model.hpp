@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * phase_model.hpp
  * ===============
@@ -116,7 +116,7 @@ struct PhaseParams {
     double sigmoid_k     = 0.05;   // K^-1 (steepness of transition)
 
     // Mode C Boltzmann softening
-    double gamma_J       = 500.0;  // J/mol (softening scale for ΔG → f_l)
+    double gamma_J       = 500.0;  // J/mol (softening scale for ΔG -> f_l)
 
     void default_solidus_liquidus() {
         if (T_solidus_K <= 0.0) T_solidus_K = T_melt_K - 5.0;
@@ -125,7 +125,7 @@ struct PhaseParams {
 };
 
 // ============================================================================
-// Melt result — exposed intermediates
+// Melt result  -  exposed intermediates
 // ============================================================================
 
 struct MeltResult {
@@ -145,7 +145,7 @@ struct MeltResult {
 };
 
 // ============================================================================
-// Gas result — exposed intermediates
+// Gas result  -  exposed intermediates
 // ============================================================================
 
 struct GasResult {
@@ -206,7 +206,7 @@ namespace mode_a {
 
 /**
  * Enthalpy accumulation:
- *   H(T) ≈ ∫[T0→T] cp(T) dT
+ *   H(T) ≈ ∫[T0->T] cp(T) dT
  *
  * Melt onset:  H(T) >= H_melt,onset
  * Full melt:   H(T) >= H_melt,onset + ΔH_f
@@ -524,8 +524,8 @@ inline double gibbs_with_cp(double H_ref, double S_ref, double cp,
  * Stability competition melt model.
  *
  * ΔG_melt = G_liquid - G_solid
- *   ΔG > 0 → solid favored
- *   ΔG < 0 → liquid favored
+ *   ΔG > 0 -> solid favored
+ *   ΔG < 0 -> liquid favored
  *
  * Probabilistic liquid fraction:
  *   f_l = 1 / (1 + exp(ΔG / γ))

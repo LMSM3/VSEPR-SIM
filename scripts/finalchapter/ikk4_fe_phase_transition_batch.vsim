@@ -1,0 +1,276 @@
+# =============================================================================
+# IKK IV -- Scale Interval, Length Scales, and Dimensional Structure
+# VSIM implementation: Fe BCC (alpha) at 300 K vs Fe FCC (gamma) at 1100 K
+#
+# Theory claim (IKK IV):
+#   Field, particle, and macro structure are not separate ontological
+#   categories. They are different representational limits of identity-bearing
+#   structure along the scale axis w.
+#
+#   EXTENSION -- phase transition as representational class change:
+#   When Fe transforms from BCC alpha (300 K) to FCC gamma (1100 K), the
+#   identity content of each Fe atom does NOT change. The atoms are still
+#   Fe atoms with the same mass, charge, and EAM interaction profile.
+#
+#   What changes is the representational class of the collective structure:
+#     BCC alpha: coordination 8, nearest neighbour 2.48 A
+#     FCC gamma: coordination 12, nearest neighbour 2.54 A
+#
+#   IKK IV S2: these are different scale-interval representational forms
+#   of the same identity-bearing structure. The phase boundary is a
+#   representational class boundary, not an identity boundary.
+#
+#   Observable test:
+#     Job A (BCC, 300 K):  emergence_candidate = true at 2.87 A window
+#                          coordination = 8
+#                          scale_drift small (ordered BCC)
+#
+#     Job B (FCC, 1100 K): emergence_candidate = true at 3.59 A window
+#                          coordination = 12
+#                          scale_drift larger (elevated temperature)
+#
+#   If the identity model (EAM for Fe) produces both structures from the
+#   same potential without any quantum input:
+#     -> the phase transition is a representational class change at the
+#        scale interval boundary, not a fundamental ontological change
+#
+# IKK IV sections mapped:
+#   S2 Length scale ladder -> rve_window_lengths_A spans atom scale to supercell
+#   S3 Representational class -> coordination number distinguishes BCC vs FCC
+#   S5 Physical vs representational size -> rve_window << system_size
+#                                           still captures coordination change
+#   S6 Field limit pointer -> largest window approaches field-like limit:
+#                             spatial_cv -> 0 at supercell-spanning window
+#
+# Physical reference:
+#   Fe BCC alpha:  a = 2.87 A, coord = 8, r_NN = 2.48 A, stable at 300 K
+#   Fe FCC gamma:  a = 3.59 A, coord = 12, r_NN = 2.54 A, stable at 1100 K
+#   Fe Curie T:    1043 K (alpha->gamma at 1184 K in reality)
+#
+# Note on temperature:
+#   Classical MD cannot reproduce the exact alpha->gamma transition temperature
+#   (1184 K). At 1100 K the FCC configuration is used directly as a seeded
+#   input to test whether the EAM potential stabilises FCC at high T.
+#   This is an identity-class probe, not a phase-diagram calculation.
+# =============================================================================
+
+[project]
+name        = "ikk4_fe_phase_transition_batch"
+version     = "v5.1.13.5"
+seed_base   = 8800
+determinism = true
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Job A: alpha-Fe BCC at 300 K -- particle-scale identity
+# IKK IV S2: BCC representational class at the nanometre scale
+# Coordination = 8. RVE windows span unit-cell to supercell.
+# ============================================================
+[[batch.job]]
+name            = "alpha_fe_bcc_300k"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic    = true
+use_ewald   = false    # metallic Fe: EAM, not Ewald
+formation_preset = "metallic"
+
+# Fe BCC: a = 2.87 A. 5x5x5 edge = 14.35 A.
+# Windows: unit cell, 2x, 3x, full supercell.
+# IKK IV S5: representational windows at each length scale.
+[batch.job.scale_sampling]
+rve_window_lengths_A             = [2.87, 5.74, 8.61, 14.35]
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+spatial_cv_threshold             = 0.25
+scale_drift_threshold            = 0.20
+scale_drift_metric               = "successive_window_difference"
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A2_Fe"
+expected_coordination        = 8
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.48
+nearest_neighbor_tolerance_A = 0.12
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.48, 2.87, 4.06]
+peak_tolerance_A   = 0.18
+require_peak_order = true
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.0
+max_slope_late       = 0.001
+expect_regime        = "solid_bounded"
+
+[batch.job.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[batch.job.observe]
+metrics       = ["energy_map", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 20
+
+[batch.job.kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[batch.job.kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true
+
+[batch.job.export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/finalchapter/ikk4_fe_alpha"
+
+
+# ============================================================
+# Job B: gamma-Fe FCC at 1100 K -- higher-T representational class
+# IKK IV S3: FCC representational class. Coordination = 12.
+# Same element, same EAM potential, different representational form.
+# ============================================================
+[[batch.job]]
+name            = "gamma_fe_fcc_1100k"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A1_Fe"    # FCC seeded input; runtime uses EAM for Fe
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 1100
+
+[batch.job.environment]
+periodic    = true
+temperature = 1100
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic         = true
+use_ewald        = false
+formation_preset = "metallic"
+
+# Fe FCC: a = 3.59 A. 5x5x5 edge = 17.95 A.
+# Same window count but adjusted to FCC lattice constant.
+# IKK IV S5: representational windows now span FCC scale.
+# At 1100 K, scale_drift will be larger due to thermal broadening.
+# That is not a failure -- it is the correct IKK IV prediction:
+# higher temperature = more representational drift = coarser observable class.
+[batch.job.scale_sampling]
+rve_window_lengths_A             = [3.59, 7.18, 10.77, 17.95]
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+spatial_cv_threshold             = 0.35    # looser: 1100 K broadening
+scale_drift_threshold            = 0.35
+scale_drift_metric               = "successive_window_difference"
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A1_Fe"
+expected_coordination        = 12
+coordination_tolerance       = 1
+expected_nearest_neighbor_A  = 2.54
+nearest_neighbor_tolerance_A = 0.18
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.54, 3.59, 4.40]
+peak_tolerance_A   = 0.25    # broader at 1100 K
+require_peak_order = true
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 5.0    # higher T: more thermal displacement
+max_slope_late       = 0.004
+expect_regime        = "solid_bounded"
+
+[batch.job.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[batch.job.observe]
+metrics       = ["energy_map", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 20
+
+[batch.job.kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[batch.job.kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true
+
+[batch.job.export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/finalchapter/ikk4_fe_gamma"
+
+
+# ---------------------------------------------------------------------------
+# Top-level report and visual (applies to the batch as a whole)
+# ---------------------------------------------------------------------------
+[report]
+title                   = "ikk4_fe_phase_transition_batch"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 40
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,coordination,rdf

@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\setlength{\emergencystretch}{3em}
+\title{Day 89 D/E/F/G: Consolidated VTK + Qt3D Visual Boundary}
+\author{VSEPR-SIM Work Order Authority}
+\date{Day 89}
+\begin{document}
+\maketitle
+
+\section*{Consolidated scope}
+The active visual stack is the VTK + Qt3D workstation, \texttt{vsepr-view}. OpenGL/GLFW/GLEW/ImGui and BGFX frontends have been moved to the dated archive and are no longer configured. Native CPU/GDI is replaced by the same Qt3D presentation behind \texttt{vsepr-view}; Day 89-F is therefore merged into the same target.
+
+The scientific producer and artifact contract remain authoritative; the viewer may not add, mutate, or silently reduce scientific rows.
+
+The input package is:
+\begin{center}
+\texttt{vsepr.dual\_backend\_3d.v1}\\
+\texttt{manifest.json}, \texttt{scenes.csv}, and \texttt{particles.csv}
+\end{center}
+Each consumer must preserve scene identity, particle identity, positions, radii, state values, bounds, and declared particle count. Presentation-specific camera, projection, shading, and frame pacing remain downstream concerns.
+
+\section*{Current evidence}
+The shared stress package is produced by \texttt{dual-backend-3d-data --stress-particles 1331}. Its manifest contains five scenes and 1,442 particles; the Python machine validator passes. This proves the upstream package boundary.
+
+A new \texttt{include/vis/day89\_artifact.hpp} contract validates manifest/CSV agreement and reports deterministic error codes. \texttt{vsepr-view --validate-only} loads the package, prints scene/count/bounds, and a \texttt{CUDA=ON/OFF CPU\_FALLBACK} capability string.
+
+\newpage
+\section*{Acceptance gate}
+Day 89-D/E is complete when \texttt{vsepr-view} either loads the fixture or reports an explicit dependency blocker, and:
+
+\begin{enumerate}
+\item loads the manifest and selected scene without uncaught parse or selection exceptions;
+\item reports the declared scene and particle counts;
+\item preserves the same particle bounds, positions, and state values used by the neutral artifact;
+\item emits deterministic diagnostics for missing, empty, malformed, and invalid-scene inputs;
+\item demonstrates that renderer execution does not mutate the scientific CSV or manifest; and
+\item provides a machine-readable validation result or a bounded, reproducible dependency blocker.
+\end{enumerate}
+
+Day 89-F and Day 89-G are merged into this gate because the consolidated VTK + Qt3D target is the single active visual consumer.
+
+\section*{Uless indicator extension}
+The VTK + Qt3D viewer now hosts the Unified Lightweight Expressive Scene Status (Uless) observation-length indicator. A new shared model, \texttt{include/vis/uless\_indicator.hpp}, stores \texttt{value}, \texttt{max\_value}, and \texttt{label}. The VSIM \texttt{[visual]} schema exposes \texttt{uless\_indicator\_enabled}, \texttt{uless\_indicator\_label}, \texttt{uless\_indicator\_value}, and \texttt{uless\_indicator\_max}; these are parsed by \texttt{src/vsim/vsim\_parser.cpp} and forwarded through \texttt{ViewerLauncher::launch\_with\_config} into \texttt{vsepr-view}'s command line.
+
+When enabled, the viewer draws a vertical bar in the top-left corner beneath a single X.XX precision readout. The bar fill ratio is clamped to $[0,1]$ against \texttt{uless\_indicator\_max}. This demonstrates full-stack visual status propagation from \texttt{.vsim} intent through the parser, launcher, and Qt3D widget.
+
+The demonstration script \texttt{scripts/demo\_uless\_visual.vsim} exercises the complete pipeline. Because Qt6 Qt3D is not installed in the current UCRT64 environment, the viewer binary is absent and \texttt{ShellExecuteExA} returns error 1223; the CLI prints an explicit blocker message, preserving the deterministic evidence pattern established for the Day 89 boundary.
+
+\section*{Status}
+Day 89-D/E/F/G is \textbf{COMPLETE for contract and capability-boundary evidence}. The VTK + Qt3D viewer compiles when Qt6 Qt3D components are available and reports an explicit blocker otherwise. OpenGL and BGFX are no longer active build targets. Uless indicator scaffolding is in place across parser, launcher, and viewer; scale-finishing camera widgets and PNG export are recorded as carry-forward under Day 89-U readiness.
+
+\end{document}

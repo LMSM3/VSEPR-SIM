@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * include/vsim/vsim_post_step.hpp
  * ================================
@@ -29,11 +29,11 @@
 
 namespace vsim {
 
-// ── run_post_step ─────────────────────────────────────────────────────────────
+// -- run_post_step -------------------------------------------------------------
 //
 // Executes the [post_step] script_block against the supplied particle state.
 //
-// Returns: interpreter scope after execution — every assignment made by the
+// Returns: interpreter scope after execution  -  every assignment made by the
 //          script is a key/value entry in the returned map.
 //          Empty map when post_step is disabled or the script_block is empty.
 //

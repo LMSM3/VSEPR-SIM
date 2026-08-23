@@ -1,16 +1,16 @@
-/**
+﻿/**
  * demo_provenance_shell.cpp
  * -------------------------
  * Provenance & Deterministic Hash Demo with ASCII Shell Visualization
  *
  * Demonstrates the core VSEPR-SIM anti-black-box principle:
  *   Every structure carries its own cryptographic fingerprint.
- *   Same inputs → identical output. Always. Everywhere.
+ *   Same inputs -> identical output. Always. Everywhere.
  *
  * Features:
  *   1. Molecule construction from scratch (H2O, CH4, NH3, SF6)
  *   2. Canonical identity computation (Morgan + FNV-1a)
- *   3. Deterministic provenance verification (build twice → same hash)
+ *   3. Deterministic provenance verification (build twice -> same hash)
  *   4. ASCII shell-based molecular visualization (XY/XZ projections)
  *   5. Full provenance chain display
  *
@@ -101,7 +101,7 @@ namespace ansi {
 }
 
 // ============================================================================
-// ASCII SHELL RENDERER — 2D projection of 3D molecular structure
+// ASCII SHELL RENDERER  -  2D projection of 3D molecular structure
 // ============================================================================
 
 struct AsciiCanvas {
@@ -274,7 +274,7 @@ void render_molecule_ascii(const vsepr::Molecule& mol,
 }
 
 // ============================================================================
-// MOLECULE FACTORIES — deterministic construction
+// MOLECULE FACTORIES  -  deterministic construction
 // ============================================================================
 
 vsepr::Molecule build_h2o() {
@@ -365,53 +365,53 @@ struct ProvenanceRecord {
 
 void print_provenance_chain(const std::vector<ProvenanceRecord>& records) {
     std::cout << "\n";
-    std::cout << ansi::BOLD << "  ╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "  ║              PROVENANCE CHAIN — HASH AUDIT                  ║\n";
-    std::cout << "  ╠══════════════════════════════════════════════════════════════╣" << ansi::RESET << "\n";
+    std::cout << ansi::BOLD << "  +==============================================================+\n";
+    std::cout << "  |              PROVENANCE CHAIN  -  HASH AUDIT                  |\n";
+    std::cout << "  ╠==============================================================╣" << ansi::RESET << "\n";
 
     for (size_t i = 0; i < records.size(); ++i) {
         const auto& r = records[i];
 
-        std::cout << "  ║ " << ansi::BOLD << std::setw(3) << (i + 1) << ". "
+        std::cout << "  | " << ansi::BOLD << std::setw(3) << (i + 1) << ". "
                   << std::setw(8) << std::left << r.formula << ansi::RESET;
 
         std::cout << "  atoms=" << std::setw(2) << r.num_atoms
                   << "  bonds=" << std::setw(2) << r.num_bonds;
 
-        std::cout << std::right << "           ║\n";
+        std::cout << std::right << "           |\n";
 
         // Topology hash
-        std::cout << "  ║     topo:  " << ansi::CYAN << "0x" << std::hex << std::setfill('0')
+        std::cout << "  |     topo:  " << ansi::CYAN << "0x" << std::hex << std::setfill('0')
                   << std::setw(16) << r.topology_hash << std::dec << std::setfill(' ')
                   << ansi::RESET;
-        std::cout << "                      ║\n";
+        std::cout << "                      |\n";
 
         // Geometry hash
-        std::cout << "  ║     geom:  " << ansi::MAGENTA << "0x" << std::hex << std::setfill('0')
+        std::cout << "  |     geom:  " << ansi::MAGENTA << "0x" << std::hex << std::setfill('0')
                   << std::setw(16) << r.geometry_hash << std::dec << std::setfill(' ')
                   << ansi::RESET;
-        std::cout << "                      ║\n";
+        std::cout << "                      |\n";
 
         // Deterministic verification
-        std::cout << "  ║     verified: "
+        std::cout << "  |     verified: "
                   << (r.deterministic_verified
                       ? (std::string(ansi::GREEN) + "DETERMINISTIC ✓" + ansi::RESET)
                       : (std::string(ansi::RED) + "MISMATCH ✗" + ansi::RESET));
-        std::cout << "                           ║\n";
+        std::cout << "                           |\n";
 
         // Method
-        std::cout << "  ║     method: " << r.construction_method;
+        std::cout << "  |     method: " << r.construction_method;
         int pad = 47 - static_cast<int>(r.construction_method.size());
         if (pad > 0) std::cout << std::string(pad, ' ');
-        std::cout << "║\n";
+        std::cout << "|\n";
 
         if (i < records.size() - 1) {
-            std::cout << "  ╠──────────────────────────────────────────────────────────────╣\n";
+            std::cout << "  ╠--------------------------------------------------------------╣\n";
         }
     }
 
     std::cout << ansi::BOLD
-              << "  ╚══════════════════════════════════════════════════════════════╝\n"
+              << "  +==============================================================+\n"
               << ansi::RESET;
 }
 
@@ -421,23 +421,23 @@ void print_provenance_chain(const std::vector<ProvenanceRecord>& records) {
 
 void print_coordinate_table(const vsepr::Molecule& mol, const std::string& label) {
     std::cout << "\n  " << ansi::BOLD << label << ansi::RESET << "\n";
-    std::cout << "  ┌──────┬──────┬───────────┬───────────┬───────────┐\n";
-    std::cout << "  │ Atom │ Elem │     X (Å) │     Y (Å) │     Z (Å) │\n";
-    std::cout << "  ├──────┼──────┼───────────┼───────────┼───────────┤\n";
+    std::cout << "  +------┬------┬-----------┬-----------┬-----------+\n";
+    std::cout << "  | Atom | Elem |     X (Å) |     Y (Å) |     Z (Å) |\n";
+    std::cout << "  +------┼------┼-----------┼-----------┼-----------┤\n";
 
     for (size_t i = 0; i < mol.num_atoms(); ++i) {
         std::string sym = z_to_sym(mol.atoms[i].Z);
         const char* color = ansi::cpk_color(mol.atoms[i].Z);
 
-        std::cout << "  │ " << std::setw(4) << i << " │ "
-                  << color << std::setw(4) << sym << ansi::RESET << " │ "
+        std::cout << "  | " << std::setw(4) << i << " | "
+                  << color << std::setw(4) << sym << ansi::RESET << " | "
                   << std::fixed << std::setprecision(4)
-                  << std::setw(9) << mol.coords[3 * i] << " │ "
-                  << std::setw(9) << mol.coords[3 * i + 1] << " │ "
-                  << std::setw(9) << mol.coords[3 * i + 2] << " │\n";
+                  << std::setw(9) << mol.coords[3 * i] << " | "
+                  << std::setw(9) << mol.coords[3 * i + 1] << " | "
+                  << std::setw(9) << mol.coords[3 * i + 2] << " |\n";
     }
 
-    std::cout << "  └──────┴──────┴───────────┴───────────┴───────────┘\n";
+    std::cout << "  +------┴------┴-----------┴-----------┴-----------+\n";
 }
 
 // ============================================================================
@@ -447,9 +447,9 @@ void print_coordinate_table(const vsepr::Molecule& mol, const std::string& label
 void print_bond_table(const vsepr::Molecule& mol) {
     if (mol.bonds.empty()) return;
 
-    std::cout << "  ┌──────┬──────┬───────┬──────────┐\n";
-    std::cout << "  │  i   │  j   │ Order │ Dist (Å) │\n";
-    std::cout << "  ├──────┼──────┼───────┼──────────┤\n";
+    std::cout << "  +------┬------┬-------┬----------+\n";
+    std::cout << "  |  i   |  j   | Order | Dist (Å) |\n";
+    std::cout << "  +------┼------┼-------┼----------┤\n";
 
     for (const auto& b : mol.bonds) {
         double dx = mol.coords[3 * b.i]     - mol.coords[3 * b.j];
@@ -460,14 +460,14 @@ void print_bond_table(const vsepr::Molecule& mol) {
         std::string sym_i = z_to_sym(mol.atoms[b.i].Z);
         std::string sym_j = z_to_sym(mol.atoms[b.j].Z);
 
-        std::cout << "  │ " << std::setw(2) << sym_i << "(" << b.i << ")"
-                  << " │ " << std::setw(2) << sym_j << "(" << b.j << ")"
-                  << " │   " << std::setw(1) << static_cast<int>(b.order) << "   "
-                  << " │ " << std::fixed << std::setprecision(4)
-                  << std::setw(8) << d << " │\n";
+        std::cout << "  | " << std::setw(2) << sym_i << "(" << b.i << ")"
+                  << " | " << std::setw(2) << sym_j << "(" << b.j << ")"
+                  << " |   " << std::setw(1) << static_cast<int>(b.order) << "   "
+                  << " | " << std::fixed << std::setprecision(4)
+                  << std::setw(8) << d << " |\n";
     }
 
-    std::cout << "  └──────┴──────┴───────┴──────────┘\n";
+    std::cout << "  +------┴------┴-------┴----------+\n";
 }
 
 // ============================================================================
@@ -502,23 +502,23 @@ bool verify_determinism(const std::string& label,
 int main() {
     std::cout << "\n";
     std::cout << ansi::BOLD;
-    std::cout << "  ╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "  ║     VSEPR-SIM: Provenance & Deterministic Hash Demo        ║\n";
-    std::cout << "  ║     Shell-Based Molecular Visualization                    ║\n";
-    std::cout << "  ╠══════════════════════════════════════════════════════════════╣\n";
-    std::cout << "  ║  Every structure carries its own fingerprint.              ║\n";
-    std::cout << "  ║  Same inputs → identical output. Always. Everywhere.      ║\n";
-    std::cout << "  ║                                                            ║\n";
-    std::cout << "  ║  Nuclear simulation demands bit-identical reproducibility. ║\n";
-    std::cout << "  ║  This demo proves the engine delivers it.                 ║\n";
-    std::cout << "  ╚══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "  +==============================================================+\n";
+    std::cout << "  |     VSEPR-SIM: Provenance & Deterministic Hash Demo        |\n";
+    std::cout << "  |     Shell-Based Molecular Visualization                    |\n";
+    std::cout << "  ╠==============================================================╣\n";
+    std::cout << "  |  Every structure carries its own fingerprint.              |\n";
+    std::cout << "  |  Same inputs -> identical output. Always. Everywhere.      |\n";
+    std::cout << "  |                                                            |\n";
+    std::cout << "  |  Nuclear simulation demands bit-identical reproducibility. |\n";
+    std::cout << "  |  This demo proves the engine delivers it.                 |\n";
+    std::cout << "  +==============================================================+\n";
     std::cout << ansi::RESET << "\n";
 
     // ========================================================================
     // Phase 1: Build molecules
     // ========================================================================
 
-    std::cout << ansi::BOLD << "  ═══ Phase 1: Deterministic Molecule Construction ═══\n" << ansi::RESET;
+    std::cout << ansi::BOLD << "  === Phase 1: Deterministic Molecule Construction ===\n" << ansi::RESET;
 
     struct MolEntry {
         std::string name;
@@ -542,8 +542,8 @@ int main() {
         auto mol = entry.builder();
         auto id = vsepr::identity::compute_identity(mol, z_to_sym);
 
-        std::cout << "\n  " << ansi::BOLD << "─── " << entry.name
-                  << " (" << entry.formula << ") ───" << ansi::RESET << "\n";
+        std::cout << "\n  " << ansi::BOLD << "--- " << entry.name
+                  << " (" << entry.formula << ") ---" << ansi::RESET << "\n";
         std::cout << "  Geometry: " << entry.geometry << "\n";
         std::cout << "  Atoms:    " << mol.num_atoms() << "\n";
         std::cout << "  Bonds:    " << mol.num_bonds() << "\n";
@@ -554,11 +554,11 @@ int main() {
         print_bond_table(mol);
 
         // ASCII visualization (XY projection)
-        render_molecule_ascii(mol, entry.name + " — " + entry.formula, Projection::XY);
+        render_molecule_ascii(mol, entry.name + "  -  " + entry.formula, Projection::XY);
 
         // Second projection for 3D molecules
         if (mol.num_atoms() > 3) {
-            render_molecule_ascii(mol, entry.name + " — " + entry.formula, Projection::XZ);
+            render_molecule_ascii(mol, entry.name + "  -  " + entry.formula, Projection::XZ);
         }
 
         // Build provenance record
@@ -582,7 +582,7 @@ int main() {
     // ========================================================================
 
     std::cout << "\n" << ansi::BOLD
-              << "  ═══ Phase 2: Deterministic Verification (build twice, compare) ═══\n"
+              << "  === Phase 2: Deterministic Verification (build twice, compare) ===\n"
               << ansi::RESET << "\n";
 
     int pass_count = 0;
@@ -608,7 +608,7 @@ int main() {
     // ========================================================================
 
     std::cout << "\n" << ansi::BOLD
-              << "  ═══ Phase 3: Cross-Molecule Uniqueness Verification ═══\n"
+              << "  === Phase 3: Cross-Molecule Uniqueness Verification ===\n"
               << ansi::RESET << "\n";
 
     std::cout << "  Verifying that distinct molecules produce distinct hashes...\n\n";
@@ -647,27 +647,27 @@ int main() {
     // ========================================================================
 
     std::cout << "\n" << ansi::BOLD;
-    std::cout << "  ═══ Nuclear Simulation Relevance ═══\n" << ansi::RESET << "\n";
+    std::cout << "  === Nuclear Simulation Relevance ===\n" << ansi::RESET << "\n";
     std::cout << "  The provenance chain above demonstrates:\n\n";
     std::cout << "  1. " << ansi::BOLD << "Bit-identical reproducibility" << ansi::RESET
-              << " — same construction → same hash, always\n";
+              << "  -  same construction -> same hash, always\n";
     std::cout << "  2. " << ansi::BOLD << "Collision-free fingerprinting" << ansi::RESET
-              << " — distinct molecules → distinct hashes\n";
+              << "  -  distinct molecules -> distinct hashes\n";
     std::cout << "  3. " << ansi::BOLD << "Platform-independent canonicalization" << ansi::RESET
-              << " — Morgan algorithm + FNV-1a\n";
+              << "  -  Morgan algorithm + FNV-1a\n";
     std::cout << "  4. " << ansi::BOLD << "Full audit trail" << ansi::RESET
-              << " — every structure traceable to construction method\n";
+              << "  -  every structure traceable to construction method\n";
     std::cout << "  5. " << ansi::BOLD << "Anti-black-box design" << ansi::RESET
-              << " — every hash is inspectable and deterministic\n";
+              << "  -  every hash is inspectable and deterministic\n";
     std::cout << "\n  For safety-critical nuclear modeling (UO₂, fuel assemblies,\n";
     std::cout << "  containment materials), this guarantees that simulation results\n";
     std::cout << "  can be independently verified and audited at any time.\n\n";
 
     std::cout << ansi::BOLD
-              << "  ════════════════════════════════════════════════════\n"
+              << "  ====================================================\n"
               << "   Demo complete. " << pass_count << "/" << total
               << " structures verified deterministic.\n"
-              << "  ════════════════════════════════════════════════════\n"
+              << "  ====================================================\n"
               << ansi::RESET << "\n";
 
     return 0;

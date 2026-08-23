@@ -105,7 +105,7 @@ static void show_welcome()
         << "\033[1;35m  ╔══════════════════════════════════════════════════════════════╗\033[0m\n"
         << "\033[1;35m  ║  \033[0m"
         << "\033[1;37mVSEPR-SIM\033[0m  "
-        << "\033[0;36mv5.14.1\033[0m"
+        << "\033[0;36mv5.16.0\033[0m"
         << "  \033[0;37m│  atomistic simulation & analysis platform\033[0m"
         << "\033[1;35m  ║\033[0m\n"
         << "\033[1;35m  ╚══════════════════════════════════════════════════════════════╝\033[0m\n";
@@ -156,11 +156,9 @@ static void show_welcome()
     // Neighbor exe check (beside vsepr.exe)
     struct NeighborCheck { const char* exe; const char* role; };
     const std::vector<NeighborCheck> neighbors = {
-        { "vsepr-desktop.exe",  "Qt workstation GUI"    },
-        { "vsepr-launcher.exe", "File association handler" },
+        { "vsepr-view.exe",     "Live molecular viewer"  },
         { "property_train.exe", "Property-based trainer" },
         { "continual_runner.exe","Continual formation engine"},
-        { "vsepr-view-bench.exe","View demo bench suite" },
     };
     // Try to locate the exe beside this process
     fs::path binDir;
@@ -193,13 +191,12 @@ static void show_welcome()
     welcome_line("\033[0;32m", "  RUN     ", "vsepr <script.vsim>",           "Short form — no subcommand needed");
         welcome_line("\033[0;32m", "  BATCH   ", "vsepr batch [opts] *.vsim",     "Run multiple .vsim scripts in batch");
     welcome_line("\033[0;36m", "  CHECK   ", "vsepr validate <script.vsim>",  "Parse & validate without running");
-    welcome_line("\033[0;36m", "  VIEW    ", "vsepr view <file>",             "Open .xyz / .xyzFull / .dynx viewer");
+    welcome_line("\033[0;36m", "  VIEW    ", "vsepr-view --artifact <file>",  "Open an artifact in the live viewer");
 
     welcome_section("TRAINING  (property-based continual engine)");
     welcome_line("\033[0;35m", "  TRAIN   ", "property_train --formations 100 --seeds 3",
                                              "Run property-based invariant training");
     welcome_line("\033[0;35m", "  TRAIN   ", "property_train --help",         "Full training CLI options");
-    welcome_line("\033[0;35m", "  BENCH   ", "vsepr-view-bench --bench",      "Run all 21 view demo scenarios");
     welcome_line("\033[0;35m", "  BENCH   ", "continual_runner",              "Continual formation engine");
 
     welcome_section("ANALYSIS  (modules)");
@@ -213,9 +210,9 @@ static void show_welcome()
     welcome_line("\033[0;36m", "  MODULE  ", "vsepr x run <file.X>",         "Run a saved .X suite file");
     welcome_line("\033[0;36m", "  MODULE  ", "vsepr mlprop <formula>",        "ML material-property recommender");
 
-    welcome_section("DESKTOP  (Qt workstation)");
-    welcome_line("\033[1;37m", "  LAUNCH  ", "vsepr-desktop",                 "Full Qt workstation (OpenGL + docks)");
-    welcome_line("\033[1;37m", "  LAUNCH  ", "vsepr-launcher <file.vsim>",    "Qt launcher (file association handler)");
+    welcome_section("LIVE VIEWER");
+    welcome_line("\033[1;37m", "  LAUNCH  ", "vsepr-view",                    "Fixed-timestep molecular viewer");
+    welcome_line("\033[1;37m", "  LAUNCH  ", "vsepr-view --artifact <file>",  "Load an exported artifact into the live viewer");
     welcome_line("\033[1;37m", "  DEMO    ", "vsepr --demo",                  "Rotating molecule viewer (random)");
     welcome_line("\033[1;37m", "  DEMO    ", "vsepr --demo --list",           "List all 20 demo molecules");
     welcome_line("\033[1;37m", "  DEMO    ", "vsepr --demo0",                 "Element tour Z=1..102");
@@ -253,13 +250,13 @@ static void show_welcome()
 
 void show_help() {
     std::cout << R"(
-VSEPR-SIM v5.14.1  |  atomistic simulation and analysis platform
+VSEPR-SIM v5.16.0  |  atomistic simulation and analysis platform
 
 USAGE
     vsepr <script.vsim>            Run a .vsim simulation script (short form)
     vsepr run      <script.vsim>   Run a .vsim simulation script
     vsepr validate <script.vsim>   Validate script syntax without running
-    vsepr view     <file>             Open a file in the lightweight viewer
+    vsepr-view --artifact <file>      Open an artifact in the live viewer
     vsepr doctor                      Print installation health summary
     vsepr doctor integratedtest       Run dependency-ordered integration tests
     vsepr doctor benchmark            Run timed throughput benchmarks
@@ -296,14 +293,12 @@ SIMULATION SCRIPTS (.vsim)
     Full language reference:  docs/VSIM_LANGUAGE.md
     Section reference:        VSIM_REFERENCE.md
 
-VIEWER
-    vsepr view molecule.xyz         Single-frame static geometry
-    vsepr view run.xyzFull          Multi-frame trajectory browser
-    vsepr view session.dynx         Dynamic session archive
-    vsepr view --small run.xyzf     Compact 700x900 window
+LIVE VIEWER
+    vsepr-view                       Start the fixed-timestep molecular viewer
+    vsepr-view --artifact molecule.xyz
+                                      Load an artifact through the live worker
 
-    Requires vsepr-light-view in PATH or next to vsepr.exe.
-    Build with:  cmake --preset vis && cmake --build build_vis --target vsepr-light-view
+    Build with: cmake --preset vis && cmake --build build_vis --target vsepr-view
 
 SUITE FILES (.X)
     vsepr x run      file.X         Run a saved suite
@@ -436,13 +431,13 @@ int main(int argc, char** argv) {
 
         // Version flag
         if (cmd == "--version" || cmd == "-v" || cmd == "version") {
-            std::cout << "VSEPR-SIM v5.14.1\n";
+            std::cout << "VSEPR-SIM v5.16.0\n";
             return 0;
         }
 
         // Build-info flag
         if (cmd == "--build-info" || cmd == "build-info") {
-            std::cout << "VSEPR-SIM v5.14.1  |  C++23  |  branch: day84t-chemplus-declarative-vsepr\n";
+            std::cout << "VSEPR-SIM v5.16.0  |  C++23  |  branch: day84t-chemplus-declarative-vsepr\n";
             std::cout << "  Compiler: " << __VERSION__ << "\n";
             return 0;
         }
@@ -505,7 +500,7 @@ int main(int argc, char** argv) {
             const std::string FAIL = "  [FAIL] ";
             const std::string WARN = "  [warn] ";
 
-            std::cout << "VSEPR-SIM v5.14.1  installation health\n" << SEP << "\n\n";
+            std::cout << "VSEPR-SIM v5.16.0  installation health\n" << SEP << "\n\n";
 
             int failures = 0;
             int warnings = 0;
@@ -891,7 +886,7 @@ int main(int argc, char** argv) {
                 std::cerr << "Usage: vsepr expand <input.vsim>\n";
                 return 1;
             }
-            return vsepr::cli::run_classify_preview(std::filesystem::path(argv[2]));
+            return vsepr::cli::run_script_expansion_preview(std::filesystem::path(argv[2]));
         }
 
         // Run VSEPR + OrganicCandidate classify preview on a .vsim formula

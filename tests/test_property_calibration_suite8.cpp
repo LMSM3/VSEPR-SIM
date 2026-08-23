@@ -1,5 +1,5 @@
-/**
- * test_property_calibration_suite8.cpp — Suite #8: Property Calibration
+﻿/**
+ * test_property_calibration_suite8.cpp  -  Suite #8: Property Calibration
  *                                         and Target Legitimacy
  *
  * Validates the calibration layer that maps precursor channels to a
@@ -156,7 +156,7 @@ build_training_dataset(int n = 20, const std::string& target_name = "rigidity_li
 }
 
 // ============================================================================
-// Phase 8A — Property Family Selection
+// Phase 8A  -  Property Family Selection
 // ============================================================================
 
 static void phase_8a_property_families() {
@@ -215,20 +215,20 @@ static void phase_8a_property_families() {
         std::printf("\n--- 8A.4: Index round-trip ---\n");
 
         check(property_family_from_index(0) == PropertyFamily::RigidityLike,
-              "index 0 → RigidityLike");
+              "index 0 -> RigidityLike");
         check(property_family_from_index(1) == PropertyFamily::DuctilityLike,
-              "index 1 → DuctilityLike");
+              "index 1 -> DuctilityLike");
         check(property_family_from_index(2) == PropertyFamily::BrittlenessLike,
-              "index 2 → BrittlenessLike");
+              "index 2 -> BrittlenessLike");
         check(property_family_from_index(3) == PropertyFamily::ThermalTransportLike,
-              "index 3 → ThermalTransportLike");
+              "index 3 -> ThermalTransportLike");
         check(property_family_from_index(4) == PropertyFamily::ElectricalTransportLike,
-              "index 4 → ElectricalTransportLike");
+              "index 4 -> ElectricalTransportLike");
     }
 }
 
 // ============================================================================
-// Phase 8B — Target-Definition Contracts
+// Phase 8B  -  Target-Definition Contracts
 // ============================================================================
 
 static void phase_8b_contracts() {
@@ -330,7 +330,7 @@ static void phase_8b_contracts() {
 }
 
 // ============================================================================
-// Phase 8C — Calibration Profiles
+// Phase 8C  -  Calibration Profiles
 // ============================================================================
 
 static void phase_8c_profiles() {
@@ -363,9 +363,9 @@ static void phase_8c_profiles() {
         p.scale = 1.0;
         p.offset = 0.0;
 
-        check(std::abs(p.apply(0.5) - 0.5) < 1e-15, "identity: 0.5 → 0.5");
-        check(std::abs(p.apply(0.0) - 0.0) < 1e-15, "identity: 0.0 → 0.0");
-        check(std::abs(p.apply(1.0) - 1.0) < 1e-15, "identity: 1.0 → 1.0");
+        check(std::abs(p.apply(0.5) - 0.5) < 1e-15, "identity: 0.5 -> 0.5");
+        check(std::abs(p.apply(0.0) - 0.0) < 1e-15, "identity: 0.0 -> 0.0");
+        check(std::abs(p.apply(1.0) - 1.0) < 1e-15, "identity: 1.0 -> 1.0");
     }
 
     // ---- 8C.3: Scale+offset transform ----
@@ -376,9 +376,9 @@ static void phase_8c_profiles() {
         p.scale = 0.5;
         p.offset = 0.25;
 
-        check(std::abs(p.apply(0.0) - 0.25) < 1e-15, "scaled: 0.0 → 0.25");
-        check(std::abs(p.apply(1.0) - 0.75) < 1e-15, "scaled: 1.0 → 0.75");
-        check(std::abs(p.apply(0.5) - 0.50) < 1e-15, "scaled: 0.5 → 0.50");
+        check(std::abs(p.apply(0.0) - 0.25) < 1e-15, "scaled: 0.0 -> 0.25");
+        check(std::abs(p.apply(1.0) - 0.75) < 1e-15, "scaled: 1.0 -> 0.75");
+        check(std::abs(p.apply(0.5) - 0.50) < 1e-15, "scaled: 0.5 -> 0.50");
     }
 
     // ---- 8C.4: Clamping behavior ----
@@ -408,7 +408,7 @@ static void phase_8c_profiles() {
 }
 
 // ============================================================================
-// Phase 8D — Supervision Regime Taxonomy
+// Phase 8D  -  Supervision Regime Taxonomy
 // ============================================================================
 
 static void phase_8d_regimes() {
@@ -447,7 +447,7 @@ static void phase_8d_regimes() {
 }
 
 // ============================================================================
-// Phase 8E — Confidence-Gated Prediction
+// Phase 8E  -  Confidence-Gated Prediction
 // ============================================================================
 
 static void phase_8e_confidence() {
@@ -505,7 +505,7 @@ static void phase_8e_confidence() {
         auto profile = default_profile(PropertyFamily::RigidityLike);
         auto status = determine_status(cd, profile);
         check(status == PredictionStatus::Withheld,
-              "zero coverage → Withheld");
+              "zero coverage -> Withheld");
     }
 
     // ---- 8E.4: Status determination ----
@@ -514,7 +514,7 @@ static void phase_8e_confidence() {
 
         auto profile = default_profile(PropertyFamily::RigidityLike);
 
-        // All high → Accepted
+        // All high -> Accepted
         {
             ConfidenceDecomposition cd;
             cd.input_confidence = 0.9;
@@ -523,10 +523,10 @@ static void phase_8e_confidence() {
             cd.attribution_stability = 0.9;
             cd.calibration_confidence = 1.0;
             check(determine_status(cd, profile) == PredictionStatus::Accepted,
-                  "high confidence → Accepted");
+                  "high confidence -> Accepted");
         }
 
-        // Total above abstention but one component marginal → LowConfidence
+        // Total above abstention but one component marginal -> LowConfidence
         {
             ConfidenceDecomposition cd;
             cd.input_confidence = 0.5;
@@ -536,10 +536,10 @@ static void phase_8e_confidence() {
             cd.calibration_confidence = 1.0;
             auto st = determine_status(cd, profile);
             check(st == PredictionStatus::LowConfidence || st == PredictionStatus::Accepted,
-                  "marginal input → LowConfidence or Accepted");
+                  "marginal input -> LowConfidence or Accepted");
         }
 
-        // Very low total → Withheld
+        // Very low total -> Withheld
         {
             ConfidenceDecomposition cd;
             cd.input_confidence = 0.1;
@@ -548,7 +548,7 @@ static void phase_8e_confidence() {
             cd.attribution_stability = 0.1;
             cd.calibration_confidence = 0.1;
             check(determine_status(cd, profile) == PredictionStatus::Withheld,
-                  "very low confidence → Withheld");
+                  "very low confidence -> Withheld");
         }
     }
 
@@ -666,7 +666,7 @@ static void phase_8e_confidence() {
 }
 
 // ============================================================================
-// Phase 8F — Out-of-Distribution Detection
+// Phase 8F  -  Out-of-Distribution Detection
 // ============================================================================
 
 static void phase_8f_ood() {
@@ -809,7 +809,7 @@ static void phase_8f_ood() {
             }
         }
 
-        // Only check dominant features — bead_count should not trigger
+        // Only check dominant features  -  bead_count should not trigger
         auto contract = make_rigidity_contract();
         auto ood = check_ood(fv, env, contract.dominant_features);
         check(!ood.extrapolating || ood.worst_feature != "bead_count",
@@ -818,7 +818,7 @@ static void phase_8f_ood() {
 }
 
 // ============================================================================
-// Phase 8G — Property-Specific Synthetic Curricula
+// Phase 8G  -  Property-Specific Synthetic Curricula
 // ============================================================================
 
 static void phase_8g_curricula() {
@@ -948,7 +948,7 @@ static void phase_8g_curricula() {
 }
 
 // ============================================================================
-// Phase 8H — Target Promotion and Legitimacy Management
+// Phase 8H  -  Target Promotion and Legitimacy Management
 // ============================================================================
 
 static void phase_8h_legitimacy() {
@@ -978,11 +978,11 @@ static void phase_8h_legitimacy() {
         ev.domain_documented = true;
 
         check(can_promote_to_calibrated(ev),
-              "monotone+signs+domain → can promote to calibrated");
+              "monotone+signs+domain -> can promote to calibrated");
 
         ev.monotonicity_preserved = false;
         check(!can_promote_to_calibrated(ev),
-              "no monotonicity → cannot promote");
+              "no monotonicity -> cannot promote");
     }
 
     // ---- 8H.3: Promotion to ExternallyAnchored ----
@@ -998,11 +998,11 @@ static void phase_8h_legitimacy() {
         ev.validated_rejection = true;
 
         check(can_promote_to_anchored(ev),
-              "full evidence → can promote to anchored");
+              "full evidence -> can promote to anchored");
 
         ev.has_external_data = false;
         check(!can_promote_to_anchored(ev),
-              "no external data → cannot promote to anchored");
+              "no external data -> cannot promote to anchored");
     }
 
     // ---- 8H.4: Evaluate legitimacy ----
@@ -1013,7 +1013,7 @@ static void phase_8h_legitimacy() {
         {
             PromotionEvidence ev;
             check(evaluate_legitimacy(ev) == LegitimacyState::ProxyOnly,
-                  "empty evidence → ProxyOnly");
+                  "empty evidence -> ProxyOnly");
         }
 
         // CalibratedRelative
@@ -1023,7 +1023,7 @@ static void phase_8h_legitimacy() {
             ev.signs_consistent = true;
             ev.domain_documented = true;
             check(evaluate_legitimacy(ev) == LegitimacyState::CalibratedRelative,
-                  "monotone+signs+domain → CalibratedRelative");
+                  "monotone+signs+domain -> CalibratedRelative");
         }
 
         // ExternallyAnchored
@@ -1036,7 +1036,7 @@ static void phase_8h_legitimacy() {
             ev.bounded_residual_error = true;
             ev.validated_rejection = true;
             check(evaluate_legitimacy(ev) == LegitimacyState::ExternallyAnchored,
-                  "full evidence → ExternallyAnchored");
+                  "full evidence -> ExternallyAnchored");
         }
     }
 

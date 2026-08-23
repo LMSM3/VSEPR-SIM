@@ -5441,4 +5441,754 @@ character of VSEPR-SIM by supporting a broader range of output formats
 and analysis workflows, consistent with the project's mission to serve
 as a scientific instrument rather than a single-purpose tool.
 
+% ============================================================================
+\section{Appendix F: VMD Atomistic Workspace and MOOSE EndoScript Runner}
+\label{sec:appendix_vmd_moose}
+% ============================================================================
+
+This appendix records the architectural lessons from two mature scientific
+systems.  VMD is the reference for an expressive atomistic workspace and
+MOOSE is the reference for a disciplined, script-driven finite-element
+runner.  Neither system is proposed as a direct dependency.  Their useful
+ideas are extracted as interface and workflow patterns for VSEPR-SIM.
+
+\subsection{Established VSEPR-SIM Rendering Baseline}
+
+The basic molecular-rendering question is already answered.  The project has
+repeatedly generated static and interactive molecular scenes across the small
+to medium atomistic range, including the existing 1--64 atom/molecule family,
+larger trajectory examples, a 200-molecule archive, and the 84-figure
+visualization report.  The baseline is therefore not another H$_2$O or XeF$_4$
+proof.  The remaining question is how to make the live 3D system as coherent
+and extensible as the reporting system.
+
+The preserved publication paths remain authoritative:
+
+\begin{itemize}
+  \item Matplotlib Agg produces deterministic 300 DPI PNG figures for the
+        static inspection report.
+  \item The C++ glass module produces software-projected SVG figures for
+        publication-oriented molecular output.
+  \item LaTeX and \texttt{pdflatex} assemble PNG, SVG, tables, and text into
+        integrated PDF documents.
+\end{itemize}
+
+The live path is a separate concern.  The current Qt workstation consumes
+\texttt{SceneDocument}, while the broader renderer contract keeps
+scientific data separate from transient presentation.  This separation must
+remain in place while the live renderer becomes more capable.
+
+\subsection{What Makes VMD Special}
+
+VMD was designed for biomolecular systems, but its central data model is
+more general: molecules contain atoms, bonds, metadata, and an animation list
+of coordinate frames.  It is useful to call this the \emph{grand atomics
+scale}: individual atoms remain first-class, while the scene may represent a
+complete molecular assembly, a long trajectory, volumetric data, and several
+simultaneous interpretations of the same state.
+
+The strength of this scale is not merely that atoms can be drawn as spheres.
+It is that an atom has a stable identity and a stable coordinate record, so
+many visual explanations can be derived without changing the underlying
+state:
+
+\begin{itemize}
+  \item CPK spheres, licorice bonds, lines, ribbons, cartoons, and surfaces;
+  \item colouring by element, residue, charge, velocity, energy, or a custom
+        scalar field;
+  \item labels, measurements, contacts, selections, and trajectory traces;
+  \item volumetric maps and molecular surfaces anchored to the same spatial
+        frame; and
+  \item several representations of selected subsets shown at once.
+\end{itemize}
+
+The decisive abstraction is the \emph{representation}.  A representation is
+not just a mesh.  It combines an atom selection, a drawing method, a colouring
+method, and appearance settings.  The user can therefore ask a scientific
+question in the same language used to construct the image: select a region,
+choose a representation, colour it by a measured quantity, and animate it
+over frames.  This is why VMD feels unusually expressive at the atomistic
+scale: the visual grammar is aligned with the scientific grammar.
+
+VMD also makes the atomistic scale operationally durable:
+
+\begin{enumerate}
+  \item The animation-list model makes trajectory playback a native operation,
+        rather than an external movie generator.
+  \item The atom-selection language provides reusable queries over identity,
+        topology, geometry, and frame-dependent values.
+  \item Tcl and Python expose both analysis and interface control, so GUI
+        actions can be turned into repeatable procedures.
+  \item GPU, multicore, vectorized, and ray-traced paths allow the same
+        conceptual model to extend from small molecules to very large
+        atomistic structures.
+\end{enumerate}
+
+The official VMD documentation describes multiple molecular rendering and
+colouring methods, extensive atom selection syntax, trajectory animation,
+file-format plugins, scripting, and ray-traced export.  The current release
+notes also describe optimizations for structures exceeding 100 million atoms:
+\href{https://www.ks.uiuc.edu/Research/vmd/allversions/what_is_vmd.html}{VMD
+feature overview} and
+\href{https://www.ks.uiuc.edu/Research/vmd/current/}{VMD release information}.
+
+\subsection{Why the VMD Ecosystem Is So Durable}
+
+The ecosystem is built around stable extension boundaries rather than around
+frequent rewrites of the main application.
+
+\begin{itemize}
+  \item \textbf{Molfile plugins} translate structures, coordinates,
+        trajectories, volumetric data, and graphics data into the in-memory
+        model.  The plugin API is documented for use from C, C++, and Fortran.
+  \item \textbf{Scripting plugins} add analyses, menus, workflows, and
+        simulation preparation without recompiling the main program.
+  \item \textbf{External coupling} lets VMD act as a front end to NAMD and
+        other running simulations, including remote and interactive workflows.
+  \item \textbf{Documentation and examples} make the extension points
+        discoverable to researchers who are not graphics programmers.
+\end{itemize}
+
+This is open in an important but precise sense.  The VMD plugin tree is
+generally distributed under the UIUC Open Source License, while the main VMD
+program is governed by a separate University of Illinois research and
+non-commercial license.  VSEPR-SIM should therefore borrow the architectural
+ideas and use compatible public file boundaries, not assume that embedding
+the VMD core is automatically appropriate.
+
+Primary references are the
+\href{https://www.ks.uiuc.edu/Research/vmd/plugins/doxygen/intro.html}{VMD
+plugin architecture},
+\href{https://www.ks.uiuc.edu/Research/vmd/plugins/molfile/}{Molfile plugin
+documentation}, and
+\href{https://www.ks.uiuc.edu/Research/vmd/current/LICENSE.html}{VMD and
+plugin licenses}.
+
+\subsection{What MOOSE Shows About a High-Quality EndoScript Runner}
+
+MOOSE provides the complementary pattern.  Its command-line executable is a
+stable runner, while reusable finite-element behaviour is supplied by typed,
+registered objects.  The input file declares the experiment and the runner
+owns its lifecycle.
+
+A basic MOOSE input file is organised around six responsibilities:
+
+\begin{center}
+\small
+\begin{tabular}{lp{9.5cm}}
+\toprule
+\textbf{Block} & \textbf{Responsibility} \\
+\midrule
+\texttt{Mesh} & Domain geometry, mesh source, partitioning, and boundaries. \\
+\texttt{Variables} & Unknown fields and their finite-element families. \\
+\texttt{Kernels} & Residual or equation contributions. \\
+\texttt{BCs} & Boundary and initial conditions. \\
+\texttt{Executioner} & Steady or transient solve, nonlinear method, time control, and convergence. \\
+\texttt{Outputs} & Console, Exodus, CSV, checkpoint, and other output objects. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The quality comes from the boundaries between these blocks.  A script does
+not manually call solver functions in an arbitrary order.  It declares named
+objects, parameters, dependencies, execution timing, and output policy.  The
+runner validates the input, constructs the object graph, advances the solve,
+executes postprocessors, writes artifacts, and records enough state to resume
+after interruption.
+
+MOOSE adds several runner behaviours that are directly relevant to VSIM:
+
+\begin{itemize}
+  \item command-line overrides for parameter studies without copying input
+        files;
+  \item explicit postprocessors for derived scalar and vector measurements;
+  \item output scheduling tied to initialization, timestep, convergence, and
+        final events;
+  \item checkpoint and recover support for meshes, fields, stateful objects,
+        and progress; and
+  \item parallel execution controls that are visible at the command line and
+        in the run record.
+\end{itemize}
+
+The relevant official references are the
+\href{https://mooseframework.inl.gov/docs/PRs/32596/site/getting_started/examples_and_tutorials/examples/ex01_inputfile.html}{basic
+input-file example},
+\href{https://mooseframework.inl.gov/moose/application_usage/command_line_usage.html}{command-line
+usage},
+\href{https://mooseframework.inl.gov/syntax/Postprocessors/}{postprocessor
+system}, and
+\href{https://mooseframework.inl.gov/docs/site/application_usage/restart_recover.html}{restart
+and recovery guide}.
+
+\subsection{Combined VSEPR-SIM Target Architecture}
+
+VSEPR-SIM should combine the two patterns without collapsing them into one
+renderer or one physical scale:
+
+\begin{lstlisting}[style=cpp]
+EndoScript input
+    -> typed registry and validation
+    -> initial state / formation / dynamics
+    -> observations, analysis, balances, and events
+    -> state, trajectory, field, report, and manifest artifacts
+    -> visual consumers and document consumers
+\end{lstlisting}
+
+The visual side should then apply a VMD-like representation stack:
+
+\begin{lstlisting}[style=cpp]
+SceneDocument / RenderPayload
+    -> selection or query
+    -> representation style
+    -> colour, scalar, vector, and material mapping
+    -> level of detail and visibility
+    -> Qt/VTK or other Linux-native renderer
+\end{lstlisting}
+
+The existing \texttt{SceneDocument} already carries atoms, bonds, velocities,
+forces, charges, periodic boxes, transient overlays, scalar properties,
+trajectory frames, and provenance.  It is a reasonable atomistic foundation.
+The next extension is a representation and layer model, not a second source
+of scientific truth.
+
+The multiscale layers should remain explicit:
+
+\begin{itemize}
+  \item atomistic: atoms, bonds, charges, forces, local fields, and molecular
+        trajectories;
+  \item coarse-grain: beads, chains, domains, and interaction links;
+  \item mesoscopic: clusters, interfaces, populations, and transport paths;
+  \item engineering: finite-element cells, displacement, stress, strain,
+        vectors, contours, slices, and boundary conditions; and
+  \item macro: curves, glyphs, summaries, and report-ready aggregate fields.
+\end{itemize}
+
+Each layer should carry units, frame or time identity, provenance, and a
+declared relationship to the other layers.  A continuum cell must not be
+silently presented as an atom, and an atomistic observation must not be
+silently promoted to a continuum field.
+
+\subsection{Additional Three-Step Plan}
+
+\subsubsection{Step 1: Freeze the EndoScript Execution Contract}
+
+Define the runner as a typed, registry-driven execution graph.  Keep the
+existing VSIM sections where they are sound, but give every observable,
+analysis, output, renderer, and verification target a registered name, schema,
+units, execution phase, and failure policy.  Unknown names must produce a
+diagnostic rather than disappearing into an unvalidated raw section.
+
+The run lifecycle should be explicit:
+
+\begin{enumerate}
+  \item parse and validate the input;
+  \item resolve registry targets and provenance;
+  \item construct the initial state;
+  \item run formation and bounded dynamics;
+  \item execute observations, analysis, balances, and events;
+  \item write outputs and the manifest; and
+  \item write checkpoints or replay data according to policy.
+\end{enumerate}
+
+Acceptance evidence includes a deterministic run card, a rejection
+case, a command-line parameter override, a checkpoint/replay case, and a
+manifest that records every requested, produced, skipped, or blocked artifact.
+
+\subsubsection{Step 2: Build a Linux-Native VMD-Like Atomic Workspace}
+
+Add a bounded Linux-first 3D consumer behind the existing scene and artifact
+contracts.  The preferred scientific route is Qt6 Widgets hosting VTK through
+\texttt{QVTKOpenGLNativeWidget}; Qt Quick 3D may be evaluated for surrounding
+UI polish, while Qt 3D remains a prototype-only option because current Qt
+documentation marks it obsolete.
+
+The viewport proof must reuse the established molecular and trajectory
+fixtures rather than repeat a small-molecule demo.  It should exercise:
+
+\begin{itemize}
+  \item existing 1--64 atom/molecule cases and larger trajectory scenes;
+  \item selection-driven multiple representations in one scene;
+  \item periodic boxes, forces, charges, scalar colouring, and vector glyphs;
+  \item a real unstructured engineering mesh with deformation and contours;
+  \item synchronized frame playback, picking, clipping, labels, and camera
+        controls; and
+  \item Linux desktop rendering plus headless EGL or OSMesa capture.
+\end{itemize}
+
+Acceptance evidence: count, bounds, state-value, frame, and provenance parity
+against the shared input package; interactive screenshots; and a headless
+rendering result that can be reproduced from the same run manifest.
+
+\subsubsection{Step 3: Close the Multiscale Evidence and Publication Loop}
+
+Connect the EndoScript artifacts to the representation stack and preserve the
+existing publication routes.  A single run should be able to produce:
+
+\begin{itemize}
+  \item atomistic and coarse-grain trajectory artifacts;
+  \item mesh and field artifacts for engineering views;
+  \item scalar, vector, mass, energy, and event tables;
+  \item deterministic PNG capture for the actual 3D viewport;
+  \item SVG or other vector report figures where applicable; and
+  \item an integrated PDF assembled from the verified sidecars.
+\end{itemize}
+
+The final gate is not visual similarity alone.  It is a replayable chain from
+script to state, state to analysis, analysis to visual layer, and visual layer
+to publication artifact.  The manifest must identify the renderer, backend,
+scene layer, frame, input hashes, output hashes, and any unsupported feature.
+
+\subsection{Decision}
+
+The combined reference architecture is therefore:
+
+\begin{center}
+\large
+\textbf{MOOSE-like EndoScript runner} $+$
+\textbf{VMD-like atomistic workspace} $+$
+\textbf{explicit multiscale scene layers}.
+\end{center}
+
+This preserves the current PNG, SVG, and PDF methods while giving actual 3D
+rendering a stronger scientific and interaction model.  The renderer remains
+a consumer of authoritative state; it does not become the owner of chemistry,
+mechanics, or provenance.
+
+% ============================================================================
+\section{Appendix G: Two-Pronged Visual Stack Research Methodology}
+\label{sec:appendix_visual_methodology}
+% ============================================================================
+
+This appendix turns the architectural decision in Appendix~F into a repeatable
+research and documentation method.  The method has two prongs which are
+developed independently but evaluated against one evidence package:
+
+\begin{enumerate}
+  \item the \textbf{EndoScript and state prong}, which declares, validates,
+        executes, and records a scientific run; and
+  \item the \textbf{visual workspace prong}, which selects, represents,
+        interacts with, and captures the resulting atomistic, mesoscopic, or
+        engineering state.
+\end{enumerate}
+
+The two prongs must meet at a typed state-and-artifact boundary.  A visual
+success cannot repair an invalid run, and a valid run is not complete until its
+scientific state can be inspected and its evidence can be regenerated.  This
+is the same anti-black-box principle used by the project's deep visual study
+protocol: phases can be entered independently, intermediate states are
+recorded, and the final result is checked after the run rather than inferred
+from a screenshot.
+
+\subsection{Method Objective and Boundaries}
+
+The objective is not to reproduce VMD or MOOSE feature-for-feature.  It is to
+adopt the parts of their methodology that make a scientific tool durable:
+stable state identity, named and typed operations, multiple views of the same
+data, scripted execution, explicit diagnostics, and recoverable evidence.
+
+The method therefore has five boundaries:
+
+\begin{itemize}
+  \item chemistry, mechanics, formation, and provenance remain owned by the
+        existing simulation and analysis layers;
+  \item the EndoScript runner is responsible for lifecycle order and output
+        policy, not for drawing;
+  \item the 3D workspace is responsible for representation, interaction,
+        camera, and capture, not for inventing scientific values;
+  \item static PNG, software-projected SVG, and integrated PDF remain
+        publication paths rather than being replaced by the live viewer; and
+  \item every proposed backend is judged by the same fixtures, manifests,
+        parity checks, and negative-input tests.
+\end{itemize}
+
+The scope is intentionally multiscale.  An atomistic view may contain atoms,
+bonds, charges, forces, and trajectories; a coarse-grain view may contain
+beads and interaction links; an engineering view may contain cells, fields,
+stress, strain, and boundary conditions.  These are related views, not one
+undifferentiated object type.
+
+\subsection{The Two Prongs}
+
+\begin{center}
+\small
+\begin{tabular}{p{2.6cm}p{5.6cm}p{6.4cm}}
+\toprule
+\textbf{Prong} & \textbf{Primary question} & \textbf{Required evidence} \\
+\midrule
+EndoScript and state & Did the declared run produce the intended state,
+observations, balances, events, and artifacts? & Parsed run card, registry
+resolution, initial-state record, trajectory or field data, analysis tables,
+diagnostics, manifest, and replay or checkpoint evidence. \\
+Visual workspace & Can a user inspect the same state at the appropriate scale,
+with repeatable representations and captures? & Scene or render payload,
+selection record, representation configuration, frame and camera record,
+interactive screenshot, headless capture, and backend capability report. \\
+Bridge & Did the workspace consume the state without changing identity,
+values, units, or provenance? & Machine-readable parity result, input/output
+hashes, unsupported-feature report, and proof that the producer artifacts were
+not mutated. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The bridge is the important third surface even though the product has two
+prongs.  It keeps the two systems from becoming two competing sources of
+truth.
+
+\subsection{Shared Evidence Contract}
+
+The minimum shared package should be small enough to inspect by hand and rich
+enough to drive every consumer.  It should contain the following logical
+records, whether they are stored as JSON, CSV, VTK XML, VTKHDF, or a project
+native equivalent:
+
+\begin{enumerate}
+  \item \textbf{run identity}: schema version, run identifier, source
+        revision, input hashes, seed, units, and declared scale;
+  \item \textbf{state identity}: stable atom, bead, cell, field, and event
+        identifiers, with frame or time identity;
+  \item \textbf{scientific values}: positions, topology, radii, masses,
+        charges, velocities, forces, scalar fields, vector fields, and any
+        derived values that are claimed by the run;
+  \item \textbf{execution record}: lifecycle phase, registry target,
+        parameters, overrides, warnings, failures, checkpoint, and replay
+        information;
+  \item \textbf{visual contract}: selectable entities, available scalar and
+        vector arrays, units, representation defaults, supported layers, and
+        unsupported features; and
+  \item \textbf{artifact manifest}: requested, produced, skipped, blocked,
+        and rejected outputs with paths, hashes, sizes, and producer identity.
+\end{enumerate}
+
+The contract should be expressible as a neutral package before any live
+renderer is started:
+
+\begin{lstlisting}[style=cpp]
+RunCard
+  -> StateBundle
+  -> AnalysisBundle
+  -> RenderPayload
+  -> CaptureBundle
+  -> Manifest and EvidenceLedger
+\end{lstlisting}
+
+The existing \texttt{SceneDocument} is a strong source for the
+\texttt{RenderPayload}.  It already carries atoms, bonds, velocities, forces,
+charges, periodic boxes, transient overlays, scalar properties, trajectory
+frames, and provenance.  The next step is to expose this information through
+a documented payload boundary and a representation model, not to duplicate it
+inside a renderer.
+
+\subsection{Research Protocol}
+
+The protocol mirrors the quick-switching structure of the deep visual studies
+document.  Each phase has a bounded input, a named output, and a pass
+condition.  A phase may be repeated without invalidating the other phase, but
+the evidence ledger must record which phase and backend produced each artifact.
+
+\begin{center}
+\small
+\begin{tabular}{p{2.0cm}p{5.0cm}p{6.8cm}}
+\toprule
+\textbf{Phase} & \textbf{Work} & \textbf{Pass condition} \\
+\midrule
+0. Freeze & Select fixtures, schema, units, seed, source revision, and target
+backends. & The input package and expected identity table are hashed and can
+be inspected without running a renderer. \\
+1. Run & Parse and validate the EndoScript card; resolve registry targets;
+construct state; run formation, dynamics, observations, and balances. & The
+runner emits a deterministic state or a deterministic rejection with a useful
+diagnostic. \\
+2. Bridge & Convert the state package into a render payload without changing
+rows, units, identity, bounds, or frame numbers. & The machine validator reports
+parity and the producer files remain byte-for-byte unchanged. \\
+3. View & Exercise selection, representations, scalar and vector mapping,
+trajectory playback, picking, clipping, labels, and camera state. & The
+interactive view is usable and every visible claim can be traced to a payload
+row and a representation setting. \\
+4. Capture & Render the same scene interactively and headlessly, then assemble
+PNG, SVG, tables, and PDF evidence. & Captures are reproducible from the
+manifest and identify backend, layer, frame, camera, and output hash. \\
+5. Stress & Repeat with large, empty, malformed, missing, invalid-scene,
+unsupported-feature, and interrupted-run inputs. & Failure classes are explicit;
+no error is silently converted into an empty scene or a successful report. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This protocol makes a distinction that is easy to lose in visual work.  A
+renderer can be visually attractive and still fail the bridge; a runner can be
+scientifically correct and still fail the workspace contract.  Both outcomes
+are recorded separately.
+
+\subsection{Linux-Native Stack Evaluation}
+
+The current research supports a layered Linux-first evaluation rather than a
+single all-purpose 3D framework.
+
+\subsubsection{Qt Widgets and VTK: Primary Scientific Workspace}
+
+For the scientific viewport, Qt Widgets hosting VTK through its documented Qt
+OpenGL widget is the most direct route to the required combination of Qt
+desktop integration and scientific data processing.  The VTK widget is a Qt
+OpenGL widget subclass that houses a generic VTK OpenGL render window; the
+documented path sets a VTK-ready surface format before the application creates
+its widgets.  This gives the
+project a clear seam between Qt actions and VTK pipelines while retaining
+VTK's molecule, polydata, unstructured-grid, scalar, vector, selection, and
+volume-oriented data model.
+
+The Linux evaluation must test both the desktop and headless paths.  Current
+VTK runtime documentation identifies X11, EGL, and OSMesa render-window paths
+and exposes backend selection through runtime settings.  The methodology
+therefore treats headless capture as a first-class acceptance target, not as a
+later build-system convenience.
+
+The primary workspace proof should exercise:
+
+\begin{itemize}
+  \item a \texttt{vtkMolecule}-like atomistic payload for the established
+        1--64 atom and molecule fixtures;
+  \item trajectory frames with stable atom identity and frame numbers;
+  \item bonds, CPK or project colours, charge, force, velocity, and custom
+        scalar representations;
+  \item a \texttt{vtkPolyData} or \texttt{vtkUnstructuredGrid} engineering
+        payload with cell and point arrays;
+  \item hardware or software selection, picking, clipping, labels, and
+        camera state; and
+  \item desktop, EGL, and OSMesa or other supported headless capture modes.
+\end{itemize}
+
+The exact VTK data representation remains an implementation choice.  The
+scientific contract is the invariant; the VTK object graph is a consumer-side
+mapping that can be inspected and versioned.
+
+\subsubsection{Qt Quick 3D: UI and Presentation Track}
+
+Qt Quick 3D is a current Qt 6 route for high-level 3D content and 3D user
+interfaces.  Its Rendering Hardware Interface supports OpenGL, Vulkan, Metal,
+and Direct3D through Qt's abstraction, and its public API includes custom
+geometry, custom materials, instancing, picking, layers, and level of detail.
+This makes it valuable for polished UI composition, lightweight scene layers,
+and future presentation surfaces.
+
+It should not silently become the scientific data authority.  The Qt Quick 3D
+track should consume the same \texttt{RenderPayload}, use the same identity and
+frame checks, and emit the same capture metadata as the VTK track.  It also
+needs explicit Linux graphics capability tests because Qt documents the
+backend selection and notes that the software adaptation is not supported for
+3D content.
+
+\subsubsection{Qt 3D: Bounded Compatibility Track}
+
+Qt 3D remains worth evaluating where the project already has local C++
+templates, community knowledge, or a useful prototype.  It should be treated
+as a bounded compatibility track: pin the Qt version, compile a minimal
+consumer, exercise the exact APIs required by the project, and record the
+maintenance status of those APIs.  The current Qt documentation still
+describes the Qt 3D framework, while the Qt 6 documentation also identifies
+obsolete Qt 3D classes.  This makes an evidence-based capability test more
+useful than a broad claim that the whole module is either current or dead.
+
+The Qt 3D track passes only if it can consume the shared payload, preserve
+parity, render the selected fixtures, and produce a deterministic capture.  It
+does not replace the primary Qt/VTK evaluation until those conditions are met.
+
+\subsubsection{Preserved Publication Paths}
+
+The existing Matplotlib Agg PNG, C++ software-projected SVG, and LaTeX/PDF
+paths remain part of the same methodology.  They are the publication and
+regression baseline against which the live workspace is compared.  The new
+stack must add actual 3D interaction without making publication depend on a
+window, a GPU, or a transient process.
+
+\subsection{Representation Method}
+
+The visual workspace should be documented as a sequence of scientific choices
+rather than as a list of drawing calls:
+
+\begin{center}
+\small
+\begin{tabular}{@{}p{0.5cm}p{14.0cm}@{}}
+1. & Select an entity set by stable identity, topology, geometry, layer, frame,
+     or a named query. \\
+[0.25em]
+2. & Select a representation such as CPK, licorice, line, surface, glyph,
+     mesh, contour, slice, vector, or volume. \\
+[0.25em]
+3. & Select a colour and scalar source with a declared unit and range. \\
+[0.25em]
+4. & Select visibility, level of detail, clipping, label, and interaction
+     settings. \\
+[0.25em]
+5. & Record the complete choice as a serialisable representation state. \\
+\end{tabular}
+\end{center}
+
+A representation state should be sufficient to regenerate a screenshot.  A
+camera angle alone is not enough; the record must include the selected rows,
+frame, layer, colour mapping, scalar range, opacity, lighting or material
+settings, clipping planes, labels, and backend.
+
+The same payload may therefore support several simultaneous explanations:
+CPK atoms for identity, licorice bonds for connectivity, force glyphs for
+dynamics, charge colouring for electrostatics, and a mesh contour for an
+engineering field.  Each explanation remains traceable to a field and a
+representation record.
+
+\subsection{Parity and Negative Testing}
+
+Parity is checked in increasing order of cost:
+
+\begin{enumerate}
+  \item \textbf{identity parity}: entity count, stable identifiers, species,
+        topology, and declared scale;
+  \item \textbf{geometry parity}: positions, radii, bounds, cell geometry,
+        and periodic-box metadata;
+  \item \textbf{value parity}: charges, masses, velocities, forces, scalar
+        arrays, vector arrays, units, and frame values;
+  \item \textbf{temporal parity}: frame count, frame order, time values,
+        replay position, and checkpoint continuation;
+  \item \textbf{representation}: selection, colour source, scalar
+        range, visible layer, and unsupported-feature state; and
+  \item \textbf{artifact parity}: capture dimensions, backend, camera,
+        manifest links, input hashes, output hashes, and PDF sidecars.
+\end{enumerate}
+
+The negative test set is equally important.  It must include missing files,
+empty packages, malformed rows, duplicate identifiers, invalid scene names,
+unknown registry names, incompatible units, unsupported arrays, and interrupted
+runs.  The expected result is a named diagnostic and a non-success outcome.
+An empty viewport, a default camera, or an empty report is not an acceptable
+substitute for a failure record.
+
+\subsection{Evidence Ledger and Reproducibility}
+
+The methodology should produce one ledger entry per phase and backend.  A
+compact record can be represented as:
+
+\begin{lstlisting}[style=cpp]
+VisualEvidence {
+  run_id, source_revision, schema_version,
+  input_hashes, state_hashes, output_hashes,
+  phase, layer, frame, entity_count,
+  renderer, backend, camera, representation_state,
+  interactive_capture, headless_capture,
+  parity_result, diagnostics, unsupported_features
+}
+\end{lstlisting}
+
+The ledger is not a replacement for the scientific manifest.  It is the
+cross-prong index that answers: which run produced this state, which renderer
+consumed it, which representation was active, which frame was visible, which
+backend produced the image, and whether the producer data changed afterward?
+
+The reproducibility command should be conceptually simple even if the exact
+CLI is still under construction:
+
+\begin{lstlisting}[language=bash,title={\textbf{Target evidence sequence}}]
+vsim run --card case.vsim --manifest out/run/manifest.json
+vsim inspect --manifest out/run/manifest.json --parity
+vsim render --manifest out/run/manifest.json --layer atomistic \\
+  --frame 0 --backend egl --capture out/run/atomistic.png
+vsim report --manifest out/run/manifest.json --pdf out/run/report.pdf
+\end{lstlisting}
+
+The commands above describe the intended contract, not a claim that every
+subcommand is already implemented.  The implementation is complete only when
+the commands, or their project-equivalent helpers, produce the manifest and
+evidence records described in this appendix.
+
+\subsection{Acceptance Matrix}
+
+\begin{center}
+\small
+\begin{tabular}{p{3.0cm}p{4.8cm}p{5.8cm}}
+\toprule
+\textbf{Gate} & \textbf{Question} & \textbf{Minimum evidence} \\
+\midrule
+Runner contract & Does the input describe a typed, ordered, diagnosable run? &
+Schema dump, valid case, invalid case, required-parameter failure, and
+override record. \\
+State bridge & Does the render payload preserve scientific data? & Count,
+identity, bounds, values, units, frame, provenance, and producer-file hash
+parity. \\
+Desktop workspace & Can a user inspect the state productively? & Interactive
+Qt session, selection and representation record, picking, playback, and
+screenshots. \\
+Headless workspace & Can the same scene be captured without a desktop? & EGL,
+OSMesa, or explicitly bounded alternative capture with backend metadata and
+nonblank-image check. \\
+Publication & Can the result enter the existing report system? & PNG, SVG or
+vector equivalent, tables, integrated PDF, and linked manifest. \\
+Stress and recovery & Does failure remain visible and recoverable? & Malformed,
+empty, missing, invalid-scene, unsupported-feature, and checkpoint/replay
+cases. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+No gate is passed by a screenshot alone.  Every screenshot is a derived
+artifact whose state, representation, backend, and provenance must be
+inspectable.
+
+\subsection{Immediate Research Sequence}
+
+The next bounded research sequence is:
+
+\begin{enumerate}
+  \item freeze one neutral run package from the existing 1--64 fixtures plus
+        one trajectory and one engineering-field case;
+  \item implement or verify the state-to-render-payload adapter and its parity
+        validator before adding renderer-specific features;
+  \item evaluate Qt/VTK, Qt Quick 3D, and the bounded Qt 3D track against the
+        same package and capture protocol;
+  \item connect the winning workspace path to the current PNG, SVG, tables,
+        and PDF publication routes; and
+  \item record the result as a day-scoped work-order letter with source
+        revision, fixture hashes, screenshots, logs, and explicit blockers.
+\end{enumerate}
+
+The research references for this appendix are the official Qt Quick 3D
+architecture and graphics requirements, the Qt 3D overview and obsolete-class
+list, the VTK Qt widget and runtime-backend documentation, VTK data-format
+documentation, and the MOOSE input-parameter and command-line contracts:
+\href{https://doc.qt.io/qt-6/qtquick3d-architecture.html}{Qt Quick 3D
+architecture},
+\href{https://doc.qt.io/qt-6/qtquick3d-requirements.html}{Qt Quick 3D graphics
+requirements},
+\href{https://doc.qt.io/qt-6/qt3d-overview.html}{Qt 3D overview},
+\href{https://doc.qt.io/qt-6/obsoleteclasses.html}{Qt 6 obsolete classes},
+\href{https://vtk.org/doc/nightly/html/classQVTKOpenGLNativeWidget.html}{VTK
+Qt widget},
+\href{https://docs.vtk.org/en/latest/advanced/runtime_settings.html}{VTK
+runtime settings},
+\href{https://docs.vtk.org/en/latest/vtk_file_formats/vtkxml_file_format.html}{VTK
+file formats},
+\href{https://mooseframework.inl.gov/source/utils/InputParameters.html}{MOOSE
+InputParameters}, and
+\href{https://mooseframework.inl.gov/moose/application_usage/command_line_usage.html}{MOOSE
+command-line usage}.
+
+\subsection{Methodological Conclusion}
+
+The two-pronged approach is therefore a controlled separation of concerns,
+not two unrelated applications.  The EndoScript runner makes the scientific
+run typed, ordered, replayable, and reportable.  The Linux-native workspace
+makes the resulting state selectable, representable, interactive, and
+capturable.  The bridge and ledger make the relationship testable.
+
+The practical target is:
+
+\begin{center}
+\large
+\textbf{one authoritative run} $+$
+\textbf{two independently testable consumers} $+$
+\textbf{one reproducible evidence ledger}.
+\end{center}
+
+That target preserves the quality already achieved by the internal PNG and
+PDF workflow while giving the actual 3D system a methodology capable of
+growing from molecular inspection to multiscale engineering visualization.
+
 \end{document}

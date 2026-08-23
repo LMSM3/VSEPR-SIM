@@ -1,5 +1,5 @@
-// =============================================================================
-// tests/pbc_verification.cpp — Group 25: PBC Core
+﻿// =============================================================================
+// tests/pbc_verification.cpp  -  Group 25: PBC Core
 // =============================================================================
 //
 // Phase 1 unit tests: wrap correctness, MIC delta antisymmetry/boundedness,
@@ -368,9 +368,9 @@ void test_delta_halfbox_tie(TestStats& stats) {
 int main() {
     std::cout << std::fixed << std::setprecision(12);
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PBC (Orthorhombic) — Phase 1 Verification Tests         ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  PBC (Orthorhombic)  -  Phase 1 Verification Tests         |\n";
+    std::cout << "+============================================================+\n";
     std::cout << "\nTolerance: eps = " << EPS << "\n";
     std::cout << "Stop condition: ANY failure blocks Phase 2 (physics)\n";
     
@@ -378,7 +378,7 @@ int main() {
     
     // Phase 1.1: Wrap Tests
     std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "PHASE 1.1 — WRAP CORRECTNESS\n";
+    std::cout << "PHASE 1.1  -  WRAP CORRECTNESS\n";
     std::cout << std::string(60, '=') << "\n";
     
     TestStats wrap_stats;
@@ -398,7 +398,7 @@ int main() {
     
     // Phase 1.2: Delta (MIC) Tests
     std::cout << "\n" << std::string(60, '=') << "\n";
-    std::cout << "PHASE 1.2 — MINIMUM-IMAGE DELTA (MIC)\n";
+    std::cout << "PHASE 1.2  -  MINIMUM-IMAGE DELTA (MIC)\n";
     std::cout << std::string(60, '=') << "\n";
     
     TestStats delta_stats;
@@ -427,15 +427,15 @@ int main() {
     std::cout << "Failed: " << total.failed << "\n";
     
     if (total.failed == 0) {
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✓✓✓ PHASE 1 COMPLETE — PBC IMPLEMENTATION VERIFIED   ✓✓✓ ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ✓✓✓ PHASE 1 COMPLETE  -  PBC IMPLEMENTATION VERIFIED   ✓✓✓ |\n";
+        std::cout << "+============================================================+\n";
         std::cout << "\nPROCEED TO PHASE 2: Physics integration (LJ, bonds, etc.)\n\n";
         return 0;
     } else {
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✗✗✗ PHASE 1 FAILED — DO NOT PROCEED TO PHYSICS       ✗✗✗ ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ✗✗✗ PHASE 1 FAILED  -  DO NOT PROCEED TO PHYSICS       ✗✗✗ |\n";
+        std::cout << "+============================================================+\n";
         std::cout << "\nFix failures before implementing physics with PBC.\n\n";
         return 1;
     }

@@ -1,0 +1,71 @@
+# scripts/demo_13_pipe_flow_objects.vsim
+# VSEPR-SIM v5.1.4  |  Demo 13 -- Non-Molecular Objects + XBIT (WO-66N/66Q)
+# PipeGeometry -> WallSurface -> InletSource/OutletSink/AmbientEnv wired via ObjectPath.
+# XBIT auto-tagging on all objects. DEMBridge + FEABridge frozen schema stubs.
+# Viewer 1: gl_interactive  (ImGui panels during run)
+# Viewer 2: vsepr-light-view (post-run geometry inspector)
+# Run: vsper run scripts/demo_13_pipe_flow_objects.vsim
+
+[project]
+name        = "demo_13_pipe_flow_objects"
+version     = "v5.1.4"
+seed_base   = 13001
+determinism = true
+description = "Pipe flow non-molecular object system -- WO-66N/66Q constructor demo"
+
+[kernel]
+pass_through    = true
+symbolic_trace  = false
+
+[objects]
+system.geometry.pipe = PipeGeometry(radius = 0.05, length = 2.0, material = steel, xbit = auto)
+system.surface.wall  = WallSurface(geometry = system.geometry.pipe, pressure_ref_Pa = 101325, region_grid_n = 16, binning_mode = axis_aligned, xbit = auto)
+system.source.inlet  = InletSource(geometry = system.geometry.pipe, flux_rate = 1000, particle_radius_m = 0.001, particle_density_kg_m3 = 2500, inlet_velocity_m_s = 0.5, velocity_profile = parabolic, xbit = auto)
+system.sink.outlet   = OutletSink(geometry = system.geometry.pipe, outlet_pressure_Pa = 98000, record_flux = true, xbit = auto)
+environment.carrier  = AmbientEnv(fluid_species = water, temperature_K = 293.15, pressure_Pa = 101325, density_kg_m3 = 998.2, viscosity_Pa_s = 0.001, gy = -9.81, xbit = auto)
+dem.pipe_packing     = DEMBridge(from = system.surface.wall, geometry = system.geometry.pipe)
+fea.pipe_wall        = FEABridge(from = system.surface.wall, target = system.geometry.pipe)
+
+[run]
+mode         = "relax"
+max_steps    = 100
+output_level = "verbose"
+
+[observe]
+metrics       = ["energy", "formation"]
+output_format = "json"
+every_n_steps = 25
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+write_manifest_json = true
+
+[export.visual]
+write_html_dashboard = true
+visual_output_dir    = figures/demo_13/
+
+[visual]
+output_type              = "gl_interactive"
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = true
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 5
+
+[open]
+enabled = true
+mode    = "advanced"
+file    = "auto"
+
+[open.advanced]
+trajectory_controls = false
+data_inspector      = true
+bond_overlay        = false
+start_paused        = false
+default_frame       = 0

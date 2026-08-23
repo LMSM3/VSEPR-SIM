@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/failure_modes.hpp
  * ================================
- * WO-VSEPR-SIM-62B — Batch Failure Mode Enumeration
+ * WO-VSEPR-SIM-62B  -  Batch Failure Mode Enumeration
  *
  * Enumerated failure/warning codes emitted per run by the batch
  * verification aggregation kernel.  These codes appear in:
@@ -23,22 +23,22 @@ namespace vsim {
 namespace batch {
 
 enum class BatchFailureMode {
-	// ── Analysis / inference failures ────────────────────────────────────
+	// -- Analysis / inference failures ------------------------------------
 	FAIL_MISSING_SCALE_EVIDENCE,    // M_op did not produce a valid ScaleSampleRecord
 	FAIL_INVALID_RVE,               // No qualifying RVE window found
 	FAIL_RUNTIME_CRASH,             // Run exited non-zero or produced no outputs
 
-	// ── Verification check failures ───────────────────────────────────────
+	// -- Verification check failures ---------------------------------------
 	FAIL_MASS_CONSERVATION,         // Relative mass error exceeds tolerance
 	FAIL_STRUCTURE_COORDINATION,    // Coordination number outside expected range
 	FAIL_RDF_REFERENCE,             // First or second peak position outside tolerance
 	FAIL_MSD_SOLID_BOUND,           // MSD exceeds solid-state bound
 
-	// ── Batch requirement failures ────────────────────────────────────────
+	// -- Batch requirement failures ----------------------------------------
 	FAIL_OUTPUT_MISSING,            // Required file absent from run output
 	FAIL_CHECK_MISSING,             // Required check absent from verify_report.json
 
-	// ── Marginal warnings (do not fail overall_pass) ──────────────────────
+	// -- Marginal warnings (do not fail overall_pass) ----------------------
 	WARN_RDF_PEAK_WIDTH,            // Peak width outside expected range; position valid
 	WARN_CONVERGENCE_SLOW,          // Converged but used >90 % of max_steps
 	WARN_SCALE_MARGINAL,            // RVE candidate found but spatial_cv near threshold

@@ -1,0 +1,284 @@
+# =============================================================================
+# EVM IV -- Empirical Consequence and Optional Predictions
+# VSIM implementation: Al FCC, Born-rule recovery + uniform-eta test
+#
+# Theory claim (EVM IV):
+#   The base theory does not depend on Tier IV success.
+#   Tier IV tests derived applications. A framework whose core survives
+#   Tier I-III and whose Tier IV derived predictions fail is not destroyed
+#   -- it is refined.
+#
+# Key Tier IV claims tested here:
+#
+#   S2 Deformed Born rule:
+#     eta_i != eta_j => p_i = eta_i|alpha_i|^2 / sum_j eta_j|alpha_j|^2
+#
+#     In MD terms: if scale access efficiency eta differs between two RVE
+#     windows (eta_small != eta_large), the observable distribution should
+#     show a systematic shift relative to the uniform-access prediction.
+#
+#     Al FCC prediction: eta is UNIFORM across all windows.
+#     Al FCC is one of the cleanest elemental metals: close-packed, soft
+#     phonons, no charge disorder. If any system should give uniform eta,
+#     it is Al FCC.
+#
+#     If spatial_cv(small window) approx spatial_cv(large window):
+#       eta is uniform -> Born rule is undeformed -> standard statistics.
+#       This is the PASS condition.
+#
+#     If spatial_cv drops sharply at large windows:
+#       eta is non-uniform -> look for RDF peak shifts at the coarse scale.
+#       This is the Tier IV deformation signal.
+#
+#   S6 MD simulation benchmarks:
+#     Two temperature runs: 300 K and 700 K.
+#     eta should be temperature-independent if it is an identity-level
+#     property, not a thermal artefact.
+#
+#     Same rve_window_lengths_A at both temperatures.
+#     If scale_sampling spatial_cv tracks with temperature instead of
+#     remaining at a system-characteristic level, eta is thermally contaminated
+#     -- a Tier IV failure mode for Al specifically.
+#
+#   S7 Failure conditions:
+#     Tight verify gates. If verify fails AND scale_sampling shows
+#     non-uniform eta, this is the Tier IV falsification for Al.
+#
+#   S8 Honest assessment:
+#     A single-element FCC metal at moderate temperature is the most
+#     favourable possible test case. Failing here would be significant.
+#     Passing here is necessary but not sufficient.
+#
+# Physical reference for Al FCC:
+#   Space group:   Fm-3m (A1 prototype)
+#   Lattice:       a = 4.050 A
+#   Coordination:  12 (FCC close-packed)
+#   r_NN:          2.86 A (a / sqrt(2))
+#   RDF peaks:     2.86 A (1st), 4.050 A (2nd), 4.95 A (3rd)
+#   Debye temp:    428 K (soft metal, significant thermal displacement at 300 K)
+#
+# Two-job structure: 300 K and 700 K (approaching but below melting at ~933 K)
+# =============================================================================
+
+[project]
+name        = "evm4_al_fcc_standalone"
+version     = "v5.1.13.5"
+seed_base   = 9090
+determinism = true
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Job 1: Al FCC at 300 K -- ambient eta baseline
+# EVM IV S6: cross-temperature consistency check (low T anchor)
+# Born rule test: spatial_cv uniform across all four RVE windows.
+# ============================================================
+[[batch.job]]
+name            = "al_fcc_300k_born_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Al"
+prototype = "A1_Al"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic         = true
+use_ewald        = false    # Al: metallic EAM, not Ewald
+formation_preset = "metallic"
+
+# Al FCC: a = 4.050 A. 5x5x5 edge = 20.25 A.
+# Windows: a/sqrt(2) (nearest-neighbour), a, 2a, 4a.
+# All four must give consistent spatial_cv for EVM IV S2 to hold.
+# If spatial_cv(2.86) approx spatial_cv(16.2): eta is uniform -> PASS.
+[batch.job.scale_sampling]
+rve_window_lengths_A             = [2.86, 4.05, 8.10, 16.20]
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+spatial_cv_threshold             = 0.22    # tight: Al should be very ordered
+scale_drift_threshold            = 0.20
+scale_drift_metric               = "successive_window_difference"
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A1_Al"
+expected_coordination        = 12
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.86
+nearest_neighbor_tolerance_A = 0.12
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.86, 4.05, 4.95]
+peak_tolerance_A   = 0.18
+require_peak_order = true
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.0
+max_slope_late       = 0.001
+expect_regime        = "solid_bounded"
+
+[batch.job.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[batch.job.observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 20
+
+[batch.job.kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[batch.job.kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true
+
+[batch.job.export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/finalchapter/evm4_al_300k"
+
+
+# ============================================================
+# Job 2: Al FCC at 700 K -- near-melting eta probe
+# EVM IV S6: if eta tracks with temperature, it is thermally contaminated.
+# Expected: spatial_cv is somewhat higher (thermal broadening) but
+# the scale dependence should be the same shape as at 300 K.
+# A shape change = eta structure is temperature-dependent = Tier IV fail.
+# ============================================================
+[[batch.job]]
+name            = "al_fcc_700k_eta_probe"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Al"
+prototype = "A1_Al"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 700
+
+[batch.job.environment]
+periodic    = true
+temperature = 700
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic         = true
+use_ewald        = false
+formation_preset = "metallic"
+
+# Same window sizes as 300 K job.
+# EVM IV S6: identical windows + different T = cross-T consistency check.
+# Looser spatial_cv threshold: 700 K thermal broadening is real.
+# If scale dependence SHAPE changes (e.g. flat at 300 K, sloped at 700 K),
+# that is a Tier IV deformation signal.
+[batch.job.scale_sampling]
+rve_window_lengths_A             = [2.86, 4.05, 8.10, 16.20]
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+spatial_cv_threshold             = 0.35    # looser: 700 K broadening
+scale_drift_threshold            = 0.30
+scale_drift_metric               = "successive_window_difference"
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A1_Al"
+expected_coordination        = 12
+coordination_tolerance       = 1
+expected_nearest_neighbor_A  = 2.86
+nearest_neighbor_tolerance_A = 0.18
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.86, 4.05, 4.95]
+peak_tolerance_A   = 0.25
+require_peak_order = true
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 4.0    # higher T: more displacement, still solid
+max_slope_late       = 0.003
+expect_regime        = "solid_bounded"
+
+[batch.job.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[batch.job.observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 20
+
+[batch.job.kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[batch.job.kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true
+
+[batch.job.export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/finalchapter/evm4_al_700k"
+
+
+# ---------------------------------------------------------------------------
+# Top-level report and visual
+# ---------------------------------------------------------------------------
+[report]
+title                   = "evm4_al_fcc_standalone"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 40
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,coordination,rdf

@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * scene_builders.hpp — Synthetic Bead Scene Construction and Validation
+ * scene_builders.hpp  -  Synthetic Bead Scene Construction and Validation
  *
  * Provides:
  *   1. SceneBead: lightweight bead for scene construction
@@ -43,7 +43,7 @@
 namespace test_util {
 
 // ============================================================================
-// PRNG — Xorshift32
+// PRNG  -  Xorshift32
 // ============================================================================
 
 /**
@@ -76,7 +76,7 @@ struct Xorshift32 {
 };
 
 // ============================================================================
-// Scene Bead — lightweight bead for scene construction
+// Scene Bead  -  lightweight bead for scene construction
 // ============================================================================
 
 struct SceneBead {
@@ -552,7 +552,7 @@ inline std::vector<SceneBead> scene_separated_cloud(
 // ============================================================================
 
 /**
- * MCSceneConfig — controlled distribution parameters for random scene
+ * MCSceneConfig  -  controlled distribution parameters for random scene
  * generation.
  *
  * Inputs:
@@ -705,7 +705,7 @@ inline std::vector<SceneBead> rotate_scene(
 // ============================================================================
 
 /**
- * SceneInfo — summary diagnostics for a scene.
+ * SceneInfo  -  summary diagnostics for a scene.
  */
 struct SceneInfo {
     int n_beads{};
@@ -914,7 +914,7 @@ inline std::vector<SceneBead> scene_helix(
  *   corner (0,0,0) and face centres (a/2,a/2,0), (a/2,0,a/2), (0,a/2,a/2).
  *
  * All orientations along z (as-placed).  The result is a realistic
- * bulk-density packing — useful for testing rho/eta bulk vs surface
+ * bulk-density packing  -  useful for testing rho/eta bulk vs surface
  * contrast.
  *
  * @param nx, ny, nz   Number of unit cells per axis
@@ -951,7 +951,7 @@ inline std::vector<SceneBead> scene_fcc_patch(int nx, int ny, int nz, double a) 
  *
  * Beads in the same plane are on a square grid with in_plane_spacing.
  * With opposed n_hat axes the cross-leaflet P2 contribution is strongly
- * negative (cos(pi) = -1 → p2_pair = +1, but the leaflet-averaged P2
+ * negative (cos(pi) = -1 -> p2_pair = +1, but the leaflet-averaged P2
  * across all pairs including within-plane) will be near 0 or slightly
  * negative, mimicking the anti-parallel order of a lipid bilayer.
  *
@@ -970,9 +970,9 @@ inline std::vector<SceneBead> scene_bilayer(
     for (int iy = 0; iy < n_per_side; ++iy) {
         double x = xy_off + ix * in_plane_spacing;
         double y = xy_off + iy * in_plane_spacing;
-        // Upper leaflet — n_hat points +z (outward)
+        // Upper leaflet  -  n_hat points +z (outward)
         beads.push_back(SceneBead{{x, y,  z_sep / 2.0}, {0, 0,  1}, true, 0.0});
-        // Lower leaflet — n_hat points -z (outward from lower face)
+        // Lower leaflet  -  n_hat points -z (outward from lower face)
         beads.push_back(SceneBead{{x, y, -z_sep / 2.0}, {0, 0, -1}, true, 0.0});
     }
     return beads;

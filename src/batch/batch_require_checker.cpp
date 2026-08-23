@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/batch_require_checker.cpp
  * ======================================
- * WO-VSIM-62C — [batch.require] Enforcement Implementation
+ * WO-VSIM-62C  -  [batch.require] Enforcement Implementation
  *
  * WO-VSIM-62C | beta-12
  */
@@ -34,7 +34,7 @@ RequireCheckResult check_run_require(const BatchRequireSection& require,
 		std::string vr_path = run_output_dir + "/verify_report.json";
 		std::ifstream vr(vr_path);
 		if (!vr.good()) {
-			// Can't read verify_report — all declared checks are missing
+			// Can't read verify_report  -  all declared checks are missing
 			for (const auto& c : require.checks)
 				result.missing_checks.push_back(c);
 		} else {

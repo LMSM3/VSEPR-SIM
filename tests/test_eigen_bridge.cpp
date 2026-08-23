@@ -1,8 +1,8 @@
-// =============================================================================
-// tests/test_eigen_bridge.cpp — WO-056-EIGEN-VEC3-BRIDGE
+﻿// =============================================================================
+// tests/test_eigen_bridge.cpp  -  WO-056-EIGEN-VEC3-BRIDGE
 // =============================================================================
 // Verifies:
-//   1. Round-trip: vsepr::Vec3 → Eigen::Vector3d → vsepr::Vec3 preserves
+//   1. Round-trip: vsepr::Vec3 -> Eigen::Vector3d -> vsepr::Vec3 preserves
 //      x, y, z, norm, and dot-product to double precision.
 //   2. Batch round-trip: to_eigen_points / from_eigen_points.
 //   3. Matrix round-trip: to_eigen_matrix / from_eigen_matrix.
@@ -168,7 +168,7 @@ static void test_centroid() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 5: compute_rmsd — identical frames → 0
+// Test 5: compute_rmsd  -  identical frames -> 0
 // ---------------------------------------------------------------------------
 
 static void test_rmsd_identical() {
@@ -183,11 +183,11 @@ static void test_rmsd_identical() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 6: compute_rmsd — uniform shift → known value
+// Test 6: compute_rmsd  -  uniform shift -> known value
 // ---------------------------------------------------------------------------
 
 static void test_rmsd_shifted() {
-	// Shift every point by (1,0,0) → RMSD = 1.0
+	// Shift every point by (1,0,0) -> RMSD = 1.0
 	const std::vector<vsepr::Vec3> ref = {
 		{0.0, 0.0, 0.0},
 		{1.0, 0.0, 0.0},
@@ -202,7 +202,7 @@ static void test_rmsd_shifted() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 7: kabsch_rmsd — rotation only → near-zero post-alignment RMSD
+// Test 7: kabsch_rmsd  -  rotation only -> near-zero post-alignment RMSD
 // ---------------------------------------------------------------------------
 
 static void test_kabsch_rotation() {
@@ -214,7 +214,7 @@ static void test_kabsch_rotation() {
 	};
 
 	// Mobile: ref rotated 90° around Z axis
-	//   (x,y,z) → (-y, x, z)
+	//   (x,y,z) -> (-y, x, z)
 	std::vector<vsepr::Vec3> mobile;
 	for (const auto& v : ref) {
 		mobile.push_back({-v.y, v.x, v.z});
@@ -227,7 +227,7 @@ static void test_kabsch_rotation() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 8: kabsch_align — aligned frame close to reference
+// Test 8: kabsch_align  -  aligned frame close to reference
 // ---------------------------------------------------------------------------
 
 static void test_kabsch_align_frame() {

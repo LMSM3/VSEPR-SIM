@@ -1,4 +1,4 @@
-/**
+﻿/**
  * simple_nacl_test.cpp
  * Simple standalone test to verify PBC works
  */
@@ -10,9 +10,9 @@
 #include <iomanip>
 
 int main() {
-    std::cout << "═══════════════════════════════════════\n";
+    std::cout << "=======================================\n";
     std::cout << "  NaCl Crystal with PBC - Simple Test\n";
-    std::cout << "═══════════════════════════════════════\n\n";
+    std::cout << "=======================================\n\n";
 
     // Create NaCl conventional cell (8 atoms)
     atomistic::State state;

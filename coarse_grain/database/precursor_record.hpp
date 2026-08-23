@@ -1,18 +1,18 @@
-#pragma once
+﻿#pragma once
 /**
- * precursor_record.hpp — Precursor Database Record P_m
+ * precursor_record.hpp  -  Precursor Database Record P_m
  *
  * Implements the formal definition:
  *
  *   P_m = (I_m, Ψ_m, Ω_m, Λ_m, T_m, H_m)
  *
  * where:
- *   I_m  — precursor identity
- *   Ψ_m  — chemical state
- *   Ω_m  — environment readiness
- *   Λ_m  — transformation / reaction flags
- *   T_m  — target formation class
- *   H_m  — provenance block
+ *   I_m   -  precursor identity
+ *   Ψ_m   -  chemical state
+ *   Ω_m   -  environment readiness
+ *   Λ_m   -  transformation / reaction flags
+ *   T_m   -  target formation class
+ *   H_m   -  provenance block
  *
  * A precursor is not just a compound.  It is a reaction-positioned entity.
  * Precursors are staged formation objects rather than fully committed
@@ -201,7 +201,7 @@ struct PrecursorRecord {
         os << "[precursor] " << name
            << " (" << precursor_class_name(precursor_class) << ")"
            << " stage=" << stage
-           << " → " << target_formation_name(target)
+           << " -> " << target_formation_name(target)
            << "  " << chemical_state.summary()
            << "  " << transformation.summary();
         return os.str();

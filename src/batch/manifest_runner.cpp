@@ -1,20 +1,20 @@
-/**
+﻿/**
  * src/batch/manifest_runner.cpp
  * ==============================
- * WO-B9-001 — Batch Manifest Runner Implementation
+ * WO-B9-001  -  Batch Manifest Runner Implementation
  *
  * Sweep expansion:
- *   Cross-product of all sweep axes × seeds → flat list of BatchRunRecord stubs.
- *   Each run gets a unique 1-based index → run_NNNN folder.
+ *   Cross-product of all sweep axes × seeds -> flat list of BatchRunRecord stubs.
+ *   Each run gets a unique 1-based index -> run_NNNN folder.
  *
  * Run isolation:
  *   Each run_NNNN folder is created before the simulator is invoked.
  *   Artefacts written by the simulator are scoped to that folder.
  *
  * Output artefacts:
- *   batch_summary.tsv      — all runs, execution order
- *   ranked_candidates.tsv  — sorted by score_composite (desc)
- *   batch_report.md        — human-readable Markdown
+ *   batch_summary.tsv       -  all runs, execution order
+ *   ranked_candidates.tsv   -  sorted by score_composite (desc)
+ *   batch_report.md         -  human-readable Markdown
  *
  * Physics:
  *   The default simulator is a deterministic stub (WO-B9-001).
@@ -42,9 +42,9 @@ namespace fs = std::filesystem;
 namespace vsim {
 namespace batch {
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Sweep expansion — Cartesian product of all axes × seeds
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// Sweep expansion  -  Cartesian product of all axes × seeds
+// -----------------------------------------------------------------------------
 
 static std::vector<BatchRunRecord> expand_sweep(const BatchManifestSection& m) {
 	// Build axis list: if no sweep, single default combination
@@ -89,9 +89,9 @@ static std::vector<BatchRunRecord> expand_sweep(const BatchManifestSection& m) {
 	return records;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Default stub simulator — deterministic, seed-driven
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// Default stub simulator  -  deterministic, seed-driven
+// -----------------------------------------------------------------------------
 
 BatchRunRecord default_stub_simulator(const BatchRunRecord& proto,
 									  const std::string& run_dir) {
@@ -157,7 +157,7 @@ BatchRunRecord default_stub_simulator(const BatchRunRecord& proto,
 		mf << "\n  }\n}\n";
 	}
 
-	// metrics.tsv — synthetic step trace
+	// metrics.tsv  -  synthetic step trace
 	{
 		std::ofstream tf(run_dir + "/metrics.tsv");
 		tf << "step\tenergy_kcal_mol\trms_force\n";
@@ -179,9 +179,9 @@ BatchRunRecord default_stub_simulator(const BatchRunRecord& proto,
 	return r;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // Output writers
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 static void write_summary_tsv(const BatchRunnerResult& result) {
 	std::ofstream f(result.summary_tsv_path);
@@ -329,13 +329,13 @@ static void write_report_md(const BatchRunnerResult& result,
 	f << "| `run_NNNN/metrics.tsv` | Per-run energy / force trace |\n";
 	f << "\n";
 
-	f << "## Gate Status (WO-B9-002 — pending)\n\n";
+	f << "## Gate Status (WO-B9-002  -  pending)\n\n";
 	f << "Steady-state gates (`energy_slope_gate`, `flux_balance_gate`, "
 		 "`residence_time_stability_gate`, `energy_drift_gate`, "
 		 "`wall_residence_gate`) are defined in WO-B9-002 and not yet wired.\n"
 		 "All `steady_pass` values in this report reflect converged == true (stub).\n\n";
 
-	f << "## Discovery Ranking (WO-B9-003 — pending)\n\n";
+	f << "## Discovery Ranking (WO-B9-003  -  pending)\n\n";
 	f << "Full ranking engine with `candidate_id`, `valid_energy`, "
 		 "`steady_pass`, and `failure_reason` filtering is defined in WO-B9-003.\n\n";
 
@@ -343,9 +343,9 @@ static void write_report_md(const BatchRunnerResult& result,
 	f << "*VSEPR-SIM beta-9 | WO-B9-001 | Batch Manifest Runner*\n";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// write_batch_outputs — public
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// write_batch_outputs  -  public
+// -----------------------------------------------------------------------------
 
 bool write_batch_outputs(BatchRunnerResult& result) {
 	try {
@@ -357,9 +357,9 @@ bool write_batch_outputs(BatchRunnerResult& result) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// run_manifest — public entry point
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// run_manifest  -  public entry point
+// -----------------------------------------------------------------------------
 
 BatchRunnerResult run_manifest(const BatchManifestSection& manifest,
 							   const BatchRunnerConfig& cfg,
@@ -444,7 +444,7 @@ BatchRunnerResult run_manifest(const BatchManifestSection& manifest,
 		result.records.push_back(std::move(done));
 
 		if (cfg.abort_on_fail && !result.records.back().converged) {
-			std::printf("  [abort_on_fail] run %d did not converge — stopping.\n",
+			std::printf("  [abort_on_fail] run %d did not converge  -  stopping.\n",
 				result.records.back().run_index);
 			break;
 		}

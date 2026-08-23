@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 /**
  * element_data.hpp
  * ================
  * Chemistry-specific element database that INTEGRATES with periodic_db.hpp.
  * 
  * NO DUPLICATION: 
- * - Atomic masses, symbols, electronegativity → FROM periodic_db.hpp
- * - Chemistry metadata (bonding manifolds, valence patterns) → ADDED HERE
+ * - Atomic masses, symbols, electronegativity -> FROM periodic_db.hpp
+ * - Chemistry metadata (bonding manifolds, valence patterns) -> ADDED HERE
  */
 
 #include <cstdint>

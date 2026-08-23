@@ -1,4 +1,4 @@
-// include/ufx_auto2/web_fetcher.hpp
+﻿// include/ufx_auto2/web_fetcher.hpp
 // UFX_AUTO_2 Phase 5 -- Web Fetch Infrastructure
 // VSEPR-SIM v5 beta8 -> beta9 target
 //
@@ -29,8 +29,8 @@ namespace vsepr::ufx {
 // ============================================================================
 
 enum class WebSource : int {
-	PubChem,        // PubChem PUG REST — identity and descriptor checks
-	NIST,           // NIST Chemistry WebBook — thermo, IR, spectra
+	PubChem,        // PubChem PUG REST  -  identity and descriptor checks
+	NIST,           // NIST Chemistry WebBook  -  thermo, IR, spectra
 	LocalReference  // local UFF reference provider (no network)
 };
 
@@ -113,7 +113,7 @@ private:
 };
 
 // ============================================================================
-// IWebFetcher — abstract interface
+// IWebFetcher  -  abstract interface
 // Implementations: CachingFetcher (decorator), PubChemFetcher, NISTFetcher
 // ============================================================================
 

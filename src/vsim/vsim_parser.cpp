@@ -137,18 +137,47 @@ void VsimParser::parse_content(const std::string& content) {
 			continue;
 		}
 
-		// Key = value
-		size_t eq = clean.find('=');
-		if (eq == std::string::npos)
-			throw ParseError(line_no, "expected '=' in: " + clean);
+		// `print_console "<message>"` directive  (WO-85A)
+		// Live-session / script-encoded console emitter (echo / Write-Host / print).
+		// Quotations are optional.  Top-level only; recognised in any section.
+		// Guard: the token must be followed by whitespace, a quote, or end-of-line
+		// so key assignments like `print_console_mode = ...` are NOT captured.
+		if (clean.compare(0, 13, "print_console") == 0) {
+			char after = (clean.size() > 13) ? clean[13] : '\0';
+			if (after == '\0' || after == ' ' || after == '\t' || after == '"') {
+				parse_print_console_directive(clean, line_no);
+				continue;
+			}
+		}
 
-		std::string key = trim(clean.substr(0, eq));
-		std::string raw = trim(clean.substr(eq + 1));
+		// Key = value, with support for bracketed multi-line lists.
+		// If a line ends while a bracket is open, accumulate continuation lines
+		// until brackets balance, then treat the whole span as the value.
+		{
+			size_t eq = clean.find('=');
+			if (eq == std::string::npos)
+				throw ParseError(line_no, "expected '=' in: " + clean);
 
-		if (key.empty())
-			throw ParseError(line_no, "empty key before '='");
+			std::string key = trim(clean.substr(0, eq));
+			std::string raw = trim(clean.substr(eq + 1));
 
-		handle_key_value(key, raw, line_no);
+			if (key.empty())
+				throw ParseError(line_no, "empty key before '='");
+
+			int bracket_depth = 0;
+			for (char c : raw) { if (c == '[') ++bracket_depth; else if (c == ']') --bracket_depth; }
+			while (bracket_depth > 0) {
+				std::string cont;
+				if (!std::getline(stream, cont)) break;
+				++line_no;
+				cont = strip_comment(cont);
+				raw += ' ';
+				raw += trim(cont);
+				for (char c : cont) { if (c == '[') ++bracket_depth; else if (c == ']') --bracket_depth; }
+			}
+
+			handle_key_value(key, raw, line_no);
+		}
 	}
 }
 
@@ -156,8 +185,9 @@ void VsimParser::parse_content(const std::string& content) {
 // Section dispatch
 // ============================================================================
 
-void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
+void VsimParser::handle_section(const std::string& sec, int line_no) {
 	current_section_ = sec;
+	current_distribution_name_.clear();
 
 	// Reset golden sub-block flags
 	in_test_run_block_      = false;
@@ -168,6 +198,16 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 	in_molecule_block_ = (sec == "simulation.molecule" || sec == "molecule");
 	if (in_molecule_block_) {
 		doc_.simulation.molecules.emplace_back();
+		return;
+	}
+
+	if (sec.rfind("distribution.", 0) == 0) {
+		current_distribution_name_ = sec.substr(std::string("distribution.").size());
+		if (current_distribution_name_.empty())
+			throw ParseError(line_no, "distribution section requires a name");
+		auto& distribution = doc_.distributions[current_distribution_name_];
+		distribution.name = current_distribution_name_;
+		current_section_ = "distribution";
 		return;
 	}
 
@@ -198,6 +238,19 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 	if (sec == "suite.limits") { in_suite_limits_ = true; return; }
 	if (sec == "suite.smoke")  { in_suite_smoke_  = true; return; }
 
+	// WO-89 PILLARS: [[reaction.channel]] and [[reaction.stage]] array-of-tables.
+	if (sec == "reaction.channel" || sec == "reaction.stage") {
+		in_reaction_channel_ = (sec == "reaction.channel");
+		in_reaction_stage_   = (sec == "reaction.stage");
+		if (sec == "reaction.channel") {
+			doc_.reaction_network.channels.emplace_back();
+		} else {
+			doc_.reaction_stages.emplace_back();
+		}
+		current_section_ = sec;
+		return;
+	}
+
 	// WO-VSIM-61C: [analysis.structure] / [analysis.sampling] are routed here;
 	// [inference] and [output] sections are plain names handled by handle_key_value.
 	// No extra state flags needed  -  current_section_ already carries "analysis.structure" etc.
@@ -226,7 +279,7 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 		in_raw_object_=true; in_override_particle_=false; doc_.raw_objects.emplace_back(); return;
 	}
 
-	// Surface Analysis: [[object.surface]] — double-bracket creates a new surface entry.
+	// Surface Analysis: [[object.surface]] -- double-bracket creates a new surface entry.
 	if (sec == "object.surface") {
 		if (!in_double_bracket_) {
 			// Single-bracket [object.surface]: enable the surface section master flag.
@@ -255,12 +308,13 @@ void VsimParser::handle_section(const std::string& sec, int /*line_no*/) {
 			current_section_   = "mcf_cai";  // sentinel for dispatch
 			return;
 		}
-		// Not an MCF-CAI section — fall through to existing object handling.
+		// Not an MCF-CAI section -- fall through to existing object handling.
 	}
 
 	in_override_particle_=false; in_raw_object_=false; current_excite_type_.clear();
 	current_mcf_layer_ = -1; current_mcf_basis_ = -1;
 	in_surface_block_  = false;
+	in_reaction_channel_ = false; in_reaction_stage_ = false;
 
 	// Normalise dotted sub-sections to their root for dispatch:
 	// [simulation.molecule] -> in_molecule_block_ already set above
@@ -291,8 +345,10 @@ void VsimParser::handle_key_value(const std::string& key,
 	} else if (in_molecule_block_) {
 		apply_molecule_key(key, val, line_no);
 	} else if (current_section_ == "material")    { apply_material_key(key, val, line_no);
-	} else if (current_section_ == "run")         { apply_run_key(key, val, line_no);
-	} else if (current_section_ == "environment") { apply_environment_key(key, val, line_no);
+	} else if (current_section_ == "distribution") { apply_distribution_key(key, val, line_no);
+	} else if (current_section_ == "run")          { apply_run_key(key, val, line_no);
+	} else if (current_section_ == "dense_record") { apply_dense_record_key(key, val, line_no);  // WO-28MAR
+	} else if (current_section_ == "environment")  { apply_environment_key(key, val, line_no);
 	} else if (current_section_ == "chemistry" || current_section_ == "system") {
 		apply_chemistry_key(key, val, line_no);
 		// WO-VSIM-61C: also populate pipeline_system for analysis-script use
@@ -367,6 +423,8 @@ void VsimParser::handle_key_value(const std::string& key,
 		apply_export_demo_key(key, val, line_no);
 	} else if (current_section_ == "visual" || current_section_ == "visualization") {
 		apply_visual_key(key, val, line_no);
+	} else if (current_section_ == "features" || current_section_ == "features.outputformat") {
+		apply_features_key(key, val, line_no);   // WO-85B output-format select
 	} else if (current_section_ == "visual.external" || current_section_ == "visual external") {
 		apply_visual_external_key(key, val, line_no);
 	} else if (current_section_ == "visual.workspace") {
@@ -465,6 +523,35 @@ void VsimParser::handle_key_value(const std::string& key,
 		apply_bio_key(key, val, line_no);
 	} else if (current_section_ == "discovery") {                      // WO-NL0A  [discovery] random-materials
 		apply_discovery_key(key, val, line_no);
+	// WO-89 PILLARS section dispatch
+	} else if (current_section_ == "pillar") {
+		apply_pillar_key(key, val, line_no);
+	} else if (current_section_ == "species.registry" || current_section_ == "species") {
+		apply_species_registry_key(key, val, line_no);
+	} else if (current_section_ == "reaction.network") {
+		apply_reaction_network_key(key, val, line_no);
+	} else if (in_reaction_channel_ || current_section_ == "reaction.channel") {
+		apply_reaction_channel_key(key, val, line_no);
+	} else if (current_section_ == "reaction.passivation") {
+		apply_reaction_passivation_key(key, val, line_no);
+	} else if (in_reaction_stage_ || current_section_ == "reaction.stage") {
+		apply_reaction_stage_key(key, val, line_no);
+	} else if (current_section_ == "metal_center") {
+		apply_metal_center_key(key, val, line_no);
+	} else if (current_section_ == "descriptor.electronic") {
+		apply_descriptor_electronic_key(key, val, line_no);
+	} else if (current_section_ == "catalysis") {
+		apply_catalysis_key(key, val, line_no);
+	} else if (current_section_ == "thermodynamics") {
+		apply_thermodynamics_key(key, val, line_no);
+	} else if (current_section_ == "ignition") {
+		apply_ignition_key(key, val, line_no);
+	} else if (current_section_ == "audit.conservation") {
+		apply_audit_conservation_key(key, val, line_no);
+	} else if (current_section_ == "audit.state_rules") {
+		apply_audit_state_rules_key(key, val, line_no);
+	} else if (current_section_ == "audit.acceptance") {
+		apply_audit_acceptance_key(key, val, line_no);
 	} else {
 		// Unknown section  -  store in raw_sections
 		doc_.raw_sections[current_section_][key] = val;
@@ -501,7 +588,7 @@ void VsimParser::apply_project_key(const std::string& key, const Value& val, int
 }
 
 // ----------------------------------------------------------------------------
-// [seed]  —  WO-66K-AUDIT  Dual-Seed Assignment
+// [seed]  --  WO-66K-AUDIT  Dual-Seed Assignment
 //
 // Dual-seed rules:
 //   If only one of {foundation, world_seed} is provided: single-seed mode.
@@ -766,6 +853,10 @@ void VsimParser::apply_export_key(const std::string& key, const Value& val, int 
 	else if (key == "write_step_file")            doc_.exports.write_step_file           = as_flag();
 	else if (key == "write_vtp_mesh")             doc_.exports.write_vtp_mesh            = as_flag();
 	else if (key == "write_actual_hashes_tsv")    doc_.exports.write_actual_hashes_tsv   = as_flag();
+	else if (key == "write_dashboard_svg")        doc_.exports.write_dashboard_svg       = as_flag();
+	else if (key == "snapshot_interval")          doc_.exports.snapshot_interval         = static_cast<int>(numeric(val));
+	else if (key == "event_interval")             doc_.exports.event_interval            = static_cast<int>(numeric(val));
+	else if (key == "metrics_interval")           doc_.exports.metrics_interval          = static_cast<int>(numeric(val));
 	else if (key == "output_dir")                 doc_.exports.output_dir = value_is_string(val) ? as_string(val) : to_string(val);
 	else doc_.raw_sections["export"][key] = val;
 }
@@ -871,6 +962,15 @@ void VsimParser::apply_visual_key(const std::string& key, const Value& val, int 
 	else if (key == "render_interval")          doc_.visual.render_interval          = static_cast<int>(as_num());
 	else if (key == "live_switch")              doc_.visual.live_switch              = as_flag();
 	else if (key == "shadow_type")              doc_.visual.shadow_type              = static_cast<int>(as_num());
+	// -- WO-93A status-loop keys
+	else if (key == "show_status_loop")         doc_.visual.show_status_loop         = as_flag();
+	else if (key == "status_loop_hz")           doc_.visual.status_loop_hz           = static_cast<float>(as_num());
+	else if (key == "hardware_monitor_hz")      doc_.visual.hardware_monitor_hz      = static_cast<float>(as_num());
+	// -- Uless observation-length indicator keys
+	else if (key == "uless_indicator_enabled")  doc_.visual.uless_indicator_enabled  = as_flag();
+	else if (key == "uless_indicator_label")    doc_.visual.uless_indicator_label    = as_str();
+	else if (key == "uless_indicator_value")    doc_.visual.uless_indicator_value    = as_num();
+	else if (key == "uless_indicator_max")      doc_.visual.uless_indicator_max      = as_num();
 	else if (key == "overlay_sequence") {
 		if (value_is_list(val)) {
 			doc_.visual.overlay_sequence.clear();
@@ -919,6 +1019,36 @@ void VsimParser::apply_visual_external_key(const std::string& key, const Value& 
 		}
 	}
 	else doc_.raw_sections["visual.external"][key] = val;
+}
+
+// ============================================================================
+// [features] / [features.outputformat] applier  (WO-85B)
+//
+// Selects the terminal output-format the run viewer emits.  Accepts several
+// spellings so both the [features] form and the [features.outputformat] alias
+// work:
+//   [features]
+//   output_format = "B"
+//
+//   [features.outputformat]
+//   mode = "B"          # also: format = "B" / value = "B" / output_format = "B"
+//
+// The token is normalised to a single letter (A/B/C/D) or "ideal" by
+// FeaturesSection::normalize().  Unknown keys are preserved in raw_sections.
+// ============================================================================
+
+void VsimParser::apply_features_key(const std::string& key, const Value& val, int /*line_no*/) {
+	auto as_str = [&]() -> std::string {
+		return value_is_string(val) ? as_string(val) : to_string(val);
+	};
+
+	if (key == "output_format" || key == "outputformat" ||
+		key == "format" || key == "mode" || key == "value") {
+		doc_.features.output_format = FeaturesSection::normalize(as_str());
+		doc_.features.present       = true;
+	} else {
+		doc_.raw_sections["features"][key] = val;
+	}
 }
 
 // ============================================================================
@@ -990,6 +1120,32 @@ void VsimParser::parse_show_directive(const std::string& line, int line_no) {
 		throw ParseError(line_no, "show directive for \"" + vd.kind + "\" requires a target");
 
 	doc_.view_directives.push_back(std::move(vd));
+}
+
+// ============================================================================
+// parse_print_console_directive  (WO-85A)
+//   print_console "<message>"   -- quotations optional
+//
+// A live-session / script-encoded console emitter, the VSIM equivalent of
+// Write-Host / echo / print.  Everything after the `print_console` keyword is
+// treated as the message.  If the remainder is wrapped in a single pair of
+// double quotes, those quotes are stripped so the payload prints verbatim.
+// An empty payload (`print_console` or `print_console ""`) emits a blank line.
+// ============================================================================
+
+void VsimParser::parse_print_console_directive(const std::string& line, int line_no) {
+	// Strip the leading `print_console` keyword (13 chars) and trim.
+	std::string msg = trim(line.substr(13));
+
+	// Optional surrounding double quotes -> strip a single matching pair.
+	if (msg.size() >= 2 && msg.front() == '"' && msg.back() == '"') {
+		msg = msg.substr(1, msg.size() - 2);
+	}
+
+	ConsolePrint cp;
+	cp.message = std::move(msg);
+	cp.line    = line_no;
+	doc_.console_prints.push_back(std::move(cp));
 }
 
 // ============================================================================
@@ -1493,11 +1649,13 @@ void VsimParser::apply_report_key(const std::string& key, const Value& val) {
 // Value parser
 // ============================================================================
 
-Value VsimParser::parse_value(const std::string& raw, int line_no) {
+Value VsimParser::parse_value(std::string raw, int line_no) {
 	if (raw.empty())
 		throw ParseError(line_no, "empty value");
 
-	// Quoted string
+	// Quoted string. Preserve inner content including colons and commas; do not
+	// attempt numeric conversion. This makes species tokens such as "Fe:lattice"
+	// safe wherever quoted strings are accepted.
 	if (raw.front() == '"' && raw.back() == '"' && raw.size() >= 2) {
 		return raw.substr(1, raw.size() - 2);
 	}
@@ -1506,7 +1664,9 @@ Value VsimParser::parse_value(const std::string& raw, int line_no) {
 	if (raw == "true")  return true;
 	if (raw == "false") return false;
 
-	// Bracketed list: [ a, b, c ]
+	// Bracketed list: [ a, b, c ]  (single-line or spanning multiple lines).
+	// Continuation inside brackets is handled by parse_content, but if the full
+	// bracketed expression was already accumulated we split it here.
 	if (raw.front() == '[' && raw.back() == ']') {
 		std::string inner = raw.substr(1, raw.size() - 2);
 		std::vector<std::string> items;
@@ -1736,15 +1896,72 @@ void VsimParser::apply_pbc_key(const std::string& key, const Value& val, int lin
 
 void VsimParser::apply_material_key(const std::string& key, const Value& val, int /*lno*/) {
 	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
-	if      (key=="formula")     doc_.material.formula=s();
-	else if (key=="prototype")   doc_.material.prototype=s();
-	else if (key=="structure")   { doc_.material.structure=s(); if(doc_.material.prototype.empty()) doc_.material.prototype=std::string(resolve_structure_alias(doc_.material.structure)); }
-	else if (key=="space_group") doc_.material.space_group=s();
-	else if (key=="lattice")     doc_.material.lattice=s();
-	else if (key=="basis")       doc_.material.basis=s();
-	else if (key=="cell")        doc_.material.cell=s();
-	else if (key=="phase")       doc_.material.phase=s();
+	if      (key=="formula")     { doc_.material.formula=s();     doc_.material.formula_declared=true; }
+	else if (key=="prototype")   { doc_.material.prototype=s();   doc_.material.prototype_declared=true; }
+	else if (key=="structure")   { doc_.material.structure=s();   doc_.material.structure_declared=true; if(!doc_.material.prototype_declared) doc_.material.prototype=std::string(resolve_structure_alias(doc_.material.structure)); }
+	else if (key=="space_group") { doc_.material.space_group=s(); doc_.material.space_group_declared=true; }
+	else if (key=="lattice")     { doc_.material.lattice=s();     doc_.material.lattice_declared=true; }
+	else if (key=="basis")       { doc_.material.basis=s();       doc_.material.basis_declared=true; }
+	else if (key=="cell")        { doc_.material.cell=s();        doc_.material.cell_declared=true; }
+	else if (key=="phase")       { doc_.material.phase=s();       doc_.material.phase_declared=true; }
 	else                         doc_.raw_sections["material"][key]=val;
+}
+
+void VsimParser::apply_distribution_key(const std::string& key, const Value& val, int line_no) {
+	auto it = doc_.distributions.find(current_distribution_name_);
+	if (it == doc_.distributions.end())
+		throw ParseError(line_no, "distribution key appears outside a named distribution section");
+
+	auto& distribution = it->second;
+	auto string_value = [&]() {
+		return value_is_string(val) ? as_string(val) : to_string(val);
+	};
+	auto vector_value = [&](XYZVec3& output, bool& present) {
+		if (value_is_xyz(val)) {
+			output = as_xyz_vec3(val);
+		} else if (value_is_int3(val)) {
+			const auto input = as_int3(val);
+			output = XYZVec3{static_cast<double>(input.x), static_cast<double>(input.y),
+				static_cast<double>(input.z)};
+		} else if (value_is_list(val) && as_list(val).size() == 3) {
+			try {
+				const auto& input = as_list(val);
+				output = XYZVec3{std::stod(input[0]), std::stod(input[1]), std::stod(input[2])};
+			} catch (const std::exception&) {
+				throw ParseError(line_no, "distribution." + current_distribution_name_
+					+ "." + key + " must contain numeric vector components");
+			}
+		} else {
+			throw ParseError(line_no, "distribution." + current_distribution_name_
+				+ "." + key + " must be a three-component numeric vector");
+		}
+		present = true;
+	};
+
+	if (key == "target") {
+		distribution.target = string_value();
+	} else if (key == "species") {
+		distribution.species = string_value();
+	} else if (key == "count") {
+		if (!value_is_int(val))
+			throw ParseError(line_no, "distribution." + current_distribution_name_
+				+ ".count must be an integer");
+		distribution.count = static_cast<int>(as_int(val));
+	} else if (key == "placement") {
+		distribution.placement = string_value();
+	} else if (key == "shape") {
+		distribution.shape = string_value();
+	} else if (key == "center") {
+		vector_value(distribution.center, distribution.has_center);
+	} else if (key == "extent") {
+		vector_value(distribution.extent, distribution.has_extent);
+	} else if (key == "velocity_mean") {
+		vector_value(distribution.velocity_mean, distribution.has_velocity_mean);
+	} else if (key == "velocity_spread") {
+		vector_value(distribution.velocity_spread, distribution.has_velocity_spread);
+	} else {
+		doc_.raw_sections["distribution." + current_distribution_name_][key] = val;
+	}
 }
 
 void VsimParser::apply_run_key(const std::string& key, const Value& val, int /*lno*/) {
@@ -1756,7 +1973,27 @@ void VsimParser::apply_run_key(const std::string& key, const Value& val, int /*l
 	else if (key=="pressure"||key=="pressure_GPa")      doc_.run.pressure_GPa=numeric(val);
 	else if (key=="converge")                           doc_.run.converge=value_is_bool(val)?as_bool(val):true;
 	else if (key=="output_level")                       doc_.run.output_level=s();
+	else if (key=="dense_record")                       { doc_.run.dense_record=value_is_bool(val)?as_bool(val):false; doc_.dense_record.enabled=doc_.run.dense_record; }
 	else                                                doc_.raw_sections["run"][key]=val;
+}
+
+// WO-28MAR: [dense_record] block controlling high-density provenance capture
+void VsimParser::apply_dense_record_key(const std::string& key, const Value& val, int /*lno*/) {
+	auto s=[&](){ return value_is_string(val)?as_string(val):to_string(val); };
+	auto& dr = doc_.dense_record;
+	if      (key=="enabled")                 dr.enabled              = value_is_bool(val)?as_bool(val):false;
+	else if (key=="energy_force_interval")   dr.energy_force_interval= static_cast<int>(numeric(val));
+	else if (key=="max_records")             dr.max_records          = static_cast<int>(numeric(val));
+	else if (key=="initial_structure")       dr.initial_structure    = value_is_bool(val)?as_bool(val):true;
+	else if (key=="final_structure")         dr.final_structure      = value_is_bool(val)?as_bool(val):true;
+	else if (key=="connectivity_before")     dr.connectivity_before  = value_is_bool(val)?as_bool(val):true;
+	else if (key=="connectivity_after")      dr.connectivity_after   = value_is_bool(val)?as_bool(val):true;
+	else if (key=="seed")                    dr.seed                 = value_is_bool(val)?as_bool(val):true;
+	else if (key=="potential_checksum")      dr.potential_checksum   = value_is_bool(val)?as_bool(val):true;
+	else if (key=="terminal_gates")          dr.terminal_gates       = value_is_bool(val)?as_bool(val):true;
+	else if (key=="timing_split")            dr.timing_split         = value_is_bool(val)?as_bool(val):true;
+	else if (key=="potential_label")         dr.potential_label      = s();
+	else                                     doc_.raw_sections["dense_record"][key]=val;
 }
 
 void VsimParser::apply_environment_key(const std::string& key, const Value& val, int /*lno*/) {
@@ -2517,7 +2754,7 @@ void VsimParser::apply_collision_case_key(const std::string& key, const Value& v
 }
 
 // ============================================================================
-// WO-VSEPR-SIM Extreme Addendum  —  new section appliers
+// WO-VSEPR-SIM Extreme Addendum  --  new section appliers
 // ============================================================================
 
 void VsimParser::apply_identity_matrices_key(const std::string& key, const Value& val) {
@@ -2624,7 +2861,7 @@ void VsimParser::apply_objects_constructor_line(const std::string& lhs,
 
 void VsimParser::apply_objects_batch_key(const std::string& key, const Value& val, int /*line_no*/)
 {
-	// Batch section: base, count, constructor — stored as raw keys for now
+	// Batch section: base, count, constructor -- stored as raw keys for now
 	auto s = [&](){ return value_is_string(val) ? as_string(val) : to_string(val); };
 	if      (key == "base")        { current_batch_base_ = s(); }
 	else { doc_.raw_sections["objects.batch"][key] = val; }
@@ -2848,7 +3085,7 @@ void VsimParser::apply_nm_ambient_key(const std::string& key, const Value& val, 
 }
 
 // ============================================================================
-// apply_bio_key  —  WO-75D  [bio] section
+// apply_bio_key  --  WO-75D  [bio] section
 // ============================================================================
 
 void VsimParser::apply_bio_key(const std::string& key, const Value& val, int /*line_no*/)

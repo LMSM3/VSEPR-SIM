@@ -8,6 +8,7 @@
 
 #include "sim_command.hpp"
 #include "sim/sim_state.hpp"
+#include "sim/live_simulation_clock.hpp"
 #include "core/frame_buffer.hpp"
 #include "pot/periodic_db.hpp"
 #include "vsepr/formula_parser.hpp"
@@ -50,6 +51,7 @@ public:
     
     // Frame output (called from renderer thread)
     FrameSnapshot get_latest_frame();
+    FramePacket get_latest_frame_packet();
     
     // Quick status check
     bool is_paused() const { return sim_state_ ? sim_state_->is_paused() : true; }
@@ -70,6 +72,8 @@ private:
     
     // Publish current state to frame buffer
     void publish_frame();
+    void reset_live_clock();
+    bool advance_live_tick();
     
     // Helper methods for dynamic formula building
     void add_to_custom_defaults(const std::string& formula);
@@ -108,6 +112,12 @@ private:
     
     // Timing
     int frame_counter_;
+    LiveSimulationClock live_clock_;
+    double live_real_time_seconds_ = 0.0;
+    double tick_rate_window_seconds_ = 0.0;
+    double live_ticks_per_second_ = 0.0;
+    std::uint64_t ticks_in_rate_window_ = 0;
+    int scheduled_run_steps_ = -1;
 };
 
 } // namespace vsepr

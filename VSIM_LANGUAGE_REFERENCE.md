@@ -1371,6 +1371,7 @@ observables            += radiation\_damage, defects
 |v5.0.0-beta.9|Beta-8 declared closed. Beta-9 theme: Registry Resolution and Minimal Lab Script Layer (WO-VSEPR-SIM-58A).|
 |v5.1.4 (Day 84)|Added `[chem_plus]` block — declarative reaction classification and VSEPR geometry bridge for the `vsepr classify` preview path. Keys: `reaction`, `preset`, `vsepr_link`, `class_override`, `energy_kj`. Schema in `vsim_document.hpp`; evaluator in `chemplus_declarative.hpp`. Full reference: `docs/CHEMISTRY_CLASSIFY_REFERENCE.md`.|
 |v5.1.4 (Day 84)|`vsepr classify` extended: now renders a `[ChemPlus]` output block when the input script contains an active `[chem_plus]` section. CLI entry point: `src/cli/cmd_classify.cpp`.|
+|v5.1.4 (Day 85, WO-85A)|Added `print_console "<message>"` top-level directive — a live-session / script-encoded console emitter (VSIM `Write-Host`/`echo`/`print`). Quotations optional; a single surrounding quote pair is stripped. Parsed into `VsimDocument::console_prints` (`ConsolePrint`). Rendered as a `[console]` block by both `vsepr run` and `vsepr classify`. Guarded so `print_console`-prefixed keys are not captured. Demo: `scripts/demo_day83_85_demonstration.vsim`; tests: Group 93 (`tests/test_print_console.cpp`).|
 
 > \*\*Reminder:\*\*
 

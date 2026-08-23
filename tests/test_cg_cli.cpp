@@ -1,5 +1,5 @@
-/**
- * test_cg_cli.cpp — CLI Integration Tests for the CG Console
+﻿/**
+ * test_cg_cli.cpp  -  CLI Integration Tests for the CG Console
  *
  * Validates the universal interpretation layer (CGSystemState)
  * and all five CG CLI operations:
@@ -14,7 +14,7 @@
  * that the interpretation layer correctly connects CLI to kernel.
  *
  * Architecture coverage:
- *   CLI → command layer → [CGSystemState] → kernel/environment engine
+ *   CLI -> command layer -> [CGSystemState] -> kernel/environment engine
  *                          ^^^^^^^^^^^^^ tested here
  *
  * Reference: Layer B1 (System Services), Layer C1 (CLI Frontend)
@@ -56,7 +56,7 @@ static int g_pass = 0, g_fail = 0;
 // ============================================================================
 
 void test_scene_presets() {
-    SECTION("Scene Construction — All Presets");
+    SECTION("Scene Construction  -  All Presets");
     using namespace vsepr::cli;
 
     // Isolated
@@ -171,10 +171,10 @@ void test_scene_presets() {
                 same = false;
             }
         }
-        CHECK(same, "Cloud: deterministic (same seed → same scene)");
+        CHECK(same, "Cloud: deterministic (same seed -> same scene)");
     }
 
-    // Different seeds → different scenes
+    // Different seeds -> different scenes
     {
         CGSystemState s1, s2;
         s1.build_preset(ScenePreset::RandomCluster, 8, 10.0, 42);
@@ -186,7 +186,7 @@ void test_scene_presets() {
                 break;
             }
         }
-        CHECK(different, "Cloud: different seeds → different scenes");
+        CHECK(different, "Cloud: different seeds -> different scenes");
     }
 
     // Preset name parsing
@@ -198,7 +198,7 @@ void test_scene_presets() {
         CHECK(parse_scene_preset("tshape") == ScenePreset::TShape, "Parse: tshape");
         CHECK(parse_scene_preset("square") == ScenePreset::Square, "Parse: square");
         CHECK(parse_scene_preset("isolated") == ScenePreset::Isolated, "Parse: isolated");
-        CHECK(parse_scene_preset("unknown") == ScenePreset::Isolated, "Parse: unknown → isolated");
+        CHECK(parse_scene_preset("unknown") == ScenePreset::Isolated, "Parse: unknown -> isolated");
     }
 }
 
@@ -207,7 +207,7 @@ void test_scene_presets() {
 // ============================================================================
 
 void test_state_inspection() {
-    SECTION("State Inspection — Neighbour Lists and Environment Init");
+    SECTION("State Inspection  -  Neighbour Lists and Environment Init");
     using namespace vsepr::cli;
 
     // Pair scene: each bead should see 1 neighbour
@@ -275,7 +275,7 @@ void test_state_inspection() {
 // ============================================================================
 
 void test_environment_update() {
-    SECTION("Environment Update Pipeline — eta Relaxation");
+    SECTION("Environment Update Pipeline  -  eta Relaxation");
     using namespace vsepr::cli;
 
     // Pair: eta should increase from 0 toward target
@@ -384,7 +384,7 @@ void test_environment_update() {
 // ============================================================================
 
 void test_interaction_evaluation() {
-    SECTION("Interaction Evaluation — Pairwise Energy");
+    SECTION("Interaction Evaluation  -  Pairwise Energy");
     using namespace vsepr::cli;
 
     // Create a pair with unified descriptors
@@ -511,10 +511,10 @@ void test_interaction_evaluation() {
 // ============================================================================
 
 void test_system_state_integration() {
-    SECTION("System State Integration — Full Pipeline");
+    SECTION("System State Integration  -  Full Pipeline");
     using namespace vsepr::cli;
 
-    // Full workflow: build → env update → inspect → interact
+    // Full workflow: build -> env update -> inspect -> interact
     {
         CGSystemState s;
         s.dt = 1.0;

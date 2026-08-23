@@ -1,4 +1,4 @@
-// test_backbone_planarity.cpp — Backbone geometry and planarity enforcement tests
+﻿// test_backbone_planarity.cpp  -  Backbone geometry and planarity enforcement tests
 // Day 48A: Organic / Peptide Formation Core
 //
 // Tests:
@@ -105,7 +105,7 @@ static void test_snap_to_trans() {
     TEST("Planarity enforcement snaps 195 -> 180 (trans)");
     auto graph = build_dipeptide_graph();
     // Set a deviant omega
-    graph.residues()[0].omega_deg = 195.0; // 15 deg off — exceeds 10 deg tolerance
+    graph.residues()[0].omega_deg = 195.0; // 15 deg off  -  exceeds 10 deg tolerance
 
     BackboneGeometryEngine geom;
     auto result = geom.enforce_amide_planarity(graph);

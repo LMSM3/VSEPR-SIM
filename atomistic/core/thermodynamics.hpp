@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "state.hpp"
 #include "statistics.hpp"
 #include <cmath>
@@ -21,7 +21,7 @@ namespace thermo {
  * 
  * 2. Pressure (virial equation):
  *    P = (N·k_B·T)/V + (1/3V)Σr_ij·F_ij  [virial term]
- *    Units: kcal/(mol·Å³) → convert to atm or bar
+ *    Units: kcal/(mol·Å³) -> convert to atm or bar
  *    1 kcal/(mol·Å³) = 68568.415 atm = 6.9479×10⁴ bar
  * 
  * 3. Heat capacity (fluctuation):

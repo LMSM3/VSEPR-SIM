@@ -1,0 +1,91 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/demo_14_batch_surfaces_xbit.vsim
+# VSEPR-SIM v5.1.4  |  Demo 14 -- Batch Objects + HCP Crystal + XBIT (WO-66N/66P)
+# Three WallSurface instances expanded via [objects.batch].
+# HCP Titanium crystal alongside the surfaces.
+# Viewer 1: gl_overlay_cycle  (density/coordination/memory/orient_order cycle)
+# Viewer 2: vsepr-light-view (post-run inspector)
+# Run: vsper run scripts/demo_14_batch_surfaces_xbit.vsim
+
+[project]
+name        = "demo_14_batch_surfaces_xbit"
+version     = "v5.1.4"
+seed_base   = 14001
+determinism = true
+description = "Batch WallSurface expansion + HCP Ti crystal + XBIT -- WO-66N/66P demo"
+
+[objects]
+system.geometry.slab      = PipeGeometry(radius = 0.1, length = 1.0, material = titanium, xbit = auto)
+substrate.crystal.hcp_ti  = CrystalModule(lattice = hcp, a = 2.951, c = 4.686, species = [Ti], supercell = [3, 3, 2], relax = true, pbc_x = true, pbc_y = true, pbc_z = false, translate_to_xyz = true, translate_to_json = true, xbit = auto)
+
+[objects.batch]
+base        = system.surface.wall
+count       = 3
+constructor = WallSurface
+geometry    = system.geometry.slab
+binning_mode = axis_aligned
+pressure[0] = 110000
+pressure[1] = 105000
+pressure[2] = 98500
+region_grid_n = 12
+xbit        = auto
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+[run]
+mode          = "relax"
+max_steps     = 400
+dt_fs         = 0.5
+temperature_K = 300.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "coordination", "rdf", "formation"]
+output_format = "json"
+every_n_steps = 25
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_14/
+
+[visual]
+output_type              = "gl_overlay_cycle"
+overlay_sequence         = ["density", "coordination", "memory", "orient_order"]
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = true
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 10
+
+[open]
+enabled = true
+mode    = "advanced"
+file    = "auto"
+
+[open.advanced]
+trajectory_controls = true
+data_inspector      = true
+bond_overlay        = false
+start_paused        = false
+default_frame       = 0

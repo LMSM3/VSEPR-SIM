@@ -1,8 +1,8 @@
-/**
+﻿/**
  * nuclear_core_runner.cpp
  * -----------------------
- * VSEPR-SIM 4.0-Legacy-Beta — Nuclear Core Autonomous Report Runner
- * C++23 Edition (N4950) — std::expected, monadic optional, std::unreachable
+ * VSEPR-SIM 4.0-Legacy-Beta  -  Nuclear Core Autonomous Report Runner
+ * C++23 Edition (N4950)  -  std::expected, monadic optional, std::unreachable
  *
  * Activates the Z=94 (Pu-239) nuclear core and runs the autonomous report
  * generation engine for a configurable wall-clock duration (10-20 minutes).
@@ -171,7 +171,7 @@ static vsepr::report::MaterialProperties pu239_properties() {
     return pu;
 }
 
-// UO2 (uranium dioxide) — common nuclear fuel matrix
+// UO2 (uranium dioxide)  -  common nuclear fuel matrix
 static vsepr::report::MaterialProperties uo2_properties() {
     vsepr::report::MaterialProperties uo2;
     uo2.name     = "Uranium Dioxide";
@@ -201,7 +201,7 @@ static vsepr::report::MaterialProperties uo2_properties() {
     return uo2;
 }
 
-// Zircaloy-4 — standard cladding
+// Zircaloy-4  -  standard cladding
 static vsepr::report::MaterialProperties zircaloy4_properties() {
     vsepr::report::MaterialProperties zr4;
     zr4.name     = "Zircaloy-4";
@@ -232,10 +232,10 @@ static vsepr::report::MaterialProperties zircaloy4_properties() {
 }
 
 // ============================================================================
-// Expanded Nuclear/Engineering Materials (Phase 6 — C++23 scope expansion)
+// Expanded Nuclear/Engineering Materials (Phase 6  -  C++23 scope expansion)
 // ============================================================================
 
-// MOX Fuel (Mixed Oxide — PuO2/UO2 blend, typical PWR MOX assembly)
+// MOX Fuel (Mixed Oxide  -  PuO2/UO2 blend, typical PWR MOX assembly)
 static vsepr::report::MaterialProperties mox_fuel_properties() {
     vsepr::report::MaterialProperties mox;
     mox.name     = "MOX Fuel (PuO2/UO2)";
@@ -265,7 +265,7 @@ static vsepr::report::MaterialProperties mox_fuel_properties() {
     return mox;
 }
 
-// Highly Enriched Uranium metal (HEU — weapons/research reactor grade, >90% U-235)
+// Highly Enriched Uranium metal (HEU  -  weapons/research reactor grade, >90% U-235)
 static vsepr::report::MaterialProperties heu_properties() {
     vsepr::report::MaterialProperties heu;
     heu.name     = "HEU Metal (U-235 enriched)";
@@ -286,7 +286,7 @@ static vsepr::report::MaterialProperties heu_properties() {
 
     heu.fatigue_endurance_MPa = 100.0;
     heu.fatigue_exponent      = -0.11;
-    heu.anisotropy_factor     = 2.0;     // alpha-U is orthorhombic — highly anisotropic
+    heu.anisotropy_factor     = 2.0;     // alpha-U is orthorhombic  -  highly anisotropic
     heu.uncertainty_factor    = 0.08;
     heu.confidence_score      = 0.88;
     heu.is_synthetic          = false;
@@ -295,7 +295,7 @@ static vsepr::report::MaterialProperties heu_properties() {
     return heu;
 }
 
-// ThO2 — Thorium dioxide (thorium cycle candidate, high melting point ceramic)
+// ThO2  -  Thorium dioxide (thorium cycle candidate, high melting point ceramic)
 static vsepr::report::MaterialProperties tho2_properties() {
     vsepr::report::MaterialProperties tho2;
     tho2.name     = "Thorium Dioxide";
@@ -316,7 +316,7 @@ static vsepr::report::MaterialProperties tho2_properties() {
 
     tho2.fatigue_endurance_MPa = 60.0;
     tho2.fatigue_exponent      = -0.07;
-    tho2.anisotropy_factor     = 1.0;   // fluorite structure — isotropic
+    tho2.anisotropy_factor     = 1.0;   // fluorite structure  -  isotropic
     tho2.uncertainty_factor    = 0.10;
     tho2.confidence_score      = 0.87;
     tho2.is_synthetic          = false;
@@ -325,7 +325,7 @@ static vsepr::report::MaterialProperties tho2_properties() {
     return tho2;
 }
 
-// TRISO particle — SiC/PyC coated fuel kernel (HTR technology)
+// TRISO particle  -  SiC/PyC coated fuel kernel (HTR technology)
 static vsepr::report::MaterialProperties triso_properties() {
     vsepr::report::MaterialProperties triso;
     triso.name     = "TRISO Particle (SiC coating)";
@@ -356,7 +356,7 @@ static vsepr::report::MaterialProperties triso_properties() {
     return triso;
 }
 
-// Inconel-718 — Ni superalloy (reactor vessel internals, control rod mechanisms)
+// Inconel-718  -  Ni superalloy (reactor vessel internals, control rod mechanisms)
 static vsepr::report::MaterialProperties inconel718_properties() {
     vsepr::report::MaterialProperties inc;
     inc.name     = "Inconel-718";
@@ -387,7 +387,7 @@ static vsepr::report::MaterialProperties inconel718_properties() {
 }
 
 // ============================================================================
-// C++23 std::expected — Material Lookup with Typed Error (N4950 §22.8)
+// C++23 std::expected  -  Material Lookup with Typed Error (N4950 §22.8)
 // ============================================================================
 
 enum class MaterialError {
@@ -413,7 +413,7 @@ lookup_nuclear_material(int index) {
 
 static constexpr int NUCLEAR_MATERIAL_COUNT = 8;
 
-// C++23 monadic optional — chain-style active core lookup (N4950 §22.5.3.7)
+// C++23 monadic optional  -  chain-style active core lookup (N4950 §22.5.3.7)
 static std::optional<std::string> active_core_description() {
     return std::optional<const vsepr::multiscale::NuclearCore*>(
                vsepr::multiscale::get_active_core())
@@ -745,16 +745,16 @@ public:
 
         // Banner
         std::cout << ansi::BOLD;
-        std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  VSEPR-SIM Nuclear Core Runner                                ║\n";
-        std::cout << "║  core = 94 (Pu-239) — ACTIVE                                  ║\n";
-        std::cout << "║  Duration: " << std::setw(5) << fmt_d(cfg_.minutes, 1)
-                  << " minutes                                       ║\n";
-        std::cout << "║  Output: " << std::setw(50) << std::left << cfg_.output_dir << " ║\n";
-        std::cout << "║  Seed: " << std::setw(12) << cfg_.seed
-                  << "                                        ║\n";
-        std::cout << "║  Formats: LaTeX (.tex) + Excel XML (.xml) + Markdown + CSV    ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+        std::cout << "+================================================================+\n";
+        std::cout << "|  VSEPR-SIM Nuclear Core Runner                                |\n";
+        std::cout << "|  core = 94 (Pu-239)  -  ACTIVE                                  |\n";
+        std::cout << "|  Duration: " << std::setw(5) << fmt_d(cfg_.minutes, 1)
+                  << " minutes                                       |\n";
+        std::cout << "|  Output: " << std::setw(50) << std::left << cfg_.output_dir << " |\n";
+        std::cout << "|  Seed: " << std::setw(12) << cfg_.seed
+                  << "                                        |\n";
+        std::cout << "|  Formats: LaTeX (.tex) + Excel XML (.xml) + Markdown + CSV    |\n";
+        std::cout << "+================================================================+\n";
         std::cout << ansi::RESET << "\n";
 
         // Nuclear core info
@@ -769,13 +769,13 @@ public:
                       << ansi::RESET << "\n\n";
         }
 
-        // LaTeX preamble — we'll write the full doc at the end
+        // LaTeX preamble  -  we'll write the full doc at the end
         std::vector<vsepr::report::TechnicalReport> all_reports;
 
         int nuclear_count = 0;
         int conventional_count = 0;
 
-        // Main loop — run until wall-clock deadline
+        // Main loop  -  run until wall-clock deadline
         while (std::chrono::steady_clock::now() < deadline) {
             auto report = engine_->generate_one();
 
@@ -846,7 +846,7 @@ public:
             std::ofstream tex(tex_path);
             if (tex) {
                 tex << LaTeXWriter::preamble(
-                    "Nuclear Core Z=94 — Autonomous Thermal-Materials Report",
+                    "Nuclear Core Z=94  -  Autonomous Thermal-Materials Report",
                     static_cast<int>(all_reports.size()),
                     elapsed_min,
                     timestamp_now()
@@ -929,19 +929,19 @@ public:
         // Summary
         // ================================================================
         std::cout << "\n" << ansi::BOLD;
-        std::cout << "  ════════════════════════════════════════════════════════════════\n";
-        std::cout << "   Nuclear Core Z=94 — Run Complete\n";
+        std::cout << "  ================================================================\n";
+        std::cout << "   Nuclear Core Z=94  -  Run Complete\n";
         std::cout << "   Reports:     " << all_reports.size() << " (" << nuclear_count << " nuclear, " << conventional_count << " conventional)\n";
         std::cout << "   Duration:    " << fmt_d(elapsed_min, 1) << " minutes\n";
         std::cout << "   Rate:        " << fmt_d(all_reports.size() / (elapsed_min * 60.0), 1) << " reports/sec\n";
         std::cout << "   Experiments: " << [&]{ int n=0; for(auto&r:all_reports) n+=r.experiments.size(); return n; }() << " total\n";
         std::cout << "   Warnings:    " << [&]{ int n=0; for(auto&r:all_reports) n+=r.warnings.size(); return n; }() << " total\n";
         std::cout << "   Output:      " << cfg_.output_dir << "/\n";
-        std::cout << "     master_report.tex  — compilable LaTeX\n";
-        std::cout << "     data.xml           — SpreadsheetML (open in Excel)\n";
-        std::cout << "     summary.csv        — cumulative CSV\n";
-        std::cout << "     TMS-NNNNNN.md      — individual Markdown reports\n";
-        std::cout << "  ════════════════════════════════════════════════════════════════\n";
+        std::cout << "     master_report.tex   -  compilable LaTeX\n";
+        std::cout << "     data.xml            -  SpreadsheetML (open in Excel)\n";
+        std::cout << "     summary.csv         -  cumulative CSV\n";
+        std::cout << "     TMS-NNNNNN.md       -  individual Markdown reports\n";
+        std::cout << "  ================================================================\n";
         std::cout << ansi::RESET << "\n";
 
         return 0;
@@ -978,7 +978,7 @@ private:
         }
 
         mc.effective.primary_Z = nuclear_mat.primary_Z;
-        mc.case_name = nuclear_mat.name + " — " + mc.case_name;
+        mc.case_name = nuclear_mat.name + "  -  " + mc.case_name;
 
         // Add radiation damage defect for nuclear cases
         vsepr::report::DefectSpec radiation;
@@ -1029,7 +1029,7 @@ int main(int argc, char** argv) {
 
         if (arg == "--help" || arg == "-h") {
             std::cout << R"(
-VSEPR-SIM Nuclear Core Runner — Z=94 (Pu-239)
+VSEPR-SIM Nuclear Core Runner  -  Z=94 (Pu-239)
 4.0-Legacy-Beta Autonomous Report Generation
 
 Usage: nuclear-core-runner [OPTIONS]

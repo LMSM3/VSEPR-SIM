@@ -1,4 +1,4 @@
-#include "velocity_verlet.hpp"
+﻿#include "velocity_verlet.hpp"
 #include <cmath>
 #include <iostream>
 #include <iomanip>
@@ -14,7 +14,7 @@ namespace atomistic {
 // Value: R / N_A = 8.314462618 J/(mol·K) / 4184 J/kcal
 static constexpr double k_B = 0.0019872041;
 
-// Kinetic energy conversion factor: amu·Å²/fs² → kcal/mol
+// Kinetic energy conversion factor: amu·Å²/fs² -> kcal/mol
 // Derivation:
 //   E(J) = 0.5 * m_amu * 1.66053906660e-27 kg/amu * (v_Å/fs * 1e5 m/s per Å/fs)²
 //        = 0.5 * m_amu * v²_Å/fs² * 1.66053906660e-17 J
@@ -24,13 +24,13 @@ static constexpr double k_B = 0.0019872041;
 // NOTE: This includes the 0.5 factor!
 static constexpr double KE_CONV = 2390.057361;
 
-// Velocity conversion factor: sqrt(kcal/(mol·amu)) → Å/fs
+// Velocity conversion factor: sqrt(kcal/(mol·amu)) -> Å/fs
 // Used in Langevin thermostat for random kick amplitude
 // CORRECT VALUE VALIDATED: b * 0.0205 gives T=298K (0.6% error)
 // Reference: BAOAB_IMPLEMENTATION_COMPLETE.md
 static constexpr double VEL_CONV = 0.0205;
 
-// Acceleration conversion factor: (kcal/(mol·Å))/amu → Å/fs²
+// Acceleration conversion factor: (kcal/(mol·Å))/amu -> Å/fs²
 // NOTE: ACC_CONV is REQUIRED (tested: ACC_CONV=1.0 gives T~10³⁴K)
 // Current value gives T~10¹⁵K (better but still wrong)
 // TODO: Find correct value from working BAOAB implementation
@@ -131,7 +131,7 @@ VelocityVerletStats VelocityVerlet::integrate(
     // Main integration loop
     for (int step = 0; step < params.n_steps; ++step) {
         // Half-step velocity update: v(t+dt/2) = v(t) + F(t) * dt / (2m)
-        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu → Å/fs²
+        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu -> Å/fs²
         for (uint32_t i = 0; i < state.N; ++i) {
             double inv_m = 1.0 / state.M[i];
             state.V[i].x += state.F[i].x * inv_m * ACC_CONV * 0.5 * params.dt;
@@ -157,7 +157,7 @@ VelocityVerletStats VelocityVerlet::integrate(
         model.eval(state, mp);
         
         // Second half-step velocity update: v(t+dt) = v(t+dt/2) + F(t+dt) * dt / (2m)
-        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu → Å/fs²
+        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu -> Å/fs²
         for (uint32_t i = 0; i < state.N; ++i) {
             double inv_m = 1.0 / state.M[i];
             state.V[i].x += state.F[i].x * inv_m * ACC_CONV * 0.5 * params.dt;
@@ -273,7 +273,7 @@ LangevinStats LangevinDynamics::integrate(
         // ====================================================================
         // B: Half-step velocity kick with forces
         // ====================================================================
-        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu → Å/fs²
+        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu -> Å/fs²
         for (uint32_t i = 0; i < state.N; ++i) {
             double inv_m = 1.0 / state.M[i];
             state.V[i].x += state.F[i].x * inv_m * ACC_CONV * 0.5 * params.dt;
@@ -329,7 +329,7 @@ LangevinStats LangevinDynamics::integrate(
         // ====================================================================
         // B: Final half-step velocity kick
         // ====================================================================
-        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu → Å/fs²
+        // NOTE: ACC_CONV converts (kcal/(mol·Å))/amu -> Å/fs²
         for (uint32_t i = 0; i < state.N; ++i) {
             double inv_m = 1.0 / state.M[i];
             state.V[i].x += state.F[i].x * inv_m * ACC_CONV * 0.5 * params.dt;

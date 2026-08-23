@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 /*
 kabsch.hpp
 ----------
 Kabsch alignment and RMSD computation for VSEPR-SIM.
 
-Public API accepts vsepr::Vec3 — the project-native state vector.
+Public API accepts vsepr::Vec3  -  the project-native state vector.
 All linear algebra runs internally through Eigen (SVD, covariance,
 rotation matrix).  No Eigen type leaks across the function boundaries.
 
@@ -16,13 +16,13 @@ Usage:
 	double rmsd = vsepr::analysis::compute_rmsd(reference, current);
 
 	auto result = vsepr::analysis::kabsch_align(reference, mobile);
-	// result.rmsd          — post-alignment RMSD
-	// result.rotation      — 3×3 rotation matrix (as vsepr::Vec3[3] rows)
-	// result.aligned       — rotated+translated mobile frame (Vec3 vector)
+	// result.rmsd           -  post-alignment RMSD
+	// result.rotation       -  3×3 rotation matrix (as vsepr::Vec3[3] rows)
+	// result.aligned        -  rotated+translated mobile frame (Vec3 vector)
 
 Reference:
-	Kabsch, W. (1976). Acta Crystallographica, A32, 922–923.
-	Kabsch, W. (1978). Acta Crystallographica, A34, 827–828.
+	Kabsch, W. (1976). Acta Crystallographica, A32, 922-923.
+	Kabsch, W. (1978). Acta Crystallographica, A34, 827-828.
 */
 
 #include "../core/math/eigen_bridge.hpp"   // vsepr::eigen_bridge helpers
@@ -38,7 +38,7 @@ namespace vsepr {
 namespace analysis {
 
 // ---------------------------------------------------------------------------
-// RMSD — root-mean-square deviation (no alignment)
+// RMSD  -  root-mean-square deviation (no alignment)
 // ---------------------------------------------------------------------------
 
 /// Compute the RMSD between two point sets without any prior alignment.
@@ -65,12 +65,12 @@ inline double compute_rmsd(
 }
 
 // ---------------------------------------------------------------------------
-// KabschResult — output of a full alignment
+// KabschResult  -  output of a full alignment
 // ---------------------------------------------------------------------------
 
 struct KabschResult {
 	double rmsd{0.0};                   ///< post-alignment RMSD
-	Eigen::Matrix3d rotation;           ///< optimal rotation (mobile → reference frame)
+	Eigen::Matrix3d rotation;           ///< optimal rotation (mobile -> reference frame)
 	Eigen::Vector3d translation;        ///< translation applied before rotation
 	std::vector<vsepr::Vec3> aligned;  ///< mobile frame after alignment
 };
@@ -83,7 +83,7 @@ struct KabschResult {
 /// between reference and mobile after centroid superposition.
 ///
 /// Returns a KabschResult with the rotation matrix, translation vector,
-/// aligned mobile frame, and the resulting RMSD — all in vsepr types
+/// aligned mobile frame, and the resulting RMSD  -  all in vsepr types
 /// except for the Eigen matrix which is documented as an internal detail.
 inline KabschResult kabsch_align(
 	const std::vector<vsepr::Vec3>& reference,

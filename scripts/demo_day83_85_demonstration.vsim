@@ -1,0 +1,188 @@
+# demo_day83_85_demonstration.vsim
+# ============================================================================
+# VSEPR-SIM  |  Day 83-85 Demonstration  |  (Day 84 scope)
+# ============================================================================
+#
+# Purpose:
+#   A narrated, self-documenting demonstration of the Day 84 arc:
+#     - VSEPR geometry classification
+#     - OrganicCandidate family inference
+#     - ChemPlus declarative reaction bridge  ([chem_plus])
+#     - print_console  -- the new kernel-level live-session console emitter
+#
+#   The star of this script is the new `print_console` primitive (WO-85A):
+#   a script-encoded / live-session console writer, the VSIM equivalent of
+#   Write-Host / echo / print.  Quotations are OPTIONAL.
+#
+# Run it two ways:
+#
+#   1. Declarative classify preview (recommended for the Day 84 chemistry arc):
+#        vsepr classify scripts/demo_day83_85_demonstration.vsim
+#
+#   2. Full run front-end (renders the [console] block in the run banner):
+#        vsepr run scripts/demo_day83_85_demonstration.vsim
+#
+# Both front-ends render the print_console lines in a [console] block, in the
+# order they appear in this file.
+#
+# NOTE: This is the Day 84 slice of the eventual Day 83-85 demonstration.
+#       Days 83 and 85 sections will be appended as those arcs are finalised.
+#
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# print_console  --  live-session console emitter  (WO-85A)
+# ----------------------------------------------------------------------------
+# Everything after the keyword is the message.  A single surrounding pair of
+# double quotes is stripped, so these two lines print identical text:
+#
+#   print_console "Hello"
+#   print_console Hello
+#
+# Comments (#) after the message are ignored (outside quotes).
+# An empty payload emits a blank line.
+
+print_console "=============================================="
+print_console " VSEPR-SIM :: Day 83-85 Demonstration (Day 84)"
+print_console "=============================================="
+print_console ""
+print_console Quotations are optional -- this line has none.
+print_console "This line keeps its    inner spacing intact."
+print_console ""
+print_console ">> Stage 1: declaring methane (CH4) for classification"
+
+
+# ----------------------------------------------------------------------------
+# [project]  --  identity block
+# ----------------------------------------------------------------------------
+
+[project]
+name        = "day83_85_demonstration"
+description = "Day 84 arc: VSEPR + OrganicCandidate + ChemPlus + print_console"
+version     = "1.0.0"
+author      = "VSEPR-SIM Day 83-85 demo"
+tags        = "day84 demonstration classify chemplus print_console"
+seed_base   = 8485
+# Make the seed_base a fixed integer to guarantee deterministic output across runs.
+# Ensures and demonstrates determinism.
+# Can be up the the maximum value of a hashable 32-bit integer (2^31-1 = 2147483647).
+
+# ----------------------------------------------------------------------------
+# [formula]  --  molecular identity for the classifiers
+# ----------------------------------------------------------------------------
+# CH4 (methane):
+#   - Centre: C (Z=6), 4 bonded H ligands
+#   - VSEPR:  AX4, tetrahedral (no lone pairs on carbon)
+#   - Organic family: alkane
+
+[formula]
+formula = "CH4"
+
+
+# ----------------------------------------------------------------------------
+# [simulation] and [run] -- minimal carrier-producing full-run counterpart
+# ----------------------------------------------------------------------------
+# The classify front-end uses [formula] above.  A full run constructs one
+# methane molecule so the final Stage 4 visual handoff has a real final-state
+# carrier rather than an empty demonstration run.
+
+[simulation]
+box_size_ang     = 20.0
+periodic         = false
+fire_max_steps   = 100
+fire_dt_fs       = 0.5
+formation_preset = "molecule"
+
+[[simulation.molecule]]
+formula       = "CH4"
+count         = 1
+temperature_K = 298.15
+lattice       = "none"
+
+[run]
+mode          = "relax"
+max_steps     = 100
+dt_fs         = 0.5
+temperature_K = 298.15
+converge      = true
+
+
+print_console ">> Stage 2: ChemPlus combustion reaction bridge engaged"
+
+
+# ----------------------------------------------------------------------------
+# [chem_plus]  --  ChemPlus declarative reaction bridge  (Day 84 / WO-84T/84U)
+# ----------------------------------------------------------------------------
+# Classify a combustion reaction alongside the molecule geometry.  When this
+# section is active, `vsepr classify` renders a [ChemPlus] block after the
+# [OrganicCandidate] block.
+#
+# Reaction:      CH4 + 2O2  ->  CO2 + 2H2O  + 891 kJ
+# Classification: combustion  (LHS has o2, RHS has co2)
+# Energy:         891 kJ (exothermic)
+# VSEPR product:  CO2 -> AX2 (linear)
+
+[chem_plus]
+reaction   = "CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"
+vsepr_link = true
+
+
+print_console ">> Stage 3: classification complete -- see blocks above"
+print_console ""
+print_console ">> Stage 4: queueing the shared visual handoff"
+print_console "    The final XYZ artifact feeds the Qt workspace molecule view."
+print_console "    VTK and Qt 3D consume the same SceneRenderPayload when their proof targets are available."
+print_console "    This demonstration records a handoff request, not a VTK/Qt 3D parity pass."
+print_console ""
+print_console "Day 84 demonstration finished. Have a nice reaction!"
+
+
+# ----------------------------------------------------------------------------
+# [export]  --  output configuration (documentation of intent)
+# ----------------------------------------------------------------------------
+# classify does not invoke the engine; these fields apply to a full run only.
+
+[export]
+output_dir      = "out/day83_85_demonstration"
+write_report_md = false
+write_xyz       = true
+write_manifest_json = true
+
+
+# ----------------------------------------------------------------------------
+# Stage 4 -- visual handoff for the VTK / Qt 3D proof lane
+# ----------------------------------------------------------------------------
+# The full run writes one final XYZ artifact first.  The current workspace can
+# open the declared molecule view from that artifact.  VTK and Qt 3D are
+# deliberately not named as render targets here: their consumers are not wired
+# in the active build yet.  When enabled, both consume the same read-only
+# SceneRenderPayload and must emit parity evidence before promotion.
+
+[visual]
+output_type     = "terminal_snapshot"
+render_interval = 1
+
+# This parser-supported output-side request is intentionally separate from the
+# VTK/Qt 3D proof; it provides the immutable current-state carrier that both
+# future adapters must consume.
+[visual.external]
+enabled            = true
+render             = "state_current"
+export_format      = "png"
+export_frame_png   = false
+export_trajectory  = false
+show_progress      = true
+render_interval    = 1
+
+# The Qt workspace is the present interactive handoff.  It remains a distinct
+# host from the planned Qt 3D compatibility consumer, and neither view writes
+# back to particle state or MolecularDB records.
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+live           = false
+show "scene.molecule" target = "run.final_state"
+
+#

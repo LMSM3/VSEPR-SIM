@@ -1,16 +1,16 @@
-#pragma once
+﻿#pragma once
 /**
- * bead_fire.hpp — Lattice-Level FIRE Minimizer for CG Bead Systems
+ * bead_fire.hpp  -  Lattice-Level FIRE Minimizer for CG Bead Systems
  *
  * FIRE (Fast Inertial Relaxation Engine) adapted to operate on
  * BeadSystem using the anisotropic surface-mapped interaction model.
  *
  * Force evaluation chain:
- *   BeadSystem → InteractionEngine::interaction_energy()
- *     → per-channel SH rotation (Wigner D-matrices)
- *     → per-(ℓ,m) radial kernel evaluation
- *     → environment coupling modulation (η-responsive)
- *     → forces by central-difference gradient
+ *   BeadSystem -> InteractionEngine::interaction_energy()
+ *     -> per-channel SH rotation (Wigner D-matrices)
+ *     -> per-(ℓ,m) radial kernel evaluation
+ *     -> environment coupling modulation (η-responsive)
+ *     -> forces by central-difference gradient
  *
  * This is NOT a second FIRE implementation. It reuses the same
  * algorithmic skeleton as atomistic::FIRE but operates on the CG
@@ -25,7 +25,7 @@
  * Anti-black-box: per-step statistics (energy, force, α, dt, per-channel
  * decomposition) are all recorded and inspectable.
  *
- * Deterministic: same input → bit-identical output.
+ * Deterministic: same input -> bit-identical output.
  *
  * Reference:
  *   - atomistic/integrators/fire.hpp (algorithmic skeleton)
@@ -53,7 +53,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * BeadFIREParams — FIRE parameters for CG bead minimization.
+ * BeadFIREParams  -  FIRE parameters for CG bead minimization.
  *
  * Same algorithmic constants as atomistic FIRE, but with additional
  * CG-specific options (environment update frequency, force finite
@@ -85,7 +85,7 @@ struct BeadFIREParams {
 // ============================================================================
 
 /**
- * BeadFIREStep — diagnostic record for one minimization step.
+ * BeadFIREStep  -  diagnostic record for one minimization step.
  * 
  * Includes bead positions for trajectory visualization.
  */
@@ -106,7 +106,7 @@ struct BeadFIREStep {
 };
 
 /**
- * BeadFIREResult — final outcome of a minimization run.
+ * BeadFIREResult  -  final outcome of a minimization run.
  */
 struct BeadFIREResult {
     int    steps_taken{};
@@ -250,7 +250,7 @@ inline void evaluate_bead_forces(
 // ============================================================================
 
 /**
- * BeadFIRE — Lattice-Level FIRE minimizer for CG bead systems.
+ * BeadFIRE  -  Lattice-Level FIRE minimizer for CG bead systems.
  *
  * Operates on bead positions using the anisotropic interaction engine
  * for force evaluation. Same FIRE algorithm as atomistic::FIRE with
@@ -377,7 +377,7 @@ struct BeadFIRE {
             double vnorm = std::sqrt(static_cast<double>(vnorm2));
             double fnorm = std::sqrt(static_cast<double>(fnorm2));
 
-            // Velocity mixing: v ← (1-α)v + α|v| f̂
+            // Velocity mixing: v <- (1-α)v + α|v| f̂
             if (fnorm > 0 && vnorm > 0) {
                 for (int i = 0; i < N; ++i) {
                     atomistic::Vec3 fhat = forces[i] * (1.0 / fnorm);
@@ -405,12 +405,12 @@ struct BeadFIRE {
                 }
             }
 
-            // Position update: x ← x + dt·v
+            // Position update: x <- x + dt·v
             for (int i = 0; i < N; ++i) {
                 beads[i].position = beads[i].position + vel[i] * dt;
             }
 
-            // Periodic environment state update (LaTeX §6 — exact η integration)
+            // Periodic environment state update (LaTeX §6  -  exact η integration)
             if (fp.use_environment && fp.env_update_freq > 0 &&
                 t > 0 && (t % fp.env_update_freq) == 0 &&
                 !env_states.empty())
@@ -438,7 +438,7 @@ struct BeadFIRE {
             }
         }
 
-        // Did not converge — return final state
+        // Did not converge  -  return final state
         auto Efinal = evaluate_bead_energy(beads, env_states, int_params, env_params);
         result.converged = false;
         result.steps_taken = fp.max_steps;

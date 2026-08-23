@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SAFETY RAILS TEST - Formation Pipeline
  * 
  * Tests Section B3: Safety Rails
@@ -31,9 +31,9 @@ constexpr double Ar_sigma = 3.4;
 // ============================================================================
 
 void test_overlap_abort() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  B3.1: OVERLAP ABORT TEST (r < 0.6σ)                      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  B3.1: OVERLAP ABORT TEST (r < 0.6σ)                      |\n";
+    std::cout << "+===========================================================+\n\n";
     
     std::cout << "Creating system with severe overlap (r = 0.5σ = " 
               << (0.5 * Ar_sigma) << " Å)...\n";
@@ -105,9 +105,9 @@ void test_overlap_abort() {
 // ============================================================================
 
 void test_energy_threshold() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  B3.2: ENERGY THRESHOLD TEST (E > 1000×E_initial)         ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  B3.2: ENERGY THRESHOLD TEST (E > 1000×E_initial)         |\n";
+    std::cout << "+===========================================================+\n\n";
     
     std::cout << "Creating system with extreme initial velocities...\n";
     
@@ -209,9 +209,9 @@ void test_energy_threshold() {
 // ============================================================================
 
 void test_error_messages() {
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  B3.3: ERROR MESSAGE CLARITY TEST                         ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  B3.3: ERROR MESSAGE CLARITY TEST                         |\n";
+    std::cout << "+===========================================================+\n\n";
     
     std::vector<std::string> test_cases = {
         "Invalid box size",
@@ -345,18 +345,18 @@ void test_error_messages() {
 // ============================================================================
 
 int main(int argc, char** argv) {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  SAFETY RAILS TEST SUITE - Formation Pipeline             ║\n";
-    std::cout << "║  Section B3: Safety Checks                                ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  SAFETY RAILS TEST SUITE - Formation Pipeline             |\n";
+    std::cout << "|  Section B3: Safety Checks                                |\n";
+    std::cout << "+===========================================================+\n";
     
     test_overlap_abort();
     test_energy_threshold();
     test_error_messages();
     
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  SAFETY RAILS TESTING COMPLETE                            ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  SAFETY RAILS TESTING COMPLETE                            |\n";
+    std::cout << "+===========================================================+\n\n";
     
     std::cout << "Note: Some tests may show warnings if safety features\n";
     std::cout << "      are not yet implemented. This is expected and helps\n";

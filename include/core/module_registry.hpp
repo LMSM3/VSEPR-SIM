@@ -1,4 +1,4 @@
-/**
+﻿/**
  * module_registry.hpp
  * -------------------
  * Unified Module Registry for VSEPR-SIM.
@@ -111,9 +111,9 @@ public:
     // Print full module table to stdout
     void print_table() const {
         std::cout << "\033[1;35m"
-                  << "╔════════════════════════════════════════════════════════════════╗\n"
-                  << "║  VSEPR-SIM Module Registry                                    ║\n"
-                  << "╚════════════════════════════════════════════════════════════════╝\n"
+                  << "+================================================================+\n"
+                  << "|  VSEPR-SIM Module Registry                                    |\n"
+                  << "+================================================================+\n"
                   << "\033[0m\n";
 
         // Group by category
@@ -123,9 +123,9 @@ public:
         }
 
         for (const auto& [cat, mods] : grouped) {
-            std::cout << "\033[1;36m┌─ " << cat << "\033[0m\n";
+            std::cout << "\033[1;36m+- " << cat << "\033[0m\n";
             for (const auto* m : mods) {
-                std::cout << "│  "
+                std::cout << "|  "
                           << status_color(m->status) << "●\033[0m "
                           << "\033[1m" << std::setw(18) << std::left << m->name << "\033[0m"
                           << " v" << std::setw(8) << std::left << m->version
@@ -135,7 +135,7 @@ public:
                 }
                 std::cout << "\n";
             }
-            std::cout << "│\n";
+            std::cout << "|\n";
         }
 
         std::cout << "Total: " << modules_.size() << " modules registered\n";
@@ -151,9 +151,9 @@ public:
         }
 
         std::cout << "\033[1;35m"
-                  << "╔════════════════════════════════════════════════════════════════╗\n"
-                  << "║  Module: " << std::setw(53) << std::left << m->name << "  ║\n"
-                  << "╚════════════════════════════════════════════════════════════════╝\n"
+                  << "+================================================================+\n"
+                  << "|  Module: " << std::setw(53) << std::left << m->name << "  |\n"
+                  << "+================================================================+\n"
                   << "\033[0m\n";
 
         std::cout << "  Version:     " << m->version << "\n";
@@ -288,9 +288,9 @@ inline void register_builtin_modules() {
 
     reg.register_module({
         "gas2", "1.0.0",
-        "Advanced heat and gas analysis — 3-EOS comparison, Chapman-Enskog transport, Joule-Thomson",
+        "Advanced heat and gas analysis  -  3-EOS comparison, Chapman-Enskog transport, Joule-Thomson",
         "simulation", ModuleStatus::Ready, {"gas"},
-        R"(  GAS2 MODULE — Advanced Heat and Gas Analysis
+        R"(  GAS2 MODULE  -  Advanced Heat and Gas Analysis
   ---------------------------------------------
   Next-generation gas-phase modeling with unified species database,
   three equation-of-state solvers, and full kinetic/thermal analysis.
@@ -367,7 +367,7 @@ inline void register_builtin_modules() {
 
     reg.register_module({
         "trail", "0.1.0",
-        "Code Trail Wind — deterministic operation audit trail with CSV",
+        "Code Trail Wind  -  deterministic operation audit trail with CSV",
         "analysis", ModuleStatus::Ready, {},
         R"(  TRAIL MODULE (Code Trail Wind v0.1)
   ------------------------------------

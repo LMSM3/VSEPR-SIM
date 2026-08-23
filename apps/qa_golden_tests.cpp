@@ -1,4 +1,4 @@
-/**
+﻿/**
  * qa_golden_tests.cpp
  * -------------------
  * Pre-Batching Quality & Reproducibility Milestone
@@ -136,7 +136,7 @@ struct LatticeInvariants {
 struct GoldenTest;
 
 /**
- * Convert atomistic::State → CoreState
+ * Convert atomistic::State -> CoreState
  * Used after simulation to extract data for validation
  */
 inline CoreState from_atomistic_state(const atomistic::State& s) {
@@ -153,7 +153,7 @@ inline CoreState from_atomistic_state(const atomistic::State& s) {
 }
 
 /**
- * Convert CoreState → atomistic::State
+ * Convert CoreState -> atomistic::State
  * Used before simulation to prepare initial structure
  */
 inline atomistic::State to_atomistic_state(const CoreState& core) {
@@ -656,7 +656,7 @@ enum class ValidationMode {
 };
 
 // ============================================================================
-// SKIP POLICY (Phase 3B — explicit deferred test documentation)
+// SKIP POLICY (Phase 3B  -  explicit deferred test documentation)
 // ============================================================================
 
 // Use SKIP_GOLDEN_HASH() to mark a test's expected_hash as explicitly deferred.
@@ -1625,7 +1625,7 @@ public:
             };
             test.initial_state.bonds = {{0, 1}, {0, 2}};  // O-H, O-H
             
-            // Calibrated: bonded at r0 + 1-2/1-3 exclusions → E ≈ 0 for small molecules
+            // Calibrated: bonded at r0 + 1-2/1-3 exclusions -> E ≈ 0 for small molecules
             test.expected_hash = "8_-0.240000_-0.310000_0.000000|1_0.720000_-0.310000_0.000000|1_-0.480000_0.620000_0.000000";
             test.expected_energy_min = -0.01;
             test.expected_energy_max = 0.01;
@@ -1649,7 +1649,7 @@ public:
             };
             test.initial_state.bonds = {{0, 1}, {0, 2}, {0, 3}};  // N-H × 3
 
-            // Calibrated: bonded at r0 + 1-2/1-3 exclusions → E ≈ 0 for small molecules
+            // Calibrated: bonded at r0 + 1-2/1-3 exclusions -> E ≈ 0 for small molecules
             test.expected_hash = "7_0.000000_0.000000_0.000000|1_1.000000_0.000000_0.000000|1_-0.500000_0.870000_0.000000|1_-0.500000_-0.870000_0.000000";
             test.expected_energy_min = -0.01;
             test.expected_energy_max = 0.01;
@@ -1674,7 +1674,7 @@ public:
             };
             test.initial_state.bonds = {{0, 1}, {0, 2}, {0, 3}, {0, 4}};  // C-H × 4
 
-            // Calibrated: bonded at r0 + 1-2/1-3 exclusions → E ≈ 0 for small molecules
+            // Calibrated: bonded at r0 + 1-2/1-3 exclusions -> E ≈ 0 for small molecules
             test.expected_hash = "6_-0.002000_0.002000_0.000000|1_1.088000_0.002000_0.000000|1_-0.362000_-0.518000_0.890000|1_-0.362000_-0.518000_-0.890000|1_-0.362000_1.032000_0.000000";
             test.expected_energy_min = -0.01;
             test.expected_energy_max = 0.01;
@@ -1697,7 +1697,7 @@ public:
             };
             test.initial_state.bonds = {{0, 1}, {0, 2}};  // C=O, C=O
 
-            // Calibrated: bonded at r0 + 1-2/1-3 exclusions → E ≈ 0 for small molecules
+            // Calibrated: bonded at r0 + 1-2/1-3 exclusions -> E ≈ 0 for small molecules
             test.expected_hash = "6_0.000000_0.000000_0.000000|8_1.160000_0.000000_0.000000|8_-1.160000_0.000000_0.000000";
             test.expected_energy_min = -0.01;
             test.expected_energy_max = 0.01;
@@ -1725,7 +1725,7 @@ public:
             };
             test.initial_state.bonds = {{0,1},{0,2},{0,3},{0,4},{0,5},{0,6}};  // S-F × 6
 
-            // Calibrated: bonded at r0 + 1-2/1-3 exclusions → E ≈ 0 for hub-spoke
+            // Calibrated: bonded at r0 + 1-2/1-3 exclusions -> E ≈ 0 for hub-spoke
             test.expected_hash = "16_0.000000_0.000000_0.000000|9_1.560000_0.000000_0.000000|9_-1.560000_0.000000_0.000000|9_0.000000_1.560000_0.000000|9_0.000000_-1.560000_0.000000|9_0.000000_0.000000_1.560000|9_0.000000_0.000000_-1.560000";
             test.expected_energy_min = -0.01;
             test.expected_energy_max = 0.01;
@@ -1822,7 +1822,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("NaCl — PBC+FIRE+Ewald implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("NaCl  -  PBC+FIRE+Ewald implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -50.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Na-Cl"] = 6;  // 6-fold coordination
@@ -1859,7 +1859,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("Si diamond — PBC+FIRE implemented (beta-8); Tersoff/bond-order potential still deferred; hash pending", "v5.1", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("Si diamond  -  PBC+FIRE implemented (beta-8); Tersoff/bond-order potential still deferred; hash pending", "v5.1", false);
             test.expected_energy_min = -40.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Si-Si"] = 4;  // 4-fold tetrahedral
@@ -1892,7 +1892,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("Al FCC — PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("Al FCC  -  PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -60.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Al-Al"] = 12;  // 12-fold FCC coordination
@@ -1940,7 +1940,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("Fe BCC — PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("Fe BCC  -  PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -50.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Fe-Fe"] = 8;  // 8-fold BCC coordination
@@ -1980,7 +1980,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a*sqrt(3.0), c};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("Mg HCP — PBC+FIRE implemented (beta-8); orthorhombic box approximation in place; hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("Mg HCP  -  PBC+FIRE implemented (beta-8); orthorhombic box approximation in place; hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -55.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Mg-Mg"] = 12;  // 12-fold HCP coordination
@@ -2010,7 +2010,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("Po SC — PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("Po SC  -  PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -30.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Po-Po"] = 6;  // 6-fold SC coordination
@@ -2045,7 +2045,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("CsCl — PBC+FIRE+Ewald implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("CsCl  -  PBC+FIRE+Ewald implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -45.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Cs-Cl"] = 8;  // 8-fold coordination
@@ -2077,7 +2077,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("CaF2 — PBC+FIRE+Ewald implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("CaF2  -  PBC+FIRE+Ewald implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -70.0;
             test.expected_energy_max = 0.0;
             test.expected_coordination["Ca-F"] = 8;   // Ca has 8 F neighbors
@@ -2116,7 +2116,7 @@ public:
             test.initial_state.pbc_enabled = true;
             test.initial_state.box_lengths = {a, a, a*strain_z};
 
-            test.expected_hash = SKIP_GOLDEN_HASH("Al FCC strained — PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
+            test.expected_hash = SKIP_GOLDEN_HASH("Al FCC strained  -  PBC+FIRE implemented (beta-8); hash pending first verified run", "v5.0-beta8", false);
             test.expected_energy_min = -58.0;  // Slightly higher than unstrained
             test.expected_energy_max = 0.0;
             test.expected_coordination["Al-Al"] = 12;  // CN should be preserved
@@ -2253,7 +2253,7 @@ public:
         double energy = model.energy(relaxed);
 
         // Explicitly skipped tests (SKIP_GOLDEN_HASH): pass immediately after relaxation.
-        // All crystal/coordination/convergence checks are bypassed — the skip reason
+        // All crystal/coordination/convergence checks are bypassed  -  the skip reason
         // documents exactly why and which version owns the fix.
         if (test.is_skip()) {
             std::cout << "  [SKIP] " << test.name << ": " << test.expected_hash << "\n";
@@ -2450,15 +2450,15 @@ public:
     }
 
     void run_all_tests() {
-        std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  Pre-Batching Quality & Reproducibility Milestone       ║\n";
-        std::cout << "╠══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Deterministic validation - NO VIBES, only facts        ║\n";
-        std::cout << "║  Mode: " 
+        std::cout << "+==========================================================+\n";
+        std::cout << "|  Pre-Batching Quality & Reproducibility Milestone       |\n";
+        std::cout << "╠==========================================================╣\n";
+        std::cout << "|  Deterministic validation - NO VIBES, only facts        |\n";
+        std::cout << "|  Mode: " 
                   << std::left << std::setw(45) 
                   << (validation_mode_ == ValidationMode::STRICT ? "STRICT" : "PORTABLE") 
-                  << "║\n";
-        std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+                  << "|\n";
+        std::cout << "+==========================================================+\n\n";
 
         // 1. Generate run manifest
         RunManifest manifest = generate_manifest();
@@ -2608,14 +2608,14 @@ private:
             else failed++;
         }
 
-        std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  SUMMARY                                                 ║\n";
-        std::cout << "╠══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Total tests: " << std::setw(2) << all_results_.size() << "                                         ║\n";
-        std::cout << "║  Passed:      " << std::setw(2) << passed  << "                                         ║\n";
-        std::cout << "║  Failed:      " << std::setw(2) << failed  << "                                         ║\n";
-        std::cout << "║  Skipped:     " << std::setw(2) << skipped << "  (explicit SKIP_GOLDEN_HASH)            ║\n";
-        std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+        std::cout << "\n+==========================================================+\n";
+        std::cout << "|  SUMMARY                                                 |\n";
+        std::cout << "╠==========================================================╣\n";
+        std::cout << "|  Total tests: " << std::setw(2) << all_results_.size() << "                                         |\n";
+        std::cout << "|  Passed:      " << std::setw(2) << passed  << "                                         |\n";
+        std::cout << "|  Failed:      " << std::setw(2) << failed  << "                                         |\n";
+        std::cout << "|  Skipped:     " << std::setw(2) << skipped << "  (explicit SKIP_GOLDEN_HASH)            |\n";
+        std::cout << "+==========================================================+\n\n";
 
         if (!skip_names.empty()) {
             std::cout << "  Skipped golden tests (target v5.1, non-blocking):\n";
@@ -2630,7 +2630,7 @@ private:
             std::cout << "❌ " << failed << " TEST(S) FAILED - See report for details\n\n";
         }
 
-        // ── Beta-version release dashboards ───────────────────────────────
+        // -- Beta-version release dashboards -------------------------------
         auto row = [](const char* label, const char* status) {
             std::string lbl(label);
             std::string sta(status);

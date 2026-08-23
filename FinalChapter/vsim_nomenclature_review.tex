@@ -1,0 +1,384 @@
+% =============================================================================
+%  vsim_nomenclature_review.tex
+%  Nomenclature Inconsistency Review
+%  Bridge docs cross-checked against VSIM_REFERENCE.md (v5.0.2)
+%  REV-2026-01
+% =============================================================================
+\documentclass[11pt,a4paper]{article}
+\usepackage{vsim_common}
+\usepackage{soul}       % for \st strikethrough
+
+\hypersetup{pdftitle={Nomenclature Review REV-2026-01},pdfsubject={VSIM Internal}}
+
+% Severity pills
+\definecolor{critbg}{RGB}{253,232,232}
+\definecolor{critfg}{RGB}{120,10,10}
+\definecolor{sigbg}{RGB}{255,248,230}
+\definecolor{sigfg}{RGB}{120,80,0}
+\definecolor{minbg}{RGB}{244,244,244}
+\definecolor{minfg}{RGB}{60,60,60}
+
+\newcommand{\scrit}{\spill{critbg}{critfg}{CRITICAL}}
+\newcommand{\ssig}{\spill{sigbg}{sigfg}{SIGNIFICANT}}
+\newcommand{\sminor}{\spill{minbg}{minfg}{MINOR}}
+
+% Finding box
+\newcounter{finding}
+\newcommand{\finding}[3]{%   #1=severity pill  #2=short title  #3=body
+  \stepcounter{finding}%
+  \vspace{8pt}%
+  \begin{tcolorbox}[colback=white,colframe=black!20,arc=0pt,boxrule=0.5pt,
+    boxsep=4pt,left=8pt,right=8pt,top=6pt,bottom=6pt,breakable]
+    \noindent{\sffamily\bfseries\small F\thefinding\quad #2}\hfill #1\\[5pt]
+    {\small #3}
+  \end{tcolorbox}%
+}
+
+% Inline wrong/right
+\newcommand{\wrong}[1]{\textcolor{failtext}{\ttfamily\small #1}}
+\newcommand{\correct}[1]{\textcolor{passtext}{\ttfamily\small #1}}
+
+\begin{document}
+\thispagestyle{empty}
+
+\begin{center}
+  \eyebrow{VSIM Internal \textperiodcentered\ Nomenclature Review}\\[8pt]
+  {\LARGE\sffamily\bfseries Nomenclature Inconsistency Review}\\[6pt]
+  {\normalsize\sffamily
+    Bridge Docs Cross-checked Against \texttt{VSIM\_REFERENCE.md} v5.0.2}
+\end{center}
+
+\vspace{10pt}
+\noindent
+\begin{tabular}{@{}L{2.8cm} L{9cm}@{}}
+  \code{Doc ID}     & REV-2026-01 \\
+  \code{Scope}      & \texttt{vsim\_bridge\_doc.tex}, \texttt{vsim\_code\_request.tex},
+                      \texttt{vsim\_bridge\_audit.tex} \\
+  \code{Reference}  & \texttt{VSIM\_REFERENCE.md} (v5.0.2) \\
+  \code{Date}       & 2026-06-01 \\
+  \code{Status}     & Open --- findings require author action \\
+\end{tabular}
+
+\vspace{10pt}
+\begin{infobox}
+  \small\sffamily
+  \textbf{Severity guide:}\quad
+  \scrit\ = conflicts directly with reference; breaks existing parser or scripts\\[3pt]
+  \ssig\ = struct/TOML mismatch or naming drift; will cause silent bugs\\[3pt]
+  \sminor\ = style inconsistency or ambiguity; no runtime impact
+\end{infobox}
+
+\noindent\rule{\linewidth}{2pt}\vspace{4pt}
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{Critical Findings}
+% =============================================================================
+
+\finding{\scrit}{%
+  \texttt{[observe].track} --- wrong key name
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_doc.tex} \S\,9 demo script (line 380);
+  \texttt{vsim\_code\_request.tex} CR-08 task description.\\[4pt]
+  \textbf{Used:} \wrong{track = ["contact", "residence", ...]}\\
+  \textbf{Reference says:} \correct{metrics = ["energy\_map", "rdf", ...]}\\[4pt]
+  \texttt{VSIM\_REFERENCE.md} \S\,\texttt{[observe]} is unambiguous ---
+  the key is \texttt{metrics}, not \texttt{track}.
+  Every existing suite script (\texttt{suite\_gas\_plasma}, \texttt{suite\_metal\_steam})
+  uses \texttt{metrics}. A parser will either reject \texttt{track} or silently ignore it,
+  meaning the \texttt{identity\_entropy} observable would never activate.
+  CR-08 propagates the same wrong key in its task description.\\[4pt]
+  \textbf{Fix:} Replace all occurrences of \wrong{track} with \correct{metrics}
+  in the demo script and in CR-08.
+}
+
+\finding{\scrit}{%
+  \texttt{[system]} block conflicts with chemistry legacy alias
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_doc.tex} \S\,9 demo script (lines 357--359).\\[4pt]
+  \textbf{Used:}
+  \begin{databox}
+  {\ttfamily\small [system]\quad mode = "surface\_interaction"\quad space = "3d"}
+  \end{databox}
+  \textbf{Reference says:} \texttt{[system]} is the \emph{legacy alias}
+  for \texttt{[chemistry]} / \texttt{[chemistry].chemistry}. It is already a
+  parsed section with completely different semantics (ambient reaction rules, heat gate,
+  scoring thresholds). Using \texttt{[system]} with \texttt{mode} and \texttt{space} keys
+  will be parsed as chemistry configuration and produce undefined behaviour.\\[4pt]
+  \textbf{Fix:} Rename to a non-conflicting block name. Candidates:
+  \correct{[run.surface]}, \correct{[surface\_mode]}, or promote these fields into
+  \texttt{[run]} (which already has \texttt{mode = "md"}).
+  The \texttt{[[surface]]} array-of-tables block below it should remain.
+}
+
+\finding{\scrit}{%
+  Non-standard metric names in \texttt{[observe].metrics}
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_doc.tex} \S\,9 demo script.\\[4pt]
+  \textbf{Used:} \wrong{"contact"}, \wrong{"residence"}, \wrong{"embedding"},
+  \wrong{"diffusion\_axis"}\\[4pt]
+  None of these appear in the \texttt{VSIM\_REFERENCE.md} observe metrics table.
+  The closest match is \texttt{"diffusion\_proxy"} (reference) vs
+  \wrong{"diffusion\_axis"} (bridge doc) --- different names for what may be the same concept.
+  \wrong{"contact"}, \wrong{"residence"}, and \wrong{"embedding"} appear to be
+  surface-interaction-specific observables not yet registered in the reference.\\[4pt]
+  \textbf{Fix:} Either register these names in the observe metrics table in
+  \texttt{VSIM\_REFERENCE.md} (if they are real planned metrics), or remove them
+  from the demo script. Replace \wrong{"diffusion\_axis"} with
+  \correct{"diffusion\_proxy"} if the intent is the existing metric.
+}
+
+\finding{\scrit}{%
+  \texttt{[particles.projectile]} is undocumented; conflicts with \texttt{[[simulation.molecule]]}
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_doc.tex} \S\,9 demo script (lines 366--370).\\[4pt]
+  \textbf{Used:}
+  \begin{databox}
+  {\ttfamily\small
+  [particles.projectile]\\
+  count = 128\quad type = "generic\_bead"\quad velocity = [0.0, 0.0, -1.5]\quad height = 15.0}
+  \end{databox}
+  The canonical way to declare particle species in VSIM is
+  \correct{[[simulation.molecule]]} (with \texttt{formula}, \texttt{count},
+  \texttt{temperature}, \texttt{lattice}). The bridge doc introduces
+  \texttt{[particles.projectile]} with entirely different field names (\texttt{type}
+  instead of \texttt{formula}; \texttt{height} and \texttt{velocity} as top-level
+  keys instead of via \texttt{[[override.particle]]}). The parser will not recognise
+  this block.\\[4pt]
+  \textbf{Fix:} Replace with \correct{[[simulation.molecule]]} + initial velocity
+  via \correct{[[override.particle]]} (which IS in the reference), or register
+  \texttt{[particles.*]} as a new section type in the reference and parser.
+}
+
+% =============================================================================
+\section{Significant Findings}
+% =============================================================================
+
+\finding{\ssig}{%
+  \texttt{surface\_state} field in TOML missing from \texttt{FormationContext} C++ struct
+}{%
+  \textbf{Location:} \S\,9 demo script vs \S\,10 C++ header.\\[4pt]
+  Demo script \texttt{[formation.initial\_state]} contains:
+  \wrong{surface\_state = "roughened"}\\
+  The \texttt{FormationContext} struct in \S\,10 has fields:
+  \code{method}, \code{history}, \code{formation\_time}, \code{temperature\_K},
+  \code{pressure\_Pa}, \code{phase}, \code{defect\_state}, \code{grain\_state},
+  \code{density} --- \textbf{no} \texttt{surface\_state}.\\[4pt]
+  CR-01 in the code request also lists the same nine fields with no \texttt{surface\_state}.
+  The field would be silently dropped by the parser. Either add it to the struct and
+  the CR-01 field list, or remove it from the TOML example.
+}
+
+\finding{\ssig}{%
+  TOML field name \texttt{temperature} vs C++ struct field \texttt{temperature\_K}
+}{%
+  \textbf{Location:} \S\,4 minimum formation block vs \S\,10 C++ struct.\\[4pt]
+  \S\,4 TOML block: \wrong{temperature = 300.0} (no unit suffix)\\
+  \S\,10 C++ struct: \correct{double temperature\_K = 300.0;} (with \texttt{\_K} suffix)\\[4pt]
+  The \S\,9 demo script correctly uses \texttt{temperature = 300.0} in
+  \texttt{[formation.initial\_state]}, which maps to the C++ field \texttt{temperature\_K}.
+  This TOML-to-struct name mismatch must be documented in the parser (similar to how
+  \texttt{[run]} accepts both \texttt{temperature} and \texttt{temperature\_K}).
+  The \S\,4 minimum block should note the unit convention or use the suffixed name
+  for clarity.
+}
+
+\finding{\ssig}{%
+  TOML field \texttt{pressure} vs C++ struct field \texttt{pressure\_Pa}
+}{%
+  \textbf{Location:} \S\,4 minimum formation block vs \S\,10 C++ struct.\\[4pt]
+  Same issue as F6: the TOML uses \wrong{pressure = 101325.0} while the struct
+  declares \correct{double pressure\_Pa = 101325.0;}. Note also that \texttt{[run]}
+  uses \texttt{pressure\_GPa} (different unit), creating three pressure representations
+  across the system. The formation block implicitly uses Pascals but the field name
+  does not say so. The unit should be either embedded in the TOML key
+  (\correct{pressure\_Pa}) or documented in a comment.
+}
+
+\finding{\ssig}{%
+  Column header abbreviations in \texttt{.ie} data row do not match field names
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_doc.tex} \S\,6 data row example.\\[4pt]
+  The example header uses shortened names that do not match the formal field names
+  written by \texttt{IEWriter::write\_header()} in \S\,10:
+
+  \vspace{4pt}
+  \begin{center}\small
+  \begin{tabular}{@{}ll@{}}
+    \rowcolor{skybg}\textbf{Data row (abbreviated)} & \textbf{Formal field name} \\
+    \toprule
+    \wrong{hidden\_act}  & \correct{hidden\_activity} \\
+    \wrong{proj\_loss}   & \correct{projection\_loss} \\
+    \wrong{recov}        & \correct{recoverability} \\
+    \wrong{coal\_loss}   & \correct{coalescence\_loss} \\
+    \wrong{lin}          & \correct{lineage\_depth} \\
+    \wrong{state\_q}     & \correct{state\_quota} \\
+    \wrong{entr\_flux}   & \correct{entropy\_flux} \\
+    \wrong{form\_mem}    & \correct{formation\_memory} \\
+    \bottomrule
+  \end{tabular}
+  \end{center}
+  \vspace{4pt}
+  The actual \texttt{.ie} file written by \texttt{IEWriter} uses full names
+  (confirmed in \S\,10 \texttt{write\_header()}). The example would mislead anyone
+  using it to write a parser for the \texttt{.ie} format.\\[4pt]
+  \textbf{Fix:} Use full field names in the data row example, or note explicitly
+  that the header row is abbreviated for display purposes only.
+}
+
+\finding{\ssig}{%
+  \texttt{[seed].formation} vs new \texttt{[formation]} block --- namespace collision risk
+}{%
+  \textbf{Location:} \texttt{VSIM\_REFERENCE.md} \S\,\texttt{[seed]} vs
+  bridge doc \S\,4.\\[4pt]
+  The existing \texttt{[seed]} section has a field \texttt{formation = 7306}
+  (a 64-bit RNG seed component). The bridge doc introduces a new top-level block
+  \texttt{[formation]} with entirely different semantics (material history context).
+  The name proximity is a parser confusion risk: a naive reader of
+  \code{seed.formation = 7306} may conflate this with the new \texttt{[formation]}
+  block. The suite scripts already use both: \code{[seed] formation = 8106} alongside
+  the intended new \code{[formation]} block. The reference should add a disambiguation
+  note, and the bridge doc should acknowledge this naming overlap.
+}
+
+\finding{\ssig}{%
+  \texttt{[[surface]]} block is undocumented in \texttt{VSIM\_REFERENCE.md}
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_doc.tex} \S\,9 demo script.\\[4pt]
+  The demo uses a \texttt{[[surface]]} block (array-of-tables) with fields
+  \code{type = "graphite\_layer"}, \code{roughness = 0.05},
+  \code{warm\_minimum\_beads = 100}.\\[4pt]
+  \texttt{[[surface]]} (array-of-tables), its fields \texttt{roughness},
+  \texttt{warm\_minimum\_beads}, and the type value \texttt{"graphite\_layer"}
+  do not appear anywhere in \texttt{VSIM\_REFERENCE.md}. Either these are planned
+  future additions that need registering, or the block name conflicts with something
+  not yet surfaced in the reference.
+}
+
+% =============================================================================
+\section{Minor Findings}
+% =============================================================================
+
+\finding{\sminor}{%
+  \texttt{defect\_state} (field) vs ``defect seed'' (prose) --- semantic ambiguity
+}{%
+  \textbf{Location:} \S\,8 formation descriptors list vs \S\,10 C++ struct.\\[4pt]
+  The formation descriptors table in \S\,8 lists ``defect seed'' as a descriptor type.
+  The \texttt{FormationContext} struct field is \texttt{defect\_state}. These are
+  different concepts: a \emph{seed} is a numerical RNG input for defect placement;
+  a \emph{state} is the current defect configuration. The VSIM\_REFERENCE
+  \texttt{[seed]} section already has a \texttt{defect} seed field (\texttt{defect = 7303}).
+  Recommend changing ``defect seed'' in the \S\,8 prose to ``defect state'' to match
+  the struct, or renaming the struct field to \texttt{defect\_seed} if the intent is
+  to store a seed value.
+}
+
+\finding{\sminor}{%
+  \texttt{formation\_time} units unspecified
+}{%
+  \textbf{Location:} \S\,4 minimum formation block.\\[4pt]
+  \code{formation\_time = 0.0} has no documented unit. All time-related fields in
+  the reference use explicit unit suffixes (e.g., \texttt{dt\_fs} in femtoseconds,
+  \texttt{step\_delay\_ms} in milliseconds). Recommend either renaming to
+  \correct{formation\_time\_fs} or adding a comment in the TOML schema.
+}
+
+\finding{\sminor}{%
+  \texttt{[outputs.identity\_entropy]} not following \texttt{[export.*]} convention
+}{%
+  \textbf{Location:} All bridge docs.\\[4pt]
+  Already flagged as DEC-01 in the code request, but worth stating explicitly
+  as a nomenclature finding. All existing output configuration uses the
+  \texttt{[export]} and \texttt{[export.visual]} namespace. The bridge doc
+  introduces \texttt{[outputs.*]}, a new top-level namespace that does not exist
+  elsewhere in the reference. This creates two parallel output configuration
+  systems with no clear rule for which one owns what. DEC-01 must be resolved
+  and the decision recorded in the reference.
+}
+
+\finding{\sminor}{%
+  \texttt{vsim\_bridge\_audit.tex} audit tables use ``Wired'' where reference uses \checkmark
+}{%
+  \textbf{Location:} \texttt{vsim\_bridge\_audit.tex} \S\,3 Runtime Wire Audit.\\[4pt]
+  The audit doc uses the pill \swired\ for existing functions. The
+  \texttt{VSIM\_REFERENCE.md} uses the symbol legend: \checkmark\ (parsed and wired),
+  \texttt{*} (parsed, not wired), \texttt{x} (not parsed). The audit doc should note
+  that its status pills do not correspond to the reference symbols, or adopt the same
+  convention to reduce cross-document confusion.
+}
+
+\finding{\sminor}{%
+  \texttt{[run].temperature\_K} vs \texttt{[formation.initial\_state].temperature}
+}{%
+  \textbf{Location:} \S\,9 demo script.\\[4pt]
+  The \S\,9 demo uses \wrong{temperature\_K = 300.0} in \texttt{[run]} and
+  \wrong{temperature = 300.0} in \texttt{[formation.initial\_state]}.
+  These are different field names for the same physical quantity (temperature in Kelvin).
+  The reference notes that \texttt{[run]} accepts both \texttt{temperature} and
+  \texttt{temperature\_K} as aliases, so both are technically valid, but mixing
+  them within a single script increases read-time confusion. Recommend using the
+  suffixed form (\correct{temperature\_K}) consistently across all blocks in new scripts.
+}
+
+\finding{\sminor}{%
+  \texttt{C++ IERecord.state\_quota} is \texttt{uint32\_t} but \texttt{lineage\_depth} range may exceed 32-bit on deep coalescence chains
+}{%
+  \textbf{Location:} \S\,10 C++ header.\\[4pt]
+  \code{uint32\_t lineage\_depth = 0;} and \code{uint32\_t state\_quota = 1;}
+  are both 32-bit unsigned. For \texttt{state\_quota} ($Q_n$, particle count),
+  \texttt{uint32\_t} caps at $\approx 4\times10^9$, which is sufficient. For
+  \texttt{lineage\_depth}, the cap is also fine in practice. However, the frame
+  and \texttt{identity\_id} fields are \texttt{uint64\_t}. The mixed 32/64-bit
+  usage should be documented as a deliberate choice in the header, or both counters
+  widened to \texttt{uint64\_t} for consistency.
+}
+
+% =============================================================================
+\section{Summary Table}
+% =============================================================================
+
+\vspace{6pt}
+\small
+\begin{longtable}{@{} C{0.8cm} L{1.5cm} L{7.5cm} L{3.2cm} @{}}
+  \rowcolor{skybg}
+  \textbf{F\#} & \textbf{Severity} & \textbf{Title} & \textbf{Location} \\
+  \toprule
+  \endhead\bottomrule\endfoot
+
+  F1  & \scrit   & \code{[observe].track} wrong key name             & bridge \S\,9, CR-08 \\
+  F2  & \scrit   & \code{[system]} conflicts with chemistry alias     & bridge \S\,9 \\
+  F3  & \scrit   & Non-standard observe metric names                  & bridge \S\,9 \\
+  F4  & \scrit   & \code{[particles.projectile]} undocumented         & bridge \S\,9 \\
+  F5  & \ssig    & \code{surface\_state} in TOML, absent from struct  & bridge \S\,9, \S\,10 \\
+  F6  & \ssig    & TOML \code{temperature} vs struct \code{temperature\_K} & bridge \S\,4, \S\,10 \\
+  F7  & \ssig    & TOML \code{pressure} vs struct \code{pressure\_Pa} & bridge \S\,4, \S\,10 \\
+  F8  & \ssig    & Column header abbreviations don't match field names & bridge \S\,6 \\
+  F9  & \ssig    & \code{[seed].formation} vs \code{[formation]} collision risk & ref + bridge \S\,4 \\
+  F10 & \ssig    & \code{[[surface]]} block undocumented              & bridge \S\,9 \\
+  F11 & \sminor  & \code{defect\_state} vs ``defect seed'' prose      & bridge \S\,8, \S\,10 \\
+  F12 & \sminor  & \code{formation\_time} units unspecified           & bridge \S\,4 \\
+  F13 & \sminor  & \code{[outputs.*]} vs \code{[export.*]} namespace  & all bridge docs \\
+  F14 & \sminor  & Audit status pills vs reference symbol legend      & audit \S\,3 \\
+  F15 & \sminor  & Mixed \code{temperature} / \code{temperature\_K} in one script & bridge \S\,9 \\
+  F16 & \sminor  & Mixed \code{uint32\_t} / \code{uint64\_t} widths in IERecord  & bridge \S\,10 \\
+
+\end{longtable}
+\normalsize
+
+\vspace{8pt}
+\begin{warnbox}
+  \textbf{Recommended action order:} Fix F1 (wrong observe key) and F2 (system block conflict)
+  immediately --- both would cause a real script to silently misbehave or error at parse time.
+  F3 and F4 (undocumented blocks/metrics) should be resolved before the bridge doc \S\,9
+  script is used as a canonical example. F5--F10 should be resolved before CR-01 is closed.
+\end{warnbox}
+
+% =============================================================================
+\vspace{12pt}
+\noindent\rule{\linewidth}{0.5pt}
+{\small\sffamily\textcolor{gray}{REV-2026-01 \textperiodcentered\
+  VSIM Internal \textperiodcentered\
+  Ref: VSIM\_REFERENCE.md v5.0.2 \textperiodcentered\
+  vsim\_bridge\_doc.tex \textperiodcentered\ vsim\_code\_request.tex}}
+\end{document}

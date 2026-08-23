@@ -1,0 +1,105 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.72in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\setlist{nosep,leftmargin=1.3em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.3em}
+\title{Day 90: Active Molecular Registry Dynamics}
+\author{VSEPR-SIM Authoritative Day Overview}
+\date{Planned continuation from Day 89}
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+Day 90 turns the molecular registry from a passive collection of names and structures into an active evidence system. A registry target is complete only when identity, authority, deterministic state construction, dynamics or explicit static status, analysis, conservation reports, events, artifacts, and provenance are connected by a manifest.
+
+The work begins from Day 89's verified VSIM, artifact, renderer, and bead foundations. Day 90 does not inherit unverified Day 89 claims. Its opening ledger must name the branch, release, authoritative documents, latest evidence, unresolved blockers, and accepted carry-forward work.
+
+\section*{Registry strata}
+Records are separated by authority and evidence:
+\begin{itemize}
+\item \textbf{Reference-backed}: a traceable source supports identity, structure, or property data.
+\item \textbf{Reference-derived}: normalization or transformation is recorded and reproducible.
+\item \textbf{Model-derived}: a named model, parameters, version, and seed produced the result.
+\item \textbf{Exploratory}: the record supports testing or discovery but makes no reality claim.
+\item \textbf{Rejected}: validation, conservation, structural, chemical, or provenance gates failed.
+\end{itemize}
+
+A generated transition-metal fluoride such as OsF$_4$ begins as model-derived or exploratory unless a suitable reference is attached. Legacy osmium and fluoride files may be consolidated, but moving a file does not improve its authority. Each migrated datum retains source path, original semantics, transformations, and uncertainty.
+
+\section*{Required artifact pair}
+Each selected registry target and executed analysis/run pair produces:
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Artifact & Required content \\
+\midrule
+\texttt{chemistry\_report.json} & Composition, formula, charge/spin assumptions, coordination, reactions, warnings, confidence \\
+\texttt{process\_report.json} & State construction, run mode, schedules, boundaries, convergence, stages, failures \\
+\texttt{mass\_balance.tsv} & Initial, entered, left, transformed, final, and residual represented mass/species \\
+\texttt{energy\_balance.tsv} & Kinetic, potential components, heat, work, exchanged energy, final, and residual \\
+\texttt{events.json} & Ordered identity, state, exchange, reaction, warning, and lifecycle events \\
+\texttt{manifest.json} & Schema, record/run IDs, source hashes, seed, versions, artifacts, hashes, validation status \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+All six artifacts share one target identity and one execution identity. A missing artifact is represented as an explicit skipped/blocked manifest entry, never by silent omission.
+
+\newpage
+\section*{Dynamics as the next registry step}
+Static geometry is insufficient for an active record. Dynamics adds initial state, time axis, positions, velocities, forces, energy trace, boundary conditions, events, and analysis windows. It must remain clear whether a property is measured, reference-derived, model-estimated, or merely observed in a finite simulation.
+
+The first dynamics target should be reference-backed and computationally bounded. A second target may exercise sparse chemistry, such as an osmium/fluoride candidate, but must use conservative confidence language. Deterministic seeds and state hashes permit replay. Force-field limitations, excluded regimes, and failed gates are first-class outputs.
+
+A registry run follows:
+\[
+\text{identity}\rightarrow\text{initial state}\rightarrow\text{formation/relaxation}\rightarrow
+\text{dynamics}\rightarrow\text{analysis}\rightarrow\text{balances/events}\rightarrow\text{manifest}.
+\]
+
+\section*{Lettered execution map}
+A--V are ordinary execution slots. W--Z remain reserved.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+Range & Theme & Outcome \\
+\midrule
+A--C & Schema and authority & Stable record IDs, source lineage, confidence vocabulary \\
+D--F & Osmium/fluoride consolidation & Legacy inventory, migration adapters, canonical/exploratory targets \\
+G--I & State and dynamics & Deterministic initial state, formation, bounded trajectory \\
+J--N & Required reports & Chemistry, process, mass, energy, and events \\
+O--Q & Manifest and replay & Artifact hashes, replay route, rejection diagnostics \\
+R--T & Extended database & Generator adapters, refinement, validation coverage \\
+U & Readiness & Authority/evidence audit and blocker list \\
+V & Handoff & Day 90 close and Day 91 open ledger \\
+W--Z & Reserved & No ordinary pre-assignment \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Every completed letter requires an approximately two-page authoritative TeX document. This overview governs sequence and evidence but does not replace target-specific chemical, dynamic, or conservation authority.
+
+\section*{Acceptance criteria}
+Day 90 may close when:
+\begin{itemize}
+\item at least one reference-backed and one model-derived/exploratory target are represented;
+\item selected targets produce or explicitly account for all six required artifacts;
+\item formulas, atom/species inventories, and represented mass agree across artifacts;
+\item energy terms and exchanges declare units, method, residual, and tolerance;
+\item events preserve ordering and before/after state;
+\item manifest hashes and versions support replay or state a precise limitation;
+\item model-derived evidence is not presented as experimental truth;
+\item the extended molecular database receives validated, provenance-bearing refinements;
+\item the Day 90 close ledger records completed, carried, blocked, evidence, authority, and Day 91 acceptance.
+\end{itemize}
+
+Reserved W--Z slots are used only for late critical work, cross-cutting correction, release evidence, or recovery. Their availability is part of the day design and shall not be consumed by routine planning.
+\end{document}

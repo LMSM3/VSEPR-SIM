@@ -1,43 +1,43 @@
-#pragma once
+﻿#pragma once
 /**
- * material_kernel.hpp — Material Kernel Vector M_k
+ * material_kernel.hpp  -  Material Kernel Vector M_k
  *
  * Implements the material kernel formalism:
  *
- *           ┌ φ_k ┐
- *           │ ψ_k │
- *   M_k =   │ χ_k │
- *           │ ω_k │
- *           └ E_k ┘
+ *           + φ_k +
+ *           | ψ_k |
+ *   M_k =   | χ_k |
+ *           | ω_k |
+ *           + E_k +
  *
  * where each component encodes a distinct physical channel:
  *
- *   φ_k  — electrostatic potential proxy (kcal/mol/e)
+ *   φ_k   -  electrostatic potential proxy (kcal/mol/e)
  *          Source: QMDescriptor::phi_elec or Σ_j q_j·g_e / r_ij
  *
- *   ψ_k  — orientational order / structural coherence [0, 1]
+ *   ψ_k   -  orientational order / structural coherence [0, 1]
  *          Source: EnvironmentState::P2 (Legendre P₂)
  *          or mean η (slow state convergence signal)
  *
- *   χ_k  — electronegativity / chemical identity (Pauling)
+ *   χ_k   -  electronegativity / chemical identity (Pauling)
  *          Source: QMDescriptor::chi_mean or MetalRecord::electronegativity_pauling
  *
- *   ω_k  — orbital overlap / bonding character [0, 1]
+ *   ω_k   -  orbital overlap / bonding character [0, 1]
  *          Source: QMDescriptor::omega_overlap
  *
- *   E_k  — local energy density (kcal/mol per bead)
+ *   E_k   -  local energy density (kcal/mol per bead)
  *          Source: EnergyDecomposition, summed over pair contributions to bead k
  *
  * The material kernel vector is the 5-channel representation of each
  * bead (or domain) that flows through the analysis pipeline:
  *
- *   Atomistic → CG L2 bead → M_k kernel → L3 domain aggregate → Macro-DM
+ *   Atomistic -> CG L2 bead -> M_k kernel -> L3 domain aggregate -> Macro-DM
  *
  * Properties of M_k:
  *   - Deterministic: computed entirely from CG state + registry data
  *   - Low-dimensional: 5 real-valued components
  *   - Basis for comparison: ||M_k - M_ref|| measures material distance
- *   - Basis for classification: M_k clusters → material families
+ *   - Basis for classification: M_k clusters -> material families
  *   - Invariant to rotation: all components are scalars
  *
  * Anti-black-box: every component formula is explicit and traceable.
@@ -62,7 +62,7 @@ namespace theory {
 // ============================================================================
 
 /**
- * MaterialKernel — the 5-component per-bead (or per-domain) material
+ * MaterialKernel  -  the 5-component per-bead (or per-domain) material
  * state vector.
  *
  * All components are real-valued scalars.  Units are documented per field.
@@ -225,7 +225,7 @@ inline MaterialKernel aggregate_kernels(
 // ============================================================================
 
 /**
- * MaterialDistance — comparison between two material kernels.
+ * MaterialDistance  -  comparison between two material kernels.
  */
 struct MaterialDistance {
     double euclidean{};         ///< ||M_a − M_b||₂
@@ -260,7 +260,7 @@ inline MaterialDistance compare_kernels(
 // ============================================================================
 
 /**
- * KernelSpectrum — statistics over all M_k in the system.
+ * KernelSpectrum  -  statistics over all M_k in the system.
  */
 struct KernelSpectrum {
     MaterialKernel mean{};        ///< <M> = (1/N) Σ M_k

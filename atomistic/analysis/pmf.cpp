@@ -1,4 +1,4 @@
-#include "atomistic/analysis/pmf.hpp"
+﻿#include "atomistic/analysis/pmf.hpp"
 #include <cmath>
 #include <limits>
 #include <stdexcept>
@@ -179,7 +179,7 @@ PMFResult PMFCalculator::compute_from_rdf(
     result.tail_mean = (tail_count > 0) ? (tail_sum / tail_count) : 0.0;
     result.pmf_shift = result.tail_mean;
 
-    // Shift PMF so tail → 0
+    // Shift PMF so tail -> 0
     for (size_t i = 0; i < result.pmf.size(); ++i) {
         if (std::isfinite(result.pmf[i])) {
             result.pmf[i] -= result.pmf_shift;

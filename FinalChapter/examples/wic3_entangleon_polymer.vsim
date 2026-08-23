@@ -1,0 +1,224 @@
+# =============================================================================
+# WIC III — Connectivity Particles and the Entangleon
+# VSIM implementation: polymer bead chain, connectivity as identity
+#
+# Theory claim (WIC III):
+#   Stable connectivity may require its own representation.
+#   The entangleon E is a connectivity particle — identity-bearing
+#   without necessarily being a matter object.
+#
+#   Minimal form (1×2 Mina vector): m_E^(2) = [κ, τ]
+#     κ: connectivity strength
+#     τ: connectivity type
+#
+#   Extended form: V_E(t) = [κ(t), τ(t), D_E(t), H_E(t), C_E(t), w_E(t), Π_E]
+#
+#   WIC III §8: Hashlet exception.
+#     Connectivity particles may not require hashlets.
+#     This is settled in WIC III, not deferred.
+#
+#   WIC III §9: unverified status.
+#     The entangleon is explicitly a proposed concept.
+#     This script tests whether a polymer bead chain produces
+#     connectivity structure that behaves differently from matter
+#     particle structure — not whether entangleons exist.
+#
+# Computational test:
+#   A polymer bead chain in bead-spring model:
+#   - Each bead is a matter carrier (P_i)
+#   - Each bond between beads IS the connectivity object (E_{ij})
+#   - The bond has κ (spring constant) and τ (bond type = covalent)
+#
+#   WIC III §6: expanded identity vector V_E(t).
+#     κ(t): measured as bond stiffness from force constant extraction
+#     τ(t): covalent → constant across run (no bond breaking at 300 K)
+#     D_E(t): recoverable content of the connectivity — does the bond
+#             preserve its κ and τ throughout the run?
+#     H_E(t): does the connectivity object have an interaction history?
+#             Yes: the bond stretches and relaxes, accumulating strain history.
+#
+#   WIC III §7: pairwise vs many-body.
+#     E_{ij}: the bond between bead i and bead j
+#     E_W: the full connectivity graph of the chain
+#     Test: does the chain-level connectivity E_W have emergent properties
+#           not present in any single E_{ij}? (Contour length, end-to-end distance)
+#
+#   post_step probe:
+#     Bond lengths for bonds 1-2 and (n/2)-((n/2)+1) (mid-chain)
+#     End-to-end distance: pbc.distance(particle.position(1), particle.position(N))
+#     These capture κ(t) and the chain-level E_W evolution.
+#
+# Traditional system: 24-bead linear polymer chain
+#   Minimal bead-spring model. No chemistry. Pure connectivity geometry.
+#   This isolates the connectivity identity from the matter identity.
+# =============================================================================
+
+[project]
+name        = "wic3_entangleon_polymer"
+version     = "v5.1.13.5"
+seed_base   = 3300
+determinism = true
+
+[material]
+formula   = "polymer_chain"
+structure = "bead"
+phase     = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 6000
+dt_fs        = 2.0     # coarse time step for bead dynamics
+temperature  = 300.0
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = false    # free chain in vacuum — no PBC
+temperature = 300.0
+medium      = "vacuum"
+
+[simulation]
+fire_max_steps   = 400
+fire_dt_fs       = 1.0
+box_size_ang     = 120.0   # large box: 24-bead chain, ~80 Å extended
+periodic         = false
+formation_preset = "bead_spring"
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "bead_chain_24"
+count       = 1
+temperature = 300.0
+
+# ---------------------------------------------------------------------------
+# post_step: connectivity (entangleon) probes
+# WIC III §6: V_E(t) = [κ(t), τ(t), ...]
+#
+# Bond 1-2: first bond in chain (E_{12})
+# Bond 12-13: middle bond (E_{12,13})
+# End-to-end: captures E_W chain-level connectivity
+#
+# If bond_12 and bond_mid oscillate independently: E_{ij} are local
+# If end_to_end correlates with neither: E_W has emergent structure
+# That emergence IS the WIC III §7 pairwise vs many-body distinction.
+# ---------------------------------------------------------------------------
+[post_step]
+enabled = true
+script_block = """
+bond_12  = pbc.distance(particle.position(1),  particle.position(2))
+bond_mid = pbc.distance(particle.position(12), particle.position(13))
+end_to_end = pbc.distance(particle.position(1), particle.position(24))
+"""
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 20
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true    # bond stretch/recovery events = κ(t) changes
+defect_events    = false
+transport_events = true    # bead displacement = C_E(t) (connectivity motion)
+dynamic_energy   = true    # spring potential = κ-encoded energy
+
+# ---------------------------------------------------------------------------
+# Scale sampling
+# WIC III §5: minimal forms. The bead chain has a natural scale hierarchy:
+#   Bond scale (~3-4 Å bead diameter)
+#   Kuhn segment scale (~10-15 Å, a few beads)
+#   Chain end-to-end scale (~80 Å extended)
+# emergence_candidate at the chain scale = E_W has coherent structure
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [4, 4, 4]
+rve_window_lengths_A             = [4.0, 12.0, 30.0, 80.0]
+rve_windows_per_level            = 4
+rve_window_placement             = "stratified"
+min_particles_for_scale_sampling = 4
+spatial_cv_threshold             = 0.60    # bead chain: high variance expected
+temporal_drift_threshold         = 0.40
+scale_drift_threshold            = 0.50
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 8.0    # bead model: large cutoff for connectivity detection
+contact_cutoff_A  = 4.5
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_msd    = 60
+unwrap_pbc            = false    # no PBC: unwrapping irrelevant
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Verification
+# WIC III §9: verify the bead system is stable (connectivity preserved)
+# not that entangleons exist. Honest scope.
+# Coordination = 2 for interior beads (bonded to two neighbors)
+# Coordination = 1 for end beads (bonded to one neighbor)
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "wic3_polymer_connectivity_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "bead_chain_linear"
+expected_coordination        = 2    # interior beads; end beads = 1, average ~1.9
+coordination_tolerance       = 1
+expected_nearest_neighbor_A  = 3.80    # typical bead equilibrium spacing
+nearest_neighbor_tolerance_A = 0.50
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = false    # polymer: sub-diffusive, not solid-bounded
+max_msd_A2           = 200.0   # wide: chain coils and stretches
+max_slope_late       = 0.5
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+output_dir                = "out/wic3_polymer"
+
+[report]
+title                   = "WIC III — Entangleon: 24-Bead Polymer Chain Connectivity"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 30
+show_event_timeline    = true
+show_symbolic_trace    = true
+overlay_sequence       = energy_map,coordination,rdf

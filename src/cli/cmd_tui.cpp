@@ -1,4 +1,4 @@
-/**
+﻿/**
  * cmd_tui.cpp
  * -----------
  * Implementation of the TUI viewer command.
@@ -64,9 +64,9 @@ EXAMPLES:
 
 SANITY WARNINGS:
   The reader validates observable ranges from the spec (Edition 2 §8):
-	Force     > 1000 kcal/(mol·Å)  → flagged
-	Charge    |q| > 5 e            → flagged
-	Velocity  |v| > 1.0 Å/fs       → flagged
+	Force     > 1000 kcal/(mol·Å)  -> flagged
+	Charge    |q| > 5 e            -> flagged
+	Velocity  |v| > 1.0 Å/fs       -> flagged
   Warnings are printed to stderr before rendering begins.
 )";
 }
@@ -144,14 +144,14 @@ int TuiCommand::Execute(const std::vector<std::string>& args) {
 		Display::Info("Supported: .xyz  .xyza  .xyzc  .xyzf");
 		return 1;
 	}
-	Display::Info(std::string("tui: loading ") + vsepr::io::format_name(fmt) + " → " + path);
+	Display::Info(std::string("tui: loading ") + vsepr::io::format_name(fmt) + " -> " + path);
 
 	// ---- run reader + validate + render ----
 	try {
 		vsepr::io::ParseContext ctx;
 
 		if (fmt == vsepr::io::XYZFormat::XYZF) {
-			// Trajectory — load all frames, sanity-check, animate
+			// Trajectory  -  load all frames, sanity-check, animate
 			auto data = vsepr::io::read_xyzf(path, &ctx);
 
 			for (const auto& w : ctx.warnings)

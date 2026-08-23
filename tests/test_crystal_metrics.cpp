@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_crystal_metrics.cpp
  * ------------------------
  * Validation tests for the crystal verification scorecard system.
@@ -13,7 +13,7 @@
  *   7. Supercell metric consistency (metrics scale correctly)
  *   8. Relaxation stability detection
  *   9. All 10 presets pass verification
- *  10. Determinism (same input → same output, always)
+ *  10. Determinism (same input -> same output, always)
  */
 
 #include "atomistic/crystal/crystal_metrics.hpp"
@@ -152,11 +152,11 @@ void test_topology() {
     CHECK(tm.num_connected_components == 1, "NaCl: 1 connected component");
     CHECK(tm.topology_hash != 0, "NaCl topology hash computed");
     
-    // Determinism: same input → same hash
+    // Determinism: same input -> same hash
     auto tm2 = compute_topology_metrics(uc, 3.5);
     CHECK(tm.topology_hash == tm2.topology_hash, "topology hash is deterministic");
     
-    // Different structures → different hashes
+    // Different structures -> different hashes
     auto uc_fe = presets::iron_bcc();
     auto tm_fe = compute_topology_metrics(uc_fe, 3.0);
     CHECK(tm.topology_hash != tm_fe.topology_hash, "NaCl hash ≠ Fe hash");
@@ -364,9 +364,9 @@ void test_reference_scorecards() {
     };
     
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  COMPREHENSIVE REFERENCE VERIFICATION                            ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==================================================================+\n";
+    std::cout << "|  COMPREHENSIVE REFERENCE VERIFICATION                            |\n";
+    std::cout << "+==================================================================+\n";
     
     int total_scorecards = 0;
     int passing_scorecards = 0;
@@ -392,7 +392,7 @@ void test_reference_scorecards() {
 }
 
 // ============================================================================
-// Test 12: Benchmark crystal library — all new presets pass sanity
+// Test 12: Benchmark crystal library  -  all new presets pass sanity
 // ============================================================================
 void test_benchmark_crystals_sanity() {
     struct BenchTest {
@@ -440,9 +440,9 @@ void test_benchmark_crystals_sanity() {
         {"UO3 gamma",     presets::uo3_gamma,          128, 4.0, 9.0},
     };
 
-    std::cout << "\n╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  BENCHMARK CRYSTAL LIBRARY SANITY CHECKS                         ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+==================================================================+\n";
+    std::cout << "|  BENCHMARK CRYSTAL LIBRARY SANITY CHECKS                         |\n";
+    std::cout << "+==================================================================+\n";
 
     for (const auto& t : tests) {
         auto uc = t.factory();
@@ -588,9 +588,9 @@ void test_benchmark_scorecards() {
         {"La2Zr2O7", presets::la2zr2o7_pyrochlore, reference::pyrochlore_la2zr2o7_ref(), 3.0},
     };
 
-    std::cout << "\n╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  BENCHMARK CRYSTAL REFERENCE VERIFICATION                        ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+==================================================================+\n";
+    std::cout << "|  BENCHMARK CRYSTAL REFERENCE VERIFICATION                        |\n";
+    std::cout << "+==================================================================+\n";
 
     for (const auto& t : tests) {
         auto uc = t.factory();
@@ -612,9 +612,9 @@ void test_benchmark_scorecards() {
 // ============================================================================
 
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════╗\n";
-    std::cout << "║  Crystal Metrics & Verification Tests (SS10b)   ║\n";
-    std::cout << "╚══════════════════════════════════════════════════╝\n\n";
+    std::cout << "+==================================================+\n";
+    std::cout << "|  Crystal Metrics & Verification Tests (SS10b)   |\n";
+    std::cout << "+==================================================+\n\n";
 
     test_identity_metrics();
     test_symmetry_metrics();
@@ -633,10 +633,10 @@ int main() {
     test_polymorph_ordering();
     test_benchmark_scorecards();
 
-    std::cout << "\n────────────────────────────────────────────────────\n";
+    std::cout << "\n----------------------------------------------------\n";
     std::cout << "  PASSED: " << tests_passed << "\n";
     std::cout << "  FAILED: " << tests_failed << "\n";
-    std::cout << "────────────────────────────────────────────────────\n";
+    std::cout << "----------------------------------------------------\n";
 
     if (tests_failed == 0) {
         std::cout << "  ✓ ALL TESTS PASSED\n";

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * dynamic_molecule_builder.cpp
  * =============================
  * Implementation of dynamic molecule generator with live .xyz export
@@ -335,7 +335,7 @@ DynamicMoleculeGenerator::analyze_molecule(const Molecule& mol) const {
 }
 
 void DynamicMoleculeGenerator::print_analysis(const AtomAnalysis& analysis) const {
-    std::cout << "══════ Molecule Analysis ══════\n";
+    std::cout << "====== Molecule Analysis ======\n";
     std::cout << "Formula: " << analysis.molecular_formula << "\n";
     std::cout << "Total atoms: " << analysis.total_atoms << "\n";
     std::cout << "Total bonds: " << analysis.total_bonds << "\n";
@@ -345,7 +345,7 @@ void DynamicMoleculeGenerator::print_analysis(const AtomAnalysis& analysis) cons
     for (const auto& [Z, count] : analysis.atom_counts) {
         std::cout << "  " << analysis.atom_symbols.at(Z) << ": " << count << "\n";
     }
-    std::cout << "═══════════════════════════════\n";
+    std::cout << "===============================\n";
 }
 
 // Live export
@@ -724,7 +724,7 @@ Molecule DynamicMoleculeGenerator::generate_rocksalt_unit_cell() {
 
 /**
  * Generate Rock Salt (NaCl) supercell
- * Default: 5×5×4 = 100 unit cells → 100 atoms (50 Na + 50 Cl)
+ * Default: 5×5×4 = 100 unit cells -> 100 atoms (50 Na + 50 Cl)
  * Formula: Na₅₀Cl₅₀
  */
 Molecule DynamicMoleculeGenerator::generate_rocksalt_supercell(int nx, int ny, int nz) {

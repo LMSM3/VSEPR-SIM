@@ -1,0 +1,37 @@
+# scripts/vsim_skeletons/wo83f_bond_order_stub.vsim
+# Tier B — native replacement for demo_wo83f_bond_order_stub.py
+#
+# STUB: [classify.providers] section does not exist in vsim_document.hpp yet.
+#       BondOrderProvider is a C++-only interface; no VSIM-language entry point.
+#       The Python script explicitly states: "provider interface is C++ only"
+#
+# What works today:  CO2 classifies as linear (AX2) via element-count inference
+#                    regardless of bond order.  No provider is needed for this case.
+# What is deferred:  d8 metal complexes (e.g., PtCl4) require real bond-order data
+#                    to distinguish square_planar vs. tetrahedral (WO-84A + WO-84D).
+#
+# Python equivalent:
+#   assert "vsepr_report" in out    # no crash = null provider fallback works
+#   print("bond-order null provider: OK")
+
+[project]
+name    = wo83f_bond_order_stub
+version = v5.0.0
+
+[material]
+formula = CO2
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.providers]
+# bond_order = null                 # STUB: field not parsed (WO-84A)
+#                                   # DEFERRED WO-84D: real BondOrderProvider
+#                                   # needed for square_planar vs. tetrahedral
+#                                   # disambiguation on d8 metals
+#
+# [classify.expect]
+# contains = "vsepr_report"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────

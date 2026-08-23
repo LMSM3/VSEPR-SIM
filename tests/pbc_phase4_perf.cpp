@@ -1,18 +1,18 @@
-// =============================================================================
-// tests/pbc_phase4_perf.cpp — Group 26: PBC Performance / Regression
+﻿// =============================================================================
+// tests/pbc_phase4_perf.cpp  -  Group 26: PBC Performance / Regression
 // =============================================================================
 //
-// Phase 4 — Performance Baselines:
-//   Microbench delta() (10–100M calls), pair-loop throughput (LJ O(N²)),
+// Phase 4  -  Performance Baselines:
+//   Microbench delta() (10-100M calls), pair-loop throughput (LJ O(N²)),
 //   scaling analysis N = 256/512/1024.
-//   Not a correctness gate — timing anchor only.
+//   Not a correctness gate  -  timing anchor only.
 //
 // Day #57A  |  WO-56C
 // =============================================================================
 /*
 pbc_phase4_perf.cpp
 -------------------
-Phase 4 — Performance Baselines
+Phase 4  -  Performance Baselines
 
 Establish performance baselines before adding optimizations:
 1. Microbench delta() - 10-100M calls with checksum to prevent opt-out
@@ -59,7 +59,7 @@ private:
 };
 
 // ============================================================================
-// Test 1: Microbench delta() — 100M calls
+// Test 1: Microbench delta()  -  100M calls
 // ============================================================================
 void microbench_delta() {
     std::cout << "\n=== Microbench 1: delta() Performance ===\n";
@@ -259,9 +259,9 @@ void benchmark_pair_loop(int N) {
 int main() {
     std::cout << std::fixed << std::setprecision(6);
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PBC Phase 4 — Performance Baselines                     ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  PBC Phase 4  -  Performance Baselines                     |\n";
+    std::cout << "+============================================================+\n";
     std::cout << "\nEstablishing pre-optimization baselines.\n";
     
     #ifdef NDEBUG

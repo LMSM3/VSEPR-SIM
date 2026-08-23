@@ -1,0 +1,49 @@
+# scripts/vsim_skeletons/wo83e_geometry_fallback.vsim
+# Tier A — native replacement for demo_wo83e_geometry_fallback.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+# Note: the Python script iterates over H2O then NH3 in a loop.
+#       Two separate classify invocations are needed in native VSIM
+#       until a [classify.batch] section is wired.
+#
+# Python equivalent (per formula):
+#   assert "vsepr_report" in out
+#   assert "organic_candidate" in out
+
+[project]
+name    = wo83e_geometry_fallback_h2o
+version = v5.0.0
+
+[material]
+formula = H2O
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+#
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+# Second invocation (NH3) — would be a separate [classify] target or
+# a [classify.batch] list once that section exists (WO-84A design TBD).
+
+[project]
+name    = wo83e_geometry_fallback_nh3
+version = v5.0.0
+
+[material]
+formula = NH3
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+#
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────

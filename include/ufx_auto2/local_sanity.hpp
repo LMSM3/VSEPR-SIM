@@ -1,9 +1,9 @@
-// include/ufx_auto2/local_sanity.hpp
+﻿// include/ufx_auto2/local_sanity.hpp
 // UFX_AUTO_2 Phases 2-9 -- Local Sanity Checker
 // VSEPR-SIM v5 beta9
 //
 // LocalSanityChecker validates a UFXMaterialRecord before it is stored.
-// Phase 2 checks (Tier 0–1):
+// Phase 2 checks (Tier 0-1):
 //   - identity fields non-empty
 //   - provenance populated
 //   - T/P/phase state present
@@ -91,7 +91,7 @@ public:
 	// Recognized geometry tags (Phase 2 set).
 	static const std::vector<std::string>& known_geometries() noexcept;
 
-	// Run all Phase 2 checks (Tier 0–1). Returns combined result.
+	// Run all Phase 2 checks (Tier 0-1). Returns combined result.
 	static LocalCheckResult check(const UFXMaterialRecord& record);
 
 	// Tier 2 -- molecular descriptor checks (Phase 6).
@@ -110,7 +110,7 @@ public:
 	// Failure tag: macro_block_invalid
 	static LocalCheckResult check_macro(const UFXMaterialRecord& record);
 
-	// Run all checks from all populated tiers (Phase 2–9).
+	// Run all checks from all populated tiers (Phase 2-9).
 	static LocalCheckResult check_all(const UFXMaterialRecord& record);
 
 private:

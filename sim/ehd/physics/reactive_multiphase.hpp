@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * reactive_multiphase.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * Reactive Multiphase Flow Model
  *
@@ -49,11 +49,11 @@ namespace physics {
 // ============================================================================
 
 struct SourceCell {
-    double S_mass   = 0.0;  // kg/(m³·s) — mass source from particle burnout
-    double S_energy = 0.0;  // W/m³      — heat release to gas
-    double S_O2     = 0.0;  // kg/(m³·s) — oxygen consumption (negative)
-    Vec3   S_mom;           // N/m³      — momentum coupling (drag)
-    double S_rad    = 0.0;  // W/m³      — radiative loss (outgoing)
+    double S_mass   = 0.0;  // kg/(m³·s)  -  mass source from particle burnout
+    double S_energy = 0.0;  // W/m³       -  heat release to gas
+    double S_O2     = 0.0;  // kg/(m³·s)  -  oxygen consumption (negative)
+    Vec3   S_mom;           // N/m³       -  momentum coupling (drag)
+    double S_rad    = 0.0;  // W/m³       -  radiative loss (outgoing)
     int    n_particles = 0; // count of particles mapped to this cell
 };
 
@@ -79,7 +79,7 @@ struct SourceField {
         return qmax;
     }
 
-    /** Total heat release rate (W) — integrate over volume */
+    /** Total heat release rate (W)  -  integrate over volume */
     double total_heat_release() const {
         double dV = 2.0 * constants::PI * dr * dz;  // annular cell volume factor
         double total = 0.0;

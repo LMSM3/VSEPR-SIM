@@ -1,4 +1,4 @@
-/*
+﻿/*
 cmd_therm.cpp
 -------------
 Thermal properties analysis and object generation command.
@@ -155,7 +155,7 @@ using namespace vsepr::cli;
 namespace {
 
 // ============================================================================
-// V4 Visual Card — Pre-Thermal Crystal Popup
+// V4 Visual Card  -  Pre-Thermal Crystal Popup
 // ============================================================================
 
 // Known metallic host atoms from Day #47 reference set.
@@ -214,7 +214,7 @@ static void fire_crystal_card(
         lat = (it != KNOWN_LATTICE.end()) ? it->second : "FCC";
     }
 
-    // Build command — Python3, detached (&)
+    // Build command  -  Python3, detached (&)
     std::string cmd = "python3 tools/crystal_card_popup.py "
                     + symbol + " " + lat;
     if (gamma   >= 0.0) cmd += " " + std::to_string(gamma);
@@ -557,7 +557,7 @@ int ThermCommand::Execute(const std::vector<std::string>& args) {
     
     Display::Success("Loaded " + std::to_string(mol.num_atoms()) + " atoms");
 
-    // ── V4 Visual Card: fire crystal popup before thermal classification ──
+    // -- V4 Visual Card: fire crystal popup before thermal classification --
     {
         std::string host = dominant_element(xyz_mol);
         if (!host.empty())

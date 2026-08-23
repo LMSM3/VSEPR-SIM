@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * multi_channel_mapper.hpp — Multi-Channel Surface Descriptor Generator
+ * multi_channel_mapper.hpp  -  Multi-Channel Surface Descriptor Generator
  *
  * Extends the single-channel SurfaceMapper to compute multi-channel
  * descriptors with separate probe potentials for each physical channel:
@@ -31,7 +31,7 @@
 namespace coarse_grain {
 
 /**
- * MultiChannelMapperConfig — per-channel probe configuration.
+ * MultiChannelMapperConfig  -  per-channel probe configuration.
  */
 struct MultiChannelMapperConfig {
     int    n_samples       = 100;    // Number of probe directions on sphere
@@ -60,7 +60,7 @@ struct MultiChannelMapperConfig {
 };
 
 /**
- * MultiChannelMapper — stateless, deterministic multi-channel generator.
+ * MultiChannelMapper  -  stateless, deterministic multi-channel generator.
  *
  * Usage:
  *   MultiChannelMapper mapper;
@@ -93,7 +93,7 @@ public:
         desc.frame = compute_inertia_frame(state.X, state.M, indices, com);
 
         if (indices.size() < 2) {
-            // Single atom → isotropic descriptor on all channels
+            // Single atom -> isotropic descriptor on all channels
             double iso = std::sqrt(4.0 * 3.14159265358979323846);
             if (!desc.steric.coeffs.empty())        desc.steric.coeffs[0] = iso;
             if (!desc.electrostatic.coeffs.empty())  desc.electrostatic.coeffs[0] = iso;
@@ -189,7 +189,7 @@ private:
     // ====================================================================
 
     /**
-     * Steric probe: Σ (σ/d)^6 — purely repulsive, maps excluded volume.
+     * Steric probe: Σ (σ/d)^6  -  purely repulsive, maps excluded volume.
      */
     static double probe_steric(const atomistic::Vec3& probe_pos,
                                const atomistic::State& state,
@@ -211,7 +211,7 @@ private:
     }
 
     /**
-     * Electrostatic probe: Σ q_i / d — Coulombic potential from charges.
+     * Electrostatic probe: Σ q_i / d  -  Coulombic potential from charges.
      */
     static double probe_electrostatic(const atomistic::Vec3& probe_pos,
                                        const atomistic::State& state,
@@ -230,7 +230,7 @@ private:
     }
 
     /**
-     * Dispersion probe: Σ ε_i · (σ/d)^6 — weighted repulsive, maps
+     * Dispersion probe: Σ ε_i · (σ/d)^6  -  weighted repulsive, maps
      * interaction strength landscape.
      */
     static double probe_dispersion(const atomistic::Vec3& probe_pos,

@@ -1,0 +1,155 @@
+# WIC II — Interaction History and Worldline Unity
+# Graphite AB Bernal 5-layer MD. H_i(t) and E(t): inter-layer slip events.
+# Theory: WIC II §3-5 — P_i ∈ W but P_i ≠ W. Unity without collapse.
+
+[project]
+name        = "wic2_interaction_history_graphite"
+version     = "v5.1.13.5"
+seed_base   = 2200
+determinism = true
+
+[material]
+formula   = "C"
+structure = "graphite"
+cell      = "6x6x5"
+phase     = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 5000
+dt_fs        = 0.25
+temperature  = 600.0
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 600.0
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.25
+periodic         = true
+formation_preset = "molecular"
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 360
+lattice     = "hexagonal"
+layer_mode  = "AB"
+n_layers    = 5
+temperature = 600.0
+
+[post_step]
+enabled = true
+script_block = """
+d_interlayer = pbc.distance(particle.position(1), particle.position(73))
+d_inplane_12 = pbc.distance(particle.position(1), particle.position(2))
+"""
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 10
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true
+dynamic_energy   = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 4]
+rve_window_lengths_A             = [1.42, 2.84, 7.10, 14.20]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 36
+spatial_cv_threshold             = 0.40
+temporal_drift_threshold         = 0.25
+scale_drift_threshold            = 0.30
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 4.0
+contact_cutoff_A  = 2.0
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[verify]
+enabled             = true
+profile             = "wic2_graphite_interaction_history"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.42
+nearest_neighbor_tolerance_A = 0.10
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.42, 2.46, 3.35]
+peak_tolerance_A   = 0.18
+require_peak_order = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 4.0
+max_slope_late       = 0.003
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+output_dir                = "out/wic2_graphite"
+
+[report]
+title = "WIC II — Interaction History: Graphite AB 5-Layer"
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 20
+show_event_timeline = true
+overlay_sequence = energy_map,coordination,rdf,interference

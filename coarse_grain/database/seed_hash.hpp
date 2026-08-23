@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * seed_hash.hpp — Deterministic Seed Block S_i and Hash Provenance Block H_i
+ * seed_hash.hpp  -  Deterministic Seed Block S_i and Hash Provenance Block H_i
  *
  * Implements the formal definitions:
  *
@@ -55,17 +55,17 @@ struct SeedBlock {
 // §6.3  Hash Block  H_i = (H_32^tag, H_256^content, H_562^provenance)
 // ============================================================================
 
-/// 32-byte (256-bit) content hash — SHA-256 or equivalent
+/// 32-byte (256-bit) content hash  -  SHA-256 or equivalent
 using Hash256 = std::array<uint8_t, 32>;
 
-/// 71-byte (562-bit) provenance hash — custom deep lineage signature
+/// 71-byte (562-bit) provenance hash  -  custom deep lineage signature
 /// Stored as 71 bytes (562 bits, last byte uses only 2 bits)
 using Hash562 = std::array<uint8_t, 71>;
 
 struct HashBlock {
-    uint32_t tag_32    = 0;             ///< H_32^tag   — quick human-friendly tag
-    Hash256  content   = {};            ///< H_256^content — exact record fingerprint
-    Hash562  provenance = {};           ///< H_562^provenance — deep lineage signature
+    uint32_t tag_32    = 0;             ///< H_32^tag    -  quick human-friendly tag
+    Hash256  content   = {};            ///< H_256^content  -  exact record fingerprint
+    Hash562  provenance = {};           ///< H_562^provenance  -  deep lineage signature
 
     bool has_content_hash() const {
         for (auto b : content) if (b != 0) return true;
@@ -135,7 +135,7 @@ inline uint32_t compute_tag(const std::string& key) {
     return fnv1a_32(key.data(), key.size());
 }
 
-/// Fill content hash from raw bytes (truncated FNV cascade — placeholder
+/// Fill content hash from raw bytes (truncated FNV cascade  -  placeholder
 /// until a real SHA-256 implementation is wired in)
 inline Hash256 compute_content_hash(const void* data, size_t len) {
     Hash256 h = {};
@@ -150,7 +150,7 @@ inline Hash256 compute_content_hash(const void* data, size_t len) {
     return h;
 }
 
-/// Fill provenance hash from raw bytes (cascade — placeholder)
+/// Fill provenance hash from raw bytes (cascade  -  placeholder)
 inline Hash562 compute_provenance_hash(const void* data, size_t len) {
     Hash562 h = {};
     for (size_t seg = 0; seg < 71; seg += 8) {

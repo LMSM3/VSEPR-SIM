@@ -1,0 +1,89 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e18_surface_momentum_flux.vsim
+# =============================================================================
+# E18  --  Momentum Flux (P) and Pressure Proxy Through a Rectangular Probe
+#
+# Purpose: Measures the momentum transferred across a rectangular surface
+#          per unit area per step.  This is the kinetic pressure proxy
+#          P = sum(m * v_normal) / (area * step) for an Ar gas slab.
+#
+# Key concepts:
+#   compute_momentum_flux = true  ->  P metric in surface.json.
+#   The normal component of velocity is used for signed momentum transfer.
+#   Two surfaces (top and bottom of slab) allow pressure gradient estimate.
+# =============================================================================
+
+[project]
+name        = "e18_surface_momentum_flux"
+version     = "v5.0.14"
+seed_base   = 1800
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 800
+temperature = 350.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 6000
+dt_fs     = 2.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e18"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e18/surfaces"
+
+# Top boundary
+[[object.surface]]
+name                    = "slab_top"
+geometry                = "rectangle"
+center_x                = 0.0
+center_y                = 15.0
+center_z                = 0.0
+normal_x                = 0.0
+normal_y                = 1.0
+normal_z                = 0.0
+width                   = 30.0
+height                  = 30.0
+log_crossings           = true
+compute_flux            = true
+compute_momentum_flux   = true
+output_tag              = "P_top"
+
+# Bottom boundary
+[[object.surface]]
+name                    = "slab_bottom"
+geometry                = "rectangle"
+center_x                = 0.0
+center_y                = -15.0
+center_z                = 0.0
+normal_x                = 0.0
+normal_y                = 1.0
+normal_z                = 0.0
+width                   = 30.0
+height                  = 30.0
+log_crossings           = true
+compute_flux            = true
+compute_momentum_flux   = true
+output_tag              = "P_bottom"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 300
+

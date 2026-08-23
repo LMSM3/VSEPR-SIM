@@ -1,0 +1,46 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{booktabs}
+\title{Day 89-C: Large-Particle Artifact Contract}
+\author{VSEPR-SIM Work Order Authority}
+\date{Day 89}
+\begin{document}
+\maketitle
+\section{Authority}
+Day 89-C extends the renderer-neutral \texttt{vsepr.dual\_backend\_3d.v1} package without transferring scientific ownership to any renderer. The package remains \texttt{manifest.json}, \texttt{scenes.csv}, and \texttt{particles.csv}; report and presentation files are sidecars.
+
+\section{Required invariants}
+The manifest now declares total particle count and measured generation milliseconds. Total particle count must equal both the sum of scene particle counts and the number of particle data rows. Scene identifiers represented by particle rows must equal the scene table identifiers. State values remain bounded in $[0,1]$ and numeric serialization remains locale independent.
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Invariant & Machine check \\
+\midrule
+Scene count & manifest equals scene rows \\
+Particle count & manifest equals CSV rows \\
+Scene totals & sum equals particle rows \\
+Stress scale & total and largest scene exceed 1,000 \\
+State range & every value in $[0,1]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Compatibility}
+The default package remains four scenes and 111 rows. Stress mode appends a fifth scene and uses the same columns, allowing OpenGL, BGFX, native CPU/GDI, R, XLSX, and static HTML consumers to read either package without schema branching.
+
+\newpage
+\section{Validation interface}
+The validator is invoked as:
+\begin{verbatim}
+python tests/test_dual_backend_3d_artifacts.py
+  out/day89_recheck --stress
+\end{verbatim}
+Stress mode additionally requires more than 1,000 total rows and a scene above 1,000 particles. Report checks continue to ensure PNG, PDF, and XLSX sidecars are genuine nonempty outputs.
+
+\section{Evidence}
+The accepted Day 89-B package contains five scenes and 1,442 particle rows. Its manifest reports the same count and a positive generation duration. The shared contract documentation has been updated so consumers can rely on these fields rather than recomputing scale ad hoc.
+
+\section{Exit decision}
+Day 89-C is \textbf{COMPLETE}. General and stress validators accept packages produced by the same executable, and no renderer-specific data is added to scientific rows. Day 89-D/E may expand OpenGL and BGFX consumption while preserving this contract. W--Z remain reserved.
+\end{document}

@@ -1,0 +1,174 @@
+# =============================================================================
+# IKK I -- Schrodinger's Alternative
+# VSIM implementation: NH3 minimal relaxation (pyramidal geometry)
+#
+# Theory claim (IKK I):
+#   Waves are not primitive. A wave may be the projected observable form of
+#   persistent point-like identity. The particle-like model is more
+#   fundamental than wave substance.
+#
+# Computational test:
+#   Run a minimal NH3 relaxation from random initial positions with a fixed
+#   seed. NH3 adopts C3v (trigonal pyramidal) geometry, NOT tetrahedral.
+#   This is the IKK I discriminator for NH3 vs CH4:
+#
+#     CH4 (IKK I baseline): Td symmetry, bond angle = 109.47 deg, coord = 4
+#     NH3 (this script):    C3v symmetry, bond angle = 107.8 deg, coord = 3
+#
+#   The nitrogen lone pair depresses the H-N-H angle below the tetrahedral
+#   ideal. The point-identity model encodes the lone pair via partial charge
+#   on N (q_N = -1.02 e), and the asymmetry emerges from the forcefield
+#   without requiring wave-mechanical input.
+#
+#   If the identity model (FIRE minimiser + Coulomb) converges to the
+#   correct C3v pyramid reproducibly:
+#     -> formation does not require a wave-mechanical explanation
+#     -> the bond angle deviation from 109.47 is an emergent consequence
+#        of point charge asymmetry, not of orbital symmetry breaking
+#
+#   Falsification: if bond angle = 109.47 deg (tetrahedral) instead of
+#   107.8 deg, the point-charge model has collapsed NH3 onto CH4 geometry.
+#   That is the specific failure mode for IKK I in C3v systems.
+#
+# IKK I sections mapped:
+#   S2 Reversal Claim       -> FIRE relax: no wavefunction, still converges
+#   S3 Point-Like Identity  -> [[simulation.molecule]] species = N + 3H
+#                              lone-pair asymmetry via q_N partial charge
+#   S4 Wave as Projection   -> [observe] spectral_response post-convergence
+#   S5 Against String       -> [verify.structure] C3v geometry without
+#                              extended-object substrate
+#   S7 Interpretive Status  -> [verify] profile = "ikk1_nh3_c3v_test"
+#
+# Physical reference for NH3:
+#   N-H bond length:    1.012 A
+#   H-N-H bond angle:  107.8 deg
+#   Coordination (N):   3 (bonded H atoms; lone pair is non-bonding)
+#   Symmetry:           C3v
+#   Dipole moment:      1.47 D (consequence of asymmetry)
+# =============================================================================
+
+[project]
+name        = "ikk1_nh3_pyramidal_relax"
+version     = "v5.1.13.5"
+seed_base   = 202
+determinism = true    # IKK I S2: identity-first model must be fully deterministic
+
+# ---------------------------------------------------------------------------
+# Material
+# ---------------------------------------------------------------------------
+[material]
+formula   = "NH3"
+structure = "molecular"
+phase     = "gas"
+
+[run]
+mode         = "relax"
+max_steps    = 800
+converge     = true
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 0.0     # ground-state geometry: no thermal noise
+medium      = "vacuum"
+
+# ---------------------------------------------------------------------------
+# Simulation
+# Coulomb partial charges resolve the lone-pair asymmetry without orbitals.
+# formation_preset = "molecular" uses LJ-neutral + Coulomb from atom charges.
+# ---------------------------------------------------------------------------
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0    # auto-size from atom count
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "NH3"
+count       = 1
+temperature = 0.0
+
+# ---------------------------------------------------------------------------
+# Observables
+# [observe] spectral_response after convergence -- IKK I S4.
+# The NH3 inversion tunnelling frequency (~0.793 cm^-1 pure inversion,
+# ~950 cm^-1 classical) is a wave-like observable from the point system.
+# energy_map: tracks the asymmetric potential surface.
+# bond_angles: primary geometry discriminator (C3v vs Td).
+# coordination: must be 3 for N-centre, 1 for each H periphery.
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "bond_angles", "coordination", "bond_lengths", "spectral_response"]
+output_format = "json"
+every_n_steps = 50
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = false
+transport_events = false
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Verification
+# IKK I S5: correct C3v geometry without wave-primitive substrate.
+# NH3 N-H bond length: 1.012 A. Coordination: 3 (N centre), 1 (H periphery).
+# Bond angle tolerance is tighter than CH4 because the lone-pair asymmetry
+# is the key observable: if it collapses to 109.47 deg the test fails.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "ikk1_nh3_c3v_test"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "NH3_molecular"
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.012
+nearest_neighbor_tolerance_A = 0.06
+expected_bond_angle_deg      = 107.8
+bond_angle_tolerance_deg     = 3.0
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+write_verify_report       = true
+write_verify_tsv          = true
+output_dir                = "out/finalchapter/ikk1_nh3"
+
+[report]
+title                   = "ikk1_nh3_pyramidal_relax"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 25
+show_convergence_trace = true
+show_symbolic_trace    = true
+show_event_timeline    = true
+overlay_sequence       = energy_map,bond_angles,coordination,spectral_response

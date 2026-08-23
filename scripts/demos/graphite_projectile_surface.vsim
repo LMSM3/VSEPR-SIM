@@ -1,0 +1,141 @@
+[project]
+name = "graphite_projectile_surface"
+version = "v5.1.x"
+seed_base = 8102
+determinism = true
+description = "Graphite surface hit by a small projectile cloud; contact and residence analysis."
+
+[seed]
+foundation = 8102
+placement = 19102
+thermal = 16102
+
+[material]
+formula = "C"
+structure = "graphite"
+phase = "solid"
+cell = "6x6x3"
+
+[run]
+mode = "md"
+max_steps = 8000
+dt_fs = 1.0
+temperature_K = 300.0
+converge = true
+output_level = "verbose"
+
+[environment]
+periodic = true
+temperature = 300.0
+pressure = 0.0
+medium = "vacuum"
+field_x = 0.0
+field_y = 0.0
+field_z = 0.0
+
+[cell]
+lx = 60.0
+ly = 60.0
+lz = 40.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[pbc]
+minimum_image = true
+wrap_positions = "after_step"
+track_images = true
+unwrap_for_diffusion = true
+
+[distribution.projectile_cloud]
+species = "He"
+count = 96
+shape = "rectangular_prism"
+center = [0.0, 0.0, 18.0]
+extent = [35.0, 35.0, 4.0]
+velocity_mean = [0.0, 0.0, -1.2]
+velocity_spread = [0.1, 0.1, 0.25]
+placement = "low_discrepancy"
+
+[chemistry]
+chemistry = "none"
+heat = -1
+reaction_events = true
+track_species_state = true
+event_registry = true
+min_score_threshold = 0.25
+max_reactions_per_step = 0
+
+[analysis.structure]
+enabled = true
+
+[analysis.sampling]
+enabled = true
+compute_rdf = true
+compute_msd = true
+
+[analysis.scale_sampling]
+enabled = true
+compute_field_projection = true
+compute_rve_sampling = true
+compute_emergence_metrics = true
+field_grid = [8, 8, 4]
+rve_window_lengths_A = [5.0, 10.0, 15.0]
+rve_windows_per_level = 8
+rve_window_placement = "grid"
+min_particles_for_scale_sampling = 64
+
+[analysis.inference]
+enabled = true
+mode = "rule_based_61d"
+
+[observe]
+metrics = ["formation", "transport", "defect", "reaction_events"]
+output_format = "json"
+every_n_steps = 25
+
+[verify]
+enabled = true
+profile = "graphite_surface_projectile_proxy"
+write_verify_report = true
+write_verify_tsv = true
+
+[verify.mass]
+enabled = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz = true
+write_xyzf = true
+write_xyzfull = true
+write_analysis_json = true
+write_metrics_tsv = true
+write_events_json = true
+write_report_md = true
+write_dashboard_json = true
+write_manifest_json = true
+write_dashboard_svg = true
+output_dir = "out/graphite_projectile_surface"
+
+[export.visual]
+write_svg_figures = true
+write_rdf_svg = true
+write_energy_trace_svg = true
+write_defect_map_svg = true
+write_cluster_map_svg = true
+write_html_dashboard = true
+write_report_html = true
+visual_output_dir = "figures"
+
+[visual]
+output_type = "terminal_overlay_cycle"
+animation_mode = "overlay"
+render_interval = 10
+show_proxy_table = true
+show_convergence_trace = true
+show_event_timeline = true
+show_rdf_plot = true
+show_defect_map = true

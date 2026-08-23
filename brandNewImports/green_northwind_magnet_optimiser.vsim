@@ -1,0 +1,392 @@
+# @category Green Energy Applications
+# @title    Northwind Magnet Path — REE-lean NdFeB generator magnet optimization
+#
+# Green Energy Pillar 2
+# Physical organization: grains <-> grain boundaries <-> magnetic domains <-> generator duty cycle
+#
+# Scientific intent:
+#   1. Model a segmented Nd2Fe14B permanent magnet under rotating-field,
+#      thermal, and mechanical duty representative of a direct-drive generator.
+#   2. Resolve domain rotation, wall motion, pinning, local reversal, eddy-current
+#      heating, and irreversible demagnetization proxies.
+#   3. Optimize grain size, boundary thickness, Cu-rich boundary fraction,
+#      segmentation, and a tightly limited Dy shell fraction.
+#   4. Maximize torque-density and thermal stability while minimizing magnetic
+#      loss and critical-rare-earth use. No molten salts, because apparently
+#      the project is capable of restraint.
+#
+# Canonical entry point:
+#   vsper run scripts/green_energy/green_northwind_magnet_optimiser.vsim
+
+[project]
+name        = "green_northwind_magnet_optimiser"
+version     = "v0.1.0"
+seed_base   = 52001
+determinism = true
+description = "Microstructural optimization of a REE-lean NdFeB wind-generator magnet"
+author      = "VSIM Green Energy Applications"
+
+[pillar]
+id                 = "northwind_magnet"
+name               = "Northwind Magnet Path"
+model              = "mesostructural_magnetics"
+spatial_authority  = "grain_boundary_domain"
+event_authority    = "field_energy_minimization_plus_activated_reversal"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 420.0
+ly    = 180.0
+lz    = 72.0
+units = "nanometer"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[material]
+formula       = "Nd2Fe14B"
+structure     = "segmented_sintered_magnet"
+phase         = "ferromagnetic_solid"
+texture_axis  = "x"
+
+[microstructure]
+generator                 = "voronoi_textured_grains"
+grain_count               = 768
+mean_grain_diameter_nm     = 4.8
+grain_sigma_nm             = 0.9
+grain_boundary_nm          = 0.65
+texture_alignment          = 0.94
+nd_rich_boundary_fraction  = 0.72
+cu_boundary_fraction       = 0.045
+dy_shell_fraction          = 0.003
+dy_shell_depth_nm          = 0.45
+porosity_fraction          = 0.006
+segment_count              = 8
+segment_gap_nm             = 3.0
+track_grain_identity       = true
+track_boundary_connectivity = true
+track_crack_precursors     = true
+
+[magnetics]
+solver                       = "reduced_micromagnetic_llg"
+exchange_model               = "nearest_grain_tensor"
+anisotropy_model             = "uniaxial_temperature_dependent"
+demagnetization_model        = "fft_reduced"
+domain_wall_model            = "activated_pinning"
+eddy_current_model            = "segment_loop_proxy"
+magnetostriction_model       = "linear_proxy"
+track_domain_vectors          = true
+track_wall_density            = true
+track_local_coercivity        = true
+track_irreversible_reversal   = true
+
+[material.constants]
+remanence_T_at_300K          = 1.34
+intrinsic_coercivity_kA_m    = 955.0
+curie_temperature_K         = 585.0
+anisotropy_constant_MJ_m3   = 4.3
+exchange_stiffness_pJ_m     = 7.7
+electrical_resistivity_uohm_cm = 145.0
+density_kg_m3               = 7500.0
+thermal_conductivity_W_mK   = 8.8
+
+[field.drive]
+type                 = "rotating_generator_field"
+frequency_Hz         = 42.0
+peak_flux_density_T  = 1.10
+negative_axis_bias_T = 0.42
+phase_count          = 3
+cycles               = 18
+ramp_cycles          = 2
+
+[thermal]
+model                    = "anisotropic_conduction_plus_loss"
+ambient_temperature_K    = 333.0
+coolant_boundary_K       = 318.0
+convection_coefficient   = 165.0
+loss_to_heat_coupling    = 1.0
+track_hotspots           = true
+track_thermal_gradient   = true
+maximum_temperature_K    = 423.0
+
+[mechanical]
+model                     = "magnetostriction_plus_centrifugal_proxy"
+rotor_speed_rpm           = 2520.0
+preload_MPa               = 18.0
+track_boundary_stress     = true
+track_crack_precursors    = true
+failure_stress_MPa        = 180.0
+
+[event.registry]
+events = [
+    "domain_rotation",
+    "domain_wall_motion",
+    "boundary_pinning",
+    "local_reversal",
+    "irreversible_demagnetization",
+    "eddy_loop_activation",
+    "hysteresis_heat_release",
+    "thermal_softening",
+    "boundary_stress_excursion",
+    "crack_precursor"
+]
+
+[event.kinetics]
+selection                 = "eligible_energy_drop_then_activated_probability"
+rate_law                  = "neel_arrhenius_proxy"
+field_update_interval     = 1
+thermal_update_interval   = 4
+mechanical_update_interval = 8
+reject_unphysical_norm    = true
+reject_energy_creation    = true
+
+[[event.channel]]
+id                    = "domain_rotation"
+from_state            = "misaligned_domain"
+to_state              = "field_aligned_domain"
+barrier_model         = "anisotropy_minus_field_work"
+pre_exponential       = 1.0e10
+energy_delta_mode     = "computed"
+reversible            = true
+
+[[event.channel]]
+id                    = "wall_depinning"
+from_state            = "pinned_wall"
+to_state              = "mobile_wall"
+barrier_model         = "boundary_composition_and_temperature"
+pre_exponential       = 4.0e9
+energy_delta_mode     = "computed"
+reversible            = true
+
+[[event.channel]]
+id                    = "local_reversal"
+from_state            = "positive_domain"
+to_state              = "negative_domain"
+barrier_model         = "local_coercivity_minus_reverse_field"
+pre_exponential       = 8.0e9
+energy_delta_mode     = "computed"
+reversible            = false
+records_demagnetization = true
+
+[[event.channel]]
+id                    = "eddy_loop_activation"
+from_state            = "segment_quiet"
+to_state              = "segment_current_loop"
+barrier_model         = "induced_emf_over_segment_resistance"
+pre_exponential       = 1.0
+energy_delta_mode     = "joule_loss"
+reversible            = true
+
+[[event.channel]]
+id                    = "boundary_crack_precursor"
+from_state            = "boundary_intact"
+to_state              = "boundary_damaged"
+barrier_model         = "stress_temperature_grain_misalignment"
+pre_exponential       = 2.5e6
+energy_delta_mode     = "fracture_proxy"
+reversible            = false
+
+[duty_cycle]
+mode                        = "field_thermal_mechanical_coupled"
+steps_per_cycle             = 720
+cooldown_steps              = 360
+record_minor_loops          = true
+record_major_loop           = true
+record_post_cycle_remanence = true
+
+[optimization]
+mode                  = "bounded_multiobjective_sweep"
+baseline_id           = "commercial_ndfeb_reference"
+replicates_per_point  = 4
+selection_rule        = "pareto_then_weighted_score"
+retain_top_n          = 16
+
+[[optimization.axis]]
+key    = "microstructure.mean_grain_diameter_nm"
+values = [3.2, 4.0, 4.8, 5.8, 7.0]
+
+[[optimization.axis]]
+key    = "microstructure.grain_boundary_nm"
+values = [0.35, 0.50, 0.65, 0.85, 1.10]
+
+[[optimization.axis]]
+key    = "microstructure.cu_boundary_fraction"
+values = [0.015, 0.030, 0.045, 0.065]
+
+[[optimization.axis]]
+key    = "microstructure.dy_shell_fraction"
+values = [0.0, 0.001, 0.003, 0.006, 0.010]
+
+[[optimization.axis]]
+key    = "microstructure.segment_count"
+values = [2, 4, 8, 12, 16]
+
+[[optimization.objective]]
+metric    = "generator.torque_density_proxy"
+direction = "maximize"
+weight    = 0.24
+
+[[optimization.objective]]
+metric    = "magnet.remanence_retention"
+direction = "maximize"
+weight    = 0.22
+
+[[optimization.objective]]
+metric    = "magnet.reverse_field_margin"
+direction = "maximize"
+weight    = 0.18
+
+[[optimization.objective]]
+metric    = "loss.total_W_kg"
+direction = "minimize"
+weight    = 0.17
+
+[[optimization.objective]]
+metric    = "thermal.peak_temperature_K"
+direction = "minimize"
+weight    = 0.09
+
+[[optimization.objective]]
+metric    = "material.heavy_REE_mass_fraction"
+direction = "minimize"
+weight    = 0.10
+
+[constraints]
+heavy_REE_mass_fraction_max = 0.010
+peak_temperature_K_max      = 423.0
+irreversible_reversal_max   = 0.015
+crack_precursor_fraction_max = 0.005
+minimum_remanence_retention = 0.97
+
+[simulation]
+formation_preset    = "textured_magnetic_polycrystal"
+neighbor_skin_nm    = 1.5
+rebuild_neighbors_n = 8
+smooth_resim        = false
+
+[run]
+mode          = "coupled_magneto_thermal"
+max_steps     = 13320
+dt_ps         = 0.5
+temperature_K = 333.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics = [
+    "magnet.remanence_T",
+    "magnet.remanence_retention",
+    "magnet.coercivity_proxy_kA_m",
+    "magnet.reverse_field_margin",
+    "magnet.domain_alignment",
+    "magnet.wall_density",
+    "magnet.irreversible_reversal_fraction",
+    "loss.hysteresis_W_kg",
+    "loss.eddy_W_kg",
+    "loss.total_W_kg",
+    "thermal.peak_temperature_K",
+    "thermal.hotspot_fraction",
+    "mechanical.boundary_stress_max_MPa",
+    "mechanical.crack_precursor_fraction",
+    "generator.torque_density_proxy",
+    "material.heavy_REE_mass_fraction",
+    "audit.magnetization_norm_residual",
+    "audit.energy_residual"
+]
+every_n_steps = 10
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["Nd", "Fe", "B", "Cu", "Dy"]
+charge                = false
+energy                = "field_thermal_mechanical_proxy"
+strict                = true
+check_every_n_steps   = 20
+relative_tolerance    = 1.0e-9
+absolute_tolerance    = 1.0e-11
+reject_invalid_event  = true
+
+[audit.state_rules]
+magnetization_norm_min       = 0.999999
+magnetization_norm_max       = 1.000001
+irreversible_reversal_nonnegative = true
+segment_current_closed_loops = true
+reject_impossible_transition = true
+
+[audit.acceptance]
+requirements = [
+    "best_score > baseline_score",
+    "remanence_retention_final >= 0.97",
+    "irreversible_reversal_fraction <= 0.015",
+    "heavy_REE_mass_fraction <= 0.010",
+    "peak_temperature_K <= 423.0",
+    "crack_precursor_fraction <= 0.005",
+    "max_abs_energy_residual < 1.0e-8"
+]
+
+[export]
+output_dir          = "out/green_energy/northwind_magnet"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 40
+event_interval      = 1
+metrics_interval    = 10
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_hysteresis_svg   = true
+visual_output_dir      = "figures/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_domain_events       = true
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+live           = true
+
+show "scene.magnetic_grains" target = "pillar.northwind_magnet" options = {
+    "color_by": "domain_orientation",
+    "show_grain_boundaries": true,
+    "show_pinning_sites": true,
+    "show_reversed_domains": true,
+    "show_thermal_hotspots": true
+}
+
+show "data.history.timeseries" target = "run.history" options = {
+    "series": ["magnet.remanence_retention", "loss.total_W_kg", "thermal.peak_temperature_K"],
+    "log_y": false
+}
+
+show "data.magnetics.hysteresis" target = "magnet.loop_history"
+show "data.optimization.pareto" target = "optimization.results"
+show "data.events.timeline" target = "kernel.events"
+show "data.scalar.panel" target = "run.summary"
+
+[suite]
+groups   = ["green_energy", "northwind_magnet", "wind_generator", "optimization"]
+ordering = "deterministic"
+
+[suite.limits]
+timeout_s           = 360
+fail_fast           = true
+continue_on_warning = false
+
+[suite.smoke]
+groups = ["northwind_magnet"]

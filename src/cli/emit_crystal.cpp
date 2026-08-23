@@ -1,4 +1,4 @@
-#include "cli/emit_crystal.hpp"
+﻿#include "cli/emit_crystal.hpp"
 #include "cli/emit_output.hpp"
 #ifdef ENABLE_CRYSTAL_VIZ
 #include "cli/crystal_visualizer.hpp"  // NEW: Visualization bridge
@@ -27,7 +27,7 @@ struct CrystalEmissionResult {
 // Forward declarations
 CrystalEmissionResult emit_atomistic_preset(const std::string& preset_name);
 
-// Day #56: Vec3 unified — alias to vsepr::Vec3 (fractional coordinates).
+// Day #56: Vec3 unified  -  alias to vsepr::Vec3 (fractional coordinates).
 using Vec3 = vsepr::Vec3;
 
 // ============================================================================
@@ -453,7 +453,7 @@ CrystalEmissionResult unit_cell_to_emission_result(const atomistic::crystal::Uni
     result.space_group = uc.space_group_number;
     result.space_symbol = uc.space_group_symbol;
 
-    // ── Crystal Verification Metrics (auto-computed on every emission) ──
+    // -- Crystal Verification Metrics (auto-computed on every emission) --
     auto metrics = atomistic::crystal::compute_all_metrics(uc);
     metrics.print_summary();
 
@@ -607,7 +607,7 @@ CrystalEmissionResult emit_atomistic_preset(const std::string& preset_name) {
         return unit_cell_to_emission_result(presets::uo3_gamma());
     }
 
-    // Not an atomistic preset — return empty
+    // Not an atomistic preset  -  return empty
     return CrystalEmissionResult();
 }
 

@@ -1,4 +1,4 @@
-// apps/uff_smoketest.cpp
+﻿// apps/uff_smoketest.cpp
 // Formation Engine v4.1.0 -- UFX population with live shell relay
 //
 // Populates the full UFF runtime table from the Rappé 1992 baseline,
@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
 	relay.start();
 
 	// ------------------------------------------------------------------
-	// 1. Seed the runtime table — stream every entry through the relay
+	// 1. Seed the runtime table  -  stream every entry through the relay
 	// ------------------------------------------------------------------
 	relay.on_stage(RunStage::LoadingUFF);
 
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
 	std::this_thread::sleep_for(60ms);
 
 	// ------------------------------------------------------------------
-	// 4. 10% batch validation — results appear live in the dashboard
+	// 4. 10% batch validation  -  results appear live in the dashboard
 	// ------------------------------------------------------------------
 	relay.on_stage(RunStage::SpotChecking);
 

@@ -1,0 +1,94 @@
+# IKK I — Schrödinger's Alternative
+# CH4 deterministic relax. Wave-like observables post-convergence only.
+# Theory: IKK I §2-5 — point-like identity is fundamental; wave is projected output.
+
+[project]
+name        = "ikk1_schrodinger_alternative_ch4"
+version     = "v5.1.13.5"
+seed_base   = 101
+determinism = true
+
+[material]
+formula   = "CH4"
+structure = "molecular"
+phase     = "gas"
+
+[run]
+mode         = "relax"
+max_steps    = 800
+converge     = true
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 0.0
+medium      = "vacuum"
+
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+
+[[simulation.molecule]]
+formula     = "CH4"
+count       = 1
+temperature = 0.0
+
+[observe]
+metrics       = ["energy_map", "coordination", "spectral_response"]
+output_format = "json"
+every_n_steps = 50
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+[verify]
+enabled             = true
+profile             = "ikk1_interpretation_test"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "CH4_molecular"
+expected_coordination        = 4
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.09
+nearest_neighbor_tolerance_A = 0.06
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+output_dir                = "out/ikk1_ch4"
+
+[report]
+title                   = "IKK I — Schrödinger's Alternative: CH4"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 25
+show_convergence_trace = true
+show_symbolic_trace    = true
+overlay_sequence       = energy_map,coordination,spectral_response

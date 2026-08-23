@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * sim_pipe_gas3.hpp
  * =================
- * V4 — Pipe Gas 3
+ * V4  -  Pipe Gas 3
  * Scale Mission: Particles, Clouds, Lattice, and Pipe Gas 3
  *
  * Transport-focused flowing gas system.
@@ -35,12 +35,12 @@
  *   - optional markdown report
  *
  * Integrates with:
- *   include/mission/mission_profile.hpp  — shared profile + entity layer
- *   include/gas2/gas2_engine.hpp         — EOS + kinetic + heat
- *   include/gas2/gas2_kinetic.hpp        — viscosity, MFP
- *   include/gas2/gas2_heat.hpp           — JT coefficient, heat capacity
- *   include/gas3/gas3_state_record.hpp   — QualityTier
- *   include/pipe_network.hpp             — Vec3×Vec3 pipe segment geometry
+ *   include/mission/mission_profile.hpp   -  shared profile + entity layer
+ *   include/gas2/gas2_engine.hpp          -  EOS + kinetic + heat
+ *   include/gas2/gas2_kinetic.hpp         -  viscosity, MFP
+ *   include/gas2/gas2_heat.hpp            -  JT coefficient, heat capacity
+ *   include/gas3/gas3_state_record.hpp    -  QualityTier
+ *   include/pipe_network.hpp              -  Vec3×Vec3 pipe segment geometry
  */
 
 #include "mission/mission_profile.hpp"
@@ -136,7 +136,7 @@ inline RuntimeProfile profile_for(MissionScale s) {
 struct PipeGeometry {
     double length_m    {1.0};    // pipe length (m)
     double diameter_m  {0.025}; // inner diameter (m)
-    double roughness_m {4.6e-5}; // absolute roughness (m) — steel default
+    double roughness_m {4.6e-5}; // absolute roughness (m)  -  steel default
 
     double area()  const { return 3.14159265 * diameter_m * diameter_m * 0.25; }
     double volume() const { return area() * length_m; }
@@ -193,7 +193,7 @@ struct PipeFlowState {
 };
 
 // ============================================================================
-// Friction factor — Churchill correlation (covers all Re regimes)
+// Friction factor  -  Churchill correlation (covers all Re regimes)
 //   Covers laminar, transition, turbulent in a single expression.
 //   Churchill (1977): f = 8 * [(8/Re)^12 + (A+B)^(-3/2)]^(1/12)
 // ============================================================================
@@ -215,7 +215,7 @@ inline double friction_factor_churchill(double Re, double eps_over_D) {
 // Single segment solver
 //
 // Given inlet (T_in, P_in, ṁ) + geometry + species:
-//   1. Solve EOS at inlet → ρ
+//   1. Solve EOS at inlet -> ρ
 //   2. Compute v = ṁ / (ρ A)
 //   3. Compute Re = ρ v D / μ
 //   4. Compute f (Churchill)
@@ -269,7 +269,7 @@ inline void solve_segment(PipeFlowState& seg) {
     const double eps_D = seg.geometry.roughness_m / D;
     seg.friction_f     = friction_factor_churchill(seg.Re, eps_D);
 
-    // Pressure drop — Darcy-Weisbach
+    // Pressure drop  -  Darcy-Weisbach
     seg.dP_Pa  = seg.friction_f * seg.geometry.L_over_D()
                * rho * seg.v_mean * seg.v_mean * 0.5;
     seg.P_out_Pa = seg.P_in_Pa - seg.dP_Pa;
@@ -284,10 +284,10 @@ inline void solve_segment(PipeFlowState& seg) {
     const double Cp = sp.Cp_Jmol; // J/(mol·K)
     seg.JT_K_Pa = ((2.0 * sp.vdw_a) / (R * T) - sp.vdw_b) / Cp;
 
-    // T_out — adiabatic + JT correction for pressure drop
+    // T_out  -  adiabatic + JT correction for pressure drop
     seg.T_out_K = seg.T_in_K + seg.JT_K_Pa * (-seg.dP_Pa);
 
-    // Wall heat flux (no active exchange in default — set to 0)
+    // Wall heat flux (no active exchange in default  -  set to 0)
     seg.q_wall = 0.0;
 
     // Quality tier
@@ -334,7 +334,7 @@ inline void connect_series(PipeNetwork& net) {
 }
 
 // ============================================================================
-// Main run — deterministic pipe scheduler
+// Main run  -  deterministic pipe scheduler
 // ============================================================================
 
 inline MissionDeliverable run(PipeNetwork& net) {
@@ -395,7 +395,7 @@ inline MissionDeliverable run(PipeNetwork& net) {
 }
 
 // ============================================================================
-// CSV export — pipe state table
+// CSV export  -  pipe state table
 // ============================================================================
 
 inline std::string to_csv_pipe_state(const PipeNetwork& net) {
@@ -431,7 +431,7 @@ inline std::string to_csv_pipe_state(const PipeNetwork& net) {
 
 inline std::string report(const PipeNetwork& net, const MissionDeliverable& d) {
     std::ostringstream o;
-    o << "\n  V4 Pipe Gas 3 — " << mission_scale_name(net.profile.scale) << "\n";
+    o << "\n  V4 Pipe Gas 3  -  " << mission_scale_name(net.profile.scale) << "\n";
     o << "  " << std::string(60, '-') << "\n";
     o << "  Segments  : " << d.entity_count << "\n";
     o << "  Steps     : " << d.steps_run << "\n";

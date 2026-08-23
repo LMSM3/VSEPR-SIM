@@ -52,6 +52,10 @@ function Do-Build {
     Write-Host "  . Target   : $Target"
 
     cmake -S "$ProjectRoot" -B "$ProjectRoot\$BuildDir" `
+        -G Ninja `
+        -DCMAKE_MAKE_PROGRAM="C:/msys64/ucrt64/bin/ninja.exe" `
+        -DCMAKE_C_COMPILER="C:/msys64/ucrt64/bin/gcc.exe" `
+        -DCMAKE_CXX_COMPILER="C:/msys64/ucrt64/bin/g++.exe" `
         -DCMAKE_BUILD_TYPE="$Config" `
         -DBUILD_TESTS=ON `
         -DBUILD_APPS=OFF `

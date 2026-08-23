@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * deep_research.hpp -- Multi-Phase Deep Research Engine
  * =====================================================
@@ -301,7 +301,7 @@ struct StudyLedger {
     uint64_t fire_calls = 0;
     uint64_t converged_geometries = 0;
     std::vector<GeometryCandidate> candidates;
-    std::unordered_map<std::string, uint64_t> hash_cache;  ///< hex→candidate_idx
+    std::unordered_map<std::string, uint64_t> hash_cache;  ///< hex->candidate_idx
 
     // Phase 20B
     uint64_t bead_formations_attempted = 0;
@@ -355,7 +355,7 @@ struct DeepResearchConfig {
     uint32_t    initnum = 220;          ///< Max pathway enumeration count
     uint32_t    max_ligands = 6;        ///< Max ligands around seed
     uint32_t    max_eta_iterations = 50;///< eta iterations per pathway class
-    double      energy_cutoff = 100.0;  ///< kcal/mol above minimum → reject
+    double      energy_cutoff = 100.0;  ///< kcal/mol above minimum -> reject
     double      fire_tol = 1e-4;        ///< FIRE RMS force tolerance
 
     // Allowed ligand elements (by atomic number)

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * named_regions.hpp
  *
- * Electrohydrodynamic Simulation — Stage 2: Domain Extraction
+ * Electrohydrodynamic Simulation  -  Stage 2: Domain Extraction
  *
  * Named-region registry for mapping CAD body names to solver boundary
  * condition zones.  Every surface that needs a BC gets a unique tag.

@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * ewald_sum.hpp — Particle-Mesh Ewald (real-space + k-space) for ionic crystals
+ * ewald_sum.hpp  -  Particle-Mesh Ewald (real-space + k-space) for ionic crystals
  * ================================================================================
  *
  * Computes the long-range Coulomb energy and forces for a periodic system using
@@ -22,7 +22,7 @@
  *  - Units: charges in elementary charge (e), distances in Å,
  *           energies in kcal/mol (factor = 332.0637 kcal·Å/(mol·e²)).
  *
- * Beta-8 status: IMPLEMENTED — gates crystal golden tests (NaCl, CsCl, CaF2).
+ * Beta-8 status: IMPLEMENTED  -  gates crystal golden tests (NaCl, CsCl, CaF2).
  */
 
 #include "box/pbc.hpp"   // vsepr::BoxOrtho
@@ -35,7 +35,7 @@
 namespace vsepr {
 
 // ============================================================================
-// EwaldParams — tuning knobs
+// EwaldParams  -  tuning knobs
 // ============================================================================
 
 struct EwaldParams {
@@ -46,7 +46,7 @@ struct EwaldParams {
 };
 
 // ============================================================================
-// EwaldSum — stateless evaluator; call evaluate() each step
+// EwaldSum  -  stateless evaluator; call evaluate() each step
 // ============================================================================
 
 class EwaldSum {
@@ -55,7 +55,7 @@ public:
 	explicit EwaldSum(const EwaldParams& p) : params_(p) {}
 
 	// -----------------------------------------------------------------------
-	// evaluate() — accumulate Ewald energy and forces
+	// evaluate()  -  accumulate Ewald energy and forces
 	//
 	// coords  : flat array [x0,y0,z0, x1,y1,z1, ...]  (must be pre-wrapped)
 	// charges : charges[i] in elementary charge units

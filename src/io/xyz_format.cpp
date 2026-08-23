@@ -1,4 +1,4 @@
-/**
+﻿/**
  * XYZ File Format Implementation
  */
 
@@ -58,7 +58,7 @@ void XYZMolecule::translate(double dx, double dy, double dz) {
 }
 
 void XYZMolecule::rotate(const std::array<double, 3>& axis, double angle) {
-    // Rodrigues rotation — no GLM dependency
+    // Rodrigues rotation  -  no GLM dependency
     double ax = axis[0], ay = axis[1], az = axis[2];
     double len = std::sqrt(ax*ax + ay*ay + az*az);
     if (len < 1e-12) return;

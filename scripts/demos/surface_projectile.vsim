@@ -1,0 +1,62 @@
+# surface_projectile.vsim
+# =============================================================================
+# Demo 06 — Argon atom projectile hitting a graphite surface
+# =============================================================================
+# A single Ar atom is given downward velocity toward a 3x3 graphite slab.
+# Demonstrates surface_interaction mode: contact, residence, embedding.
+#
+# Run:  vsepr run scripts/demos/surface_projectile.vsim
+# =============================================================================
+
+[project]
+name        = "surface_projectile_demo"
+version     = "v5.1.4"
+seed_base   = 1006
+description = "Ar projectile -> graphite surface — surface_interaction mode"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = true
+track_energy_path    = true
+track_structure_changes = true
+
+[crystal]
+formula      = "C"
+structure    = "graphite"
+layer_mode   = "AB"
+supercell_a  = 3
+supercell_b  = 3
+supercell_c  = 2
+slab         = true
+slab_layers  = 2
+
+[[simulation.molecule]]
+formula        = "Ar"
+count          = 1
+temperature_K  = 0.0
+lattice        = "none"
+region         = "above_surface"
+velocity_z     = -0.05
+
+[run]
+mode              = "surface_interaction"
+num_steps         = 2000
+dt                = 0.5
+integrator        = "velocity_verlet"
+temperature_K     = 0.0
+sample_interval   = 50
+render_interval   = 50
+
+[export]
+xyz      = true
+xyzFull  = true
+dynx     = true
+events   = true
+report   = true
+
+[analysis]
+surface_contact   = true
+residence_time    = true
+embedding         = true
+energy_trace      = true

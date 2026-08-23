@@ -1,5 +1,5 @@
-/**
- * test_export_flush.cpp — Group 29: Script-Declared Export Flush
+﻿/**
+ * test_export_flush.cpp  -  Group 29: Script-Declared Export Flush
  * ==============================================================
  *
  * Acceptance tests proving that VsimRuntime::flush_exports() correctly
@@ -59,7 +59,7 @@ static void seed_log(KernelEventLog& log, int n = 3) {
 }
 
 // ---------------------------------------------------------------------------
-// Test 1 — no flags set → no files written
+// Test 1  -  no flags set -> no files written
 // ---------------------------------------------------------------------------
 
 static void test_no_flags_no_output() {
@@ -85,7 +85,7 @@ static void test_no_flags_no_output() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 2 — write_events_json=true → events.jsonl written with correct content
+// Test 2  -  write_events_json=true -> events.jsonl written with correct content
 // ---------------------------------------------------------------------------
 
 static void test_jsonl_written() {
@@ -118,7 +118,7 @@ static void test_jsonl_written() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 3 — write_report_md=true → events.md written with Markdown table
+// Test 3  -  write_report_md=true -> events.md written with Markdown table
 // ---------------------------------------------------------------------------
 
 static void test_markdown_written() {
@@ -151,7 +151,7 @@ static void test_markdown_written() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 4 — both flags set → both files written in one call
+// Test 4  -  both flags set -> both files written in one call
 // ---------------------------------------------------------------------------
 
 static void test_both_flags_both_files() {
@@ -176,7 +176,7 @@ static void test_both_flags_both_files() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 5 — multi-run appends accumulate into single file
+// Test 5  -  multi-run appends accumulate into single file
 // ---------------------------------------------------------------------------
 
 static void test_multi_run_appends() {
@@ -208,7 +208,7 @@ static void test_multi_run_appends() {
 }
 
 // ---------------------------------------------------------------------------
-// Test 6 — empty log produces empty but valid files (not a crash)
+// Test 6  -  empty log produces empty but valid files (not a crash)
 // ---------------------------------------------------------------------------
 
 static void test_empty_log_produces_valid_files() {

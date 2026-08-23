@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * formation_kinetics.hpp
  * ======================
@@ -102,7 +102,7 @@ struct KineticState {
 // ============================================================================
 
 /**
- * TransitionEvent types — universal across all domains.
+ * TransitionEvent types  -  universal across all domains.
  * Domain adapters translate these into chemical / physical meaning.
  */
 enum class EventType : uint8_t {
@@ -246,7 +246,7 @@ struct RateLaw {
 };
 
 // ============================================================================
-// Formation score: the central output — "most stable" vs "most likely"
+// Formation score: the central output  -  "most stable" vs "most likely"
 // ============================================================================
 
 /**
@@ -258,12 +258,12 @@ struct RateLaw {
 struct FormationScore {
     std::string candidate_id;
 
-    // ── Thermodynamic branch ──────────────────────────────────────────────
+    // -- Thermodynamic branch ----------------------------------------------
     double energy_final_eV        = 0.0;  // Final static energy (lowest = best)
     double delta_G_eV             = 0.0;  // Gibbs energy of formation
     double thermo_rank            = 0.0;  // Lower = more thermodynamically stable
 
-    // ── Kinetic branch ────────────────────────────────────────────────────
+    // -- Kinetic branch ----------------------------------------------------
     //
     //  S_kinetic = w1·A_path + w2·R_encounter + w3·S_steric
     //            + w4·T_window + w5·E_barrier
@@ -276,27 +276,27 @@ struct FormationScore {
     double kinetic_score          = 0.0;  // Weighted sum
     double kinetic_rank           = 0.0;  // Lower = forms faster
 
-    // ── Environmental branch ──────────────────────────────────────────────
+    // -- Environmental branch ----------------------------------------------
     double solvent_score          = 0.0;
     double crowding_score         = 0.0;
     double env_score              = 0.0;
 
-    // ── Data branch (from HGST / meta-scores) ────────────────────────────
+    // -- Data branch (from HGST / meta-scores) ----------------------------
     double data_score             = 0.0;  // γ, Q_data, C_compact contribution
 
-    // ── Combined formation likelihood ─────────────────────────────────────
+    // -- Combined formation likelihood -------------------------------------
     //
     //  S_form = α·S_thermo + β·S_kinetic + χ·S_env + δ·S_data
     //
     double S_form                 = 0.0;
     double form_rank              = 0.0;  // Lower = most likely observed product
 
-    // ── Interpretation ────────────────────────────────────────────────────
+    // -- Interpretation ----------------------------------------------------
     std::string expected_observation;
     // e.g. "likely after long equilibration" / "likely early product" / "transient intermediate"
 };
 
-// ── Kinetic score weights (tunable, exposed for anti-black-box) ────────────
+// -- Kinetic score weights (tunable, exposed for anti-black-box) ------------
 struct KineticWeights {
     double w_path      = 0.20;
     double w_encounter = 0.20;
@@ -364,7 +364,7 @@ public:
     /// Apply an event to the state, returning the updated state.
     /// If the event requires a particle that does not yet exist in the
     /// model (e.g. an alpha particle in a decay chain), the adapter MUST
-    /// record the event and leave a placeholder — never silently invent data.
+    /// record the event and leave a placeholder  -  never silently invent data.
     virtual KineticState
     apply_event(const KineticState& state, const TransitionEvent& event) const = 0;
 
@@ -388,7 +388,7 @@ public:
     FormationKineticsEngine();
     explicit FormationKineticsEngine(uint64_t seed);
 
-    // ── Configuration ─────────────────────────────────────────────────────
+    // -- Configuration -----------------------------------------------------
     void set_weights(const KineticWeights& w) { weights_ = w; }
     const KineticWeights& weights() const     { return weights_; }
 
@@ -398,12 +398,12 @@ public:
     void set_max_events(uint64_t n)           { max_events_ = n; }
     void set_max_time(double t_s)             { max_time_s_ = t_s; }
 
-    // ── Domain adapter registration ───────────────────────────────────────
+    // -- Domain adapter registration ---------------------------------------
     void set_adapter(std::shared_ptr<DomainAdapter> adapter) {
         adapter_ = std::move(adapter);
     }
 
-    // ── Single-step evolution ─────────────────────────────────────────────
+    // -- Single-step evolution ---------------------------------------------
 
     /**
      * Enumerate transitions, score them, select one, apply it.
@@ -413,7 +413,7 @@ public:
     std::optional<TransitionEvent>
     step(KineticState& state);
 
-    // ── Multi-step evolution ──────────────────────────────────────────────
+    // -- Multi-step evolution ----------------------------------------------
 
     /**
      * Run the kinetic engine until max_events or max_time is reached.
@@ -422,7 +422,7 @@ public:
     std::vector<TransitionEvent>
     evolve(KineticState& state);
 
-    // ── Formation scoring ─────────────────────────────────────────────────
+    // -- Formation scoring -------------------------------------------------
 
     /**
      * Score a single candidate product.
@@ -440,7 +440,7 @@ public:
     RankingTable
     rank_candidates(const std::vector<std::pair<KineticState, TransitionEvent>>& candidates) const;
 
-    // ── Inspectable internals (anti-black-box) ────────────────────────────
+    // -- Inspectable internals (anti-black-box) ----------------------------
     uint64_t events_applied() const { return events_applied_; }
     double   elapsed_time()   const { return elapsed_time_s_; }
 

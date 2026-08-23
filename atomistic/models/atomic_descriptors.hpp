@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * atomic_descriptors.hpp
  * ======================
@@ -15,7 +15,7 @@
  * Namespace: atomistic::polarization::desc
  *
  * These functions form the "descriptor layer" for alpha_model.hpp.
- * They should not be modified to tune the model — only alpha_model.hpp's
+ * They should not be modified to tune the model  -  only alpha_model.hpp's
  * AlphaModelParams should change.  If descriptor logic changes, all
  * downstream tests must be re-verified.
  */
@@ -226,7 +226,7 @@ inline uint32_t block_index(uint32_t Z) noexcept {
 // Shell-closure proximity  g_shell(Z)
 //
 // Measures how close element Z is to a closed-shell configuration.
-// Noble gases (group 18): 1.0  — full closure, maximum suppression
+// Noble gases (group 18): 1.0   -  full closure, maximum suppression
 // Halogens   (group 17): smooth falloff (Gaussian, sigma=1.8)
 // Others:                 ~0
 //
@@ -254,15 +254,15 @@ inline double shell_closure(uint32_t Z) noexcept {
 //
 // Heavy atoms exhibit relativistic contraction of s and p_1/2 orbitals,
 // reducing their participation in polarizability.  This effect is NOT
-// monotonic with Z — it peaks at specific "hotspot" configurations:
+// monotonic with Z  -  it peaks at specific "hotspot" configurations:
 //
 //   1. Z~80 (Hg region): 6s^2 inert pair + filled 5d^10.  Hg is the
-//      poster child — its 6s contracts so strongly that Hg is liquid at
-//      room temperature.  Affects Au(79)–Tl(81) as well.
+//      poster child  -  its 6s contracts so strongly that Hg is liquid at
+//      room temperature.  Affects Au(79)-Tl(81) as well.
 //
 //   2. Z~115 (superheavy 7p region): extreme spin-orbit splitting of
 //      7p_{1/2} / 7p_{3/2} compresses the effective cloud.
-//      Affects Nh(113)–Og(118).
+//      Affects Nh(113)-Og(118).
 //
 // Model: sum of two Gaussians centered at the hotspots.
 //   f_rel(Z) = exp(-(Z-80)^2 / 200) + 0.5 * exp(-(Z-115)^2 / 50)
@@ -284,10 +284,10 @@ inline double relativistic_factor(uint32_t Z) noexcept {
 // Shell fill fraction  f(Z) = active_valence(Z) / max_valence_in_period(Z)
 //
 // Measures how "full" the outermost shell is.
-//   0.0   → empty shell (impossible, but limiting)
-//   0.125 → Li  (1 electron in an 8-capacity shell: very diffuse)
-//   0.5   → C, Si  (mid-shell: orbital extent ≈ rcov)
-//   1.0   → Ne, Ar (full shell: compact, rcov overestimates cloud)
+//   0.0   -> empty shell (impossible, but limiting)
+//   0.125 -> Li  (1 electron in an 8-capacity shell: very diffuse)
+//   0.5   -> C, Si  (mid-shell: orbital extent ≈ rcov)
+//   1.0   -> Ne, Ar (full shell: compact, rcov overestimates cloud)
 //
 // Physical basis: an atom with few valence electrons has a diffuse
 // outermost orbital that extends well beyond rcov (the covalent bond
@@ -313,12 +313,12 @@ inline double fill_fraction(uint32_t Z) noexcept {
 // They return 0.0 for all non-f-block elements.
 //
 // Physical basis:
-//   f_series_position  — linear 0→1 across the series; captures the smooth
+//   f_series_position   -  linear 0->1 across the series; captures the smooth
 //                        lanthanide contraction beyond what rcov drift provides.
-//   f_half_shell       — Gaussian at half-filling (Eu Z=63 / Am Z=95).
+//   f_half_shell        -  Gaussian at half-filling (Eu Z=63 / Am Z=95).
 //                        4f^7 / 5f^7 half-shell stabilisation raises alpha
 //                        above the smooth trend (Eu bump: ref=27.7 vs trend~22).
-//   f_full_shell       — Gaussian at full-filling (Yb Z=70 / No Z=102).
+//   f_full_shell        -  Gaussian at full-filling (Yb Z=70 / No Z=102).
 //                        4f^14 / 5f^14 filled-shell contraction suppresses
 //                        alpha below trend (Yb: ref=19.5 vs trend~22).
 //
@@ -328,10 +328,10 @@ inline double fill_fraction(uint32_t Z) noexcept {
 //                + c_f_full*f_full_shell
 // ============================================================================
 
-// Linear drift 0→1 across each f-series.
+// Linear drift 0->1 across each f-series.
 inline double f_series_position(uint32_t Z) noexcept {
-    if (Z >= 57 && Z <= 71)  return (Z - 57) / 14.0;   // La=0.0 → Lu=1.0
-    if (Z >= 89 && Z <= 103) return (Z - 89) / 14.0;   // Ac=0.0 → No=1.0
+    if (Z >= 57 && Z <= 71)  return (Z - 57) / 14.0;   // La=0.0 -> Lu=1.0
+    if (Z >= 89 && Z <= 103) return (Z - 89) / 14.0;   // Ac=0.0 -> No=1.0
     return 0.0;
 }
 
@@ -362,7 +362,7 @@ inline double f_full_shell_proximity(uint32_t Z) noexcept {
 }
 
 // ============================================================================
-// F-shell electron count  n_f(Z)  (v2.8.X — Alpha Method D)
+// F-shell electron count  n_f(Z)  (v2.8.X  -  Alpha Method D)
 //
 // Ground-state 4f/5f occupancy for lanthanides and actinides.
 // Returns 0 for all non-f-block elements.
@@ -423,7 +423,7 @@ inline uint32_t f_electron_count(uint32_t Z) noexcept {
 }
 
 // ============================================================================
-// First ionization energy  I_1(Z)  (eV)  —  v2.8.X (Alpha Method D)
+// First ionization energy  I_1(Z)  (eV)   -   v2.8.X (Alpha Method D)
 //
 // NIST Atomic Spectra Database for Z=1-103.
 // Z=104-118: relativistic CCSD(T)/DHF estimates from
@@ -432,11 +432,11 @@ inline uint32_t f_electron_count(uint32_t Z) noexcept {
 // Physical role in the model:
 //   g_bind(Z) = 1 / (1 + b_bind * I_1(Z))
 //   This single descriptor replaces three previous mechanisms:
-//     - softness coupling (a_soft * s)           — low I_1 = soft
-//     - electronegativity suppression (chi^b_chi) — high I_1 = high chi
-//     - shell-closure gate (c_shell)              — noble gases have highest I_1
+//     - softness coupling (a_soft * s)            -  low I_1 = soft
+//     - electronegativity suppression (chi^b_chi)  -  high I_1 = high chi
+//     - shell-closure gate (c_shell)               -  noble gases have highest I_1
 //   Physically: I_1 measures how tightly the outermost electron is bound.
-//   High I_1 → stiff, compact cloud → low polarizability.
+//   High I_1 -> stiff, compact cloud -> low polarizability.
 // ============================================================================
 
 inline double first_ionization_energy(uint32_t Z) noexcept {

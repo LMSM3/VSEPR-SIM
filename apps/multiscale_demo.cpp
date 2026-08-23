@@ -1,11 +1,11 @@
-/**
+﻿/**
  * multiscale_demo.cpp
  * 
  * Demonstration of Multiscale Bridge with GPU Resource Management
  * 
  * Shows:
  * 1. GPU conflict prevention
- * 2. Molecular → FEA property transfer
+ * 2. Molecular -> FEA property transfer
  * 3. Safe scale transitions
  * 4. User confirmation workflow
  * 
@@ -23,9 +23,9 @@ using namespace vsepr::multiscale;
 
 void print_header(const std::string& title) {
     std::cout << "\n";
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  " << std::left << std::setw(57) << title << "║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  " << std::left << std::setw(57) << title << "|\n";
+    std::cout << "+===========================================================+\n";
     std::cout << "\n";
 }
 
@@ -61,7 +61,7 @@ void demo_1_gpu_conflict_prevention() {
 }
 
 void demo_2_property_extraction() {
-    print_header("DEMO 2: Molecular → FEA Property Extraction");
+    print_header("DEMO 2: Molecular -> FEA Property Extraction");
     
     MolecularFEABridge bridge;
     
@@ -85,10 +85,10 @@ void demo_3_safe_transition() {
     
     MolecularFEABridge bridge;
     
-    std::cout << "Demonstrating safe transition: Molecular → FEA\n\n";
+    std::cout << "Demonstrating safe transition: Molecular -> FEA\n\n";
     
     // Step 1: Activate molecular
-    std::cout << "═══ PHASE 1: Molecular Dynamics ═══\n\n";
+    std::cout << "=== PHASE 1: Molecular Dynamics ===\n\n";
     if (bridge.activate_molecular_scale()) {
         std::cout << "Running molecular simulation...\n";
         std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -98,12 +98,12 @@ void demo_3_safe_transition() {
         bridge.print_gpu_status();
         
         // Step 3: Deactivate molecular
-        std::cout << "═══ PHASE 2: Transition ═══\n\n";
+        std::cout << "=== PHASE 2: Transition ===\n\n";
         std::cout << "Deactivating molecular scale...\n";
         bridge.deactivate_molecular_scale();
         
         // Step 4: Activate FEA
-        std::cout << "\n═══ PHASE 3: Physical Scale FEA ═══\n\n";
+        std::cout << "\n=== PHASE 3: Physical Scale FEA ===\n\n";
         if (bridge.activate_fea_scale()) {
             std::cout << "Running FEA simulation...\n";
             std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -113,7 +113,7 @@ void demo_3_safe_transition() {
         }
     }
     
-    std::cout << "\n═══ FINAL STATUS ═══\n";
+    std::cout << "\n=== FINAL STATUS ===\n";
     bridge.print_gpu_status();
 }
 
@@ -187,12 +187,12 @@ void demo_5_automatic_mode() {
 
 int main(int argc, char* argv[]) {
     std::cout << "\n";
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║                                                           ║\n";
-    std::cout << "║     MULTISCALE BRIDGE DEMONSTRATION                       ║\n";
-    std::cout << "║     GPU Resource Management + MD ↔ FEA                   ║\n";
-    std::cout << "║                                                           ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|                                                           |\n";
+    std::cout << "|     MULTISCALE BRIDGE DEMONSTRATION                       |\n";
+    std::cout << "|     GPU Resource Management + MD ↔ FEA                   |\n";
+    std::cout << "|                                                           |\n";
+    std::cout << "+===========================================================+\n";
     std::cout << "\n";
     
     if (argc > 1) {
@@ -233,9 +233,9 @@ int main(int argc, char* argv[]) {
     }
     
     std::cout << "\n";
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  ALL DEMONSTRATIONS COMPLETE                              ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  ALL DEMONSTRATIONS COMPLETE                              |\n";
+    std::cout << "+===========================================================+\n";
     std::cout << "\n";
     
     return 0;

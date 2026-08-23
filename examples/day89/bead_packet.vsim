@@ -1,0 +1,7 @@
+# bead ID SPECIES MASS X Y Z PX PY PZ ENERGY BOUNDARY PROVENANCE
+bead packet-001 H2O 72.0600 0 0 0 0.25 0 0 18.0 open registry:H2O:4to1
+# exchange SEQ TIME KIND DMASS DPX DPY DPZ DENERGY SPECIES DSPECIES SOURCE
+exchange 1 10 mass 18.015 0.10 0 0 2.5 H2O 18.015 inlet-A
+exchange 2 20 momentum 0 0.05 -0.02 0 0 H2O 0 pressure-face
+exchange 3 30 heat 0 0 0 0 1.25 H2O 0 thermal-bath
+exchange 4 40 species -18.015 -0.08 0.01 0 -2.0 H2O -18.015 outlet-B

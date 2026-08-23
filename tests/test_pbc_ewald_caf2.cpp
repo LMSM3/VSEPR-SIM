@@ -1,8 +1,8 @@
-/**
- * test_pbc_ewald_caf2.cpp — Empirical Ewald validation: CaF2 fluorite 4×4×4 supercell
+﻿/**
+ * test_pbc_ewald_caf2.cpp  -  Empirical Ewald validation: CaF2 fluorite 4×4×4 supercell
  * ======================================================================================
  *
- * Group 28 — Beta-8 PBC/Ewald Empirical Validation
+ * Group 28  -  Beta-8 PBC/Ewald Empirical Validation
  *
  * TEST(PBC_Ewald_CaF2, Fluorite_4x4x4_MadelungValidation)
  *
@@ -11,7 +11,7 @@
  *
  *   1. Mixed charge magnitudes: Ca²⁺ (+2) and F⁻ (−1)
  *   2. Unequal self-energy contributions: Ca contributes q²=4, F contributes q²=1
- *   3. 3-ion formula unit (Ca + 2F) — formula-unit normalization must be correct
+ *   3. 3-ion formula unit (Ca + 2F)  -  formula-unit normalization must be correct
  *   4. Larger basis: 12 ions per conventional cell, 768 ions total in 4×4×4 supercell
  *   5. Harder neutral-cell check: 256 Ca²⁺ + 512 F⁻ must sum to zero charge
  *
@@ -144,7 +144,7 @@ static double run_ewald(const CaF2System& sys,
 	double err_pct     = 100.0 * std::abs(err_kcal) / std::abs(E_mad_per_form);
 
 	if (print_row) {
-		std::printf("║ %.2f   ║ %4.1f Å      ║ %4d ║ %14.4f ║ %11.3f %% ║\n",
+		std::printf("| %.2f   | %4.1f Å      | %4d | %14.4f | %11.3f %% |\n",
 					alpha, rcut, kmax, E_per_form, err_pct);
 	}
 	return err_pct;
@@ -173,7 +173,7 @@ int main() {
 	const int nx = 4, ny = 4, nz = 4;
 	auto sys = build_caf2(nx, ny, nz, a);
 
-	// ─── Basic sanity assertions ────────────────────────────────────────────
+	// --- Basic sanity assertions --------------------------------------------
 	assert(sys.N_Ca == 256   && "Expected 256 Ca ions");
 	assert(sys.N_F  == 512   && "Expected 512 F ions");
 	assert(sys.N    == 768   && "Expected 768 total ions");
@@ -184,12 +184,12 @@ int main() {
 	for (double q : sys.charges) Q_total += q;
 	assert(std::abs(Q_total) < 1e-12 && "Cell must be electrically neutral");
 
-	// ─── Header ─────────────────────────────────────────────────────────────
+	// --- Header -------------------------------------------------------------
 	std::printf("\n");
-	std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-	std::printf("║   CaF2 Fluorite Ewald Empirical Validation                  ║\n");
-	std::printf("║   include/box/pbc.hpp  |  Group 28  |  beta-8 gate          ║\n");
-	std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+	std::printf("+==============================================================+\n");
+	std::printf("|   CaF2 Fluorite Ewald Empirical Validation                  |\n");
+	std::printf("|   include/box/pbc.hpp  |  Group 28  |  beta-8 gate          |\n");
+	std::printf("+==============================================================+\n\n");
 
 	std::printf("Reference:\n");
 	std::printf("  Structure               = Fluorite CaF2 (Fm-3m, #225)\n");
@@ -207,11 +207,11 @@ int main() {
 	std::printf("  Box = %.4f × %.4f × %.4f Å\n", sys.box.L.x, sys.box.L.y, sys.box.L.z);
 	std::printf("  Total charge = %.1e (neutral: OK)\n\n", Q_total);
 
-	// ─── Parameter convergence matrix ───────────────────────────────────────
-	std::printf("╔════════╦════════════╦══════╦════════════════╦═══════════════╗\n");
-	std::printf("║ alpha  ║ rcut_real  ║ kmax ║ E per formula  ║ error %%       ║\n");
-	std::printf("║ Å⁻¹   ║            ║      ║ kcal/mol       ║               ║\n");
-	std::printf("╠════════╬════════════╬══════╬════════════════╬═══════════════╣\n");
+	// --- Parameter convergence matrix ---------------------------------------
+	std::printf("+========╦============╦======╦================╦===============+\n");
+	std::printf("| alpha  | rcut_real  | kmax | E per formula  | error %%       |\n");
+	std::printf("| Å⁻¹   |            |      | kcal/mol       |               |\n");
+	std::printf("╠========╬============╬======╬================╬===============╣\n");
 
 	struct Params { double alpha; double rcut; int kmax; };
 	Params matrix[] = {
@@ -227,9 +227,9 @@ int main() {
 		if (err < best_err) best_err = err;
 	}
 
-	std::printf("╚════════╩════════════╩══════╩════════════════╩═══════════════╝\n\n");
+	std::printf("+========╩============╩======╩================╩===============+\n\n");
 
-	// ─── Primary validation — use the canonical β=0.30 parameters ───────────
+	// --- Primary validation  -  use the canonical β=0.30 parameters -----------
 	EwaldParams ep;
 	ep.alpha     = 0.30;
 	ep.rcut_real = 8.0;
@@ -252,20 +252,20 @@ int main() {
 	}
 	double fnet = std::sqrt(fx*fx + fy*fy + fz*fz);
 
-	// ─── Validation table ────────────────────────────────────────────────────
-	std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-	std::printf("║   EMPIRICAL VALIDATION TABLE  (alpha=0.30, rcut=8, kmax=8)  ║\n");
-	std::printf("╠═══════════════════════════════╦═══════════════╦══════════════╣\n");
-	std::printf("║  Quantity                     ║  Value        ║  Units       ║\n");
-	std::printf("╠═══════════════════════════════╬═══════════════╬══════════════╣\n");
-	std::printf("║  E_Ewald total                ║ %13.4f ║  kcal/mol    ║\n", E_total);
-	std::printf("║  N formula units              ║ %13d ║  —           ║\n", sys.N_form);
-	std::printf("║  E_Ewald per formula          ║ %13.4f ║  kcal/mol    ║\n", E_per_form);
-	std::printf("║  E_Madelung per formula       ║ %13.4f ║  kcal/mol    ║\n", E_mad_per_form);
-	std::printf("║  Absolute error               ║ %13.4f ║  kcal/mol    ║\n", err_kcal);
-	std::printf("║  Error %%                      ║ %12.3f%% ║              ║\n", err_pct);
-	std::printf("║  |F_net|                      ║ %13.2e ║  kcal/mol/Å  ║\n", fnet);
-	std::printf("╠═══════════════════════════════╩═══════════════╩══════════════╣\n");
+	// --- Validation table ----------------------------------------------------
+	std::printf("+==============================================================+\n");
+	std::printf("|   EMPIRICAL VALIDATION TABLE  (alpha=0.30, rcut=8, kmax=8)  |\n");
+	std::printf("╠===============================╦===============╦==============╣\n");
+	std::printf("|  Quantity                     |  Value        |  Units       |\n");
+	std::printf("╠===============================╬===============╬==============╣\n");
+	std::printf("|  E_Ewald total                | %13.4f |  kcal/mol    |\n", E_total);
+	std::printf("|  N formula units              | %13d |   -            |\n", sys.N_form);
+	std::printf("|  E_Ewald per formula          | %13.4f |  kcal/mol    |\n", E_per_form);
+	std::printf("|  E_Madelung per formula       | %13.4f |  kcal/mol    |\n", E_mad_per_form);
+	std::printf("|  Absolute error               | %13.4f |  kcal/mol    |\n", err_kcal);
+	std::printf("|  Error %%                      | %12.3f%% |              |\n", err_pct);
+	std::printf("|  |F_net|                      | %13.2e |  kcal/mol/Å  |\n", fnet);
+	std::printf("╠===============================╩===============╩==============╣\n");
 
 	const bool gate_pass     = err_pct < 1.00;
 	const bool strong_pass   = err_pct < 0.25;
@@ -277,11 +277,11 @@ int main() {
 		strong_pass ? "STRONG PASS (< 0.25%)" :
 		gate_pass   ? "GATE PASS (< 1.00%)" : "FAIL";
 
-	std::printf("║  E grade:  %-48s║\n", grade);
-	std::printf("║  F-balance: %-47s║\n", fbalance_pass ? "PASS (|F_net| < 1e-4)" : "FAIL");
-	std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+	std::printf("|  E grade:  %-48s|\n", grade);
+	std::printf("|  F-balance: %-47s|\n", fbalance_pass ? "PASS (|F_net| < 1e-4)" : "FAIL");
+	std::printf("+==============================================================+\n\n");
 
-	// ─── Assertions (hard gate) ──────────────────────────────────────────────
+	// --- Assertions (hard gate) ----------------------------------------------
 	// Sanity counts
 	assert(sys.N_Ca == 256);
 	assert(sys.N_F  == 512);

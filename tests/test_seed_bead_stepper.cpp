@@ -1,5 +1,5 @@
-/**
- * test_seed_bead_stepper.cpp — Tests for the 6+9 Unified Step Function
+﻿/**
+ * test_seed_bead_stepper.cpp  -  Tests for the 6+9 Unified Step Function
  *
  * Validates:
  *   1. SeedBeadStepper initialisation
@@ -7,7 +7,7 @@
  *   3. Full run to steady state
  *   4. SnapshotGraphCollector accumulates data
  *   5. Metal/gas study configuration and report generation
- *   6. Determinism (same input → same output)
+ *   6. Determinism (same input -> same output)
  */
 
 #include "coarse_grain/models/seed_bead_stepper.hpp"

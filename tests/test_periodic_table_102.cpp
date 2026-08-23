@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_periodic_table_102.cpp
  * ============================
  * Test complete periodic table with isotope support for Z=1-102
@@ -244,9 +244,9 @@ void print_periodic_table() {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗" << std::endl;
-    std::cout << "║  VSEPR-Sim Periodic Table Test (Z=1-102 with Isotopes)  ║" << std::endl;
-    std::cout << "╚═══════════════════════════════════════════════════════════╝" << std::endl;
+    std::cout << "+===========================================================+" << std::endl;
+    std::cout << "|  VSEPR-Sim Periodic Table Test (Z=1-102 with Isotopes)  |" << std::endl;
+    std::cout << "+===========================================================+" << std::endl;
     
     try {
         // Initialize periodic table
@@ -262,9 +262,9 @@ int main() {
         test_coverage();
         print_periodic_table();
         
-        std::cout << "\n╔═══════════════════════════════════════╗" << std::endl;
-        std::cout << "║  ✓ ALL TESTS PASSED SUCCESSFULLY!   ║" << std::endl;
-        std::cout << "╚═══════════════════════════════════════╝" << std::endl;
+        std::cout << "\n+=======================================+" << std::endl;
+        std::cout << "|  ✓ ALL TESTS PASSED SUCCESSFULLY!   |" << std::endl;
+        std::cout << "+=======================================+" << std::endl;
         
         return 0;
         

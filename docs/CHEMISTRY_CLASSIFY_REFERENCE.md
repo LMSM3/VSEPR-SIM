@@ -9,8 +9,9 @@
 
 ## Overview
 
-`vsepr classify <script.vsim>` is an analysis preview command. It accepts a
-`.vsim` script file and prints a multi-section report covering:
+`vsepr classify <script.vsim>` and `vsepr expand <script.vsim>` are analysis
+preview commands. They share one script-enrichment result and print a
+multi-section report covering:
 
 1. **[VSEPR]** — per-atom geometry sites, electron-domain topology, and
    shape classification using VSEPR rules.
@@ -68,7 +69,6 @@ vsepr_link  = true
 |-----|------|-------------|
 | `reaction` | string | Canonical reaction string, e.g. `"CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"` |
 | `preset` | string | Named preset library: `"999"` (8 general reactions) or `"998"` |
-| `vsepr_link` | bool | When `true`, resolves a VSEPR geometry tag for the first product |
 | `vsepr_link` | bool | When `true`, resolves a VSEPR geometry tag for the first product |
 | `class_override` | string | Force reaction class: `combustion`, `decomposition`, `acid-base`, `synthesis`, `general` |
 | `energy_kj` | float | Override parsed energy value (kJ/mol) |

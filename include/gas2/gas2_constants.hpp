@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas2_constants.hpp
  * ------------------
  * Physical Constants and Unit Definitions for gas2 Module.
@@ -21,12 +21,12 @@ namespace gas2 {
 // Fundamental Constants (CODATA 2018, exact where indicated)
 // ============================================================================
 
-constexpr double kB       = 1.380649e-23;       // J/K       — Boltzmann constant (exact)
-constexpr double R_gas    = 8.314462618;         // J/(mol·K) — molar gas constant
-constexpr double N_A      = 6.02214076e23;       // mol^-1    — Avogadro constant (exact)
-constexpr double h_planck = 6.62607015e-34;      // J·s       — Planck constant (exact)
-constexpr double c_light  = 299792458.0;         // m/s       — speed of light (exact)
-constexpr double sigma_SB = 5.670374419e-8;      // W/(m^2·K^4) — Stefan-Boltzmann
+constexpr double kB       = 1.380649e-23;       // J/K        -  Boltzmann constant (exact)
+constexpr double R_gas    = 8.314462618;         // J/(mol·K)  -  molar gas constant
+constexpr double N_A      = 6.02214076e23;       // mol^-1     -  Avogadro constant (exact)
+constexpr double h_planck = 6.62607015e-34;      // J·s        -  Planck constant (exact)
+constexpr double c_light  = 299792458.0;         // m/s        -  speed of light (exact)
+constexpr double sigma_SB = 5.670374419e-8;      // W/(m^2·K^4)  -  Stefan-Boltzmann
 
 // ============================================================================
 // Conversion Factors

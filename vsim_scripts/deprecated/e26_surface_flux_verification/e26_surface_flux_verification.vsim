@@ -1,0 +1,88 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e26_surface_flux_verification.vsim
+# =============================================================================
+# E26  --  Surface Flux Verification with [verify.structure]
+#
+# Purpose: Combine surface analysis with the empirical verification layer
+#          (WO-62A).  The [verify.structure] block checks that surface
+#          flux is consistent with mass conservation and boundary conditions.
+#
+# Key concepts:
+#   [verify.structure] can include flux checks in future extensions.
+#   Currently, this example shows co-activation of surface + verify layers.
+#   Demonstrates the analysis → verification pipeline.
+# =============================================================================
+
+[project]
+name        = "e26_surface_flux_verify"
+version     = "v5.0.14"
+seed_base   = 2600
+determinism = true
+
+[material]
+formula   = "Ne"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ne"
+count       = 512
+temperature = 350.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 4000
+dt_fs     = 2.0
+converge  = false
+
+[analysis.structure]
+enabled     = true
+compute_rdf = true
+rdf_rmax    = 8.0
+rdf_nbins   = 160
+
+[verify]
+enabled = true
+
+[verify.structure]
+check_rdf                = true
+rdf_first_peak_min       = 3.0
+rdf_first_peak_max       = 4.0
+rdf_coordination_min     = 10.0
+rdf_coordination_max     = 14.0
+rdf_coordination_species = "Ne"
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = "out/e26"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e26/surfaces"
+
+[[object.surface]]
+name          = "verify_flux_probe"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 1.0
+normal_y      = 0.0
+normal_z      = 0.0
+width         = 25.0
+height        = 25.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_verify"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 200
+

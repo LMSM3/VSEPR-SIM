@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
-// src/core/stats/online_stats.hpp — Welford Online Statistics (Day #56)
+// src/core/stats/online_stats.hpp  -  Welford Online Statistics (Day #56)
 // =============================================================================
 // Port of the Python OnlineStats accumulator to C++.
 //
@@ -17,7 +17,7 @@
 //   - Structural residual drift
 //
 // Anti-black-box: all fields are public, all calculations explicit.
-// Thread safety: none — single-threaded per-accumulator model.
+// Thread safety: none  -  single-threaded per-accumulator model.
 // =============================================================================
 
 #include <cmath>

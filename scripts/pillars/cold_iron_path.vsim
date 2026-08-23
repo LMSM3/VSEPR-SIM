@@ -1,0 +1,322 @@
+# @category Pillars
+# @title    Cold Iron Path — Fe oxidation, passivation, and H2 reduction
+#
+# Three Metallic Pillars / Pillar 1
+# Reactive organization: gas <-> surface <-> lattice
+#
+# Scientific intent:
+#   1. Expose an Fe(110)-like slab to O2.
+#   2. Track adsorption, dissociation, oxide nucleation, and passivation.
+#   3. Replace the atmosphere with H2 and permit partial oxide reduction.
+#   4. Audit Fe/O/H inventories and chemical-energy bookkeeping.
+
+[project]
+name        = "pillar_cold_iron_fe_oxidation_reduction"
+version     = "v0.1.0"
+seed_base   = 41001
+determinism = true
+description = "Fe surface oxidation, passivation, and hydrogen reduction"
+author      = "VSIM Three Metallic Pillars"
+
+[pillar]
+id                 = "cold_iron"
+name               = "Cold Iron Path"
+model              = "surface_reaction"
+spatial_authority  = "gas_surface_lattice"
+event_authority    = "stochastic_kinetic"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 32.0
+ly    = 32.0
+lz    = 56.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = false
+
+[material]
+formula       = "Fe"
+structure     = "bcc"
+phase         = "solid"
+surface_plane = "110"
+
+[[simulation.molecule]]
+formula     = "Fe"
+count       = 768
+temperature = 650.0
+lattice     = "bcc_slab_110"
+region      = "substrate"
+
+[[simulation.molecule]]
+formula     = "O2"
+count       = 180
+temperature = 650.0
+lattice     = "gas_random"
+region      = "gas_reservoir"
+
+[[simulation.molecule]]
+formula     = "H2"
+count       = 240
+temperature = 725.0
+lattice     = "gas_random"
+region      = "reduction_reservoir"
+initially_active = false
+
+[environment]
+temperature = 650.0
+pressure    = 0.0025
+medium      = "reactive_gas"
+gravity     = false
+
+[surface]
+host_element          = "Fe"
+plane                 = "110"
+site_model            = "bridge_hollow_top"
+site_density_mode     = "derived_from_lattice"
+max_site_occupancy    = 1.0
+subsurface_layers     = 6
+track_vacancies       = true
+track_local_strain    = true
+track_oxide_fraction  = true
+
+[species.registry]
+species = [
+	"Fe:lattice",
+	"site:vacant",
+	"O2:gas",
+	"O2:adsorbed",
+	"O:adsorbed",
+	"O:subsurface",
+	"FeO:surface",
+	"Fe2O3:surface",
+	"H2:gas",
+	"H:adsorbed",
+	"H2O:adsorbed",
+	"H2O:gas"
+]
+
+[reaction.network]
+id                 = "cold_iron_fe_o_h_v1"
+selection          = "stochastic_kinetic"
+rate_law           = "arrhenius"
+energy_model       = "tabulated_proxy"
+spatial_index      = "surface_neighbor_graph"
+reject_on_overlap  = true
+reject_on_deficit  = true
+
+[[reaction.channel]]
+id             = "oxygen_adsorption"
+stage          = "oxidation"
+reactants      = ["O2:gas", "site:vacant"]
+products       = ["O2:adsorbed"]
+pre_exponential = 2.0e12
+barrier_eV     = 0.12
+energy_delta_eV = -0.48
+site_radius_ang = 2.8
+
+[[reaction.channel]]
+id             = "oxygen_dissociation"
+stage          = "oxidation"
+reactants      = ["O2:adsorbed", "site:vacant"]
+products       = ["O:adsorbed", "O:adsorbed"]
+pre_exponential = 8.0e12
+barrier_eV     = 0.42
+energy_delta_eV = -1.10
+neighbor_rule  = "adjacent_surface_sites"
+
+[[reaction.channel]]
+id             = "oxygen_surface_hop"
+stage          = "oxidation"
+reactants      = ["O:adsorbed", "site:vacant"]
+products       = ["site:vacant", "O:adsorbed"]
+pre_exponential = 3.0e12
+barrier_eV     = 0.31
+energy_delta_eV = 0.0
+neighbor_rule  = "surface_nearest_neighbor"
+
+[[reaction.channel]]
+id             = "oxygen_incorporation"
+stage          = "oxidation"
+reactants      = ["O:adsorbed", "Fe:lattice"]
+products       = ["O:subsurface", "FeO:surface"]
+pre_exponential = 1.2e12
+barrier_eV     = 0.58
+energy_delta_eV = -0.72
+max_depth_layers = 3
+
+[[reaction.channel]]
+id             = "oxide_growth"
+stage          = "oxidation"
+reactants      = ["FeO:surface", "O:adsorbed"]
+products       = ["Fe2O3:surface"]
+pre_exponential = 9.0e11
+barrier_eV     = 0.66
+energy_delta_eV = -0.54
+neighbor_rule  = "oxide_front"
+
+[[reaction.channel]]
+id             = "hydrogen_adsorption"
+stage          = "reduction"
+reactants      = ["H2:gas", "site:vacant"]
+products       = ["H:adsorbed", "H:adsorbed"]
+pre_exponential = 2.5e12
+barrier_eV     = 0.24
+energy_delta_eV = -0.22
+neighbor_rule  = "adjacent_surface_sites"
+
+[[reaction.channel]]
+id             = "feo_reduction"
+stage          = "reduction"
+reactants      = ["FeO:surface", "H:adsorbed", "H:adsorbed"]
+products       = ["Fe:lattice", "H2O:adsorbed", "site:vacant"]
+pre_exponential = 7.0e11
+barrier_eV     = 0.74
+energy_delta_eV = 0.18
+neighbor_rule  = "oxide_front"
+
+[[reaction.channel]]
+id             = "water_desorption"
+stage          = "reduction"
+reactants      = ["H2O:adsorbed"]
+products       = ["H2O:gas", "site:vacant"]
+pre_exponential = 4.0e12
+barrier_eV     = 0.29
+energy_delta_eV = 0.21
+
+[reaction.passivation]
+enabled               = true
+metric                = "surface.oxide_thickness_proxy"
+model                 = "exponential_accessibility"
+alpha_per_layer       = 0.42
+minimum_accessibility = 0.015
+affects_channels      = [
+	"oxygen_adsorption",
+	"oxygen_dissociation",
+	"oxygen_incorporation",
+	"oxide_growth"
+]
+
+[[reaction.stage]]
+id                  = "oxidation"
+start_step          = 0
+end_step            = 1800
+active_reservoirs   = ["gas_reservoir"]
+environment_T_K     = 650.0
+pressure_proxy_GPa  = 0.0025
+
+[[reaction.stage]]
+id                  = "purge"
+start_step          = 1801
+end_step            = 2000
+active_reservoirs   = []
+environment_T_K     = 675.0
+pressure_proxy_GPa  = 0.0001
+remove_unbound      = ["O2:gas"]
+
+[[reaction.stage]]
+id                  = "reduction"
+start_step          = 2001
+end_step            = 4000
+active_reservoirs   = ["reduction_reservoir"]
+environment_T_K     = 725.0
+pressure_proxy_GPa  = 0.0030
+
+[simulation]
+fire_max_steps      = 300
+fire_dt_fs          = 0.5
+formation_preset    = "reactive_surface"
+smooth_resim        = false
+neighbor_skin_ang   = 2.0
+rebuild_neighbors_n = 5
+
+[chemistry]
+chemistry           = "surface_reaction_network"
+reaction_events     = true
+track_species_state = true
+event_registry      = true
+
+[run]
+mode          = "reactive_md"
+max_steps     = 4000
+dt_fs         = 0.5
+temperature_K = 650.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics = [
+	"energy.total",
+	"energy.chemical",
+	"temperature",
+	"species.population",
+	"reaction.acceptance",
+	"surface.coverage.O",
+	"surface.oxide_fraction",
+	"surface.oxide_thickness_proxy",
+	"surface.passivation_factor",
+	"surface.vacancy_fraction",
+	"flux.gas_to_surface",
+	"flux.surface_to_lattice",
+	"product.H2O",
+	"audit.element_residual"
+]
+every_n_steps = 5
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["Fe", "O", "H"]
+charge                = false
+energy                = "tracked_proxy"
+strict                = true
+check_every_n_steps   = 10
+relative_tolerance    = 1.0e-10
+absolute_tolerance    = 1.0e-12
+reject_invalid_event  = true
+
+[audit.acceptance]
+requirements = [
+	"oxide_fraction_at_1800 > oxide_fraction_at_0",
+	"passivation_factor_at_1800 < 1.0",
+	"oxygen_uptake_rate_late < oxygen_uptake_rate_early",
+	"H2O_product_count_final > 0",
+	"oxide_fraction_final < oxide_fraction_at_2000",
+	"max_abs_element_residual < 1.0e-10"
+]
+
+[export]
+output_dir          = "out/pillars/cold_iron"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 50
+event_interval      = 1
+metrics_interval    = 5
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_rdf_svg          = false
+visual_output_dir      = "figures/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = false
+show_bond_events         = true

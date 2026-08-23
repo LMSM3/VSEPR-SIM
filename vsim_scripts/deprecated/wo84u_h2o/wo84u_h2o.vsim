@@ -1,0 +1,13 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name = wo84u_h2o
+
+[formula]
+formula = H2O
+
+[chem_plus]
+reaction = 2H2 + O2 -> 2H2O + 572 kJ
+vsepr_link = true
+

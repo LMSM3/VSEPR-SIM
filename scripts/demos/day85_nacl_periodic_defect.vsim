@@ -1,0 +1,122 @@
+# day85_nacl_periodic_defect.vsim
+# =============================================================================
+# Day 85 — Periodic ionic crystal and vacancy-defect demonstration
+#
+# Demonstrates earlier core VSIM capabilities: material prototypes, explicit PBC,
+# Ewald electrostatics, crystal defects, event/analysis artifacts, and the
+# interactive crystal-grid viewer.
+#
+# Run: vsepr run scripts/demos/day85_nacl_periodic_defect.vsim
+# =============================================================================
+
+print_console "VSEPR-SIM Day 85: periodic NaCl vacancy demonstration"
+print_console "PBC: periodic in all axes; electrostatics: Ewald; defect: vacancy"
+
+[project]
+name        = "day85_nacl_periodic_defect"
+version     = "v5.1.4"
+seed_base   = 8516
+determinism = true
+description = "Deterministic periodic NaCl crystal with a vacancy defect"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+phase     = "solid"
+
+[crystal]
+formula      = "NaCl"
+structure    = "rocksalt"
+supercell_a  = 4
+supercell_b  = 4
+supercell_c  = 4
+defect_type  = "vacancy"
+defect_count = 1
+
+[cell]
+type  = "orthorhombic"
+lx    = 22.6
+ly    = 22.6
+lz    = 22.6
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[formation]
+enabled                 = true
+history                 = true
+track_events            = true
+track_energy_path       = true
+track_structure_changes = true
+
+[simulation]
+fire_max_steps   = 500
+fire_dt_fs       = 0.5
+box_size_ang     = 22.6
+periodic         = true
+formation_preset = "ceramic"
+use_ewald        = true
+ewald_alpha      = 0.3
+ewald_rcut       = 11.0
+ewald_kmax       = 5
+
+[[simulation.molecule]]
+formula       = "NaCl"
+count         = 64
+temperature_K = 300.0
+lattice       = "fcc_ionic"
+
+[run]
+mode            = "md"
+num_steps       = 500
+dt              = 0.5
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 25
+render_interval = 25
+
+[analysis]
+rmsd            = true
+energy_trace    = true
+coordination    = true
+defect_fraction = true
+stationarity    = true
+
+[export]
+output_dir          = "out/day85_nacl_periodic_defect"
+write_xyz           = true
+write_xyzf          = true
+write_xyzfull       = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_events_json   = true
+write_report_md     = true
+write_manifest_json = true
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_defect_map_svg   = true
+write_report_html      = true
+visual_output_dir      = "figures"
+
+[visual]
+output_type       = "gl_crystal_grid"
+gl_spin           = true
+gl_spin_axis      = "y"
+gl_spin_deg_per_s = 20.0
+gl_show_axes      = true
+gl_window_width   = 960
+gl_window_height  = 720
+
+print_console "Exports include state, event, analysis, defect-map, and report artifacts."

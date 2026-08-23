@@ -1,6 +1,6 @@
-/**
+﻿/**
  * matrix_demo.cpp
- * ───────────────
+ * ---------------
  * C++26 bare-metal script #1: dynamic matrix allocation, placeholder '_',
  * erroneous-behaviour trapping, and structured bindings.
  *
@@ -19,14 +19,14 @@
 #include <tuple>
 #include <cstring>
 
-// ── Erroneous Behaviour demo ──────────────────────────────────────────────────
+// -- Erroneous Behaviour demo --------------------------------------------------
 // With -ftrivial-auto-var-init=pattern, GCC 14+ scribbles 0xFEFE... into
 // uninitialized stack memory.  This traps immediately instead of crashing
 // randomly 10 minutes later.
 static void demo_erroneous_behaviour() {
-    std::cout << "\n── Erroneous Behaviour (Memory Safety) ─────────────────\n";
+    std::cout << "\n-- Erroneous Behaviour (Memory Safety) -----------------\n";
 
-    // Deliberately uninitialized — with -ftrivial-auto-var-init=pattern,
+    // Deliberately uninitialized  -  with -ftrivial-auto-var-init=pattern,
     // this will show a predictable "wrong" value (0xFEFEFEFE...)
     double uninit_val;
     std::memset(&uninit_val, 0xFE, sizeof(uninit_val));   // simulate pattern init
@@ -40,16 +40,16 @@ static void demo_erroneous_behaviour() {
     std::cout << "  ✓ Erroneous behaviour catches forgotten initialisations\n";
 }
 
-// ── Matrix allocation + C++23 structured bindings ─────────────────────────────
+// -- Matrix allocation + C++23 structured bindings -----------------------------
 static void demo_matrix_allocation() {
-    std::cout << "\n── Dynamic Matrix Allocation ────────────────────────────\n";
+    std::cout << "\n-- Dynamic Matrix Allocation ----------------------------\n";
 
     auto t0 = std::chrono::high_resolution_clock::now();
 
     // Allocate a 100x100 matrix
     auto matrix = create_matrix(100, 100);
 
-    // C++23 structured binding — extract what we need
+    // C++23 structured binding  -  extract what we need
     auto [rows, cols, _data] = std::tuple{matrix.rows, matrix.cols, matrix.data.size()};
     std::cout << "  Matrix: " << rows << "x" << cols
               << " (" << _data << " elements, "
@@ -82,9 +82,9 @@ static void demo_matrix_allocation() {
     std::cout << "  ✓ Temp 50x50 allocated and discarded cleanly\n";
 }
 
-// ── Scaling test ──────────────────────────────────────────────────────────────
+// -- Scaling test --------------------------------------------------------------
 static void demo_scaling() {
-    std::cout << "\n── Scaling Test (N×N multiply) ─────────────────────────\n";
+    std::cout << "\n-- Scaling Test (N×N multiply) -------------------------\n";
 
     const size_t sizes[] = {32, 64, 128, 256, 512};
     std::mt19937 rng(123);
@@ -109,9 +109,9 @@ static void demo_scaling() {
     }
 }
 
-// ── Identity verify ───────────────────────────────────────────────────────────
+// -- Identity verify -----------------------------------------------------------
 static void demo_identity() {
-    std::cout << "\n── Identity Matrix Verify ──────────────────────────────\n";
+    std::cout << "\n-- Identity Matrix Verify ------------------------------\n";
 
     auto I = create_identity(4);
     auto A = create_matrix(4, 4);
@@ -127,17 +127,17 @@ static void demo_identity() {
 }
 
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║    VSEPR-SIM  Bare Metal Script #1                      ║\n";
-    std::cout << "║    C++23/26 Matrix Operations + Erroneous Behaviour     ║\n";
-    std::cout << "║    AlmaLinux 10 · GCC 14.3.1 · i9-13900K               ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==========================================================+\n";
+    std::cout << "|    VSEPR-SIM  Bare Metal Script #1                      |\n";
+    std::cout << "|    C++23/26 Matrix Operations + Erroneous Behaviour     |\n";
+    std::cout << "|    AlmaLinux 10 · GCC 14.3.1 · i9-13900K               |\n";
+    std::cout << "+==========================================================+\n";
 
     demo_erroneous_behaviour();
     demo_matrix_allocation();
     demo_scaling();
     demo_identity();
 
-    std::cout << "\n── Complete ────────────────────────────────────────────\n";
+    std::cout << "\n-- Complete --------------------------------------------\n";
     return 0;
 }

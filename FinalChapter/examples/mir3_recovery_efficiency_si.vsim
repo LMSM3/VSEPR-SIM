@@ -1,0 +1,240 @@
+# =============================================================================
+# MIR III — Recovery Efficiency and Validity
+# VSIM implementation: Si diamond cubic, efficiency sweep
+#
+# Theory claim (MIR III):
+#   Recovery efficiency η_{rep} = recoverable identity content / representation cost.
+#   A compact representation becomes physically interesting only when it
+#   preserves recoverable structure across scale, projection, and prediction.
+#   Useful simulation ≠ true ontology. Efficient representation is not proof.
+#
+# Key equation:
+#   η_{ab} = ‖Π_{a→b} I_a‖² / ‖C_a I_a‖²
+#
+# Computational test:
+#   Run Si MD. At each scale window, compute:
+#     - field_projection: how much identity content survives (numerator of η)
+#     - spatial_cv: variance = inverse of recovery quality
+#     - scale_drift: information lost between adjacent windows (loss variable λ)
+#
+#   Sweep three temperatures (0 K, 300 K, 900 K) to measure how thermal
+#   entropy degrades recovery efficiency:
+#     MIR III §4: entropy as recoverability loss
+#     At 0 K:   η near maximum — ground state, no thermal noise
+#     At 300 K: η reduced — thermal broadening of identity content
+#     At 900 K: η reduced further — approaching melting, maximum loss
+#
+#   MIR III §6: multi-scale efficiency.
+#     η at small window vs large window.
+#     If η is high at 2.71 Å (near-atom) but drops at 21.72 Å (supercell),
+#     the representation is locally efficient but not multi-scale efficient.
+#     A physically interesting representation should sustain η across all windows.
+#
+#   MIR III §7: failure modes.
+#     If η is high only at the ground-state window and collapses at 900 K,
+#     the representation is overfitted to equilibrium — a failure mode.
+#
+# Traditional system: Si diamond cubic (A4_Si)
+#   Tetrahedral covalent. Known phonon structure. Band gap above visible.
+#   Recovery efficiency has a clear ground truth: 300 K Si should preserve
+#   coordination 4 and RDF peaks across all sensible projection windows.
+# =============================================================================
+
+[project]
+name        = "mir3_recovery_efficiency_si"
+version     = "v5.1.13.5"
+seed_base   = 3030
+determinism = true
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Temperature sweep: 0 K, 300 K, 900 K
+# MIR III §4: each temperature step is a recoverability degradation
+# ============================================================
+
+# --- 0 K: ground state, maximum η ---
+[[batch.job]]
+name            = "t0_ground_state_max_efficiency"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "6x6x6"
+
+[batch.job.run]
+mode        = "relax"
+max_steps   = 1000
+temperature = 0.0
+converge    = true
+
+[batch.job.environment]
+periodic    = true
+temperature = 0.0
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+spatial_cv_threshold = 0.20    # tight: ground state should be highly ordered
+
+
+# --- 300 K: thermal equilibrium, standard η ---
+[[batch.job]]
+name            = "t300_thermal_standard_efficiency"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "6x6x6"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 0.5
+temperature = 300.0
+
+[batch.job.environment]
+periodic    = true
+temperature = 300.0
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+spatial_cv_threshold = 0.30    # standard tolerance
+
+
+# --- 900 K: high temperature, degraded η ---
+# Si melting point ~1687 K; 900 K is solid but highly disordered
+# MIR III §7: failure mode test — does the representation collapse?
+[[batch.job]]
+name            = "t900_high_temp_degraded_efficiency"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "6x6x6"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 0.5
+temperature = 900.0
+
+[batch.job.environment]
+periodic    = true
+temperature = 900.0
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+spatial_cv_threshold = 0.50    # loose: high temperature degrades order
+
+
+# ---------------------------------------------------------------------------
+# Shared analysis
+# MIR III §6: multi-scale efficiency requires identical windows across runs
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+temporal_drift_threshold         = 0.20
+scale_drift_threshold            = 0.25
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.5
+contact_cutoff_A  = 2.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 40
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+dynamic_energy   = true
+formation_events = false
+defect_events    = true     # Si defects at 900 K are the η degradation signal
+
+# ---------------------------------------------------------------------------
+# Verification
+# MIR III §2: validity criteria — representation efficiency is not proof.
+# Verify at 300 K (standard). Do not require 900 K to pass structure verify —
+# that would be demanding more than the theory claims.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "mir3_recovery_efficiency_si"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "A4_Si"
+expected_coordination        = 4
+coordination_tolerance       = 1    # loose: 900 K job may have partial disorder
+expected_nearest_neighbor_A  = 2.35
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.35, 3.84, 4.50]
+peak_tolerance_A   = 0.25    # wide: 900 K peak broadening expected
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_scale_sampling_json = true
+write_manifest_json       = true
+output_dir                = "out/mir3_si_efficiency"
+
+[report]
+title                   = "MIR III — Recovery Efficiency Si: 0 K / 300 K / 900 K"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 40
+show_bar_chart   = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination,rdf

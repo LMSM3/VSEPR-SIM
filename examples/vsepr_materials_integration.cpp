@@ -1,5 +1,5 @@
-/**
- * VSEPR-Sim → Materials Subsystem Integration
+﻿/**
+ * VSEPR-Sim -> Materials Subsystem Integration
  * Demonstrates how molecular simulation connects to materials analysis
  * "Weaving back" to original VSEPR code
  */
@@ -24,7 +24,7 @@ using namespace vsepr::molecular;
 using MolecularMaterialProperties = vsepr::molecular::MolecularMaterialProperties;
 
 // ============================================================================
-// VSEPR → Materials Bridge
+// VSEPR -> Materials Bridge
 // ============================================================================
 
 class VSEPRMaterialsBridge {
@@ -47,7 +47,7 @@ public:
     }
     
     void process_molecule(const Molecule& mol) {
-        std::cout << "\n[VSEPR→Materials Bridge] Processing molecule with " 
+        std::cout << "\n[VSEPR->Materials Bridge] Processing molecule with " 
                   << mol.num_atoms() << " atoms\n";
         
         // Analyze molecular structure and recommend materials
@@ -65,8 +65,8 @@ public:
         }
         
         if (has_ni || has_cr || has_mo) {
-            std::cout << "  → Detected transition metals (Ni/Cr/Mo)\n";
-            std::cout << "  → Recommending Hastelloy alloys for container material\n\n";
+            std::cout << "  -> Detected transition metals (Ni/Cr/Mo)\n";
+            std::cout << "  -> Recommending Hastelloy alloys for container material\n\n";
             
             // Search for suitable materials
             auto candidates = materials_sim_.search_materials(
@@ -88,13 +88,13 @@ public:
 };
 
 // ============================================================================
-// Demo 1: Organometallic Complex → Materials Selection
+// Demo 1: Organometallic Complex -> Materials Selection
 // ============================================================================
 
 void demo_organometallic_catalyst() {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ Demo 1: Organometallic Catalyst → Reactor Materials          ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "| Demo 1: Organometallic Catalyst -> Reactor Materials          |\n";
+    std::cout << "+================================================================+\n";
     
     // Create Ni-based catalyst molecule (simplified)
     Molecule catalyst;
@@ -115,13 +115,13 @@ void demo_organometallic_catalyst() {
 }
 
 // ============================================================================
-// Demo 2: Stress Testing Workflow (VSEPR → Materials → Failure)
+// Demo 2: Stress Testing Workflow (VSEPR -> Materials -> Failure)
 // ============================================================================
 
 void demo_stress_testing_workflow() {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ Demo 2: Complete Workflow (VSEPR → Materials → Failure)      ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "| Demo 2: Complete Workflow (VSEPR -> Materials -> Failure)      |\n";
+    std::cout << "+================================================================+\n";
     
     // Step 1: VSEPR molecular simulation
     Molecule corrosive_molecule;
@@ -131,8 +131,8 @@ void demo_stress_testing_workflow() {
     corrosive_molecule.add_atom(8, 0.0, 1.6, 0.0);   // O
     
     std::cout << "\n[Step 1: VSEPR] Simulated CrO₃ (corrosive oxidizer)\n";
-    std::cout << "  → High oxidation potential\n";
-    std::cout << "  → Requires corrosion-resistant container\n";
+    std::cout << "  -> High oxidation potential\n";
+    std::cout << "  -> Requires corrosion-resistant container\n";
     
     // Step 2: Materials selection
     MetallicSimulator sim;
@@ -175,9 +175,9 @@ void demo_stress_testing_workflow() {
 // ============================================================================
 
 void demo_reactive_data_flow() {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ Demo 3: Reactive Data Pipes (VSEPR → GUI → Materials)        ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "| Demo 3: Reactive Data Pipes (VSEPR -> GUI -> Materials)        |\n";
+    std::cout << "+================================================================+\n";
     
     // Create data pipes
     auto vsepr_pipe = std::make_shared<DataPipe<Molecule>>("vsepr_output");
@@ -203,7 +203,7 @@ void demo_reactive_data_flow() {
             recommendation = "Steel 316L (general purpose)";
         }
         
-        std::cout << "  → Recommended: " << recommendation << "\n";
+        std::cout << "  -> Recommended: " << recommendation << "\n";
         material_pipe->push(recommendation);
     });
     
@@ -218,21 +218,21 @@ void demo_reactive_data_flow() {
     Molecule small_mol;
     small_mol.add_atom(1, 0.0, 0.0, 0.0);
     small_mol.add_atom(1, 0.74, 0.0, 0.0);
-    std::cout << "\n→ Pushing H₂ molecule (2 atoms)";
+    std::cout << "\n-> Pushing H₂ molecule (2 atoms)";
     vsepr_pipe->push(small_mol);
     
     Molecule medium_mol;
     for (int i = 0; i < 15; i++) {
         medium_mol.add_atom(6, i * 1.5, 0.0, 0.0);
     }
-    std::cout << "\n→ Pushing C₁₅ chain (15 atoms)";
+    std::cout << "\n-> Pushing C₁₅ chain (15 atoms)";
     vsepr_pipe->push(medium_mol);
     
     Molecule large_mol;
     for (int i = 0; i < 30; i++) {
         large_mol.add_atom(6, i * 1.5, 0.0, 0.0);
     }
-    std::cout << "\n→ Pushing C₃₀ chain (30 atoms)";
+    std::cout << "\n-> Pushing C₃₀ chain (30 atoms)";
     vsepr_pipe->push(large_mol);
 }
 
@@ -241,9 +241,9 @@ void demo_reactive_data_flow() {
 // ============================================================================
 
 void demo_batch_molecular_processing() {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ Demo 4: Batch Molecular Processing (Production Workflow)      ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "| Demo 4: Batch Molecular Processing (Production Workflow)      |\n";
+    std::cout << "+================================================================+\n";
     
     MetallicSimulator sim;
     
@@ -302,9 +302,9 @@ void demo_batch_molecular_processing() {
 // ============================================================================
 
 void demo_subsystem_registration() {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ Demo 5: Subsystem Registration (Full VSEPR Integration)       ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "| Demo 5: Subsystem Registration (Full VSEPR Integration)       |\n";
+    std::cout << "+================================================================+\n";
     
     auto& interface = SubsystemInterface::instance();
     
@@ -361,12 +361,12 @@ void demo_subsystem_registration() {
 
 int main() {
     std::cout << "\n";
-    std::cout << "████████████████████████████████████████████████████████████████\n";
-    std::cout << "█                                                              █\n";
-    std::cout << "█  VSEPR-Sim ↔ Materials Subsystem Integration                █\n";
-    std::cout << "█  Weaving Back to Original Code                              █\n";
-    std::cout << "█                                                              █\n";
-    std::cout << "████████████████████████████████████████████████████████████████\n";
+    std::cout << "################################################################\n";
+    std::cout << "#                                                              #\n";
+    std::cout << "#  VSEPR-Sim ↔ Materials Subsystem Integration                #\n";
+    std::cout << "#  Weaving Back to Original Code                              #\n";
+    std::cout << "#                                                              #\n";
+    std::cout << "################################################################\n";
     
     try {
         demo_organometallic_catalyst();
@@ -376,9 +376,9 @@ int main() {
         demo_subsystem_registration();
         
         std::cout << "\n";
-        std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║ All Integration Demos Completed Successfully! ✅              ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+        std::cout << "+================================================================+\n";
+        std::cout << "| All Integration Demos Completed Successfully! ✅              |\n";
+        std::cout << "+================================================================+\n";
         std::cout << "\n";
         
     } catch (const std::exception& e) {

@@ -1,22 +1,22 @@
-#pragma once
+﻿#pragma once
 /*
- * chart_data.hpp — Portable data containers for chart and document automation.
+ * chart_data.hpp  -  Portable data containers for chart and document automation.
  *
  * Provides structured data types with built-in CSV, JSON, and LaTeX export.
  * Every container is header-only, deterministic, and traces to inspectable fields.
  *
  * Containers:
- *   Series           — Named 1-D data column (x-values, y-values, labels)
- *   DataTable         — Named 2-D table (rows × typed columns, CSV/LaTeX out)
- *   ChartSpec         — Chart description (type, series refs, axis labels, title)
- *   FigureManifest    — Collection of ChartSpecs for batch figure generation
- *   TimeseriesRecord  — Step-indexed time-series with provenance
- *   PropertyCard      — Key-value property bag with units
- *   ExportConfig      — Output path, DPI, format selection
+ *   Series            -  Named 1-D data column (x-values, y-values, labels)
+ *   DataTable          -  Named 2-D table (rows × typed columns, CSV/LaTeX out)
+ *   ChartSpec          -  Chart description (type, series refs, axis labels, title)
+ *   FigureManifest     -  Collection of ChartSpecs for batch figure generation
+ *   TimeseriesRecord   -  Step-indexed time-series with provenance
+ *   PropertyCard       -  Key-value property bag with units
+ *   ExportConfig       -  Output path, DPI, format selection
  *
  * Design rules:
  *   - No hidden state: every field is public and inspectable
- *   - Deterministic: same inputs → identical export strings
+ *   - Deterministic: same inputs -> identical export strings
  *   - Anti-black-box: export methods are transparent string builders
  *
  * Usage (C++20):
@@ -53,9 +53,9 @@
 namespace vsepr {
 namespace chart {
 
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 // Forward declarations
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 
 struct Series;
 struct DataTable;
@@ -65,9 +65,9 @@ struct TimeseriesRecord;
 struct PropertyCard;
 struct ExportConfig;
 
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 // Enumerations
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 
 enum class ColumnType : uint8_t {
     Int    = 0,
@@ -119,9 +119,9 @@ enum class ExportFormat : uint8_t {
     LaTeX = 2,
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// Series — Named 1-D data column
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// Series  -  Named 1-D data column
+// =======================================================================
 
 struct Series {
     std::string name;
@@ -142,7 +142,7 @@ struct Series {
     size_t size() const { return values.size(); }
     bool   empty() const { return values.empty(); }
 
-    // ── Statistics ──
+    // -- Statistics --
     double min_val() const {
         if (values.empty()) return 0.0;
         return *std::min_element(values.begin(), values.end());
@@ -164,7 +164,7 @@ struct Series {
         return std::sqrt(acc / static_cast<double>(values.size() - 1));
     }
 
-    // ── Export ──
+    // -- Export --
     std::string to_csv_column() const {
         std::ostringstream out;
         out << name;
@@ -176,9 +176,9 @@ struct Series {
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// DataTable — Named 2-D table (rows × typed columns)
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// DataTable  -  Named 2-D table (rows × typed columns)
+// =======================================================================
 
 struct DataTable {
     std::string name;
@@ -192,7 +192,7 @@ struct DataTable {
     DataTable() = default;
     explicit DataTable(const std::string& n) : name(n) {}
 
-    // ── Schema ──
+    // -- Schema --
     void add_column(const std::string& col_name,
                     ColumnType type = ColumnType::Float,
                     const std::string& unit = "") {
@@ -204,7 +204,7 @@ struct DataTable {
     size_t num_cols() const { return col_names.size(); }
     size_t num_rows() const { return rows.size(); }
 
-    // ── Row insertion ──
+    // -- Row insertion --
     void add_row(const std::vector<std::string>& row) {
         assert(row.size() == col_names.size());
         rows.push_back(row);
@@ -219,7 +219,7 @@ struct DataTable {
         rows.push_back(row);
     }
 
-    // ── Cell access ──
+    // -- Cell access --
     const std::string& cell(size_t row, size_t col) const {
         return rows[row][col];
     }
@@ -230,7 +230,7 @@ struct DataTable {
         return std::stoi(rows[row][col]);
     }
 
-    // ── Column extraction as Series ──
+    // -- Column extraction as Series --
     Series column_as_series(size_t col) const {
         Series s(col_names[col], col_units[col]);
         for (const auto& row : rows) {
@@ -239,7 +239,7 @@ struct DataTable {
         return s;
     }
 
-    // ── CSV export ──
+    // -- CSV export --
     std::string to_csv(char delim = ',') const {
         std::ostringstream out;
         // Header
@@ -259,7 +259,7 @@ struct DataTable {
         return out.str();
     }
 
-    // ── JSON export ──
+    // -- JSON export --
     std::string to_json(int indent = 2) const {
         std::string pad(indent, ' ');
         std::string pad2(indent * 2, ' ');
@@ -302,7 +302,7 @@ struct DataTable {
         return out.str();
     }
 
-    // ── LaTeX table export ──
+    // -- LaTeX table export --
     std::string to_latex_table(const std::string& caption = "",
                                const std::string& label = "") const {
         std::ostringstream out;
@@ -347,7 +347,7 @@ struct DataTable {
         return out.str();
     }
 
-    // ── Write to file ──
+    // -- Write to file --
     bool write_csv(const std::string& path) const {
         std::ofstream f(path);
         if (!f) return false;
@@ -383,9 +383,9 @@ private:
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// ChartSpec — Describes a single chart for Python rendering
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// ChartSpec  -  Describes a single chart for Python rendering
+// =======================================================================
 
 struct ChartSpec {
     std::string  id;           // unique figure id, e.g. "stress_strain_Fe"
@@ -416,7 +416,7 @@ struct ChartSpec {
     std::vector<std::string> series_labels;
     std::vector<std::string> series_colors;
 
-    // ── Export as JSON spec for Python consumer ──
+    // -- Export as JSON spec for Python consumer --
     std::string to_json() const {
         std::ostringstream out;
         out << "{\n";
@@ -466,9 +466,9 @@ struct ChartSpec {
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// FigureManifest — Batch of chart specs + associated data
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// FigureManifest  -  Batch of chart specs + associated data
+// =======================================================================
 
 struct FigureManifest {
     std::string   name;
@@ -514,9 +514,9 @@ struct FigureManifest {
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// TimeseriesRecord — Step-indexed time-series with provenance
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// TimeseriesRecord  -  Step-indexed time-series with provenance
+// =======================================================================
 
 struct TimeseriesRecord {
     std::string name;
@@ -543,7 +543,7 @@ struct TimeseriesRecord {
 
     size_t size() const { return x.size(); }
 
-    // ── CSV ──
+    // -- CSV --
     std::string to_csv() const {
         std::ostringstream out;
         out << "# " << name << " | source: " << source << "\n";
@@ -558,7 +558,7 @@ struct TimeseriesRecord {
         return out.str();
     }
 
-    // ── JSON ──
+    // -- JSON --
     std::string to_json() const {
         std::ostringstream out;
         out << std::setprecision(12);
@@ -584,9 +584,9 @@ struct TimeseriesRecord {
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// PropertyCard — Key-value property bag with units
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// PropertyCard  -  Key-value property bag with units
+// =======================================================================
 
 struct PropertyCard {
     struct Entry {
@@ -615,7 +615,7 @@ struct PropertyCard {
         entries.push_back({k, std::to_string(v), u});
     }
 
-    // ── LaTeX description list ──
+    // -- LaTeX description list --
     std::string to_latex() const {
         std::ostringstream out;
         out << "\\begin{description}[style=nextline]\n";
@@ -629,7 +629,7 @@ struct PropertyCard {
         return out.str();
     }
 
-    // ── JSON ──
+    // -- JSON --
     std::string to_json() const {
         std::ostringstream out;
         out << "{\n";
@@ -648,7 +648,7 @@ struct PropertyCard {
         return out.str();
     }
 
-    // ── CSV ──
+    // -- CSV --
     std::string to_csv() const {
         std::ostringstream out;
         out << "property,value,unit\n";
@@ -658,9 +658,9 @@ struct PropertyCard {
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
-// ExportConfig — Output settings for the Python rendering pipeline
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
+// ExportConfig  -  Output settings for the Python rendering pipeline
+// =======================================================================
 
 struct ExportConfig {
     std::string output_dir = "docs/figures";
@@ -688,9 +688,9 @@ struct ExportConfig {
     }
 };
 
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 // LaTeX snippet generators
-// ═══════════════════════════════════════════════════════════════════════
+// =======================================================================
 
 // Generate a \includegraphics line for a figure
 inline std::string latex_figure(const std::string& filename,

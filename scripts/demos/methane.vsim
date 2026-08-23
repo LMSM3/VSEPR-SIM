@@ -1,0 +1,55 @@
+# methane.vsim
+# =============================================================================
+# Demo 02 — Methane tetrahedral geometry
+# =============================================================================
+# CH4 in vacuum: ideal tetrahedral VSEPR geometry, FIRE relax, NVT.
+#
+# Run:  vsepr run scripts/demos/methane.vsim
+# =============================================================================
+
+[project]
+name        = "methane_demo"
+version     = "v5.1.4"
+seed_base   = 1002
+description = "CH4 tetrahedral geometry — FIRE relax + NVT"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = true
+track_energy_path    = true
+track_structure_changes = true
+
+[simulation]
+box_size_ang    = 20.0
+periodic        = false
+fire_max_steps  = 400
+fire_dt_fs      = 0.5
+formation_preset = "molecule"
+
+[[simulation.molecule]]
+formula       = "CH4"
+count         = 1
+temperature_K = 298.15
+lattice       = "none"
+
+[run]
+mode           = "molecule"
+num_steps      = 500
+dt             = 0.5
+integrator     = "velocity_verlet"
+temperature_K  = 298.15
+sample_interval   = 50
+render_interval   = 50
+
+[export]
+xyz      = true
+xyzFull  = true
+dynx     = true
+events   = true
+report   = true
+
+[analysis]
+rmsd            = true
+energy_trace    = true
+stationarity    = true

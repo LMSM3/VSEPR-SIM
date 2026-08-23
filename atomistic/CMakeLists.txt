@@ -161,6 +161,28 @@ add_library(atomistic STATIC
     classify/fingerprints.cpp
     classify/cluster.hpp
     classify/cluster.cpp
+    classify/vsepr.hpp
+    classify/vsepr.cpp
+    classify/organic_candidate.hpp
+    classify/organic_candidate.cpp
+    classify/script_enrichment.hpp
+    classify/script_enrichment.cpp
+    classify/element_lone_pair_provider.hpp
+    classify/element_lone_pair_provider.cpp
+    classify/ring_detector.hpp
+    classify/ring_detector.cpp
+    classify/ring_provider.hpp
+    classify/ring_provider.cpp
+    classify/bond_order_provider.hpp
+    classify/bond_order_provider.cpp
+    classify/aromaticity.hpp
+    classify/aromaticity.cpp
+    export/vsepr_export.hpp
+    export/vsepr_export.cpp
+    export/organic_candidate_export.hpp
+    export/organic_candidate_export.cpp
+    export/markdown_report.hpp
+    export/markdown_report.cpp
     models/model.hpp
     models/lj_coulomb.cpp
     models/bonded.hpp
@@ -193,6 +215,8 @@ add_library(atomistic STATIC
     reaction/causal.cpp
     reaction/discovery_viz.hpp
     reaction/discovery_viz.cpp
+    reaction/dissolution.hpp
+    reaction/dissolution.cpp
     report/report_md.hpp
     report/report_md.cpp
     validation/experiment_match.hpp

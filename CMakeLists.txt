@@ -1,4 +1,4 @@
-﻿cmake_minimum_required(VERSION 3.15...4.2)
+cmake_minimum_required(VERSION 3.15...4.2)
 
 # ── Generator enforcement ─────────────────────────────────────────────────────
 # VSEPR-SIM exclusively uses Ninja.  CMakePresets.json declares this for every
@@ -12,7 +12,7 @@ if(NOT CMAKE_GENERATOR MATCHES "Ninja")
         "Ninja is at: C:/msys64/ucrt64/bin/ninja.exe")
 endif()
 
-project(vsepr-sim VERSION 5.14.1 LANGUAGES C CXX)
+project(vsepr-sim VERSION 5.16.0 LANGUAGES C CXX)
 
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libstdc++")
 
@@ -23,7 +23,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -st
 # This root file provides:
 #   1. Project identity, compiler settings, build options
 #   2. include(cmake/CoreBuild.cmake)  Part 1: all headless targets
-#   3. include(cmake/VisBuild.cmake)   Part 2: VIS / GUI / Desktop
+#   3. include(cmake/VisBuild.cmake)   Part 2: active live viewer
 #   4. Tests (after both parts so all targets are available)
 #   5. Summary
 #
@@ -60,12 +60,9 @@ endif()
 
 option(BUILD_TESTS "Build test suite" ON)
 option(BUILD_APPS  "Build applications" ON)
-option(BUILD_VIS   "Build visualization tools (vsepr-view, vsepr_vis)" ON)
-option(BUILD_ADVANCED_RENDER "Build advanced 3D molecular renderer + data window (requires BUILD_VIS=ON)" OFF)
+option(BUILD_VIS   "Build the VTK + Qt3D visualization viewer (vsepr-view)" ON)
 option(BUILD_DEMOS "Build demo targets" OFF)
-option(BUILD_BGFX_DEMO "Build the standalone BGFX persistent-window demo" OFF)
-option(BUILD_VIEWER        "Build lightweight one-shot file viewer (WO-67-A1, requires BUILD_VIS=ON)" ON)
-option(BUILD_VIEWER_DAEMON "Build persistent viewer daemon (WO-67-A2, requires BUILD_VIS=ON)" OFF)
+# BGFX frontend demo is archived; see archive/viewers/legacy-2026-07-27-opengl-bgfx/
 
 # ── VSEPR Feature flags ───────────────────────────────────────────────────────
 option(VSEPR_ENABLE_ATOMISTIC     "Enable atomistic molecular simulation layer" ON)
@@ -110,6 +107,35 @@ endif()
 
 include(cmake/CoreBuild.cmake)
 
+# Headless producer for the isolated dual-backend 3D demonstration. The same
+# source is compiled without BUILD_VISUALIZATION so that it only emits the
+# renderer-neutral Day 89 artifact package. The VTK + Qt3D viewer consumes it.
+add_executable(dual-backend-3d-data apps/cg_anim_demo.cpp)
+target_link_libraries(dual-backend-3d-data PRIVATE vsepr_core)
+target_include_directories(dual-backend-3d-data PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_executable(test-bead-packet tests/test_bead_packet.cpp)
+target_link_libraries(test-bead-packet PRIVATE vsepr_core)
+target_include_directories(test-bead-packet PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+add_executable(bead-packet-demo apps/bead_packet_demo.cpp)
+target_link_libraries(bead-packet-demo PRIVATE vsepr_core)
+target_include_directories(bead-packet-demo PRIVATE
+    ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+# Native CPU/GDI demo is archived; see archive/viewers/legacy-2026-07-27-opengl-bgfx/
+
 # ── Feature compile definitions (propagate to all targets via vsepr_core) ────
 target_compile_definitions(vsepr_core INTERFACE
     VSEPR_ENABLE_ATOMISTIC=$<BOOL:${VSEPR_ENABLE_ATOMISTIC}>
@@ -124,23 +150,11 @@ target_compile_definitions(vsepr_core INTERFACE
 )
 
 # ============================================================================
-# Part 2: Visualization and GUI Build
-#         OpenGL / GLFW / GLEW / ImGui / Qt6
-#         Dependencies auto-fetched via FetchContent when not on system.
+# Part 2: Live Visualization Build
+#         VTK + Qt3D only; no OpenGL, GLFW, GLEW, ImGui, or BGFX fallback.
 # ============================================================================
 
 include(cmake/VisBuild.cmake)
-
-# ============================================================================
-# Part 3: Advanced Renderer (optional — requires BUILD_VIS=ON)
-#         3D molecular window + ImGui data panel
-# ============================================================================
-
-include(cmake/AdvancedRender.cmake)
-
-if(BUILD_BGFX_DEMO)
-    include(cmake/BgfxDemo.cmake)
-endif()
 
 # ============================================================================
 # Tests (after both parts so VIS targets are visible to test helpers)
@@ -210,8 +224,11 @@ message(STATUS "    tests:          ${BUILD_TESTS}")
 message(STATUS "    apps:           ${BUILD_APPS}")
 message(STATUS "    vis:            ${BUILD_VIS}")
 message(STATUS "    demos:          ${BUILD_DEMOS}")
-message(STATUS "    viewer (A1):    ${BUILD_VIEWER}")
-message(STATUS "    viewd  (A2):    ${BUILD_VIEWER_DAEMON}")
+if(VSEPR_VIS_READY)
+    message(STATUS "    live viewer:    ON (vsepr-view VTK + Qt3D)")
+else()
+    message(STATUS "    live viewer:    OFF")
+endif()
 message(STATUS "")
 message(STATUS "  Runtime modules:")
 message(STATUS "    atomistic:      ${VSEPR_ENABLE_ATOMISTIC}")

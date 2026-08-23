@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * molecular_fea_bridge.hpp
  * 
@@ -91,37 +91,37 @@ struct ContinuumProperties {
      */
     void print() const {
         std::cout << "\n";
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  CONTINUUM MATERIAL PROPERTIES                            ║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Source:  " << std::left << std::setw(48) << source_molecule << "║\n";
-        std::cout << "║  Atoms:   " << std::left << std::setw(48) << num_atoms << "║\n";
-        std::cout << "║  Temp:    " << std::left << std::setw(48) 
-                  << (std::to_string((int)temperature_K) + " K") << "║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  MECHANICAL PROPERTIES:                                   ║\n";
-        std::cout << "║  Young's Modulus (E):     " << std::left << std::setw(28) 
-                  << (std::to_string(youngs_modulus_Pa/1e9) + " GPa") << "║\n";
-        std::cout << "║  Poisson's Ratio (ν):     " << std::left << std::setw(28) 
-                  << poissons_ratio << "║\n";
-        std::cout << "║  Shear Modulus (G):       " << std::left << std::setw(28) 
-                  << (std::to_string(shear_modulus_Pa/1e9) + " GPa") << "║\n";
-        std::cout << "║  Bulk Modulus (K):        " << std::left << std::setw(28) 
-                  << (std::to_string(bulk_modulus_Pa/1e9) + " GPa") << "║\n";
-        std::cout << "║  Density (ρ):             " << std::left << std::setw(28) 
-                  << (std::to_string((int)density_kg_m3) + " kg/m³") << "║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  THERMAL PROPERTIES:                                      ║\n";
-        std::cout << "║  Conductivity (k):        " << std::left << std::setw(28) 
-                  << (std::to_string(thermal_conductivity) + " W/m·K") << "║\n";
-        std::cout << "║  Heat Capacity (Cp):      " << std::left << std::setw(28) 
-                  << (std::to_string((int)heat_capacity) + " J/kg·K") << "║\n";
-        std::cout << "║  Expansion (α):           " << std::left << std::setw(28) 
-                  << (std::to_string(thermal_expansion) + " 1/K") << "║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Status:  " << std::left << std::setw(48) 
-                  << (is_valid ? "VALID" : "INVALID") << "║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  CONTINUUM MATERIAL PROPERTIES                            |\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  Source:  " << std::left << std::setw(48) << source_molecule << "|\n";
+        std::cout << "|  Atoms:   " << std::left << std::setw(48) << num_atoms << "|\n";
+        std::cout << "|  Temp:    " << std::left << std::setw(48) 
+                  << (std::to_string((int)temperature_K) + " K") << "|\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  MECHANICAL PROPERTIES:                                   |\n";
+        std::cout << "|  Young's Modulus (E):     " << std::left << std::setw(28) 
+                  << (std::to_string(youngs_modulus_Pa/1e9) + " GPa") << "|\n";
+        std::cout << "|  Poisson's Ratio (ν):     " << std::left << std::setw(28) 
+                  << poissons_ratio << "|\n";
+        std::cout << "|  Shear Modulus (G):       " << std::left << std::setw(28) 
+                  << (std::to_string(shear_modulus_Pa/1e9) + " GPa") << "|\n";
+        std::cout << "|  Bulk Modulus (K):        " << std::left << std::setw(28) 
+                  << (std::to_string(bulk_modulus_Pa/1e9) + " GPa") << "|\n";
+        std::cout << "|  Density (ρ):             " << std::left << std::setw(28) 
+                  << (std::to_string((int)density_kg_m3) + " kg/m³") << "|\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  THERMAL PROPERTIES:                                      |\n";
+        std::cout << "|  Conductivity (k):        " << std::left << std::setw(28) 
+                  << (std::to_string(thermal_conductivity) + " W/m·K") << "|\n";
+        std::cout << "|  Heat Capacity (Cp):      " << std::left << std::setw(28) 
+                  << (std::to_string((int)heat_capacity) + " J/kg·K") << "|\n";
+        std::cout << "|  Expansion (α):           " << std::left << std::setw(28) 
+                  << (std::to_string(thermal_expansion) + " 1/K") << "|\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  Status:  " << std::left << std::setw(48) 
+                  << (is_valid ? "VALID" : "INVALID") << "|\n";
+        std::cout << "+===========================================================+\n";
         std::cout << "\n";
     }
     
@@ -157,7 +157,7 @@ struct ContinuumProperties {
 };
 
 // ============================================================================
-// Molecular → FEA Bridge
+// Molecular -> FEA Bridge
 // ============================================================================
 
 class MolecularFEABridge {
@@ -232,17 +232,17 @@ public:
         // Check if FEA is active
         if (fea_active_ || gpu_manager_.is_scale_active(GPUScaleType::PHYSICAL_FEA)) {
             std::cerr << "\n";
-            std::cerr << "╔═══════════════════════════════════════════════════════════╗\n";
-            std::cerr << "║  ERROR: CANNOT ACTIVATE MOLECULAR SCALE                   ║\n";
-            std::cerr << "╠═══════════════════════════════════════════════════════════╣\n";
-            std::cerr << "║  Physical/FEA scale is currently active on GPU            ║\n";
-            std::cerr << "║  You must deactivate FEA before activating molecular      ║\n";
-            std::cerr << "║                                                           ║\n";
-            std::cerr << "║  SOLUTION:                                                ║\n";
-            std::cerr << "║  1. Call deactivate_fea_scale()                          ║\n";
-            std::cerr << "║  2. Wait for confirmation                                 ║\n";
-            std::cerr << "║  3. Then call activate_molecular_scale()                 ║\n";
-            std::cerr << "╚═══════════════════════════════════════════════════════════╝\n";
+            std::cerr << "+===========================================================+\n";
+            std::cerr << "|  ERROR: CANNOT ACTIVATE MOLECULAR SCALE                   |\n";
+            std::cerr << "╠===========================================================╣\n";
+            std::cerr << "|  Physical/FEA scale is currently active on GPU            |\n";
+            std::cerr << "|  You must deactivate FEA before activating molecular      |\n";
+            std::cerr << "|                                                           |\n";
+            std::cerr << "|  SOLUTION:                                                |\n";
+            std::cerr << "|  1. Call deactivate_fea_scale()                          |\n";
+            std::cerr << "|  2. Wait for confirmation                                 |\n";
+            std::cerr << "|  3. Then call activate_molecular_scale()                 |\n";
+            std::cerr << "+===========================================================+\n";
             std::cerr << "\n";
             return false;
         }
@@ -294,17 +294,17 @@ public:
         // Check if molecular is active
         if (molecular_active_ || gpu_manager_.is_scale_active(GPUScaleType::MOLECULAR)) {
             std::cerr << "\n";
-            std::cerr << "╔═══════════════════════════════════════════════════════════╗\n";
-            std::cerr << "║  ERROR: CANNOT ACTIVATE FEA SCALE                         ║\n";
-            std::cerr << "╠═══════════════════════════════════════════════════════════╣\n";
-            std::cerr << "║  Molecular dynamics scale is currently active on GPU      ║\n";
-            std::cerr << "║  You must deactivate molecular before activating FEA      ║\n";
-            std::cerr << "║                                                           ║\n";
-            std::cerr << "║  SOLUTION:                                                ║\n";
-            std::cerr << "║  1. Call deactivate_molecular_scale()                    ║\n";
-            std::cerr << "║  2. Wait for confirmation                                 ║\n";
-            std::cerr << "║  3. Then call activate_fea_scale()                       ║\n";
-            std::cerr << "╚═══════════════════════════════════════════════════════════╝\n";
+            std::cerr << "+===========================================================+\n";
+            std::cerr << "|  ERROR: CANNOT ACTIVATE FEA SCALE                         |\n";
+            std::cerr << "╠===========================================================╣\n";
+            std::cerr << "|  Molecular dynamics scale is currently active on GPU      |\n";
+            std::cerr << "|  You must deactivate molecular before activating FEA      |\n";
+            std::cerr << "|                                                           |\n";
+            std::cerr << "|  SOLUTION:                                                |\n";
+            std::cerr << "|  1. Call deactivate_molecular_scale()                    |\n";
+            std::cerr << "|  2. Wait for confirmation                                 |\n";
+            std::cerr << "|  3. Then call activate_fea_scale()                       |\n";
+            std::cerr << "+===========================================================+\n";
             std::cerr << "\n";
             return false;
         }

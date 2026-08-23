@@ -1,13 +1,13 @@
-/**
+﻿/**
  * tests/test_batch_runner_static.cpp
  * =====================================
- * WO-VSIM-62C — Group 43: Static Runner Integration Tests
+ * WO-VSIM-62C  -  Group 43: Static Runner Integration Tests
  *
- * Tests R1–R12 from spec §10.
+ * Tests R1-R12 from spec §10.
  *
  * These tests exercise the full batch-layer pipeline:
- *   BatchParser → BatchExpander → CheckpointManager →
- *   RequireChecker → BatchAggregator → output writers.
+ *   BatchParser -> BatchExpander -> CheckpointManager ->
+ *   RequireChecker -> BatchAggregator -> output writers.
  *
  * Kernel/physics execution is not exercised here; run records are
  * synthesised directly to validate the orchestration layer in isolation.
@@ -52,7 +52,7 @@ static int failures = 0;
 
 #define EXPECT_STR(a, b) EXPECT_TRUE(std::string(a) == std::string(b))
 
-// ── fixture helpers ───────────────────────────────────────────────────────────
+// -- fixture helpers -----------------------------------------------------------
 
 static const std::string kTmpDir = "test_runner_static_tmp";
 
@@ -104,10 +104,10 @@ static BatchRunRecord make_run_record(const std::string& run_id,
 	return r;
 }
 
-// ── R1: Inline study, 2 axes → all runs expand ────────────────────────────────
+// -- R1: Inline study, 2 axes -> all runs expand --------------------------------
 
 static void test_R1() {
-	std::cout << "R1: 2 static axes (2×2) → 4 run specs\n";
+	std::cout << "R1: 2 static axes (2×2) -> 4 run specs\n";
 	auto doc = make_inline_study();
 	std::vector<std::string> warnings;
 	auto specs = BatchExpander::expand(doc, warnings);
@@ -116,7 +116,7 @@ static void test_R1() {
 	EXPECT_STR(specs[3].run_id, "run_0004");
 }
 
-// ── R2: run.vsim.resolved written per run ────────────────────────────────────
+// -- R2: run.vsim.resolved written per run ------------------------------------
 
 static void test_R2() {
 	std::cout << "R2: run.vsim.resolved written per case\n";
@@ -144,7 +144,7 @@ static void test_R2() {
 	rm_rf(kTmpDir + "/resolved_write_test");
 }
 
-// ── R3: batch_checkpoint.json written and grows ───────────────────────────────
+// -- R3: batch_checkpoint.json written and grows -------------------------------
 
 static void test_R3() {
 	std::cout << "R3: checkpoint written after each run\n";
@@ -166,7 +166,7 @@ static void test_R3() {
 	rm_rf(dir);
 }
 
-// ── R4: Resume — already-completed runs skipped ──────────────────────────────
+// -- R4: Resume  -  already-completed runs skipped ------------------------------
 
 static void test_R4() {
 	std::cout << "R4: resume skips completed runs\n";
@@ -198,10 +198,10 @@ static void test_R4() {
 	rm_rf(dir);
 }
 
-// ── R5: batch.require — missing file → FAIL_OUTPUT_MISSING ───────────────────
+// -- R5: batch.require  -  missing file -> FAIL_OUTPUT_MISSING -------------------
 
 static void test_R5() {
-	std::cout << "R5: batch.require missing file → FAIL_OUTPUT_MISSING\n";
+	std::cout << "R5: batch.require missing file -> FAIL_OUTPUT_MISSING\n";
 	std::string dir = kTmpDir + "/require_test_r5";
 	mkdir_p(dir);
 
@@ -217,10 +217,10 @@ static void test_R5() {
 	rm_rf(dir);
 }
 
-// ── R6: batch.require — missing check in verify_report ───────────────────────
+// -- R6: batch.require  -  missing check in verify_report -----------------------
 
 static void test_R6() {
-	std::cout << "R6: batch.require missing check → FAIL_CHECK_MISSING\n";
+	std::cout << "R6: batch.require missing check -> FAIL_CHECK_MISSING\n";
 	std::string dir = kTmpDir + "/require_test_r6";
 	mkdir_p(dir);
 
@@ -239,10 +239,10 @@ static void test_R6() {
 	rm_rf(dir);
 }
 
-// ── R7: abort_on_fail = true — batch stops on first FAIL ─────────────────────
+// -- R7: abort_on_fail = true  -  batch stops on first FAIL ---------------------
 
 static void test_R7() {
-	std::cout << "R7: abort_on_fail — stop on first FAIL\n";
+	std::cout << "R7: abort_on_fail  -  stop on first FAIL\n";
 	std::vector<BatchRunRecord> records = {
 		make_run_record("run_0001", "PASS", 0.95),
 		make_run_record("run_0002", "FAIL", 0.0),
@@ -259,10 +259,10 @@ static void test_R7() {
 	EXPECT_STR(processed.back().verify_status, "FAIL");
 }
 
-// ── R8: on_run_fail = "continue" — failed run recorded, batch proceeds ────────
+// -- R8: on_run_fail = "continue"  -  failed run recorded, batch proceeds --------
 
 static void test_R8() {
-	std::cout << "R8: on_run_fail=continue — all runs in summary\n";
+	std::cout << "R8: on_run_fail=continue  -  all runs in summary\n";
 	std::vector<BatchRunRecord> records = {
 		make_run_record("run_0001", "PASS", 0.95),
 		make_run_record("run_0002", "FAIL", 0.0),
@@ -273,7 +273,7 @@ static void test_R8() {
 	EXPECT_STR(records[1].verify_status, "FAIL");
 }
 
-// ── R9: aggregate_results produced after all runs ─────────────────────────────
+// -- R9: aggregate_results produced after all runs -----------------------------
 
 static void test_R9() {
 	std::cout << "R9: aggregate_results.tsv produced\n";
@@ -304,7 +304,7 @@ static void test_R9() {
 	rm_rf(dir);
 }
 
-// ── R10: ranked_candidates excludes FAIL/MISSING ─────────────────────────────
+// -- R10: ranked_candidates excludes FAIL/MISSING -----------------------------
 
 static void test_R10() {
 	std::cout << "R10: ranked_candidates excludes FAIL/MISSING\n";
@@ -334,7 +334,7 @@ static void test_R10() {
 	rm_rf(dir);
 }
 
-// ── R11: batch summary produced and non-empty ─────────────────────────────────
+// -- R11: batch summary produced and non-empty ---------------------------------
 
 static void test_R11() {
 	std::cout << "R11: batch_summary.tsv produced\n";
@@ -356,10 +356,10 @@ static void test_R11() {
 	rm_rf(dir);
 }
 
-// ── R12: Template mode — base loaded from file ────────────────────────────────
+// -- R12: Template mode  -  base loaded from file --------------------------------
 
 static void test_R12() {
-	std::cout << "R12: template mode — BatchMerger::load_template\n";
+	std::cout << "R12: template mode  -  BatchMerger::load_template\n";
 	std::string dir = kTmpDir + "/template_test";
 	mkdir_p(dir);
 
@@ -385,7 +385,7 @@ static void test_R12() {
 	rm_rf(dir);
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
 	std::cout << "=== Group 43: Static Runner Integration Tests ===\n\n";

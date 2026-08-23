@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gen_xyz_demo.cpp
  * ----------------
  * Generates all 8 XYZ-family demo files used for TUI integration testing.
@@ -6,12 +6,12 @@
  * WO-ID: DEV54-XYZ-SPEC-INTEGRATION
  *
  * Molecules:
- *   OsO4   — osmium tetroxide  (Z: Os=76, O=8)
+ *   OsO4    -  osmium tetroxide  (Z: Os=76, O=8)
  *             Td symmetry, d(Os-O) = 1.711 Å
  *             90 molecules × 5 atoms = 450 atoms
  *
- *   CH3HgI — methylmercury iodide (Z: C=6, H=1×3, Hg=80, I=53)
- *             Linear C–Hg–I backbone + methyl group
+ *   CH3HgI  -  methylmercury iodide (Z: C=6, H=1×3, Hg=80, I=53)
+ *             Linear C-Hg-I backbone + methyl group
  *             75 molecules × 6 atoms = 450 atoms
  *
  * Files written to ./demo_xyz/ :
@@ -21,7 +21,7 @@
  * Physical parameters used (spec §8 sanity ranges):
  *   Charges : O ≈ -0.83 e,  Os ≈ +3.32 e (formal +8, partial ~+3.3)
  *             Hg ≈ +0.50 e, I  ≈ -0.35 e, C ≈ -0.28 e, H ≈ +0.15 e
- *   Forces  : 1–40 kcal/(mol·Å)
+ *   Forces  : 1-40 kcal/(mol·Å)
  *   Velocity: ~0.02 Å/fs (300 K Maxwell-Boltzmann)
  *   Energy  : −500 to −1500 kcal/mol depending on molecule count
  */
@@ -64,7 +64,7 @@ struct DRng {
 // Molecule geometry builders
 // ============================================================================
 
-// OsO4 — Td (tetrahedral), Os at origin, 4 O at d=1.711 Å
+// OsO4  -  Td (tetrahedral), Os at origin, 4 O at d=1.711 Å
 // Tetrahedral O positions (normalised):
 //   (+1, +1, -1)/√3
 //   (+1, -1, +1)/√3
@@ -119,7 +119,7 @@ static std::vector<AtomRecord> build_OsO4(double cx, double cy, double cz, DRng&
 	return atoms;
 }
 
-// CH3HgI — C-Hg-I linear backbone + methyl H's
+// CH3HgI  -  C-Hg-I linear backbone + methyl H's
 // Bond lengths: C-Hg 2.07 Å, Hg-I 2.73 Å, C-H 1.09 Å
 // Place backbone along X; rotate H's to methyl geometry
 
@@ -340,7 +340,7 @@ int main(int argc, char** argv) {
 	std::cout << "\n=== gen_xyz_demo  (DEV54-XYZ-SPEC-INTEGRATION) ===\n\n";
 
 	// ---- OsO4 : 90 molecules × 5 atoms = 450 ----
-	std::cout << "OsO4 (osmium tetroxide)  — 90 mol × 5 atoms = 450\n";
+	std::cout << "OsO4 (osmium tetroxide)   -  90 mol × 5 atoms = 450\n";
 	{
 		// spacing 8 Å gives comfortable room around each OsO4 (≈4 Å diameter)
 		auto pack = pack_molecules(90, 8.0,
@@ -354,7 +354,7 @@ int main(int argc, char** argv) {
 	std::cout << "\n";
 
 	// ---- CH3HgI : 75 molecules × 6 atoms = 450 ----
-	std::cout << "CH3HgI (methylmercury iodide)  — 75 mol × 6 atoms = 450\n";
+	std::cout << "CH3HgI (methylmercury iodide)   -  75 mol × 6 atoms = 450\n";
 	{
 		// spacing 9 Å (molecule end-to-end ≈ 6.9 Å)
 		auto pack = pack_molecules(75, 9.0,

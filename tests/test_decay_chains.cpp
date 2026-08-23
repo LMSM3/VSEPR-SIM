@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_decay_chains.cpp
  * =====================
  * Test the four natural radioactive decay series
@@ -13,13 +13,13 @@
 using namespace vsepr::nuclear;
 
 void print_header(const std::string& title) {
-    std::cout << "\n╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ " << std::left << std::setw(64) << title << " ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==================================================================+\n";
+    std::cout << "| " << std::left << std::setw(64) << title << " |\n";
+    std::cout << "+==================================================================+\n\n";
 }
 
 void test_thorium_series() {
-    print_header("THORIUM SERIES (4n): Th-232 → Pb-208");
+    print_header("THORIUM SERIES (4n): Th-232 -> Pb-208");
     
     const auto& series = get_decay_series();
     const auto& thorium = series.thorium_series();
@@ -31,7 +31,7 @@ void test_thorium_series() {
               << ", β=" << thorium.beta_decays << ")\n";
     std::cout << "Total energy released: " << thorium.total_energy_MeV << " MeV\n";
     std::cout << "\nDecay Chain:\n";
-    std::cout << std::string(70, '─') << "\n";
+    std::cout << std::string(70, '-') << "\n";
     
     for (size_t i = 0; i < thorium.chain.size(); ++i) {
         const auto& n = thorium.chain[i];
@@ -54,7 +54,7 @@ void test_thorium_series() {
 }
 
 void test_neptunium_series() {
-    print_header("NEPTUNIUM SERIES (4n+1): Np-237 → Bi-209 [EXTINCT]");
+    print_header("NEPTUNIUM SERIES (4n+1): Np-237 -> Bi-209 [EXTINCT]");
     
     const auto& series = get_decay_series();
     const auto& neptunium = series.neptunium_series();
@@ -66,7 +66,7 @@ void test_neptunium_series() {
     std::cout << "Total decays: " << neptunium.total_decays << " (α=" << neptunium.alpha_decays 
               << ", β=" << neptunium.beta_decays << ")\n";
     std::cout << "\nDecay Chain:\n";
-    std::cout << std::string(70, '─') << "\n";
+    std::cout << std::string(70, '-') << "\n";
     
     for (size_t i = 0; i < neptunium.chain.size(); ++i) {
         const auto& n = neptunium.chain[i];
@@ -87,7 +87,7 @@ void test_neptunium_series() {
 }
 
 void test_uranium_series() {
-    print_header("URANIUM SERIES (4n+2): U-238 → Pb-206");
+    print_header("URANIUM SERIES (4n+2): U-238 -> Pb-206");
     
     const auto& series = get_decay_series();
     const auto& uranium = series.uranium_series();
@@ -99,7 +99,7 @@ void test_uranium_series() {
     std::cout << "Total decays: " << uranium.total_decays << " (α=" << uranium.alpha_decays 
               << ", β=" << uranium.beta_decays << ")\n";
     std::cout << "\nDecay Chain:\n";
-    std::cout << std::string(70, '─') << "\n";
+    std::cout << std::string(70, '-') << "\n";
     
     for (size_t i = 0; i < uranium.chain.size(); ++i) {
         const auto& n = uranium.chain[i];
@@ -127,7 +127,7 @@ void test_uranium_series() {
 }
 
 void test_actinium_series() {
-    print_header("ACTINIUM SERIES (4n+3): U-235 → Pb-207");
+    print_header("ACTINIUM SERIES (4n+3): U-235 -> Pb-207");
     
     const auto& series = get_decay_series();
     const auto& actinium = series.actinium_series();
@@ -139,7 +139,7 @@ void test_actinium_series() {
     std::cout << "Total decays: " << actinium.total_decays << " (α=" << actinium.alpha_decays 
               << ", β=" << actinium.beta_decays << ")\n";
     std::cout << "\nDecay Chain:\n";
-    std::cout << std::string(70, '─') << "\n";
+    std::cout << std::string(70, '-') << "\n";
     
     for (size_t i = 0; i < actinium.chain.size(); ++i) {
         const auto& n = actinium.chain[i];
@@ -223,7 +223,7 @@ void test_series_classification() {
     
     for (const auto& test : tests) {
         std::string result = series_name_for_A(test.A);
-        std::cout << "A=" << test.A << " → " << result;
+        std::cout << "A=" << test.A << " -> " << result;
         assert(result == test.expected_series);
         std::cout << " ✓\n";
     }
@@ -236,7 +236,7 @@ void test_decay_path_tracing() {
     
     const auto& series = get_decay_series();
     
-    // Trace U-238 → Pb-206
+    // Trace U-238 -> Pb-206
     std::cout << "Tracing decay path from U-238:\n";
     auto path = series.trace_decay_path(92, 238);
     std::cout << "Found " << path.size() << " nuclides in decay chain\n";
@@ -244,9 +244,9 @@ void test_decay_path_tracing() {
     for (size_t i = 0; i < std::min(path.size(), size_t(5)); ++i) {
         const auto& n = path[i];
         std::cout << "  " << static_cast<int>(n.Z) << "-" << n.A;
-        if (i < path.size() - 1) std::cout << " → ";
+        if (i < path.size() - 1) std::cout << " -> ";
     }
-    std::cout << " ... → Pb-206\n";
+    std::cout << " ... -> Pb-206\n";
     
     assert(path.size() == 15);  // U-238 series has 15 members
     assert(path.front().Z == 92 && path.front().A == 238);
@@ -297,7 +297,7 @@ void print_summary_table() {
               << std::setw(10) << "Decays"
               << std::setw(12) << "t½ (years)"
               << "\n";
-    std::cout << std::string(80, '─') << "\n";
+    std::cout << std::string(80, '-') << "\n";
     
     auto print_row = [](const DecayChain& chain) {
         std::cout << std::setw(12) << chain.name.substr(0, 11)
@@ -318,10 +318,10 @@ void print_summary_table() {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║     NATURAL RADIOACTIVE DECAY SERIES TEST SUITE                      ║\n";
-    std::cout << "║     Four Major Decay Chains (Thorium, Neptunium, Uranium, Actinium)  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+=======================================================================+\n";
+    std::cout << "|     NATURAL RADIOACTIVE DECAY SERIES TEST SUITE                      |\n";
+    std::cout << "|     Four Major Decay Chains (Thorium, Neptunium, Uranium, Actinium)  |\n";
+    std::cout << "+=======================================================================+\n";
     
     try {
         // Initialize decay series
@@ -338,9 +338,9 @@ int main() {
         test_equilibrium_concepts();
         print_summary_table();
         
-        std::cout << "\n╔═══════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║     ✓ ALL DECAY CHAIN TESTS PASSED SUCCESSFULLY!            ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+===============================================================+\n";
+        std::cout << "|     ✓ ALL DECAY CHAIN TESTS PASSED SUCCESSFULLY!            |\n";
+        std::cout << "+===============================================================+\n";
         
         return 0;
         

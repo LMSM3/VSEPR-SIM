@@ -1,20 +1,20 @@
-#pragma once
+﻿#pragma once
 /**
- * pipeline_record.hpp — beta-7 Research Pipeline Record Types
+ * pipeline_record.hpp  -  beta-7 Research Pipeline Record Types
  * ============================================================
  *
  * Connective data layer for the beta-7 pipeline:
  *
  *   FormationOutput (v4::FormationRecord)
- *       ↓  stage_fingerprint()
+ *       v  stage_fingerprint()
  *   FingerprintRecord
- *       ↓  stage_cluster()
+ *       v  stage_cluster()
  *   ClusterRecord
- *       ↓  stage_analysis()
+ *       v  stage_analysis()
  *   AnalysisRecord
- *       ↓  stage_report()
+ *       v  stage_report()
  *   ReportRecord
- *       ↓  stage_dashboard()
+ *       v  stage_dashboard()
  *   DashboardRecord
  *
  * Design rules:
@@ -77,17 +77,17 @@ inline const char* warning_name(WarningCode w) {
 }
 
 // ============================================================================
-// Stage 1 — FingerprintRecord
+// Stage 1  -  FingerprintRecord
 // ============================================================================
 
 /**
- * FingerprintRecord — scalar formation fingerprint (beta-7 version).
+ * FingerprintRecord  -  scalar formation fingerprint (beta-7 version).
  *
  * Encodes one formation case as a fixed-length feature vector
  * extracted deterministically from v4::FormationRecord.
  *
- * Feature layout (8 components):
- *   [0]  final_energy       (kcal/mol or eV — caller's units)
+ * Feature layout (10 components):
+ *   [0]  final_energy       (kcal/mol or eV  -  caller's units)
  *   [1]  rms_force          (convergence quality)
  *   [2]  avg_eta            (mean packing fraction proxy)
  *   [3]  avg_rho            (mean density proxy)
@@ -95,6 +95,12 @@ inline const char* warning_name(WarningCode w) {
  *   [5]  macro_rigidity     (inferred macro-scale rigidity)
  *   [6]  macro_ductility    (inferred macro-scale ductility)
  *   [7]  log10(steps+1)     (convergence cost, log-scale)
+ *   [8]  topology_hash_f    (low 32-bits of topology_hash / 1e9, structural)
+ *   [9]  coord_sig_hash_f   (low 32-bits of coordination signature hash / 1e9)
+ *
+ * Features [8] and [9] carry graph-structural identity so that two
+ * constitutional or coordination isomers with identical thermodynamic
+ * scalars are still placed in different clusters.
  *
  * NaN components are replaced with 0.0 and flagged.
  * The topology_hash encodes lattice class + bead count for grouping.
@@ -104,11 +110,12 @@ struct FingerprintRecord {
 	std::string symbol;
 	std::string name;
 
-	// Feature vector (FEATURE_DIM = 8)
-	static constexpr int FEATURE_DIM = 8;
+	// Feature vector (FEATURE_DIM = 10)
+	// [0-7] thermodynamic scalars; [8] topology hash; [9] coordination sig hash
+	static constexpr int FEATURE_DIM = 10;
 	std::array<double, FEATURE_DIM> features{};
 
-	// Topology hash — groups same lattice + bead-count families
+	// Topology hash  -  groups same lattice + bead-count families
 	// Deterministic: hash(lattice_class_byte, n_beads)
 	uint64_t topology_hash{0};
 
@@ -133,15 +140,15 @@ struct FingerprintRecord {
 };
 
 // ============================================================================
-// Stage 2 — ClusterRecord
+// Stage 2  -  ClusterRecord
 // ============================================================================
 
 /**
- * ClusterRegistry — shared mutable registry of known clusters.
+ * ClusterRegistry  -  shared mutable registry of known clusters.
  *
  * Assigns a cluster ID to each FingerprintRecord using threshold-based
  * nearest-centroid logic. Deterministic within a single run (insertion
- * order is canonical). Thread-unsafe by design — single-threaded pipeline.
+ * order is canonical). Thread-unsafe by design  -  single-threaded pipeline.
  */
 struct ClusterRegistry {
 	struct Entry {
@@ -180,7 +187,7 @@ struct ClusterRegistry {
 			return e.id;
 		}
 
-		// New cluster — ID = hash of symbol + topology_hash
+		// New cluster  -  ID = hash of symbol + topology_hash
 		Entry e;
 		e.id = _make_id(fp);
 		e.centroid = fp;
@@ -213,7 +220,7 @@ private:
 };
 
 /**
- * ClusterRecord — one formation case after cluster assignment.
+ * ClusterRecord  -  one formation case after cluster assignment.
  */
 struct ClusterRecord {
 	// Forwarded from FingerprintRecord
@@ -233,11 +240,11 @@ struct ClusterRecord {
 };
 
 // ============================================================================
-// Stage 3 — AnalysisRecord
+// Stage 3  -  AnalysisRecord
 // ============================================================================
 
 /**
- * AnalysisRecord — per-case interpreted analysis layer.
+ * AnalysisRecord  -  per-case interpreted analysis layer.
  *
  * Interprets ClusterRecord + original FormationRecord to produce
  * analysis-layer outputs. Nothing here is stored back into xyzFull.
@@ -261,8 +268,8 @@ struct AnalysisRecord {
 	double energy_per_bead{0.0};
 	double convergence_quality{0.0};
 	std::string motif_class;           // "FCC" / "BCC" / "HCP" / "unknown"
-	double packing_quality{0.0};       // [0,1] — higher is denser/more ordered
-	double stability_score{0.0};       // [0,1] — higher is more stable
+	double packing_quality{0.0};       // [0,1]  -  higher is denser/more ordered
+	double stability_score{0.0};       // [0,1]  -  higher is more stable
 	double defect_indicator{0.0};      // n_l3_domains / n_beads
 	std::string interpretation;        // human-readable one-liner
 
@@ -274,11 +281,11 @@ struct AnalysisRecord {
 };
 
 // ============================================================================
-// Stage 4 — ReportRecord
+// Stage 4  -  ReportRecord
 // ============================================================================
 
 /**
- * ReportRecord — tables, CSV row, JSON blob.
+ * ReportRecord  -  tables, CSV row, JSON blob.
  *
  * All output is text. No binary blobs. Every field inspectable.
  */
@@ -289,7 +296,7 @@ struct ReportRecord {
 	// CSV row (header provided separately)
 	std::string csv_row;
 
-	// JSON object for this case (no array wrapper — caller aggregates)
+	// JSON object for this case (no array wrapper  -  caller aggregates)
 	std::string json_fragment;
 
 	// Human-readable summary line
@@ -314,11 +321,11 @@ struct ReportRecord {
 };
 
 // ============================================================================
-// Stage 5 — DashboardRecord
+// Stage 5  -  DashboardRecord
 // ============================================================================
 
 /**
- * DashboardRecord — aggregated export artifact for one run.
+ * DashboardRecord  -  aggregated export artifact for one run.
  *
  * beta-7: text-only output (Markdown summary table + JSON array).
  * SVG/PNG rendering is planned for beta-8 when the glass pipeline
@@ -344,11 +351,11 @@ struct DashboardRecord {
 };
 
 // ============================================================================
-// Composite PipelineRecord — one case fully processed
+// Composite PipelineRecord  -  one case fully processed
 // ============================================================================
 
 /**
- * PipelineRecord — full provenance chain for one formation case.
+ * PipelineRecord  -  full provenance chain for one formation case.
  *
  * Preserves every intermediate stage record so any stage can be
  * re-inspected, re-run, or audited after the fact.
@@ -360,7 +367,7 @@ struct PipelineRecord {
 	AnalysisRecord       analysis;     // Stage 3
 	ReportRecord         report;       // Stage 4
 	// Stage 5 (DashboardRecord) is assembled across all PipelineRecords
-	// by run_pipeline() — it is a run-level record, not a per-case record.
+	// by run_pipeline()  -  it is a run-level record, not a per-case record.
 
 	bool complete{false};  // set true when all stages ran without fatal error
 };

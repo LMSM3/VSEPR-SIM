@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase2_complex_molecules.cpp
  * =============================
  * Phase 2 Testing: Complex Single Molecules (Geometry + Physics)
@@ -8,7 +8,7 @@
  * - Hypervalent main group: SF₆, PF₅
  * - Mixed-manifold: metal-oxalate complexes
  * 
- * Mimics user workflow: create → optimize → analyze → report
+ * Mimics user workflow: create -> optimize -> analyze -> report
  */
 
 #include <iostream>
@@ -30,9 +30,9 @@ using std::vector;
 
 void print_header(const string& title) {
     cout << "\n";
-    cout << "╔" << string(78, '═') << "╗\n";
-    cout << "║ " << std::left << std::setw(76) << title << " ║\n";
-    cout << "╚" << string(78, '═') << "╝\n";
+    cout << "+" << string(78, '=') << "+\n";
+    cout << "| " << std::left << std::setw(76) << title << " |\n";
+    cout << "+" << string(78, '=') << "+\n";
 }
 
 void print_section(const string& title) {
@@ -304,10 +304,10 @@ void print_summary() {
 
 int main() {
     cout << R"(
-╔════════════════════════════════════════════════════════════════════════════╗
-║                    PHASE 2: COMPLEX MOLECULES TEST SUITE                   ║
-║            Simulating User Workflow with Coordination Chemistry            ║
-╚════════════════════════════════════════════════════════════════════════════╝
++============================================================================+
+|                    PHASE 2: COMPLEX MOLECULES TEST SUITE                   |
+|            Simulating User Workflow with Coordination Chemistry            |
++============================================================================+
 
 This test simulates how a user would interact with the system to build
 and optimize complex coordination compounds and hypervalent molecules.

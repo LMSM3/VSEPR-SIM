@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Equipartition Test: Langevin Thermostat Validation
  * 
  * Tests that kinetic temperature equilibrates to target T
@@ -162,9 +162,9 @@ double compute_kinetic_temperature(const State& state) {
 // ============================================================================
 
 int main(int argc, char** argv) {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  EQUIPARTITION TEST: Langevin Thermostat Validation      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  EQUIPARTITION TEST: Langevin Thermostat Validation      |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // Parse command line
     int seed = 42;
@@ -344,9 +344,9 @@ int main(int argc, char** argv) {
     // ANALYSIS
     // ========================================================================
     
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  ANALYSIS                                                  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  ANALYSIS                                                  |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // Split into equilibration and production
     int n_equil = params.n_steps / 2;
@@ -388,9 +388,9 @@ int main(int argc, char** argv) {
     // PASS/FAIL CRITERIA
     // ========================================================================
     
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VALIDATION                                                ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  VALIDATION                                                |\n";
+    std::cout << "+===========================================================+\n\n";
     
     bool pass_mean = std::abs(T_mean - T_target) < 0.03 * T_target;  // Within 3%
     bool pass_std = (T_std > 5.0) && (T_std < 100.0);  // Fluctuations 5-100 K
@@ -424,14 +424,14 @@ int main(int argc, char** argv) {
     bool overall_pass = pass_mean && pass_std && pass_equilibration;
     
     if (overall_pass) {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✅ TEST PASSED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ✅ TEST PASSED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 0;
     } else {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ❌ TEST FAILED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ❌ TEST FAILED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 1;
     }
 }

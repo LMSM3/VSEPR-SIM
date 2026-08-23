@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/vsim/vsim_interpreter.cpp
  * ================================
  * VsimInterpreter eval() and exec() implementation.
@@ -32,7 +32,7 @@
 
 namespace vsim {
 
-// ── String utilities ──────────────────────────────────────────────────────────
+// -- String utilities ----------------------------------------------------------
 
 static std::string trim(const std::string& s) {
 	auto a = s.find_first_not_of(" \t\r\n");
@@ -41,7 +41,7 @@ static std::string trim(const std::string& s) {
 	return s.substr(a, b - a + 1);
 }
 
-// ── Field access helper ───────────────────────────────────────────────────────
+// -- Field access helper -------------------------------------------------------
 
 // Resolve value.x / value.y / value.z for XYZVec3 and Int3
 static std::optional<Value> try_field_access(const Value& val, const std::string& field) {
@@ -62,7 +62,7 @@ static std::optional<Value> try_field_access(const Value& val, const std::string
 	return std::nullopt;  // not a field-access-able type
 }
 
-// ── Argument list splitter ────────────────────────────────────────────────────
+// -- Argument list splitter ----------------------------------------------------
 // Splits a raw args string on top-level commas (skipping nested parens).
 
 std::vector<Value> VsimInterpreter::parse_args(const std::string& args_str) {
@@ -86,7 +86,7 @@ std::vector<Value> VsimInterpreter::parse_args(const std::string& args_str) {
 	return result;
 }
 
-// ── eval_atom ─────────────────────────────────────────────────────────────────
+// -- eval_atom -----------------------------------------------------------------
 // Parses a single non-call token: number, quoted string, or variable lookup.
 
 Value VsimInterpreter::eval_atom(const std::string& token) {
@@ -101,7 +101,7 @@ Value VsimInterpreter::eval_atom(const std::string& token) {
 	if (token == "true")  return true;
 	if (token == "false") return false;
 
-	// Numeric — try integer first, then float
+	// Numeric  -  try integer first, then float
 	{
 		bool has_dot = (token.find('.') != std::string::npos);
 		bool has_e   = (token.find('e') != std::string::npos ||
@@ -120,7 +120,7 @@ Value VsimInterpreter::eval_atom(const std::string& token) {
 	throw VsimRuntimeError("Unknown variable or literal: '" + token + "'");
 }
 
-// ── eval_call ─────────────────────────────────────────────────────────────────
+// -- eval_call -----------------------------------------------------------------
 // Dispatches a builtin call.  fn_name is the full dotted name ("pbc.wrap").
 
 Value VsimInterpreter::eval_call(const std::string& fn_name,
@@ -153,14 +153,14 @@ Value VsimInterpreter::eval_call(const std::string& fn_name,
 	return it->second(args, *runtime_);
 }
 
-// ── eval ─────────────────────────────────────────────────────────────────────
+// -- eval ---------------------------------------------------------------------
 
 Value VsimInterpreter::eval(const std::string& expr) {
 	std::string s = trim(expr);
 	if (s.empty())
 		throw VsimRuntimeError("Cannot evaluate empty expression.");
 
-	// ── Field access: expr.field (postfix, evaluate left then resolve field)
+	// -- Field access: expr.field (postfix, evaluate left then resolve field)
 	// Only applies if the last token is a bare identifier following a '.'
 	// and the dot is not part of a function call.
 	// Strategy: find the last '.' that is NOT inside parens and not part
@@ -190,12 +190,12 @@ Value VsimInterpreter::eval(const std::string& expr) {
 				Value base = eval(sub);
 				auto result = try_field_access(base, field);
 				if (result) return *result;
-				// Not a known field — fall through to call resolution below
+				// Not a known field  -  fall through to call resolution below
 			}
 		}
 	}
 
-	// ── Function call: name(...) or namespace.name(...)
+	// -- Function call: name(...) or namespace.name(...)
 	// Find the outermost '(' that closes at the very end of the string
 	auto paren_start = s.find('(');
 	if (paren_start != std::string::npos && s.back() == ')') {
@@ -204,11 +204,11 @@ Value VsimInterpreter::eval(const std::string& expr) {
 		return eval_call(fn_name, args_str);
 	}
 
-	// ── Atom: literal or variable
+	// -- Atom: literal or variable
 	return eval_atom(s);
 }
 
-// ── exec ──────────────────────────────────────────────────────────────────────
+// -- exec ----------------------------------------------------------------------
 
 void VsimInterpreter::exec(const std::string& script_block) {
 	std::istringstream ss(script_block);

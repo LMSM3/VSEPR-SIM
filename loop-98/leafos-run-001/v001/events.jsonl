@@ -1,0 +1,8 @@
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.685918+00:00","run_id":"leafos-run-001","version":"v001","event":"loop.started","data":{"manifest":"C:\\R\\VSPER-SIM\\loop-98\\leafos-run-001\\v001\\loop-manifest.json"}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.687920+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"plan"}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.688919+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"hypothesize"}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.689917+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"code"}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.714940+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"kernel_run","returncode":0}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.716916+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"verify","passed":true}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.717917+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"report","status":"passed"}}
+{"schema":"vsepr.loop-98-event.v1","time":"2026-07-17T10:29:13.718922+00:00","run_id":"leafos-run-001","version":"v001","event":"stage.completed","data":{"stage":"checkpoint","status":"checkpointed"}}

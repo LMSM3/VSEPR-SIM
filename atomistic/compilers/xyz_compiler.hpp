@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../core/state.hpp"
 #include "io/xyz_format.hpp"
 #include <string>
@@ -6,7 +6,7 @@
 namespace atomistic {
 namespace compilers {
 
-// Convert atomistic::State → vsepr::io::XYZMolecule (basic XYZ)
+// Convert atomistic::State -> vsepr::io::XYZMolecule (basic XYZ)
 vsepr::io::XYZMolecule to_xyz(const State& s, const std::vector<std::string>& element_names);
 
 // Save State as .xyzA with energy metadata

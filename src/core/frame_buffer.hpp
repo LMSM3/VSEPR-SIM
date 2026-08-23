@@ -2,61 +2,61 @@
 
 #include "core/frame_snapshot.hpp"
 #include <atomic>
-#include <array>
+#include <cstdint>
+#include <mutex>
 
 namespace vsepr {
 
 /**
- * Lock-free double-buffered communication between simulation and renderer.
- * 
- * The simulation thread writes to one buffer while the render thread reads from another.
- * An atomic index tracks which buffer contains the latest complete frame.
- * 
- * Thread Safety:
- * - Only the simulation thread calls write()
- * - Only the render thread calls read()
- * - No mutexes needed due to double buffering
+ * Sequenced communication between the simulation and renderer.
+ *
+ * Snapshot copies are deliberately protected by a small mutex.  At 120 Hz this
+ * keeps the data hand-off correct even when a renderer misses several ticks;
+ * the sequence is then used to avoid treating the same physics state as new.
  */
+struct FramePacket {
+    FrameSnapshot snapshot;
+    std::uint64_t sequence = 0;
+};
+
 class FrameBuffer {
 public:
-    FrameBuffer() : latest_index_(0) {}
+    FrameBuffer() = default;
     
     /**
      * Write a new frame snapshot (simulation thread only).
-     * Writes to the non-current buffer, then publishes atomically.
      */
     void write(const FrameSnapshot& snapshot) {
-        // Determine which buffer to write to
-        int current = latest_index_.load(std::memory_order_relaxed);
-        int write_idx = 1 - current;  // Write to the other buffer
-        
-        // Copy data to write buffer
-        buffers_[write_idx] = snapshot;
-        
-        // Publish the new buffer atomically
-        latest_index_.store(write_idx, std::memory_order_release);
+        std::lock_guard<std::mutex> lock(mutex_);
+        latest_ = snapshot;
+        ++sequence_;
     }
     
     /**
      * Read the latest frame snapshot (render thread only).
      * Returns a copy of the most recent complete frame.
      */
+    FramePacket read_packet() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return {latest_, sequence_};
+    }
+
     FrameSnapshot read() const {
-        int read_idx = latest_index_.load(std::memory_order_acquire);
-        return buffers_[read_idx];
+        return read_packet().snapshot;
     }
     
     /**
      * Check if any valid frame has been written.
      */
     bool has_data() const {
-        int idx = latest_index_.load(std::memory_order_acquire);
-        return buffers_[idx].is_valid();
+        std::lock_guard<std::mutex> lock(mutex_);
+        return latest_.is_valid();
     }
     
 private:
-    std::array<FrameSnapshot, 2> buffers_;
-    std::atomic<int> latest_index_;
+    mutable std::mutex mutex_;
+    FrameSnapshot latest_;
+    std::uint64_t sequence_ = 0;
 };
 
 } // namespace vsepr

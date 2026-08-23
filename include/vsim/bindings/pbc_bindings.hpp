@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * include/vsim/bindings/pbc_bindings.hpp
  * ========================================
@@ -13,7 +13,7 @@
  * declaration so the interpreter has a well-defined target to call.
  *
  * All particle IDs in the pbc.* namespace are 1-indexed (VSIM convention).
- * The bindings apply the 1→0 offset before accessing C++ arrays.
+ * The bindings apply the 1->0 offset before accessing C++ arrays.
  *
  * Error protocol:
  *   - Configuration errors: throw std::runtime_error with a [PBC ERROR] prefix.
@@ -32,7 +32,7 @@
 
 namespace vsim::pbc_bindings {
 
-// ── Runtime state that bindings operate on ────────────────────────────────────
+// -- Runtime state that bindings operate on ------------------------------------
 // The caller (interpreter or test harness) provides these by reference.
 // In the full runtime this will be fields of VsimRuntime; bindings receive
 // const/mutable references as needed.
@@ -44,7 +44,7 @@ struct PBCBindingContext {
 	const std::vector<vsepr::ImageCount>& images;    // Image counters (0-indexed)
 };
 
-// ── Validation helpers ────────────────────────────────────────────────────────
+// -- Validation helpers --------------------------------------------------------
 
 // Ensure at least one axis is periodic; throws [PBC ERROR] if not.
 inline void require_periodic(const vsepr::PeriodicCell& cell) {
@@ -75,7 +75,7 @@ inline void require_track_images(const PBCSection& cfg, const char* fn_name) {
 			" requires track_images = true in [pbc] block.");
 }
 
-// ── pbc.wrap(r) ───────────────────────────────────────────────────────────────
+// -- pbc.wrap(r) ---------------------------------------------------------------
 // Wraps position r into the active periodic cell.
 // Equivalent to wrap_position(r, cell) from include/box/pbc.hpp.
 
@@ -84,7 +84,7 @@ inline vsepr::Vec3 pbc_wrap(const vsepr::Vec3& r, const vsepr::PeriodicCell& cel
 	return vsepr::wrap_position(r, cell);
 }
 
-// ── pbc.delta(ri, rj) ────────────────────────────────────────────────────────
+// -- pbc.delta(ri, rj) --------------------------------------------------------
 // Returns the minimum-image displacement from ri to rj.
 // Non-periodic axes carry raw displacement.
 
@@ -97,7 +97,7 @@ inline vsepr::Vec3 pbc_delta(
 	return vsepr::minimum_image_delta(ri, rj, cell);
 }
 
-// ── pbc.distance(ri, rj) ─────────────────────────────────────────────────────
+// -- pbc.distance(ri, rj) -----------------------------------------------------
 // Returns the scalar minimum-image distance between ri and rj.
 
 inline double pbc_distance(
@@ -109,7 +109,7 @@ inline double pbc_distance(
 	return vsepr::pbc_distance(ri, rj, cell);
 }
 
-// ── pbc.crossed_boundary(particle_id) ────────────────────────────────────────
+// -- pbc.crossed_boundary(particle_id) ----------------------------------------
 // Returns true if the particle's image count changed this step.
 // Compares current_images vs prev_images.
 // particle_id is 1-indexed (VSIM convention).
@@ -127,7 +127,7 @@ inline bool pbc_crossed_boundary(
 	return cur.ix != prev.ix || cur.iy != prev.iy || cur.iz != prev.iz;
 }
 
-// ── pbc.image_count(particle_id) → (ix, iy, iz) ──────────────────────────────
+// -- pbc.image_count(particle_id) -> (ix, iy, iz) ------------------------------
 // Returns the cumulative image counter for a particle.
 // particle_id is 1-indexed (VSIM convention).
 
@@ -141,7 +141,7 @@ inline vsepr::ImageCount pbc_image_count(
 	return images[idx];
 }
 
-// ── pbc.unwrap(particle_id) ───────────────────────────────────────────────────
+// -- pbc.unwrap(particle_id) ---------------------------------------------------
 // Returns the continuous (unwrapped) position reconstructed from the wrapped
 // position and image count.
 // particle_id is 1-indexed (VSIM convention).
@@ -159,7 +159,7 @@ inline vsepr::Vec3 pbc_unwrap(
 	return vsepr::unwrap_position(positions[idx], images[idx], cell);
 }
 
-// ── PeriodicCell construction from VsimDocument ───────────────────────────────
+// -- PeriodicCell construction from VsimDocument -------------------------------
 // Constructs the canonical vsepr::PeriodicCell from the parsed document sections.
 // Throws [PBC ERROR] if cell lengths are missing when a periodic axis is requested.
 

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * electrostatic_model.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * Electrostatic field model for the Poisson equation:
  *

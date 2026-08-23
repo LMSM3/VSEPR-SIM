@@ -1,6 +1,156 @@
 # VSEPR-SIM — Master Stage & Gate Ledger
 
-> Updated: v5.14.1 | Branch: day84t-chemplus-declarative-vsepr | Day 87 (finalization)
+> Updated: v5.16.0 | Branch: day84t-chemplus-declarative-vsepr | Day 94 (VSIM 5.16 architectural cut active)
+
+---
+
+## 1. Executive Summary
+
+VSEPR-SIM has completed the **revival/plumbing arc** (v5.15.0) and is now in
+the **v5.16 integrated-runtime architectural cut**, followed by a language-level
+rewrite (v6.0.0) and a new physics kernel (v6.1.0 DFAE).
+
+The synthetic/formation path currently reports many warnings and only partial
+convergence because the real potential/integrator is not yet wired to the
+CLI `vsepr run` path. This is intentional progress: the error and warning
+libraries are now being exercised rather than bypassed.
+
+> **Scientific development note:** physics/math errors are progress signals.
+> They demonstrate that error libraries are exercising the model rather than
+> masking it, moving work from plumbing toward real mathematics and physics
+> refinement.
+
+---
+
+## 2. Long-term Release Arc (v5.16.0 → v6.1.0)
+
+| Version | Theme | Major deliverables | Exit gate |
+|---|---|---|---|
+| **v5.15.0** | VSIM parser/runtime parity | `[visual]` status loop (WO-93A), ChemPlus classify bridge, dense-record runtime, stable build. | ✅ COMPLETE |
+| **v5.16.0** | Integrated live runtime | `RuntimeSession`/observer architecture; `[export.live]`; bounded compact render frames; gas-injection `.xyzf` restoration; stable runtime identities; final v5 compatibility baseline. | Live-on/live-off scientific hashes match and all v5 demo scripts reproduce v5.13.4 artefacts. |
+| **v6.0.0** | Intent-first language rewrite | Intent-first `.vsim` surface; typed intermediate representation; v5-to-v6 translation shim; shared runtime/export architecture; existing-physics parity (all v5 results reproducible). | v5 golden tests pass unmodified through v6 translation. |
+| **v6.1.0** | DFAE / electron lifecycle | DFAE runtime; electron lifecycle tracking; field coupling; comparative model benchmarks; live electron visualization. | DFAE benchmarks match or exceed v5 empirical fits. |
+
+### 2.1 Arc philosophy
+
+* **v5.16.0 is the last pure-v5 release.** After it ships, no new v5-only
+  features are added; only bug fixes and translation regressions are allowed.
+* **v6.0.0 is a language/runtime rewrite, not a physics rewrite.** Existing
+  physics models are preserved behind a v5 translation shim so validation
+  datasets remain authoritative.
+* **v6.1.0 introduces the first new physics since the freeze.** DFAE and
+  electron lifecycle are developed against v6.0.0 benchmarks to prove they
+  improve on v5 baselines.
+
+### 2.2 Work-order map per release
+
+#### v5.16.0 — Expected WOs
+
+| WO | Deliverable | Status |
+|---|---|---|
+| WO-94A | Gas-injection `.xyzf` writer restored and verified | complete |
+| WO-94B | RuntimeSession + ObserverHub + `[export.live]` foundation | active |
+| WO-95A | Export profiles (`[export.profile]`) | planned |
+| WO-95B | Stable runtime identities (run_label, lineage UUIDs) | planned |
+| WO-96A | Final v5 compatibility baseline and golden lock | planned |
+
+#### v6.0.0 — Expected WOs
+
+| WO | Deliverable | Status |
+|---|---|---|
+| WO-97A | Intent-first grammar design document | planned |
+| WO-97B | Typed IR (`vsepr::ir::Module`) | planned |
+| WO-98A | v5-to-v6 translator (`vsepr translate`) | planned |
+| WO-98B | Shared runtime and export architecture (WO-98 build) | planned |
+| WO-99A | Existing-physics parity gate | planned |
+| WO-99B | v6 documentation and migration guide | planned |
+
+#### v6.1.0 — Expected WOs
+
+| WO | Deliverable | Status |
+|---|---|---|
+| WO-100A | DFAE runtime scaffold | planned |
+| WO-100B | Electron lifecycle model | planned |
+| WO-101A | Field coupling (EM ↔ atomic) | planned |
+| WO-101B | Comparative model benchmarks | planned |
+| WO-102A | Live electron visualization | planned |
+
+### 2.3 Dependency graph
+
+```
+v5.15.0 ──┬──> WO-94A (gas restore) ──┬──> v5.16.0 compatibility freeze
+          │                           │
+          └──> WO-93A (status loop) ──┘      │
+                                             ▼
+                        v5.16.0 ───> WO-97A (intent grammar)
+                                              │
+                                              ▼
+                        WO-97B (typed IR) <──┘
+                          │
+                          ├──> WO-98A (v5 translator)
+                          │         │
+                          │         ▼
+                          │   WO-98B (shared runtime)
+                          │         │
+                          │         ▼
+                          └──> v6.0.0 parity release
+                                     │
+                                     ▼
+                        v6.0.0 ───> WO-100A (DFAE scaffold)
+                                             │
+                                             ▼
+                        WO-100B (electron lifecycle) ──┬──> WO-101A (field coupling)
+                                                              │
+                                                              ▼
+                        WO-101B (benchmarks) <───────────────┘
+                          │
+                          ▼
+                        v6.1.0 DFAE release
+```
+
+---
+
+## 3. Risk Register
+
+| Risk | Impact | Mitigation | Owner |
+|---|---|---|---|
+| v5.16.0 gas restoration uncovers deeper trajectory-layer rot | High | Keep scope narrow; restore only the path used by `argon_gas_expanded_demo.vsim`; add regression test. | WO-94A |
+| v6.0.0 translation shim drifts from v5 semantics | High | Run v5 golden artefacts through translator and diff outputs; fail release if diff > tolerance. | WO-98A |
+| DFAE runtime in v6.1.0 cannot reproduce v5 empirical fits | High | Maintain v6.0.0 legacy-physics mode as fallback; benchmarks must beat, not just match. | WO-101B |
+| CUDA/toolchain still unavailable for visual/CUDA features | Medium | Keep CUDA optional; visual features degrade to headless/terminal paths. | Infrastructure |
+| Documentation falls behind schema/runtime changes | Medium | Per-action evidence docs required by `VSIM_DEVELOPMENT.md` since WO-93A. | Every WO |
+
+---
+
+## 4. Current Contamination / Warning Signature
+
+Recent `vsepr run` outputs for `argon_gas_expanded_demo` show:
+
+* `n_cases = 500`
+* `n_clusters = 45`
+* `n_warnings = 1470`
+* `Converged: 30 / 500`
+
+**Interpretation:** The CLI synthetic path is emitting formation events from
+parsed molecule counts, but the integrator/optimizer is not yet producing
+physically converged states. This is acceptable for v5.15.0 because the
+pipeline is being exercised end-to-end; it is **not** acceptable for v5.16.0,
+which must either restore the real gas MD path or clearly mark these outputs
+as synthetic/debug with a new `[run] mode`.
+
+---
+
+## Day ~99 Beta7-8 carry-forward acceptance
+
+[W] WO-99A-GR-GOLDEN — release observability, viewer fixture, and execution evidence
+[D] Day ~99 — Beta7-8 legacy carry-forward
+[R] GOLDEN — evidence is measured against this work order's criteria only
+[T] Make build/test completion, NaCl viewer startup, demos, EHD, CLI, replay, and repeatability observable
+[B] Build summary previously showed CUDA OFF and demos OFF; default NaCl resolution and focused CTest evidence were not visible
+[I] Release now enables headless demos/viewer demos; `data/fixtures/nacl.xyz` is canonical; viewer resolves build/install fixture paths; CLI smoke tests are registered
+[V] Full release build completed; CTest: 197/197 passed; headless viewer demo: 5/5 passed; `test_ehd`, `test_view_67b`, `vsepr`, `vsepr-view-demo-01`, and `vsepr-view-bench` built
+[P] Evidence and two-page specification: `docs/day99/DAY99_A_ACCEPTANCE.tex`; commands are published in README
+[N] Validate a PNG 3D export in an environment with visual dependencies; CUDA remains blocked until a CUDA compiler is configured
 
 ---
 
@@ -19,6 +169,10 @@
 | **v5.13.4**    | Gap classifier + multi-scale output filter + chemistry audit (100% tests) | **74** | **COMMITTED** |
 | v5.13.5        | IKK enrichment (Part A done) + identity vector + release gate             | 75  | COMMITTED   |
 | **v5.13 FREEZE** | Branch frozen at Day 82. CI deferred (MF-F02 deprecated). WO-75A-B deferred to next arc. | **82** | **FROZEN** |
+| v5.15.0        | VSIM parser/runtime parity + terminal HUD QoL (WO-93A)                    | 93  | COMMITTED   |
+| **v5.16.0**    | Gas restoration; live refresh loop; export profiles; stable runtime identities; final v5 compatibility baseline | 94–96 | PLANNED     |
+| **v6.0.0**     | Intent-first language; typed IR; v5 translation; shared runtime/export architecture; existing-physics parity | 97–100 | PLANNED     |
+| **v6.1.0**     | DFAE runtime; electron lifecycle; field coupling; comparative benchmarks; live electron visualization | 101+ | PLANNED     |
 
 ---
 
@@ -447,6 +601,30 @@ and branch freeze summary.
 
 ---
 
+## Day 93 — WO-93A Status-Loop QoL Complete
+
+**Date:** 2026-08-04  
+**Branch:** `day84t-chemplus-declarative-vsepr`  
+**Version:** `v5.15.0`  
+**Status:** ✅ COMMITTED
+
+### Evidence
+
+| Check | Result |
+|---|---|
+| Build | `vsepr.exe` links with `vsepr_infra`; zero errors |
+| Test | `WO93AStatusLoopTest` passes via CTest |
+| Demo | `scripts/demos/wo93a_status_loop_demo.vsim` renders two-line HUD |
+| GPU detection | `NVIDIA GeForce RTX 4070` detected without ambiguity |
+| Viewer guard | Missing `vsepr-view.exe` prints console warning, no dialog |
+| Docs | `VSIM_REFERENCE.md`, `docs/VSIM_LANGUAGE.md`, `docs/WO93A_STATUS_LOOP.md` updated |
+
+### Forward pointer
+
+Next: WO-94A (gas restoration) or WO-94B (live refresh thread ownership).
+
+---
+
 ## Day 82 — v5.13 Branch Freeze
 
 **Date:** 2026-06-28  
@@ -519,6 +697,23 @@ and branch freeze summary.
 | `4c770688` | WO-84T | Chem+ declarative VSEPR bridge (Group 91, 39 PASS) |
 | `0a2ce72b` | WO-84U | ChemPlus CLI classify integration (Group 92, 33 PASS, PNG) |
 
+---
+
+## Day 88 — Visual-System Repair and VSIM Integration
+
+**Status:** 🟡 PLANNED — continuation after Day 87 finalization
+
+| WO | Day | Deliverable | Status | Dependency |
+|----|-----|-------------|--------|------------|
+| WO-88 | 88 | Visual repair of new system: establish a reliable BGFX/GLFW visual-data and rendering-lifecycle boundary | TODO | Day 87 visual-system review |
+| WO-88A | 88 | Improve and integrate VSIM modules through the repaired visual boundary | TODO | WO-88 supported contract |
+
+### Day 88 scope boundary
+
+- WO-88 repairs and validates the new visual frontend without changing authoritative scientific data.
+- WO-88A follows only after WO-88 and wires existing VSIM modules through explicit parser, runtime, routing, artifact, test, and documentation contracts.
+- The former WO-88A hosted-session UI reservation under WO-87A is deferred and requires a new unique child identifier before implementation.
+
 *Ledger maintained per `VSIM_DEVELOPMENT.md` §4C. Update with every WO completion.*
-*Last compiled: 2026-07-03 | Branch: day84t-chemplus-declarative-vsepr | WO-84U COMPLETE*
+*Last compiled: 2026-08-04 | Branch: day84t-chemplus-declarative-vsepr | Day 93 WO-93A COMPLETE | v5.15.0*
 

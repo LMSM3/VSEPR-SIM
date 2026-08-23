@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas3_sweep.hpp
  * --------------
  * Sweep Engine for Gas3 Module.
@@ -129,7 +129,7 @@ struct SweepStats {
 };
 
 // ============================================================================
-// State generator — produces one GasStateRecord from Gas2
+// State generator  -  produces one GasStateRecord from Gas2
 // ============================================================================
 
 inline GasStateRecord generate_state(

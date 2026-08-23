@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * surface_descriptor.hpp — Anisotropic Surface Descriptor for CG Beads
+ * surface_descriptor.hpp  -  Anisotropic Surface Descriptor for CG Beads
  *
  * Stores the spherical harmonic expansion coefficients that encode
  * the directional interaction profile of a coarse-grained bead.
@@ -24,7 +24,7 @@
 namespace coarse_grain {
 
 /**
- * SurfaceDescriptor — spherical harmonic encoding of bead surface.
+ * SurfaceDescriptor  -  spherical harmonic encoding of bead surface.
  *
  * All 25 coefficients (ℓ=0..4, m=-ℓ..ℓ) are stored.
  * The descriptor is defined in the bead's local principal-axis frame.

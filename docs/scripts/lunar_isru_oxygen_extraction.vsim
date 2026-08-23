@@ -1,0 +1,138 @@
+# =============================================================================
+# Lunar ISRU — Oxygen Extraction via Molten Regolith Electrolysis
+# author  = "SM / VSEPR-SIM"
+# version = "v5.1.13.5"
+# status  = "concept_script"
+#
+# WARNING: Several modules are not yet implemented.
+# Required: lunar_environment, oxide_reduction_engine, regolith_composition_library
+# See: dev/bridge/LUNAR_MODULE_SPEC.md
+# =============================================================================
+
+[project]
+name        = "lunar_isru_oxygen_extraction"
+version     = "v5.1.13.5"
+seed_base   = 1969
+determinism = true
+
+[system]
+name          = "lunar_regolith_oxygen_cell"
+scale         = "chemical_to_bead"
+environment   = "moon_surface"
+gravity       = 1.62
+pressure      = 0.0
+atmosphere    = "vacuum"
+solar_flux    = 1361.0
+temperature_day_K   = 390.0
+temperature_night_K = 100.0
+
+# ---------------------------------------------------------------------------
+# Material
+# ---------------------------------------------------------------------------
+[material.regolith]
+source                    = "local_lunar_surface"
+composition_model         = "oxide_mixture"
+geometry                  = "granular_distribution"
+particle_count            = 5000
+grain_radius_distribution = "lognormal"
+grain_radius_min_um       = 10
+grain_radius_max_um       = 500
+oxide_basis               = ["SiO2", "Al2O3", "FeO", "MgO", "CaO", "TiO2"]
+
+[formation.parent]
+name                  = "raw_regolith_bed"
+formation_type        = "granular_packed_bed"
+packing               = "random_close"
+porosity              = 0.38
+surface_area_model    = "grain_resolved"
+thermal_contact_model = "bead_contact_network"
+
+# ---------------------------------------------------------------------------
+# Geometry
+# ---------------------------------------------------------------------------
+[geometry.collector]
+type        = "rectangular_scoop"
+length_m    = 1.0
+width_m     = 0.35
+depth_m     = 0.12
+orientation = "surface_parallel"
+operation   = "scoop_and_transfer"
+
+# ---------------------------------------------------------------------------
+# Process chain
+# ---------------------------------------------------------------------------
+[process.sorting]
+enabled            = true
+method             = "magnetic_density_thermal_sort"
+target_enrichment  = ["FeO", "TiO2"]
+reject_fraction    = 0.30
+output_streams     = ["oxide_rich", "silicate_rich", "fine_dust"]
+
+[process.oxygen_extraction]
+enabled         = true
+method          = "molten_regolith_electrolysis"
+input_stream    = "oxide_rich"
+temperature_K   = 1873.0
+electrode_model = "inert_anode_future"
+electrolyte_state = "molten"
+reaction_goal   = "release_O2_from_oxide_lattice"
+
+# ---------------------------------------------------------------------------
+# Reaction
+# ---------------------------------------------------------------------------
+[reaction.oxygen_release]
+reaction_type  = "oxide_reduction"
+reactants      = ["FeO", "TiO2", "SiO2"]
+products       = ["O2", "reduced_metals", "slag"]
+energy_source  = "solar_concentrator_plus_electric"
+track_energy   = true
+track_mass_balance = true
+
+# ---------------------------------------------------------------------------
+# Observables
+# ---------------------------------------------------------------------------
+[observe]
+metrics = [
+    "mass_in_kg",
+    "oxygen_yield_kg",
+    "slag_mass_kg",
+    "thermal_energy_MJ",
+    "electrical_energy_MJ",
+    "oxide_conversion_fraction",
+    "dust_loss_fraction"
+]
+output_format = "json"
+every_n_steps = 100
+
+# ---------------------------------------------------------------------------
+# Run
+# ---------------------------------------------------------------------------
+[run]
+mode              = "reaction_event"
+max_steps         = 25000
+dt_fs             = 0.002
+output_level      = "verbose"
+
+[environment]
+periodic    = false
+temperature = 390.0
+medium      = "vacuum"
+pressure    = 0.0
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_events_json   = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_dashboard_svg = true
+write_manifest_json = true
+output_dir          = "exports/lunar_isru_oxygen"
+
+[visual]
+output_type     = "terminal_overlay_cycle"
+render_interval = 500
+overlay_sequence = mass_in_kg,oxygen_yield_kg,oxide_conversion_fraction

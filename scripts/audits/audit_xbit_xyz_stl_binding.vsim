@@ -1,0 +1,208 @@
+# =============================================================================
+# audit_xbit_xyz_stl_binding.vsim
+# VSEPR-SIM Day #68 — Audit Script 1 (implement first)
+#
+# Target:
+#   Validate XBIT as XYZ/XYZFull object <-> STL geometry binding layer.
+#
+# Audit focus:
+#   - object_id stability
+#   - state_index mapping
+#   - STL mesh references
+#   - transform matrices
+#   - mesh hashes
+#   - state binding hash
+#   - CRC-32 checksum body
+#   - XBIT inspect / validate / export
+#
+# Unique audit target:
+#   XYZ object_id <-> STL mesh_id
+#
+# VSIM_REFERENCE: WO-VSIM-DAY68-AUDIT / Group 70
+# =============================================================================
+
+[project]
+name        = "audit_xbit_xyz_stl_binding"
+version     = "v5.1.X-day68"
+seed_base   = 68002
+determinism = true
+description = "XBIT object-to-STL binding audit"
+
+[system]
+type = "rigid_geometry_proxy"
+units.length = "mm"
+
+[[raw.object]]
+id = 100
+label = "pipe_segment_A"
+kind = "rigid_body"
+position = [0.0, 0.0, 0.0]
+orientation = [0.0, 0.0, 0.0]
+mass = 2.50
+material = "steel"
+
+[[raw.object]]
+id = 101
+label = "pipe_segment_B"
+kind = "rigid_body"
+position = [100.0, 0.0, 0.0]
+orientation = [0.0, 0.0, 0.0]
+mass = 2.50
+material = "steel"
+
+[[raw.object]]
+id = 102
+label = "valve_body"
+kind = "rigid_body"
+position = [50.0, 25.0, 0.0]
+orientation = [0.0, 0.0, 0.0]
+mass = 8.00
+material = "brass"
+
+[geometry]
+root  = "geometry/stl/"
+units = "mm"
+
+[[geometry.mesh]]
+id   = "mesh_pipe_A"
+file = "geometry/stl/pipe_segment_A.stl"
+role = "visual_and_collision_proxy"
+
+[[geometry.mesh]]
+id   = "mesh_pipe_B"
+file = "geometry/stl/pipe_segment_B.stl"
+role = "visual_and_collision_proxy"
+
+[[geometry.mesh]]
+id   = "mesh_valve_body"
+file = "geometry/stl/valve_body.stl"
+role = "visual_and_collision_proxy"
+
+[xbit]
+enabled                = true
+schema                 = "xyz_stl_binding_v1"
+checksum               = "crc32"
+strict_hash_validation = true
+
+[[xbit.binding]]
+object_id         = 100
+state_index       = 0
+mesh_id           = "mesh_pipe_A"
+binding_type      = "object_to_mesh"
+material_layer    = "steel"
+render_layer      = "pipes"
+collision_enabled = true
+transform         = [
+	[1,0,0,  0],
+	[0,1,0,  0],
+	[0,0,1,  0],
+	[0,0,0,  1]
+]
+
+[[xbit.binding]]
+object_id         = 101
+state_index       = 1
+mesh_id           = "mesh_pipe_B"
+binding_type      = "object_to_mesh"
+material_layer    = "steel"
+render_layer      = "pipes"
+collision_enabled = true
+transform         = [
+	[1,0,0,100],
+	[0,1,0,  0],
+	[0,0,1,  0],
+	[0,0,0,  1]
+]
+
+[[xbit.binding]]
+object_id         = 102
+state_index       = 2
+mesh_id           = "mesh_valve_body"
+binding_type      = "object_to_mesh"
+material_layer    = "brass"
+render_layer      = "valves"
+collision_enabled = true
+transform         = [
+	[1,0,0, 50],
+	[0,1,0, 25],
+	[0,0,1,  0],
+	[0,0,0,  1]
+]
+
+[kernel]
+model         = "legacy_rigid"
+integrator    = "none"
+steps         = 0
+deterministic = true
+seed          = 68002
+
+[export]
+xyzFull     = true
+xbit        = true
+summary_csv = true
+report      = true
+
+[report]
+enabled            = true
+format             = "markdown"
+title              = "XBIT XYZ-to-STL Binding Audit"
+include_artifacts  = true
+include_validation = true
+
+[script]
+require(xbit.enabled == true)
+require(xbit.schema == "xyz_stl_binding_v1")
+
+artifact.manifest.write("out/xbit_binding_audit/manifest.json")
+
+runtime.run_case("xbit_binding_static_build")
+
+artifact.state.export("out/xbit_binding_audit/state/final.xyzFull")
+
+artifact.xbit.create(mode = "geometry_binding")
+artifact.xbit.bind_state("out/xbit_binding_audit/state/final.xyzFull")
+artifact.xbit.compute_mesh_hashes()
+artifact.xbit.compute_state_hash()
+artifact.xbit.recompute_checksum()
+
+gate.begin("xbit_binding_integrity")
+
+artifact.xbit.validate(strict = true)
+
+metrics.capture()
+
+gate.assert(metrics.xbit.object_count == 3)
+gate.assert(metrics.xbit.mesh_count == 3)
+gate.assert(metrics.xbit.binding_count == 3)
+gate.assert(metrics.xbit.missing_object_refs == 0)
+gate.assert(metrics.xbit.missing_mesh_refs == 0)
+gate.assert(metrics.xbit.invalid_transforms == 0)
+gate.assert(metrics.xbit.state_hash_present == true)
+gate.assert(metrics.xbit.checksum_nonzero == true)
+gate.assert(metrics.xbit.checksum_reproducible == true)
+
+artifact.xbit.export("out/xbit_binding_audit/bindings/model.xbit")
+
+gate.end()
+
+gate.begin("xbit_negative_missing_mesh")
+
+artifact.xbit.clone("negative_missing_mesh")
+artifact.xbit.mutate_binding("negative_missing_mesh", object_id = 102, mesh_id = "missing_mesh")
+artifact.xbit.validate_expect_fail("negative_missing_mesh", reason = "missing mesh reference")
+
+gate.end()
+
+gate.begin("xbit_negative_bad_transform")
+
+artifact.xbit.clone("negative_bad_transform")
+artifact.xbit.mutate_transform("negative_bad_transform", object_id = 101, transform = [
+	[1,0,0],
+	[0,1,0]
+])
+artifact.xbit.validate_expect_fail("negative_bad_transform", reason = "invalid transform matrix")
+
+gate.end()
+
+artifact.report.write("out/xbit_binding_audit/report.md")
+artifact.manifest.finalize()

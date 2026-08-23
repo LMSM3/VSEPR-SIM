@@ -1,24 +1,24 @@
-#pragma once
+﻿#pragma once
 /**
- * scale_bridge.hpp — Multi-Scale Property Search Bridge
+ * scale_bridge.hpp  -  Multi-Scale Property Search Bridge
  * =====================================================
  *
  * Provides the upward/downward scale transitions that allow property
  * searches to cascade from atomistic through grain to macroscopic.
  *
- * The key insight: the mature kernel (v0.1→v0.3→2.7→2.9) now produces
+ * The key insight: the mature kernel (v0.1->v0.3->2.7->2.9) now produces
  * deterministic, hash-auditable atomistic structures. This means we
  * can trust the base layer enough to build upward.
  *
  * Scale transitions:
- *   1→2  Atomistic → CG:     Fragment mapping (existing fragment_bridge.hpp)
- *   2→3  CG → Grain:         Bead ensemble → effective medium
- *   3→4  Grain → Component:  Grain assembly → FEA mesh (planned)
- *   4→5  Component → Macro:  Part assembly → system twin (planned)
+ *   1->2  Atomistic -> CG:     Fragment mapping (existing fragment_bridge.hpp)
+ *   2->3  CG -> Grain:         Bead ensemble -> effective medium
+ *   3->4  Grain -> Component:  Grain assembly -> FEA mesh (planned)
+ *   4->5  Component -> Macro:  Part assembly -> system twin (planned)
  *
  * Each transition has:
- *   - A forward (upward) map: fine → coarse
- *   - A backward (downward) map: coarse → fine (refinement)
+ *   - A forward (upward) map: fine -> coarse
+ *   - A backward (downward) map: coarse -> fine (refinement)
  *   - A property transfer function: what properties survive the crossing
  *   - A fidelity metric: how much information is lost
  */
@@ -72,17 +72,17 @@ struct PropertySearchResult {
 // ============================================================================
 
 /**
- * PropertySearchEngine — cascading multi-scale property extraction
+ * PropertySearchEngine  -  cascading multi-scale property extraction
  *
  * Given a molecular identity (formula + topology hash), searches across
- * scales 1→5 to extract every computable property. Each extraction is
- * tied to the provenance chain (same hash → same property, always).
+ * scales 1->5 to extract every computable property. Each extraction is
+ * tied to the provenance chain (same hash -> same property, always).
  *
  * The "hugely random" aspect: the search explores exotic material
  * candidates using the discovery engine's weighted random sampling,
  * then cascades each candidate through the scale hierarchy to see
  * which properties emerge. This is why the formation physics modules
- * must be robust — they're being hammered with random compositions.
+ * must be robust  -  they're being hammered with random compositions.
  */
 class PropertySearchEngine {
 public:
@@ -105,12 +105,12 @@ public:
     // ========================================================================
 
     void register_default_transitions() {
-        // Scale 1 → 2: Atomistic → Coarse-Grained
+        // Scale 1 -> 2: Atomistic -> Coarse-Grained
         // Nuclear domain active: Z=94 (Pu) fissile core enabled at atomistic scale
         transitions_.push_back({
             SimulationScale::Atomistic,
             SimulationScale::CoarseGrained,
-            "Atomistic → CG",
+            "Atomistic -> CG",
             "Fragment mapping (Morgan canonical + inertia frame + SH descriptors)",
             0.85,
             {PropertyDomain::Structural, PropertyDomain::Mechanical,
@@ -118,40 +118,40 @@ public:
              PropertyDomain::Nuclear}
         });
 
-        // Scale 2 → 3: CG → Grain
+        // Scale 2 -> 3: CG -> Grain
         transitions_.push_back({
             SimulationScale::CoarseGrained,
             SimulationScale::Grain,
-            "CG → Grain",
-            "Bead ensemble → effective medium (Voigt-Reuss-Hill bounds + Boltzmann averaging)",
+            "CG -> Grain",
+            "Bead ensemble -> effective medium (Voigt-Reuss-Hill bounds + Boltzmann averaging)",
             0.70,
             {PropertyDomain::Mechanical, PropertyDomain::Thermal,
              PropertyDomain::Nuclear}
         });
 
-        // Scale 3 → 4: Grain → Component
+        // Scale 3 -> 4: Grain -> Component
         transitions_.push_back({
             SimulationScale::Grain,
             SimulationScale::Component,
-            "Grain → Component",
-            "Grain assembly → FEA mesh (constitutive law extraction + homogenization)",
+            "Grain -> Component",
+            "Grain assembly -> FEA mesh (constitutive law extraction + homogenization)",
             0.60,
             {PropertyDomain::Mechanical, PropertyDomain::Thermal}
         });
 
-        // Scale 4 → 5: Component → Macroscopic
+        // Scale 4 -> 5: Component -> Macroscopic
         transitions_.push_back({
             SimulationScale::Component,
             SimulationScale::Macroscopic,
-            "Component → System",
-            "Part assembly → digital twin (contact + boundary conditions + load paths)",
+            "Component -> System",
+            "Part assembly -> digital twin (contact + boundary conditions + load paths)",
             0.50,
             {PropertyDomain::Mechanical}
         });
     }
 
     // ========================================================================
-    // Fidelity chain — cumulative information preservation
+    // Fidelity chain  -  cumulative information preservation
     // ========================================================================
 
     /**
@@ -234,7 +234,7 @@ private:
 };
 
 // ============================================================================
-// Nuclear Core Registry — fissile species active in the property search
+// Nuclear Core Registry  -  fissile species active in the property search
 // ============================================================================
 
 struct NuclearCore {
@@ -250,13 +250,13 @@ struct NuclearCore {
     const char* notes;
 };
 
-// Active nuclear cores — indexed by Z
-// core = 94 → Pu-239 enabled
+// Active nuclear cores  -  indexed by Z
+// core = 94 -> Pu-239 enabled
 inline constexpr NuclearCore NUCLEAR_CORES[] = {
     {92,  "U",  "Uranium",   238, "U-238",
      40.0, 35.56, false,
      "orthorhombic-alpha",
-     "Fertile species; breed → Pu-239 via neutron capture"},
+     "Fertile species; breed -> Pu-239 via neutron capture"},
 
     {94,  "Pu", "Plutonium", 239, "Pu-239",
      35.0, 37.03, true,

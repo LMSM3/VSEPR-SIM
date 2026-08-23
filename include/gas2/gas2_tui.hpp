@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas2_tui.hpp
  * ------------
  * Pure-ANSI Interactive TUI for Gas2/Gas3.
@@ -8,17 +8,17 @@
  * Renders with the same ANSI 256-color + box-drawing style as gas2_engine.cpp.
  *
  * Screens:
- *   MAIN_MENU      — Top-level nav: Species / Analyze / Sweep / Compare / Help / Quit
- *   SPECIES_SELECT — Scrollable species browser with property preview
- *   PARAM_EDIT     — T / P / n parameter editor
- *   ANALYSIS_VIEW  — Full gas2 report rendered inline
- *   EOS_COMPARE    — Side-by-side EOS comparison with live bar chart
- *   SWEEP_LIVE     — Gas3 adaptive sweep streaming view
- *   HELP           — Key binding reference
+ *   MAIN_MENU       -  Top-level nav: Species / Analyze / Sweep / Compare / Help / Quit
+ *   SPECIES_SELECT  -  Scrollable species browser with property preview
+ *   PARAM_EDIT      -  T / P / n parameter editor
+ *   ANALYSIS_VIEW   -  Full gas2 report rendered inline
+ *   EOS_COMPARE     -  Side-by-side EOS comparison with live bar chart
+ *   SWEEP_LIVE      -  Gas3 adaptive sweep streaming view
+ *   HELP            -  Key binding reference
  *
  * Entry points:
- *   gas2_tui_run()   — called by `vsepr gas2 tui`
- *   gas3_tui_run()   — called by `vsepr gas3 tui`
+ *   gas2_tui_run()    -  called by `vsepr gas2 tui`
+ *   gas3_tui_run()    -  called by `vsepr gas3 tui`
  *
  * Anti-black-box: every screen is a standalone render function.
  * Every key binding is explicit. No hidden state.
@@ -43,7 +43,7 @@
 #include <chrono>
 #include <thread>
 
-// ── Platform raw input ────────────────────────────────────────────────────────
+// -- Platform raw input --------------------------------------------------------
 #ifdef _WIN32
 #  include <conio.h>
 #  include <windows.h>
@@ -117,7 +117,7 @@ static constexpr int COL_KEY     = 156;  // key hint green
 // Print a horizontal rule
 inline void rule(int width = 72, int col = 240) {
     std::cout << fg(col);
-    for (int i = 0; i < width; ++i) std::cout << "─";
+    for (int i = 0; i < width; ++i) std::cout << "-";
     std::cout << reset_str() << "\n";
 }
 
@@ -127,13 +127,13 @@ inline std::string bar(double value, double max_val, int bar_width, int col) {
     len = std::max(1, std::min(len, bar_width));
     std::ostringstream s;
     s << fg(col);
-    for (int i = 0; i < len; ++i) s << "█";
+    for (int i = 0; i < len; ++i) s << "#";
     s << reset_str();
     return s.str();
 }
 
 // Sparkline chars
-static constexpr const char* SPARK[] = {"▁","▂","▃","▄","▅","▆","▇","█"};
+static constexpr const char* SPARK[] = {"▁","▂","▃","▄","▅","▆","▇","#"};
 
 } // namespace tui_ansi
 
@@ -190,10 +190,10 @@ struct TuiState {
 static void render_header(const std::string& title, const TuiState& st) {
     using namespace tui_ansi;
     std::cout << bold_fg(COL_HEADER)
-              << "╔══════════════════════════════════════════════════════════════════════╗\n"
-              << "║  ⚛  VSEPR-SIM  │  Gas Analysis TUI  │  "
-              << std::left << std::setw(29) << title << "║\n"
-              << "╚══════════════════════════════════════════════════════════════════════╝"
+              << "+======================================================================+\n"
+              << "|  ⚛  VSEPR-SIM  |  Gas Analysis TUI  |  "
+              << std::left << std::setw(29) << title << "|\n"
+              << "+======================================================================+"
               << reset_str() << "\n";
     // Species + conditions bar
     std::cout << fg(COL_DIM) << "  Species: " << reset_str()
@@ -213,12 +213,12 @@ static void render_header(const std::string& title, const TuiState& st) {
 // ============================================================================
 
 static const char* MENU_ITEMS[] = {
-    "  [S]  Species Browser    — browse all 14 species with properties",
-    "  [A]  Analyze            — full gas2 analysis report",
-    "  [E]  EOS Compare        — Ideal / VdW / Redlich-Kwong side-by-side",
-    "  [P]  Parameters         — edit T, P, n",
-    "  [W]  Sweep (gas3)       — live quality sweep across T/P grid",
-    "  [H]  Help               — key bindings and navigation",
+    "  [S]  Species Browser     -  browse all 14 species with properties",
+    "  [A]  Analyze             -  full gas2 analysis report",
+    "  [E]  EOS Compare         -  Ideal / VdW / Redlich-Kwong side-by-side",
+    "  [P]  Parameters          -  edit T, P, n",
+    "  [W]  Sweep (gas3)        -  live quality sweep across T/P grid",
+    "  [H]  Help                -  key bindings and navigation",
     "  [Q]  Quit",
 };
 static constexpr int MENU_COUNT = 7;
@@ -239,7 +239,7 @@ static void render_main_menu(const TuiState& st) {
     }
     std::cout << "\n";
     rule();
-    std::cout << fg(COL_KEY) << "  ↑/↓ navigate   Enter/letter select   Q quit" << reset_str() << "\n";
+    std::cout << fg(COL_KEY) << "  ↑/v navigate   Enter/letter select   Q quit" << reset_str() << "\n";
     if (!st.status.empty())
         std::cout << fg(COL_WARN) << "  " << st.status << reset_str() << "\n";
 }
@@ -297,33 +297,33 @@ static void render_species_select(const TuiState& st) {
     // Scroll indicator
     if (total > VISIBLE) {
         std::cout << fg(COL_DIM) << "  (" << (st.species_scroll + 1)
-                  << "–" << end << " of " << total << ")" << reset_str() << "\n";
+                  << "-" << end << " of " << total << ")" << reset_str() << "\n";
     }
 
     // Property detail panel for selected species
     const auto* sel = find_species(st.species_keys[st.species_cursor]);
     if (sel) {
         rule(72, 238);
-        std::cout << fg(COL_SECTION) << "┌─ Detail: " << bold_fg(COL_SPECIES) << sel->name << reset_str() << "\n";
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_SECTION) << "+- Detail: " << bold_fg(COL_SPECIES) << sel->name << reset_str() << "\n";
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  Cv=" << std::setprecision(2) << sel->Cv_Jmol << " J/mol·K"
                   << "  Cp=" << sel->Cp_Jmol << " J/mol·K"
                   << "  d_kin=" << std::setprecision(0) << sel->d_kinetic_pm << " pm"
                   << "  Pc=" << std::setprecision(1) << sel->Pc_atm << " atm\n";
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  VdW a=" << std::setprecision(4) << sel->vdw_a
                   << " Pa·m⁶/mol²   b=" << std::setprecision(4) << sel->vdw_b * 1e5
                   << "×10⁻⁵ m³/mol"
                   << "  Hf⁰=" << std::setprecision(1) << sel->Hf0_kJmol << " kJ/mol\n";
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  η(tab)=" << std::setprecision(1) << sel->viscosity_uPas
                   << " μPa·s   κ=" << sel->k_thermal_mWmK << " mW/m·K\n";
-        std::cout << fg(COL_SECTION) << "└" << reset_str() << "\n";
+        std::cout << fg(COL_SECTION) << "+" << reset_str() << "\n";
     }
 
     rule();
     std::cout << fg(COL_KEY)
-              << "  ↑/↓ scroll   Enter=select+analyze   Esc/M=menu"
+              << "  ↑/v scroll   Enter=select+analyze   Esc/M=menu"
               << reset_str() << "\n";
 }
 
@@ -338,7 +338,7 @@ static void render_param_edit(const TuiState& st) {
 
     const char* labels[] = {"Temperature (K)", "Pressure (atm)", "Amount (mol)"};
     double vals[]        = {st.T_K, st.P_atm, st.n_mol};
-    const char* hints[]  = {"[100 – 5000]", "[0.01 – 500]", "[0.001 – 100]"};
+    const char* hints[]  = {"[100 - 5000]", "[0.01 - 500]", "[0.001 - 100]"};
 
     std::cout << "\n";
     for (int i = 0; i < 3; ++i) {
@@ -370,16 +370,16 @@ static void render_param_edit(const TuiState& st) {
         {"HP   (298.15K, 50 atm)", 298.15, 50.0},
         {"Cryo (77K,     1 atm)",    77.0,  1.0},
     };
-    std::cout << fg(COL_SECTION) << "┌─ Quick Presets\n" << reset_str();
+    std::cout << fg(COL_SECTION) << "+- Quick Presets\n" << reset_str();
     for (int i = 0; i < 6; ++i) {
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  [" << (i+1) << "] " << fg(COL_DIM) << presets[i].label << reset_str() << "\n";
     }
-    std::cout << fg(COL_SECTION) << "└" << reset_str() << "\n";
+    std::cout << fg(COL_SECTION) << "+" << reset_str() << "\n";
 
     rule();
     std::cout << fg(COL_KEY)
-              << "  ↑/↓ field   +/- adjust ×0.1   1-6 preset   A=analyze   Esc/M=menu"
+              << "  ↑/v field   +/- adjust ×0.1   1-6 preset   A=analyze   Esc/M=menu"
               << reset_str() << "\n";
     if (!st.status.empty())
         std::cout << fg(COL_WARN) << "  " << st.status << reset_str() << "\n";
@@ -399,7 +399,7 @@ static void render_analysis_view(const TuiState& st) {
                   << "  No analysis cached.  Press [A] from the menu, or [Enter] in Species Browser.\n"
                   << reset_str();
     } else {
-        // Delegate to the engine's own renderer — already rich ANSI output
+        // Delegate to the engine's own renderer  -  already rich ANSI output
         std::cout << st.analysis.format_full_report();
     }
 
@@ -419,7 +419,7 @@ static void render_eos_compare(const TuiState& st) {
     render_header("EOS Comparison", st);
 
     if (!st.analysis_valid) {
-        std::cout << "\n" << fg(COL_WARN) << "  No analysis cached — run Analyze first.\n" << reset_str();
+        std::cout << "\n" << fg(COL_WARN) << "  No analysis cached  -  run Analyze first.\n" << reset_str();
         rule();
         std::cout << fg(COL_KEY) << "  A=analyze   Esc/M=menu" << reset_str() << "\n";
         return;
@@ -428,12 +428,12 @@ static void render_eos_compare(const TuiState& st) {
     const auto& a = st.analysis;
 
     // --- Volume comparison ---
-    std::cout << "\n" << fg(COL_SECTION) << "┌─ Molar Volume (L/mol)\033[0m\n";
+    std::cout << "\n" << fg(COL_SECTION) << "+- Molar Volume (L/mol)\033[0m\n";
     double vmax = std::max({a.eos_ideal.V_L(), a.eos_vdw.V_L(), a.eos_rk.V_L(), 0.001});
     constexpr int BW = 32;
 
     auto eos_row = [&](const char* name, const EOSResult& r, int col) {
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  " << bold_fg(col) << std::setw(14) << std::left << name << reset_str()
                   << fg(col) << std::setw(10) << std::fixed << std::setprecision(5) << r.V_L() << reset_str()
                   << " L   " << bar(r.V_L(), vmax, BW, col)
@@ -443,16 +443,16 @@ static void render_eos_compare(const TuiState& st) {
     eos_row("Ideal Gas",     a.eos_ideal, 75);
     eos_row("Van der Waals", a.eos_vdw,   156);
     eos_row("Redlich-Kwong", a.eos_rk,    213);
-    std::cout << fg(COL_SECTION) << "└" << reset_str() << "\n\n";
+    std::cout << fg(COL_SECTION) << "+" << reset_str() << "\n\n";
 
     // --- Deviation from ideal ---
-    std::cout << fg(COL_SECTION) << "┌─ Deviation from Ideal\033[0m\n";
+    std::cout << fg(COL_SECTION) << "+- Deviation from Ideal\033[0m\n";
     auto dev_row = [&](const char* name, double V_real, int col) {
         double dev = (V_real - a.eos_ideal.V_L()) / a.eos_ideal.V_L() * 100.0;
         int bar_len = std::min(static_cast<int>(std::abs(dev) / 20.0 * 24), 24);
         std::string bar_str;
         for (int i = 0; i < bar_len; ++i) bar_str += (dev < 0) ? "◀" : "▶";
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  " << bold_fg(col) << std::setw(14) << std::left << name << reset_str()
                   << fg(dev < 0 ? COL_GOOD : COL_BAD) << std::showpos << std::fixed
                   << std::setprecision(3) << dev << "%" << std::noshowpos << reset_str()
@@ -460,17 +460,17 @@ static void render_eos_compare(const TuiState& st) {
     };
     dev_row("Van der Waals", a.eos_vdw.V_L(), 156);
     dev_row("Redlich-Kwong", a.eos_rk.V_L(),  213);
-    std::cout << fg(COL_SECTION) << "└" << reset_str() << "\n\n";
+    std::cout << fg(COL_SECTION) << "+" << reset_str() << "\n\n";
 
     // --- Kinetic summary ---
-    std::cout << fg(COL_SECTION) << "┌─ Kinetic Theory\033[0m\n";
+    std::cout << fg(COL_SECTION) << "+- Kinetic Theory\033[0m\n";
     double vscale = std::max(a.v_rms, 1.0);
     auto speed_row = [&](const char* name, double v, int col) {
         int slen = std::max(1, static_cast<int>(v / vscale * 20));
         std::string gauge;
-        for (int i = 0; i < slen; ++i) gauge += "━";
+        for (int i = 0; i < slen; ++i) gauge += "-";
         gauge += "▸";
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  " << fg(col) << std::setw(10) << std::left << name << reset_str()
                   << fg(COL_VALUE) << std::setw(10) << std::fixed << std::setprecision(1) << v << " m/s  " << reset_str()
                   << fg(col) << gauge << reset_str() << "\n";
@@ -478,32 +478,32 @@ static void render_eos_compare(const TuiState& st) {
     speed_row("v_mp",   a.v_mp,   226);
     speed_row("v_mean", a.v_mean, 48);
     speed_row("v_rms",  a.v_rms,  196);
-    std::cout << fg(COL_PIPE) << "│" << reset_str()
+    std::cout << fg(COL_PIPE) << "|" << reset_str()
               << "  MFP=" << std::setprecision(2) << (a.mean_free_path_m * 1e9) << " nm"
               << "   η=" << std::setprecision(2) << (a.viscosity * 1e6) << " μPa·s";
     if (a.species) {
         std::cout << fg(COL_DIM) << "  [tab: " << a.species->viscosity_uPas << "]" << reset_str();
     }
-    std::cout << "\n" << fg(COL_SECTION) << "└" << reset_str() << "\n\n";
+    std::cout << "\n" << fg(COL_SECTION) << "+" << reset_str() << "\n\n";
 
     // --- Thermal ---
-    std::cout << fg(COL_SECTION) << "┌─ Thermal Properties\033[0m\n";
-    std::cout << fg(COL_PIPE) << "│" << reset_str()
+    std::cout << fg(COL_SECTION) << "+- Thermal Properties\033[0m\n";
+    std::cout << fg(COL_PIPE) << "|" << reset_str()
               << "  Cv=" << std::setprecision(3) << a.Cv_calc << " J/mol·K";
     if (a.species) std::cout << fg(COL_DIM) << "  [tab: " << a.species->Cv_Jmol << "]" << reset_str();
     std::cout << "\n";
-    std::cout << fg(COL_PIPE) << "│" << reset_str()
+    std::cout << fg(COL_PIPE) << "|" << reset_str()
               << "  Cp=" << a.Cp_calc << " J/mol·K";
     if (a.species) std::cout << fg(COL_DIM) << "  [tab: " << a.species->Cp_Jmol << "]" << reset_str();
     std::cout << "\n";
-    std::cout << fg(COL_PIPE) << "│" << reset_str()
+    std::cout << fg(COL_PIPE) << "|" << reset_str()
               << "  γ=" << std::setprecision(4) << a.gamma_calc;
     if (a.species) std::cout << fg(COL_DIM) << "  [tab: " << a.species->gamma << "]" << reset_str();
     std::cout << "\n";
-    std::cout << fg(COL_PIPE) << "│" << reset_str()
+    std::cout << fg(COL_PIPE) << "|" << reset_str()
               << "  c_sound=" << std::setprecision(1) << a.c_sound << " m/s\n";
     if (a.species) {
-        std::cout << fg(COL_PIPE) << "│" << reset_str()
+        std::cout << fg(COL_PIPE) << "|" << reset_str()
                   << "  T_inv=" << std::setprecision(0) << a.T_inversion << " K";
         if (a.T_K < a.T_inversion)
             std::cout << fg(COL_SECTION) << "  ❄ cooling on expansion" << reset_str();
@@ -511,7 +511,7 @@ static void render_eos_compare(const TuiState& st) {
             std::cout << fg(COL_BAD) << "  🔥 heating on expansion" << reset_str();
         std::cout << "\n";
     }
-    std::cout << fg(COL_SECTION) << "└" << reset_str() << "\n";
+    std::cout << fg(COL_SECTION) << "+" << reset_str() << "\n";
 
     rule();
     std::cout << fg(COL_KEY)
@@ -526,12 +526,12 @@ static void render_eos_compare(const TuiState& st) {
 static void render_sweep_live(const TuiState& st) {
     using namespace tui_ansi;
     clear();
-    render_header("Gas3 Sweep — " + st.formula, st);
+    render_header("Gas3 Sweep  -  " + st.formula, st);
 
     const auto& recs = st.sweep_records;
     if (recs.empty()) {
         std::cout << "\n" << fg(COL_WARN)
-                  << (st.sweep_running ? "  Sweeping…\n" : "  Press [R] to run sweep.\n")
+                  << (st.sweep_running ? "  Sweeping...\n" : "  Press [R] to run sweep.\n")
                   << reset_str();
         rule();
         std::cout << fg(COL_KEY) << "  [R] run sweep   Esc/M=menu" << reset_str() << "\n";
@@ -554,8 +554,8 @@ static void render_sweep_live(const TuiState& st) {
     }
     double avg_q = (total > 0) ? sum_q / total : 0.0;
 
-    std::cout << "\n" << fg(COL_SECTION) << "┌─ Summary  (" << total << " records)\033[0m\n";
-    std::cout << fg(COL_PIPE) << "│" << reset_str()
+    std::cout << "\n" << fg(COL_SECTION) << "+- Summary  (" << total << " records)\033[0m\n";
+    std::cout << fg(COL_PIPE) << "|" << reset_str()
               << "  " << bold_fg(COL_GOOD) << "Q4:" << q4 << reset_str()
               << fg(75)  << "  Q3:" << q3 << reset_str()
               << fg(COL_VALUE) << "  Q2:" << q2 << reset_str()
@@ -565,7 +565,7 @@ static void render_sweep_live(const TuiState& st) {
               << "\n";
 
     // Quality sparkline across the whole sweep
-    std::cout << fg(COL_PIPE) << "│" << reset_str() << "  ";
+    std::cout << fg(COL_PIPE) << "|" << reset_str() << "  ";
     int spark_w = std::min(total, 60);
     for (int i = 0; i < spark_w; ++i) {
         int idx = static_cast<int>(i * static_cast<double>(total) / spark_w);
@@ -576,7 +576,7 @@ static void render_sweep_live(const TuiState& st) {
         std::cout << fg(col) << tui_ansi::SPARK[level] << reset_str();
     }
     std::cout << "  quality\n";
-    std::cout << fg(COL_SECTION) << "└" << reset_str() << "\n\n";
+    std::cout << fg(COL_SECTION) << "+" << reset_str() << "\n\n";
 
     // Scrollable record table
     constexpr int VISIBLE = 14;
@@ -611,13 +611,13 @@ static void render_sweep_live(const TuiState& st) {
     }
 
     if (total > VISIBLE) {
-        std::cout << fg(COL_DIM) << "  (" << (scroll + 1) << "–" << end
-                  << " of " << total << ")   ↑/↓ scroll" << reset_str() << "\n";
+        std::cout << fg(COL_DIM) << "  (" << (scroll + 1) << "-" << end
+                  << " of " << total << ")   ↑/v scroll" << reset_str() << "\n";
     }
 
     rule();
     std::cout << fg(COL_KEY)
-              << "  [R] rerun sweep   ↑/↓ scroll   Esc/M=menu"
+              << "  [R] rerun sweep   ↑/v scroll   Esc/M=menu"
               << reset_str() << "\n";
 }
 
@@ -628,7 +628,7 @@ static void render_sweep_live(const TuiState& st) {
 static void render_help(const TuiState& st) {
     using namespace tui_ansi;
     clear();
-    render_header("Help — Key Bindings", st);
+    render_header("Help  -  Key Bindings", st);
 
     struct Section { const char* title; std::vector<std::pair<const char*, const char*>> keys; };
     const Section sections[] = {
@@ -641,7 +641,7 @@ static void render_help(const TuiState& st) {
         }},
         {"Navigation", {
             {"↑ / k",    "Move cursor up"},
-            {"↓ / j",    "Move cursor down"},
+            {"v / j",    "Move cursor down"},
             {"Enter",    "Select / confirm"},
             {"Tab",      "Next screen"},
         }},
@@ -661,13 +661,13 @@ static void render_help(const TuiState& st) {
 
     std::cout << "\n";
     for (const auto& sec : sections) {
-        std::cout << fg(COL_SECTION) << "┌─ " << sec.title << "\033[0m\n";
+        std::cout << fg(COL_SECTION) << "+- " << sec.title << "\033[0m\n";
         for (const auto& [key, desc] : sec.keys) {
-            std::cout << fg(COL_PIPE) << "│" << reset_str()
+            std::cout << fg(COL_PIPE) << "|" << reset_str()
                       << "  " << bold_fg(COL_KEY) << std::setw(12) << std::left << key
                       << reset_str() << fg(255) << desc << reset_str() << "\n";
         }
-        std::cout << fg(COL_SECTION) << "└\033[0m\n\n";
+        std::cout << fg(COL_SECTION) << "+\033[0m\n\n";
     }
 
     rule();
@@ -815,7 +815,7 @@ inline int gas2_tui_run(const std::string& initial_formula = "Ar",
         // Normalise to uppercase for letter shortcuts (leave digits and specials)
         int letter = (ch >= 'a' && ch <= 'z') ? (ch - 32) : ch;
 
-        // ── Global shortcuts ──────────────────────────────────────────────
+        // -- Global shortcuts ----------------------------------------------
         if (letter == 'Q' || (ch == 27 && st.screen == TuiScreen::MAIN_MENU)) {
             st.screen = TuiScreen::QUIT;
             break;
@@ -838,7 +838,7 @@ inline int gas2_tui_run(const std::string& initial_formula = "Ar",
         if (letter == 'P') { st.screen = TuiScreen::PARAM_EDIT;     render(); continue; }
         if (letter == 'W') { st.screen = TuiScreen::SWEEP_LIVE;     render(); continue; }
 
-        // ── Screen-specific input ─────────────────────────────────────────
+        // -- Screen-specific input -----------------------------------------
         switch (st.screen) {
 
             // ---- MAIN MENU ----

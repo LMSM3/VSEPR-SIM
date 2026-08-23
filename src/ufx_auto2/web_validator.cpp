@@ -1,4 +1,4 @@
-// src/ufx_auto2/web_validator.cpp
+﻿// src/ufx_auto2/web_validator.cpp
 // UFX_AUTO_2 Phase 5 -- Web Validator Implementation
 // VSEPR-SIM v5 beta8 -> beta9 target
 //
@@ -158,7 +158,7 @@ WebValidateResult WebValidator::validate_batch(const WebValidateOptions& opts) {
 								   "webdata missing; confidence cap applied");
 				++result.missing;
 			} else {
-				// Property found — basic plausibility check for molecular_weight
+				// Property found  -  basic plausibility check for molecular_weight
 				if (std::string(check.prop) == "molecular_weight"
 					&& resp.numeric_value.has_value()) {
 					double mw = *resp.numeric_value;

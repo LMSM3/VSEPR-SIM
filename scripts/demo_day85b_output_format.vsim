@@ -1,0 +1,111 @@
+# demo_day85b_output_format.vsim
+# ============================================================================
+# VSEPR-SIM  |  Day 85B  |  Reformatted default viewer + output formats
+# ============================================================================
+#
+# Purpose:
+#   Demonstrate the Day 85B viewer redesign for `vsepr run`:
+#
+#     - Output format B : the rich per-step table that shows, from left to
+#                         right, the step, thermal energy E (kcal/mol), a Gibbs
+#                         proxy G* (kJ/mol, from [chem_plus]), the live
+#                         % composition of every reaction species, and -- as
+#                         the right-most column -- the relative reactivity
+#                         (Part E: |d(composition)/dstep| normalised to the run
+#                         peak, in [0..1]).
+#
+#     - Output format D : the legacy convergence step-trace row, preserved.
+#
+#   The reaction below is methane combustion, so the composition column shows
+#   the decay of CH4 (and O2) alongside the formation of CO2 and H2O, exactly
+#   the "example decay of CH4" case.
+#
+# Output-format selection:
+#   The kernel default is format "A" (the legacy proxy viewer -- unchanged).
+#   A script overrides it declaratively with [features]:
+#
+#       [features]
+#       output_format = "B"     # or "D" for the legacy trace, "A" for default
+#
+#   The [features.outputformat] alias form works too (mode = "B").
+#   The idealised layout is reserved for WO-85G (output_format = "ideal").
+#
+# Run it:
+#     vsepr run scripts/demo_day85b_output_format.vsim
+#
+# ============================================================================
+
+
+print_console "=============================================="
+print_console " VSEPR-SIM :: Day 85B Output-Format Demo"
+print_console "=============================================="
+print_console ""
+print_console ">> Output format B: composition + thermal + Gibbs + reactivity"
+print_console ">> Watch the decay of CH4 and the rise of CO2 / H2O."
+
+
+# ----------------------------------------------------------------------------
+# [features]  --  output-format selection  (WO-85B)
+# ----------------------------------------------------------------------------
+# Select the rich composition/thermodynamics/reactivity viewer.  Switch this to
+# "D" to see the preserved legacy convergence trace, or "A" for the default.
+
+[features]
+output_format = "B"
+
+
+# ----------------------------------------------------------------------------
+# [project]  --  identity block
+# ----------------------------------------------------------------------------
+
+[project]
+name        = "day85b_output_format"
+description = "Day 85B: Format B viewer -- composition, thermal, Gibbs, reactivity"
+version     = "1.0.0"
+seed_base   = 8585
+
+
+# ----------------------------------------------------------------------------
+# [material]  --  the reacting species shown in the composition column
+# ----------------------------------------------------------------------------
+
+[material]
+formula = "CH4"
+
+
+# ----------------------------------------------------------------------------
+# [chem_plus]  --  ChemPlus reaction bridge  (drives composition + G*)
+# ----------------------------------------------------------------------------
+# The reaction supplies both the stoichiometry (for the % composition column)
+# and the reaction energy (for the Gibbs proxy G*).
+#
+#   Reaction:  CH4 + 2O2 -> CO2 + 2H2O + 891 kJ
+#   Energy:    891 kJ (exothermic -> negative G* proxy)
+
+[chem_plus]
+reaction   = "CH4 + 2O2 -> CO2 + 2H2O + 891 kJ"
+vsepr_link = true
+
+
+# ----------------------------------------------------------------------------
+# [run]  --  keep the run short so the table is easy to read
+# ----------------------------------------------------------------------------
+
+[run]
+mode      = "relax"
+max_steps = 24
+
+
+# ----------------------------------------------------------------------------
+# [visual]  --  render every step so each table row is emitted
+# ----------------------------------------------------------------------------
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 1
+
+
+print_console ""
+print_console "Day 85B demonstration finished. See the reactivity column ->"
+
+#

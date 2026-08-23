@@ -1,14 +1,14 @@
-/**
- * test_bead_layers.cpp — Tests for Multi-Layer Bead Visualization Model
+﻿/**
+ * test_bead_layers.cpp  -  Tests for Multi-Layer Bead Visualization Model
  *
  * Validates the Layer 2 (Effective Surface-State) and Layer 3
  * (Internal Structural Reference) data model and builder logic.
  *
- * Phase A: Layer 2 — SurfaceStateGrid correctness
+ * Phase A: Layer 2  -  SurfaceStateGrid correctness
  *   Grid population, vertex count, angular coordinates, SH evaluation,
  *   channel range tracking, channel_value accessor, synthesized channel.
  *
- * Phase B: Layer 3 — InternalRefOptions and SourceFragmentMiniature
+ * Phase B: Layer 3  -  InternalRefOptions and SourceFragmentMiniature
  *   Source fragment population from FragmentView, element census,
  *   bond transfer, orientation marker data.
  *
@@ -21,11 +21,11 @@
  *
  * Architecture position:
  *   Bead + FragmentView + UnifiedDescriptor
- *       → build_visual_record()
- *       → BeadVisualRecord
- *           → Layer 2: SurfaceStateGrid
- *           → Layer 3: SourceFragmentMiniature
- *       → renderer primitives
+ *       -> build_visual_record()
+ *       -> BeadVisualRecord
+ *           -> Layer 2: SurfaceStateGrid
+ *           -> Layer 3: SourceFragmentMiniature
+ *       -> renderer primitives
  *
  * Reference: Multi-Layer Bead Visualization Model specification
  *            (section_anisotropic_beads.tex)
@@ -164,11 +164,11 @@ static atomistic::FragmentView make_water_fragment() {
 }
 
 // ============================================================================
-// Phase A — Layer 2: SurfaceStateGrid Correctness
+// Phase A  -  Layer 2: SurfaceStateGrid Correctness
 // ============================================================================
 
 static void phase_a_surface_state_grid() {
-    std::printf("\n=== Phase A: Layer 2 — SurfaceStateGrid Correctness ===\n");
+    std::printf("\n=== Phase A: Layer 2  -  SurfaceStateGrid Correctness ===\n");
 
     // ---- A.1: Grid population from isotropic bead ----
     {
@@ -317,9 +317,9 @@ static void phase_a_surface_state_grid() {
         check(vmin <= vmax, "synthesized range: min <= max");
     }
 
-    // ---- A.8: No descriptor → grid not populated ----
+    // ---- A.8: No descriptor -> grid not populated ----
     {
-        std::printf("\n--- A.8: No descriptor → no grid ---\n");
+        std::printf("\n--- A.8: No descriptor -> no grid ---\n");
 
         Bead b;
         b.position = {0.0, 0.0, 0.0};
@@ -372,11 +372,11 @@ static void phase_a_surface_state_grid() {
 }
 
 // ============================================================================
-// Phase B — Layer 3: Internal Structural Reference
+// Phase B  -  Layer 3: Internal Structural Reference
 // ============================================================================
 
 static void phase_b_internal_reference() {
-    std::printf("\n=== Phase B: Layer 3 — Internal Structural Reference ===\n");
+    std::printf("\n=== Phase B: Layer 3  -  Internal Structural Reference ===\n");
 
     // ---- B.1: Fragment population ----
     {
@@ -456,7 +456,7 @@ static void phase_b_internal_reference() {
         check(com_len < 1.0, "COM is close to origin");
     }
 
-    // ---- B.6: No fragment → not populated ----
+    // ---- B.6: No fragment -> not populated ----
     {
         std::printf("\n--- B.6: No fragment ---\n");
 
@@ -498,7 +498,7 @@ static void phase_b_internal_reference() {
 }
 
 // ============================================================================
-// Phase C — ViewMode Coverage
+// Phase C  -  ViewMode Coverage
 // ============================================================================
 
 static void phase_c_view_mode() {
@@ -555,7 +555,7 @@ static void phase_c_view_mode() {
 }
 
 // ============================================================================
-// Phase D — Builder Integration
+// Phase D  -  Builder Integration
 // ============================================================================
 
 static void phase_d_builder_integration() {
@@ -662,7 +662,7 @@ static void phase_d_builder_integration() {
 // ============================================================================
 
 int main() {
-    std::printf("Multi-Layer Bead Visualization Model — Unit Tests\n");
+    std::printf("Multi-Layer Bead Visualization Model  -  Unit Tests\n");
     std::printf("Layer 2: Effective Surface-State  |  Layer 3: Internal Reference\n");
     std::printf("================================================================\n");
 

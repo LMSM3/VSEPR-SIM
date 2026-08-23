@@ -1,4 +1,4 @@
-#include "cli/emit_gas.hpp"
+﻿#include "cli/emit_gas.hpp"
 #include "cli/emit_output.hpp"
 #include <iostream>
 #include <random>
@@ -8,7 +8,7 @@ namespace vsepr {
 namespace cli {
 
 // Expand formula to atom list matching target count
-// Example: H2O + cloud=300 → [H,H,O, H,H,O, ...] (200 H, 100 O)
+// Example: H2O + cloud=300 -> [H,H,O, H,H,O, ...] (200 H, 100 O)
 std::vector<std::string> expand_formula(
     const std::vector<std::pair<std::string, int>>& composition,
     int target_atoms

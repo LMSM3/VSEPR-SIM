@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 // ============================================================================
-// topology_graph.hpp — Glass Module: Topology Graph Builder
+// topology_graph.hpp  -  Glass Module: Topology Graph Builder
 // ============================================================================
 // Converts existing vsepr::Molecule data into the lightweight GlassMolecule
 // topology used by the prerender layout engine.
@@ -24,10 +24,10 @@ float default_covalent_radius(uint16_t Z);
 // Build a GlassMolecule from flat arrays (the format used by FrameSnapshot
 // and AtomicGeometry).
 //
-//   atomic_numbers  — Z values, one per atom
-//   bond_pairs      — (i,j) atom index pairs
-//   bond_orders     — optional per-bond order (nullptr → all Single)
-//   covalent_radii  — optional per-atom radius (nullptr → use defaults)
+//   atomic_numbers   -  Z values, one per atom
+//   bond_pairs       -  (i,j) atom index pairs
+//   bond_orders      -  optional per-bond order (nullptr -> all Single)
+//   covalent_radii   -  optional per-atom radius (nullptr -> use defaults)
 // -----------------------------------------------------------------------
 GlassMolecule build_topology(
     const std::vector<int>&                          atomic_numbers,

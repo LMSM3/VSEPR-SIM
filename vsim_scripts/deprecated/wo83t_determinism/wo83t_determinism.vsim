@@ -1,0 +1,58 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83t_determinism.vsim
+# Tier A — native replacement for demo_wo83t_determinism.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# The Python script runs classify 3 times per formula and asserts byte-equal
+# stdout.  In native VSIM, determinism is a project-level contract:
+#   determinism = true
+# The pipeline guarantees identical output on repeated runs by construction.
+# No re-run comparison loop is needed; the [project] field is the assertion.
+
+[project]
+name        = wo83t_determinism_nh3
+version     = v5.0.0
+determinism = true
+
+[material]
+formula = NH3
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+# [classify.expect]
+# result = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name        = wo83t_determinism_co2
+version     = v5.0.0
+determinism = true
+[material]
+formula = CO2
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+# [classify.expect]
+# result = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name        = wo83t_determinism_ch4
+version     = v5.0.0
+determinism = true
+[material]
+formula = CH4
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+# [classify.expect]
+# result = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

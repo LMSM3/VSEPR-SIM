@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * cluster.hpp
  * -----------
@@ -50,7 +50,7 @@ ClusterResult cluster_by_defect(const std::vector<State>& structures,
 // Classification Modules
 // ============================================================================
 
-// Module A: Polymorph Detection (same chemistry → structure phases)
+// Module A: Polymorph Detection (same chemistry -> structure phases)
 struct PolymorphResult {
     std::string formula;
     std::vector<uint64_t> phase_ids;       // α, β, γ, ... (ranked by energy)
@@ -63,7 +63,7 @@ classify_polymorphs(const std::vector<State>& structures,
                    const std::vector<double>& energies = {},
                    double epsilon = 0.05);
 
-// Module B: Isomorph Detection (same structure → chemistry variants)
+// Module B: Isomorph Detection (same structure -> chemistry variants)
 struct IsomorphResult {
     uint64_t prototype_id;
     std::vector<uint64_t> variant_ids;
@@ -76,7 +76,7 @@ classify_isomorphs(const std::vector<State>& structures,
                   double proto_epsilon = 0.05,
                   double deco_epsilon = 0.10);
 
-// Module C: Defect Microstate Detection (same parent → occupancy/disorder)
+// Module C: Defect Microstate Detection (same parent -> occupancy/disorder)
 struct DefectResult {
     uint64_t parent_id;
     std::string parent_formula;

@@ -1,4 +1,4 @@
-// functional_groups.hpp — Functional group detection and classification
+﻿// functional_groups.hpp  -  Functional group detection and classification
 #pragma once
 
 #include <cstdint>

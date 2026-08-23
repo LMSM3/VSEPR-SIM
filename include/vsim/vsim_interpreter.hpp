@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * include/vsim/vsim_interpreter.hpp
  * ===================================
@@ -16,7 +16,7 @@
  * particle.* script blocks. Anything beyond that is 57E work.
  *
  * PBCInterpreterRuntime
- * ─────────────────────
+ * ---------------------
  * Separate from the legacy VsimRuntime (vsim_runtime.hpp) which drives
  * the beta-10 simulation loop. PBCInterpreterRuntime is the context object
  * the interpreter bindings operate on. It holds particles, image counts,
@@ -46,7 +46,7 @@
 
 namespace vsim {
 
-// ── Particle: minimal state representation ────────────────────────────────────
+// -- Particle: minimal state representation ------------------------------------
 
 struct ScriptParticle {
 	XYZVec3 position;          // Wrapped coordinate (angstrom)
@@ -54,7 +54,7 @@ struct ScriptParticle {
 	int Z = 0;                 // Atomic number
 };
 
-// ── PBCInterpreterRuntime ─────────────────────────────────────────────────────
+// -- PBCInterpreterRuntime -----------------------------------------------------
 // The interpreter context. Bindings receive a reference to this struct.
 // All per-particle arrays are 0-indexed; VSIM scripts are 1-indexed.
 
@@ -81,13 +81,13 @@ struct PBCInterpreterRuntime {
 	}
 };
 
-// ── BuiltinFn signature ───────────────────────────────────────────────────────
+// -- BuiltinFn signature -------------------------------------------------------
 
 using BuiltinFn = std::function<
 	Value(const std::vector<Value>&, PBCInterpreterRuntime&)
 >;
 
-// ── VsimInterpreter ───────────────────────────────────────────────────────────
+// -- VsimInterpreter -----------------------------------------------------------
 
 class VsimInterpreter {
 public:
@@ -101,13 +101,13 @@ public:
 
 	// Evaluate a single expression and return its value.
 	// Supports:
-	//   namespace.function(args...)   — builtin call
-	//   function(args...)             — builtin call (no namespace)
-	//   xyzvec3(x, y, z)             — vector literal constructor
-	//   numeric literal              — int64 or double
-	//   quoted string literal        — std::string
-	//   variable_name                — lookup in scope_
-	//   expr.x  expr.y  expr.z      — field access on XYZVec3 / Int3
+	//   namespace.function(args...)    -  builtin call
+	//   function(args...)              -  builtin call (no namespace)
+	//   xyzvec3(x, y, z)              -  vector literal constructor
+	//   numeric literal               -  int64 or double
+	//   quoted string literal         -  std::string
+	//   variable_name                 -  lookup in scope_
+	//   expr.x  expr.y  expr.z       -  field access on XYZVec3 / Int3
 	Value eval(const std::string& expr);
 
 	// Execute a multi-line script block (one "name = expr" per line).
@@ -126,7 +126,7 @@ private:
 	std::vector<Value> parse_args(const std::string& args_str);
 };
 
-// ── Registration declarations ─────────────────────────────────────────────────
+// -- Registration declarations -------------------------------------------------
 
 void register_pbc_builtins     (VsimInterpreter& interp);
 void register_particle_builtins(VsimInterpreter& interp);

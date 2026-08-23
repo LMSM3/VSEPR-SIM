@@ -1,34 +1,45 @@
 #pragma once
+/**
+ * viewer_launcher.hpp
+ * ====================
+ * VSEPR-SIM  |  WO-85Z  |  Viewer Launcher
+ *
+ * Launches the supported live `vsepr-view` process for simulation artifacts.
+ * Historical standalone, VTK, and daemon viewers are archived and are not
+ * considered launch candidates.
+ */
+
 #include <string>
 
 namespace vsepr {
 namespace cli {
 
-/**
- * Viewer Launcher
- * 
- * Handles launching visualization tools with appropriate flags.
- */
+struct ViewerLaunchConfig {
+    std::string artifact_path;
+    bool uless_indicator_enabled = false;
+    std::string uless_label = "obs";
+    double uless_value = 0.0;
+    double uless_max = 1.0;
+};
+
 class ViewerLauncher {
 public:
-    /**
-     * Launch viewer in static mode (--viz)
-     * 
-     * Opens viewer after simulation completes.
-     * Viewer exits when user closes window.
-     */
-    static void launch_static(const std::string& xyz_path);
-    
-    /**
-     * Launch viewer in watch mode (--watch)
-     * 
-     * Opens viewer that auto-reloads on file changes.
-     * Runs in background during simulation.
-     */
-    static void launch_watch(const std::string& xyz_path);
-    
+    // Launch a live viewer seeded from an artifact path.
+    static void launch_static(const std::string& artifact_path);
+
+    // Launch with explicit Uless indicator configuration.
+    static void launch_with_config(const ViewerLaunchConfig& config);
+
+    // Launch a live viewer from the latest artifact state. The simulation loop
+    // remains fixed-timestep and independent of render cadence.
+    static void launch_watch(const std::string& artifact_path);
+
 private:
+    // Resolve only the supported live viewer.
+    static std::string resolve_viewer_binary();
+
     static void launch_process(const std::string& command);
 };
 
-}} // namespace vsepr::cli
+} // namespace cli
+} // namespace vsepr

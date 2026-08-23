@@ -1,0 +1,106 @@
+# scripts/demo_15_wo66N_batch_advanced.vsim
+# VSEPR-SIM v5.1.4  |  Demo 15 -- WO-66N Advanced Batch Constructor Objects
+# Deep multi-material batch sweep across three WallSurface instances and
+# two pipe geometries.  Fully report-ready: TSV pressure/shear profiles,
+# JSON analysis, SVG energy traces, HTML dashboard.
+# Run: vsper run scripts/demo_15_wo66N_batch_advanced.vsim
+
+[project]
+name        = "demo_15_wo66N_batch_advanced"
+version     = "v5.1.4"
+seed_base   = 15001
+determinism = true
+description = "WO-66N deep batch constructor sweep -- multi-material pipe surfaces with report-ready outputs"
+
+[objects]
+system.geometry.steel_pipe   = PipeGeometry(radius = 0.08, length = 2.0, material = steel, xbit = auto)
+system.geometry.ceramic_pipe = PipeGeometry(radius = 0.06, length = 1.5, material = alumina, xbit = auto)
+
+[objects.batch]
+base         = system.surface.wall_steel
+count        = 3
+constructor  = WallSurface
+geometry     = system.geometry.steel_pipe
+binning_mode = axis_aligned
+region_grid_n = 16
+pressure[0]  = 120000
+pressure[1]  = 115000
+pressure[2]  = 108000
+roughness[0] = 0.0008
+roughness[1] = 0.0012
+roughness[2] = 0.0020
+slip[0]      = 0.03
+slip[1]      = 0.05
+slip[2]      = 0.08
+xbit         = auto
+
+[objects.batch]
+base         = system.surface.wall_ceramic
+count        = 2
+constructor  = WallSurface
+geometry     = system.geometry.ceramic_pipe
+binning_mode = axis_aligned
+region_grid_n = 12
+pressure[0]  = 90000
+pressure[1]  = 85000
+roughness[0] = 0.0002
+roughness[1] = 0.0004
+slip[0]      = 0.01
+slip[1]      = 0.02
+xbit         = auto
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+[run]
+mode          = "relax"
+max_steps     = 600
+dt_fs         = 0.5
+temperature_K = 350.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "coordination", "rdf", "pressure", "shear", "flow_rate", "formation"]
+output_format = "json"
+every_n_steps = 30
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.tables]
+pressure_profile_tsv  = "reports/demo_15/pressure_profile.tsv"
+shear_profile_tsv     = "reports/demo_15/shear_profile.tsv"
+flow_rate_tsv         = "reports/demo_15/flow_rate.tsv"
+wall_stress_tsv       = "reports/demo_15/wall_stress.tsv"
+batch_summary_tsv     = "reports/demo_15/batch_summary.tsv"
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_15/
+
+[visual]
+output_type              = "gl_overlay_cycle"
+overlay_sequence         = ["density", "coordination", "pressure", "shear"]
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 15
+
+[open]
+enabled = false

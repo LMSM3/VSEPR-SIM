@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * supercell.hpp
  * -------------
@@ -8,8 +8,8 @@
  *   r_{i,pqr} = r_i + p·a + q·b + r·c
  *
  * Key operations:
- *   construct_supercell(unit_cell, na, nb, nc) → State
- *   validate_supercell(unit_cell, supercell)   → ConstructionReport
+ *   construct_supercell(unit_cell, na, nb, nc) -> State
+ *   validate_supercell(unit_cell, supercell)   -> ConstructionReport
  *
  * Construction follows the documented protocol:
  *   1. Geometric replication (no bond topology)
@@ -66,7 +66,7 @@ struct SupercellResult {
  * Replicates all basis atoms by (na, nb, nc) along lattice vectors.
  * The resulting State has PBC enabled with scaled box dimensions.
  * Atomic properties (mass, charge, type) are replicated identically.
- * Bond topology is NOT replicated — must be re-inferred.
+ * Bond topology is NOT replicated  -  must be re-inferred.
  *
  * @param uc   Unit cell definition
  * @param na   Replications along a

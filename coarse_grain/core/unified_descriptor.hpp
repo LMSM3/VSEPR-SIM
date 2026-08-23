@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * unified_descriptor.hpp — Unified Adaptive Descriptor
+ * unified_descriptor.hpp  -  Unified Adaptive Descriptor
  *
  * Replaces the discrete two-tier model architecture with a single
  * descriptor formalism that supports adaptive truncation. All beads,
@@ -45,7 +45,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * ResolutionLevel — descriptive label for the active truncation depth.
+ * ResolutionLevel  -  descriptive label for the active truncation depth.
  *
  * These are NOT discrete model tiers. They are human-readable labels
  * for ranges within a continuous resolution parameter (ℓ_max).
@@ -87,7 +87,7 @@ inline ResolutionLevel classify_resolution(int l_max) {
 // ============================================================================
 
 /**
- * UnifiedChannel — one channel within the unified descriptor.
+ * UnifiedChannel  -  one channel within the unified descriptor.
  *
  * Same structure as ChannelDescriptor but with additional metadata
  * for residual-driven promotion and active/inactive tracking.
@@ -200,11 +200,11 @@ struct UnifiedChannel {
 // ============================================================================
 
 /**
- * UnifiedDescriptor — single adaptive descriptor for all CG beads.
+ * UnifiedDescriptor  -  single adaptive descriptor for all CG beads.
  *
  * Contains one UnifiedChannel per physical channel. All channels share
  * the same orientation frame. Channel activation and ℓ_max are
- * independently configurable — this is NOT a two-model architecture.
+ * independently configurable  -  this is NOT a two-model architecture.
  *
  * The "resolution" of a bead is determined by the active channels and
  * their ℓ_max values, not by a discrete tier assignment.

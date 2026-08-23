@@ -344,7 +344,7 @@ AnalysisFrame gas2_analysis_frame(const gas2::Gas2Analysis& a,
 }
 
 // ============================================================================
-// VizServer — socket machinery
+// VizServer  -  socket machinery
 // ============================================================================
 
 VizServer::VizServer(const VizServerConfig& cfg) : cfg_(cfg) {
@@ -518,13 +518,13 @@ int viz_dispatch(int argc, char** argv) {
     }
 
     std::cout << "\033[1;36m"
-              << "╔══════════════════════════════════════════════════════════╗\n"
-              << "║  ⚛  VSEPR-SIM Dual-Port Visualisation Stream Server     ║\n"
-              << "╚══════════════════════════════════════════════════════════╝\n"
+              << "+==========================================================+\n"
+              << "|  ⚛  VSEPR-SIM Dual-Port Visualisation Stream Server     |\n"
+              << "+==========================================================+\n"
               << "\033[0m"
-              << "  Port 9999  → Atomic View    (" << atomic_fps   << " fps)\n"
-              << "  Port 10001 → Analysis View  (" << analysis_fps << " fps)\n"
-              << "  Formula: " << formula << "  T: " << T_start << " – " << T_end << " K\n"
+              << "  Port 9999  -> Atomic View    (" << atomic_fps   << " fps)\n"
+              << "  Port 10001 -> Analysis View  (" << analysis_fps << " fps)\n"
+              << "  Formula: " << formula << "  T: " << T_start << " - " << T_end << " K\n"
               << "  Atoms: " << n_atoms << "\n\n"
               << "  Connect viewers:\n"
               << "    python tools/viz_atomic.py\n"

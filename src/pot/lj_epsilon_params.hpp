@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 lj_epsilon_params.hpp
 ---------------------
@@ -309,26 +309,26 @@ PF5 (Trigonal Bipyramidal):
   - F-F distances: ~2.16 Å (eq-eq), ~2.65 Å (ax-eq), ~3.16 Å (ax-ax)
   - Target nonbonded energy: < 50 kcal/mol (ideally < 20)
   - Current issue: 648.8 kcal/mol with uniform ε = 0.01
-  - Fix: P ε = 0.305, F ε = 0.050 → mixed ε = 0.124 (softer)
+  - Fix: P ε = 0.305, F ε = 0.050 -> mixed ε = 0.124 (softer)
 
 BrF5 (Square Pyramidal):
   - Br-F bond length: ~1.68-1.77 Å
   - F-F distances: ~2.28 Å (basal), ~2.42 Å (apical-basal)
   - Target nonbonded energy: < 50 kcal/mol
   - Current issue: 716.2 kcal/mol
-  - Fix: Br ε = 0.251, F ε = 0.050 → mixed ε = 0.112
+  - Fix: Br ε = 0.251, F ε = 0.050 -> mixed ε = 0.112
 
 IF5 (Square Pyramidal):
   - I-F bond length: ~1.84-1.87 Å
   - Target nonbonded energy: < 50 kcal/mol
   - Current issue: 194.2 kcal/mol (better but still high)
-  - Fix: I ε = 0.339, F ε = 0.050 → mixed ε = 0.130
+  - Fix: I ε = 0.339, F ε = 0.050 -> mixed ε = 0.130
 
 XeF6 (Distorted Octahedral):
   - Xe-F bond length: ~1.89 Å
   - Complex geometry with lone pair
   - Current issue: 21.8 kcal/mol (acceptable but could be lower)
-  - Fix: Xe ε = 0.433, F ε = 0.050 → mixed ε = 0.147
+  - Fix: Xe ε = 0.433, F ε = 0.050 -> mixed ε = 0.147
 
 Expected Improvements:
   - 5-10x reduction in nonbonded energies

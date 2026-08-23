@@ -180,6 +180,20 @@ In the appropriate work-in-progress section (e.g., "Beta-8 Stack" or "Phase N Ga
 
 When the feature is complete, create a summary block and mark it **COMPLETE**.
 
+#### D. Create / update the per-action evidence doc
+
+From the VSIM 93 stack onward, every action that adds, changes, or verifies a
+feature must leave a concise evidence document at `docs/WO<NN><L>_<SLUG>.md`.
+
+Content:
+1. One-line goal and work-order identity.
+2. Files changed (definition, parser, wiring, test, docs).
+3. Acceptance criteria with pass/fail status.
+4. A terminal or log snippet showing it works.
+5. Next action or blocker marker.
+
+Example: `docs/WO93A_STATUS_LOOP.md`.
+
 ---
 
 ## Anatomy of a complete feature (WO-57D example)

@@ -1,11 +1,11 @@
-/**
- * test_fragment_bridge.cpp — Tests for Atomistic Preparation Layer & Scale Bridge
+﻿/**
+ * test_fragment_bridge.cpp  -  Tests for Atomistic Preparation Layer & Scale Bridge
  *
- * Validates the atomistic→CG scale boundary:
+ * Validates the atomistic->CG scale boundary:
  *   1. FragmentView construction from State
- *   2. Empty fragment → EmptyFragment status
- *   3. Single atom fragment → Valid, no frame
- *   4. Two-atom fragment → Valid, frame defined
+ *   2. Empty fragment -> EmptyFragment status
+ *   3. Single atom fragment -> Valid, no frame
+ *   4. Two-atom fragment -> Valid, frame defined
  *   5. Mass and charge aggregation
  *   6. Bond extraction from state edge list
  *   7. Duplicate position detection
@@ -13,8 +13,8 @@
  *   9. Metal center detection (transition metals)
  *  10. Heteroatom and hydrogen flags
  *  11. Cyclic fragment detection
- *  12. Bridge: FragmentView → Bead
- *  13. Bridge: FragmentView → UnifiedDescriptor structure
+ *  12. Bridge: FragmentView -> Bead
+ *  13. Bridge: FragmentView -> UnifiedDescriptor structure
  *  14. Bridge: complete fragment_to_bead pipeline
  *  15. Bridge: invalid fragment produces error
  *  16. Benzene canonical case (12 atoms, planar, cyclic)
@@ -22,16 +22,16 @@
  *
  * Validation sweep groups discussed for unified descriptor development:
  *
- *   Group A — Baseline geometry / boundary cases
+ *   Group A  -  Baseline geometry / boundary cases
  *     - Benzene      : canonical planar aromatic reference
  *     - Water        : small polar boundary case, non-ideal single-bead target
  *     - Naphthalene  : extended planar anisotropy / fused aromatic test
  *
- *   Group B — Chemical asymmetry on aromatic cores
+ *   Group B  -  Chemical asymmetry on aromatic cores
  *     - Pyridine     : heteroatom-substituted aromatic ring
  *     - Phenol       : aromatic + polar OH functionality
  *
- *   Group C — Steric / substituted aromatic complexity
+ *   Group C  -  Steric / substituted aromatic complexity
  *     - Cresol       : phenol + methyl substitution
  *     - BHT          : bulky sterically hindered substituted aromatic
  *
@@ -434,7 +434,7 @@ static void test_atom_flags() {
 static void test_cyclic_detection() {
     std::printf("\n--- 11. Cyclic fragment detection ---\n");
 
-    // Linear chain: 3 atoms, 2 bonds → not cyclic
+    // Linear chain: 3 atoms, 2 bonds -> not cyclic
     auto s1 = make_simple_state(3);
     s1.X[0] = {0, 0, 0}; s1.X[1] = {1, 0, 0}; s1.X[2] = {2, 0, 0};
     s1.B.push_back({0, 1});
@@ -443,7 +443,7 @@ static void test_cyclic_detection() {
     auto frag1 = atomistic::build_fragment_view(s1, {0, 1, 2});
     check(!frag1.cyclic, "linear chain is not cyclic");
 
-    // Triangle: 3 atoms, 3 bonds → cyclic
+    // Triangle: 3 atoms, 3 bonds -> cyclic
     auto s2 = make_simple_state(3);
     s2.X[0] = {0, 0, 0}; s2.X[1] = {1, 0, 0}; s2.X[2] = {0.5, 0.866, 0};
     s2.B.push_back({0, 1});
@@ -455,10 +455,10 @@ static void test_cyclic_detection() {
 }
 
 // ============================================================================
-// 12. Bridge: FragmentView → Bead
+// 12. Bridge: FragmentView -> Bead
 // ============================================================================
 static void test_bridge_to_bead() {
-    std::printf("\n--- 12. Bridge: FragmentView → Bead ---\n");
+    std::printf("\n--- 12. Bridge: FragmentView -> Bead ---\n");
 
     auto s = make_simple_state(3);
     s.X[0] = {0, 0, 0}; s.X[1] = {3, 0, 0}; s.X[2] = {0, 3, 0};
@@ -480,10 +480,10 @@ static void test_bridge_to_bead() {
 }
 
 // ============================================================================
-// 13. Bridge: FragmentView → UnifiedDescriptor structure
+// 13. Bridge: FragmentView -> UnifiedDescriptor structure
 // ============================================================================
 static void test_bridge_to_descriptor() {
-    std::printf("\n--- 13. Bridge: FragmentView → UnifiedDescriptor ---\n");
+    std::printf("\n--- 13. Bridge: FragmentView -> UnifiedDescriptor ---\n");
 
     // Small fragment: should get low l_max
     auto s = make_simple_state(4);

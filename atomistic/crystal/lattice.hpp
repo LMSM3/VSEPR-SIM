@@ -1,18 +1,18 @@
-#pragma once
+﻿#pragma once
 /**
  * lattice.hpp
  * -----------
  * Triclinic lattice representation for crystallographic simulation.
  *
  * Core objects:
- *   Mat3       — 3×3 matrix (column-major: columns = lattice vectors)
- *   Lattice    — Full lattice with cached inverse, metric tensor, volume
+ *   Mat3        -  3×3 matrix (column-major: columns = lattice vectors)
+ *   Lattice     -  Full lattice with cached inverse, metric tensor, volume
  *
  * Key operations:
- *   to_cartesian(f)  — r = A · f
- *   to_fractional(r) — f = A⁻¹ · r
- *   mic_delta(fi, fj) — Δf_MIC = Δf - round(Δf), then Δr = A · Δf_MIC
- *   distance(fi, fj)  — ||Δr_MIC||₂  (or via metric tensor G = Aᵀ A)
+ *   to_cartesian(f)   -  r = A · f
+ *   to_fractional(r)  -  f = A⁻¹ · r
+ *   mic_delta(fi, fj)  -  Δf_MIC = Δf - round(Δf), then Δr = A · Δf_MIC
+ *   distance(fi, fj)   -  ||Δr_MIC||₂  (or via metric tensor G = Aᵀ A)
  *
  * Follows docs/FROM_MOLECULES_TO_MATTER.ipynb formulation exactly.
  */
@@ -117,10 +117,10 @@ struct Lattice {
     // Coordinate transforms
     // ========================================================================
 
-    // Fractional → Cartesian: r = A · f
+    // Fractional -> Cartesian: r = A · f
     Vec3 to_cartesian(const Vec3& frac) const { return A.mul(frac); }
 
-    // Cartesian → Fractional: f = A⁻¹ · r
+    // Cartesian -> Fractional: f = A⁻¹ · r
     Vec3 to_fractional(const Vec3& cart) const { return A_inv.mul(cart); }
 
     // ========================================================================

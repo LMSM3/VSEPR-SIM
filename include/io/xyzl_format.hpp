@@ -1,4 +1,4 @@
-/**
+﻿/**
  * xyzl_format.hpp
  * ----------------
  * XYZL Format: Line-Segment / Bead Dynamics with Sensor Integration.
@@ -15,9 +15,9 @@
  *   Lines 3+: <type> <fields...>
  *
  * Entry types:
- *   B  — Bead:    B <label> <x0> <y0> <z0> <x1> <y1> <z1> <mass> <charge> <vx> <vy> <vz> <mu>
- *   S  — Sensor:  S <name> <type> <x0> <y0> <z0> <x1> <y1> <z1> <radius> <mu>
- *   L  — Link:    L <bead_i> <bead_j> <order>
+ *   B   -  Bead:    B <label> <x0> <y0> <z0> <x1> <y1> <z1> <mass> <charge> <vx> <vy> <vz> <mu>
+ *   S   -  Sensor:  S <name> <type> <x0> <y0> <z0> <x1> <y1> <z1> <radius> <mu>
+ *   L   -  Link:    L <bead_i> <bead_j> <order>
  *
  * Comment line metadata:
  *   frame=<N> time=<fs> dt=<fs> energy=<eV> temperature=<K>
@@ -58,7 +58,7 @@ namespace io {
 // ============================================================================
 
 /**
- * XYZLBead — one coarse-grained bead with line-segment extent.
+ * XYZLBead  -  one coarse-grained bead with line-segment extent.
  *
  * A bead occupies a directed segment [p0, p1] in space, not just a point.
  * This captures bead anisotropy (elongated polymers, rod-like molecules).
@@ -95,7 +95,7 @@ struct XYZLBead {
 };
 
 /**
- * XYZLSensor — embedded sensor in the bead dynamics frame.
+ * XYZLSensor  -  embedded sensor in the bead dynamics frame.
  * Wraps sensor::Sensor for file serialisation.
  */
 struct XYZLSensor {
@@ -134,7 +134,7 @@ struct XYZLSensor {
 };
 
 /**
- * XYZLLink — bead-bead connectivity.
+ * XYZLLink  -  bead-bead connectivity.
  */
 struct XYZLLink {
     int bead_i  = 0;
@@ -143,7 +143,7 @@ struct XYZLLink {
 };
 
 /**
- * XYZLFrame — one frame of bead dynamics + sensors.
+ * XYZLFrame  -  one frame of bead dynamics + sensors.
  */
 struct XYZLFrame {
     // Beads
@@ -214,7 +214,7 @@ struct XYZLFrame {
 };
 
 /**
- * XYZLTrajectory — multi-frame bead dynamics trajectory.
+ * XYZLTrajectory  -  multi-frame bead dynamics trajectory.
  */
 struct XYZLTrajectory {
     std::vector<XYZLFrame> frames;
@@ -456,7 +456,7 @@ private:
 // ============================================================================
 //
 // Add XYZL to the format family.
-// Caller can check: if extension == ".xyzL" || ".xyzl" → use XYZLReader.
+// Caller can check: if extension == ".xyzL" || ".xyzl" -> use XYZLReader.
 //
 
 inline bool is_xyzl_file(const std::string& filename) {

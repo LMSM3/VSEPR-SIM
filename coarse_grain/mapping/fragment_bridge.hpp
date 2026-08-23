@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * fragment_bridge.hpp — Atomistic→CG Scale Boundary Bridge
+ * fragment_bridge.hpp  -  Atomistic->CG Scale Boundary Bridge
  *
  * Provides the conversion functions from atomistic::FragmentView
  * to coarse_grain:: types (Bead, UnifiedDescriptor). This is the
  * one-directional data flow point:
  *
- *   atomistic::FragmentView → coarse_grain::Bead
- *   atomistic::FragmentView → coarse_grain::UnifiedDescriptor
+ *   atomistic::FragmentView -> coarse_grain::Bead
+ *   atomistic::FragmentView -> coarse_grain::UnifiedDescriptor
  *
  * The atomistic namespace never imports coarse_grain types.
  * The coarse_grain namespace depends on atomistic bridge types.
@@ -35,7 +35,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * BridgeResult — outcome of a scale boundary crossing.
+ * BridgeResult  -  outcome of a scale boundary crossing.
  *
  * Records whether the conversion succeeded, and if not, why.
  */
@@ -46,7 +46,7 @@ struct BridgeResult {
 };
 
 // ============================================================================
-// Fragment → Bead
+// Fragment -> Bead
 // ============================================================================
 
 /**
@@ -99,7 +99,7 @@ inline Bead build_bead(const atomistic::FragmentView& frag,
 }
 
 // ============================================================================
-// Fragment → InertiaFrame (bridge helper)
+// Fragment -> InertiaFrame (bridge helper)
 // ============================================================================
 
 /**
@@ -115,7 +115,7 @@ inline InertiaFrame bridge_frame(const atomistic::LocalFrame& lf) {
 }
 
 // ============================================================================
-// Fragment → UnifiedDescriptor (structural initialization)
+// Fragment -> UnifiedDescriptor (structural initialization)
 // ============================================================================
 
 /**
@@ -175,11 +175,11 @@ inline UnifiedDescriptor build_descriptor_structure(
 }
 
 // ============================================================================
-// Full Bridge: Fragment → Bead with UnifiedDescriptor
+// Full Bridge: Fragment -> Bead with UnifiedDescriptor
 // ============================================================================
 
 /**
- * BridgedBead — result of a complete atomistic→CG bridge operation.
+ * BridgedBead  -  result of a complete atomistic->CG bridge operation.
  */
 struct BridgedBead {
     BridgeResult result;

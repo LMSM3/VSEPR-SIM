@@ -1,0 +1,368 @@
+# Adding a CLI Command to VSEPR-SIM
+
+This document describes the process for adding a top-level command to the active VSEPR-SIM CLI. The example command is:
+
+```text
+vsepr deploy --here
+```
+
+The command should be implemented as a small, testable feature rather than as a large block of logic inside the executable entry point.
+
+## 1. Identify the active CLI entry point
+
+The current unified CLI entry point is:
+
+```text
+apps/vsepr.cpp
+```
+
+Its `main()` function reads `argv[1]`, matches the command name, gathers the remaining arguments, calls the command implementation, and returns its exit code.
+
+The basic dispatch flow is:
+
+```text
+argv[]
+  -> apps/vsepr.cpp::main()
+  -> command-name match
+  -> command implementation
+  -> exit code
+```
+
+The repository also contains an older `Command` interface in `src/cli/commands.hpp`. New commands for the current `vsepr.exe` should follow the dispatch style already used in `apps/vsepr.cpp` unless the command is explicitly part of that older framework.
+
+## 2. Define the command contract
+
+Before writing code, define the command syntax, options, outputs, and failure behavior.
+
+Example contract:
+
+```text
+vsepr deploy --here
+vsepr deploy --here --dry-run
+vsepr deploy --here --force
+vsepr deploy --help
+```
+
+Suggested meanings:
+
+| Argument | Meaning |
+|---|---|
+| `--here` | Use the current repository as the deployment source |
+| `--dry-run` | Print the deployment plan without changing files |
+| `--force` | Replace an existing deployment |
+| `--clean` | Remove files recorded by the deployment manifest |
+| `--no-path` | Do not modify PATH |
+| `--help` | Show command-specific help |
+
+The first implementation should not silently modify PATH, file associations, or global installation state. Those operations should be explicit and separately testable.
+
+## 3. Create a command module
+
+Create a header and source file for the command:
+
+```text
+include/cli/cmd_deploy.hpp
+src/cli/cmd_deploy.cpp
+```
+
+A simple interface consistent with the existing command functions is:
+
+```cpp
+#pragma once
+
+#include <string>
+#include <vector>
+
+namespace vsepr::cli {
+
+int cmd_deploy(const std::vector<std::string>& args);
+
+}
+```
+
+Keep the implementation divided into focused operations:
+
+```text
+parse_deploy_args()
+discover_repository_root()
+build_deployment_plan()
+execute_deployment()
+write_manifest()
+print_summary()
+```
+
+This allows `--dry-run` to use the same planning code as a real deployment and keeps path logic out of `main()`.
+
+## 4. Register the command
+
+Add the command header to `apps/vsepr.cpp`:
+
+```cpp
+#include "cli/cmd_deploy.hpp"
+```
+
+Then add a dispatch block near the other v5 commands:
+
+```cpp
+if (cmd == "deploy") {
+	std::vector<std::string> rest;
+	for (int i = 2; i < argc; ++i) {
+		rest.emplace_back(argv[i]);
+	}
+	return vsepr::cli::cmd_deploy(rest);
+}
+```
+
+For this invocation:
+
+```text
+vsepr deploy --here --dry-run
+```
+
+the command implementation receives:
+
+```cpp
+{ "--here", "--dry-run" }
+```
+
+It does not receive the executable name or the `deploy` token.
+
+## 5. Locate the repository safely
+
+`--here` should not assume that the current directory is the repository root. Start with `std::filesystem::current_path()` and walk toward the filesystem root until repository markers are found.
+
+Useful markers include:
+
+```text
+CMakeLists.txt
+CMakePresets.json
+include/
+src/
+```
+
+Require enough markers to avoid deploying from an unrelated directory. If no repository is found, return a clear error:
+
+```text
+[deploy] ERROR: unable to locate a VSEPR-SIM repository.
+[deploy] Expected CMakeLists.txt and CMakePresets.json in the current directory or a parent.
+```
+
+## 6. Build a deployment plan
+
+The planning stage should identify the source files, destination directory, and missing prerequisites before copying anything.
+
+A local deployment could use:
+
+```text
+.deploy/vsepr-sim/
+├── bin/
+│   └── vsepr.exe
+├── data/
+├── docs/
+├── examples/
+├── scripts/
+├── include/
+└── manifest.json
+```
+
+The command should explicitly report which build supplied each executable:
+
+```text
+[deploy] source repository: C:\R\VSPER-SIM
+[deploy] core binary:       build\vsepr.exe
+[deploy] visualization:    not included
+```
+
+Do not silently mix `build/` and `build_vis/` artifacts. If visualization binaries are included, report that choice explicitly.
+
+## 7. Implement dry-run first
+
+The first useful behavior is:
+
+```text
+vsepr deploy --here --dry-run
+```
+
+Expected output:
+
+```text
+VSEPR-SIM deployment plan
+-------------------------
+Source:      C:\R\VSPER-SIM
+Destination: C:\R\VSPER-SIM\.deploy\vsepr-sim
+
+Would copy:
+  build\vsepr.exe       -> bin\vsepr.exe
+  data\                 -> data\
+  docs\                 -> docs\
+  examples\             -> examples\
+  scripts\              -> scripts\
+
+Would write:
+  manifest.json
+
+No files changed.
+```
+
+The dry-run must use the same validation and planning code as the real deployment.
+
+## 8. Make the command idempotent
+
+Running the command repeatedly should be safe:
+
+```text
+vsepr deploy --here
+vsepr deploy --here
+```
+
+Use a manifest to record the source root, destination, version, timestamp, and deployed files. Include hashes when practical:
+
+```json
+{
+  "product": "VSEPR-SIM",
+  "source_root": "C:\\R\\VSPER-SIM",
+  "deployment_root": "C:\\R\\VSPER-SIM\\.deploy\\vsepr-sim",
+  "version": "5.1.4",
+  "files": [
+	{
+	  "path": "bin/vsepr.exe",
+	  "sha256": "..."
+	}
+  ]
+}
+```
+
+The manifest supports repeatable deployment, stale-file detection, cleanup, and comparison against older installations.
+
+## 9. Define errors and exit codes
+
+Use stable exit codes so scripts can consume the command:
+
+| Code | Meaning |
+|---:|---|
+| `0` | Deployment or dry-run completed |
+| `1` | Invalid command-line arguments |
+| `2` | Repository or required build content missing |
+| `3` | Copy or manifest write failure |
+| `4` | Existing deployment conflict |
+
+Examples should identify both the problem and the corrective action:
+
+```text
+[deploy] ERROR: build\vsepr.exe does not exist
+[deploy] Hint: build the project with the release preset first.
+```
+
+Do not return success when only part of a deployment completed.
+
+## 10. Add help output
+
+Add the command to the top-level help list:
+
+```text
+deploy        Deploy the current repository to a local runtime directory
+```
+
+Implement command-specific help:
+
+```text
+vsepr deploy --help
+```
+
+It should describe options and provide examples:
+
+```text
+Usage:
+  vsepr deploy --here [options]
+
+Options:
+  --here       Deploy the repository containing the current directory
+  --dry-run    Show the deployment plan without changing files
+  --force      Replace an existing deployment
+  --clean      Remove files recorded by the deployment manifest
+  --no-path    Do not modify PATH
+  --help       Show this help
+
+Examples:
+  vsepr deploy --here --dry-run
+  vsepr deploy --here
+  vsepr deploy --here --force
+```
+
+## 11. Add tests
+
+Add unit coverage for argument and plan behavior:
+
+```text
+deploy_requires_here
+deploy_accepts_dry_run
+deploy_rejects_unknown_option
+deploy_finds_repository_root
+deploy_rejects_missing_build_binary
+deploy_manifest_contains_hashes
+```
+
+Add CLI integration coverage in:
+
+```text
+tests/cli_integration.bats
+```
+
+Useful integration cases include:
+
+```sh
+@test "deploy --help prints usage" {
+	run "$VSEPR" deploy --help
+	[ "$status" -eq 0 ]
+	[[ "$output" == *"Deploy the current repository"* ]]
+}
+
+@test "deploy --here --dry-run changes nothing" {
+	run "$VSEPR" deploy --here --dry-run
+	[ "$status" -eq 0 ]
+	[[ "$output" == *"No files changed"* ]]
+}
+```
+
+Real deployment tests should use a temporary directory. They must not alter the user’s actual installation, PATH, registry, or file associations.
+
+## 12. Build and validate
+
+Use the project’s normal preset workflow:
+
+```powershell
+C:\msys64\ucrt64\bin\cmake.exe --preset release
+C:\msys64\ucrt64\bin\cmake.exe --build --preset release --target vsepr
+```
+
+Then validate the new command:
+
+```powershell
+C:\R\VSPER-SIM\build\vsepr.exe deploy --help
+C:\R\VSPER-SIM\build\vsepr.exe deploy --here --dry-run
+```
+
+Finally run the relevant CLI tests and confirm that ordinary commands still work:
+
+```text
+vsepr --version
+vsepr --help
+vsepr validate <script.vsim>
+```
+
+## Recommended implementation order
+
+```text
+1. Define arguments, output, and exit codes.
+2. Add cmd_deploy.hpp and cmd_deploy.cpp.
+3. Implement repository-root discovery.
+4. Implement dry-run planning.
+5. Register deploy in apps/vsepr.cpp.
+6. Add top-level and command-specific help.
+7. Implement file copying.
+8. Write a deployment manifest with hashes.
+9. Add unit and CLI integration tests.
+10. Add PATH, registry, or file-association operations only as explicit later features.
+```
+
+A command such as `vsepr deploy --here` should initially be a controlled developer deployment command, not a replacement for the complete Windows installer. Keeping deployment, PATH mutation, shortcuts, and file associations as separate stages makes the behavior easier to test, audit, and undo.

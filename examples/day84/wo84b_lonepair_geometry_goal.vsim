@@ -1,0 +1,53 @@
+# ============================================================================
+# wo84b_lonepair_geometry_goal.vsim  --  Day 84 / WO-84B goal script
+# ============================================================================
+# Status label: GOAL_ONLY
+#
+# Living artifact: goal document -> demonstration -> regression fixture.
+# Narrates its own intent via print_console (Day 84 live-scripting primitive).
+#
+# Run through:  vsepr classify examples/day84/wo84b_lonepair_geometry_goal.vsim
+#          or:  vsepr run      examples/day84/wo84b_lonepair_geometry_goal.vsim
+# ============================================================================
+
+print_console "Day 84 - VSEPR Revival Arc"
+print_console "Work Order: WO-84B"
+print_console "Status: GOAL_ONLY"
+print_console "Purpose: test lone-pair provider impact on VSEPR geometry"
+print_console "Expected: H2O bent, NH3 trigonal pyramidal, XeF4 square planar"
+print_console "Known gaps: heavy noble gas geometries may require warning paths"
+print_console ""
+print_console ">> ElementLonePairProvider now covers main-group + Xe/Kr/Rn + TM fallback"
+print_console ">> Geometry is derived from bonded + lone-pair domain counts (AXE model)"
+print_console ">> XeF2 -> AX2E3 -> linear;  XeF4 -> AX4E2 -> square planar"
+print_console ">> XeF6 -> AX6E1 -> expanded coordination (heavy noble-gas warning path)"
+print_console ">> Transition metals: conservative 0 stereochemically-active lone pairs"
+print_console ""
+print_console ">> Future regression target: CTest Group 100"
+
+# ----------------------------------------------------------------------------
+# [project]  --  identity block
+# ----------------------------------------------------------------------------
+
+[project]
+name        = "wo84b_lonepair_geometry_goal"
+description = "Day 84 WO-84B: element lone-pair provider drives VSEPR geometry"
+version     = "1.0.0"
+author      = "VSEPR-SIM Day 84 arc"
+tags        = "day84 wo-84b lone_pair vsepr noble_gas goal_only print_console"
+seed_base   = 8402
+
+# ----------------------------------------------------------------------------
+# [formula]  --  molecular identity for the classifiers
+# ----------------------------------------------------------------------------
+# XeF4 (xenon tetrafluoride):
+#   - Centre: Xe (Z=54), 4 bonded F ligands, 2 lone pairs -> AX4E2
+#   - VSEPR:  square planar  (this is the WO-84B headline geometry)
+#   - Without the noble-gas-aware provider, this used to collapse toward a
+#     generic tetrahedral answer; the provider prevents that.
+
+[formula]
+formula = "XeF4"
+
+print_console ">> Declared XeF4: expect square planar via AX4E2"
+print_console ">> GOAL_ONLY: heavy noble gas warning paths are documented, not yet exhaustive"

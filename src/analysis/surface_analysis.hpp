@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/analysis/surface_analysis.hpp
 // =============================================================================
@@ -6,10 +6,10 @@
 //
 // Tracks incoming particle behavior and surface response from trajectory only.
 // No erosion_rate, adsorption_probability, surface_damage, or roughness_score
-// stored in state — those emerge from the analysis layer.
+// stored in state  -  those emerge from the analysis layer.
 //
 // Per-frame surface metrics
-// ─────────────────────────
+// -------------------------
 //  min_surface_distance    closest approach of incoming atom to surface plane
 //  surface_z_ref           z-coordinate of ideal surface plane (from reference)
 //  residence_frames        how many frames incoming atom stays within r_reside
@@ -23,7 +23,7 @@
 //  embedded_count          atoms that entered slab below z_embed threshold
 //  E_rel_drift             energy drift of the combined system
 //  stationary_flag
-//  emergent_class          analysis label — never stored in state
+//  emergent_class          analysis label  -  never stored in state
 //
 // Emergent class vocabulary
 //   reflection              incoming leaves surface with similar speed
@@ -52,9 +52,9 @@
 
 namespace vsepr::surface {
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SurfaceMetricsRow  — one row of the per-frame output table
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// SurfaceMetricsRow   -  one row of the per-frame output table
+// -----------------------------------------------------------------------------
 
 struct SurfaceMetricsRow {
 	std::string case_id;
@@ -64,8 +64,8 @@ struct SurfaceMetricsRow {
 	double      min_surface_distance= 0.0;     // Å
 	int         residence_frames    = 0;
 	double      reflection_angle_deg= 0.0;     // degrees (0=normal, 90=tangential)
-	double      surface_residual    = 0.0;     // Å — RMS slab-surface atom displacement
-	double      roughness_proxy     = 0.0;     // Å — stddev of surface-layer z
+	double      surface_residual    = 0.0;     // Å  -  RMS slab-surface atom displacement
+	double      roughness_proxy     = 0.0;     // Å  -  stddev of surface-layer z
 	int         ejected_count       = 0;
 	int         embedded_count      = 0;
 	double      E_rel_drift         = 0.0;
@@ -102,9 +102,9 @@ struct SurfaceMetricsRow {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// classify_surface_event()  — trajectory label
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// classify_surface_event()   -  trajectory label
+// -----------------------------------------------------------------------------
 
 inline std::string classify_surface_event(
 		double min_surface_distance,
@@ -115,7 +115,7 @@ inline std::string classify_surface_event(
 		int    ejected_count,
 		int    embedded_count,
 		double KE_ratio,               // KE_outgoing / KE_incoming (1=elastic)
-		double r_contact = 6.0)        // Å — within this = "contact"
+		double r_contact = 6.0)        // Å  -  within this = "contact"
 {
 	// Priority order: trajectory-confirmed events first, absence of interaction last.
 	// An embedded atom is a harder fact than whether the approach distance was small.
@@ -136,26 +136,26 @@ inline std::string classify_surface_event(
 	return "reflection";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // SurfaceAnalyzer
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 //
 // Configuration:
-//   slab_N          — number of atoms that belong to the slab
-//   incoming_id     — index of the incoming atom in the combined State
-//   surface_z_ref   — ideal z of the top surface layer (Å)
-//   z_eject         — z above which atom is counted as ejected (Å)
-//   z_embed         — z below which atom is counted as embedded (Å, from top layer)
-//   r_reside        — distance from surface within which = "residing" (Å)
-//   surface_layer_z_min — z threshold for "surface layer" atoms
+//   slab_N           -  number of atoms that belong to the slab
+//   incoming_id      -  index of the incoming atom in the combined State
+//   surface_z_ref    -  ideal z of the top surface layer (Å)
+//   z_eject          -  z above which atom is counted as ejected (Å)
+//   z_embed          -  z below which atom is counted as embedded (Å, from top layer)
+//   r_reside         -  distance from surface within which = "residing" (Å)
+//   surface_layer_z_min  -  z threshold for "surface layer" atoms
 
 struct SurfaceAnalyzer {
 	uint32_t slab_N          = 0;
 	uint32_t incoming_id     = 0;
 	double   surface_z_ref   = 0.0;
-	double   z_eject         = 0.0;    // slab atoms: if z > z_eject → ejected
-	double   z_embed         = 0.0;    // incoming atom: if z < z_embed → embedded
-	double   r_reside        = 6.0;    // Å — near surface threshold
+	double   z_eject         = 0.0;    // slab atoms: if z > z_eject -> ejected
+	double   z_embed         = 0.0;    // incoming atom: if z < z_embed -> embedded
+	double   r_reside        = 6.0;    // Å  -  near surface threshold
 	double   surface_layer_z_min = 0.0;
 	double   E0              = 0.0;
 
@@ -202,13 +202,13 @@ struct SurfaceAnalyzer {
 		const vsepr::Vec3& inc_pos = all_pos[incoming_id];
 		const vsepr::Vec3& inc_vel = all_vel[incoming_id];
 
-		// ── Distance from surface plane ───────────────────────────────────────
+		// -- Distance from surface plane ---------------------------------------
 		const double dist_to_surface = inc_pos.z - surface_z_ref;
 		row.min_surface_distance = std::abs(dist_to_surface);
 		min_surface_distance_ever = std::min(min_surface_distance_ever,
 											 row.min_surface_distance);
 
-		// ── Residence tracking ───────────────────────────────────────────────
+		// -- Residence tracking -----------------------------------------------
 		if (row.min_surface_distance < r_reside) {
 			++residence_frames_total;
 			KE_outgoing_last = 0.5 * (inc_vel.x*inc_vel.x +
@@ -218,7 +218,7 @@ struct SurfaceAnalyzer {
 		row.residence_frames = residence_frames_total;
 		last_vel_incoming = inc_vel;
 
-		// ── Reflection angle (angle of vel w.r.t. surface normal = z-axis) ───
+		// -- Reflection angle (angle of vel w.r.t. surface normal = z-axis) ---
 		const double v_mag = std::sqrt(inc_vel.x*inc_vel.x +
 									   inc_vel.y*inc_vel.y +
 									   inc_vel.z*inc_vel.z);
@@ -228,7 +228,7 @@ struct SurfaceAnalyzer {
 									   / 3.14159265358979;
 		}
 
-		// ── Surface structural residual (surface-layer atoms only) ────────────
+		// -- Surface structural residual (surface-layer atoms only) ------------
 		{
 			std::vector<vsepr::Vec3> cur_surface;
 			for (uint32_t i = 0; i < slab_N; ++i) {
@@ -248,7 +248,7 @@ struct SurfaceAnalyzer {
 			row.surface_residual = (N_sl > 0)
 				? std::sqrt(sum_sq / static_cast<double>(N_sl)) : 0.0;
 
-			// roughness_proxy — stddev of z among surface-layer atoms
+			// roughness_proxy  -  stddev of z among surface-layer atoms
 			if (!cur_surface.empty()) {
 				double mean_z = 0.0;
 				for (const auto& p : cur_surface) mean_z += p.z;
@@ -262,7 +262,7 @@ struct SurfaceAnalyzer {
 			}
 		}
 
-		// ── Eject / embed counting ────────────────────────────────────────────
+		// -- Eject / embed counting --------------------------------------------
 		{
 			int ejected = 0, embedded = 0;
 			for (uint32_t i = 0; i < slab_N; ++i)
@@ -273,7 +273,7 @@ struct SurfaceAnalyzer {
 			row.embedded_count = embedded;
 		}
 
-		// ── Classification ────────────────────────────────────────────────────
+		// -- Classification ----------------------------------------------------
 		const double KE_ratio = (KE_incoming_first > 1e-12)
 			? KE_outgoing_last / KE_incoming_first : 0.0;
 		const double ref_residual = surface_ref_pos.empty() ? 0.01 : 0.01;
@@ -292,9 +292,9 @@ struct SurfaceAnalyzer {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SurfaceSweepResult  — per-case summary for the full parameter sweep
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// SurfaceSweepResult   -  per-case summary for the full parameter sweep
+// -----------------------------------------------------------------------------
 
 struct SurfaceSweepResult {
 	std::string case_id;

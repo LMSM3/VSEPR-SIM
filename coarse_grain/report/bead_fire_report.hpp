@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * bead_fire_report.hpp — Automated Outcome Reporting for Bead FIRE Minimization
+ * bead_fire_report.hpp  -  Automated Outcome Reporting for Bead FIRE Minimization
  *
  * Generates structured Markdown reports documenting:
  *   - Convergence outcome and statistics
@@ -99,9 +99,9 @@ inline std::string bead_fire_report_md(const BeadFIREResult& result,
         o << "| Dispersion | " << std::setprecision(6) << result.U_dispersion 
           << " | " << std::setprecision(2) << (100.0 * result.U_dispersion / total) << "% |\n";
     } else {
-        o << "| Steric | " << result.U_steric << " | — |\n";
-        o << "| Electrostatic | " << result.U_electrostatic << " | — |\n";
-        o << "| Dispersion | " << result.U_dispersion << " | — |\n";
+        o << "| Steric | " << result.U_steric << " |  -  |\n";
+        o << "| Electrostatic | " << result.U_electrostatic << " |  -  |\n";
+        o << "| Dispersion | " << result.U_dispersion << " |  -  |\n";
     }
     o << "| **Total** | **" << std::setprecision(6) << total << "** | **100%** |\n";
     o << "\n";
@@ -245,7 +245,7 @@ inline std::string bead_fire_report_md(const BeadFIREResult& result,
     o << "where δ = " << std::setprecision(2) << std::scientific << params.fd_delta 
       << std::fixed << " Å.\n\n";
     o << "Energy chain:\n";
-    o << "- `BeadSystem` → `InteractionEngine::interaction_energy()`\n";
+    o << "- `BeadSystem` -> `InteractionEngine::interaction_energy()`\n";
     o << "- Per-channel spherical harmonic rotation (Wigner D-matrices)\n";
     o << "- Per-(ℓ,m) radial kernel evaluation\n";
     o << "- Environment coupling modulation (η-responsive)\n";

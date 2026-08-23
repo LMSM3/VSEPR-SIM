@@ -1,15 +1,15 @@
-#pragma once
+﻿#pragma once
 /**
- * pipe_network.hpp — Vec3×Vec3 Beam and Pipe Network Generator
+ * pipe_network.hpp  -  Vec3×Vec3 Beam and Pipe Network Generator
  *
  * Generates stochastic 3D pipe/beam networks from the L5 macro layer,
  * where each segment is defined by two Vec3 endpoints (the Vec3×Vec3
- * pair) and carries full material identity propagated from L1→L2→L4.
+ * pair) and carries full material identity propagated from L1->L2->L4.
  *
  * The Vec3×Vec3 segment representation:
  *
- *   PipeSegment.origin   (Vec3)  — start point in 3D space (m)
- *   PipeSegment.terminus (Vec3)  — end point in 3D space (m)
+ *   PipeSegment.origin   (Vec3)   -  start point in 3D space (m)
+ *   PipeSegment.terminus (Vec3)   -  end point in 3D space (m)
  *
  *   Direction vector: d = terminus − origin
  *   Segment length:   L = |d|
@@ -20,7 +20,7 @@
  *   - Segment length spread (χ amplifies the lognormal length distribution)
  *   - Angular deviation at junctions (χ widens the deflection angle)
  *   - Loop-back probability (creates closed cycles in the network)
- *   - Material assignment randomness (alloy bead → segment material)
+ *   - Material assignment randomness (alloy bead -> segment material)
  *
  * Network topology:
  *   The network is a directed graph:
@@ -46,7 +46,7 @@
  * Anti-black-box: every segment's length, angle, branching decision, and
  * material assignment are recorded with their RNG provenance.
  *
- * Deterministic: same seed + same chaos factor → same network.
+ * Deterministic: same seed + same chaos factor -> same network.
  *
  * Reference: include/layer_stack.hpp (L5 layer)
  *            include/alloy_generator.hpp (alloy material source)
@@ -69,11 +69,11 @@ namespace pipe_network {
 using Vec3 = atomistic::Vec3;
 
 // ============================================================================
-// Mat3 — 3×3 matrix (beam tensor, rotation, etc.)
+// Mat3  -  3×3 matrix (beam tensor, rotation, etc.)
 // ============================================================================
 
 /**
- * Mat3 — column-major 3×3 matrix.
+ * Mat3  -  column-major 3×3 matrix.
  *
  * Storage: m[row][col], row-major in memory.
  * Used for:
@@ -120,7 +120,7 @@ struct Mat3 {
 };
 
 /**
- * outer_product — Vec3 ⊗ Vec3 → Mat3
+ * outer_product  -  Vec3 ⊗ Vec3 -> Mat3
  * B_ij = a_i * b_j
  */
 inline Mat3 outer_product(const Vec3& a, const Vec3& b) {
@@ -132,7 +132,7 @@ inline Mat3 outer_product(const Vec3& a, const Vec3& b) {
 }
 
 /**
- * beam_tensor — B = length × (t̂ ⊗ t̂)
+ * beam_tensor  -  B = length × (t̂ ⊗ t̂)
  *
  * For a segment from origin to terminus:
  *   d = terminus − origin
@@ -156,7 +156,7 @@ inline Mat3 beam_tensor(const Vec3& origin, const Vec3& terminus) {
 // ============================================================================
 
 /**
- * NetworkChaos — derived parameters from the chaos factor χ.
+ * NetworkChaos  -  derived parameters from the chaos factor χ.
  *
  * At χ = 1.25:
  *   branch_prob        = 0.50  (50% chance of a new branch at each junction)
@@ -183,15 +183,15 @@ struct NetworkChaos {
 };
 
 // ============================================================================
-// Pipe segment — Vec3×Vec3 + structural data
+// Pipe segment  -  Vec3×Vec3 + structural data
 // ============================================================================
 
 /**
- * PipeSegment — one segment in the network.
+ * PipeSegment  -  one segment in the network.
  *
  * The fundamental Vec3×Vec3 representation:
- *   origin   — start node position (m)
- *   terminus — end node position (m)
+ *   origin    -  start node position (m)
+ *   terminus  -  end node position (m)
  *
  * The beam tensor B is computed from these two Vec3s.
  * All structural quantities are derived from B.
@@ -207,7 +207,7 @@ struct PipeSegment {
     // Derived geometry
     double    length_m{};          // |terminus - origin|
     Vec3      unit_tangent{};      // t̂ = (terminus−origin)/L
-    Mat3      beam_tensor_B{};     // B = L × (t̂⊗t̂)  — the 3×3 beam representation
+    Mat3      beam_tensor_B{};     // B = L × (t̂⊗t̂)   -  the 3×3 beam representation
 
     // Cross-section (circular pipe)
     double    outer_diameter_m{};  // m
@@ -291,11 +291,11 @@ struct PipeNetwork {
 };
 
 // ============================================================================
-// Random rotation helper — rotate a unit vector by a random deflection
+// Random rotation helper  -  rotate a unit vector by a random deflection
 // ============================================================================
 
 /**
- * random_deflect — deflect a unit direction vector by a random angle.
+ * random_deflect  -  deflect a unit direction vector by a random angle.
  *
  * Generates a random rotation axis perpendicular to `dir`, then rotates
  * `dir` by `angle_rad` around that axis using Rodrigues' rotation formula:
@@ -353,7 +353,7 @@ inline Vec3 random_deflect(const Vec3& dir, double angle_rad,
 // ============================================================================
 
 /**
- * generate_pipe_network — main entry point.
+ * generate_pipe_network  -  main entry point.
  *
  * @param n_segments_target  Approximate number of segments to generate
  * @param chaos              NetworkChaos (chi = 1.25 for complex topology)
@@ -517,7 +517,7 @@ inline PipeNetwork generate_pipe_network(
             net.nodes[from_node].is_junction = true;
     }
 
-    // ── Statistics ────────────────────────────────────────────────────────────
+    // -- Statistics ------------------------------------------------------------
     net.n_segments = static_cast<uint32_t>(net.segments.size());
     net.n_junctions = 0;
     net.n_loops     = 0;

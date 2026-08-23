@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 // ============================================================================
-// render_style_keys.hpp — Glass Module: External Colour/Style Key System
+// render_style_keys.hpp  -  Glass Module: External Colour/Style Key System
 // ============================================================================
 // No hardcoded colours.  The prerender system emits style keys; a palette
 // mapper (cloneable from Python or set per-project) resolves them to RGB.
@@ -12,7 +12,7 @@ namespace vsepr {
 namespace glass {
 
 // -----------------------------------------------------------------------
-// RenderStyleKey — emitted per atom/bond instance for external palette lookup.
+// RenderStyleKey  -  emitted per atom/bond instance for external palette lookup.
 // -----------------------------------------------------------------------
 struct RenderStyleKey {
     uint32_t atom_type{};       // atomic number (Z)
@@ -33,7 +33,7 @@ namespace StyleFlags {
 }
 
 // -----------------------------------------------------------------------
-// BondStyleKey — per bond instance
+// BondStyleKey  -  per bond instance
 // -----------------------------------------------------------------------
 struct BondStyleKey {
     uint32_t bond_order{};      // 1,2,3,4 (aromatic)

@@ -1,37 +1,37 @@
-#pragma once
+﻿#pragma once
 /**
- * seed_bead_stepper.hpp — Unified 6+9 Steady-State Step Function
+ * seed_bead_stepper.hpp  -  Unified 6+9 Steady-State Step Function
  *
- * Replaces the sequential VSEPR → FIRE → CG → Thermo pipeline with
+ * Replaces the sequential VSEPR -> FIRE -> CG -> Thermo pipeline with
  * a single composite step function that integrates all subsystems per tick.
  *
  * The "6+9" decomposition:
  *
  *   6 SEED units (atomistic / structural foundation):
- *     [S1] VSEPR geometry prediction         — domain class → ideal angles
- *     [S2] Velocity Verlet integration        — NVE propagation (Å, amu, fs)
- *     [S3] FIRE quench                        — adaptive damping toward minimum
- *     [S4] Force evaluation                   — LJ 12-6, Coulomb, bonded terms
- *     [S5] Statistical accumulation           — Welford online mean/variance
- *     [S6] Convergence detection              — |F_rms| < tol, energy plateau
+ *     [S1] VSEPR geometry prediction          -  domain class -> ideal angles
+ *     [S2] Velocity Verlet integration         -  NVE propagation (Å, amu, fs)
+ *     [S3] FIRE quench                         -  adaptive damping toward minimum
+ *     [S4] Force evaluation                    -  LJ 12-6, Coulomb, bonded terms
+ *     [S5] Statistical accumulation            -  Welford online mean/variance
+ *     [S6] Convergence detection               -  |F_rms| < tol, energy plateau
  *
  *   9 BEAD units (coarse-grained / environment-responsive layer):
- *     [B1] CG mapping                         — atom groups → bead positions
- *     [B2] Local density ρ_B                  — Gaussian-weighted neighbour sum
- *     [B3] Coordination number C_B            — neighbour count within r_cutoff
- *     [B4] Orientational order P_{2,B}        — Legendre P2 of axis alignment
- *     [B5] Target function f(ρ̂, P̂₂)          — α·ρ̂ + β·P̂₂
- *     [B6] Slow state η integration           — dη/dt = (f − η)/τ
- *     [B7] Kernel modulation (steric)         — K_s · (1 + γ_s · η̄)
- *     [B8] Kernel modulation (electrostatic)  — K_e · (1 + γ_e · η̄)
- *     [B9] Kernel modulation (dispersion)     — K_d · (1 + γ_d · η̄)
+ *     [B1] CG mapping                          -  atom groups -> bead positions
+ *     [B2] Local density ρ_B                   -  Gaussian-weighted neighbour sum
+ *     [B3] Coordination number C_B             -  neighbour count within r_cutoff
+ *     [B4] Orientational order P_{2,B}         -  Legendre P2 of axis alignment
+ *     [B5] Target function f(ρ̂, P̂₂)           -  α·ρ̂ + β·P̂₂
+ *     [B6] Slow state η integration            -  dη/dt = (f − η)/τ
+ *     [B7] Kernel modulation (steric)          -  K_s · (1 + γ_s · η̄)
+ *     [B8] Kernel modulation (electrostatic)   -  K_e · (1 + γ_e · η̄)
+ *     [B9] Kernel modulation (dispersion)      -  K_d · (1 + γ_d · η̄)
  *
  * Steady-state condition:
  *   All 15 units have converged when:
  *     |F_rms| < F_tol   AND   |Δη/Δt| < η_tol   AND   |ΔE/E| < E_tol
  *
  * Anti-black-box: every sub-unit produces an inspectable diagnostic.
- * Deterministic: identical inputs → bit-identical outputs.
+ * Deterministic: identical inputs -> bit-identical outputs.
  *
  * Reference: section_environment_responsive_beads.tex §5.6, §6.1
  *            section6_formation_physics.tex
@@ -57,7 +57,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * SeedUnitStatus — per-unit convergence / activity flags for SEED layer.
+ * SeedUnitStatus  -  per-unit convergence / activity flags for SEED layer.
  */
 struct SeedUnitStatus {
     bool s1_vsepr_active{};        // Geometry prediction ran
@@ -69,7 +69,7 @@ struct SeedUnitStatus {
 };
 
 /**
- * BeadUnitStatus — per-unit convergence / activity flags for BEAD layer.
+ * BeadUnitStatus  -  per-unit convergence / activity flags for BEAD layer.
  */
 struct BeadUnitStatus {
     bool b1_mapping_done{};        // CG mapping updated
@@ -88,7 +88,7 @@ struct BeadUnitStatus {
 // ============================================================================
 
 /**
- * SeedBeadStepRecord — complete diagnostic snapshot of one step.
+ * SeedBeadStepRecord  -  complete diagnostic snapshot of one step.
  *
  * Every field is inspectable. No hidden state.
  */
@@ -143,7 +143,7 @@ struct SeedBeadStepRecord {
 // ============================================================================
 
 /**
- * SeedBeadParams — complete parameter set for the 6+9 step function.
+ * SeedBeadParams  -  complete parameter set for the 6+9 step function.
  *
  * 6 SEED parameters + 9 BEAD parameters (6 environment + 3 observable).
  */
@@ -207,11 +207,11 @@ struct FIREState {
 };
 
 // ============================================================================
-// SeedBeadStepper — The Unified 6+9 Step Function
+// SeedBeadStepper  -  The Unified 6+9 Step Function
 // ============================================================================
 
 /**
- * SeedBeadStepper — deterministic steady-state step function.
+ * SeedBeadStepper  -  deterministic steady-state step function.
  *
  * Operates on a BeadSystem + per-bead EnvironmentState vector.
  * Each call to step() executes all 15 units in order and returns
@@ -254,10 +254,10 @@ public:
         const size_t N = system.beads.size();
 
         // ================================================================
-        // SEED LAYER (units S1–S6)
+        // SEED LAYER (units S1-S6)
         // ================================================================
 
-        // [S4] Force evaluation — compute pairwise bead forces
+        // [S4] Force evaluation  -  compute pairwise bead forces
         evaluate_bead_forces(system, env_states, forces, params.env_params);
         record.seed_status.s4_forces_evaluated = true;
 
@@ -273,15 +273,15 @@ public:
         record.rms_force = std::sqrt(f_sq_sum / std::max(N, size_t(1)));
         record.max_force = f_max;
 
-        // [S1] VSEPR geometry — implicit in the bead type assignments
+        // [S1] VSEPR geometry  -  implicit in the bead type assignments
         record.seed_status.s1_vsepr_active = true;
 
-        // [S3] FIRE quench — adaptive velocity mixing
+        // [S3] FIRE quench  -  adaptive velocity mixing
         apply_fire(system, velocities, forces, fire, params);
         record.seed_status.s3_fire_active = true;
         record.dt_current = fire.dt;
 
-        // [S2] Velocity Verlet — half-step velocity, full-step position
+        // [S2] Velocity Verlet  -  half-step velocity, full-step position
         velocity_verlet_step(system, velocities, forces, fire.dt);
         record.seed_status.s2_verlet_active = true;
 
@@ -303,13 +303,13 @@ public:
         record.seed_status.s6_converged = record.seed_converged;
 
         // ================================================================
-        // BEAD LAYER (units B1–B9)
+        // BEAD LAYER (units B1-B9)
         // ================================================================
 
-        // [B1] CG mapping update — positions already in beads
+        // [B1] CG mapping update  -  positions already in beads
         record.bead_status.b1_mapping_done = true;
 
-        // [B2–B5] Fast observables + target function
+        // [B2-B5] Fast observables + target function
         double sum_rho = 0.0, sum_C = 0.0, sum_P2 = 0.0, sum_f = 0.0;
         double max_deta = 0.0;
 
@@ -334,7 +334,7 @@ public:
                 }
             }
 
-            // Full environment state update (B2–B6)
+            // Full environment state update (B2-B6)
             env_states[i] = update_environment_state(
                 prev_eta[i],
                 system.beads[i].orientation.normal,
@@ -369,7 +369,7 @@ public:
         for (size_t i = 0; i < N; ++i) sum_eta += env_states[i].eta;
         record.avg_eta = sum_eta * invN;
 
-        // [B7–B9] Kernel modulation diagnostics
+        // [B7-B9] Kernel modulation diagnostics
         double sum_gs = 0.0, sum_ge = 0.0, sum_gd = 0.0;
         uint64_t pair_count = 0;
         for (size_t i = 0; i < N; ++i) {
@@ -540,7 +540,7 @@ private:
                     system.beads[i].structural_role,
                     system.beads[j].structural_role);
 
-                // Environment modulation — all three channels
+                // Environment modulation  -  all three channels
                 double eta_i = (i < env_states.size()) ? env_states[i].eta : 0.0;
                 double eta_j = (j < env_states.size()) ? env_states[j].eta : 0.0;
                 double g_steric = kernel_modulation_factor(
@@ -694,7 +694,7 @@ private:
                     system.beads[i].structural_role,
                     system.beads[j].structural_role);
 
-                // Environment modulation — all three channels
+                // Environment modulation  -  all three channels
                 double eta_i = (i < env_states.size()) ? env_states[i].eta : 0.0;
                 double eta_j = (j < env_states.size()) ? env_states[j].eta : 0.0;
                 double g_steric = kernel_modulation_factor(

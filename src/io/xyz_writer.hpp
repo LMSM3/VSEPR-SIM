@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * xyz_writer.hpp -- Spec-compliant unified XYZ family writer
  * ===========================================================
@@ -29,7 +29,7 @@ namespace vsepr {
 namespace io {
 
 // ============================================================================
-// WriterConfig — shared output settings
+// WriterConfig  -  shared output settings
 // ============================================================================
 
 struct XYZWriterConfig {
@@ -117,7 +117,7 @@ inline std::string make_comment(const XYZFrame& frame, const std::string& props_
 		if (frame.energy)      out << " | E = " << std::fixed << std::setprecision(4) << *frame.energy << " kcal/mol";
 		if (frame.temperature) out << " | T = " << std::fixed << std::setprecision(2) << *frame.temperature << " K";
 	} else {
-		// already has properties= — keep verbatim
+		// already has properties=  -  keep verbatim
 		out << frame.comment;
 	}
 
@@ -289,7 +289,7 @@ inline bool write_xyzf(std::ostream& out,
 }
 
 // ============================================================================
-// XYZFWriter — streaming append writer for real-time trajectory output
+// XYZFWriter  -  streaming append writer for real-time trajectory output
 // ============================================================================
 
 class XYZFWriter {

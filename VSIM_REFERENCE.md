@@ -165,7 +165,7 @@ Controls which output files are written after a run.
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
 | `write_xyz` | bool | `true` | ✅ | Final particle positions (XYZ format). Ground-truth state. |
-| `write_xyzf` | bool | `false` | ✅ | Multi-frame trajectory (XYZF format). |
+| `write_xyzf` | bool | `false` | ✅ | Multi-frame trajectory (XYZF format). Active for gas-injection runs (molecules with `region = "corner_*"`). |
 | `write_xyzfull` | bool | `false` | ✅ | Full state history. Doctrine: stores *what happened*, not inferred labels. |
 | `write_pdb` | bool | `false` | * | PDB format for external viewers (VESTA, VMD). Parser wired; writer pending. |
 
@@ -279,7 +279,7 @@ Controls interactive display during and after the simulation run. Separated from
 
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
-| `output_type` | string | `"none"` | ✅ | See output type catalog below. |
+| `output_type` | string | `"none"` | ✅ | See output type catalog below. VTK + Qt3D requires `BUILD_VIS=ON` and Qt6 Qt3D. |
 | `animation_mode` | string | `"none"` | ✅ | `"none"`, `"spark"`, `"bar"`, `"overlay"`. Terminal paths only. |
 | `render_interval` | int | `1` | ✅ | **Emit a render / export frame every N simulation steps.** Orthogonal to `display_fps`. `0` treated as `1`. |
 | `live_switch` | bool | `false` | ✅ | **Live-switch feed.** Derived from the element carousel pattern. When `true`, the viewer window is refreshed in-place (cursor-up overwrite / GL content swap / SSE data push) instead of being torn down and reopened between simulation phases or data-source changes. Eliminates flash and preserves scroll context. |
@@ -296,10 +296,10 @@ Controls interactive display during and after the simulation run. Separated from
 | `"terminal_energy_heatmap"` | — | 2D ASCII energy landscape heatmap. |
 | `"terminal_defect_map"` | — | ASCII defect site map (grid projection). |
 | `"terminal_phase_diagram"` | — | ASCII phase field snapshot. |
-| `"gl_overlay_cycle"` | `BUILD_VISUALIZATION` | CGVizViewer overlay cycle. |
-| `"gl_live_60fps"` | `BUILD_VISUALIZATION` | SeedBeadViewer 60 fps live view. |
-| `"gl_crystal_grid"` | `BUILD_VISUALIZATION` | Crystal grid viewer. |
-| `"gl_interactive"` | `BUILD_VISUALIZATION` | Full interactive viewer with ImGui. |
+| `"gl_overlay_cycle"` | `BUILD_VIS` | VTK + Qt3D overlay cycle. |
+| `"gl_live_60fps"` | `BUILD_VIS` | VTK + Qt3D 60 fps live view. |
+| `"gl_crystal_grid"` | `BUILD_VIS` | VTK + Qt3D crystal grid viewer. |
+| `"gl_interactive"` | `BUILD_VIS` | VTK + Qt3D interactive viewer. |
 | `"web_dashboard"` | network | HTTP server with auto-updating HTML dashboard. |
 | `"sse_stream"` | network | SSE event stream to external client. |
 | `"webgl_viewer"` | network | WebGL streamer bundle. |
@@ -321,6 +321,14 @@ Controls interactive display during and after the simulation run. Separated from
 | `show_energy_heatmap` | bool | `false` | ✅ | 2D ASCII energy landscape projection. |
 | `show_defect_map` | bool | `false` | ✅ | ASCII defect site grid projection. |
 | `show_phase_field` | bool | `false` | ✅ | ASCII phase field snapshot. |
+
+### WO-93A live status-loop flags
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `show_status_loop` | bool | `false` | ✅ | Smooth two-line terminal HUD: line 1 (high Hz) shows step, energy bar, η bar, and state label with interpretive colour mapping; line 2 (medium Hz) shows CPU %, RAM free/total, disk free, and GPU name. |
+| `status_loop_hz` | float | `30.0` | ✅ | Max line-1 updates/sec. |
+| `hardware_monitor_hz` | float | `2.0` | ✅ | Max line-2 hardware telemetry updates/sec. |
 
 ### GL options
 
@@ -344,6 +352,15 @@ Controls interactive display during and after the simulation run. Separated from
 | Field | Type | Default | Status | Notes |
 |---|---|---|---|---|
 | `shadow_type` | int | `0` | ✅ | **Depth-shading model** for ASCII and GL terminal renderers. `0` = off (flat, legacy). `1` = `ambient_soft` — soft ambient-occlusion gradient (`shade = 0.30 + 0.70 * sat((z+depth)/range)`); good for small molecules. `2` = `depth_fade` — linear perspective cue (`shade = 1.0 - 0.55 * sat((maxZ-z)/range)`); good for crystals. `3` = `contact` — proximity darkening (darkens atoms close to neighbours). |
+
+### Uless observation-length indicator (VTK + Qt3D viewer)
+
+| Field | Type | Default | Status | Notes |
+|---|---|---|---|---|
+| `uless_indicator_enabled` | bool | `false` | ✅ | Enable a vertical bar indicator in the top-left corner of the VTK + Qt3D viewer. |
+| `uless_indicator_label` | string | `"obs"` | ✅ | Short label rendered above the numeric readout. |
+| `uless_indicator_value` | float | `0.0` | ✅ | Current value displayed with X.XX precision. |
+| `uless_indicator_max` | float | `1.0` | ✅ | Upper bound used to compute the bar fill ratio, clamped to `[0, 1]`. |
 
 ### Web options
 
@@ -914,6 +931,37 @@ Declares the run mode and top-level execution controls.
 | `pressure` / `pressure_GPa` | float | `0.0` | GPa (for NPT) |
 | `converge` | bool | `true` | Stop early on convergence criterion |
 | `output_level` | string | `"standard"` | `"minimal"`, `"standard"`, `"verbose"` |
+| `dense_record` | bool | `false` | Shortcut that enables `[dense_record]` high-density run provenance (WO-28MAR). |
+
+________________________________________
+
+## `[dense_record]` — WO-28MAR high-density run record
+
+Controls the high-density provenance sidecar emitted next to run artifacts. Enabled either by `[run] dense_record = true` or by any key in this section.
+
+| Key | Type | Default | Description |
+|---|---|---|---|
+| `enabled` | bool | `false` | Turn the dense record path on/off. |
+| `energy_force_interval` | int | `5` | Steps between energy / RMS force samples. |
+| `max_records` | int | `10000` | Hard cap on per-step samples. |
+| `initial_structure` | bool | `true` | Write `*_initial.xyz` before the step loop. |
+| `final_structure` | bool | `true` | Write `*_final.xyz` after the step loop. |
+| `connectivity_before` | bool | `true` | Write `*_connectivity_before.json`. |
+| `connectivity_after` | bool | `true` | Write `*_connectivity_after.json`. |
+| `seed` | bool | `true` | Include the RNG seed in the record. |
+| `potential_checksum` | bool | `true` | Include a lightweight source-file checksum. |
+| `potential_label` | string | `""` | Human-readable potential name. |
+| `terminal_gates` | bool | `true` | Record terminal gate evaluations per cadence step. |
+| `timing_split` | bool | `true` | Report computation vs orchestration wall time. |
+
+Emitted artifacts (in `output_dir` / `out/<run_label>`):
+
+* `<run_label>_initial.xyz`
+* `<run_label>_final.xyz`
+* `<run_label>_connectivity_before.json`
+* `<run_label>_connectivity_after.json`
+* `<run_label>_energy_force.tsv`
+* `<run_label>_dense_record.json`
 
 ________________________________________
 
@@ -2101,19 +2149,24 @@ eigen-basis presolve.  Seven new optional `.X` sections are supported.
 | 45 | `test_curvefit_presolve` | EIG-7..8 (3) | added v5.1.3 |
 | 46 | `test_release_gate` | EIG-9..10 (4) | added v5.1.3 |
 | 47 | `test_basis_archive` | BA-1..5 (5) | added v5.1.3 |
-| 53 | `test_view_67b` | VIEW-67B-01..08 + BONUS (9) | added WO-67-B; guarded: `BUILD_VIS=ON` required |
+| 53 | `test_view_67b` | VIEW-67B-01..08 + BONUS (9) | archived with the retired viewer contract |
 
 ---
 
-## Lightweight Viewer — WO-67-A / WO-67-B
+## Archived Viewer Contract — WO-67-A / WO-67-B
+
+The one-shot viewer, daemon, VTK route, and associated data contract are no
+longer configured or installed. Their source and supporting history live at
+`archive/viewers/legacy-2026-07-22`. The supported interactive frontend is
+`vsepr-view`, documented in `docs/visual_stack/12_live_simulation_density_domains_v0.md`.
 
 ### Build gates
 
 | CMake option | Default | Effect |
 |---|---|---|
-| `BUILD_VIS` | `ON` | Required parent gate for all viewer targets |
-| `BUILD_VIEWER` | `ON` | Builds `vsepr-light-view` and `vsepr_view_lib` |
-| `BUILD_VIEWER_DAEMON` | `OFF` | Builds `vsepr-viewd` daemon (WO-67-A2, gated) |
+| `BUILD_VIS` | `ON` | Builds the supported fixed-timestep `vsepr-view` |
+| `BUILD_VIEWER` | retired | Archived one-shot viewer; no active target |
+| `BUILD_VIEWER_DAEMON` | retired | Archived daemon; no active target |
 
 ### Canonical viewer data model (`include/vsim/view/viewer_types.hpp`)
 
@@ -2235,7 +2288,8 @@ Unlinked ids (particle has `identity_id > 0` but no matching sidecar record) pro
 
 `NullViewBridge` — no-op implementation for headless / offline / test mode.
 
-Transport implementations (`NdjsonViewBridge`, etc.) are gated by `BUILD_VIEWER_DAEMON` and belong to WO-67-A2.
+Transport implementations (`NdjsonViewBridge`, etc.) are historical material
+archived with the retired daemon route.
 
 ### WO-67-B test suite (Group 53)
 

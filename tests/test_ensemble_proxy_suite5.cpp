@@ -1,5 +1,5 @@
-/**
- * test_ensemble_proxy_suite5.cpp — Suite #5: Emergent Effective Medium Mapping
+﻿/**
+ * test_ensemble_proxy_suite5.cpp  -  Suite #5: Emergent Effective Medium Mapping
  *
  * Validates the ensemble-level macroscopic response proxy layer.
  *
@@ -12,7 +12,7 @@
  *   stabilization, large > small for surface sensitivity reduction.
  *
  * Phase 5C: Large-N proxy stability
- *   N = 64, 125, 216 — all proxies finite, bounded, responsive.
+ *   N = 64, 125, 216  -  all proxies finite, bounded, responsive.
  *
  * Phase 5D: Invariance
  *   Translation, rotation, permutation produce identical proxies.
@@ -22,11 +22,11 @@
  *
  * Architecture position:
  *   Environment-state evaluation
- *       ↓
+ *       v
  *   Ensemble statistics / spatial field summaries
- *       ↓
+ *       v
  *   Macroscopic response proxies
- *       ↓
+ *       v
  *   Later constitutive or transport models
  *
  * Reference: Emergent Effective Medium Mapping specification
@@ -101,7 +101,7 @@ static coarse_grain::EnsembleProxySummary run_and_proxy(
 }
 
 // ============================================================================
-// Phase 5A — Computation Correctness
+// Phase 5A  -  Computation Correctness
 // ============================================================================
 
 static void phase_5a_computation() {
@@ -277,7 +277,7 @@ static void phase_5a_computation() {
 }
 
 // ============================================================================
-// Phase 5B — Physical Sense
+// Phase 5B  -  Physical Sense
 // ============================================================================
 
 static void phase_5b_physical_sense() {
@@ -347,7 +347,7 @@ static void phase_5b_physical_sense() {
         auto proxy_lattice = run_and_proxy(scene_lattice, params);
         auto proxy_cloud   = run_and_proxy(scene_cloud,   params);
 
-        // Lattice is geometrically regular → lower variance → higher uniformity
+        // Lattice is geometrically regular -> lower variance -> higher uniformity
         check(proxy_lattice.uniformity_proxy >= proxy_cloud.uniformity_proxy - 0.05,
               "lattice at least as uniform as random cloud");
     }
@@ -394,7 +394,7 @@ static void phase_5b_physical_sense() {
 }
 
 // ============================================================================
-// Phase 5C — Large-N Proxy Stability
+// Phase 5C  -  Large-N Proxy Stability
 // ============================================================================
 
 static void phase_5c_large_n() {
@@ -514,7 +514,7 @@ static void phase_5c_large_n() {
 }
 
 // ============================================================================
-// Phase 5D — Invariance
+// Phase 5D  -  Invariance
 // ============================================================================
 
 static void phase_5d_invariance() {
@@ -608,7 +608,7 @@ static void phase_5d_invariance() {
 }
 
 // ============================================================================
-// Phase 5E — Proxy Sensitivity
+// Phase 5E  -  Proxy Sensitivity
 // ============================================================================
 
 static void phase_5e_sensitivity() {
@@ -618,7 +618,7 @@ static void phase_5e_sensitivity() {
 
     // ---- 5E.1: Spacing sweep affects cohesion ----
     {
-        std::printf("\n--- 5E.1: Spacing sweep → cohesion ---\n");
+        std::printf("\n--- 5E.1: Spacing sweep -> cohesion ---\n");
 
         double spacings[] = {2.5, 4.0, 6.0, 8.0, 10.0};
         int n_sp = 5;
@@ -649,7 +649,7 @@ static void phase_5e_sensitivity() {
 
     // ---- 5E.2: Alignment sweep affects texture ----
     {
-        std::printf("\n--- 5E.2: Alignment sweep → texture ---\n");
+        std::printf("\n--- 5E.2: Alignment sweep -> texture ---\n");
 
         double biases[] = {0.0, 0.25, 0.5, 0.75, 1.0};
         int n_biases = 5;
@@ -748,14 +748,14 @@ static void phase_5e_sensitivity() {
 }
 
 // ============================================================================
-// Phase 5F — Directed Proxy Validation (Blocking)
+// Phase 5F  -  Directed Proxy Validation (Blocking)
 //
 // One perturbation test per proxy. Each test specifies:
 //   - the perturbation applied to states/scene
 //   - the expected direction of change
 //   - the pass criterion
 //
-// If any test fails, the proxy formula is wrong — fix it before use.
+// If any test fails, the proxy formula is wrong  -  fix it before use.
 // ============================================================================
 
 static void phase_5f_directed_validation() {
@@ -765,14 +765,14 @@ static void phase_5f_directed_validation() {
     double dt   = 10.0;
     int n_steps = 500;
 
-    // ---- 5F.1: Degrade edge bead states → cohesion decreases ----
+    // ---- 5F.1: Degrade edge bead states -> cohesion decreases ----
     // Perturbation: identify the N/2 lowest-C beads (edge class) and set
     //   their rho_hat = 0, eta = 0, target_f = 0.9 (forces high mismatch).
     // Expected: cohesion = (mean_rho_hat + mean_eta + (1 - mean_mismatch)) / 3
     //   decreases because rho_hat and eta terms fall and mismatch rises.
     // Pass criterion: cohesion_base > cohesion_degraded.
     {
-        std::printf("\n--- 5F.1: Edge states degraded → cohesion decreases ---\n");
+        std::printf("\n--- 5F.1: Edge states degraded -> cohesion decreases ---\n");
 
         auto scene    = test_util::scene_cubic_lattice(3, 4.0);
         auto states   = test_util::run_all_beads(scene, params, dt, n_steps);
@@ -798,13 +798,13 @@ static void phase_5f_directed_validation() {
               "5F.1: mean_rho_hat decreases after edge degradation");
     }
 
-    // ---- 5F.2: Randomize P2_hat → texture decreases ----
+    // ---- 5F.2: Randomize P2_hat -> texture decreases ----
     // Perturbation: start with an aligned scene (P2_hat > 0.5), then set
     //   all P2_hat to 1/3 (isotropic random average).
     // Expected: texture_proxy = mean_P2_hat decreases toward 0.33.
     // Pass criterion: texture_aligned > texture_random.
     {
-        std::printf("\n--- 5F.2: P2_hat randomized → texture decreases ---\n");
+        std::printf("\n--- 5F.2: P2_hat randomized -> texture decreases ---\n");
 
         auto scene_aligned = test_util::scene_biased_stack_cloud(
             20, 3.5, 1.0, 0.0, 42);
@@ -826,14 +826,14 @@ static void phase_5f_directed_validation() {
               "5F.2: randomized texture_proxy == 1/3 (mean_P2_hat)");
     }
 
-    // ---- 5F.3: Reduce variance → uniformity increases ----
+    // ---- 5F.3: Reduce variance -> uniformity increases ----
     // Perturbation: take heterogeneous converged states; then create a
     //   second version where all beads have the ensemble mean for eta and
     //   rho_hat (zero variance).
-    // Expected: uniformity = 1 - normalized_spread → 1.0 when spread = 0.
+    // Expected: uniformity = 1 - normalized_spread -> 1.0 when spread = 0.
     // Pass criterion: uniformity_zero_var > uniformity_base.
     {
-        std::printf("\n--- 5F.3: Zero variance → uniformity increases ---\n");
+        std::printf("\n--- 5F.3: Zero variance -> uniformity increases ---\n");
 
         auto scene  = test_util::scene_cubic_lattice(3, 4.0);
         auto states = test_util::run_all_beads(scene, params, dt, n_steps);
@@ -858,14 +858,14 @@ static void phase_5f_directed_validation() {
               "5F.3: var_eta is zero after equalization");
     }
 
-    // ---- 5F.4: Freeze eta at random values → stabilization decreases ----
+    // ---- 5F.4: Freeze eta at random values -> stabilization decreases ----
     // Perturbation: take converged states (high eta, low mismatch); replace
     //   eta with LCG pseudo-random values in [0, 1] and set target_f = 0.9.
     // Expected: stabilization = mean_eta * (1 - mean_mismatch) decreases
     //   because mean_eta ≈ 0.5 and mismatch ≈ mean|random - 0.9| ≈ 0.4.
     // Pass criterion: stabilization_converged > stabilization_frozen.
     {
-        std::printf("\n--- 5F.4: Frozen random eta → stabilization decreases ---\n");
+        std::printf("\n--- 5F.4: Frozen random eta -> stabilization decreases ---\n");
 
         auto scene  = test_util::scene_cubic_lattice(3, 4.0);
         auto states = test_util::run_all_beads(scene, params, dt, n_steps);
@@ -890,19 +890,19 @@ static void phase_5f_directed_validation() {
               "5F.4: frozen random eta produces higher mismatch");
     }
 
-    // ---- 5F.5: Identical bead states → surface sensitivity near zero ----
+    // ---- 5F.5: Identical bead states -> surface sensitivity near zero ----
     // Perturbation: set all beads to identical rho, C, eta, target_f.
     //   When bulk mean == edge mean for all fields, all gaps are zero.
     // Expected: surface_sensitivity_proxy ≈ 0.
     // Pass criterion: surface_sensitivity < 0.02.
     {
-        std::printf("\n--- 5F.5: Identical states → surface sensitivity near zero ---\n");
+        std::printf("\n--- 5F.5: Identical states -> surface sensitivity near zero ---\n");
 
         auto scene  = test_util::scene_cubic_lattice(3, 4.0);
         auto states = test_util::run_all_beads(scene, params, dt, n_steps);
         auto positions = extract_positions(scene);
 
-        // Force all beads to identical values — no bulk/edge contrast
+        // Force all beads to identical values  -  no bulk/edge contrast
         auto states_ident = states;
         for (auto& st : states_ident) {
             st.rho      = 1.0;
@@ -922,7 +922,7 @@ static void phase_5f_directed_validation() {
 }
 
 // ============================================================================
-// Phase 5G — Time Delta, Validity, and Reference Distributions
+// Phase 5G  -  Time Delta, Validity, and Reference Distributions
 // ============================================================================
 
 static void phase_5g_delta_validity_reference() {
@@ -962,9 +962,9 @@ static void phase_5g_delta_validity_reference() {
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
         auto positions = extract_positions(scene);
 
-        // Zero steps → all eta = 0
+        // Zero steps -> all eta = 0
         auto states_t0 = test_util::run_all_beads(scene, params, 10.0, 0);
-        // Few steps → eta has moved
+        // Few steps -> eta has moved
         auto states_t1 = test_util::run_all_beads(scene, params, 10.0, 30);
 
         auto proxy_t0 = coarse_grain::compute_ensemble_proxy(
@@ -980,7 +980,7 @@ static void phase_5g_delta_validity_reference() {
               "fresh: not yet converged");
     }
 
-    // ---- 5G.3: Validity flag — small N flagged ----
+    // ---- 5G.3: Validity flag  -  small N flagged ----
     {
         std::printf("\n--- 5G.3: Validity flag ---\n");
 
@@ -1025,7 +1025,7 @@ static void phase_5g_delta_validity_reference() {
               "explicit c_thresh_used = 4.0 as pinned");
     }
 
-    // ---- 5G.5: Reference bounds — apply_reference fills rel_* ----
+    // ---- 5G.5: Reference bounds  -  apply_reference fills rel_* ----
     {
         std::printf("\n--- 5G.5: Reference normalisation ---\n");
 
@@ -1068,7 +1068,7 @@ static void phase_5g_delta_validity_reference() {
         auto proxy  = run_and_proxy(scene, params, 10.0, 400);
 
         // For an ordered lattice with variance > 0, we expect a finite ξ
-        // (NaN is acceptable if the field is uniform — but that's checked
+        // (NaN is acceptable if the field is uniform  -  but that's checked
         // by the all_finite flag on separate proxies).
         bool eta_ok = (proxy.var_eta < 1e-20) ||
                       (!std::isnan(proxy.eta_corr_length) && proxy.eta_corr_length > 0.0);

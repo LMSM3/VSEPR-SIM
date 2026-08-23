@@ -1,0 +1,60 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# water.vsim
+# =============================================================================
+# Demo 01 — Water molecule geometry + short MD relaxation
+# =============================================================================
+# H2O in vacuum: VSEPR bent geometry, FIRE relaxation, short NVT run.
+# Every fresh install can run this and prove the pipeline works.
+#
+# Run:  vsepr run scripts/demos/water.vsim
+# =============================================================================
+
+[project]
+name        = "water_demo"
+version     = "v5.1.4"
+seed_base   = 1001
+description = "H2O bent geometry — FIRE relax + short NVT"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = true
+track_energy_path    = true
+track_structure_changes = true
+
+[simulation]
+box_size_ang    = 20.0
+periodic        = false
+fire_max_steps  = 300
+fire_dt_fs      = 0.5
+formation_preset = "molecule"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 1
+temperature_K = 298.15
+lattice       = "none"
+
+[run]
+mode           = "molecule"
+num_steps      = 500
+dt             = 0.5
+integrator     = "velocity_verlet"
+temperature_K  = 298.15
+sample_interval   = 50
+render_interval   = 50
+
+[export]
+xyz      = true
+xyzFull  = true
+dynx     = true
+events   = true
+report   = true
+
+[analysis]
+rmsd            = true
+energy_trace    = true
+stationarity    = true
+

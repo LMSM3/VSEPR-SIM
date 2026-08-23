@@ -1,0 +1,58 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# ============================================================================
+# wo84c_ring_detection_goal.vsim  --  Day 84 / WO-84C goal script
+# ============================================================================
+# Status label: GOAL_ONLY
+#
+# Living artifact: goal document -> demonstration -> regression fixture.
+# Narrates its own intent via print_console (Day 84 live-scripting primitive).
+#
+# Run through:  vsepr classify examples/day84/wo84c_ring_detection_goal.vsim
+#          or:  vsepr run      examples/day84/wo84c_ring_detection_goal.vsim
+# ============================================================================
+
+print_console "Day 84 - VSEPR Revival Arc"
+print_console "Work Order: WO-84C"
+print_console "Status: GOAL_ONLY"
+print_console "Purpose: test ring detection and rotatable bond exclusion"
+print_console "Expected: benzene and cyclohexane report rings"
+print_console "Expected: linear hexane reports zero rings"
+print_console "Known gaps: fused rings may initially use conservative flags"
+print_console ""
+print_console ">> RingDetector runs SSSR-lite over the heavy-atom graph (State based)"
+print_console ">> RingProvider is the sanctioned ring-data inlet into classify"
+print_console ">> OrganicClassifier::count_rings prefers the provider, else detects directly"
+print_console ">> Ring bonds are excluded from rotatable-bond counts"
+print_console ">> benzene -> 1 ring (size 6);  cyclopropane -> strained 3-ring"
+print_console ">> naphthalene -> 2 fused rings;  linear hexane -> 0 rings"
+print_console ""
+print_console ">> Future regression target: CTest Group 101"
+
+# ----------------------------------------------------------------------------
+# [project]  --  identity block
+# ----------------------------------------------------------------------------
+
+[project]
+name        = "wo84c_ring_detection_goal"
+description = "Day 84 WO-84C: ring detection + rotatable-bond ring exclusion"
+version     = "1.0.0"
+author      = "VSEPR-SIM Day 84 arc"
+tags        = "day84 wo-84c ring detection rotatable_bond goal_only print_console"
+seed_base   = 8403
+
+# ----------------------------------------------------------------------------
+# [formula]  --  molecular identity for the classifiers
+# ----------------------------------------------------------------------------
+# benzene (C6H6):
+#   - 6-membered carbon ring -> ring_count 1, ring size 6
+#   - all ring C-C bonds excluded from rotatable-bond count -> 0 rotatable
+#   - aromaticity itself is WO-84D; this script only asserts ring presence
+
+[formula]
+formula = "C6H6"
+
+print_console ">> Declared benzene C6H6: expect ring_count 1, rotatable_bonds 0"
+print_console ">> GOAL_ONLY: aromatic gating arrives in WO-84D; here we only detect the ring"
+

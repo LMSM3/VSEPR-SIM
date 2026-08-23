@@ -1,6 +1,6 @@
-// src/vsim/node_accessor.cpp
+﻿// src/vsim/node_accessor.cpp
 //
-// NodeAccessor — translates NodePath strings into typed row structs by
+// NodeAccessor  -  translates NodePath strings into typed row structs by
 // querying KernelEventLog::instance().
 //
 // ContinualReportEvent fields beyond result_value are recovered from the
@@ -171,7 +171,7 @@ bool NodeAccessor::has_data() const {
 }
 
 // ---------------------------------------------------------------------------
-// helix_rows — "run.history"
+// helix_rows  -  "run.history"
 // ---------------------------------------------------------------------------
 
 std::vector<HelixRow> NodeAccessor::helix_rows(int boundary_every) const {
@@ -224,7 +224,7 @@ std::vector<HelixRow> NodeAccessor::helix_rows(int boundary_every) const {
 }
 
 // ---------------------------------------------------------------------------
-// heat_rows — "room.solver"
+// heat_rows  -  "room.solver"
 // ---------------------------------------------------------------------------
 
 std::vector<HeatRow> NodeAccessor::heat_rows(int subsample_cap) const {
@@ -268,7 +268,7 @@ std::vector<HeatRow> NodeAccessor::heat_rows(int subsample_cap) const {
 }
 
 // ---------------------------------------------------------------------------
-// scalar_summary — data.scalar.panel
+// scalar_summary  -  data.scalar.panel
 // ---------------------------------------------------------------------------
 
 std::vector<std::pair<std::string, std::string>>

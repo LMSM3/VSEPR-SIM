@@ -1,27 +1,27 @@
-/**
- * fire_smooth_task.cpp — FIRE Smooth-Sampling Experimental Task
+﻿/**
+ * fire_smooth_task.cpp  -  FIRE Smooth-Sampling Experimental Task
  *
  * Experimental runner that extends the FIRE 6+9 relaxation with:
  *   - Smooth random sampling of arrangement parameters (Gaussian perturbations)
  *   - QM descriptor computation (Level-0 analytic) for each converged state
- *   - Level 3 Bead aggregation (L2 → L3 domain clustering)
+ *   - Level 3 Bead aggregation (L2 -> L3 domain clustering)
  *   - Macro-DM precursor handoff records (rigidity*, ductility*, transport*...)
  *   - Full per-step trace attached to seed hash
  *
  * This is the integration test for three new infrastructure layers:
- *   coarse_grain/fire_smooth/   — smooth sampler + runner
- *   coarse_grain/qm/            — QM descriptor preparation (Level 0)
- *   coarse_grain/level3/        — Level 3 Beading, macro-DM handoff
+ *   coarse_grain/fire_smooth/    -  smooth sampler + runner
+ *   coarse_grain/qm/             -  QM descriptor preparation (Level 0)
+ *   coarse_grain/level3/         -  Level 3 Beading, macro-DM handoff
  *
  * Usage:
  *   fire-smooth [master_seed] [n_samples]
  *   defaults: seed=42, n_samples=200
  *
  * Outputs:
- *   fire_smooth_results.csv       — one row per sample, all metadata
- *   fire_smooth_l3.csv            — one row per L3 domain
- *   fire_smooth_trace/<HASH>.csv  — per-step trace per sample
- *   fire_smooth_report.md         — summary report
+ *   fire_smooth_results.csv        -  one row per sample, all metadata
+ *   fire_smooth_l3.csv             -  one row per L3 domain
+ *   fire_smooth_trace/<HASH>.csv   -  per-step trace per sample
+ *   fire_smooth_report.md          -  summary report
  *
  * Anti-black-box: every perturbation, QM value, and L3 aggregate
  * is explicitly recorded and traceable to its seed hash.
@@ -356,7 +356,7 @@ static void write_report(const std::string& path,
     f << "| Macro-DM Precursors | `coarse_grain/analysis/macro_precursor.hpp` | Wired |\n\n";
 
     f << "---\n";
-    f << "*VSEPR-SIM v2.9.2 — deterministic atomistic platform*\n";
+    f << "*VSEPR-SIM v2.9.2  -  deterministic atomistic platform*\n";
     f << "*fire_smooth: experimental FIRE + smooth sampling + QM + L3 Beading*\n";
 
     std::cout << "  Written: " << path << "\n";
@@ -466,9 +466,9 @@ int main(int argc, char* argv[])
               << n_samples << " files)\n";
     std::cout << "\n================================================================\n";
     std::cout << " Done. New layers active:\n";
-    std::cout << "   coarse_grain/fire_smooth/  — smooth sampler\n";
-    std::cout << "   coarse_grain/qm/           — QM descriptors (Level 0)\n";
-    std::cout << "   coarse_grain/level3/       — L3 Beading, macro-DM handoff\n";
+    std::cout << "   coarse_grain/fire_smooth/   -  smooth sampler\n";
+    std::cout << "   coarse_grain/qm/            -  QM descriptors (Level 0)\n";
+    std::cout << "   coarse_grain/level3/        -  L3 Beading, macro-DM handoff\n";
     std::cout << "================================================================\n";
 
     return 0;

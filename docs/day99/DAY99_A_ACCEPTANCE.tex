@@ -1,0 +1,74 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{enumitem}
+\title{WO-99A: Beta7--8 Acceptance and Execution Evidence}
+\author{VSEPR-SIM}
+\date{Day \textasciitilde99}
+\begin{document}
+\maketitle
+
+\section*{Scope and baseline}
+This work order closes visibility gaps carried forward from the Beta7--8
+acceptance record. The target is not a new simulation subsystem. It is an
+observable path through the existing formation, trajectory, analysis, report,
+and viewer pipeline. The baseline had a release configuration with demos
+suppressed, no canonical NaCl fixture for default viewer startup, and no
+single visible record of CLI, electrohydrodynamic (EHD), replay, and
+repeatability execution.
+
+The authoritative acceptance commands are:
+\begin{verbatim}
+cmake --preset release
+cmake --build build --parallel 4
+ctest --test-dir build --output-on-failure
+\end{verbatim}
+The release preset remains headless when OpenGL dependencies are unavailable,
+but it builds the portable viewer-contract demos and their bench entry.
+
+\section*{Implementation}
+The release preset enables \texttt{BUILD\_DEMOS} and \texttt{BUILD\_VIEW\_DEMOS}.
+The canonical scientific fixture \texttt{data/fixtures/nacl.xyz} contains an
+eight-particle NaCl rock-salt cell. The lightweight viewer searches the build,
+parent-build, and installed data paths for this fixture before opening its file
+dialog. Viewer behavior remains downstream: the XYZ fixture is the source of
+truth and the viewer only loads and renders it.
+
+EHD remains a header-only library by design, but it is not interface-only in
+the acceptance sense: \texttt{test\_ehd} runs CAD, domain, physics, mesh, and
+post-processing execution, while \texttt{bench\_ehd} provides a timed coupled
+solver path. CLI help and version smoke tests are registered in CTest. Existing
+viewer data-contract and replay-hash tests provide truth-replay and
+repeatability evidence without mutating scientific coordinates.
+
+\newpage
+\section*{Verification record}
+The full release verification passed 197/197 configured CTest tests. The
+focused acceptance set also passed all six selected tests:
+\begin{itemize}[noitemsep]
+  \item \texttt{EHDMultiphysicsTest}
+  \item \texttt{EHDBenchmark}
+  \item \texttt{Bridge65ReplayHashGroup52}
+  \item \texttt{ViewerRuntimeBridge67B}
+  \item \texttt{CLIHelpSmoke}
+  \item \texttt{CLIVersionSmoke}
+\end{itemize}
+The observed focused result was 6/6 tests passed. The full release build and
+CTest run completed successfully. The build also produced
+\texttt{vsepr}, \texttt{test\_ehd}, \texttt{test\_view\_67b},
+\texttt{vsepr-view-demo-01}, and \texttt{vsepr-view-bench}.
+
+Configuration reports CUDA as OFF because no CUDA compiler is configured in
+the prescribed toolchain. This is an explicit CPU fallback, not a claim of GPU
+acceleration. A visual OpenGL window and PNG 3D export still require a visual
+preset and its runtime dependencies; that environment-dependent gate remains
+next action rather than being represented as complete.
+
+\section*{Handoff}
+The work order is at Golden evidence for its explicit criteria: build/test
+visibility, fixture resolution, demo artifact wiring, EHD execution, CLI
+smoke validation, and replay/repeatability checks are reproducible from the
+commands above. The next handoff is a full release transcript plus PNG export
+verification on a host with visual dependencies, followed by CUDA capability
+work only if a supported CUDA compiler is installed.
+\end{document}

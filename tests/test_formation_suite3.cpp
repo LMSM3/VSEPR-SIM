@@ -1,5 +1,5 @@
-/**
- * test_formation_suite3.cpp — Suite #3: Structured N > 10 Formation Studies
+﻿/**
+ * test_formation_suite3.cpp  -  Suite #3: Structured N > 10 Formation Studies
  *
  * Phase 1: Single-variable response atlas
  *   For each of 7 environment variables (rho, rho_hat, C, P2, P2_hat, eta,
@@ -71,7 +71,7 @@ static std::vector<CanonicalScene> build_canonical_scenes(double spacing) {
 }
 
 // ============================================================================
-// Phase 1 — Single-Variable Response Atlas
+// Phase 1  -  Single-Variable Response Atlas
 // ============================================================================
 // Strategy: for each scene, sweep one parameter that directly controls
 // the density of neighbours (via spacing), which in turn varies rho, C,
@@ -80,9 +80,9 @@ static std::vector<CanonicalScene> build_canonical_scenes(double spacing) {
 // ============================================================================
 
 static void phase1_spacing_sweep() {
-    std::printf("\n══════════════════════════════════════════════════════════\n");
-    std::printf("  Phase 1 — Single-Variable Response Atlas (spacing sweep)\n");
-    std::printf("══════════════════════════════════════════════════════════\n\n");
+    std::printf("\n==========================================================\n");
+    std::printf("  Phase 1  -  Single-Variable Response Atlas (spacing sweep)\n");
+    std::printf("==========================================================\n\n");
 
     coarse_grain::EnvironmentParams params;
     params.r_cutoff = 12.0;
@@ -93,7 +93,7 @@ static void phase1_spacing_sweep() {
     double dt = 1.0;
     int n_steps = 200;
 
-    // Spacing values to sweep: tight → loose
+    // Spacing values to sweep: tight -> loose
     const double spacings[] = {2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0, 15.0};
     const int n_spacings = 10;
 
@@ -237,7 +237,7 @@ static void phase1_spacing_sweep() {
             "P1.A4: isolated eta = 0");
     }
 
-    // A5: Pair scene — rho should decrease monotonically with increasing spacing
+    // A5: Pair scene  -  rho should decrease monotonically with increasing spacing
     {
         std::vector<double> rho_vs_spacing;
         for (int si = 0; si < n_spacings; ++si) {
@@ -249,7 +249,7 @@ static void phase1_spacing_sweep() {
             "P1.A5: pair rho decreases with spacing");
     }
 
-    // A6: Stack — coordination C should decrease with increasing spacing
+    // A6: Stack  -  coordination C should decrease with increasing spacing
     //     (beads leave cutoff)
     {
         std::vector<double> C_vs_spacing;
@@ -262,7 +262,7 @@ static void phase1_spacing_sweep() {
             "P1.A6: stack C decreases with spacing");
     }
 
-    // A7: Ring — C should be bounded [0, N-1]
+    // A7: Ring  -  C should be bounded [0, N-1]
     {
         auto ring = test_util::scene_ring(6, 4.0);
         auto traj = test_util::run_trajectory(ring, 0, 0.0, params, dt, n_steps);
@@ -270,7 +270,7 @@ static void phase1_spacing_sweep() {
             "P1.A7: ring C bounded [0, N-1]");
     }
 
-    // A8: Cloud — all variables should be finite
+    // A8: Cloud  -  all variables should be finite
     {
         auto cloud = test_util::scene_random_cluster(12, 15.0, 42);
         auto traj = test_util::run_trajectory(cloud, 0, 0.0, params, dt, n_steps);
@@ -280,7 +280,7 @@ static void phase1_spacing_sweep() {
             "P1.A8: cloud all finite after 200 steps");
     }
 
-    // A9: P2 range — must be in [-0.5, 1.0] for all scenes
+    // A9: P2 range  -  must be in [-0.5, 1.0] for all scenes
     {
         bool P2_bounded = true;
         for (auto& [sname, builder] : scene_builders) {
@@ -295,7 +295,7 @@ static void phase1_spacing_sweep() {
         check(P2_bounded, "P1.A9: P2 in [-0.5, 1.0] all scenes");
     }
 
-    // A10: eta range — must be in [0, 1] for all scenes
+    // A10: eta range  -  must be in [0, 1] for all scenes
     {
         bool eta_bounded = true;
         for (auto& [sname, builder] : scene_builders) {
@@ -341,13 +341,13 @@ static void phase1_spacing_sweep() {
 }
 
 // ============================================================================
-// Phase 1 — Perturbation Sensitivity Test
+// Phase 1  -  Perturbation Sensitivity Test
 // ============================================================================
 
 static void phase1_perturbation_test() {
-    std::printf("\n──────────────────────────────────────────────────────────\n");
-    std::printf("  Phase 1 — Perturbation Sensitivity (±5%%)\n");
-    std::printf("──────────────────────────────────────────────────────────\n\n");
+    std::printf("\n----------------------------------------------------------\n");
+    std::printf("  Phase 1  -  Perturbation Sensitivity (±5%%)\n");
+    std::printf("----------------------------------------------------------\n\n");
 
     coarse_grain::EnvironmentParams params;
     params.r_cutoff = 12.0;
@@ -409,17 +409,17 @@ static void phase1_perturbation_test() {
 }
 
 // ============================================================================
-// Phase 1 — Redundancy Detection
+// Phase 1  -  Redundancy Detection
 // ============================================================================
 
 static void phase1_redundancy_check() {
-    std::printf("\n──────────────────────────────────────────────────────────\n");
-    std::printf("  Phase 1 — Redundancy Detection\n");
-    std::printf("──────────────────────────────────────────────────────────\n\n");
+    std::printf("\n----------------------------------------------------------\n");
+    std::printf("  Phase 1  -  Redundancy Detection\n");
+    std::printf("----------------------------------------------------------\n\n");
 
-    // Check: rho_hat is just a rescaled rho — flag as expected-redundant
-    // Check: P2_hat is just a rescaled P2 — flag as expected-redundant
-    // Check: target_f is a linear combination of rho_hat and P2_hat — flag
+    // Check: rho_hat is just a rescaled rho  -  flag as expected-redundant
+    // Check: P2_hat is just a rescaled P2  -  flag as expected-redundant
+    // Check: target_f is a linear combination of rho_hat and P2_hat  -  flag
 
     coarse_grain::EnvironmentParams params;
     params.r_cutoff = 12.0;
@@ -450,7 +450,7 @@ static void phase1_redundancy_check() {
     check(rho_rhohat_corr,
         "P1.R1: rho and rho_hat are monotonically correlated (expected)");
     if (rho_rhohat_corr)
-        std::printf("    ⚑ rho_hat is a deterministic rescaling of rho — "
+        std::printf("    ⚑ rho_hat is a deterministic rescaling of rho  -  "
                     "not independent information\n");
 
     // P2 and P2_hat
@@ -463,7 +463,7 @@ static void phase1_redundancy_check() {
     check(P2_P2hat_corr,
         "P1.R2: P2 and P2_hat are monotonically correlated (expected)");
     if (P2_P2hat_corr)
-        std::printf("    ⚑ P2_hat is a deterministic rescaling of P2 — "
+        std::printf("    ⚑ P2_hat is a deterministic rescaling of P2  -  "
                     "not independent information\n");
 
     // target_f should be recoverable from rho_hat and P2_hat
@@ -489,13 +489,13 @@ static void phase1_redundancy_check() {
 }
 
 // ============================================================================
-// Phase 2a — Pairwise Coupling Maps
+// Phase 2a  -  Pairwise Coupling Maps
 // ============================================================================
 
 static void phase2a_pairwise_coupling() {
-    std::printf("\n══════════════════════════════════════════════════════════\n");
-    std::printf("  Phase 2a — Pairwise Coupling Maps\n");
-    std::printf("══════════════════════════════════════════════════════════\n\n");
+    std::printf("\n==========================================================\n");
+    std::printf("  Phase 2a  -  Pairwise Coupling Maps\n");
+    std::printf("==========================================================\n\n");
 
     coarse_grain::EnvironmentParams base_params;
     base_params.r_cutoff = 12.0;
@@ -505,10 +505,10 @@ static void phase2a_pairwise_coupling() {
     int n_steps = 300;
     const int grid = 5;
 
-    // ── Coupling 1: rho × eta (density vs topology) ──
+    // -- Coupling 1: rho × eta (density vs topology) --
     // Control rho via spacing, observe final eta
     {
-        std::printf("  ── rho × eta (spacing → density, observe eta convergence) ──\n");
+        std::printf("  -- rho × eta (spacing -> density, observe eta convergence) --\n");
         double spacings[] = {2.0, 3.5, 5.0, 7.0, 10.0};
         double taus[]     = {20.0, 50.0, 100.0, 200.0, 500.0};
 
@@ -545,9 +545,9 @@ static void phase2a_pairwise_coupling() {
         check(eta_responds, "P2a.C2: eta varies with spacing (density sensitive)");
     }
 
-    // ── Coupling 2: C × P2 (coordination vs orientational order) ──
+    // -- Coupling 2: C × P2 (coordination vs orientational order) --
     {
-        std::printf("\n  ── C × P2 (coordination via shell count, P2 via alignment) ──\n");
+        std::printf("\n  -- C × P2 (coordination via shell count, P2 via alignment) --\n");
         int shell_counts[] = {2, 4, 6, 8, 12};
         double align_biases[] = {0.0, 0.25, 0.50, 0.75, 1.0};
 
@@ -592,9 +592,9 @@ static void phase2a_pairwise_coupling() {
         check(P2_responds, "P2a.C4: P2 responds to alignment bias");
     }
 
-    // ── Coupling 3: P2 × P2_hat (correlation check) ──
+    // -- Coupling 3: P2 × P2_hat (correlation check) --
     {
-        std::printf("\n  ── P2 × P2_hat (confirm monotone transform) ──\n");
+        std::printf("\n  -- P2 × P2_hat (confirm monotone transform) --\n");
         bool monotone_ok = true;
         double align_vals[] = {0.0, 0.2, 0.4, 0.6, 0.8, 1.0};
         std::vector<double> P2_vals, P2hat_vals;
@@ -624,9 +624,9 @@ static void phase2a_pairwise_coupling() {
         check(monotone_ok, "P2a.C5: P2_hat = (P2+0.5)/1.5 exact");
     }
 
-    // ── Coupling 4: rho × target_f (density vs target field response) ──
+    // -- Coupling 4: rho × target_f (density vs target field response) --
     {
-        std::printf("\n  ── rho × target_f (spacing sweep, varying alpha/beta) ──\n");
+        std::printf("\n  -- rho × target_f (spacing sweep, varying alpha/beta) --\n");
         double spacings[] = {2.0, 3.5, 5.0, 7.0, 10.0};
         double alpha_vals[] = {0.0, 0.25, 0.50, 0.75, 1.0};
 
@@ -666,7 +666,7 @@ static void phase2a_pairwise_coupling() {
 }
 
 // ============================================================================
-// Phase 2b — Structured Large-N Runs
+// Phase 2b  -  Structured Large-N Runs
 // ============================================================================
 
 struct LargeNResult {
@@ -742,9 +742,9 @@ static LargeNResult run_large_n(
 }
 
 static void phase2b_large_n() {
-    std::printf("\n══════════════════════════════════════════════════════════\n");
-    std::printf("  Phase 2b — Structured Large-N Runs\n");
-    std::printf("══════════════════════════════════════════════════════════\n\n");
+    std::printf("\n==========================================================\n");
+    std::printf("  Phase 2b  -  Structured Large-N Runs\n");
+    std::printf("==========================================================\n\n");
 
     coarse_grain::EnvironmentParams params;
     params.r_cutoff = 8.0;
@@ -771,8 +771,8 @@ static void phase2b_large_n() {
     int total_runs = 0;
 
     for (auto& cfg : configs) {
-        std::printf("\n  ┌─ N = %d (n_side = %d, spacing = %.1f) "
-                    "───────────────────────────────────┐\n",
+        std::printf("\n  +- N = %d (n_side = %d, spacing = %.1f) "
+                    "-----------------------------------+\n",
             cfg.N, cfg.n_side, cfg.spacing);
 
         // 1. Perfect lattice
@@ -781,7 +781,7 @@ static void phase2b_large_n() {
             auto r = run_large_n("perfect_lattice", scene, params, dt, n_steps);
             ++total_runs;
 
-            std::printf("  │ %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
+            std::printf("  | %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
                         "eta=%.4f±%.4f  edge=%.4f(%d) bulk=%.4f(%d)\n",
                 r.init_name, r.N,
                 r.all_finite ? "yes" : "NO",
@@ -804,7 +804,7 @@ static void phase2b_large_n() {
             auto r = run_large_n("perturbed_lattice", scene, params, dt, n_steps);
             ++total_runs;
 
-            std::printf("  │ %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
+            std::printf("  | %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
                         "eta=%.4f±%.4f  edge=%.4f(%d) bulk=%.4f(%d)\n",
                 r.init_name, r.N,
                 r.all_finite ? "yes" : "NO",
@@ -826,7 +826,7 @@ static void phase2b_large_n() {
             auto r = run_large_n("line_bundle", scene, params, dt, n_steps);
             ++total_runs;
 
-            std::printf("  │ %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
+            std::printf("  | %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
                         "eta=%.4f±%.4f  edge=%.4f(%d) bulk=%.4f(%d)\n",
                 r.init_name, r.N,
                 r.all_finite ? "yes" : "NO",
@@ -858,7 +858,7 @@ static void phase2b_large_n() {
             auto r = run_large_n("layered_slab", scene, params, dt, n_steps);
             ++total_runs;
 
-            std::printf("  │ %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
+            std::printf("  | %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
                         "eta=%.4f±%.4f  edge=%.4f(%d) bulk=%.4f(%d)\n",
                 r.init_name, r.N,
                 r.all_finite ? "yes" : "NO",
@@ -881,7 +881,7 @@ static void phase2b_large_n() {
             auto r = run_large_n("shell_init", scene, params, dt, n_steps);
             ++total_runs;
 
-            std::printf("  │ %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
+            std::printf("  | %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
                         "eta=%.4f±%.4f  edge=%.4f(%d) bulk=%.4f(%d)\n",
                 r.init_name, r.N,
                 r.all_finite ? "yes" : "NO",
@@ -904,7 +904,7 @@ static void phase2b_large_n() {
             auto r = run_large_n("random_cloud", scene, params, dt, n_steps);
             ++total_runs;
 
-            std::printf("  │ %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
+            std::printf("  | %-20s  N=%3d  finite=%s  C_mean=%.2f±%.2f  "
                         "eta=%.4f±%.4f  edge=%.4f(%d) bulk=%.4f(%d)\n",
                 r.init_name, r.N,
                 r.all_finite ? "yes" : "NO",
@@ -920,8 +920,8 @@ static void phase2b_large_n() {
             if (r.all_finite) ++total_pass;
         }
 
-        std::printf("  └──────────────────────────────────────────────────"
-                    "──────────────────┘\n");
+        std::printf("  +--------------------------------------------------"
+                    "------------------+\n");
     }
 
     std::printf("\n  Large-N finiteness: %d/%d runs stable\n", total_pass, total_runs);
@@ -932,13 +932,13 @@ static void phase2b_large_n() {
 }
 
 // ============================================================================
-// Phase 2b — Edge vs Bulk Differentiation
+// Phase 2b  -  Edge vs Bulk Differentiation
 // ============================================================================
 
 static void phase2b_edge_bulk_analysis() {
-    std::printf("\n──────────────────────────────────────────────────────────\n");
-    std::printf("  Phase 2b — Edge vs Bulk Differentiation\n");
-    std::printf("──────────────────────────────────────────────────────────\n\n");
+    std::printf("\n----------------------------------------------------------\n");
+    std::printf("  Phase 2b  -  Edge vs Bulk Differentiation\n");
+    std::printf("----------------------------------------------------------\n\n");
 
     coarse_grain::EnvironmentParams params;
     params.r_cutoff = 8.0;
@@ -975,10 +975,10 @@ static void phase2b_edge_bulk_analysis() {
     std::printf("  N=216 lattice, %d edge beads, %d bulk beads\n",
         static_cast<int>(edge_rhos.size()),
         static_cast<int>(bulk_rhos.size()));
-    std::printf("    rho  — edge: %.4f ± %.4f    bulk: %.4f ± %.4f\n",
+    std::printf("    rho   -  edge: %.4f ± %.4f    bulk: %.4f ± %.4f\n",
         edge_rho_stats.mean, std::sqrt(edge_rho_stats.variance),
         bulk_rho_stats.mean, std::sqrt(bulk_rho_stats.variance));
-    std::printf("    eta  — edge: %.4f ± %.4f    bulk: %.4f ± %.4f\n",
+    std::printf("    eta   -  edge: %.4f ± %.4f    bulk: %.4f ± %.4f\n",
         edge_eta_stats.mean, std::sqrt(edge_eta_stats.variance),
         bulk_eta_stats.mean, std::sqrt(bulk_eta_stats.variance));
 
@@ -986,24 +986,24 @@ static void phase2b_edge_bulk_analysis() {
     check(bulk_rho_stats.mean > edge_rho_stats.mean,
         "P2b.EB1: bulk rho > edge rho (lattice N=216)");
 
-    // Bulk beads should have higher eta (more crowded → higher target_f → higher eta)
+    // Bulk beads should have higher eta (more crowded -> higher target_f -> higher eta)
     check(bulk_eta_stats.mean > edge_eta_stats.mean,
         "P2b.EB2: bulk eta > edge eta (lattice N=216)");
 
     // Edge beads should have lower coordination
-    // (by construction — this validates the classification)
+    // (by construction  -  this validates the classification)
     check(!edge_rhos.empty() && !bulk_rhos.empty(),
         "P2b.EB3: both edge and bulk populations exist");
 }
 
 // ============================================================================
-// Phase 2b — Coordination Histogram Analysis
+// Phase 2b  -  Coordination Histogram Analysis
 // ============================================================================
 
 static void phase2b_coord_histogram() {
-    std::printf("\n──────────────────────────────────────────────────────────\n");
-    std::printf("  Phase 2b — Coordination Histogram (N=125 lattice)\n");
-    std::printf("──────────────────────────────────────────────────────────\n\n");
+    std::printf("\n----------------------------------------------------------\n");
+    std::printf("  Phase 2b  -  Coordination Histogram (N=125 lattice)\n");
+    std::printf("----------------------------------------------------------\n\n");
 
     coarse_grain::EnvironmentParams params;
     params.r_cutoff = 6.0;  // Tight cutoff to see lattice structure
@@ -1022,7 +1022,7 @@ static void phase2b_coord_histogram() {
             std::printf("    C=%2d : %3d beads  ", c, hist.bins[c]);
             // Simple bar
             for (int b = 0; b < hist.bins[c] && b < 40; ++b)
-                std::printf("█");
+                std::printf("#");
             std::printf("\n");
         }
     }
@@ -1038,7 +1038,7 @@ static void phase2b_coord_histogram() {
     check(hist.mean_coord > 0,
         "P2b.H2: mean coordination > 0");
 
-    // Verify structured distribution — not all the same
+    // Verify structured distribution  -  not all the same
     int distinct_bins = 0;
     for (int c = 0; c < static_cast<int>(hist.bins.size()); ++c) {
         if (hist.bins[c] > 0) ++distinct_bins;
@@ -1053,7 +1053,7 @@ static void phase2b_coord_histogram() {
 
 int main() {
     std::printf("================================================================\n");
-    std::printf("  Suite #3 — Structured N > 10 Formation Studies\n");
+    std::printf("  Suite #3  -  Structured N > 10 Formation Studies\n");
     std::printf("================================================================\n");
 
     // Phase 1

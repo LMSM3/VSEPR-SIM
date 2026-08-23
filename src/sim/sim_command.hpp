@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * sim_command.hpp
  * ---------------
- * Command queue for renderer → simulation thread communication.
+ * Command queue for renderer -> simulation thread communication.
  * Thread-safe, lock-free SPSC (single producer, single consumer) queue.
  * 
  * Architecture: Path-based parameter system

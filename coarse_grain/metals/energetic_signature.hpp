@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 /**
- * energetic_signature.hpp — Metal Combustion & Energetic Material Descriptors
+ * energetic_signature.hpp  -  Metal Combustion & Energetic Material Descriptors
  *
  * Deterministic computation of energetic signatures for metallic fuels.
- * NO DFT, NO Monte Carlo — all values derived from MetalRecord thermochemistry.
+ * NO DFT, NO Monte Carlo  -  all values derived from MetalRecord thermochemistry.
  *
  * Physical basis:
  *   - Heat of combustion ΔH_comb from oxide formation enthalpies
@@ -19,11 +19,11 @@
  *
  * The flame colour image (methane/iron/aluminium/boron-aluminium/zirconium)
  * maps directly to the emission properties computed here:
- *   - Methane: CH₄ + 2O₂ → CO₂ + 2H₂O (blue — C₂/CH band emission)
- *   - Iron: 4Fe + 3O₂ → 2Fe₂O₃ (orange-red — FeO* band 580–620 nm)
- *   - Aluminium: 4Al + 3O₂ → 2Al₂O₃ (white — AlO band 484 nm + continuum)
- *   - Boron/Al: mixture → green (BO₂ band 518 nm dominant)
- *   - Zirconium: Zr + O₂ → ZrO₂ (yellow sparks — ZrO band + continuum)
+ *   - Methane: CH₄ + 2O₂ -> CO₂ + 2H₂O (blue  -  C₂/CH band emission)
+ *   - Iron: 4Fe + 3O₂ -> 2Fe₂O₃ (orange-red  -  FeO* band 580-620 nm)
+ *   - Aluminium: 4Al + 3O₂ -> 2Al₂O₃ (white  -  AlO band 484 nm + continuum)
+ *   - Boron/Al: mixture -> green (BO₂ band 518 nm dominant)
+ *   - Zirconium: Zr + O₂ -> ZrO₂ (yellow sparks  -  ZrO band + continuum)
  *
  * References:
  *   - Dreizin, Prog. Energy Combust. Sci. 35, 141 (2009)
@@ -58,13 +58,13 @@ struct EnergeticSignature {
     // Ignition characteristics
     double ignition_temperature_K{};     ///< T_ign for powder
     double melting_point_K{};            ///< T_melt
-    double ign_to_melt_ratio{};          ///< T_ign / T_melt — lower = easier ignition
+    double ign_to_melt_ratio{};          ///< T_ign / T_melt  -  lower = easier ignition
     double thermal_conductivity{};       ///< κ (W/m·K)
 
     // Nanoparticle enhancement factors
     double surface_area_factor{};        ///< SA/V relative to 1 mm particle
     double nano_enhancement{};           ///< Combined SA × κ enhancement proxy
-    double reactivity_class{};           ///< 0–1 normalized reactivity
+    double reactivity_class{};           ///< 0-1 normalized reactivity
 
     // Classification
     std::string fuel_grade;              ///< "High-Energy" / "Moderate" / "Inert"
@@ -84,7 +84,7 @@ struct EnergeticSignature {
  */
 inline double estimate_bulk_density(const MetalRecord& m) {
     constexpr double N_A = 6.02214076e23;
-    double a_cm = m.lattice_constant_ang * 1.0e-8; // Å → cm
+    double a_cm = m.lattice_constant_ang * 1.0e-8; // Å -> cm
     if (a_cm <= 0) return 0.0;
     double V_cell = a_cm * a_cm * a_cm; // cm³
 
@@ -116,7 +116,7 @@ inline EnergeticSignature compute_energetic_signature(
     sig.melting_point_K         = metal.melting_point_K;
     sig.thermal_conductivity    = metal.thermal_conductivity_W_mK;
 
-    // kJ/g → kJ/mol
+    // kJ/g -> kJ/mol
     sig.heat_of_combustion_kJ_mol = metal.heat_of_combustion_kJ_g * metal.atomic_mass_amu;
 
     // Volumetric energy density (MJ/L)
@@ -139,7 +139,7 @@ inline EnergeticSignature compute_energetic_signature(
     sig.nano_enhancement = std::sqrt(sig.surface_area_factor * kappa_norm);
 
     // Reactivity class: normalized composite
-    // High ΔH, low T_ign/T_melt, high nano_enhancement → high reactivity
+    // High ΔH, low T_ign/T_melt, high nano_enhancement -> high reactivity
     double dH_norm = std::min(metal.heat_of_combustion_kJ_g / 31.0, 1.0); // Al is ceiling
     double ign_norm = (sig.ign_to_melt_ratio > 0)
                     ? std::max(1.0 - sig.ign_to_melt_ratio, 0.0)

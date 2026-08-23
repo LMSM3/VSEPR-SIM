@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * coupled_solver.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * Coupled multiphysics solver orchestrating the three sub-models:
  *
@@ -11,9 +11,9 @@
  *   3. Ion transport (Nernst-Planck: diffusion + migration + convection)
  *
  * Coupling order (segregated, outer-iteration):
- *   (a) Solve flow  →  u, p
- *   (b) Solve electric  →  φ, E   (with ρ_e from previous species solution)
- *   (c) Solve ion transport  →  c_i, N_i   (with u from flow, E from electric)
+ *   (a) Solve flow  ->  u, p
+ *   (b) Solve electric  ->  φ, E   (with ρ_e from previous species solution)
+ *   (c) Solve ion transport  ->  c_i, N_i   (with u from flow, E from electric)
  *   (d) Update ρ_e = F Σ z_i c_i
  *   (e) Repeat until convergence
  *
@@ -105,7 +105,7 @@ public:
         electric_field_ = electro_.initialize_coaxial(card_.nr, card_.nz);
         species_fields_ = transport_.initialize_uniform(card_.nr, card_.nz);
 
-        std::cout << "[EHD] Initialized — Re = " << flow_.reynolds_number()
+        std::cout << "[EHD] Initialized  -  Re = " << flow_.reynolds_number()
                   << " | E_max(coaxial) = " << electro_.coaxial_E_max()
                   << " V/m\n";
     }
@@ -129,12 +129,12 @@ public:
             //     Here: keep Poiseuille baseline (no body force update yet)
 
             // (b) Electrostatic sub-solve stub
-            //     In production: assemble charge → solve Poisson → compute E
+            //     In production: assemble charge -> solve Poisson -> compute E
             //     Here: update E from potential via finite-difference
             ElectrostaticModel::compute_field_from_potential(electric_field_);
 
             // (c) Ion transport sub-solve stub
-            //     In production: assemble N_i for each species → advect/diffuse
+            //     In production: assemble N_i for each species -> advect/diffuse
             //     Here: compute flux at each cell using current fields
             update_species_fluxes();
 

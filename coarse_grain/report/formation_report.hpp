@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * formation_report.hpp — Five-Factor Formation Reporting System
+ * formation_report.hpp  -  Five-Factor Formation Reporting System
  * =============================================================
  *
  * Implements the unified formation-factor scoring framework:
@@ -8,11 +8,11 @@
  *   F_total = F_E + F_M + F_K + F_T + F_N
  *
  * Where:
- *   F_E : Energetic factors     — energy, convergence, basin depth
- *   F_M : Motif factors         — geometric motif detection / persistence
- *   F_K : Kinetic factors       — diffusion, rearrangement, trapping
- *   F_T : Thermodynamic factors — temperature schedule, free energy
- *   F_N : Network/topology      — connectivity, coordination, defects
+ *   F_E : Energetic factors      -  energy, convergence, basin depth
+ *   F_M : Motif factors          -  geometric motif detection / persistence
+ *   F_K : Kinetic factors        -  diffusion, rearrangement, trapping
+ *   F_T : Thermodynamic factors  -  temperature schedule, free energy
+ *   F_N : Network/topology       -  connectivity, coordination, defects
  *
  * The system reports not just final energy and geometry, but also:
  *   - WHY a structure emerged
@@ -74,7 +74,7 @@ struct EnergyReport {
 // ============================================================================
 
 /**
- * GeometricMotifType — structural motifs detected in bead arrangements.
+ * GeometricMotifType  -  structural motifs detected in bead arrangements.
  *
  * Distinct from atomistic::reaction::MotifType which covers chemical
  * functional groups (amine, carboxyl, etc.). These are spatial/geometric.
@@ -318,7 +318,7 @@ inline double compute_kinetic_score(const KineticReport& r) {
 /**
  * Thermal score (F_T).
  *
- * Not "higher T good" or "lower T good" — scores based on schedule
+ * Not "higher T good" or "lower T good"  -  scores based on schedule
  * plausibility and free-energy favourability.
  *
  * Weights: free_energy 0.50, quench 0.30, latent_heat 0.20
@@ -376,7 +376,7 @@ inline double compute_topology_score(const TopologyReport& r) {
 }
 
 // ============================================================================
-// Emergence Score — Unified Summary
+// Emergence Score  -  Unified Summary
 // ============================================================================
 
 /**

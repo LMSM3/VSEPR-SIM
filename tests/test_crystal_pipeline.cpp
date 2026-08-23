@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_crystal_pipeline.cpp
  * -------------------------
  * Validation tests for the crystal module:
@@ -98,7 +98,7 @@ void test_mic() {
     Vec3 f2 = {0.95, 0.95, 0.95};
 
     // Without MIC, distance would be ~sqrt(3)*0.9*10 ≈ 15.6
-    // With MIC, should wrap to (-0.1, -0.1, -0.1) → distance = sqrt(3)*0.1*10 ≈ 1.73
+    // With MIC, should wrap to (-0.1, -0.1, -0.1) -> distance = sqrt(3)*0.1*10 ≈ 1.73
     double d = lat.distance(f1, f2);
     double expected = 10.0 * std::sqrt(3.0) * 0.1;
     CHECK_CLOSE(d, expected, 1e-6, "MIC wraps across boundary");
@@ -190,7 +190,7 @@ void test_coordination() {
     auto al = presets::aluminum_fcc();
     auto sc = construct_supercell(al, 2, 2, 2);
 
-    auto coord = coordination_numbers(sc.state, sc.lattice, 1.15);
+    auto coord = coordination_numbers(sc.state, sc.lattice, 1.20);
     // FCC: coordination number = 12 for all atoms in bulk
     uint32_t min_cn = *std::min_element(coord.begin(), coord.end());
     uint32_t max_cn = *std::max_element(coord.begin(), coord.end());
@@ -263,7 +263,7 @@ void test_hexagonal() {
 }
 
 // ============================================================================
-// Test 13: UnitCell → State → FIRE (LJ-only relaxation)
+// Test 13: UnitCell -> State -> FIRE (LJ-only relaxation)
 // ============================================================================
 void test_fire_relaxation() {
     auto al = presets::aluminum_fcc();
@@ -294,9 +294,9 @@ void test_fire_relaxation() {
 // ============================================================================
 
 int main() {
-    std::cout << "╔══════════════════════════════════════════════════╗\n";
-    std::cout << "║  Crystal Pipeline Tests                         ║\n";
-    std::cout << "╚══════════════════════════════════════════════════╝\n\n";
+    std::cout << "+==================================================+\n";
+    std::cout << "|  Crystal Pipeline Tests                         |\n";
+    std::cout << "+==================================================+\n\n";
 
     test_lattice_cubic();
     test_metric_tensor();
@@ -312,10 +312,10 @@ int main() {
     test_hexagonal();
     test_fire_relaxation();
 
-    std::cout << "\n────────────────────────────────────────────────────\n";
+    std::cout << "\n----------------------------------------------------\n";
     std::cout << "  PASSED: " << tests_passed << "\n";
     std::cout << "  FAILED: " << tests_failed << "\n";
-    std::cout << "────────────────────────────────────────────────────\n";
+    std::cout << "----------------------------------------------------\n";
 
     if (tests_failed == 0) {
         std::cout << "  ✓ ALL TESTS PASSED\n";

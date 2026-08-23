@@ -1,0 +1,22 @@
+﻿# examples/structures/tio2_rutile_unit_cell.xyz
+# TiO2 rutile -- unit cell (6 atoms)
+# Space group: P4_2/mnm (#136)
+# Lattice: tetragonal  a = b = 4.593 Ang  c = 2.959 Ang
+# Internal parameter: u = 0.3048
+# Sources: ICSD #9161 / IUCr Acta Cryst. B 35, 1182 (1979)
+#
+# Extended-XYZ header format:
+#   Line 1 : atom count
+#   Line 2 : comment -- Lattice="..." Properties=... origin="..."
+#   Lines 3..N : element  x(Ang)  y(Ang)  z(Ang)
+#
+# NOTE: write_xyzfull = true in the companion .vsim script will append
+#       additional frames here after each FIRE/MD step.
+6
+Lattice="4.593 0.0 0.0  0.0 4.593 0.0  0.0 0.0 2.959" Properties=species:S:1:pos:R:3 origin="ICSD#9161" pbc="T T T" vsim_version="5.0.2"
+Ti   0.00000   0.00000   0.00000
+Ti   2.29650   2.29650   1.47950
+O    1.39971   1.39971   0.00000
+O    3.19329   3.19329   0.00000
+O    3.69717   0.89583   1.47950
+O    0.89583   3.69717   1.47950

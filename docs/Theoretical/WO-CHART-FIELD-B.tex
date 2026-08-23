@@ -1,0 +1,1326 @@
+% ============================================================================
+%  WO-CHART-FIELD-B --- Unified Scientific Data Manifold
+%  VSEPR-SIM Theoretical Division
+%  Classification: TOP SECRET (internal development document)
+%
+%  Subject: Canonical mathematical specification of the unified scientific
+%           data manifold underpinning .chart, .xchart, .dynx, .flux, and
+%           .x artifact types; domain manifolds for thermodynamics, MD,
+%           flux fields, radiation transport, excitation dynamics, and the
+%           effective gluon/color-field proxy layer; Qt desktop stack;
+%           and the universal validation and implementation contract.
+%
+%  Compile: pdflatex (twice for ToC)
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+            headheight=14pt]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+            urlcolor=blue]{hyperref}
+
+% --- Code style --------------------------------------------------------------
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  numberstyle=\tiny\color{codegray},
+  numbers=left, numbersep=6pt,
+  breaklines=true, frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b, showstringspaces=false,
+  tabsize=2
+}
+
+% --- Headers -----------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{WO-CHART-FIELD-B --- Unified Scientific Data Manifold}}
+\fancyhead[R]{\small\textit{VSEPR-SIM / TOP SECRET}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section style -----------------------------------------------------------
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% --- Math convenience --------------------------------------------------------
+\newcommand{\ang}{\text{\AA}}
+\newcommand{\fs}{\text{fs}}
+\newcommand{\eV}{\text{eV}}
+\newcommand{\amu}{\text{amu}}
+\newcommand{\Rec}{\mathcal{R}}           % universal record
+\newcommand{\Tab}{\mathcal{T}}           % table of records
+\newcommand{\Proj}{\Pi}                  % projection operator
+\newcommand{\Val}{\mathcal{V}}           % validation operator
+\newcommand{\Bund}{\mathcal{B}}          % .x bundle
+\newcommand{\Qvec}{\mathbf{Q}}           % universal state vector
+\newcommand{\xvec}{\mathbf{x}}
+\newcommand{\vvec}{\mathbf{v}}
+\newcommand{\Fvec}{\mathbf{F}}
+\newcommand{\Phivec}{\bm{\Phi}}
+\newcommand{\uvec}{\mathbf{u}}
+\newcommand{\phibold}{\bm{\phi}}
+\newcommand{\Hvec}{\mathbf{H}}           % lattice matrix (context-dep.)
+\newcommand{\avec}{\mathbf{a}}
+\newcommand{\Omvec}{\bm{\Omega}}         % radiation direction
+\DeclareMathOperator{\Hash}{Hash}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.2cm}
+  {\large\scshape VSEPR-SIM Theoretical Division\par}
+  \vspace{0.3cm}
+  {\small TOP SECRET --- Internal Development Document\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries WO-CHART-FIELD-B\par}
+  \vspace{0.4cm}
+  {\LARGE Unified Scientific Data Manifold\par}
+  \vspace{0.8cm}
+  {\large\itshape
+    Chart \& XChart artifacts\,|\,Dynamic event streams\,|\,\\[0.3em]
+    Flux fields\,|\,Radiation transport\,|\,Excitation dynamics\,|\,\\[0.3em]
+    Effective gluon proxy\,|\,Qt desktop stack\,|\,\\[0.3em]
+    Validation mathematics\,|\,Universal implementation contract\par}
+  \vspace{1.4cm}
+  {\normalsize VSEPR-SIM Development Work Order Series\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Core Thesis and Motivation}
+\label{sec:thesis}
+% ============================================================================
+
+\subsection{The plotting-scale artifact problem}
+
+The previous Python plotting layer produced outputs such as a heat capacity
+curve for the hydrogen atom with a y-axis offset of the form:
+
+\[
+  \underbrace{1 \times 10^{-10}}_{\text{numerical noise}} + 2.078603 \times 10^{1}
+\]
+
+The axis is communicating that $C_p \approx 20.786\ \mathrm{J\,mol^{-1}\,K^{-1}}$
+(the correct monatomic ideal-gas value $\frac{5}{2}R$), but the floating-point
+residuals in the time-integrated trajectory are being treated as physically
+meaningful variation and plotted on a collapsed scale. The physics is correct.
+The representation is not.
+
+This is not a cosmetic problem. A plot that suppresses its own axis scale or
+offsets it to highlight noise carries no reproducible scientific information.
+It is missing metadata about:
+
+\begin{itemize}
+  \item what equation and coefficient set produced the curve,
+  \item what phase assumption and species model were used,
+  \item what unit convention the y-axis values are in,
+  \item what validity range the model applies to,
+  \item whether the axis offset was intentional or a numerical artifact.
+\end{itemize}
+
+A PNG image cannot answer any of these questions. The solution is to make
+the chart itself a structured scientific object that carries its own
+provenance, validation state, and projection definition alongside the data.
+
+\subsection{The unified abstraction}
+
+Every output object in VSEPR-SIM is a sampled field over a generalised domain.
+Steam tables, radiation transport fields, MD trajectories, flux surfaces,
+excitation timelines, and effective gluon event streams are all projections of
+the same universal state vector $\Qvec$. One projection operator, all output
+types. The same validation contract applies to all of them.
+
+\medskip
+\noindent\textbf{File type stack affected by this work order:}
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  Type & Role \\
+  \midrule
+  \texttt{.chart}  & Lightweight plot recipe \\
+  \texttt{.xchart} & Rich chart + data + provenance visualization object \\
+  \texttt{.dynx}   & Dynamic force, bond, vector, excitation, event stream \\
+  \texttt{.flux}   & Scalar/vector/tensor field state \\
+  \texttt{.x}      & Universal session / artifact bundle \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\noindent\textbf{Work order parts:}
+
+\begin{description}[leftmargin=2em]
+  \item[Part A] Add \texttt{.chart} and \texttt{.xchart} as first-class artifact formats.
+  \item[Part B] Add Qt desktop support: 2D charts, 3D surfaces, vector fields,
+    scalar field slices, radiation maps, excitation timelines, event trees,
+    batch comparison dashboards.
+  \item[Part C] Connect chart objects to: steam table presolved MD outputs,
+    \texttt{.dynx} dynamic event streams, \texttt{.flux} field samples,
+    \texttt{.x} universal session bundles.
+  \item[Part D] Add validation rules preventing physically meaningless charts
+    from being treated as verified outputs.
+\end{description}
+
+% ============================================================================
+\section{Universal State Vector and Sample Record}
+\label{sec:universal}
+% ============================================================================
+
+\subsection{Generalised domain}
+
+Every sampled object lives on a product domain:
+\begin{equation}
+  \mathcal{D}
+  = \Omega_x \times \Omega_t \times \Omega_\theta
+    \times \Omega_E \times \Omega_s
+  \label{eq:domain}
+\end{equation}
+where
+\[
+  \Omega_x \subseteq \mathbb{R}^3,\quad
+  \Omega_t \subseteq \mathbb{R}_{\geq 0},\quad
+  \Omega_\theta \subseteq \mathbb{R}^{n_\theta},\quad
+  \Omega_E \subseteq \mathbb{R},\quad
+  \Omega_s \subseteq \mathbb{R}^{n_s}.
+\]
+
+\subsection{Universal state vector}
+
+The universal sampled state is:
+\begin{equation}
+  \Qvec = \bigl[\xvec,\; t,\; \bm{\theta},\; E,\; \mathbf{s},\;
+                \vvec,\; \Fvec,\; \Phivec,\; \mathbf{M},\; \mathbf{H}\bigr]
+  \label{eq:Qvec}
+\end{equation}
+with components:
+\begin{align*}
+  \xvec &= (x,y,z) & &\text{spatial position} \\
+  t     & & &\text{time coordinate} \\
+  \bm{\theta} &= (T, P, \rho, \ldots) & &\text{thermodynamic / control variables} \\
+  E     & & &\text{energy coordinate} \\
+  \mathbf{s} & & &\text{internal state vector} \\
+  \vvec &= (v_x, v_y, v_z) & &\text{velocity} \\
+  \Fvec &= (F_x, F_y, F_z) & &\text{force} \\
+  \Phivec &= (\Phi_0, \Phi_x, \Phi_y, \Phi_z, \Phi_{xx}, \ldots) & &\text{field values} \\
+  \mathbf{M} & & &\text{model metadata} \\
+  \mathbf{H} & & &\text{provenance hash}
+\end{align*}
+
+\subsection{Primitive sampled record}
+
+The primitive record for sample $i$ is:
+\begin{equation}
+  \Rec_i = \bigl(\mathrm{id}_i,\; \xvec_i,\; t_i,\; \bm{\theta}_i,\; E_i,\;
+                  \mathbf{s}_i,\; \vvec_i,\; \Fvec_i,\; \Phivec_i,\;
+                  w_i,\; \mu_i,\; H_i\bigr)
+  \label{eq:record}
+\end{equation}
+where $w_i$ is the statistical weight and $\mu_i$ is the uncertainty or
+variance metric.
+
+\subsection{General table form}
+
+The full dataset is the table of $N$ records:
+\begin{equation}
+  \Tab = \{\Rec_i\}_{i=1}^{N}
+  \label{eq:table}
+\end{equation}
+
+In column form, $\Tab$ is the matrix:
+\begin{equation}
+  \Tab =
+  \bigl[\;
+    \mathrm{id}\;\Big|\;
+    x\; y\; z\;\Big|\;
+    t\;\Big|\;
+    \theta_1 \cdots \theta_{n_\theta}\;\Big|\;
+    E\;\Big|\;
+    s_1 \cdots s_{n_s}\;\Big|\;
+    v_x\; v_y\; v_z\;\Big|\;
+    F_x\; F_y\; F_z\;\Big|\;
+    \Phi_0 \cdots\;\Big|\;
+    w\;\Big|\; \mu\;\Big|\; H
+  \;\bigr]
+  \label{eq:table_col}
+\end{equation}
+
+This is the mathematical basis of \texttt{.xchart}.
+
+% ============================================================================
+\section{Universal Projection Operator}
+\label{sec:projection}
+% ============================================================================
+
+A chart is a projection of the table $\Tab$ into a renderable space:
+\begin{equation}
+  \Proj : \Tab \to \mathbb{R}^k
+  \label{eq:proj}
+\end{equation}
+
+\subsection{2D chart}
+
+\begin{equation}
+  C_{\mathrm{2D}} = \bigl\{(a_i, b_i)\bigr\}_{i=1}^{N},
+  \qquad
+  a_i = f_a(\Rec_i),\quad b_i = f_b(\Rec_i)
+  \label{eq:proj2d}
+\end{equation}
+
+\subsection{3D surface}
+
+\begin{equation}
+  C_{\mathrm{3D}} = \bigl\{(a_i, b_i, c_i)\bigr\}_{i=1}^{N},
+  \qquad
+  a_i = f_a(\Rec_i),\quad b_i = f_b(\Rec_i),\quad c_i = f_c(\Rec_i)
+  \label{eq:proj3d}
+\end{equation}
+
+\subsection{Vector-field plot}
+
+\begin{equation}
+  C_V = \bigl\{(\xvec_i, \uvec_i)\bigr\}_{i=1}^{N},
+  \qquad
+  \uvec_i = f_u(\Rec_i)
+  \label{eq:projvec}
+\end{equation}
+
+Typical choices: $\uvec_i = \vvec_i$ (velocity field), $\uvec_i = \Fvec_i$
+(force field), $\uvec_i = \Phivec_{\mathrm{vec},i}$ (flux vector field).
+
+\medskip
+\noindent The reason not to build separate plotting systems for steam tables,
+radiation fields, and gluon events is that the \emph{plot} is just a
+projection. The data changes. The math does not.
+
+% ============================================================================
+\section{Steam Table / Thermodynamic Manifold}
+\label{sec:steam}
+% ============================================================================
+
+\subsection{State vector}
+
+\begin{equation}
+  \mathbf{S}_{\mathrm{steam}}
+  = \bigl[T,\; P,\; \rho,\; u,\; h,\; s,\; C_p,\; C_v,\;
+           \mu_{\mathrm{visc}},\; k,\; x_q,\; \phi\bigr]
+  \label{eq:steam_state}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Symbol & Quantity & Unit \\
+  \midrule
+  $T$             & Temperature           & K \\
+  $P$             & Pressure              & Pa \\
+  $\rho$          & Density               & kg/m$^3$ \\
+  $u$             & Specific internal energy & J/kg \\
+  $h$             & Specific enthalpy     & J/kg \\
+  $s$             & Specific entropy      & J/(kg\,K) \\
+  $C_p$           & Isobaric heat capacity & J/(mol\,K) \\
+  $C_v$           & Isochoric heat capacity & J/(mol\,K) \\
+  $\mu_{\mathrm{visc}}$ & Dynamic viscosity & Pa\,s \\
+  $k$             & Thermal conductivity  & W/(m\,K) \\
+  $x_q$           & Vapour quality        & --- \\
+  $\phi$          & Phase code            & integer \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Governing property functions}
+
+\begin{align}
+  \rho &= \rho(T,P) & h &= h(T,P) \notag \\
+  u    &= u(T,P)    & s &= s(T,P) \notag \\
+  C_p  &= C_p(T,P)  & C_v &= C_v(T,P)
+\end{align}
+
+\subsection{Thermodynamic identities}
+
+Enthalpy--internal energy relation:
+\begin{equation}
+  h = u + \frac{P}{\rho}
+  \label{eq:enthalpy}
+\end{equation}
+
+Heat capacities via central finite differences over the MD-derived table:
+\begin{align}
+  C_p(T_i, P_j) &\approx \frac{h(T_{i+1}, P_j) - h(T_{i-1}, P_j)}{T_{i+1} - T_{i-1}}
+  \label{eq:Cp_fd} \\[4pt]
+  C_v(T_i, \rho_j) &\approx \frac{u(T_{i+1}, \rho_j) - u(T_{i-1}, \rho_j)}{T_{i+1} - T_{i-1}}
+  \label{eq:Cv_fd}
+\end{align}
+
+\noindent\textbf{Axis-offset artefact note.} For a monatomic ideal gas,
+$C_p = \frac{5}{2}R \approx 20.786\ \mathrm{J\,mol^{-1}\,K^{-1}}$ is
+exactly constant. Any trajectory-integrated $C_p$ that varies from this value
+by less than $\sim 10^{-8}\ \mathrm{J\,mol^{-1}\,K^{-1}}$ is numerical noise.
+A chart renderer that re-scales the y-axis around these residuals \emph{must}
+be rejected by the smoothness gate (\S\ref{sec:val_smooth}) and the chart
+redrawn with a fixed axis spanning a physically meaningful range.
+
+\subsection{Chart projections}
+
+\begin{align}
+  C_{\mathrm{sat}} &= \{(T_i,\, P_{\mathrm{sat},i})\}
+  && \text{2D saturation curve} \label{eq:c_sat} \\[4pt]
+  C_h             &= \{(T_i, P_j,\, h_{ij})\}
+  && \text{3D enthalpy surface} \label{eq:c_h} \\[4pt]
+  C_\rho          &= \{(T_i, P_j,\, \rho_{ij})\}
+  && \text{3D density surface} \label{eq:c_rho} \\[4pt]
+  \epsilon_h(T,P) &= h_{\mathrm{MD}}(T,P) - h_{\mathrm{ref}}(T,P)
+  && \text{absolute residual} \label{eq:c_res} \\[4pt]
+  \epsilon_{\mathrm{rel},h}(T,P) &=
+    \frac{h_{\mathrm{MD}}(T,P) - h_{\mathrm{ref}}(T,P)}{h_{\mathrm{ref}}(T,P)}
+  && \text{relative residual} \label{eq:c_relres}
+\end{align}
+
+% ============================================================================
+\section{Molecular Dynamics Manifold}
+\label{sec:md}
+% ============================================================================
+
+\subsection{Particle state}
+
+\begin{equation}
+  B_i = \bigl[\mathrm{id}_i,\; \xvec_i,\; \vvec_i,\; \avec_i,\;
+               m_i,\; q_i,\; r_i,\; \mathbf{s}_i\bigr]
+  \label{eq:particle}
+\end{equation}
+where $\avec_i = \Fvec_i / m_i$ is the acceleration.
+
+\subsection{Force decomposition}
+
+\begin{equation}
+  \Fvec_i = \Fvec_{i,\mathrm{bonded}}
+           + \Fvec_{i,\mathrm{near}}
+           + \Fvec_{i,\mathrm{far}}
+           + \Fvec_{i,\mathrm{flux}}
+           + \Fvec_{i,\mathrm{event}}
+  \label{eq:force_decomp}
+\end{equation}
+
+This decomposition is the bead communication spine: each term can be sourced
+from a different module without restructuring the integrator.
+
+\subsection{Time integration --- Velocity Verlet}
+
+\begin{align}
+  \xvec_{i,n+1} &= \xvec_{i,n} + \vvec_{i,n}\,\Delta t
+    + \tfrac{1}{2}\avec_{i,n}\,\Delta t^2
+  \label{eq:vv_x} \\[4pt]
+  \vvec_{i,n+1} &= \vvec_{i,n}
+    + \tfrac{1}{2}\bigl(\avec_{i,n} + \avec_{i,n+1}\bigr)\Delta t
+  \label{eq:vv_v}
+\end{align}
+
+\subsection{Chart projections}
+
+Trajectory:
+\begin{equation}
+  C_{\mathrm{traj}} = \{(\xvec_i(t),\, y_i(t),\, z_i(t))\}
+  \label{eq:c_traj}
+\end{equation}
+
+Energy conservation residual:
+\begin{equation}
+  \epsilon_E(t) = \frac{E(t) - E(0)}{E(0)}
+  \label{eq:c_edrift}
+\end{equation}
+
+Instantaneous kinetic temperature:
+\begin{equation}
+  T(t) = \frac{2}{3Nk_B}\sum_{i=1}^{N} \tfrac{1}{2}m_i\norm{\vvec_i}^2
+  \label{eq:c_temp}
+\end{equation}
+
+Radial distribution function:
+\begin{equation}
+  g(r) = \frac{1}{4\pi r^2 \rho N}
+  \left\langle \sum_{i} \sum_{j \neq i} \delta(r - r_{ij}) \right\rangle
+  \label{eq:c_rdf}
+\end{equation}
+
+% ============================================================================
+\section{Flux Field Manifold}
+\label{sec:flux}
+% ============================================================================
+
+\subsection{Field types}
+
+Scalar flux:
+\begin{equation}
+  \Phi_s = \Phi_s(\xvec, t, E)
+  \label{eq:flux_scalar}
+\end{equation}
+
+Vector flux:
+\begin{equation}
+  \Phivec_v = \begin{pmatrix}\Phi_x \\ \Phi_y \\ \Phi_z\end{pmatrix}
+  = \Phivec_v(\xvec, t, E)
+  \label{eq:flux_vec}
+\end{equation}
+
+Tensor flux:
+\begin{equation}
+  \mathbf{\Phi}_T =
+  \begin{pmatrix}
+    \Phi_{xx} & \Phi_{xy} & \Phi_{xz} \\
+    \Phi_{yx} & \Phi_{yy} & \Phi_{yz} \\
+    \Phi_{zx} & \Phi_{zy} & \Phi_{zz}
+  \end{pmatrix}
+  \label{eq:flux_tensor}
+\end{equation}
+
+\subsection{Conservation form}
+
+\begin{equation}
+  \frac{\partial q}{\partial t} + \nabla \cdot \Phivec = S
+  \label{eq:conservation}
+\end{equation}
+
+where $q$ is the conserved quantity density, $\Phivec$ is the flux, and $S$
+is the source/sink term.
+
+\subsection{Discrete flux divergence}
+
+\begin{equation}
+  \nabla \cdot \Phivec \approx
+  \frac{\Phi_x(x+\Delta x) - \Phi_x(x-\Delta x)}{2\Delta x}
+  + \frac{\Phi_y(y+\Delta y) - \Phi_y(y-\Delta y)}{2\Delta y}
+  + \frac{\Phi_z(z+\Delta z) - \Phi_z(z-\Delta z)}{2\Delta z}
+  \label{eq:div_discrete}
+\end{equation}
+
+\subsection{Primitive flux record}
+
+\begin{lstlisting}[language=C++, caption={Primitive \texttt{.flux} record.}]
+struct FluxSample {
+    double   x, y, z;          // position (Ang)
+    double   t;                 // time (fs)
+    double   energy_eV;         // energy coordinate
+    double   scalar;            // scalar field value
+    double   vx, vy, vz;        // vector field components
+    double   weight;            // statistical weight
+    uint32_t field_type;        // flux type enum
+    uint64_t source_event_id;   // parent event (0 = none)
+};
+\end{lstlisting}
+
+\subsection{Chart projections}
+
+2D slice at fixed $z = z_0$:
+\begin{equation}
+  C_{\Phi,\mathrm{2D}} = \{(x_i, y_i, \Phi_i) : z_i = z_0\}
+  \label{eq:c_flux2d}
+\end{equation}
+
+3D vector field:
+\begin{equation}
+  C_{\Phi,\mathrm{vec}} = \{(\xvec_i, \Phivec_i)\}
+  \label{eq:c_fluxvec}
+\end{equation}
+
+Divergence surface:
+\begin{equation}
+  C_{\nabla\cdot\Phi} = \{(x_i, y_i, (\nabla\cdot\Phivec)_i)\}
+  \label{eq:c_div}
+\end{equation}
+
+% ============================================================================
+\section{Radiation Transport Manifold}
+\label{sec:radiation}
+% ============================================================================
+
+\subsection{Radiation state}
+
+\begin{equation}
+  \mathcal{R}_{\mathrm{rad}} = [\xvec,\; t,\; E,\; \Omvec,\;
+                                  \Phi,\; D,\; \Sigma,\; \lambda,\; w]
+  \label{eq:rad_state}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Symbol & Quantity & Unit \\
+  \midrule
+  $\Omvec$ & Direction unit vector & --- \\
+  $\Phi$   & Particle flux         & m$^{-2}$\,s$^{-1}$ \\
+  $D$      & Dose / deposited energy & J/kg (Gy) \\
+  $\Sigma$ & Macroscopic cross section & m$^{-1}$ \\
+  $\lambda = 1/\Sigma$ & Attenuation length & m \\
+  $w$      & Particle weight & --- \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Attenuation law}
+
+\begin{equation}
+  I(x) = I_0\, e^{-\mu x}, \qquad
+  T(x) = \frac{I(x)}{I_0} = e^{-\mu x}
+  \label{eq:attenuation}
+\end{equation}
+
+\subsection{Flux definitions}
+
+Integrated flux:
+\begin{equation}
+  \Phi = \frac{dN}{dA\,dt}
+  \label{eq:flux_def}
+\end{equation}
+
+Energy-resolved flux:
+\begin{equation}
+  \Phi(E) = \frac{dN}{dA\,dt\,dE}
+  \label{eq:flux_energy}
+\end{equation}
+
+\subsection{Dose proxy}
+
+\begin{equation}
+  D = \frac{E_{\mathrm{dep}}}{m}, \qquad
+  \dot{D} = \frac{dD}{dt}
+  \label{eq:dose}
+\end{equation}
+
+\subsection{Chart projections}
+
+Energy spectrum, dose map, flux field, and attenuation curve:
+\begin{align}
+  C_E         &= \{(E_i, N_i)\}
+  && \text{energy spectrum} \label{eq:c_espect} \\[4pt]
+  C_D         &= \{(x_i, y_i, D_i) : z = z_0\}
+  && \text{dose map} \label{eq:c_dose} \\[4pt]
+  C_\Phi      &= \{(\xvec_i, \Phi_i)\}
+  && \text{flux field} \label{eq:c_flux} \\[4pt]
+  C_T         &= \{(x_i,\; e^{-\mu x_i})\}
+  && \text{attenuation curve} \label{eq:c_atten}
+\end{align}
+
+% ============================================================================
+\section{Excitation Dynamics Manifold}
+\label{sec:excitation}
+% ============================================================================
+
+\subsection{Excitation state}
+
+\begin{equation}
+  \mathcal{X}_i = [\mathrm{id}_i,\; t_i,\; \xvec_i,\;
+                    E_{0,i},\; E_{1,i},\; \Delta E_i,\;
+                    \sigma_i,\; p_i,\; \tau_i]
+  \label{eq:excit_state}
+\end{equation}
+where $\Delta E_i = E_{1,i} - E_{0,i}$, $\sigma_i$ is the transition
+cross-section, $p_i$ is the transition probability, and $\tau_i$ is the
+state lifetime.
+
+\subsection{Population dynamics}
+
+State population vector with normalisation:
+\begin{equation}
+  \mathbf{p}(t) = [p_1(t),\; p_2(t),\; \ldots,\; p_n(t)],
+  \qquad
+  \sum_{k=1}^{n} p_k(t) = 1
+  \label{eq:population}
+\end{equation}
+
+Transition rate matrix $K$ and population equation:
+\begin{equation}
+  \frac{d\mathbf{p}}{dt} = K\,\mathbf{p},
+  \qquad
+  \mathbf{p}_{n+1} = \mathbf{p}_n + \Delta t\, K\,\mathbf{p}_n
+  \label{eq:rate_eq}
+\end{equation}
+
+\subsection{Excitation event struct}
+
+\begin{lstlisting}[language=C++, caption={Excitation event in \texttt{.dynx}.}]
+struct ExcitationEvent {
+    uint64_t event_id;
+    uint64_t particle_id;
+    double   t;                 // time (fs)
+    double   x, y, z;          // position (Ang)
+    double   E_initial_eV;
+    double   E_final_eV;
+    double   delta_E_eV;
+    int      state_initial;
+    int      state_final;
+    uint32_t cause;             // collision | photon_abs | decay | thermal | field
+};
+\end{lstlisting}
+
+\subsection{Chart projections}
+
+\begin{align}
+  C_\mathcal{X}  &= \{(t_i,\; \Delta E_i)\}
+  && \text{transition timeline} \label{eq:c_xtl} \\[4pt]
+  C_p            &= \{(t_i,\; p_k(t_i))\}
+  && \text{state population} \label{eq:c_pop} \\[4pt]
+  C_{\mathrm{emit}} &= \{(\Delta E_i,\; N_i)\}
+  && \text{emission spectrum} \label{eq:c_emit}
+\end{align}
+
+% ============================================================================
+\section{Effective Gluon / Color-Field Proxy Manifold}
+\label{sec:gluon}
+% ============================================================================
+
+\begin{quote}
+  \itshape
+  \textbf{Scope disclaimer.} The model in this section is an
+  \textbf{effective proxy}, not a first-principles QCD calculation.
+  It does not solve the QCD path integral, does not implement lattice
+  gauge theory, and makes no claim to reproduce the full non-Abelian
+  $\mathrm{SU}(3)$ dynamics. It is a reduced representation suitable
+  for event-level bookkeeping in particle cascade simulations and for
+  visualisation of confinement-like phenomena in educational or
+  exploratory contexts. The field \texttt{full\_qcd = false} must always
+  be set in any \texttt{.xchart} or \texttt{.dynx} output from this module.
+  The universe already contains enough fraud without compiling more.
+\end{quote}
+
+\subsection{Effective color-state vector}
+
+The six-component color-state vector encodes the three color and three
+anti-color occupancy proxies:
+\begin{equation}
+  \mathbf{G}_i =
+  \bigl[g_r,\; g_g,\; g_b,\; \bar{g}_r,\; \bar{g}_g,\; \bar{g}_b\bigr]
+  \in [0,1]^6
+  \label{eq:color_vec}
+\end{equation}
+
+or, using the reduced scalar for confinement dynamics, the color-excitation
+state:
+\begin{equation}
+  \chi_c(t) \in [0,1],
+  \qquad
+  \chi_c(t) = 0 \implies \text{color neutral (confined)}
+  \label{eq:chi_c}
+\end{equation}
+
+\subsection{Color-neutrality residual}
+
+The residual from exact color neutrality is:
+\begin{equation}
+  \eta_c = \left\| \sum_{i \in \mathrm{hadron}} \mathbf{G}_i \right\|,
+  \qquad
+  \eta_c \leq \epsilon_c \implies \text{color-neutral state}
+  \label{eq:color_residual}
+\end{equation}
+
+\subsection{Confinement proxy energy}
+
+A phenomenological confinement energy proxy:
+\begin{equation}
+  E_{\mathrm{conf}}(r) = \kappa\, r + \frac{\alpha_s}{r},
+  \qquad
+  \kappa \approx 0.18\ \mathrm{GeV}^2,\quad
+  \alpha_s \approx 0.1\text{--}0.3
+  \label{eq:confinement}
+\end{equation}
+
+This is the Cornell potential. It is an effective model. It is not derived
+from the VSEPR-SIM force field and should not be connected to the MD
+integrator without explicit demarcation.
+
+\subsection{Gluon event struct}
+
+\begin{lstlisting}[language=C++, caption={Effective gluon excitation event.}]
+struct GluonExcitationEvent {
+    uint64_t event_id;
+    uint64_t parent_particle_id;
+    double   t;                       // time (s)
+    double   x, y, z;                 // position (m)
+    double   energy_GeV;              // effective energy
+    double   confinement_proxy;       // Cornell potential value
+    double   color_state[6];          // G_i vector
+    uint32_t interaction_type;        // emission | absorption | annihilation
+    uint64_t state_hash;              // provenance
+};
+\end{lstlisting}
+
+\subsection{Chart projections}
+
+\begin{align}
+  C_{\chi}   &= \{(t_i,\; \chi_{c,i})\}
+  && \text{color-excitation timeline} \label{eq:c_chi} \\[4pt]
+  C_{\mathrm{conf}} &= \{(r_i,\; E_{\mathrm{conf},i})\}
+  && \text{confinement curve} \label{eq:c_conf} \\[4pt]
+  C_G        &= \{(t_i,\; \mathbf{G}_i)\}
+  && \text{color-state history} \label{eq:c_gluon}
+\end{align}
+
+% ============================================================================
+\section{Dynamic Event Stream --- \texttt{.dynx}}
+\label{sec:dynx}
+% ============================================================================
+
+\subsection{General event object}
+
+\begin{equation}
+  D_i = [\mathrm{id}_i,\; \mathrm{type}_i,\; t_i,\; \xvec_i,\;
+          \avec_i,\; \mathbf{b}_i,\; \mathbf{q}_i,\; H_i]
+  \label{eq:dynx_event}
+\end{equation}
+
+where $\avec_i$ is the primary vector payload, $\mathbf{b}_i$ is the
+secondary vector payload, and $\mathbf{q}_i$ is the scalar payload vector.
+
+\subsection{Bond-force vector event}
+
+\begin{equation}
+  D_{\mathrm{bond}} = [\mathrm{id},\; t,\; \xvec_a,\; \xvec_b,\;
+                        \Fvec_{ab},\; \ell,\; \ell_0,\; \epsilon_b]
+  \label{eq:bond_event}
+\end{equation}
+
+Bond length and strain:
+\begin{align}
+  \ell      &= \norm{\xvec_b - \xvec_a} \label{eq:bond_len} \\
+  \epsilon_b &= \frac{\ell - \ell_0}{\ell_0} \label{eq:bond_strain}
+\end{align}
+
+Bond force (harmonic):
+\begin{equation}
+  \Fvec_{ab} = -k_b\,(\ell - \ell_0)\,
+               \frac{\xvec_b - \xvec_a}{\ell}
+  \label{eq:bond_force}
+\end{equation}
+
+Break criteria:
+\begin{equation}
+  |\epsilon_b| > \epsilon_{\mathrm{crit}}
+  \quad\text{or}\quad
+  \norm{\Fvec_{ab}} > F_{\mathrm{crit}}
+  \label{eq:bond_break}
+\end{equation}
+
+\subsection{\texttt{.dynx} data contract}
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  Data-in field & Meaning \\
+  \midrule
+  \texttt{event\_id}, \texttt{event\_type} & Event identity \\
+  \texttt{time\_s}                         & Event time \\
+  \texttt{particle\_a}, \texttt{particle\_b} & Participant IDs \\
+  \texttt{x, y, z}                         & Event position \\
+  \texttt{vx, vy, vz}                      & Velocity at event \\
+  \texttt{Fx, Fy, Fz}                      & Force at event \\
+  \texttt{energy}                          & Event energy \\
+  \texttt{state\_initial}, \texttt{state\_final} & State transition \\
+  \texttt{hash}                            & Event provenance hash \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{File Format Specifications}
+\label{sec:formats}
+% ============================================================================
+
+\subsection{\texttt{.chart} --- lightweight plot recipe}
+
+A \texttt{.chart} file defines the tuple:
+\begin{equation}
+  C = (S,\; \Proj,\; \mathcal{A},\; \Val)
+  \label{eq:chart_tuple}
+\end{equation}
+
+where $S$ is the source dataset path, $\Proj$ is the projection (column
+mapping), $\mathcal{A}$ is the axis metadata set, and $\Val$ is the
+validation rule set.
+
+Axis definition:
+\begin{equation}
+  \mathcal{A}_k = (\mathrm{name}_k,\; \mathrm{unit}_k,\; f_k)
+  \label{eq:axis}
+\end{equation}
+
+\begin{lstlisting}[caption={\texttt{.chart} format example.}]
+[chart]
+version    = "0.2"
+kind       = "line"
+title      = "Cp(T) - Hydrogen Atom"
+
+[source]
+path       = "h_atom_steam.tsv"
+x_column   = "T_K"
+y_column   = "Cp_J_molK"
+
+[axes]
+x_label    = "Temperature"
+x_unit     = "K"
+x_min      = 100.0
+x_max      = 6000.0
+y_label    = "Cp"
+y_unit     = "J/(mol K)"
+y_min      = 20.0          # fixed --- prevents offset artifact
+y_max      = 22.0
+
+[validation]
+y_finite        = true
+y_nonnegative   = true
+smoothness_tol  = 0.05
+axis_offset_check = true   # rejects plots where offset > 1e-6 * range
+\end{lstlisting}
+
+\subsection{\texttt{.xchart} --- rich scientific visualization object}
+
+An \texttt{.xchart} file defines:
+\begin{equation}
+  \mathcal{X} = (\Tab,\; \mathcal{P},\; \mathcal{M},\; \Val,\; H)
+  \label{eq:xchart}
+\end{equation}
+
+where $\mathcal{P} = \{\Proj_1, \Proj_2, \ldots, \Proj_k\}$ is the set of
+chart projections, $\mathcal{M}$ is the metadata block, and $H$ is the
+provenance hash.
+
+\begin{lstlisting}[caption={\texttt{.xchart} --- radiation flux surface.}]
+[xchart]
+version = "0.2"
+kind    = "radiation_flux_surface"
+title   = "Neutron Flux Field Around Source"
+
+[datasets.primary]
+format  = "inline_table"
+columns = ["x_m","y_m","z_m","time_s","energy_MeV",
+           "flux_m2_s","dose_Gy_s"]
+
+[plot.surface]
+type = "3d_surface"
+x    = "radius_m"
+y    = "energy_MeV"
+z    = "flux_m2_s"
+
+[physics]
+field           = "neutron_flux"
+transport_model = "effective_monte_carlo"
+source          = "decay_event_stream"
+units_checked   = true
+
+[validation]
+nonneg_flux    = true
+energy_bins_ok = true
+source_hash    = "PLACEHOLDER"
+\end{lstlisting}
+
+\begin{lstlisting}[caption={\texttt{.xchart} --- effective gluon excitation timeline.}]
+[xchart]
+version = "0.2"
+kind    = "subatomic_excitation_timeline"
+title   = "Effective Gluon Excitation Events"
+
+[datasets.events]
+format  = "inline_table"
+columns = ["event_id","particle_id","time_s","energy_GeV",
+           "confinement_proxy","color_r","color_g","color_b",
+           "anticolor_r","anticolor_g","anticolor_b"]
+
+[plot.timeline]
+type  = "event_timeline"
+x     = "time_s"
+y     = "energy_GeV"
+group = "particle_id"
+
+[plot.phase]
+type = "phase_map"
+x    = "time_s"
+y    = "confinement_proxy"
+z    = "energy_GeV"
+
+[physics]
+model_class = "effective_subatomic_proxy"
+full_qcd    = false          # mandatory --- this is NOT a QCD solver
+\end{lstlisting}
+
+\subsection{\texttt{.flux} --- scalar/vector/tensor field state}
+
+The \texttt{.flux} file is a binary or text stream of
+\texttt{FluxSample} records (see \S\ref{sec:flux}). Text form uses
+tab-separated columns in the order defined by the file header:
+
+\begin{lstlisting}[caption={\texttt{.flux} text header.}]
+# flux_version=1
+# field_type=neutron_flux
+# units=x:m,t:s,energy:eV,phi:m-2.s-1
+x_m  y_m  z_m  time_s  energy_eV  phi_scalar  phi_x  phi_y  phi_z  weight  source_id
+\end{lstlisting}
+
+\subsection{\texttt{.x} --- universal session bundle}
+
+The bundle is:
+\begin{equation}
+  \Bund = \{S_{\mathrm{sim}},\; \mathcal{T}_{\mathrm{state}},\;
+             D_{\mathrm{dyn}},\; \mathcal{F}_{\mathrm{flux}},\;
+             C_{\mathrm{chart}},\; R_{\mathrm{report}},\; H_\Bund\}
+  \label{eq:bundle}
+\end{equation}
+
+Bundle hash:
+\begin{equation}
+  H_\Bund = \Hash(H_1 \,\|\, H_2 \,\|\, \cdots \,\|\, H_n)
+  \label{eq:bundle_hash}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Symbol & Contents & Extensions \\
+  \midrule
+  $S_{\mathrm{sim}}$        & Simulation scripts     & \texttt{.vsim} \\
+  $\mathcal{T}_{\mathrm{state}}$ & Particle states   & \texttt{.xyz}, \texttt{.xyza}, \texttt{.xyzf}, \texttt{.xyzc} \\
+  $D_{\mathrm{dyn}}$        & Dynamic event streams  & \texttt{.dynx} \\
+  $\mathcal{F}_{\mathrm{flux}}$ & Field data         & \texttt{.flux} \\
+  $C_{\mathrm{chart}}$      & Charts / visualizations & \texttt{.chart}, \texttt{.xchart} \\
+  $R_{\mathrm{report}}$     & Reports and logs       & \texttt{.json}, \texttt{.tsv}, \texttt{.md} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Qt Desktop Stack}
+\label{sec:qt}
+% ============================================================================
+
+\subsection{View modes}
+
+The Qt desktop layer treats charts as scientific view modes, not plots.
+Each view kind maps to a specific projection type from \S\ref{sec:projection}.
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Qt view class & Projection type & Primary input \\
+  \midrule
+  \texttt{Chart2DView}           & $C_{\mathrm{2D}}$         & \texttt{.chart}, \texttt{.xchart} \\
+  \texttt{Chart3DSurfaceView}    & $C_{\mathrm{3D}}$         & \texttt{.xchart} \\
+  \texttt{FieldSliceView}        & $C_{\Phi,\mathrm{2D}}$    & \texttt{.flux}, \texttt{.xchart} \\
+  \texttt{FluxVectorView}        & $C_{\Phi,\mathrm{vec}}$   & \texttt{.flux} \\
+  \texttt{RadiationMapView}      & $C_D$, $C_\Phi$           & \texttt{.xchart}, \texttt{.dynx} \\
+  \texttt{ExcitationTimelineView}& $C_\mathcal{X}$           & \texttt{.dynx} \\
+  \texttt{SubatomicEventView}    & $C_\chi$, $C_G$           & \texttt{.dynx} \\
+  \texttt{BatchComparisonView}   & $\{\Proj_j\}_j$           & \texttt{.x} bundle \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Desktop opening behaviour}
+
+\begin{lstlisting}[caption={Qt desktop launch examples.}]
+vsepr open steam_surface.xchart        # -> Chart3DSurfaceView
+vsepr open radiation_flux.xchart       # -> RadiationMapView
+vsepr open gluon_excitation.dynx       # -> SubatomicEventView + FluxVectorView
+vsepr open reactor_batch.x             # -> BatchComparisonView dashboard
+\end{lstlisting}
+
+\subsection{Visualisation families}
+
+\textbf{Thermodynamic charts.} For steam tables and MD-derived properties.
+Views: 2D saturation curve, 3D property surface, phase map, residual error
+map, lookup interpolation heatmap.
+
+\textbf{Radiation charts.} For isotope, reactor, shielding, and particle
+transport. Variables: $\Phi(r,t,E) = dN/(dA\,dt\,dE)$. Views: flux vs.\
+radius, dose vs.\ shielding thickness, energy spectrum, attenuation curve,
+3D radiation field.
+
+\textbf{Flux fields.} For thermal, mass, charge, neutron, momentum, and
+reaction flux. Connects directly to \texttt{.flux}. Views: slice, divergence
+surface, vector arrows.
+
+\textbf{Excitation dynamics.} For atoms, molecules, radiation events, and
+reduced quantum states. Views: excitation energy vs.\ time, transition
+probability map, emission spectrum, state population histogram, decay cascade
+timeline.
+
+\textbf{Effective gluon / subatomic events.} Marked \texttt{full\_qcd =
+false}. Views: color-state transition timeline, effective confinement energy,
+subatomic excitation graph, collision event tree, particle cascade map, field
+intensity surface.
+
+% ============================================================================
+\section{Validation Mathematics}
+\label{sec:validation}
+% ============================================================================
+
+\subsection{Unit consistency}
+
+Every plotted variable must satisfy dimensional agreement with its declared
+axis:
+\begin{equation}
+  \dim(f_k) = \dim(\mathcal{A}_k) \quad \forall\, k
+  \label{eq:val_dim}
+\end{equation}
+Reject if $\dim(f_k) \neq \dim(\mathcal{A}_k)$ for any $k$.
+
+\subsection{Finite-value gate}
+
+\begin{equation}
+  \forall\, i,k : \mathrm{isfinite}\bigl(f_k(\Rec_i)\bigr) = \mathrm{true}
+  \label{eq:val_finite}
+\end{equation}
+Reject if any sample maps to $\{\mathrm{NaN},\, +\infty,\, -\infty\}$.
+
+\subsection{Non-negativity gate}
+
+For density, absolute temperature, flux magnitude, dose, and mass:
+\begin{equation}
+  q_i \geq 0 \quad \forall\, i
+  \label{eq:val_nonneg}
+\end{equation}
+
+\subsection{Conservation residual}
+
+For conserved density $q$ governed by \eqref{eq:conservation}:
+\begin{equation}
+  \mathcal{R}_q = \frac{\partial q}{\partial t} + \nabla\cdot\Phivec - S
+  \label{eq:val_conservation}
+\end{equation}
+Accept if $|\mathcal{R}_q| < \epsilon_q$.
+
+\subsection{Smoothness gate}
+\label{sec:val_smooth}
+
+Second-difference smoothness check:
+\begin{equation}
+  \Delta^2 y_i = y_{i+1} - 2y_i + y_{i-1}
+  \label{eq:val_smooth}
+\end{equation}
+Accept if $|\Delta^2 y_i| < \epsilon_{\mathrm{smooth}}$ unless
+$\mathrm{boundary}_i = \mathrm{true}$ (phase boundary).
+
+\noindent\textbf{Application to the Cp axis artifact.} For a monatomic
+ideal-gas $C_p$ trace, $|\Delta^2 C_p| \ll 10^{-6}\ \mathrm{J\,mol^{-1}\,K^{-1}}$.
+A chart renderer that produces an axis offset greater than
+$10^{-6} \times y_{\mathrm{range}}$ on such a trace must fail this gate and
+re-render with fixed axis bounds.
+
+\subsection{Segment discontinuity gate}
+
+At a segment boundary $x_b$ between piecewise model regions:
+\begin{equation}
+  \Delta y_b = \left| y^+(x_b) - y^-(x_b) \right|
+  \label{eq:val_disc}
+\end{equation}
+Accept if $\Delta y_b < \epsilon_b$ or $\mathrm{phase\_boundary}_b =
+\mathrm{true}$.
+
+\noindent This gate would have caught the ethane/propane plot discontinuities
+at segment boundaries in the previous implementation.
+
+\subsection{Axis-offset rejection gate}
+
+Let $y_{\mathrm{range}} = y_{\max} - y_{\min}$ over the plotted data. Define
+the axis offset as the mantissa displacement introduced by the renderer:
+\begin{equation}
+  \delta_{\mathrm{offset}} = \bigl|y_{\mathrm{axis,min}} - y_{\min}\bigr|
+  \label{eq:val_offset}
+\end{equation}
+Reject (flag as artifact) if:
+\begin{equation}
+  \frac{\delta_{\mathrm{offset}}}{y_{\mathrm{range}}} < \epsilon_{\mathrm{offset}}
+  \quad \text{and} \quad
+  \delta_{\mathrm{offset}} > 0
+  \label{eq:val_offset_gate}
+\end{equation}
+Default $\epsilon_{\mathrm{offset}} = 10^{-4}$. A non-zero offset on a
+nearly-flat curve indicates the renderer is auto-scaling around noise.
+
+% ============================================================================
+\section{Universal Pipeline and Implementation Contract}
+\label{sec:contract}
+% ============================================================================
+
+\subsection{Universal pipeline}
+
+Every new module must implement the four-stage pipeline:
+
+\begin{equation}
+  \mathcal{I} \;\xrightarrow{K}\; \Tab
+                \;\xrightarrow{\Proj_j}\; C_j
+                \;\xrightarrow{\Val_j}\; \{\mathrm{pass},\,\mathrm{fail},\,\epsilon\}
+                \;\xrightarrow{\mathcal{E}}\; \{\texttt{.chart},\,\texttt{.xchart},\,\ldots\}
+  \label{eq:pipeline}
+\end{equation}
+
+\begin{description}[leftmargin=2em]
+  \item[Input $\mathcal{I}$] Raw simulation or measurement records
+    $\{\Rec_i^{\mathrm{raw}}\}$.
+  \item[Transform $K$] Normalise to the universal record schema
+    \eqref{eq:record}: unit conversion, column mapping, hash computation.
+  \item[Project $\Proj_j$] Apply one or more projection operators to produce
+    chart tables $C_j$.
+  \item[Validate $\Val_j$] Apply all applicable gates from \S\ref{sec:validation}.
+    A failing gate produces a diagnostic, not a silent bad chart.
+  \item[Export $\mathcal{E}$] Write \texttt{.chart}, \texttt{.xchart},
+    \texttt{PNG}, \texttt{SVG}, \texttt{TSV}, or bundle into \texttt{.x}.
+\end{description}
+
+In plain structure:
+
+\begin{lstlisting}[caption={Universal pipeline pseudocode.}]
+raw_data
+  -> normalize_to_universal_table(K)
+  -> for each projection Proj_j:
+       C_j = project(table, Proj_j)
+       result = validate(C_j, rules_j)
+       if result.pass:
+           export(C_j, fmt)
+       else:
+           emit_diagnostic(result)
+\end{lstlisting}
+
+\subsection{Variable dictionary}
+
+The following variable names are canonical across all modules and file formats:
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  Name & Meaning \\
+  \midrule
+  \texttt{id}                     & Persistent sample or particle identifier \\
+  \texttt{x, y, z}                & Position (\AA\ for MD; m for radiation) \\
+  \texttt{t}                      & Time \\
+  \texttt{T}                      & Temperature (K) \\
+  \texttt{P}                      & Pressure (Pa) \\
+  \texttt{rho}                    & Density (kg/m$^3$) \\
+  \texttt{u}                      & Specific internal energy (J/kg) \\
+  \texttt{h}                      & Specific enthalpy (J/kg) \\
+  \texttt{s}                      & Specific entropy (J/(kg\,K)) \\
+  \texttt{Cp, Cv}                 & Heat capacities (J/(mol\,K)) \\
+  \texttt{mu}                     & Dynamic viscosity (Pa\,s) \\
+  \texttt{k}                      & Thermal conductivity (W/(m\,K)) \\
+  \texttt{E}                      & Energy (eV for MD; MeV/GeV for particle) \\
+  \texttt{vx, vy, vz}             & Velocity (\AA/fs) \\
+  \texttt{Fx, Fy, Fz}             & Force (eV/\AA) \\
+  \texttt{Phi}                    & Scalar flux \\
+  \texttt{Phi\_x, Phi\_y, Phi\_z} & Vector flux components \\
+  \texttt{D}                      & Dose (Gy) \\
+  \texttt{Omega}                  & Radiation direction unit vector \\
+  \texttt{Sigma}                  & Macroscopic cross section (m$^{-1}$) \\
+  \texttt{state\_i, state\_j}     & Initial and final excitation state indices \\
+  \texttt{delta\_E}               & Transition energy \\
+  \texttt{c}                      & Color-state proxy vector $\mathbf{G}_i$ \\
+  \texttt{eta\_c}                 & Color-neutrality residual \\
+  \texttt{E\_conf}                & Confinement proxy energy \\
+  \texttt{w}                      & Sample weight \\
+  \texttt{epsilon}                & Validation residual \\
+  \texttt{H}                      & Provenance hash \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Implementation order}
+
+\begin{enumerate}
+  \item Implement \texttt{.chart} format parser and writer.
+  \item Implement \texttt{.xchart} format with embedded table support.
+  \item Implement \texttt{.flux} binary and text record I/O.
+  \item Connect \texttt{.xchart} to \texttt{.flux} (field visualization).
+  \item Connect \texttt{.xchart} to \texttt{.dynx} (event timeline visualization).
+  \item Add Qt \texttt{Chart2DView} and \texttt{Chart3DSurfaceView}.
+  \item Add Qt \texttt{FluxVectorView} and \texttt{FieldSliceView}.
+  \item Add Qt \texttt{ExcitationTimelineView}.
+  \item Add Qt \texttt{RadiationMapView} and \texttt{SubatomicEventView}.
+  \item Add Qt \texttt{BatchComparisonView}.
+  \item Add all validation gates (\S\ref{sec:validation}).
+  \item Bundle all outputs through \texttt{.x}.
+\end{enumerate}
+
+\subsection{Data-in / data-out matrix}
+
+\begin{center}
+\begin{tabular}{p{3.2cm}p{4.8cm}p{4.8cm}}
+  \toprule
+  Module & Data-in & Data-out \\
+  \midrule
+  Steam MD table
+    & $T, P, \rho, u, h, s, C_p, C_v, \mu, k$
+    & \texttt{.xchart}, lookup cache, phase maps \\
+  Molecular dynamics
+    & $\xvec, \vvec, m, q, \Fvec$, forcefield
+    & \texttt{.xyzf}, \texttt{.dynx}, \texttt{.xchart} \\
+  Flux field
+    & $\xvec, t, E, \Phi, \Phivec$
+    & \texttt{.flux}, vector/slice charts \\
+  Radiation transport
+    & particle type, $E, \Omvec, \Sigma, \Phi, D$
+    & \texttt{.dynx}, \texttt{.flux}, dose maps \\
+  Excitation dynamics
+    & $E_i, E_j, \Delta E, p, \tau$
+    & timelines, emission spectra \\
+  Effective gluon proxy
+    & $\mathbf{G}, E_{\mathrm{conf}}, \chi_c$
+    & color-state maps, event trees \\
+  Chart engine
+    & source columns, axes, units, rules
+    & PNG/SVG/Qt view \\
+  XChart engine
+    & embedded datasets, projections, hashes
+    & multi-view scientific artifact \\
+  Bundle \texttt{.x}
+    & all artifact types
+    & replayable session archive \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Architecture rule}
+
+Do not make gluons, radiation, flux, and steam tables separate isolated
+plotting systems. They are all projections of the universal state vector
+$\Qvec$ \eqref{eq:Qvec} onto appropriate subspaces:
+
+\begin{equation}
+  \mathcal{D} = \{X, Y, Z, T, E, S, V, M, H\}
+  \label{eq:arch_rule}
+\end{equation}
+
+where $X,Y,Z$ are position; $T$ is time or temperature; $E$ is energy; $S$
+are state variables; $V$ are vector field components; $M$ is model metadata;
+and $H$ is the provenance hash. Then \texttt{.xchart} maps those fields into
+views. One spine. All output types fall from it.
+
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{WO-CHART-FIELD-B --- VSEPR-SIM Theoretical Division.
+  One abstraction. All the physics. Someone alert the academy before
+  they ruin it with a subcommittee.}
+\end{center}
+
+\end{document}

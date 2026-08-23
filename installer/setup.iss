@@ -19,7 +19,10 @@
 ;
 ;   Universal file opener (all VSIM/XYZ types):
 ;     installer\bin\open_vsim_file.cmd
-;   Priority: live-xyza-viewer.exe -> vsepr.exe open -> pythonw vsepr_xyz_popup.pyw
+;   Supported interactive frontend: vsepr-view.exe
+;
+;   Command surface:
+;     vsepr.exe is canonical; v.cmd is an optional short alias on PATH.
 ;
 ; ============================================================================
 
@@ -86,28 +89,17 @@ Source: "build\{#MyAppExeName}";       DestDir: "{app}\bin"; Flags: ignoreversio
 Source: "build\vsepr-sim.exe";         DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
 ; vsepr.exe IS the CLI binary (no separate vsepr-cli.exe target exists)
 Source: "build\vsepr.exe";             DestDir: "{app}\bin"; DestName: "vsepr-cli.exe"; Flags: ignoreversion skipifsourcedoesntexist
+Source: "installer\bin\v.cmd";        DestDir: "{app}\bin"; Flags: ignoreversion
 Source: "build\vsepr_batch.exe";       DestDir: "{app}\bin"; Flags: ignoreversion
-
-; --- Qt desktop + launcher (require Qt6 runtime below) ---
-Source: "build\vsepr-desktop.exe";    DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "build\vsepr-launcher.exe";   DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
-Source: "apps\launcher\xsuite_launcher.bat"; DestDir: "{app}\bin"; Flags: ignoreversion
 
 ; --- .X framework audit binary (post-install self-test) ---
 ; Alias of build\tests\test_x_framework.exe.  Runs XBundle + XSuite tests after install.
 Source: "build\tests\test_x_framework.exe"; DestDir: "{app}\bin"; DestName: "vsepr-x-audit.exe"; Flags: ignoreversion skipifsourcedoesntexist
 
-; --- Qt runtime DLLs (produced by: windeployqt6 --dir installer\qt_runtime build\vsepr-desktop.exe build\vsepr-launcher.exe) ---
-; Run windeployqt6 once after a successful Qt build, then uncomment:
-;Source: "installer\qt_runtime\*"; DestDir: "{app}\bin"; Flags: ignoreversion recursesubdirs createallsubdirs
+; --- Supported OpenGL live viewer (requires the vis preset) ---
+Source: "build_vis\vsepr-view.exe";  DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
 
-; --- OpenGL 3-D visualization renderer (primary viewer; requires BUILD_VIS=ON) ---
-; CMD opener routes here first; other paths activate only when this is absent.
-Source: "build\live-xyza-viewer.exe";  DestDir: "{app}\bin"; Flags: ignoreversion skipifsourcedoesntexist
-
-; --- Universal file opener + Python popup viewer (fallback chain) ---
-; open_vsim_file.cmd priority: 1. live-xyza-viewer.exe  2. vsepr.exe open  3. pythonw popup
-Source: "tools\vsepr_xyz_popup.pyw";   DestDir: "{app}\bin"; Flags: ignoreversion
+; --- Universal file opener (routes into vsepr-view) ---
 Source: "installer\bin\open_vsim_file.cmd"; DestDir: "{app}\bin"; Flags: ignoreversion
 
 ; --- File association script (canonical registry writer — HKCU, no admin) ---
@@ -134,8 +126,7 @@ Source: "resources\vsepr.ico"; DestDir: "{app}\resources"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#MyAppName}";                              Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Comment: "{#MyAppDescription}"
 Name: "{group}\{#MyAppName} CLI";                         Filename: "{app}\bin\vsepr-cli.exe";   WorkingDir: "{app}"; Comment: "VSIM command-line interface"
-Name: "{group}\{#MyAppName} Desktop";                     Filename: "{app}\bin\vsepr-desktop.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM Qt desktop / 3D viewer"
-Name: "{group}\{#MyAppName} Launcher";                    Filename: "{app}\bin\vsepr-launcher.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM .vsim / .X file launcher"
+Name: "{group}\{#MyAppName} Live Viewer";                 Filename: "{app}\bin\vsepr-view.exe"; WorkingDir: "{app}"; Comment: "VSEPR-SIM fixed-timestep molecular viewer"
 Name: "{group}\{cm:UninstallProgram,{#MyAppName}}";       Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}";                       Filename: "{app}\bin\{#MyAppExeName}"; WorkingDir: "{app}"; Tasks: desktopicon; Comment: "{#MyAppDescription}"
 

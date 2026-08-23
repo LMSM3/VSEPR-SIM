@@ -1,5 +1,5 @@
-// =============================================================================
-// tests/test_wo_03b.cpp   WO-VSIM-03B — Kill Explicit Object Authoring (Group 36)
+﻿// =============================================================================
+// tests/test_wo_03b.cpp   WO-VSIM-03B  -  Kill Explicit Object Authoring (Group 36)
 // =============================================================================
 // L0A  Level 0: [project] + [material] formula + [run] mode round-trips
 // L0B  Level 0: structure alias "rocksalt" resolves to prototype "B1_NaCl"
@@ -232,7 +232,7 @@ static void L4B() {
 // ALIAS  resolve_structure_alias covers documented entries
 // ---------------------------------------------------------------------------
 static void ALIAS() {
-	// ── ionic / salts ─────────────────────────────────────────────────────
+	// -- ionic / salts -----------------------------------------------------
 	assert(vsim::resolve_structure_alias("rocksalt")         == "B1_NaCl");
 	assert(vsim::resolve_structure_alias("halite")           == "B1_NaCl");
 	assert(vsim::resolve_structure_alias("nacl")             == "B1_NaCl");
@@ -246,7 +246,7 @@ static void ALIAS() {
 	assert(vsim::resolve_structure_alias("rutile")           == "C4_TiO2");
 	assert(vsim::resolve_structure_alias("perovskite")       == "ABO3_perovskite");
 	assert(vsim::resolve_structure_alias("spinel")           == "AB2O4_spinel");
-	// ── elemental metals ──────────────────────────────────────────────────
+	// -- elemental metals --------------------------------------------------
 	assert(vsim::resolve_structure_alias("simple_cubic")     == "A_cP1");
 	assert(vsim::resolve_structure_alias("sc")               == "A_cP1");
 	assert(vsim::resolve_structure_alias("bcc")              == "A2_bcc");
@@ -261,10 +261,10 @@ static void ALIAS() {
 	assert(vsim::resolve_structure_alias("germanium")        == "A4_diamond");
 	assert(vsim::resolve_structure_alias("graphite")         == "A9_graphite");
 	assert(vsim::resolve_structure_alias("graphene")         == "A9_graphene_2D");
-	// ── covalent / semiconductor ──────────────────────────────────────────
+	// -- covalent / semiconductor ------------------------------------------
 	assert(vsim::resolve_structure_alias("zinc_sulfide")     == "B3_ZnS");
 	assert(vsim::resolve_structure_alias("cadmium_sulfide")  == "B4_CdS");
-	// ── oxides / ceramics ─────────────────────────────────────────────────
+	// -- oxides / ceramics -------------------------------------------------
 	assert(vsim::resolve_structure_alias("alpha_alumina")    == "D5_Al2O3_corundum");
 	assert(vsim::resolve_structure_alias("corundum")         == "D5_Al2O3_corundum");
 	assert(vsim::resolve_structure_alias("magnesia")         == "B1_MgO");
@@ -272,7 +272,7 @@ static void ALIAS() {
 	assert(vsim::resolve_structure_alias("zirconia")         == "C1_ZrO2_fluorite_like");
 	assert(vsim::resolve_structure_alias("uraninite")        == "C1_UO2_fluorite");
 	assert(vsim::resolve_structure_alias("thoria")           == "C1_ThO2_fluorite");
-	// ── molecular geometry ────────────────────────────────────────────────
+	// -- molecular geometry ------------------------------------------------
 	assert(vsim::resolve_structure_alias("linear")           == "geom_linear");
 	assert(vsim::resolve_structure_alias("bent")             == "geom_bent");
 	assert(vsim::resolve_structure_alias("trigonal_planar")  == "geom_trigonal_planar");
@@ -282,20 +282,20 @@ static void ALIAS() {
 	assert(vsim::resolve_structure_alias("square_planar")    == "geom_square_planar");
 	assert(vsim::resolve_structure_alias("see_saw")          == "geom_seesaw");
 	assert(vsim::resolve_structure_alias("t_shaped")         == "geom_t_shaped");
-	// ── polymers / organics ───────────────────────────────────────────────
+	// -- polymers / organics -----------------------------------------------
 	assert(vsim::resolve_structure_alias("linear_chain")     == "polymer_linear_chain");
 	assert(vsim::resolve_structure_alias("branched_chain")   == "polymer_branched");
 	assert(vsim::resolve_structure_alias("aromatic_ring")    == "organic_aromatic_ring");
 	assert(vsim::resolve_structure_alias("benzene_ring")     == "organic_benzene");
 	assert(vsim::resolve_structure_alias("alkane_chain")     == "organic_alkane_chain");
 	assert(vsim::resolve_structure_alias("cycloalkane")      == "organic_cycloalkane");
-	// ── porous / framework ────────────────────────────────────────────────
+	// -- porous / framework ------------------------------------------------
 	assert(vsim::resolve_structure_alias("zeolite")          == "framework_zeolite");
 	assert(vsim::resolve_structure_alias("mof")              == "framework_mof");
 	assert(vsim::resolve_structure_alias("cof")              == "framework_cof");
 	assert(vsim::resolve_structure_alias("pba")              == "framework_prussian_blue_analog");
 	assert(vsim::resolve_structure_alias("prussian_blue")    == "framework_prussian_blue");
-	// ── bead / premacro ───────────────────────────────────────────────────
+	// -- bead / premacro ---------------------------------------------------
 	assert(vsim::resolve_structure_alias("bead_chain")       == "bead_linear_chain");
 	assert(vsim::resolve_structure_alias("bead_cluster")     == "bead_cluster_random");
 	assert(vsim::resolve_structure_alias("powder_bed")       == "premacro_powder_bed");
@@ -303,7 +303,7 @@ static void ALIAS() {
 	assert(vsim::resolve_structure_alias("granular_column")  == "premacro_granular_column");
 	assert(vsim::resolve_structure_alias("fiber_bundle")     == "premacro_fiber_bundle");
 	assert(vsim::resolve_structure_alias("pipe_flow")        == "premacro_pipe_flow");
-	// ── pass-through ──────────────────────────────────────────────────────
+	// -- pass-through ------------------------------------------------------
 	assert(vsim::resolve_structure_alias("unknown_xyz")      == "unknown_xyz");
 	printf("ALIAS OK\n");
 }

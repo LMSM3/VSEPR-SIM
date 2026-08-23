@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * code_trail.hpp  —  Code Trail Wind v0.1
+ * code_trail.hpp   -   Code Trail Wind v0.1
  * ========================================
  * VSEPR-SIM 3.0.1
  *
@@ -10,7 +10,7 @@
  *   - step index        (monotonic, 0-based)
  *   - operation label   (e.g. "add", "multiply", "sqrt", "dot_product")
  *   - left operand      (or single input for unary ops)
- *   - right operand     (unused for unary ops — NaN-flagged)
+ *   - right operand     (unused for unary ops  -  NaN-flagged)
  *   - result            (output of this operation)
  *   - accumulator       (running total / chain value, caller-managed)
  *   - formula_notation  (human-readable symbolic expression for this step)
@@ -24,7 +24,7 @@
  * -----------------
  * Anti-black-box: every mapping decision must be inspectable and traceable.
  * The trail is append-only during a calculation, then flushed to CSV.
- * No hidden state.  The CSV is self-describing — column headers included.
+ * No hidden state.  The CSV is self-describing  -  column headers included.
  *
  * Usage (basic)
  * -------------
@@ -45,9 +45,9 @@
  *
  * Versioning
  * ----------
- *   v0.1  —  CSV output, operation trail, formula_notation as plain text
- *   v0.2  —  LaTeX formula block export (planned)
- *   v0.3  —  Paper-printable formula sheet with solution steps (planned)
+ *   v0.1   -   CSV output, operation trail, formula_notation as plain text
+ *   v0.2   -   LaTeX formula block export (planned)
+ *   v0.3   -   Paper-printable formula sheet with solution steps (planned)
  */
 
 #include <string>
@@ -78,7 +78,7 @@ enum class OpKind : uint8_t {
     UNARY    = 1,   // one operand   -> result
     ASSIGN   = 2,   // named value assignment (no arithmetic)
     COMPARE  = 3,   // comparison producing a boolean (stored as 1.0/0.0)
-    CUSTOM   = 4    // caller-defined — formula_notation carries full meaning
+    CUSTOM   = 4    // caller-defined  -  formula_notation carries full meaning
 };
 
 inline const char* op_kind_str(OpKind k) {
@@ -93,7 +93,7 @@ inline const char* op_kind_str(OpKind k) {
 }
 
 // ============================================================================
-// TrailEntry  —  one recorded operation step
+// TrailEntry   -   one recorded operation step
 // ============================================================================
 
 struct TrailEntry {
@@ -113,7 +113,7 @@ struct TrailEntry {
 };
 
 // ============================================================================
-// TrailStats  —  aggregate summary emitted at end of CSV
+// TrailStats   -   aggregate summary emitted at end of CSV
 // ============================================================================
 
 struct TrailStats {
@@ -128,7 +128,7 @@ struct TrailStats {
 };
 
 // ============================================================================
-// CodeTrail  —  append-only recorder for a single calculation
+// CodeTrail   -   append-only recorder for a single calculation
 // ============================================================================
 
 class CodeTrail {
@@ -137,7 +137,7 @@ public:
     explicit CodeTrail(const std::string& name = "unnamed_trail")
         : name_(name), step_counter_(0) {}
 
-    // ── Recording API ──────────────────────────────────────────────────────
+    // -- Recording API ------------------------------------------------------
 
     // Record a binary operation:  result = lhs  <op>  rhs
     void record_binary(
@@ -237,7 +237,7 @@ public:
         entries_.push_back(std::move(e));
     }
 
-    // Record a fully custom step — formula_notation carries all semantics
+    // Record a fully custom step  -  formula_notation carries all semantics
     void record_custom(
         const std::string& op_label,
         double result,
@@ -260,12 +260,12 @@ public:
         entries_.push_back(std::move(e));
     }
 
-    // ── Scope tagging (used by TrailScope) ─────────────────────────────────
+    // -- Scope tagging (used by TrailScope) ---------------------------------
 
     void push_tag(const std::string& tag) { active_tag_ = tag; }
     void pop_tag()                         { active_tag_.clear(); }
 
-    // ── Read access ────────────────────────────────────────────────────────
+    // -- Read access --------------------------------------------------------
 
     const std::vector<TrailEntry>& entries() const { return entries_; }
     const std::string& name()                const { return name_; }
@@ -274,7 +274,7 @@ public:
     // Compute aggregate stats from current entries
     TrailStats stats() const;
 
-    // ── Output ─────────────────────────────────────────────────────────────
+    // -- Output -------------------------------------------------------------
 
     // Flush all entries to a CSV file.
     // Returns true on success.
@@ -304,7 +304,7 @@ private:
 };
 
 // ============================================================================
-// TrailScope  —  RAII scope that pushes/pops a source_tag on a CodeTrail
+// TrailScope   -   RAII scope that pushes/pops a source_tag on a CodeTrail
 // ============================================================================
 
 class TrailScope {
@@ -323,7 +323,7 @@ private:
 };
 
 // ============================================================================
-// TrailWriter  —  convenience wrapper for streaming CSV writes
+// TrailWriter   -   convenience wrapper for streaming CSV writes
 //                 without holding all entries in memory
 // ============================================================================
 

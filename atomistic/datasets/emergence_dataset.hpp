@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * emergence_dataset.hpp — Emergence Dataset #1:
+ * emergence_dataset.hpp  -  Emergence Dataset #1:
  *     Anisotropy, Isomer Stability, and Fall Transitions
  * ====================================================================
  *
@@ -101,7 +101,7 @@ inline const char* system_class_name(SystemClass c) {
 }
 
 // ============================================================================
-// Perturbation Driver — what caused the transition
+// Perturbation Driver  -  what caused the transition
 // ============================================================================
 
 enum class DriverType : uint8_t {
@@ -132,7 +132,7 @@ inline const char* driver_type_name(DriverType d) {
 }
 
 /**
- * PerturbationDriver — full description of the driving force.
+ * PerturbationDriver  -  full description of the driving force.
  */
 struct PerturbationDriver {
     DriverType type{DriverType::Thermal};
@@ -166,7 +166,7 @@ inline const char* anisotropy_type_name(AnisotropyType a) {
 }
 
 /**
- * AnisotropyDescriptor — quantified directional property variation.
+ * AnisotropyDescriptor  -  quantified directional property variation.
  *
  * Anisotropy is NOT a vibe. It is:
  *
@@ -323,7 +323,7 @@ inline AnisotropyDescriptor compute_geometric_anisotropy(
 }
 
 // ============================================================================
-// Fall Mode — categorical label for the transition type
+// Fall Mode  -  categorical label for the transition type
 // ============================================================================
 
 enum class FallMode : uint8_t {
@@ -368,7 +368,7 @@ inline const char* fall_mode_name(FallMode m) {
 // ============================================================================
 
 /**
- * FallSeverityWeights — configurable weights for the severity score.
+ * FallSeverityWeights  -  configurable weights for the severity score.
  *
  *   S_f = w1 * RMSD/RMSD_max + w2 * |ΔE|/|ΔE|_max + w3 * τ_persist/τ_max
  *
@@ -399,7 +399,7 @@ inline double compute_fall_severity(
 // ============================================================================
 
 /**
- * FallDetectionConfig — strict event definition thresholds.
+ * FallDetectionConfig  -  strict event definition thresholds.
  *
  * A sample gets tagged as an isomer-fall event if ANY of:
  *   1. ΔE_barrier < E_perturb
@@ -415,11 +415,11 @@ struct FallDetectionConfig {
 };
 
 // ============================================================================
-// State Label — discrete structural state identifier
+// State Label  -  discrete structural state identifier
 // ============================================================================
 
 /**
- * StateLabel — identifies the isomer/conformer/structural state.
+ * StateLabel  -  identifies the isomer/conformer/structural state.
  *
  * The label is the q_state in the fall detection criterion:
  *   q_state(t + Δt) ≠ q_state(t)  =>  isomer fall
@@ -438,11 +438,11 @@ struct StateLabel {
 };
 
 // ============================================================================
-// Emergence Sample — one row in the dataset
+// Emergence Sample  -  one row in the dataset
 // ============================================================================
 
 /**
- * EmergenceSample — the fundamental record in ED1.
+ * EmergenceSample  -  the fundamental record in ED1.
  *
  * Minimal schema:
  *   X_i = (id, system_class, composition, state_0, state_1,
@@ -523,11 +523,11 @@ struct EmergenceSample {
 };
 
 // ============================================================================
-// Emergence Dataset — the full collection
+// Emergence Dataset  -  the full collection
 // ============================================================================
 
 /**
- * EmergenceDataset — container for ED1 samples with query/filter/export.
+ * EmergenceDataset  -  container for ED1 samples with query/filter/export.
  */
 struct EmergenceDataset {
     std::string name{"Emergence Dataset #1: Anisotropy and Isomer-Fall Transitions"};
@@ -695,7 +695,7 @@ private:
 };
 
 // ============================================================================
-// Benchmark Exemplars — controlled reference samples
+// Benchmark Exemplars  -  controlled reference samples
 // ============================================================================
 
 /**
@@ -709,7 +709,7 @@ inline EmergenceDataset build_benchmark_exemplars()
     EmergenceDataset ds;
     ds.name = "ED1 Benchmark Exemplars";
 
-    // --- Example 1: Butane (anti → gauche, torsion fall) ---
+    // --- Example 1: Butane (anti -> gauche, torsion fall) ---
     {
         EmergenceSample s;
         s.family       = DatasetFamily::ED1A_Molecular;
@@ -751,7 +751,7 @@ inline EmergenceDataset build_benchmark_exemplars()
         ds.add(std::move(s));
     }
 
-    // --- Example 2: Cyclohexane (chair → boat, conformer fall) ---
+    // --- Example 2: Cyclohexane (chair -> boat, conformer fall) ---
     {
         EmergenceSample s;
         s.family       = DatasetFamily::ED1A_Molecular;

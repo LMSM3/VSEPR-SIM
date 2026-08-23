@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * conformer_finder.hpp - Comprehensive Isomer and Conformer Discovery
  * 
@@ -15,7 +15,7 @@
  * - Early rejection of illegal/redundant variants
  * 
  * Design principles:
- * - Deterministic: same (formula + seed + flags) → same minima
+ * - Deterministic: same (formula + seed + flags) -> same minima
  * - Stable output: sorted by energy, reproducible ordering
  * - Chemically aware: coordination rules, ring protection
  * - Multi-level deduplication: signature + geometry + energy
@@ -522,7 +522,7 @@ inline std::vector<Molecule> ConformerFinder::generate_isomer_structures(
     }
     
     if (metal_idx == UINT32_MAX) {
-        // Not a coordination complex → no geometric isomers
+        // Not a coordination complex -> no geometric isomers
         isomers.push_back(mol);
         return isomers;
     }
@@ -667,7 +667,7 @@ inline std::vector<MolecularVariant> ConformerFinder::find_all_variants(
         std::cout << "  Rotatable bonds: " << rotatable.size() << "\n";
         
         if (!settings_.enumerate_conformers || rotatable.empty()) {
-            // No conformational freedom → just optimize base structure
+            // No conformational freedom -> just optimize base structure
             Molecule mol = isomer_base;
             
             // Optimize
@@ -754,7 +754,7 @@ inline std::vector<MolecularVariant> ConformerFinder::find_conformers(
     auto rotatable = find_rotatable_bonds(base_molecule);
     
     if (rotatable.empty()) {
-        // No rotatable bonds → return optimized base structure
+        // No rotatable bonds -> return optimized base structure
         Molecule mol = base_molecule;
         FIREOptimizer optimizer(settings_.opt_settings);
         auto result = optimizer.minimize(mol.coords, energy_model);

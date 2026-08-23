@@ -1,0 +1,133 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=0.85in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=black,citecolor=black,urlcolor=blue]{hyperref}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+\setlist{nosep,leftmargin=1.2em}
+
+\titleformat{\section}{\large\bfseries}{}{0em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+\titlespacing{\section}{0pt}{10pt}{4pt}
+\titlespacing{\subsection}{0pt}{8pt}{2pt}
+
+\title{%
+  \large\bfseries VSIM Script Audit Batch\\
+  \normalsize\mdseries VSEPR-SIM v5.0.0-main \quad|\quad Workspace Audit}
+\author{}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+  \begin{minipage}{0.88\linewidth}
+	\small
+	\textbf{Abstract.}
+	Five representative \texttt{.vsim} scripts were examined to assess their
+	suitability as easy-to-launch, game-style entry points. The audit covers
+	script structure, naming consistency, separation of demo from test content,
+	and concrete usability recommendations for the interactive launcher.
+  \end{minipage}
+\end{center}
+\vspace{0.4em}\hrule\vspace{0.5em}
+
+\section*{Scripts Audited}
+
+\begin{center}
+\begin{tabular}{@{}p{7.6cm}l@{}}
+\toprule
+\textbf{Script} & \textbf{Role} \\
+\midrule
+\texttt{scripts/demo\textunderscore simple\textunderscore h2o.vsim}
+  & Minimal single-molecule demo \\
+\texttt{scripts/demos/argon\textunderscore gas.vsim}
+  & Gas-phase benchmark and analysis \\
+\texttt{scripts/demos/crystal\textunderscore defect.vsim}
+  & FCC Al mono-vacancy showcase \\
+\texttt{scripts/beta7\textunderscore pipeline\textunderscore smoke.vsim}
+  & Pipeline smoke / gate regression test \\
+\texttt{scripts/demo\textunderscore 06\textunderscore batch\textunderscore sweep.vsim}
+  & Declarative batch parameter sweep \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section*{Findings}
+
+\begin{itemize}
+  \item Demo scripts are already usable as launcher entry points,
+		especially the water and argon examples.
+  \item The batch and smoke-test scripts are structurally strong but
+		read as engineering assets rather than end-user content.
+  \item Several scripts mix field naming conventions (e.g.\ \texttt{temperature}
+		vs.\ \texttt{temperature\_K}) across sections.
+  \item A small curated play-list of 3--5 scripts with plain-language labels
+		would improve the user experience more than adding new scripts.
+\end{itemize}
+
+\section*{Per-Script Notes}
+
+\subsection*{\texttt{demo\_simple\_h2o.vsim} --- Water Molecule Relax}
+Strong starter script: compact, readable, and a natural default launch target.
+Suggested improvement: surface it as \emph{Launch Water Demo} in the UI rather
+than showing the raw file path.
+
+\subsection*{\texttt{argon\_gas.vsim} --- Ar$_{64}$ NVT Benchmark}
+Well-documented benchmark with explicit output and analysis sections.
+Consistently naming temperature fields (\texttt{temperature\_K} everywhere)
+would make the script easier to read.
+
+\subsection*{\texttt{crystal\_defect.vsim} --- FCC Al Vacancy}
+Clear experimental intent and a good showcase of the defect analysis pathway.
+The header comment describes a FIRE~$+$ NVT two-phase run, but the \texttt{[run]}
+block specifies only the MD phase. The comment should be updated to match.
+
+\subsection*{\texttt{beta7\_pipeline\_smoke.vsim} --- Gate Regression Test}
+Excellent as a release gate and CI smoke test.
+This script belongs in \texttt{scripts/audits/} or a dedicated \texttt{tests/}
+folder, not the demo launcher list.
+
+\subsection*{\texttt{demo\_06\_batch\_sweep.vsim} --- NaCl Parameter Sweep}
+Useful advanced example of declarative batch scripting.
+The dual-\texttt{analyze} / \texttt{measure} entries are easy to misread;
+a compact grouped syntax would help. Not suitable as a first-run target.
+
+\section*{Usability Recommendations}
+
+\begin{enumerate}
+  \item Add a curated \emph{Play} panel in the UI launcher listing 3--5 scripts
+		with plain-language names.
+  \item Use friendly display labels (e.g.\ \emph{Water Molecule Demo},
+		\emph{Argon Gas Benchmark}) rather than raw file paths.
+  \item Separate demo content from audit and smoke-test content at the
+		directory level.
+  \item Keep the most common scripts one click from startup; avoid nesting
+		entry-point scripts more than one folder deep.
+  \item Align field naming conventions across scripts; prefer \texttt{temperature\_K}
+		for absolute temperature wherever it appears.
+\end{enumerate}
+
+\section*{Conclusion}
+
+The audited scripts are technically solid and cover a useful range of
+simulation scenarios. The primary product gap is not more scripts but a
+polished, game-like launcher that surfaces the best existing scripts
+prominently, with human-readable titles and one-click access.
+
+\vspace{0.5em}\hrule\vspace{0.3em}
+{\footnotesize
+  Repository: \texttt{VSEPR-SIM} branch \texttt{v5.0.0-main} \quad|
+  Scripts audited: 5 \quad|
+  Compile: \texttt{pdflatex docs/VSIM\_SCRIPT\_AUDIT\_BATCH.tex}
+}
+
+\end{document}

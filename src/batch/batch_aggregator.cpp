@@ -1,12 +1,15 @@
-/**
+﻿/**
  * src/batch/batch_aggregator.cpp
  * ================================
- * WO-VSIM-62C — Static-Axis Post-Run Aggregation Implementation
+ * WO-VSIM-62C  -  Static-Axis Post-Run Aggregation Implementation
+ * WO-OUTPUT-P2-D  -  Demo artifact hook
  *
  * WO-VSIM-62C | beta-12
  */
 
 #include "include/batch/batch_aggregator.hpp"
+#include "include/vsim/io/demo_frame_sampler.hpp"
+#include "include/vsim/io/demo_bundle_writer.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -18,7 +21,7 @@
 namespace vsim {
 namespace batch {
 
-// ── stat helpers ──────────────────────────────────────────────────────────────
+// -- stat helpers --------------------------------------------------------------
 
 static double stat_mean(const std::vector<double>& v) {
 	if (v.empty()) return 0.0;
@@ -58,7 +61,7 @@ static std::map<std::string, double> compute_stats(
 	return out;
 }
 
-// ── group key ────────────────────────────────────────────────────────────────
+// -- group key ----------------------------------------------------------------
 
 static std::map<std::string, std::string> make_group_key(
 	const BatchRunRecord&            rec,
@@ -72,7 +75,7 @@ static std::map<std::string, std::string> make_group_key(
 	return key;
 }
 
-// ── aggregate_runs ────────────────────────────────────────────────────────────
+// -- aggregate_runs ------------------------------------------------------------
 
 BatchAggregateResult aggregate_runs(
 	const std::vector<BatchRunRecord>&  records,
@@ -115,7 +118,7 @@ BatchAggregateResult aggregate_runs(
 	return result;
 }
 
-// ── write_batch_summary ───────────────────────────────────────────────────────
+// -- write_batch_summary -------------------------------------------------------
 
 void write_batch_summary(const std::vector<BatchRunRecord>& records,
 						  const std::string&                  path)
@@ -155,7 +158,7 @@ void write_batch_summary(const std::vector<BatchRunRecord>& records,
 	}
 }
 
-// ── write_ranked_candidates ───────────────────────────────────────────────────
+// -- write_ranked_candidates ---------------------------------------------------
 
 void write_ranked_candidates(const std::vector<BatchRunRecord>& records,
 							  const std::string&                  rank_by,
@@ -190,7 +193,7 @@ void write_ranked_candidates(const std::vector<BatchRunRecord>& records,
 	}
 }
 
-// ── write_aggregate_tsv ───────────────────────────────────────────────────────
+// -- write_aggregate_tsv -------------------------------------------------------
 
 void write_aggregate_tsv(const BatchAggregateResult& result, const std::string& path)
 {
@@ -219,7 +222,7 @@ void write_aggregate_tsv(const BatchAggregateResult& result, const std::string& 
 	}
 }
 
-// ── write_aggregate_json ──────────────────────────────────────────────────────
+// -- write_aggregate_json ------------------------------------------------------
 
 void write_aggregate_json(const BatchAggregateResult& result, const std::string& path)
 {
@@ -256,6 +259,82 @@ void write_aggregate_json(const BatchAggregateResult& result, const std::string&
 		f << "\n";
 	}
 	f << "  ]\n}\n";
+}
+
+// -- run_demo_artifacts --------------------------------------------------------
+
+DemoArtifactResult run_demo_artifacts(
+	const std::vector<BatchRunRecord>& records,
+	const ExportDemoSection&           cfg,
+	const std::string&                 out_dir)
+{
+	DemoArtifactResult result;
+	if (!cfg.enabled || records.empty()) return result;
+
+	// Ensure output directory exists
+	std::ofstream test_dir(out_dir + "/.demo_probe", std::ios::trunc);
+	bool dir_ok = test_dir.is_open();
+	test_dir.close();
+	if (!dir_ok) {
+		// Try creating via a dummy write; if it fails, still attempt per entry
+	}
+	if (dir_ok) {
+		std::remove((out_dir + "/.demo_probe").c_str());
+	}
+
+	for (const auto& rec : records) {
+		DemoArtifactEntry entry;
+		entry.case_id = rec.run_id.empty() ? rec.case_name : rec.run_id;
+
+		auto dynx_it = rec.axis_values.find("dynx_path");
+		if (dynx_it == rec.axis_values.end() || dynx_it->second.empty()) {
+			entry.error = "no dynx_path in record";
+			result.entries.push_back(std::move(entry));
+			++result.fail_count;
+			continue;
+		}
+
+		const std::string& dynx_path = dynx_it->second;
+		std::string vsim_path;
+		auto vsim_it = rec.axis_values.find("vsim_path");
+		if (vsim_it != rec.axis_values.end()) vsim_path = vsim_it->second;
+
+		std::string demo_dynx = out_dir + "/" + entry.case_id + ".demo.dynx";
+		std::string demo_bundle;
+		if (!cfg.bundle_name.empty())
+			demo_bundle = out_dir + "/" + cfg.bundle_name;
+		else
+			demo_bundle = out_dir + "/" + entry.case_id + ".demo.X";
+
+		entry.bundle_path = demo_bundle;
+
+		// Sample frames
+		auto sr = io::DemoFrameSampler::sample(dynx_path, demo_dynx, cfg);
+		if (!sr.ok) {
+			entry.error = sr.error;
+			result.entries.push_back(std::move(entry));
+			++result.fail_count;
+			continue;
+		}
+
+		// Assemble bundle
+		if (cfg.write_demo_bundle) {
+			auto br = io::DemoBundleWriter::write(
+				demo_dynx, vsim_path, demo_bundle, sr, cfg, entry.case_id);
+			if (!br.ok) {
+				entry.error = br.error;
+				result.entries.push_back(std::move(entry));
+				++result.fail_count;
+				continue;
+			}
+		}
+
+		entry.ok = true;
+		++result.ok_count;
+		result.entries.push_back(std::move(entry));
+	}
+
+	return result;
 }
 
 } // namespace batch

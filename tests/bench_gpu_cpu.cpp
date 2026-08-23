@@ -1,5 +1,5 @@
-/**
- * bench_gpu_cpu.cpp — GPU vs CPU Nonbonded Energy Benchmark
+﻿/**
+ * bench_gpu_cpu.cpp  -  GPU vs CPU Nonbonded Energy Benchmark
  *
  * Generates random atom clouds of increasing size and measures wall-clock
  * time for nonbonded energy evaluation on both GPU and CPU backends.
@@ -210,12 +210,12 @@ int main(int argc, char** argv) {
     }
 
     if (cfg.human) {
-        std::fprintf(stderr, "╔════════════════════════════════════════════════════════╗\n");
-        std::fprintf(stderr, "║  VSEPR-SIM GPU vs CPU Benchmark v3.0.0                ║\n");
-        std::fprintf(stderr, "╚════════════════════════════════════════════════════════╝\n");
+        std::fprintf(stderr, "+========================================================+\n");
+        std::fprintf(stderr, "|  VSEPR-SIM GPU vs CPU Benchmark v3.0.0                |\n");
+        std::fprintf(stderr, "+========================================================+\n");
         std::fprintf(stderr, "  GPU Backend:  %s\n", backend_name.c_str());
         std::fprintf(stderr, "  Device:       %s\n", backend.get_device_name().c_str());
-        std::fprintf(stderr, "  Atom range:   %d — %d  (%d steps)\n",
+        std::fprintf(stderr, "  Atom range:   %d  -  %d  (%d steps)\n",
                      cfg.min_atoms, cfg.max_atoms, cfg.steps);
         std::fprintf(stderr, "  Repeats:      %d\n", cfg.repeats);
         std::fprintf(stderr, "  Seed:         %u\n\n", cfg.seed);

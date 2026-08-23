@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "../core/state.hpp"
 #include "engine.hpp"
 #include <vector>
@@ -22,14 +22,14 @@ namespace reaction {
  * Example (SN2):
  *   bonds_broken: [(C-X)]
  *   bonds_formed: [(Nu-C)]
- *   charge_shifts: [Nu: 0→+1, X: 0→-1]
- *   electron_flow: Nu→C, C-X→X
+ *   charge_shifts: [Nu: 0->+1, X: 0->-1]
+ *   electron_flow: Nu->C, C-X->X
  */
 struct ElectronFlowSignature {
     std::vector<std::pair<uint32_t, uint32_t>> bonds_broken;  // Atom indices
     std::vector<std::pair<uint32_t, uint32_t>> bonds_formed;
     
-    std::map<uint32_t, int> formal_charge_before;  // Atom index → charge
+    std::map<uint32_t, int> formal_charge_before;  // Atom index -> charge
     std::map<uint32_t, int> formal_charge_after;
     
     std::map<uint32_t, int> coordination_before;   // Coordination number
@@ -50,7 +50,7 @@ struct ElectronFlowSignature {
  * 
  * Example:
  *   name: "nucleophilic_displacement"
- *   pattern: Nu⁻ + R-X → R-Nu + X⁻
+ *   pattern: Nu⁻ + R-X -> R-Nu + X⁻
  *   signature: { bonds_broken: [(R-X)], bonds_formed: [(Nu-R)] }
  *   conditions: { f⁺(Nu) > 0.3, f⁻(X) > 0.3, angle(Nu-R-X) > 150° }
  */
@@ -112,7 +112,7 @@ struct CausalFactor {
 };
 
 /**
- * Causal graph edge: factor → outcome
+ * Causal graph edge: factor -> outcome
  */
 struct CausalEdge {
     std::string from_factor;
@@ -127,8 +127,8 @@ struct CausalEdge {
  * Counterfactual experiment: perturb conditions and observe
  * 
  * Example:
- *   original: CH3Br + OH⁻ → CH3OH + Br⁻ (success)
- *   perturbation: "increase_steric_bulk" → (CH3)3C-Br + OH⁻
+ *   original: CH3Br + OH⁻ -> CH3OH + Br⁻ (success)
+ *   perturbation: "increase_steric_bulk" -> (CH3)3C-Br + OH⁻
  *   outcome: fails (E2 instead)
  *   conclusion: "backside_access" is necessary condition
  */
@@ -231,8 +231,8 @@ public:
      * Build causal graph from reaction database
      * 
      * Uses causal inference to distinguish:
-     *   - "Leaving group f⁻ is high" → correlation
-     *   - "Good leaving group causes success" → causation
+     *   - "Leaving group f⁻ is high" -> correlation
+     *   - "Good leaving group causes success" -> causation
      * 
      * Methods:
      *   - Counterfactual testing (perturb and observe)
@@ -250,12 +250,12 @@ public:
      * Generate counterfactual experiments
      * 
      * For successful reaction, create variants:
-     *   - Perturb leaving group (Br → Cl → I)
-     *   - Change nucleophile strength (OH⁻ → H₂O)
-     *   - Modify steric bulk (CH₃ → (CH₃)₃C)
+     *   - Perturb leaving group (Br -> Cl -> I)
+     *   - Change nucleophile strength (OH⁻ -> H₂O)
+     *   - Modify steric bulk (CH₃ -> (CH₃)₃C)
      *   - Vary solvent polarity proxy
      * 
-     * Observe which perturbations kill the reaction → necessary conditions
+     * Observe which perturbations kill the reaction -> necessary conditions
      * 
      * @param reaction Successful reaction to perturb
      * @return List of counterfactual experiments
@@ -316,9 +316,9 @@ public:
      * Compute expected information gain
      * 
      * How much would we learn from exploring this reaction?
-     *   - High uncertainty → reduces entropy
-     *   - Novel mechanism → fills knowledge gap
-     *   - Causal ambiguity → disambiguates factors
+     *   - High uncertainty -> reduces entropy
+     *   - Novel mechanism -> fills knowledge gap
+     *   - Causal ambiguity -> disambiguates factors
      * 
      * Use for active learning: prioritize high-gain proposals.
      * 
@@ -420,7 +420,7 @@ private:
     std::vector<bool> success_flags_;
     
     // Signature database for diversity
-    std::map<uint64_t, uint64_t> signature_counts_;  // hash → count
+    std::map<uint64_t, uint64_t> signature_counts_;  // hash -> count
     
     // Helper: compute formal charges from partial charges
     std::map<uint32_t, int> infer_formal_charges(const State& s);

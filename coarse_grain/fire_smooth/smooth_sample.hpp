@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * smooth_sample.hpp — FIRE Smooth-Sampling Infrastructure
+ * smooth_sample.hpp  -  FIRE Smooth-Sampling Infrastructure
  *
  * A SampleDescriptor identifies one random draw in the smooth-sampling
  * experiment. Each draw selects an arrangement and parameter perturbation
@@ -51,7 +51,7 @@ using namespace coarse_grain::chemistry;
 // ============================================================================
 
 /**
- * SmoothPerturbParams — controls the width of Gaussian perturbations
+ * SmoothPerturbParams  -  controls the width of Gaussian perturbations
  * applied to arrangement parameters at each random draw.
  *
  * Setting a width to 0 disables that perturbation channel.
@@ -64,11 +64,11 @@ struct SmoothPerturbParams {
 };
 
 // ============================================================================
-// SampleDescriptor — one random draw
+// SampleDescriptor  -  one random draw
 // ============================================================================
 
 /**
- * SampleDescriptor — fully-specified random draw.
+ * SampleDescriptor  -  fully-specified random draw.
  *
  * Everything needed to reproduce a single smooth-sampling simulation
  * exactly from master_seed + sample_index.
@@ -94,7 +94,7 @@ struct SampleDescriptor {
     double temperature_base{};
     double dt_base{};
 
-    // Drawn (perturbed) parameters — the actual values used
+    // Drawn (perturbed) parameters  -  the actual values used
     double tau_drawn{};
     double gamma_steric_drawn{};
     double gamma_elec_drawn{};
@@ -116,11 +116,11 @@ struct SampleDescriptor {
 };
 
 // ============================================================================
-// SmoothSampleRecord — result of one FIRE relaxation
+// SmoothSampleRecord  -  result of one FIRE relaxation
 // ============================================================================
 
 /**
- * SmoothSampleRecord — full output of one smooth-sampling simulation.
+ * SmoothSampleRecord  -  full output of one smooth-sampling simulation.
  *
  * Contains:
  *   - The sample descriptor (input parameters + perturbations)
@@ -157,7 +157,7 @@ struct StepTrace {
 struct SmoothSampleRecord {
     SampleDescriptor descriptor;
 
-    // FIRE trace — one row per integration step
+    // FIRE trace  -  one row per integration step
     std::vector<StepTrace> trace;
 
     // Convergence outcome
@@ -167,7 +167,7 @@ struct SmoothSampleRecord {
     double   final_rms_force{};
     double   final_avg_eta{};
 
-    // Level 3 aggregation — macro-DM precursor payload
+    // Level 3 aggregation  -  macro-DM precursor payload
     std::vector<level3::Level3HandoffRecord> l3_domains;
 
     // Elapsed wall time
@@ -194,18 +194,18 @@ inline std::string fmt_hash(uint64_t h)
 }
 
 // ============================================================================
-// draw_sample — produce a SampleDescriptor from RNG
+// draw_sample  -  produce a SampleDescriptor from RNG
 // ============================================================================
 
 /**
- * draw_sample — draw one SampleDescriptor from a seeded RNG.
+ * draw_sample  -  draw one SampleDescriptor from a seeded RNG.
  *
  * Applies Gaussian perturbations to the base arrangement parameters.
  * All draws are recorded for full reproducibility audit.
  *
  * @param idx         Global sample index
  * @param master_seed Master seed
- * @param arr_id      Arrangement ID (0–49)
+ * @param arr_id      Arrangement ID (0-49)
  * @param arr         ArrangementDescriptor (base parameters)
  * @param perturb     Perturbation widths
  * @param rng         Seeded RNG (mt19937_64)

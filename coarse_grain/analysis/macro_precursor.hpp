@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * macro_precursor.hpp — Macro Property Precursor Channels
+ * macro_precursor.hpp  -  Macro Property Precursor Channels
  *
  * Converts ensemble-level macroscopic response proxies into property
  * precursor bundles: intermediate latent descriptors that are later
@@ -9,13 +9,13 @@
  *
  * Architecture position:
  *   Environment-state evaluation
- *       ↓
+ *       v
  *   Ensemble statistics / spatial field summaries
- *       ↓
+ *       v
  *   Macroscopic response proxies     (ensemble_proxy.hpp)
- *       ↓
- *   Macro precursor channels          ← this module
- *       ↓
+ *       v
+ *   Macro precursor channels          <- this module
+ *       v
  *   Later calibrated property estimator
  *
  * What this module does NOT claim:
@@ -29,7 +29,7 @@
  *       cohesion_integrity_like, thermal_transport_like,
  *       electrical_transport_like, surface_reactivity_like,
  *       fracture_susceptibility_like
- *   - Explicit weighted formulas — no hidden weights, no learned parameters
+ *   - Explicit weighted formulas  -  no hidden weights, no learned parameters
  *   - Per-channel confidence and validity flags
  *   - Intermediate penalty/helper terms with full provenance
  *   - An anisotropy index and interface penalty
@@ -49,7 +49,7 @@
 namespace coarse_grain {
 
 // ============================================================================
-// Model Parameters — documented, inspectable
+// Model Parameters  -  documented, inspectable
 // ============================================================================
 
 /**
@@ -67,7 +67,7 @@ constexpr double PRECURSOR_XI_REF = 20.0;
 constexpr double PRECURSOR_MIN_CONFIDENCE = 0.1;
 
 // ============================================================================
-// Weight Constants — explicit, traceable, not buried in formulas
+// Weight Constants  -  explicit, traceable, not buried in formulas
 // ============================================================================
 
 // Rigidity-like weights
@@ -138,7 +138,7 @@ namespace weights {
 // ============================================================================
 
 /**
- * MacroPrecursorChannel — one property precursor.
+ * MacroPrecursorChannel  -  one property precursor.
  *
  * value:      the precursor estimate in [0, 1].
  * confidence: how trustworthy this channel is given input quality.
@@ -153,13 +153,13 @@ struct MacroPrecursorChannel {
 };
 
 /**
- * MacroPrecursorState — full precursor output.
+ * MacroPrecursorState  -  full precursor output.
  *
  * Eight property precursor channels plus global diagnostics.
  * All channel values are in [0, 1] when valid.
  *
  * Naming convention: -like suffixes indicate these are NOT real
- * engineering properties. They are evidence variables — monotone
+ * engineering properties. They are evidence variables  -  monotone
  * functions of ensemble proxies that will later be calibrated
  * against experiment or higher-fidelity simulation.
  */
@@ -181,7 +181,7 @@ struct MacroPrecursorState {
     double interface_penalty      = std::numeric_limits<double>::quiet_NaN();
     double convergence_confidence = 0.0;
 
-    // Intermediate terms — exposed for traceability
+    // Intermediate terms  -  exposed for traceability
     double xi_norm          = 0.0;   // normalised correlation length
     double adapt_capacity   = 0.0;   // adaptation/relaxation signal
     double texture_lock     = 0.0;   // orientational rigidity measure
@@ -193,7 +193,7 @@ struct MacroPrecursorState {
 };
 
 // ============================================================================
-// Helper Computations — all exposed, all inspectable
+// Helper Computations  -  all exposed, all inspectable
 // ============================================================================
 
 /**
@@ -264,7 +264,7 @@ inline double compute_adapt_capacity(const EnsembleProxySummary& s)
 }
 
 /**
- * Compute texture lock — how much orientational order resists deformation.
+ * Compute texture lock  -  how much orientational order resists deformation.
  *
  * High texture proxy + low variance = orientationally locked structure.
  * This inhibits ductile deformation modes.
@@ -284,7 +284,7 @@ inline double compute_texture_lock(const EnsembleProxySummary& s)
  * Currently isotropic-only (single ξ). Architecture placeholder for
  * directional splitting (ξ_x, ξ_y, ξ_z) when available.
  *
- * For now: high texture + any measurable correlation → anisotropic.
+ * For now: high texture + any measurable correlation -> anisotropic.
  * Range [0, 1]: 0 = isotropic, 1 = strongly anisotropic.
  */
 inline double compute_anisotropy_index(const EnsembleProxySummary& s,

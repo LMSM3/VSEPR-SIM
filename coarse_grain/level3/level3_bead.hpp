@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * level3_bead.hpp — Level 3 Coarse-Grained Bead
+ * level3_bead.hpp  -  Level 3 Coarse-Grained Bead
  *
  * A Level 3 Bead is a spatial domain aggregate of converged Level 2 beads.
  * It is the coarsest resolution tier in the VSEPR-SIM multiscale hierarchy
@@ -9,13 +9,13 @@
  * Scale hierarchy:
  *
  *   Atomistic (Å)          full atom positions, bonds
- *        ↓ map_reaction_to_beads()
- *   Level 1 Bead           per-atom-group (~1–5 atoms, CG mapped)
- *        ↓ SeedBeadStepper (6+9 FIRE)
+ *        v map_reaction_to_beads()
+ *   Level 1 Bead           per-atom-group (~1-5 atoms, CG mapped)
+ *        v SeedBeadStepper (6+9 FIRE)
  *   Level 2 Bead           converged, environment-responsive (η, ρ, C, P₂)
- *        ↓ aggregate_to_l3()
- *   Level 3 Bead           domain aggregate, macro-DM ready    ← this file
- *        ↓ MacroPrecursorState
+ *        v aggregate_to_l3()
+ *   Level 3 Bead           domain aggregate, macro-DM ready    <- this file
+ *        v MacroPrecursorState
  *   Macro-DM               continuum / FEA / transport model input
  *
  * Domain formation:
@@ -57,7 +57,7 @@ constexpr int L3_MIN_MEMBERS = 4;
 // ============================================================================
 
 /**
- * Level3Bead — one domain in the L3 representation.
+ * Level3Bead  -  one domain in the L3 representation.
  *
  * Aggregates structural, thermodynamic, and QM information from a
  * cluster of converged Level 2 beads. Carries the full payload needed

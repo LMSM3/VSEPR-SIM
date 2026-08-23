@@ -1,0 +1,107 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# VSEPR-SIM Day #75 — WO-75A
+# CH4 Flat Supported Baseline. Current parser compatible.
+# Ground truth for all modular Day 75 variants.
+
+[project]
+name        = "day75_ch4_flat_supported"
+version     = "v5.1.13.5-day75-wo75a"
+seed_base   = 101
+determinism = true
+
+[variables]
+formation_parent_molecule = "CH4"
+reaction_mode             = false
+formation_preset          = "molecular"
+temperature_K             = 0.0
+
+[material]
+formula   = "CH4"
+structure = "molecular"
+phase     = "gas"
+
+[run]
+mode         = "relax"
+max_steps    = 800
+converge     = true
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 0.0
+medium      = "vacuum"
+
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+
+[[simulation.molecule]]
+formula     = "CH4"
+count       = 1
+temperature = 0.0
+
+[observe]
+metrics = ["energy_map", "coordination", "bond_lengths", "bond_angles", "spectral_response"]
+output_format = "json"
+every_n_steps = 50
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+[verify]
+enabled             = true
+profile             = "day75_ikk1_flat_test"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "CH4_molecular"
+expected_coordination        = 4
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.09
+nearest_neighbor_tolerance_A = 0.06
+expected_bond_angle_deg      = 109.47
+bond_angle_tolerance_deg     = 5.0
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+write_verify_report       = true
+output_dir                = "out/day75/ch4_flat"
+
+[report]
+title                   = "Day 75 CH4 Flat Supported Baseline"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 25
+show_convergence_trace = true
+show_symbolic_trace    = true
+overlay_sequence       = energy_map,coordination,bond_lengths,spectral_response
+

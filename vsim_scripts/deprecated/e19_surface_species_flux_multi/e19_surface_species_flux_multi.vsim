@@ -1,0 +1,105 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e19_surface_species_flux_multi.vsim
+# =============================================================================
+# E19  --  Species Flux with Per-Species Output Tags
+#
+# Purpose: Shows how to deploy one surface per species across the same
+#          geometric plane to separately record Na+, Cl-, and Ar fluxes
+#          in a mixed ionic/noble-gas simulation.
+#
+# Key concepts:
+#   compute_species_flux = true  ->  per-species crossing table in sidecar.
+#   Three [[object.surface]] blocks share the same plane geometry but carry
+#   different species_filter and output_tag values.
+#   Results combine into a single .surface.json with three keyed subtables.
+# =============================================================================
+
+[project]
+name        = "e19_surface_species_flux_multi"
+version     = "v5.0.14"
+seed_base   = 1900
+determinism = true
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+cell      = "4x4x8"
+phase     = "solid"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 128
+temperature = 400.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 5000
+dt_fs     = 1.5
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e19"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e19/surfaces"
+
+[[object.surface]]
+name                 = "probe_Na"
+geometry             = "rectangle"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 0.0
+normal_x             = 0.0
+normal_y             = 0.0
+normal_z             = 1.0
+width                = 20.0
+height               = 20.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Na"]
+output_tag           = "J_Na"
+
+[[object.surface]]
+name                 = "probe_Cl"
+geometry             = "rectangle"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 0.0
+normal_x             = 0.0
+normal_y             = 0.0
+normal_z             = 1.0
+width                = 20.0
+height               = 20.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Cl"]
+output_tag           = "J_Cl"
+
+[[object.surface]]
+name                 = "probe_Ar"
+geometry             = "rectangle"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 0.0
+normal_x             = 0.0
+normal_y             = 0.0
+normal_z             = 1.0
+width                = 20.0
+height               = 20.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Ar"]
+output_tag           = "J_Ar"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 250
+

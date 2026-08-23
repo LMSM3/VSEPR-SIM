@@ -1,4 +1,4 @@
-// molecule_builder.cpp
+﻿// molecule_builder.cpp
 // Builds molecules (focusing on [Co(NH3)4Cl2]+ cis/trans isomers)
 // Optimizes with FIRE, outputs comprehensive JSON for CI testing
 //
@@ -17,7 +17,7 @@
 #include <cstring>
 #include "core/math_vec3.hpp"
 
-// Day #56: Vec3 unified — alias to vsepr::Vec3.
+// Day #56: Vec3 unified  -  alias to vsepr::Vec3.
 using Vec3 = vsepr::Vec3;
 
 struct Atom {

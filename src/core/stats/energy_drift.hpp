@@ -1,14 +1,14 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/core/stats/energy_drift.hpp
 // =============================================================================
 // Tracks total-energy drift over the course of a simulation run.
 //
 // Metrics:
-//   E_0               — baseline energy at first push (or explicit set_baseline)
-//   E_total(t)        — current total energy
-//   delta_E(t)        — E_total(t) - E_0
-//   relative_drift(t) — delta_E(t) / |E_0|   (dimensionless)
+//   E_0                -  baseline energy at first push (or explicit set_baseline)
+//   E_total(t)         -  current total energy
+//   delta_E(t)         -  E_total(t) - E_0
+//   relative_drift(t)  -  delta_E(t) / |E_0|   (dimensionless)
 //
 // Why this matters:
 //   If relative_drift grows without bound, the integrator, timestep, force
@@ -28,7 +28,7 @@ namespace vsepr {
 struct EnergyDriftTracker {
 
 	// -------------------------------------------------------------------------
-	// State (all public — inspectable at any time)
+	// State (all public  -  inspectable at any time)
 	// -------------------------------------------------------------------------
 
 	double   E_0          = std::numeric_limits<double>::quiet_NaN();

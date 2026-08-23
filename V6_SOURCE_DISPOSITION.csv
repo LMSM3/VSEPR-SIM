@@ -1,0 +1,21 @@
+﻿subsystem,paths,files,role,public_interfaces,runtime_dependencies,disposition,priority,notes
+core,src/core;include/core,59,Element data, linear algebra, status, identity, statistics,ElementDatabase;PeriodicTable;ElementIndexTracker;Status,,RETAIN,P0,Required for all element-aware simulation and inspection
+atomistic,atomistic;include/atomistic,113,Molecular state, VSEPR classification, geometry, FIRE minimization,atomistic::State;atomistic::classify;atomistic::fire,core;pot,ADAPT,P0,Kernel reused; classification moves to live-state observers
+coarse_grain,coarse_grain;include/coarse_grain,83,Bead reduced representation, CG interaction engine, mapping,Bead;BeadSystem;MappingScheme,core;atomistic,ADAPT,P1,Retain bead reduction; retire CG-as-owner visualization loops
+chem,chem;include/chem,16,Chemistry utilities: peptide, reaction, dissolution,peptide_formation;reaction_bridge,atomistic;core,RETAIN,P2,Useful after initial DFAE proof
+sim,src/sim;include/sim;sim,42,Builders, runners, and orchestration helpers,vsepr_sim library,atomistic;core;coarse_grain,REBUILD,P0,Separate builders from runtime authority
+vsim_runtime,src/vsim;include/vsim,110,VSIM parser, document model, scripting runtime, registry,VsimDocument;VsimRuntime;VsimParser,pipeline;kernel;core,ADAPT,P0,Keep declarative parser and runtime bridge; runtime becomes authoritative
+cli,src/cli;include/cli;apps/vsepr.cpp,75,Command router and headless commands,vsepr inspect;vsepr run;vsepr validate;cmd_*,vsepr_cli library,RETAIN,P0,Primary control surface for V6
+io,src/io;include/io,11,XYZ, xyzFull, trajectory, and molecular I/O,xyz_format;molecular_io,core,RETAIN,P0,Scientific truth export; update to emit state deltas
+pipeline,include/pipeline,6,Formation->fingerprint->cluster->analysis->report->dashboard,run_pipeline;stage_*,v4::FormationRecord,ADAPT,P1,Keep pure transforms; feed from live FormationEvent stream
+thermal,src/thermal;include/thermal,6,Thermodynamics property inference stubs,thermal_properties,core,ADAPT,P2,Retain useful inference; avoid hidden fallbacks
+ml,src/ml;include/ml,2,Material property route recommender/trend stubs,RouteRecommender;PropertyTrend,core,RETYPE,P3,Rebuild on live-state features rather than ad-hoc scoring
+cache,src/cache;include/vsim/cache,9,Material preset and formation lookup caches,MaterialPresetCache;FormationLUT,core;io,ADAPT,P2,Useful for validated element/precomputed data cache
+ufx_auto2,src/ufx_auto2;include/ufx_auto2,33,UFF/web material generation and validation,ufx_*,v4/uff,QUARANTINE,P3,Large external-dependency surface; review before migration
+vis,src/vis;include/vis,58,VTK/Qt3D and supported viewer abstractions,supported_viewer;viewer_launcher,VTK;Qt6,QUARANTINE,P2,Render-only consumer; must not own simulation loop
+render,src/render,2,Legacy render helpers,,,REMOVE,PX,No remaining consumers
+gui,src/gui,7,ImGui/Qt GUI fragments,,,REMOVE,PX,Retired with standalone viewer authority
+tests,tests,265,Unit, regression, and acceptance tests,,all,ADAPT,P0,Keep physics tests; remove orchestration-dependent shells
+apps,apps,75,Standalone demo and batch executables,,libraries,ADAPT,P1,Reduce to dfae + canonical CLI tools
+data,data,50,Periodic table JSON and validated element data,PeriodicTableJSON.json,,RETAIN,P0,Source of truth for element registry migration
+scripts,scripts,250,Declarative VSIM examples and demo scripts,,vsim_runtime,RETAIN,P1,Keep declarative examples; remove orchestration debris

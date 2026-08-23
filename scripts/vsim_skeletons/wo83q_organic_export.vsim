@@ -1,0 +1,30 @@
+# scripts/vsim_skeletons/wo83q_organic_export.vsim
+# Tier A — native replacement for demo_wo83q_organic_export.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# Verifies OrganicCandidate output contains all required export fields.
+#
+# Python equivalent:
+#   for field in ("primary_family:", "sp3_count:", "strain_score:",
+#                 "lipid_like_score:", "decomp_risk:"):
+#       assert field in out
+
+[project]
+name    = wo83q_organic_export
+version = v5.0.0
+
+[material]
+formula = C6H12O
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.expect]
+# contains = "primary_family:"
+# contains = "sp3_count:"
+# contains = "strain_score:"
+# contains = "lipid_like_score:"
+# contains = "decomp_risk:"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────

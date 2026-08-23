@@ -1,0 +1,138 @@
+{
+  "schema": "vsepr.bridge65.validation.v1",
+  "version": "5.1.13",
+  "cases": [
+    {
+      "name": "bench_bridge65_argon_lj",
+      "description": "Two Ar atoms at LJ equilibrium separation (~3.76 Å). Net force on each should be ~0 eV/Å.",
+      "atoms": [
+        {
+          "Z": 18,
+          "symbol": "Ar",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "Z": 18,
+          "symbol": "Ar",
+          "x": 3.76,
+          "y": 0.0,
+          "z": 0.0
+        }
+      ],
+      "expected_force_magnitude_eV_A": [
+        0.0,
+        0.0
+      ],
+      "force_tolerance_eV_A": 0.05,
+      "notes": "LJ equilibrium: sigma=3.40 Å, eps=0.0104 eV (Ar)"
+    },
+    {
+      "name": "bench_bridge65_water_bonding",
+      "description": "Single H2O: O at origin, two H at 0.958 Å bond length. Bond events must be detected.",
+      "atoms": [
+        {
+          "Z": 8,
+          "symbol": "O",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "Z": 1,
+          "symbol": "H",
+          "x": 0.757,
+          "y": 0.586,
+          "z": 0.0
+        },
+        {
+          "Z": 1,
+          "symbol": "H",
+          "x": -0.757,
+          "y": 0.586,
+          "z": 0.0
+        }
+      ],
+      "expected_bond_events": [
+        "bond_created"
+      ],
+      "bond_cutoff_A": 1.2,
+      "notes": "OH equilibrium bond = 0.958 Å, angle = 104.5°"
+    },
+    {
+      "name": "bench_bridge65_nacl_collision",
+      "description": "Na+ and Cl- at 2.36 Å (NaCl ionic bond). Ionic force agreement check.",
+      "atoms": [
+        {
+          "Z": 11,
+          "symbol": "Na",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "Z": 17,
+          "symbol": "Cl",
+          "x": 2.36,
+          "y": 0.0,
+          "z": 0.0
+        }
+      ],
+      "charge": [
+        -1,
+        1
+      ],
+      "notes": "NaCl d_eq = 2.36 Å; Coulomb + LJ expected."
+    },
+    {
+      "name": "bench_bridge65_fe_lattice",
+      "description": "2×2×2 BCC Fe seed (8 atoms) at a=2.87 Å. Material sampling seed — collision and force logging.",
+      "lattice": "BCC",
+      "a_A": 2.87,
+      "n_cells": [
+        2,
+        2,
+        2
+      ],
+      "species": "Fe",
+      "notes": "BCC Fe a=2.87 Å. Used as material seed for bridge65."
+    },
+    {
+      "name": "bench_bridge65_high_rate_collision_box",
+      "description": "Dense Ar gas at 2000 K in 10×10×10 Å box. Stress test for event limiter and sampler.",
+      "box_A": [
+        10.0,
+        10.0,
+        10.0
+      ],
+      "temperature_K": 2000.0,
+      "species": "Ar",
+      "n_atoms": 50,
+      "notes": "High collision rate expected. Limiter must activate."
+    },
+    {
+      "name": "bench_bridge65_bond_breaking_stress",
+      "description": "H2 molecule stretched from 0.74 Å to 2.5 Å. bond_broken event must be detected near 1.65× r_eq.",
+      "atoms": [
+        {
+          "Z": 1,
+          "symbol": "H",
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        {
+          "Z": 1,
+          "symbol": "H",
+          "x": 0.74,
+          "y": 0.0,
+          "z": 0.0
+        }
+      ],
+      "stretch_to_A": 2.5,
+      "bond_break_distance_scale": 1.65,
+      "notes": "H2 r_eq=0.74 Å. Break expected at ~1.22 Å."
+    }
+  ]
+}

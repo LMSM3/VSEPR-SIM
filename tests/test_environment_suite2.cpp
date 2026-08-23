@@ -1,5 +1,5 @@
-/**
- * test_environment_suite2.cpp — Suite #2: Environment-Responsive Pipeline Tests
+﻿/**
+ * test_environment_suite2.cpp  -  Suite #2: Environment-Responsive Pipeline Tests
  *
  * Extends Suite #1 (test_environment_responsive.cpp) with:
  *

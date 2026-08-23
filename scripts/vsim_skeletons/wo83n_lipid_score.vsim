@@ -1,0 +1,55 @@
+# scripts/vsim_skeletons/wo83n_lipid_score.vsim
+# Tier A — native replacement for demo_wo83n_lipid_like_score.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+# STUB: [classify.compare] cross-formula numeric ordering not in VSIM language yet.
+#
+# The Python script extracts lipid_like_score via regex and asserts ordering:
+#   score(C16H34) > score(CH4)
+#   score(C2N4O4) <= score(C16H34)
+#
+# A native VSIM equivalent would need a [classify.compare] section to express
+# cross-formula ordering assertions — not yet designed.
+# Individual threshold checks ARE expressible once [classify.expect] is wired.
+
+[project]
+name    = wo83n_lipid_score_c16h34
+version = v5.0.0
+
+[material]
+formula = C16H34
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.expect]
+# contains         = "lipid_like_score:"
+# score_range      = {field = "lipid_like_score", min = 0.5, max = 1.0}
+#                   # C16H34 is a long-chain alkane; should score high
+# result           = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83n_lipid_score_ch4
+version = v5.0.0
+
+[material]
+formula = CH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+# [classify.expect]
+# contains    = "lipid_like_score:"
+# score_range = {field = "lipid_like_score", min = 0.0, max = 0.5}
+#              # CH4 is a single-carbon molecule; should score low
+# result      = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+# NOTE: cross-formula ordering assertion (score_A > score_B) has no VSIM
+# language equivalent yet.  The [classify.compare] section is a WO-84A+
+# design item.  The Python harness is the only way to express this today.

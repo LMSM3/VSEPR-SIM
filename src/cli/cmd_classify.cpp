@@ -18,8 +18,14 @@
 
 #include "atomistic/classify/vsepr.hpp"
 #include "atomistic/classify/organic_candidate.hpp"
+#include "atomistic/classify/bond_order_provider.hpp"
+#include "atomistic/classify/script_enrichment.hpp"
 #include "atomistic/core/state.hpp"
+#include "atomistic/export/vsepr_export.hpp"
+#include "atomistic/export/organic_candidate_export.hpp"
+#include "atomistic/export/markdown_report.hpp"
 #include "vsim/chemplus_declarative.hpp"
+#include "vsim/console_render.hpp"
 #include "vsim/vsim_document.hpp"
 
 #include <algorithm>
@@ -107,6 +113,13 @@ static std::map<std::string, std::string> read_flat_keys(const std::filesystem::
 	}
 	return m;
 }
+
+// ============================================================================
+// Console-print collector  (WO-85A / WO-84 Preflight)
+// The scan + render logic now lives in the shared vsim::console_render helper
+// (include/vsim/console_render.hpp) so classify, validate, run, and future
+// commands all narrate identically without duplicated formatting logic.
+// ============================================================================
 
 // ============================================================================
 // Build a minimal atomistic::State from a formula string
@@ -212,7 +225,9 @@ static atomistic::State build_state_from_formula(const std::string& formula) {
 // run_classify_preview
 // ============================================================================
 
-int run_classify_preview(const std::filesystem::path& vsim_path) {
+int run_classify_preview(const std::filesystem::path& vsim_path,
+                         const std::filesystem::path& report_md_path,
+                         const std::filesystem::path& report_json_path) {
 	g_color = static_cast<bool>(IS_TTY);
 
 	if (!std::filesystem::exists(vsim_path)) {
@@ -241,6 +256,12 @@ int run_classify_preview(const std::filesystem::path& vsim_path) {
 			  << COL_DIM() << "  formula:" << formula << COL_RESET() << "\n\n";
 
 	// -----------------------------------------------------------------------
+	// Console prints  (WO-85A / WO-84 Preflight)  -  script-encoded narration
+	// -----------------------------------------------------------------------
+	const auto console_lines = vsim::collect_console_prints_lightweight(vsim_path);
+	vsim::render_console_block(console_lines, std::cout, g_color);
+
+	// -----------------------------------------------------------------------
 	// Build minimal state
 	// -----------------------------------------------------------------------
 	atomistic::State state = build_state_from_formula(formula);
@@ -249,11 +270,27 @@ int run_classify_preview(const std::filesystem::path& vsim_path) {
 		return 1;
 	}
 
+	const auto expansion = atomistic::classify::expand_scientific_state(state);
+
+	std::cout << COL_CYAN() << "  [Script Expansion]" << COL_RESET() << "\n";
+	for (const auto& property : expansion.inferred) {
+		std::cout << "  " << atomistic::classify::to_string(property.key) << ": "
+				  << property.value << "  [" << property.provider << ", "
+				  << atomistic::classify::to_string(property.provenance)
+				  << ", confidence=" << property.confidence << "]\n";
+	}
+	for (const auto& unresolved : expansion.unresolved) {
+		std::cout << COL_YELLOW() << "  unresolved: "
+				  << atomistic::classify::to_string(unresolved.key) << COL_RESET() << "\n";
+	}
+	std::cout << "  execution status: "
+			  << atomistic::classify::to_string(expansion.status) << "\n\n";
+
 	// -----------------------------------------------------------------------
 	// VSEPR
 	// -----------------------------------------------------------------------
 	std::cout << COL_CYAN() << "  [VSEPR]" << COL_RESET() << "\n";
-	const auto vreport = atomistic::classify::classify_vsepr_sites(state);
+	const auto& vreport = expansion.vsepr;
 	const std::string vtext = atomistic::classify::format_vsepr_report(vreport);
 	// indent each line
 	std::istringstream vss(vtext);
@@ -265,13 +302,20 @@ int run_classify_preview(const std::filesystem::path& vsim_path) {
 			std::cout << "  " << vline << "\n";
 		}
 	}
+	// WO-84A: report lone-pair provenance (provider vs deterministic fallback)
+	std::cout << COL_DIM() << "  lone_pair_source: "
+			  << (vreport.provider_lone_pair_available ? "provider" : "fallback")
+			  << "  (provider_sites=" << vreport.provider_lone_pair_sites
+			  << ", fallback_sites=" << vreport.fallback_lone_pair_sites << ")"
+			  << COL_RESET() << "\n";
 
 	// -----------------------------------------------------------------------
-	// OrganicCandidate
+	// OrganicCandidate  (WO-84E: also capture bond-order table for export)
 	// -----------------------------------------------------------------------
 	std::cout << "\n" << COL_CYAN() << "  [OrganicCandidate]" << COL_RESET() << "\n";
-	atomistic::classify::OrganicClassifier oc;
-	const auto cand = oc.classify(state);
+	const auto& cand = expansion.organic;
+	const atomistic::classify::BondOrderTable bond_orders =
+		atomistic::classify::BondOrderProviderBuilder::infer(state);
 	const std::string otext = atomistic::classify::format_organic_candidate(cand);
 	std::istringstream oss(otext);
 	std::string oline;
@@ -315,6 +359,48 @@ int run_classify_preview(const std::filesystem::path& vsim_path) {
 						std::cout << "  vsepr=" << r.vsepr_tag;
 					std::cout << COL_RESET() << "\n";
 				}
+			}
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// WO-84E: JSON-lite + Markdown report export (optional)
+	// -----------------------------------------------------------------------
+	if (!report_json_path.empty() || !report_md_path.empty()) {
+		const atomistic::classify::SceneHints hints =
+			atomistic::classify::derive_scene_hints(state, cand);
+
+		if (!report_json_path.empty()) {
+			const std::string vjson = atomistic::classify::vsepr_to_json(vreport);
+			const std::string ojson = atomistic::classify::organic_candidate_to_json(
+				cand, bond_orders, hints);
+			std::ofstream jf(report_json_path);
+			if (jf) {
+				jf << "{\n";
+				jf << "\"vsepr\": " << vjson << ",\n";
+				jf << "\"organic\": " << ojson << "\n";
+				jf << "}\n";
+				std::cout << COL_GREEN() << "  [export] JSON-lite -> "
+						  << report_json_path.string()
+						  << COL_RESET() << "\n";
+			} else {
+				std::cerr << "classify: could not write JSON report: "
+						  << report_json_path << "\n";
+			}
+		}
+
+		if (!report_md_path.empty()) {
+			const std::string md = atomistic::classify::build_markdown_report(
+				formula, vreport, cand, bond_orders, hints);
+			std::ofstream mf(report_md_path);
+			if (mf) {
+				mf << md;
+				std::cout << COL_GREEN() << "  [export] Markdown   -> "
+						  << report_md_path.string()
+						  << COL_RESET() << "\n";
+			} else {
+				std::cerr << "classify: could not write Markdown report: "
+						  << report_md_path << "\n";
 			}
 		}
 	}

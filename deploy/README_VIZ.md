@@ -3,7 +3,7 @@
 ## Architecture
 
 ```
-WSL (AlmaLinux-10, Linux ELF — no Device Guard)
+WSL (any distro, Linux ELF — no Device Guard)
     └── vsepr viz Ar -T 300
           ├── :9999  NDJSON → Atomic View   (15 fps)
           └── :10001 NDJSON → Analysis View  (2 fps)
@@ -24,9 +24,17 @@ nginx (optional)
 ## One-time WSL build
 
 ```powershell
-# From PowerShell (runs once, binary stays at build-linux/vsepr)
-wsl -d AlmaLinux-10 -- bash /mnt/c/R/VSPER-SIM/deploy/build_wsl.sh
+# From PowerShell, run from the repo root (runs once, binary stays at build-linux/vsepr)
+wsl -- bash deploy/build_wsl.sh
+
+# Or target a specific installed distro:
+wsl -d <YourDistroName> -- bash deploy/build_wsl.sh
 ```
+
+This also injects a small themed rc snippet into `~/.bashrc` inside WSL
+(see `deploy/vseprrc`). Open a new WSL shell afterwards and you should see
+a `[vsepr]` prompt prefix and a `[vseprrc] theme ... loaded` banner — that's
+your confirmation the install actually ran.
 
 ---
 
@@ -52,7 +60,7 @@ This opens three windows:
 
 **Terminal 1 — WSL server:**
 ```bash
-wsl -d AlmaLinux-10 -- bash /mnt/c/R/VSPER-SIM/deploy/start_viz_server.sh Ar -T 300 -N 64 --verbose
+wsl -- bash deploy/start_viz_server.sh Ar -T 300 -N 64 --verbose
 ```
 
 **Terminal 2 — Atomic Viewer (Windows):**
@@ -84,8 +92,8 @@ Failed or completed workers auto-restart.
 nginx adds logging and clean port management if you want it.
 
 ```bash
-# Inside WSL
-sudo cp /mnt/c/R/VSPER-SIM/deploy/nginx-viz.conf /etc/nginx/conf.d/viz.conf
+# Inside WSL, from the repo root
+sudo cp deploy/nginx-viz.conf /etc/nginx/conf.d/viz.conf
 sudo nginx -t && sudo systemctl start nginx
 ```
 

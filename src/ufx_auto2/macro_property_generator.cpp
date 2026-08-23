@@ -1,4 +1,4 @@
-// src/ufx_auto2/macro_property_generator.cpp
+﻿// src/ufx_auto2/macro_property_generator.cpp
 // UFX_AUTO_2 Phase 9 -- Mechanics + Transport Macro Bridge Generator
 // VSEPR-SIM v5 beta9
 
@@ -102,7 +102,7 @@ static double tabulated_k0_W_mK(int Z) noexcept {
 }
 
 // ============================================================================
-// Atomic number — routes through empirical::LJ_REFS first (UFF periodic table),
+// Atomic number  -  routes through empirical::LJ_REFS first (UFF periodic table),
 // then a small supplement for elements absent from that table.
 // ============================================================================
 

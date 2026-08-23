@@ -1,15 +1,15 @@
-/**
- * phase3_relaxation.cpp — Phase 3: Relaxation and Minimization
+﻿/**
+ * phase3_relaxation.cpp  -  Phase 3: Relaxation and Minimization
  *
  * Self-testing executable.  Creates distorted molecules through the full
- * end-user pipeline (XYZMolecule → detect_bonds → parsers::from_xyz →
+ * end-user pipeline (XYZMolecule -> detect_bonds -> parsers::from_xyz ->
  * FIRE minimization), verifying that:
  *
  *   3.1  Energy decreases during relaxation
  *   3.2  Forces converge toward zero
  *   3.3  Topology (bonds) is retained
  *   3.4  Geometry settles to a physically reasonable configuration
- *   3.5  Deterministic: identical distortion → identical relaxed state
+ *   3.5  Deterministic: identical distortion -> identical relaxed state
  *   3.6  Bonded-pair exclusions produce sane molecular energies
  */
 
@@ -46,13 +46,13 @@ static vsepr::io::XYZMolecule make_mol_with_bonds(
     for (size_t i = 0; i < elems.size(); ++i)
         mol.atoms.emplace_back(elems[i], coords[i][0], coords[i][1], coords[i][2]);
 
-    // Bond detection — same as XYZReader::detect_bonds in the real pipeline
+    // Bond detection  -  same as XYZReader::detect_bonds in the real pipeline
     vsepr::io::XYZReader reader;
     reader.detect_bonds(mol);
     return mol;
 }
 
-// Full pipeline: parse + prepare state (with bonds → exclusions active)
+// Full pipeline: parse + prepare state (with bonds -> exclusions active)
 static State to_state(const vsepr::io::XYZMolecule& mol)
 {
     State s = parsers::from_xyz(mol);
@@ -74,7 +74,7 @@ static double distance(const Vec3& a, const Vec3& b)
 }
 
 // ============================================================================
-// Reference geometries — slightly distorted for relaxation
+// Reference geometries  -  slightly distorted for relaxation
 // ============================================================================
 
 // Ar cluster: 3 atoms in equilateral triangle, slightly beyond LJ minimum
@@ -120,7 +120,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 3 — Relaxation and Minimization\n");
+    std::printf("  Phase 3  -  Relaxation and Minimization\n");
     std::printf("=============================================================\n\n");
 
     auto model = create_lj_coulomb_model();
@@ -138,7 +138,7 @@ int main()
     // ------------------------------------------------------------------
     std::printf("--- 3.6 Bonded-Pair Exclusion Sanity ---\n");
     {
-        // H2 WITHOUT bonds → huge LJ repulsion
+        // H2 WITHOUT bonds -> huge LJ repulsion
         vsepr::io::XYZMolecule h2_no_bonds;
         h2_no_bonds.atoms.emplace_back("H", 0.0, 0.0, 0.0);
         h2_no_bonds.atoms.emplace_back("H", 0.74, 0.0, 0.0);
@@ -146,7 +146,7 @@ int main()
         State s_no = to_state(h2_no_bonds);
         model->eval(s_no, mp);
 
-        // H2 WITH bonds → bonded pair excluded from LJ
+        // H2 WITH bonds -> bonded pair excluded from LJ
         auto h2_bonds = make_mol_with_bonds({"H","H"}, {{{0,0,0}}, {{0.74,0,0}}});
         State s_yes = to_state(h2_bonds);
         model->eval(s_yes, mp);
@@ -164,7 +164,7 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 3.1–3.4  Relaxation of Ar3 cluster (nonbonded only)
+    // 3.1-3.4  Relaxation of Ar3 cluster (nonbonded only)
     // ------------------------------------------------------------------
     std::printf("\n--- 3.1-3.4 Ar3 Cluster Relaxation ---\n");
     {
@@ -198,11 +198,11 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 3.1–3.4  Relaxation of distorted H2O (with bonds)
+    // 3.1-3.4  Relaxation of distorted H2O (with bonds)
     //
     // NOTE: Only LJ nonbonded terms are active.  O-H pairs are excluded
     // (1-2 bonds) so the only nonbonded force is H-H.  There is no
-    // harmonic bond spring — the BondedModel is not yet composed.
+    // harmonic bond spring  -  the BondedModel is not yet composed.
     // Therefore: energy should decrease, bonds should be retained, but
     // convergence to tight tolerance is not expected.
     // ------------------------------------------------------------------
@@ -231,8 +231,8 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 3.1–3.4  Relaxation of distorted CH4 (with bonds)
-    // Same limitation as H2O — only nonbonded LJ between 1-3+ pairs.
+    // 3.1-3.4  Relaxation of distorted CH4 (with bonds)
+    // Same limitation as H2O  -  only nonbonded LJ between 1-3+ pairs.
     // ------------------------------------------------------------------
     std::printf("\n--- 3.1-3.4 CH4 Relaxation (LJ nonbonded only) ---\n");
     {

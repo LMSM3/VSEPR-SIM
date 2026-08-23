@@ -1,0 +1,37 @@
+{
+  "schema": "vsepr.loop-98.v1",
+  "run_id": "leafos-run-001",
+  "version": "v002",
+  "parent_version": "v001",
+  "status": "variant_planned",
+  "versioning": {
+    "policy": "append_only_new_directory_per_version",
+    "next_version_rule": "clone creates the next unused vNNN sibling directory",
+    "prior_versions_mutable": false
+  },
+  "lifecycle": [
+    "plan",
+    "hypothesize",
+    "code",
+    "kernel_run",
+    "verify",
+    "report",
+    "checkpoint",
+    "clone_variant",
+    "resume_repeat_mutate_log"
+  ],
+  "kernel": {
+    "command": [
+      "python",
+      "-c",
+      "print('LOOP-98 kernel smoke run')"
+    ],
+    "expected_exit_code": 0
+  },
+  "safety": {
+    "auto_apply_mutations": false,
+    "allow_network": false,
+    "allow_delete": false,
+    "skills_directory": "C:\\Users\\liamm\\.agents\\skills"
+  }
+}

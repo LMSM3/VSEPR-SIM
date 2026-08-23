@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas3_state_record.hpp
  * ---------------------
  * GasStateRecord: The Reportable, Sortable, Exportable State Object.
@@ -118,7 +118,7 @@ inline SpeciesClass classify_species(const std::string& formula) {
 }
 
 // ============================================================================
-// GasStateRecord — the core data object
+// GasStateRecord  -  the core data object
 // ============================================================================
 
 struct GasStateRecord {

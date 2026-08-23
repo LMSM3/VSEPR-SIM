@@ -1,0 +1,259 @@
+# =============================================================================
+# IKK III — Matrix Mechanics / Wave Function Bridge
+# VSIM implementation: Si diamond cubic under laser excitation
+#
+# Theory claim (IKK III):
+#   ψ is not primitive wave substance.
+#   ψ is the projected observable form of a persistent identity matrix state.
+#   Matrix mechanics and wave functions describe different representational
+#   layers of the same underlying identity structure.
+#
+# Computational test:
+#   1. Fix identity-matrix initial conditions (determinism = true, seed_base)
+#   2. Perturb with a laser pulse (excite.laser) — this probes the observation
+#      channel, not the identity itself
+#   3. Measure spectral_response and interference — these are O_{S_b}, the
+#      projected observable layer (IKK III §2)
+#   4. dynamic_energy trace in [kernel.trace] tracks the matrix-state evolution
+#      — the layer beneath the wave observable
+#   5. RVE scale sampling checks whether coherent wave-like structure emerges
+#      at the projected observation scale (IKK III §6 matrix-to-wave map)
+#   6. Determinism gate: re-run with same seed → identical spectral output.
+#      If ψ = P(I), same I must always produce same ψ.
+#
+# Traditional system: Si (A4 diamond cubic)
+#   Clean, well-characterised semiconductor. Laser-visible excitation is
+#   physical. RDF peaks are textbook. No charge disorder to contaminate the
+#   projection signal.
+# =============================================================================
+
+[project]
+name        = "ikk3_matrix_wave_bridge_si"
+version     = "v5.0.0-beta.9"
+seed_base   = 2048
+determinism = true   # IKK III §7: deterministic identity → reproducible observable
+
+# ---------------------------------------------------------------------------
+# Material — Si diamond cubic (A4 prototype)
+# IKK III §1: matrix-mechanics motivation requires a system where the
+# identity state is well-defined before excitation. Si at 0 K init is
+# as close as a classical MD allows.
+# ---------------------------------------------------------------------------
+[material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "6x6x6"
+
+[run]
+mode        = "md"
+max_steps   = 3000      # long enough to see pre-pulse equilibration + pulse + decay
+dt_fs       = 0.5
+temperature = 300
+converge    = false     # we want the full time series, not early exit
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 300
+pressure    = 0.0
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+# ---------------------------------------------------------------------------
+# Excitation — laser pulse
+# IKK III §2: the laser is the observation-channel perturbation.
+# It does not change I (identity); it probes the projection layer.
+# spectral_response and interference are the wave-observable outputs O_{S_b}.
+#
+# gaussian profile: finite pulse, not infinite plane wave — consistent with
+# a localised projection event (IKK III §5: measurement as projection-
+# interaction event).
+# ---------------------------------------------------------------------------
+[excite.laser]
+axis           = "z"
+polarization   = "x"
+intensity      = 1.2
+pulse_width_fs = 80.0
+photon_energy_eV = 3.4        # above Si band gap (~1.1 eV indirect, 3.4 eV direct)
+fluence        = 0.05
+profile        = "gaussian"
+
+# ---------------------------------------------------------------------------
+# Observables
+# IKK III §2 — wave function as projection: spectral_response is O_{S_b}
+# IKK III §3 — interference pattern as incomplete projection access
+# energy_map tracks the matrix-state energy surface (closer to I_{S_a})
+# coordination tracks structural identity — does the diamond cubic survive?
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "interference", "spectral_response", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 25
+
+# ---------------------------------------------------------------------------
+# Kernel — identity-state event log
+# IKK III §4: deterministic identity produces probabilistic-looking observables
+# only because of projection. dynamic_energy is the sub-observable layer.
+# We trace it to compare against the spectral_response output.
+# ---------------------------------------------------------------------------
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false   # use [while] for controlled reporting
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true       # IKK III §4: identity matrix energy history
+
+# ---------------------------------------------------------------------------
+# Scale sampling — emergence check
+# IKK III §6: matrix-to-wave map should produce coherent wave-like structure
+# at the observation scale. RVE windows at half-wavelength intervals test
+# whether the excitation produces spatially coherent field structure.
+#
+# Si lattice constant a = 5.43 Å.
+# Windows: 1×a, 2×a, 4×a, 8×a — one full scale ladder across the supercell.
+# If emergence_candidate = true at 10.86 Å but false at 5.43 Å, the
+# coherent wave structure only appears at the projected scale — consistent
+# with IKK III §6 (wave observable is a projection artefact, not point-local).
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                            = true
+compute_field_projection           = true
+compute_rve_sampling               = true
+compute_emergence_metrics          = true
+field_grid                         = [10, 10, 10]
+rve_window_lengths_A               = [5.43, 10.86, 21.72, 43.44]
+rve_windows_per_level              = 8
+rve_window_placement               = "grid"
+min_particles_for_scale_sampling   = 64
+spatial_cv_threshold               = 0.35    # looser: excitation breaks translational symmetry
+temporal_drift_threshold           = 0.20
+scale_drift_threshold              = 0.30
+temporal_drift_metric              = "block_difference"
+scale_drift_metric                 = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 2.8
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 20
+unwrap_pbc            = true
+
+# Rule 61d: scale evidence hard-blocks macro_ready.
+# If wave-like coherence does not emerge at scale, macro_ready = false.
+# That is the correct result — IKK III does not claim the wave is macro-real,
+# only that it is the projected observable form.
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Equilibration gate before pulse
+# Run 500 steps to settle the Si lattice before the laser fires.
+# Checks that the identity-matrix state (dynamic_energy) is stable prior
+# to any projection-layer perturbation.
+# ---------------------------------------------------------------------------
+[while]
+name          = "pre_pulse_equilibrate"
+condition     = "energy_var > 0.005"
+max_iters     = 10
+body_steps    = 500
+measure       = energy_var
+iter_delay_ms = 0
+
+[variance]
+energy_var = "energy.total" "last 100" 0.005
+
+# ---------------------------------------------------------------------------
+# Verification — IKK III §7 limits + EVM III §2 Born-rule recovery gate
+# Si diamond cubic RDF peaks from a = 5.43 Å:
+#   1st shell (nearest neighbour): 2.35 Å  (a√3/4)
+#   2nd shell:                     3.84 Å  (a/√2)
+#   3rd shell:                     4.50 Å  (a√(11)/4)
+#
+# After laser pulse the structure must still be Si diamond cubic.
+# If it is not, the perturbation destroyed the identity state — which means
+# the laser was not probing the observation channel, it was annihilating I.
+# That would falsify the IKK III framing for this run.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "ikk3_si_laser_excite"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "A4_Si"
+expected_coordination        = 4        # tetrahedral, diamond cubic
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.35
+nearest_neighbor_tolerance_A = 0.12
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.35, 3.84, 4.50]
+peak_tolerance_A   = 0.18
+require_peak_order = true
+
+# Solid-state gate: MSD must stay bounded after pulse.
+# Unbounded MSD = laser melted the lattice = identity destroyed, not projected.
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 3.5
+max_slope_late       = 0.002
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export and visual
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_dashboard_svg        = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/ikk3_si"
+
+[report]
+title                   = "ikk3_matrix_wave_bridge_si"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_event_timeline      = true
+show_bar_chart           = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,spectral_response,interference,coordination

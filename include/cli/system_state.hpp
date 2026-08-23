@@ -1,21 +1,21 @@
-#pragma once
+﻿#pragma once
 /**
- * system_state.hpp — Universal Interpretation Layer
+ * system_state.hpp  -  Universal Interpretation Layer
  *
  * The central data hub between CLI and kernel/engine.
  *
  * Architecture position:
- *   CLI → command layer → [SystemState] → kernel/environment engine
+ *   CLI -> command layer -> [SystemState] -> kernel/environment engine
  *
  * Holds both atomistic and coarse-grained state in a single inspectable
  * container. Commands construct/modify the state; kernel functions
- * operate on it. No physics formulas live here — only data routing.
+ * operate on it. No physics formulas live here  -  only data routing.
  *
  * Design rules:
  *   - Anti-black-box: every field is inspectable
- *   - Deterministic: same input → same state
+ *   - Deterministic: same input -> same state
  *   - Modular: atomistic and CG layers are independent
- *   - No rendering, no I/O — pure state
+ *   - No rendering, no I/O  -  pure state
  *
  * Reference: Layer B1 (Structure and System Services)
  */
@@ -24,14 +24,54 @@
 #include "coarse_grain/core/environment_state.hpp"
 #include "coarse_grain/models/interaction_engine.hpp"
 #include "coarse_grain/models/environment_coupling.hpp"
+#include "coarse_grain/physics/qcd_transient.hpp"
 #include "atomistic/core/state.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
 namespace vsepr {
 namespace cli {
+
+// ============================================================================
+// Transient Particle Class Codes (negative assignments)
+// ============================================================================
+
+enum class TransientTypeCode : int32_t {
+    ElectronLike = -1,
+    IonLike      = -2,
+    NeutronLike  = -3,
+    GammaLike    = -4,
+    AlphaLike    = -5,
+    ReservedBase = -6
+};
+
+inline bool is_transient_type_code(int32_t code) {
+    return code < 0;
+}
+
+inline bool is_bead_type_code(int32_t code) {
+    return code > 0;
+}
+
+inline bool transient_is_neutral(int32_t code) {
+    return code == static_cast<int32_t>(TransientTypeCode::NeutronLike)
+        || code == static_cast<int32_t>(TransientTypeCode::GammaLike);
+}
+
+struct TransientParticle {
+    uint32_t id{};
+    int32_t type_code{static_cast<int32_t>(TransientTypeCode::ElectronLike)};
+    atomistic::Vec3 position{};
+    atomistic::Vec3 velocity{};
+    double mass{0.0};
+    double charge{0.0};
+    double energy{0.0};
+    bool active{true};
+};
 
 // ============================================================================
 // Scene Preset Identifiers
@@ -73,11 +113,11 @@ inline ScenePreset parse_scene_preset(const std::string& name) {
 }
 
 // ============================================================================
-// CGSystemState — Coarse-Grained System State
+// CGSystemState  -  Coarse-Grained System State
 // ============================================================================
 
 /**
- * CGSystemState — the interpretation layer for CG workflows.
+ * CGSystemState  -  the interpretation layer for CG workflows.
  *
  * Contains all state needed to drive the CG engine from the CLI.
  * Scene construction, environment update, and interaction evaluation
@@ -102,6 +142,20 @@ struct CGSystemState {
     int step_count{};
     double dt{1.0};  // fs
 
+    // --- Transient optimizer (Day 63-A runtime sidecar) ---
+    bool enable_transient_optimizer{true};
+    int transient_substeps{100};
+    double transient_dt{0.01};  // fs
+    std::vector<TransientParticle> transient_particles;
+    std::vector<double> pending_charge_delta;
+    std::vector<double> pending_mass_delta;
+
+    // --- QCD extreme-environment sidecar (v5.1.3~2, WO-v513-QCD) ---
+    // Runs on T_A|B dual-timescale: K=200 QCD substeps per bead T_B step.
+    // Seeded automatically when the scene has ≥2 beads and enable_qcd is true.
+    bool                     enable_qcd{false};  // opt-in; expensive for large K
+    vsepr::qcd::QuarkGluonPlasma qcd_plasma;
+
     // --- Scene metadata ---
     std::string scene_name;
     ScenePreset preset{ScenePreset::Isolated};
@@ -117,6 +171,10 @@ struct CGSystemState {
         env_states.clear();
         orientations.clear();
         orientation_valid.clear();
+        transient_particles.clear();
+        pending_charge_delta.clear();
+        pending_mass_delta.clear();
+        qcd_plasma.clear();
         step_count = 0;
         scene_name.clear();
     }
@@ -126,6 +184,12 @@ struct CGSystemState {
 
     // --- Environment update for all beads ---
     void update_environment(int n_steps);
+
+    // --- Transient optimizer sidecar update ---
+    void run_transient_optimizer_substeps();
+
+    // --- QCD plasma T_B step (runs K T_A substeps internally) ---
+    void run_qcd_tb_step();
 
     // --- Build neighbour list for a specific bead ---
     std::vector<coarse_grain::NeighbourInfo> build_neighbours(int bead_index) const;
@@ -236,6 +300,84 @@ inline void CGSystemState::build_preset(ScenePreset p, int n_beads,
 
     // Initialise environment states to zero
     env_states.resize(beads.size());
+    pending_charge_delta.assign(beads.size(), 0.0);
+    pending_mass_delta.assign(beads.size(), 0.0);
+
+    // Minimal default transient sidecar population (disabled for isolated)
+    transient_particles.clear();
+    if (!beads.empty() && p != ScenePreset::Isolated) {
+        auto add_transient = [&](int32_t code,
+                                 const atomistic::Vec3& pos,
+                                 const atomistic::Vec3& vel,
+                                 double m, double q) {
+            TransientParticle tp;
+            tp.id = static_cast<uint32_t>(transient_particles.size());
+            tp.type_code = code;
+            tp.position = pos;
+            tp.velocity = vel;
+            tp.mass = m;
+            tp.charge = q;
+            tp.active = true;
+            transient_particles.push_back(tp);
+        };
+
+        const atomistic::Vec3 p0 = beads.front().position;
+        add_transient(static_cast<int32_t>(TransientTypeCode::ElectronLike),
+                      {p0.x + 0.5, p0.y, p0.z}, {0.0, 0.0, 0.0}, 0.00054858, -1.0);
+        add_transient(static_cast<int32_t>(TransientTypeCode::NeutronLike),
+                      {p0.x - 0.7, p0.y, p0.z}, {0.02, 0.0, 0.0}, 1.0, 0.0);
+    }
+}
+
+inline void CGSystemState::run_transient_optimizer_substeps() {
+    if (!enable_transient_optimizer || beads.empty() || transient_particles.empty()) {
+        return;
+    }
+
+    if (pending_charge_delta.size() != beads.size()) pending_charge_delta.assign(beads.size(), 0.0);
+    if (pending_mass_delta.size() != beads.size()) pending_mass_delta.assign(beads.size(), 0.0);
+
+    const int K = std::max(1, transient_substeps);
+    const double dt_sub = std::max(1e-6, transient_dt);
+    const double capture_radius = 0.8; // Å, lightweight default for sidecar coupling
+
+    for (int sub = 0; sub < K; ++sub) {
+        for (auto& tp : transient_particles) {
+            if (!tp.active) continue;
+
+            tp.position.x += tp.velocity.x * dt_sub;
+            tp.position.y += tp.velocity.y * dt_sub;
+            tp.position.z += tp.velocity.z * dt_sub;
+
+            // Neutral transients stay ballistic and event-driven (no EM force term here)
+            // Charged transients may be captured by nearest bead.
+            if (std::abs(tp.charge) > 1e-12) {
+                double best_d2 = std::numeric_limits<double>::max();
+                int best_i = -1;
+                for (int i = 0; i < static_cast<int>(beads.size()); ++i) {
+                    atomistic::Vec3 dr = tp.position - beads[i].position;
+                    double d2 = dr.x * dr.x + dr.y * dr.y + dr.z * dr.z;
+                    if (d2 < best_d2) {
+                        best_d2 = d2;
+                        best_i = i;
+                    }
+                }
+
+                if (best_i >= 0 && best_d2 < capture_radius * capture_radius) {
+                    pending_charge_delta[static_cast<size_t>(best_i)] += tp.charge;
+                    pending_mass_delta[static_cast<size_t>(best_i)] += tp.mass;
+                    tp.active = false;
+                }
+            }
+        }
+    }
+
+    for (size_t i = 0; i < beads.size(); ++i) {
+        beads[i].charge += pending_charge_delta[i];
+        beads[i].mass = std::max(0.0, beads[i].mass + pending_mass_delta[i]);
+        pending_charge_delta[i] = 0.0;
+        pending_mass_delta[i] = 0.0;
+    }
 }
 
 // ============================================================================
@@ -267,6 +409,9 @@ CGSystemState::build_neighbours(int bead_index) const {
 
 inline void CGSystemState::update_environment(int n_steps) {
     for (int step = 0; step < n_steps; ++step) {
+        run_transient_optimizer_substeps();
+        run_qcd_tb_step();
+
         for (int i = 0; i < num_beads(); ++i) {
             auto nbs = build_neighbours(i);
 
@@ -283,6 +428,27 @@ inline void CGSystemState::update_environment(int n_steps) {
         }
         ++step_count;
     }
+}
+
+// ============================================================================
+// QCD Plasma T_B Step
+// ============================================================================
+
+inline void CGSystemState::run_qcd_tb_step() {
+    if (!enable_qcd) return;
+
+    // Auto-seed if plasma is empty and scene has beads
+    if (qcd_plasma.particles.empty() && !beads.empty()) {
+        vsepr::qcd::QCDPopulationConfig cfg;
+        cfg.n_quarks    = std::min(12, 2 * num_beads());
+        cfg.n_gluons    = std::min(8,  num_beads());
+        cfg.box_radius  = 2.5;
+        cfg.v_thermal   = 0.08;
+        cfg.seed        = static_cast<uint32_t>(0x513'0001u + step_count);
+        vsepr::qcd::qcd_seed_plasma(qcd_plasma, cfg);
+    }
+
+    vsepr::qcd::qcd_run_tb_step(qcd_plasma);
 }
 
 }} // namespace vsepr::cli

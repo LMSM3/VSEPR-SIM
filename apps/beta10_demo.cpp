@@ -1,4 +1,4 @@
-/**
+﻿/**
  * apps/beta10_demo.cpp
  * =====================
  * VSEPR-SIM  v5.0.0 beta-10 showcase runner
@@ -6,16 +6,16 @@
  * Runs scripts/demo_09_beta10_showcase.vsim end-to-end, exercising
  * all five finalized scripting features:
  *
- *   1. [visual.external]  — post-run render requests
- *   2. [variance]         — statistical spread probes
- *   3. [N_evolution]      — population growth-rate tracking
- *   4. [while]            — conditional simulation continuation
- *   5. [batch]            — parameter sweep execution
+ *   1. [visual.external]   -  post-run render requests
+ *   2. [variance]          -  statistical spread probes
+ *   3. [N_evolution]       -  population growth-rate tracking
+ *   4. [while]             -  conditional simulation continuation
+ *   5. [batch]             -  parameter sweep execution
  *
  * Plus:
- *   • UX pacing           — artificial step delay + smooth resim
- *   • O(N) display        — complexity profiler for kernel phases
- *   • Auto render layer   — SVG / HTML artifacts via [export.visual]
+ *   • UX pacing            -  artificial step delay + smooth resim
+ *   • O(N) display         -  complexity profiler for kernel phases
+ *   • Auto render layer    -  SVG / HTML artifacts via [export.visual]
  *
  * Usage:
  *   beta10_demo.exe [--headless] [--visual] [--render] [--complexity]
@@ -64,17 +64,17 @@ namespace ansi {
 	constexpr const char* blu  = "\033[34m";
 
 	inline void hdr(const char* t) {
-		std::printf("\n%s%s══════════════════════════════════════════════════%s\n",bold,cyan,rst);
+		std::printf("\n%s%s==================================================%s\n",bold,cyan,rst);
 		std::printf("%s%s  %s%s\n",bold,cyan,t,rst);
-		std::printf("%s%s══════════════════════════════════════════════════%s\n",bold,cyan,rst);
+		std::printf("%s%s==================================================%s\n",bold,cyan,rst);
 	}
 	inline void sec(const char* t) {
-		std::printf("\n%s%s── %s ──%s\n",bold,wht,t,rst);
+		std::printf("\n%s%s-- %s --%s\n",bold,wht,t,rst);
 	}
 }
 
 // ============================================================================
-// Scenario catalog (borrowed from kernel_demo — compact subset of 18)
+// Scenario catalog (borrowed from kernel_demo  -  compact subset of 18)
 // ============================================================================
 
 struct ScenarioEntry {
@@ -99,7 +99,7 @@ static const ScenarioEntry kScenarios[] = {
 static constexpr int N_SCENARIOS = 7;
 
 // ============================================================================
-// emit_scenario — populate event log for a given scenario index + seed
+// emit_scenario  -  populate event log for a given scenario index + seed
 // ============================================================================
 
 static void emit_scenario(KernelEventLog& log, int sid, int seed_offset = 0) {
@@ -214,7 +214,7 @@ int main(int argc, char** argv) {
 			script_path = argv[++i];
 		if (std::strcmp(argv[i], "--help")       == 0) {
 			std::printf(
-				"beta10_demo — VSEPR-SIM v5.0.0 beta-10 showcase\n\n"
+				"beta10_demo  -  VSEPR-SIM v5.0.0 beta-10 showcase\n\n"
 				"Usage: beta10_demo [options]\n\n"
 				"Options:\n"
 				"  --headless      Non-interactive\n"
@@ -235,7 +235,7 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	// ── Parse .vsim script ──────────────────────────────────────────────────
+	// -- Parse .vsim script --------------------------------------------------
 	VsimDocument doc;
 	try {
 		doc = VsimParser::parse_file(script_path);
@@ -283,7 +283,7 @@ int main(int argc, char** argv) {
 		doc.visual.show_audit_table     = true;
 		doc.visual.overlay_sequence     = {"density","coordination","memory","orient_order"};
 
-		std::fprintf(stderr, "  [warn] script not found (%s) — using inline defaults\n",
+		std::fprintf(stderr, "  [warn] script not found (%s)  -  using inline defaults\n",
 			ex.what());
 	}
 
@@ -293,7 +293,7 @@ int main(int argc, char** argv) {
 		doc.simulation.smooth_resim   = false;
 	}
 
-	// ── Header ──────────────────────────────────────────────────────────────
+	// -- Header --------------------------------------------------------------
 	ansi::hdr("VSEPR-SIM  |  beta10_demo  |  v5.0.0-beta.10");
 	std::printf("\n%s  Script : %s%s%s\n",   ansi::dim, ansi::cyan, script_path.c_str(), ansi::rst);
 	std::printf("%s  Project: %s%s%s\n",    ansi::dim, ansi::wht,  doc.project.name.c_str(), ansi::rst);
@@ -310,7 +310,7 @@ int main(int argc, char** argv) {
 	auto& log = KernelEventLog::instance();
 	log.clear();
 
-	// ── Random scenario selection ────────────────────────────────────────────
+	// -- Random scenario selection --------------------------------------------
 	uint64_t seed = static_cast<uint64_t>(
 		std::chrono::steady_clock::now().time_since_epoch().count());
 	std::mt19937_64 rng(seed);
@@ -323,8 +323,8 @@ int main(int argc, char** argv) {
 	std::printf("%s  Formula: %s    Rule: %s%s\n\n",
 		ansi::dim, desc.formula, desc.rule, ansi::rst);
 
-	// ── Phase 1: Initial simulation ──────────────────────────────────────────
-	ansi::sec("Phase 1 — Initial Simulation");
+	// -- Phase 1: Initial simulation ------------------------------------------
+	ansi::sec("Phase 1  -  Initial Simulation");
 
 	// UX pacing: print live convergence bar during "FIRE steps"
 	if (doc.simulation.step_delay_ms > 0) {
@@ -346,16 +346,16 @@ int main(int argc, char** argv) {
 	ansi::sec("Event Trace");
 	for (const auto& e : log.snapshot()) print_event(e);
 
-	// ── Phase 2: Variance evaluation ────────────────────────────────────────
-	ansi::sec("Phase 2 — Variance Probes");
+	// -- Phase 2: Variance evaluation ----------------------------------------
+	ansi::sec("Phase 2  -  Variance Probes");
 	auto var_results = VsimRuntime::eval_variance(doc.variance_cfg, log);
 
-	// ── Phase 3: N_evolution evaluation ─────────────────────────────────────
-	ansi::sec("Phase 3 — N_evolution Probes");
+	// -- Phase 3: N_evolution evaluation -------------------------------------
+	ansi::sec("Phase 3  -  N_evolution Probes");
 	auto nev_results = VsimRuntime::eval_n_evolution(doc.n_evolution_cfg, log);
 
-	// ── Phase 4: While guards ────────────────────────────────────────────────
-	ansi::sec("Phase 4 — While Guards");
+	// -- Phase 4: While guards ------------------------------------------------
+	ansi::sec("Phase 4  -  While Guards");
 
 	// emit_fn: called by while/batch to add more events
 	VsimRuntime::EmitFn emit_fn = [&](int n_steps, int seed_off) -> int {
@@ -368,8 +368,8 @@ int main(int argc, char** argv) {
 
 	VsimRuntime::run_while_guards(doc.while_cfg, doc, log, emit_fn);
 
-	// ── Phase 5: Batch sweep ─────────────────────────────────────────────────
-	ansi::sec("Phase 5 — Batch Sweep");
+	// -- Phase 5: Batch sweep -------------------------------------------------
+	ansi::sec("Phase 5  -  Batch Sweep");
 
 	VsimRuntime::EmitFn batch_emit = [&](int n_steps, int seed_off) -> int {
 		log.clear();
@@ -384,15 +384,15 @@ int main(int argc, char** argv) {
 	log.clear();
 	emit_scenario(log, sid, 99);
 
-	// ── Phase 6: Visual panels ───────────────────────────────────────────────
+	// -- Phase 6: Visual panels -----------------------------------------------
 	if (show_visual) {
-		ansi::sec("Phase 6 — Visual Panels");
+		ansi::sec("Phase 6  -  Visual Panels");
 		VsimVizAdapter::event_panels(doc, log);
 	}
 
-	// ── Phase 7: Auto render layer ───────────────────────────────────────────
+	// -- Phase 7: Auto render layer -------------------------------------------
 	if (show_render || doc.visual_external.any_active()) {
-		ansi::sec("Phase 7 — Auto Render Layer");
+		ansi::sec("Phase 7  -  Auto Render Layer");
 		RenderPayload rp;
 		rp.run_name       = doc.project.name;
 		rp.formula        = desc.formula;
@@ -410,27 +410,27 @@ int main(int argc, char** argv) {
 			VsimRenderLayer::dispatch(doc, rp);
 	}
 
-	// ── Phase 8: O(N) complexity display ────────────────────────────────────
+	// -- Phase 8: O(N) complexity display ------------------------------------
 	if (show_complex) {
-		ansi::sec("Phase 8 — O(N) Kernel Phase Scaling");
-		std::printf("  %sBenchmarking kernel phases …%s\n", ansi::dim, ansi::rst);
+		ansi::sec("Phase 8  -  O(N) Kernel Phase Scaling");
+		std::printf("  %sBenchmarking kernel phases ...%s\n", ansi::dim, ansi::rst);
 		std::vector<size_t> Ns = {10, 50, 100, 500, 1000, 5000};
 		auto profiles = VsimComplexity::benchmark_kernel_phases(Ns);
 		VsimComplexity::display(profiles, Ns);
 	}
 
-	// ── Phase 9: Pipeline wiring (Gate 1) ───────────────────────────────────
-	ansi::sec("Phase 9 — Real Simulation Exit → Pipeline");
+	// -- Phase 9: Pipeline wiring (Gate 1) -----------------------------------
+	ansi::sec("Phase 9  -  Real Simulation Exit -> Pipeline");
 	std::string pipe_label = doc.project.name + "-" + std::to_string(sid);
 	auto dash = VsimRuntime::run_pipeline_from_log(log, doc.exports, pipe_label);
 
-	// ── Final summary ────────────────────────────────────────────────────────
+	// -- Final summary --------------------------------------------------------
 	ansi::sec("Run Summary");
 	size_t n_invalid = 0;
 	for (const auto& e : log.snapshot()) if (!e.is_valid) ++n_invalid;
 
 	std::printf("\n  %s%s  beta10_demo complete%s\n", ansi::bold, ansi::grn, ansi::rst);
-	std::printf("  %sScenario  : %d — %s%s\n", ansi::dim, sid, desc.name, ansi::rst);
+	std::printf("  %sScenario  : %d  -  %s%s\n", ansi::dim, sid, desc.name, ansi::rst);
 	std::printf("  %sEvents    : %zu  invalid=%zu%s\n", ansi::dim, log.size(), n_invalid, ansi::rst);
 	std::printf("  %sVariance  : %zu probe(s) evaluated%s\n", ansi::dim, var_results.size(), ansi::rst);
 	std::printf("  %sN_evol    : %zu probe(s) evaluated%s\n", ansi::dim, nev_results.size(), ansi::rst);
@@ -440,7 +440,7 @@ int main(int argc, char** argv) {
 				ansi::dim, dash.n_cases, dash.n_clusters, dash.n_warnings, ansi::rst);
 
 	std::printf("%s  v5.0.0 scripting surface: COMPLETE%s\n", ansi::bold, ansi::rst);
-	std::printf("%s  PHASE 1 COMPLETE: Real simulation → pipeline wiring is live.%s\n\n",
+	std::printf("%s  PHASE 1 COMPLETE: Real simulation -> pipeline wiring is live.%s\n\n",
 				ansi::grn, ansi::rst);
 
 	return 0;

@@ -1,0 +1,38 @@
+# =============================================================================
+# deploy/vseprrc
+# --------------
+# VSEPR-Sim WSL shell theme / customization.
+#
+# Injected into ~/.bashrc by deploy/build_wsl.sh so every new WSL shell
+# picks it up automatically. Safe to `source` multiple times.
+#
+# This file's only real purpose is to give you an unmistakable visual
+# confirmation that the WSL install/build pipeline ran end-to-end:
+#   - a themed prompt prefix (VSEPR)
+#   - a set of colorized helper aliases
+#   - a one-line banner printed once per interactive shell
+# =============================================================================
+
+# ── Theme colors (override before sourcing to customize) ────────────────────
+export VSEPR_THEME="${VSEPR_THEME:-molecule-dark}"
+export VSEPR_ACCENT="${VSEPR_ACCENT:-\033[38;5;51m}"   # cyan
+export VSEPR_OK="${VSEPR_OK:-\033[38;5;82m}"           # green
+export VSEPR_WARN="${VSEPR_WARN:-\033[38;5;214m}"      # amber
+export VSEPR_RESET="\033[0m"
+
+# ── Prompt injection ─────────────────────────────────────────────────────────
+# Only touch PS1 for interactive shells, and only once (guarded by marker).
+if [[ $- == *i* && "${PS1:-}" != *"[vsepr]"* ]]; then
+	export PS1="\[\033[38;5;51m\][vsepr]\[\033[0m\] ${PS1:-\\u@\\h:\\w\\$ }"
+fi
+
+# ── Handy aliases ────────────────────────────────────────────────────────────
+alias vsepr-build='bash "$VSEPR_REPO_ROOT/deploy/build_wsl.sh"'
+alias vsepr-viz='bash "$VSEPR_REPO_ROOT/deploy/start_viz_server.sh"'
+alias vsepr-theme='echo -e "${VSEPR_ACCENT}VSEPR-Sim${VSEPR_RESET} theme: ${VSEPR_THEME}"'
+
+# ── One-time-per-shell confirmation banner ───────────────────────────────────
+if [[ $- == *i* && -z "${VSEPR_RC_BANNER_SHOWN:-}" ]]; then
+	export VSEPR_RC_BANNER_SHOWN=1
+	echo -e "${VSEPR_OK}[vseprrc]${VSEPR_RESET} theme '${VSEPR_ACCENT}${VSEPR_THEME}${VSEPR_RESET}' loaded — rc injection is working."
+fi

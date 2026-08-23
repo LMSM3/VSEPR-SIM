@@ -1,17 +1,17 @@
-#pragma once
+﻿#pragma once
 /**
  * mesh_controls.hpp
  *
- * Electrohydrodynamic Simulation — Stage 4: Mesh
+ * Electrohydrodynamic Simulation  -  Stage 4: Mesh
  *
  * Mesh sizing and refinement control parameters.
  * Emits mesh hints that can be consumed by external meshing tools (gmsh,
  * ANSYS Meshing, OpenFOAM snappyHexMesh) or by the internal grid generator.
  *
  * Key refinement drivers:
- *   - |∇φ| is large  →  electrode vicinity
- *   - |∇c| is large  →  species boundary layers
- *   - |∇u| is large  →  wall shear layers, helix gaps
+ *   - |∇φ| is large  ->  electrode vicinity
+ *   - |∇c| is large  ->  species boundary layers
+ *   - |∇u| is large  ->  wall shear layers, helix gaps
  */
 
 #include "sim/ehd/ehd_types.hpp"

@@ -1,20 +1,20 @@
-/**
+﻿/**
  * src/batch/batch_merger.cpp
  * ============================
- * WO-VSIM-62C — Axis Application & Template Loading Implementation
+ * WO-VSIM-62C  -  Axis Application & Template Loading Implementation
  *
  * Dot-path table (spec §2.4):
- *   environment.*          → EnvironmentSection
- *   run.*                  → RunSection
- *   material.*             → MaterialSection
- *   simulation.*           → SimulationSection
- *   pbc.*                  → PBCSection
- *   cell.*                 → CellSection
- *   observe.*              → ObserveSection
- *   analysis.structure.*   → VsimStructureAnalysisSection
- *   analysis.sampling.*    → VsimSamplingSection
- *   analysis.scale_sampling.* → VsimScaleSamplingSection
- *   analysis.inference.*   → VsimAnalysisInferenceSection
+ *   environment.*          -> EnvironmentSection
+ *   run.*                  -> RunSection
+ *   material.*             -> MaterialSection
+ *   simulation.*           -> SimulationSection
+ *   pbc.*                  -> PBCSection
+ *   cell.*                 -> CellSection
+ *   observe.*              -> ObserveSection
+ *   analysis.structure.*   -> VsimStructureAnalysisSection
+ *   analysis.sampling.*    -> VsimSamplingSection
+ *   analysis.scale_sampling.* -> VsimScaleSamplingSection
+ *   analysis.inference.*   -> VsimAnalysisInferenceSection
  *
  * WO-VSIM-62C | beta-12
  */
@@ -28,7 +28,7 @@
 namespace vsim {
 namespace batch {
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static std::string to_lower(std::string s) {
 	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
@@ -48,7 +48,7 @@ static int parse_int_val(const std::string& v) {
 	try { return std::stoi(v); } catch (...) { return 0; }
 }
 
-// ── BatchMerger::load_template ────────────────────────────────────────────────
+// -- BatchMerger::load_template ------------------------------------------------
 
 VsimDocument BatchMerger::load_template(const std::string&        path,
 										 std::vector<std::string>& errors) {
@@ -60,13 +60,13 @@ VsimDocument BatchMerger::load_template(const std::string&        path,
 	}
 }
 
-// ── BatchMerger::set_path ─────────────────────────────────────────────────────
+// -- BatchMerger::set_path -----------------------------------------------------
 
 bool BatchMerger::set_path(VsimDocument&      doc,
 							const std::string& path,
 							const std::string& value)
 {
-	// Tokenise once: "environment.temperature" → ["environment","temperature"]
+	// Tokenise once: "environment.temperature" -> ["environment","temperature"]
 	auto split = [](const std::string& s) {
 		std::vector<std::string> parts;
 		std::string cur;
@@ -84,7 +84,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 	const std::string& ns  = parts[0];
 	const std::string& key = parts.back();
 
-	// ── environment.* ──────────────────────────────────────────────────────
+	// -- environment.* ------------------------------------------------------
 	if (ns == "environment") {
 		auto& e = doc.environment;
 		if (key == "temperature" || key == "temperature_K") { e.temperature = parse_double_val(value); return true; }
@@ -95,7 +95,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── run.* ──────────────────────────────────────────────────────────────
+	// -- run.* --------------------------------------------------------------
 	if (ns == "run") {
 		auto& r = doc.run;
 		if (key == "steps" || key == "max_steps") { r.max_steps     = parse_int_val(value);    return true; }
@@ -108,7 +108,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── material.* ────────────────────────────────────────────────────────
+	// -- material.* --------------------------------------------------------
 	if (ns == "material") {
 		auto& m = doc.material;
 		if (key == "formula")       { m.formula     = value; return true; }
@@ -122,7 +122,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── simulation.* ──────────────────────────────────────────────────────
+	// -- simulation.* ------------------------------------------------------
 	if (ns == "simulation") {
 		auto& s = doc.simulation;
 		if (key == "fire_max_steps")    { s.fire_max_steps    = parse_int_val(value);    return true; }
@@ -134,7 +134,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── pbc.* ─────────────────────────────────────────────────────────────
+	// -- pbc.* -------------------------------------------------------------
 	if (ns == "pbc") {
 		auto& p = doc.pbc;
 		if (key == "minimum_image")     { p.minimum_image     = parse_bool_val(value);   return true; }
@@ -143,7 +143,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── cell.* ────────────────────────────────────────────────────────────
+	// -- cell.* ------------------------------------------------------------
 	if (ns == "cell") {
 		auto& c = doc.cell;
 		if (key == "lx")    { c.lx = parse_double_val(value); return true; }
@@ -153,7 +153,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── observe.* ─────────────────────────────────────────────────────────
+	// -- observe.* ---------------------------------------------------------
 	if (ns == "observe") {
 		auto& o = doc.observe;
 		if (key == "every_n_steps")     { o.every_n_steps     = parse_int_val(value);    return true; }
@@ -161,7 +161,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── analysis.structure.* ─────────────────────────────────────────────
+	// -- analysis.structure.* ---------------------------------------------
 	if (ns == "analysis" && parts.size() >= 3 && parts[1] == "structure") {
 		auto& st = doc.pipeline_structure;
 		if (key == "enabled")              { st.enabled              = parse_bool_val(value);   return true; }
@@ -173,7 +173,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── analysis.sampling.* ──────────────────────────────────────────────
+	// -- analysis.sampling.* ----------------------------------------------
 	if (ns == "analysis" && parts.size() >= 3 && parts[1] == "sampling") {
 		auto& sa = doc.pipeline_sampling;
 		if (key == "enabled")               { sa.enabled                = parse_bool_val(value);   return true; }
@@ -184,7 +184,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── analysis.scale_sampling.* ────────────────────────────────────────
+	// -- analysis.scale_sampling.* ----------------------------------------
 	if (ns == "analysis" && parts.size() >= 3 && parts[1] == "scale_sampling") {
 		auto& ss = doc.pipeline_scale_sampling;
 		if (key == "enabled")                    { ss.enabled                    = parse_bool_val(value);   return true; }
@@ -195,7 +195,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 		return false;
 	}
 
-	// ── analysis.inference.* ─────────────────────────────────────────────
+	// -- analysis.inference.* ---------------------------------------------
 	if (ns == "analysis" && parts.size() >= 3 && parts[1] == "inference") {
 		auto& inf = doc.pipeline_inference;
 		if (key == "enabled")               { inf.enabled                   = parse_bool_val(value);   return true; }
@@ -208,7 +208,7 @@ bool BatchMerger::set_path(VsimDocument&      doc,
 	return false;
 }
 
-// ── BatchMerger::apply_axis_values ────────────────────────────────────────────
+// -- BatchMerger::apply_axis_values --------------------------------------------
 
 VsimDocument BatchMerger::apply_axis_values(
 	const VsimDocument&                         base,
@@ -218,7 +218,7 @@ VsimDocument BatchMerger::apply_axis_values(
 	VsimDocument doc = base;
 	for (const auto& [path, value] : axis_values) {
 		if (!set_path(doc, path, value))
-			warnings_out.push_back("apply_axis_values: unknown path '" + path + "' — skipped");
+			warnings_out.push_back("apply_axis_values: unknown path '" + path + "'  -  skipped");
 	}
 	return doc;
 }

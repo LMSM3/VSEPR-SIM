@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * layer_stack.hpp — Five-Layer Vertical Integration Stack
+ * layer_stack.hpp  -  Five-Layer Vertical Integration Stack
  *
  * VSEPR-SIM materials discovery engine.
  * Full fuel cycle simulation.  Cradle to product.
@@ -29,15 +29,15 @@
  *
  * Two hard problems acknowledged here by design:
  *
- *   1. Compute cost: Millions of L1 candidates; only survivors reach L2–L5.
+ *   1. Compute cost: Millions of L1 candidates; only survivors reach L2-L5.
  *      Addressed by: LayerGate (screening contract), lazy evaluation per layer.
  *
  *   2. L2 ↔ L4 phase transition boundary: where atomic behaviour becomes
- *      bulk behaviour.  Addressed by: layer_boundary.hpp — explicit interface
+ *      bulk behaviour.  Addressed by: layer_boundary.hpp  -  explicit interface
  *      with no cheating or silent approximation.
  *
  * Anti-black-box: every layer transition is a named, typed, inspectable object.
- * Deterministic: same stack inputs → same stack outputs.
+ * Deterministic: same stack inputs -> same stack outputs.
  *
  * Reference: docs/section_layer_stack.tex
  */
@@ -54,26 +54,26 @@
 namespace layer_stack {
 
 // ============================================================================
-// L1 — Paper Identity
+// L1  -  Paper Identity
 // ============================================================================
 
 /**
- * L1_PaperIdentity — static species record.
+ * L1_PaperIdentity  -  static species record.
  *
  * This is what is known from a formula, a name, and a CAS number BEFORE
  * any physics is computed.  It never mutates.  A candidate that fails at
  * L1 is never instantiated at L2 or above.
  *
  * Fields:
- *   formula     — Hill-order chemical formula string ("Fe2O3", "UO2")
- *   iupac_name  — Full IUPAC systematic name (may be empty for elements)
- *   common_name — Common / trade name ("hematite", "urania")
- *   cas_number  — CAS registry number string (empty if unknown)
- *   class_tag   — Coarse classification: "element", "oxide", "halide",
+ *   formula      -  Hill-order chemical formula string ("Fe2O3", "UO2")
+ *   iupac_name   -  Full IUPAC systematic name (may be empty for elements)
+ *   common_name  -  Common / trade name ("hematite", "urania")
+ *   cas_number   -  CAS registry number string (empty if unknown)
+ *   class_tag    -  Coarse classification: "element", "oxide", "halide",
  *                 "organometallic", "alloy", "mineral", etc.
- *   Z_set       — Set of unique atomic numbers in the formula.
+ *   Z_set        -  Set of unique atomic numbers in the formula.
  *                 Single element: {26}.  Compound: {26, 8}.
- *   stoich      — Stoichiometric coefficients paired with Z_set.
+ *   stoich       -  Stoichiometric coefficients paired with Z_set.
  *
  * A species is L1-valid if formula is non-empty and Z_set is non-empty.
  */
@@ -99,25 +99,25 @@ struct L1_PaperIdentity {
 };
 
 // ============================================================================
-// L2 — Atomistic Layer
+// L2  -  Atomistic Layer
 // ============================================================================
 
 /**
- * L2_AtomisticState — physics and energy state of a species.
+ * L2_AtomisticState  -  physics and energy state of a species.
  *
- * Carries the full §0 Identity–State vector plus the LJ energy parameters.
+ * Carries the full §0 Identity-State vector plus the LJ energy parameters.
  * Q_i and ε_i are environment-dependent: they carry the values current
  * for this simulation context (e.g. Fe³⁺ in acid leach has different Q
- * than Fe in ore body — same Z, different Q).
+ * than Fe in ore body  -  same Z, different Q).
  *
  * L2 maps 1:1 to a particle in atomistic::State.
  */
 struct L2_AtomisticState {
     // §0 Identity Vector (immutable nuclear identity + mutable environment state)
-    uint8_t  Z{};       // Atomic number — immutable
-    uint8_t  A{};       // Mass number   — immutable (0 = natural average)
+    uint8_t  Z{};       // Atomic number  -  immutable
+    uint8_t  A{};       // Mass number    -  immutable (0 = natural average)
     double   Q{};       // Effective charge participation (environment-dependent)
-    double   epsilon{}; // LJ well depth ε (kcal/mol) — energy state
+    double   epsilon{}; // LJ well depth ε (kcal/mol)  -  energy state
     double   sigma{};   // LJ radius σ (Å)
 
     // Structural role and stability (from §0 Σ_i, Λ_i)
@@ -128,8 +128,8 @@ struct L2_AtomisticState {
     coarse_grain::Identity32      identity_word{};
 
     // Thermodynamic state
-    double   temperature{298.15};  // K — local temperature proxy
-    double   pressure{1.0};        // bar — local pressure proxy
+    double   temperature{298.15};  // K  -  local temperature proxy
+    double   pressure{1.0};        // bar  -  local pressure proxy
     coarse_grain::chemistry::Phase phase{coarse_grain::chemistry::Phase::SOLID};
 
     // Provenance: which L1 species produced this particle
@@ -147,11 +147,11 @@ struct L2_AtomisticState {
 };
 
 // ============================================================================
-// L3 — Molecular 3D Layer
+// L3  -  Molecular 3D Layer
 // ============================================================================
 
 /**
- * L3_MolecularGeometry — 3D structural description of a molecule or fragment.
+ * L3_MolecularGeometry  -  3D structural description of a molecule or fragment.
  *
  * Carries geometry, bonding topology, coordination environment, and
  * local geometry classification.  Built from atomistic::State output.
@@ -175,7 +175,7 @@ struct L3_CoordinationRecord {
     uint8_t   Z_center{};
     uint32_t  coord_number{};
     double    mean_bond_length{}; // Å
-    double    bond_length_std{};  // Å — spread of bond lengths (distortion indicator)
+    double    bond_length_std{};  // Å  -  spread of bond lengths (distortion indicator)
     std::string geometry_class;  // "tetrahedral", "octahedral", "trigonal-planar", etc.
 };
 
@@ -190,7 +190,7 @@ struct L3_MolecularGeometry {
     std::vector<L3_CoordinationRecord> coordination;
 
     // Geometry quality metrics
-    double rms_force{};           // kcal/(mol·Å) — convergence quality
+    double rms_force{};           // kcal/(mol·Å)  -  convergence quality
     double total_energy{};        // kcal/mol
     bool   converged{false};
 
@@ -202,11 +202,11 @@ struct L3_MolecularGeometry {
 };
 
 // ============================================================================
-// L4 — Atomistic / CG Layer (Beads, Phase Behaviour, Bulk Interactions)
+// L4  -  Atomistic / CG Layer (Beads, Phase Behaviour, Bulk Interactions)
 // ============================================================================
 
 /**
- * L4_AtomisticBeadState — coarse-grained bead representation.
+ * L4_AtomisticBeadState  -  coarse-grained bead representation.
  *
  * Anisotropic surface mapping lives here.  Phase behaviour and bulk
  * interaction channels live here.  This is the L2↔L4 boundary output.
@@ -216,7 +216,7 @@ struct L3_MolecularGeometry {
  */
 struct L4_PhaseRegion {
     coarse_grain::chemistry::Phase phase{coarse_grain::chemistry::Phase::SOLID};
-    double volume_fraction{};      // 0–1 fraction of this phase in the bead group
+    double volume_fraction{};      // 0-1 fraction of this phase in the bead group
     double order_parameter{};      // P₂ orientational order
     double local_density{};        // ρ_B (Gaussian-weighted)
 };
@@ -239,11 +239,11 @@ struct L4_AtomisticBeadState {
 };
 
 // ============================================================================
-// L5 — Macro / CAD Layer
+// L5  -  Macro / CAD Layer
 // ============================================================================
 
 /**
- * MacroBodyType — what kind of engineering body this is.
+ * MacroBodyType  -  what kind of engineering body this is.
  */
 enum class MacroBodyType : uint8_t {
     Pipe,           // Cylindrical flow conduit
@@ -271,14 +271,14 @@ inline const char* macro_body_type_name(MacroBodyType t) {
 }
 
 /**
- * L5_MacroGeometry — CAD-scale material body.
+ * L5_MacroGeometry  -  CAD-scale material body.
  *
- * The macro body is the accumulated consequence of L1–L4.  It carries:
+ * The macro body is the accumulated consequence of L1-L4.  It carries:
  *   - Physical dimensions (SI units: metres)
- *   - Material identity — back-reference to the L1 formula of the bulk material
+ *   - Material identity  -  back-reference to the L1 formula of the bulk material
  *   - Surface area and volume
  *   - Operating conditions (T, P, flow)
- *   - Degradation / corrosion state (driven by L2–L4 chemistry at the interface)
+ *   - Degradation / corrosion state (driven by L2-L4 chemistry at the interface)
  *
  * The iron in a pipe is still Fe (Z=26) underneath.  The macro geometry
  * is just the engineering expression of that accumulated atomic identity.
@@ -325,11 +325,11 @@ struct L5_MacroGeometry {
 };
 
 // ============================================================================
-// LayerParticle — the vertically-integrated particle record
+// LayerParticle  -  the vertically-integrated particle record
 // ============================================================================
 
 /**
- * LayerParticle — one particle tracked across all five layers.
+ * LayerParticle  -  one particle tracked across all five layers.
  *
  * Propagation invariant: Z and A never change.
  * Q, ε, phase, and structural role evolve with chemical environment.
@@ -355,7 +355,7 @@ struct LayerParticle {
         if (!l2.is_valid()) return true;         // L2 not populated, skip check
         if (l3.has_value()) {
             for (auto Z_atom : l3->atomic_numbers)
-                if (Z_atom != l2.Z) return false; // heterogeneous fragment — OK, skip
+                if (Z_atom != l2.Z) return false; // heterogeneous fragment  -  OK, skip
         }
         if (l4.has_value()) {
             if (l4->dominant_atom.Z != l2.Z) return false;
@@ -366,11 +366,11 @@ struct LayerParticle {
 };
 
 // ============================================================================
-// LayerGate — screening contract
+// LayerGate  -  screening contract
 // ============================================================================
 
 /**
- * LayerGateResult — outcome of one layer's screening pass.
+ * LayerGateResult  -  outcome of one layer's screening pass.
  *
  * Each layer gate makes a binary accept/reject decision plus a score.
  * Accepted particles propagate to the next layer.
@@ -385,11 +385,11 @@ struct LayerGateResult {
 };
 
 /**
- * L1Gate — screen by formula validity and class.
+ * L1Gate  -  screen by formula validity and class.
  *
  * Rejects candidates with:
  *   - Empty or unparseable formula
- *   - Z values outside 1–118
+ *   - Z values outside 1-118
  *   - class_tag in the exclusion list
  */
 inline LayerGateResult l1_gate(
@@ -413,7 +413,7 @@ inline LayerGateResult l1_gate(
 }
 
 /**
- * L2Gate — screen by energy state.
+ * L2Gate  -  screen by energy state.
  *
  * Rejects candidates with:
  *   - epsilon outside physically reasonable range

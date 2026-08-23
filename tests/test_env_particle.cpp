@@ -1,5 +1,5 @@
-/**
- * test_env_particle.cpp  —  Environmental Particle Extension Tests
+﻿/**
+ * test_env_particle.cpp   -   Environmental Particle Extension Tests
  * ================================================================
  * VSEPR-SIM 3.0.1
  *

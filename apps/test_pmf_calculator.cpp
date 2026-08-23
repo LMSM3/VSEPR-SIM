@@ -1,4 +1,4 @@
-/**
+﻿/**
  * PMF Calculator Test
  * 
  * Validates that PMF calculation works correctly for known systems.
@@ -17,20 +17,20 @@
 using namespace atomistic;
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PMF Calculator Test                                      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  PMF Calculator Test                                      |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // Test 1: Parse pair type from string
     std::cout << "Test 1: Pair Type Parsing\n";
     
     try {
         auto pair1 = PairType::from_string("Mg:F");
-        std::cout << "  ✅ Parsed 'Mg:F' → Z1=" << pair1.type1 << ", Z2=" << pair1.type2 << "\n";
+        std::cout << "  ✅ Parsed 'Mg:F' -> Z1=" << pair1.type1 << ", Z2=" << pair1.type2 << "\n";
         std::cout << "     Formatted: " << pair1.to_string() << "\n";
         
         auto pair2 = PairType::from_string("Ar:Ar");
-        std::cout << "  ✅ Parsed 'Ar:Ar' → Z1=" << pair2.type1 << ", Z2=" << pair2.type2 << "\n";
+        std::cout << "  ✅ Parsed 'Ar:Ar' -> Z1=" << pair2.type1 << ", Z2=" << pair2.type2 << "\n";
         std::cout << "     Formatted: " << pair2.to_string() << "\n";
         
     } catch (const std::exception& e) {
@@ -71,7 +71,7 @@ int main() {
             double amplitude = 2.5;
             g_r.push_back(amplitude * std::exp(-0.5 * std::pow((x - peak_pos) / width, 2)));
         } else {
-            // Approach bulk (g → 1)
+            // Approach bulk (g -> 1)
             double decay = std::exp(-(x - 1.5) / 2.0);
             g_r.push_back(1.0 - 0.5 * decay);
         }
@@ -135,14 +135,14 @@ int main() {
     
     // Overall result
     if (pass_basin_pos && pass_basin_depth) {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✅ TEST PASSED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ✅ TEST PASSED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 0;
     } else {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ❌ TEST FAILED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ❌ TEST FAILED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 1;
     }
 }

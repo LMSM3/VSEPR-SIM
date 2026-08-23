@@ -1,0 +1,118 @@
+# BUG_EXPOSER: DBG-SAMP-001 material sampling composition
+# Validate: build/vsepr.exe validate scripts/debugging/bug_exposer_material_sampling.vsim
+# Run:      build/vsepr.exe run scripts/debugging/bug_exposer_material_sampling.vsim
+# Expected debug question: does the runtime expand prototype/sample requests
+# into multiple resolved states, or are sampling-intent keys only retained raw?
+
+print_console "DBG-SAMP-001: material sampling composition probe"
+print_console "Expected: resolved prototype samples, per-sample outputs, and clear gaps if unsupported"
+
+[project]
+name        = "bug_exposer_material_sampling"
+version     = "v5.14.1-debug"
+seed_base   = 91003
+determinism = true
+description = "Small SiO2 material sampling probe for MOOSE-like construction layer"
+
+[material]
+formula   = "SiO2"
+structure = "quartz"
+cell      = "2x2x2"
+phase     = "solid"
+
+[simulation]
+box_size_ang     = 30.0
+periodic         = true
+fire_max_steps   = 8
+fire_dt_fs       = 0.5
+formation_preset = "ceramic"
+
+[[simulation.molecule]]
+formula       = "SiO2"
+count         = 8
+temperature_K = 298.15
+lattice       = "quartz"
+
+[environment]
+temperature = 298.15
+pressure    = 0.0
+medium      = "vacuum"
+periodic    = true
+
+[cell]
+a = 9.82
+b = 9.82
+c = 10.80
+alpha = 90.0
+beta  = 90.0
+gamma = 120.0
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image = true
+wrap_positions = "on_export"
+track_images = true
+unwrap_for_diffusion = true
+
+[run]
+mode         = "nvt"
+max_steps    = 8
+dt_fs        = 0.5
+temperature  = 298.15
+converge     = false
+output_level = "verbose"
+
+[analysis.structure]
+enabled              = true
+compute_coordination = true
+compute_packing      = true
+compute_displacement = true
+compute_anisotropy   = true
+neighbor_cutoff_A    = 2.2
+contact_cutoff_A     = 1.9
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 4
+unwrap_pbc            = true
+sample_count          = 4
+state_expansion       = "prototype_variants"
+vary                  = ["defect_density", "temperature_K"]
+defect_density_values = [0.0, 0.01]
+temperature_values_K  = [298.15, 350.0]
+
+[observe]
+metrics       = ["formation", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 2
+
+[verify]
+enabled = true
+profile = "debug_material_sampling"
+
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_events_json   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/debugging/material_sampling"
+
+[report]
+title                   = "DBG-SAMP-001 Material Sampling Probe"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type     = "none"
+render_interval = 2

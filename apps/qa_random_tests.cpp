@@ -1,15 +1,15 @@
-/**
+﻿/**
  * qa_random_tests.cpp
  * --------------------
  * Expanded QA Random Molecular Test Suite
  *
- * Generates 5–101 random molecular structures, relaxes them with the
+ * Generates 5-101 random molecular structures, relaxes them with the
  * composite model (bonded + LJ nonbonded with 1-2/1-3 exclusions),
  * and produces three classes of output:
  *
- *   3/3 (always)  → .xyz file with cartoon interpretation
- *   2/3           → connectivity / energy graph (DOT format)
- *   ~1/3          → protein-like chain structures (helix / sheet / loop)
+ *   3/3 (always)  -> .xyz file with cartoon interpretation
+ *   2/3           -> connectivity / energy graph (DOT format)
+ *   ~1/3          -> protein-like chain structures (helix / sheet / loop)
  *
  * GPU detection runs first and is reported in the manifest.
  *
@@ -410,9 +410,9 @@ static GPUInfo detect_gpu() {
 // ============================================================================
 
 enum class OutputMode {
-    XYZ_CARTOON,     // 3/3 — always: .xyz file
-    GRAPH,           // 2/3 — connectivity + energy graph (DOT)
-    PROTEIN          // ~1/3 — protein-like chain output
+    XYZ_CARTOON,     // 3/3  -  always: .xyz file
+    GRAPH,           // 2/3  -  connectivity + energy graph (DOT)
+    PROTEIN          // ~1/3  -  protein-like chain output
 };
 
 // ============================================================================
@@ -485,7 +485,7 @@ static CoreState generate_hub_spoke(const HubSpoke& hs, std::mt19937_64& rng) {
     return cs;
 }
 
-// --- Linear chain (–A–B–A–B–) ---
+// --- Linear chain (-A-B-A-B-) ---
 static CoreState generate_chain(int length, int Z_a, int Z_b,
                                  double bond_len, std::mt19937_64& rng)
 {
@@ -548,7 +548,7 @@ static CoreState generate_protein_backbone(int n_residues, SecondaryStructure ss
     const double r_C_N   = 1.33;
     const double theta_bb = 111.0 * M_PI / 180.0; // backbone angle
 
-    // Build backbone as N–Cα–C repeats
+    // Build backbone as N-Cα-C repeats
     Vec3 pos = {0, 0, 0};
     Vec3 dir = {1, 0, 0};
     Vec3 perp = {0, 1, 0};
@@ -660,8 +660,8 @@ static std::vector<RandomTest> generate_random_tests(int count, uint64_t master_
         {15,17, 5, 2.04},  // PCl5
         {16, 9, 6, 1.56},  // SF6
         { 6,17, 4, 1.77},  // CCl4
-        {26, 7, 6, 2.00},  // Fe(N)6 — octahedral complex
-        {30, 8, 4, 1.95},  // Zn(O)4 — tetrahedral complex
+        {26, 7, 6, 2.00},  // Fe(N)6  -  octahedral complex
+        {30, 8, 4, 1.95},  // Zn(O)4  -  tetrahedral complex
     };
     const int n_hub = sizeof(hub_templates) / sizeof(hub_templates[0]);
 
@@ -987,12 +987,12 @@ int main(int argc, char** argv) {
     fs::create_directories(output_dir + "/protein");
 
     // --- Banner ---
-    std::cout << "╔══════════════════════════════════════════════════════════╗\n"
-              << "║  QA Random Molecular Test Suite                         ║\n"
-              << "╠══════════════════════════════════════════════════════════╣\n"
-              << "║  Deterministic randomized structure generation          ║\n"
-              << "║  Composite model: bonded + LJ (1-2/1-3 exclusions)     ║\n"
-              << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+==========================================================+\n"
+              << "|  QA Random Molecular Test Suite                         |\n"
+              << "╠==========================================================╣\n"
+              << "|  Deterministic randomized structure generation          |\n"
+              << "|  Composite model: bonded + LJ (1-2/1-3 exclusions)     |\n"
+              << "+==========================================================+\n\n";
 
     std::cout << "  Tests:  " << test_count << "\n";
     std::cout << "  Seed:   " << master_seed << "\n";
@@ -1008,7 +1008,7 @@ int main(int argc, char** argv) {
             std::cout << "     VRAM: " << gpu.vram_mb << " MB\n";
         std::cout << "     Status: MOUNTED (available for future acceleration)\n";
     } else {
-        std::cout << "  ⚠️  No GPU detected — running CPU-only\n";
+        std::cout << "  ⚠️  No GPU detected  -  running CPU-only\n";
     }
     std::cout << "\n";
 
@@ -1102,15 +1102,15 @@ int main(int argc, char** argv) {
     double wall_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
     // --- Summary ---
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n"
-              << "║  SUMMARY                                                 ║\n"
-              << "╠══════════════════════════════════════════════════════════╣\n"
-              << "║  Total:      " << std::setw(4) << test_count << "                                       ║\n"
-              << "║  Converged:  " << std::setw(4) << passed << "                                       ║\n"
-              << "║  Unconverged:" << std::setw(4) << failed << "                                       ║\n"
-              << "║  Wall time:  " << std::fixed << std::setprecision(1) << std::setw(8) << wall_ms
-              << " ms                                ║\n"
-              << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n"
+              << "|  SUMMARY                                                 |\n"
+              << "╠==========================================================╣\n"
+              << "|  Total:      " << std::setw(4) << test_count << "                                       |\n"
+              << "|  Converged:  " << std::setw(4) << passed << "                                       |\n"
+              << "|  Unconverged:" << std::setw(4) << failed << "                                       |\n"
+              << "|  Wall time:  " << std::fixed << std::setprecision(1) << std::setw(8) << wall_ms
+              << " ms                                |\n"
+              << "+==========================================================+\n\n";
 
     // --- Generate report ---
     {

@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 /**
- * unified_potential.hpp — Unified Energy Evaluator
+ * unified_potential.hpp  -  Unified Energy Evaluator
  *
  * Single energy evaluation function for all resolution levels:
  *
  *   U = F(r, Q_A, Q_B, {c_{ℓm}^(k)})
  *
- * The same machinery handles all systems — from simple aromatics
+ * The same machinery handles all systems  -  from simple aromatics
  * (few nonzero coefficients, one channel) to complex organometallics
  * (many coefficients, all channels active). There is no branching
  * on model tier or discrete regime.
@@ -22,7 +22,7 @@
  *   λ_k    = coupling weight for channel k
  *
  * For inactive channels, the coupling is identically zero (no branching,
- * no special cases — zero coefficients produce zero contribution).
+ * no special cases  -  zero coefficients produce zero contribution).
  *
  * Anti-black-box: per-channel decomposition is always available.
  *
@@ -44,10 +44,10 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * UnifiedPotentialParams — parameters for the unified interaction model.
+ * UnifiedPotentialParams  -  parameters for the unified interaction model.
  *
  * Identical structure to MultiChannelPotentialParams, because the
- * energy machinery is the same — only the descriptor resolution differs.
+ * energy machinery is the same  -  only the descriptor resolution differs.
  */
 struct UnifiedPotentialParams {
     double sigma{};       // LJ sigma (Å)
@@ -64,7 +64,7 @@ struct UnifiedPotentialParams {
 // ============================================================================
 
 /**
- * UnifiedPotentialResult — decomposed energy output with resolution metadata.
+ * UnifiedPotentialResult  -  decomposed energy output with resolution metadata.
  */
 struct UnifiedPotentialResult {
     double E_isotropic{};         // Standard LJ 12-6 contribution
@@ -116,7 +116,7 @@ inline double unified_channel_coupling(const UnifiedChannel& A,
  * Compute bead-bead interaction energy using the unified formalism.
  *
  * No branching on model tier. The same function handles:
- *   - Isotropic beads (all channels inactive → pure LJ)
+ *   - Isotropic beads (all channels inactive -> pure LJ)
  *   - Axial/moderate beads (one channel, low ℓ_max)
  *   - Enriched beads (all channels, high ℓ_max)
  *

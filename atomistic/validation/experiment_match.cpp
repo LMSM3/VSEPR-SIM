@@ -1,4 +1,4 @@
-#include "atomistic/validation/experiment_match.hpp"
+﻿#include "atomistic/validation/experiment_match.hpp"
 #include <algorithm>
 #include <numeric>
 #include <cmath>
@@ -367,7 +367,7 @@ DynamicsObservables compute_dynamics(
         dyn.msd_values[lag - 1] = (count > 0) ? msd_sum / count : 0.0;
     }
 
-    // Diffusion coefficient: D = lim_{t→∞} MSD / (6t)
+    // Diffusion coefficient: D = lim_{t->∞} MSD / (6t)
     // Linear fit over last half of MSD curve
     if (max_lag >= 4) {
         uint32_t fit_start = max_lag / 2;
@@ -459,7 +459,7 @@ MatchScore score_against_experiment(
         ms.score_diffusion = fractional_score(
             dyn.diffusion_coeff, ref.diffusion_coeff, ref.tol_D_frac);
     } else {
-        ms.score_diffusion = 1.0; // no data → no penalty
+        ms.score_diffusion = 1.0; // no data -> no penalty
     }
 
     // --- Lindemann ---

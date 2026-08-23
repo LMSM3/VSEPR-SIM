@@ -1,0 +1,33 @@
+[system]
+name      = "sio2_pipe_case_001"
+dimension = 3
+units     = "reduced_engineering"
+
+[geometry]
+type           = "pipe_section"
+material       = "SiO2"
+inner_radius   = 0.0125
+wall_thickness = 0.0025
+length         = 0.250
+
+[simulation]
+steps       = 100000
+timestep    = 0.001
+temperature = 600.0
+
+[analysis]
+track_wall_contacts   = true
+track_flux            = true
+track_energy_transfer = true
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+write_verify_report       = true
+write_verify_tsv          = true
+output_dir                = "out/sio2_pipe_case_001"

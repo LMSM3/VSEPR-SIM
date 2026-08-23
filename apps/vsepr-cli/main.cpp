@@ -16,6 +16,7 @@ Commands:
 #include "core/json_schema.hpp"
 #include "core/geom_ops.hpp"
 #include "cli/cmd_validate.hpp"
+#include "cli/cmd_ui.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -387,6 +388,9 @@ void print_usage() {
         std::cout << "    Optimize and save result\n\n";
         std::cout << "  vsepr validate script.vsim\n";
         std::cout << "    Parse and validate a .vsim run script\n\n";
+        std::cout << "  vsepr ui <sub-command> [arg]\n";
+        std::cout << "    Control the running VSEPR desktop UI from the CLI\n";
+        std::cout << "    sub-commands: showroom  open-all  open-panel  open-vsim  open-dynx  open-xyz  ping\n\n";
     }
 
 int main(int argc, char** argv) {
@@ -418,6 +422,11 @@ int main(int argc, char** argv) {
             std::vector<std::string> rest;
             for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
             return vsepr::cli::cmd_validate(rest);
+        } else if (command == "ui") {
+            std::vector<std::string> rest;
+            for (int i = 2; i < argc; ++i) rest.emplace_back(argv[i]);
+            vsepr::cli::UiCommand uiCmd;
+            return uiCmd.Execute(rest);
         } else {
             std::cerr << "Unknown command: " << command << "\n\n";
             print_usage();

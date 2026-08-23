@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Theoretical–Simulation Bridge — VSIM Internal</title>
+
+  <!-- KaTeX for math rendering -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}]});"></script>
+
+  <!-- Prism Tomorrow (dark) — only activates on elements with language-* class -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+
+  <style>
+    /* ── Palette ───────────────────────────────────────── */
+    :root {
+      --ink:          #111111;
+      --ink-mid:      #444444;
+      --ink-soft:     #777777;
+      --bg:           #ffffff;
+      --rule:         #dedede;
+      --rule-strong:  #aaaaaa;
+
+      /* Sparse pastels — used in exactly 4 contexts */
+      --lav:          #f0eaf8;   /* equations */
+      --lav-border:   #bba8d8;
+      --sage:         #f0f4f0;   /* TOML blocks */
+      --sage-border:  #9fbf9f;
+      --cream:        #f8f4e6;   /* warning box */
+      --cream-border: #d0b86a;
+      --sky:          #eaf2fb;   /* table header */
+      --sky-border:   #a4c4df;
+    }
+
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ──────────────────────────────────────────── */
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 15px;
+      line-height: 1.78;
+      color: var(--ink);
+      background: var(--bg);
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 52px 36px 88px;
+    }
+
+    p { margin-bottom: 1em; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Document Header ───────────────────────────────── */
+    .doc-header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 28px;
+      margin-bottom: 48px;
+    }
+    .doc-eyebrow {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
+    }
+    .doc-header h1 {
+      font-family: system-ui, sans-serif;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .doc-subtitle {
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--ink-mid);
+      margin-bottom: 20px;
+      letter-spacing: 0.01em;
+    }
+    .meta-table {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      row-gap: 3px;
+      column-gap: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      margin-bottom: 16px;
+    }
+    .meta-label { color: var(--ink-soft); }
+    .meta-value { color: var(--ink); }
+
+    .warning-box {
+      background: var(--cream);
+      border-left: 3px solid var(--cream-border);
+      padding: 10px 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #5a4a10;
+    }
+    .warning-box strong {
+      font-weight: 700;
+      display: block;
+      margin-bottom: 2px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    /* ── Sections ──────────────────────────────────────── */
+    .section { margin-bottom: 52px; }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 9px;
+      margin-bottom: 18px;
+    }
+    .section-num {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      padding-top: 2px;
+    }
+    .section-head h2 {
+      font-family: system-ui, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      color: var(--ink);
+    }
+
+    /* ── Core Principle Box ────────────────────────────── */
+    .principle-box {
+      border: 1.5px solid var(--ink);
+      padding: 18px 22px;
+      margin: 20px 0;
+      font-style: italic;
+      font-size: 15px;
+      line-height: 1.75;
+    }
+
+    /* ── Equation Blocks (lavender, sparse) ────────────── */
+    .eq-block {
+      background: var(--lav);
+      border-left: 3px solid var(--lav-border);
+      padding: 16px 22px;
+      margin: 22px 0;
+      overflow-x: auto;
+    }
+    .eq-label {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+    .eq-note {
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      color: var(--ink-mid);
+      margin-top: 10px;
+      line-height: 1.55;
+    }
+    .eq-note code { font-size: 11.5px; }
+
+    /* ── TOML / Script Blocks (sage, sparse) ───────────── */
+    .toml-block {
+      background: var(--sage);
+      border-left: 3px solid var(--sage-border);
+      padding: 0;
+      margin: 22px 0;
+      overflow: hidden;
+    }
+    .toml-label {
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      padding: 6px 16px 5px;
+      border-bottom: 1px solid var(--sage-border);
+      letter-spacing: 0.04em;
+    }
+    .toml-block pre {
+      font-family: 'Courier New', 'Menlo', 'Consolas', monospace;
+      font-size: 12.5px;
+      line-height: 1.65;
+      color: var(--ink);
+      padding: 14px 20px;
+      overflow-x: auto;
+      white-space: pre;
+    }
+
+    /* ── Inline code ───────────────────────────────────── */
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 12.5px;
+      background: #f4f4f4;
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    /* ── Table ─────────────────────────────────────────── */
+    .table-wrap {
+      overflow-x: auto;
+      margin: 20px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--sky);
+      border-top: 1px solid var(--sky-border);
+      border-bottom: 2px solid var(--sky-border);
+    }
+    th {
+      padding: 9px 13px;
+      text-align: left;
+      font-weight: 700;
+      color: var(--ink);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+    }
+    td {
+      padding: 8px 13px;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+    td:first-child {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+
+    /* ── Data Row Example ──────────────────────────────── */
+    .data-example {
+      background: #f8f8f8;
+      border: 1px solid #e4e4e4;
+      padding: 12px 16px;
+      margin: 14px 0;
+      overflow-x: auto;
+    }
+    .data-example pre {
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      line-height: 1.6;
+      color: #333;
+      white-space: pre;
+    }
+    .de-header { color: #888; }
+
+    /* ── Descriptor Grid ───────────────────────────────── */
+    .desc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px 24px;
+      margin: 12px 0 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+    }
+    .desc-item::before {
+      content: "—  ";
+      color: var(--ink-soft);
+    }
+
+    /* ── Application list ──────────────────────────────── */
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px 12px;
+      margin: 12px 0;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+    }
+    .app-item {
+      padding: 4px 10px;
+      border-left: 2px solid var(--rule-strong);
+      color: var(--ink-mid);
+    }
+
+    /* ── C++ Section ───────────────────────────────────── */
+    .cpp-section {
+      margin-top: 64px;
+      border-top: 2px solid var(--ink);
+      padding-top: 0;
+    }
+    .cpp-section-head {
+      padding: 22px 0 16px;
+    }
+    .cpp-section-num {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 6px;
+    }
+    .cpp-section-head h2 {
+      font-family: system-ui, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      margin-bottom: 6px;
+    }
+    .cpp-section-head p {
+      font-size: 13.5px;
+      color: var(--ink-mid);
+      font-family: system-ui, sans-serif;
+      line-height: 1.6;
+    }
+    .cpp-file-label {
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      background: #1d1f21;
+      color: #81a2be;
+      padding: 7px 18px;
+      letter-spacing: 0.05em;
+      margin-top: 20px;
+    }
+    .cpp-block pre[class*="language-"] {
+      margin: 0;
+      border-radius: 0;
+      font-size: 12.5px;
+      line-height: 1.62;
+      border-top: none;
+    }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .doc-footer {
+      margin-top: 64px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      font-family: system-ui, sans-serif;
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     DOCUMENT HEADER
+═══════════════════════════════════════════════════════ -->
+<header class="doc-header">
+  <div class="doc-eyebrow">VSIM Internal Technical Document</div>
+  <h1>Theoretical–Simulation Bridge Project</h1>
+  <div class="doc-subtitle">
+    Formation-First VSIM &nbsp;·&nbsp; Identity Entropy Outputs &nbsp;·&nbsp; Scale-Residual Tracking
+  </div>
+  <div class="meta-table">
+    <span class="meta-label">Status</span>
+    <span class="meta-value">Internal theoretical planning document</span>
+    <span class="meta-label">Audience</span>
+    <span class="meta-value">VSEPR-SIM / VSIM developers</span>
+    <span class="meta-label">Purpose</span>
+    <span class="meta-value">Bridge between theoretical identity/scale notation and simulation outputs</span>
+    <span class="meta-label">Target</span>
+    <span class="meta-value">v5.2.0-internal</span>
+  </div>
+  <div class="warning-box">
+    <strong>Warning</strong>
+    This is not a public-facing claims document. It is a design bridge. No need to dress it up in fake certainty like a grant proposal written by a committee of sleep-deprived raccoons.
+  </div>
+</header>
+
+
+<!-- ════════════════════════════════════════════════════
+     §1  PROJECT INTENT
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 1</span>
+    <h2>Project Intent</h2>
+  </div>
+  <p>
+    This chapter formalizes the transition from VSIM as a simulation scripting language
+    into VSIM as a formation-history and identity-information language. The immediate goal
+    is to connect theoretical identity notation, scale coalescence, residual structure, and
+    recoverable information to concrete simulation artifacts. The system should not merely
+    output positions, velocities, energies, and rendered views. It should also output what
+    the simulation can infer about how a material formed, what information survived projection
+    across scales, what residual structure was hidden during packing, and how much identity
+    content remains recoverable after formation, interaction, or coalescence.
+  </p>
+  <p>
+    The bridge must remain disciplined: theoretical identity variables belong in derived output
+    sidecars, overlays, reports, and analysis layers — not in mutable ground-truth state. VSIM
+    already separates runtime intent, output records, render state, and validation behavior.
+    Render state is explicitly not supposed to mutate truth state, which gives this project
+    the right architectural boundary instead of letting theory seep into the kernel like coolant
+    into a bad weld.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §2  CORE PRINCIPLE
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 2</span>
+    <h2>Core Principle</h2>
+  </div>
+  <div class="principle-box">
+    Every material simulation must preserve formation context, and every identity-information
+    output must remain derived from state history rather than written back into state.
+  </div>
+  <p>
+    Formation describes how the object entered its starting condition. Identity-entropy outputs
+    describe what is lost, preserved, hidden, or recoverable as the simulation evolves. These
+    outputs are not replacements for physics. They are an interpretive bridge between the raw
+    simulation state and the theoretical identity framework.
+  </p>
+  <p>
+    This follows the existing VSIM direction where parsed sections are transformed into runtime
+    objects through an intent bridge, including material, environment, and run configuration.
+    Formation handling already exists as a planned or partially wired runtime concept through
+    formation stages and field-ramp evaluation, with broader runtime execution deferred toward
+    v5.2.0.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §3  THEORETICAL BASIS
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 3</span>
+    <h2>Theoretical Basis</h2>
+  </div>
+  <p>
+    The theoretical side of the bridge comes from the identity-matrix framework.
+    The identity reference defines the universal object in its compact form:
+  </p>
+
+  <div class="eq-block">
+    <div class="eq-label">Universal Object — Compact Form</div>
+    $$P_i = (I_i,\; H_i,\; \Omega_w)$$
+    <div class="eq-note">
+      where $I_i$ is the identity matrix, $H_i$ is the deterministic hash matrix,
+      and $\Omega_w$ is the world seed.
+    </div>
+  </div>
+
+  <p>The extended form adds residual structure and recoverable information:</p>
+
+  <div class="eq-block">
+    <div class="eq-label">Universal Object — Extended Form</div>
+    $$P_i = (I_i,\; H_i,\; R_i,\; \xi_i^{\star},\; J_i)$$
+    <div class="eq-note">
+      $R_i$ = residual structure &nbsp;·&nbsp;
+      $\xi_i^{\star}$ = true identity-location &nbsp;·&nbsp;
+      $J_i$ = recoverable information / distinguishability
+    </div>
+  </div>
+
+  <p>
+    The same reference defines the deterministic path: identity, hash, world seed, and
+    evolution rules together define the reproducible trajectory.
+  </p>
+
+  <div class="eq-block">
+    <div class="eq-label">Deterministic Path</div>
+    $$\gamma_i(t) = F(I_i,\; H_i,\; \Omega_w,\; t)$$
+  </div>
+
+  <p>
+    For the simulation bridge, the most important theoretical object is $J_i$, because it
+    provides a scalar measure of how much lower-scale structure survives projection into a
+    higher-scale representation. The notation reference explicitly distinguishes $J_i$ (which
+    belongs to an object, as an information/recovery measure) from $Q_n$ (which is the count
+    of active identities at scale $n$, a simulation inventory count). That distinction
+    matters: one describes information content, the other describes population.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §4  FORMATION AS REQUIRED SIMULATION CONTEXT
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 4</span>
+    <h2>Formation as Required Simulation Context</h2>
+  </div>
+  <p>
+    Formation data becomes mandatory because a material state without formation context is
+    under-described. A gas mixture, cast bracket, powder bed, welded pipe, crystal surface,
+    or bead aggregate does not begin as an abstract coordinate list. It has a preparation path.
+    That preparation path affects density, defects, residual stress, grain state, packing,
+    surface roughness, thermal state, and transport behavior.
+  </p>
+  <p>
+    Minimum formation fields should include:
+  </p>
+
+  <div class="toml-block">
+    <div class="toml-label">VSIM Script — Formation Block (minimum)</div>
+    <pre>[formation]
+enabled         = true
+method          = "declared"
+history         = "tracked"
+formation_time  = 0.0
+
+[formation.initial_state]
+temperature     = 300.0
+pressure        = 101325.0
+phase           = "solid"
+density         = 1.0
+defect_state    = "unknown"
+grain_state     = "unknown"</pre>
+  </div>
+
+  <p>
+    This block is not decoration. It is the upstream condition for material interpretation.
+    The simulation can still run without perfect formation knowledge, but the validation layer
+    should mark missing formation as <code>incomplete</code>, especially for material, gas, pipe,
+    surface, powder, and structural simulations.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §5  IDENTITY-ENTROPY OUTPUT LAYER
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 5</span>
+    <h2>Identity-Entropy Output Layer</h2>
+  </div>
+  <p>
+    The proposed new output layer is a compact derived sidecar with extension <code>.ie</code>
+    (Identity Entropy). This file carries identity-information variables per frame and per
+    identity-bearing object. It links to <code>.dynx</code>, manifests, reports, and viewer
+    overlays, but must not mutate particle state.
+  </p>
+
+  <div class="toml-block">
+    <div class="toml-label">VSIM Script — outputs.identity_entropy block</div>
+    <pre>[outputs.identity_entropy]
+enabled          = true
+path             = "output/run.ie"
+format           = "table"
+precision        = 6
+attach_to_viewer = true
+write_per_frame  = true
+write_summary    = true
+variables = [
+    "J",
+    "dataloss",
+    "dataentropy",
+    "residual",
+    "hidden_activity",
+    "projection_loss",
+    "recoverability",
+    "coalescence_loss",
+    "lineage_depth",
+    "state_quota",
+    "entropy_flux",
+    "formation_memory"
+]</pre>
+  </div>
+
+  <p>
+    This layer belongs beside analysis outputs, symbolic traces, event logs, dashboards,
+    and manifest records. Existing VSIM output infrastructure already supports many distinct
+    artifact types — analysis JSON, event JSON, symbolic traces, reports, dashboards, manifests,
+    and audit records — so this is an extension of the output doctrine rather than a random
+    new species of file goblin.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §6  PROPOSED VARIABLES
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 6</span>
+    <h2>Proposed Variables</h2>
+  </div>
+  <p>
+    The first official variable set should include at least twelve fields.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Variable</th>
+          <th>Meaning</th>
+          <th>Maps to</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>J</td>
+          <td>Recoverable information / distinguishability</td>
+          <td>$J_i$</td>
+        </tr>
+        <tr>
+          <td>dataloss</td>
+          <td>Direct identity information loss</td>
+          <td>$1 - J_i$</td>
+        </tr>
+        <tr>
+          <td>dataentropy</td>
+          <td>Entropy-like spread and ambiguity of identity channels</td>
+          <td>derived</td>
+        </tr>
+        <tr>
+          <td>residual</td>
+          <td>Magnitude of packing or projection residual</td>
+          <td>$|R_i|$</td>
+        </tr>
+        <tr>
+          <td>hidden_activity</td>
+          <td>Activity in channels not visible in projected state</td>
+          <td>derived</td>
+        </tr>
+        <tr>
+          <td>projection_loss</td>
+          <td>Loss from mapping full identity-space into observable state</td>
+          <td>derived</td>
+        </tr>
+        <tr>
+          <td>recoverability</td>
+          <td>Inverse measure of residual and projection loss</td>
+          <td>$1 - \text{projection\_loss}$</td>
+        </tr>
+        <tr>
+          <td>coalescence_loss</td>
+          <td>Loss or residual from new higher-scale identity formation</td>
+          <td>$R_{\text{coal}}^{(n)}$</td>
+        </tr>
+        <tr>
+          <td>lineage_depth</td>
+          <td>Number of formation/coalescence layers behind an object</td>
+          <td>derived</td>
+        </tr>
+        <tr>
+          <td>state_quota</td>
+          <td>Count of active identities at a scale</td>
+          <td>$Q_n$</td>
+        </tr>
+        <tr>
+          <td>entropy_flux</td>
+          <td>Time derivative of identity entropy</td>
+          <td>$\dot{S}_{\text{id}}$</td>
+        </tr>
+        <tr>
+          <td>formation_memory</td>
+          <td>Fraction of formation history still recoverable from current state</td>
+          <td>$M_f$</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>A compact row format:</p>
+
+  <div class="data-example">
+    <pre><span class="de-header">frame identity_id J       dataloss dataentropy residual hidden_act proj_loss recov   coal_loss lin state_q entr_flux form_mem flags</span>
+0     17          0.9321  0.0679   0.1142      0.0831   0.2200     0.0714    0.9286  0.0000    2   1       0.0042    0.7810   0
+1     17          0.9260  0.0740   0.1219      0.0887   0.2351     0.0782    0.9218  0.0025    2   1       0.0049    0.7744   0</pre>
+  </div>
+
+  <p>
+    Human-readable enough to debug. Cryptic enough to look like it came out of a basement at
+    Los Alamos. Balance, finally.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §7  SCALE COALESCENCE AND RESIDUAL TRACKING
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 7</span>
+    <h2>Scale Coalescence and Residual Tracking</h2>
+  </div>
+  <p>
+    The identity reference defines scale coalescence as the formation of a new higher-scale
+    identity when lower-scale identities satisfy a bond/interactability condition and a
+    collective binding score. The coalescence gate is:
+  </p>
+
+  <div class="eq-block">
+    <div class="eq-label">Coalescence Gate</div>
+    $$G_{\text{coal}}(n) =
+      \mathbf{1}[m \geq 3] \;\cdot\;
+      \mathbf{1}\!\left[\bar{d}^{(n)} \leq \ell_{\text{bond}}^{(n)}\right] \;\cdot\;
+      \mathbf{1}\!\left[B_n(C_n) \geq \tau_B\right]$$
+    <div class="eq-note">
+      $m$ = member count &nbsp;·&nbsp;
+      $\bar{d}^{(n)}$ = mean inter-member distance &nbsp;·&nbsp;
+      $\ell_{\text{bond}}^{(n)}$ = bond length threshold &nbsp;·&nbsp;
+      $B_n(C_n)$ = collective binding score &nbsp;·&nbsp;
+      $\tau_B$ = binding threshold
+    </div>
+  </div>
+
+  <p>When the gate fires, a new identity is projected at the next scale:</p>
+
+  <div class="eq-block">
+    <div class="eq-label">New Higher-Scale Identity</div>
+    $$I^{\star}_{(n+1)} = \Pi_n(C_n)$$
+  </div>
+
+  <p>The coalescence residual captures internal structure hidden by the new identity formation:</p>
+
+  <div class="eq-block">
+    <div class="eq-label">Coalescence Residual</div>
+    $$R_{\text{coal}}^{(n)} = C_n - A_n\!\left(I^{\star}_{(n+1)}\right)$$
+    <div class="eq-note">
+      $R_{\text{coal}}^{(n)}$ = structure hidden by new identity formation.
+      The interpretation: whatever the higher-scale projection cannot represent is residual.
+    </div>
+  </div>
+
+  <p>
+    For simulation purposes this becomes an output rule: when a formation, clustering, bonding,
+    packing, or phase event creates a higher-scale object, emit <code>coalescence_loss</code>
+    and <code>residual</code> fields into the identity-entropy sidecar. This should not assert
+    that the simulation has "discovered" a real new ontology. Internally, it means the simulation
+    has detected a stable higher-level identity representation according to the current model.
+    Yes, science requires this annoying humility.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §8  FORMATION MEMORY
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 8</span>
+    <h2>Formation Memory</h2>
+  </div>
+  <p>
+    Formation memory is the bridge between formation-first scripting and identity-entropy output.
+  </p>
+
+  <div class="eq-block">
+    <div class="eq-label">Formation Memory</div>
+    $$M_f = \frac{\text{recoverable formation descriptors}}{\text{total declared formation descriptors}}$$
+  </div>
+
+  <p>Formation descriptors may include:</p>
+
+  <div class="desc-grid">
+    <span class="desc-item">temperature history</span>
+    <span class="desc-item">pressure history</span>
+    <span class="desc-item">phase path</span>
+    <span class="desc-item">cooling rate</span>
+    <span class="desc-item">deposition order</span>
+    <span class="desc-item">packing sequence</span>
+    <span class="desc-item">grain state</span>
+    <span class="desc-item">defect seed</span>
+    <span class="desc-item">residual stress</span>
+    <span class="desc-item">surface finish</span>
+    <span class="desc-item">mixing pathway</span>
+  </div>
+
+  <p>
+    A high $M_f$ value means the current state still carries measurable evidence of its formation
+    history. A low value means the formation path has been erased, thermalized, randomized,
+    projected away, or become hidden in residual structure.
+  </p>
+
+  <p>This is especially important for:</p>
+
+  <div class="app-grid">
+    <span class="app-item">cast parts</span>
+    <span class="app-item">welded joints</span>
+    <span class="app-item">powder beds</span>
+    <span class="app-item">gas mixtures</span>
+    <span class="app-item">pipe interiors</span>
+    <span class="app-item">surface residence</span>
+    <span class="app-item">crystal defects</span>
+    <span class="app-item">irradiated materials</span>
+  </div>
+
+  <p style="margin-top:14px;">
+    The obvious engineering value is that two materials with identical composition may behave
+    differently because they formed differently. Humanity did need several thousand years of
+    metallurgy to rediscover "history matters," but here we are.
+  </p>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §9  SCRIPT INTEGRATION
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 9</span>
+    <h2>Script Integration</h2>
+  </div>
+  <p>
+    A minimal VSIM script exercising the full bridge. The older <code>[export]</code> output
+    system is kept intact; the <code>[outputs.identity_entropy]</code> layer is additive.
+    If the final schema prefers <code>[export.identity_entropy]</code>, that can be resolved later.
+    The doctrine matters more than the bracket costume.
+  </p>
+
+  <div class="toml-block">
+    <div class="toml-label">VSIM Script — identity_entropy_surface_demo  ·  v5.2.0-internal</div>
+    <pre>[project]
+name        = "identity_entropy_surface_demo"
+version     = "v5.2.0-internal"
+seed_base   = 72001
+determinism = true
+
+[formation]
+enabled        = true
+method         = "deposition"
+history        = "tracked"
+formation_time = 0.0
+
+[formation.initial_state]
+temperature  = 300.0
+pressure     = 101325.0
+phase        = "solid"
+defect_state = "tracked"
+surface_state= "roughened"
+
+[material]
+formula   = "C"
+structure = "graphite"
+phase     = "solid"
+
+[system]
+mode  = "surface_interaction"
+space = "3d"
+
+[[surface]]
+type              = "graphite_layer"
+roughness         = 0.05
+warm_minimum_beads= 100
+
+[particles.projectile]
+count    = 128
+type     = "generic_bead"
+velocity = [0.0, 0.0, -1.5]
+height   = 15.0
+
+[run]
+mode          = "md"
+max_steps     = 8000
+dt_fs         = 1.0
+temperature_K = 300.0
+converge      = true
+
+[observe]
+track = [
+    "contact",
+    "residence",
+    "embedding",
+    "diffusion_axis",
+    "energy",
+    "identity_entropy"
+]
+
+[export]
+write_xyz              = true
+write_xyzf             = true
+write_analysis_json    = true
+write_events_json      = true
+write_symbolic_trace_json = true
+write_report_md        = true
+write_manifest_json    = true
+
+[outputs.identity_entropy]
+enabled          = true
+path             = "output/run.ie"
+format           = "table"
+precision        = 6
+attach_to_viewer = true
+write_per_frame  = true
+write_summary    = true</pre>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §10  C++ IMPLEMENTATION SKELETON
+═══════════════════════════════════════════════════════ -->
+<div class="cpp-section">
+  <div class="cpp-section-head">
+    <div class="cpp-section-num">§ 10</div>
+    <h2>C++ Implementation Skeleton</h2>
+    <p>
+      Proposed header and translation unit for the identity entropy output layer.
+      C++17/20, no external dependencies beyond the standard library.
+      Namespace: <code>vsim::ie</code>.
+    </p>
+  </div>
+
+  <!-- FILE 1: header -->
+  <div class="cpp-file-label">// vsim/identity_entropy.hpp</div>
+  <div class="cpp-block">
+<pre><code class="language-cpp">// ─────────────────────────────────────────────────────────────────
+//  vsim/identity_entropy.hpp
+//  Formation-First VSIM — Identity Entropy Output Layer
+//  Internal draft · v5.2.0-internal
+// ─────────────────────────────────────────────────────────────────
+#pragma once
+#include &lt;array&gt;
+#include &lt;cmath&gt;
+#include &lt;cstdint&gt;
+#include &lt;fstream&gt;
+#include &lt;stdexcept&gt;
+#include &lt;string&gt;
+#include &lt;vector&gt;
+
+namespace vsim::ie {
+
+// ─── Formation Context ────────────────────────────────────────────
+
+struct FormationContext {
+    std::string method;               // "deposition" | "cast" | "declared"
+    std::string history;              // "tracked" | "partial" | "unknown"
+    double      formation_time = 0.0;
+    double      temperature_K  = 300.0;
+    double      pressure_Pa    = 101325.0;
+    std::string phase;                // "solid" | "liquid" | "gas" | "plasma"
+    std::string defect_state;         // "unknown" | "tracked" | "seeded"
+    std::string grain_state;          // "unknown" | "columnar" | "equiaxed"
+    double      density        = 1.0;
+
+    // M_f : fraction of formation history still recoverable.
+    //        1.0 = full memory intact.   0.0 = thermalized/forgotten.
+    [[nodiscard]] double formation_memory() const noexcept;
+};
+
+// ─── Identity Entropy Record ──────────────────────────────────────
+//  One row in the .ie sidecar file.
+//  All fields are DERIVED — never written back into simulation state.
+
+struct IERecord {
+    uint64_t frame          = 0;
+    uint64_t identity_id    = 0;
+
+    double   J              = 1.0;  // Recoverable information / distinguishability  [Ji]
+    double   dataloss       = 0.0;  // 1 - J                                         [derived]
+    double   dataentropy    = 0.0;  // Spread/ambiguity of identity channels          [derived]
+    double   residual       = 0.0;  // Packing or projection residual magnitude       [|Ri|]
+    double   hidden_activity= 0.0;  // Activity in non-projected channels             [derived]
+    double   projection_loss= 0.0;  // Loss: identity-space -> observable state       [derived]
+    double   recoverability = 1.0;  // 1 - projection_loss                            [derived]
+    double   coalescence_loss=0.0;  // Loss from higher-scale identity formation      [Rcoal]
+    uint32_t lineage_depth  = 0;    // Formation / coalescence layers behind object   [derived]
+    uint32_t state_quota    = 1;    // Q_n : active identities at this scale          [Qn]
+    double   entropy_flux   = 0.0;  // d(identity entropy)/dt                        [S_dot]
+    double   formation_memory=1.0;  // Recoverable formation fraction                 [Mf]
+    uint32_t flags          = 0;
+
+    // Enforce derived invariants. Call before writing.
+    void sync() noexcept {
+        dataloss      = 1.0 - J;
+        recoverability = 1.0 - projection_loss;
+    }
+};
+
+// ─── Coalescence Gate ─────────────────────────────────────────────
+//
+//  G_coal(n) = 1[m >= 3]
+//            * 1[d_bar^(n) &lt;= l_bond^(n)]
+//            * 1[B_n(C_n)  >= tau_B]
+
+struct CoalescenceInput {
+    uint32_t member_count  = 0;   // m
+    double   mean_distance = 0.0; // d̄(n)
+    double   bond_length   = 0.0; // ℓ_bond(n)
+    double   binding_score = 0.0; // B_n(C_n)
+    double   tau_B         = 0.0; // τ_B threshold
+};
+
+[[nodiscard]] inline bool
+coalescence_gate(const CoalescenceInput&amp; in) noexcept {
+    return (in.member_count  &gt;= 3)
+        &amp;&amp; (in.mean_distance &lt;= in.bond_length)
+        &amp;&amp; (in.binding_score &gt;= in.tau_B);
+}
+
+// R_coal(n) = || C_n - A_n( I*_(n+1) ) ||
+[[nodiscard]] double coalescence_residual(
+    const std::vector&lt;double&gt;&amp; cluster_state,
+    const std::vector&lt;double&gt;&amp; projected_identity) noexcept;
+
+// ─── .ie File Writer ──────────────────────────────────────────────
+
+class IEWriter {
+public:
+    explicit IEWriter(const std::string&amp; path, int precision = 6);
+    ~IEWriter();
+
+    IEWriter(const IEWriter&amp;)            = delete;
+    IEWriter&amp; operator=(const IEWriter&amp;) = delete;
+
+    void write_header();
+    void write(IERecord&amp; rec);   // calls sync() internally
+    void write_summary();
+    void close();
+
+private:
+    std::ofstream         stream_;
+    int                   precision_;
+    uint64_t              rows_written_    = 0;
+    std::vector&lt;IERecord&gt; buffer_;
+    bool                  header_written_  = false;
+    bool                  closed_          = false;
+};
+
+} // namespace vsim::ie
+</code></pre>
+  </div>
+
+  <!-- FILE 2: implementation -->
+  <div class="cpp-file-label">// vsim/identity_entropy.cpp</div>
+  <div class="cpp-block">
+<pre><code class="language-cpp">// ─────────────────────────────────────────────────────────────────
+//  vsim/identity_entropy.cpp
+// ─────────────────────────────────────────────────────────────────
+#include "identity_entropy.hpp"
+#include &lt;algorithm&gt;
+#include &lt;iomanip&gt;
+#include &lt;numeric&gt;
+
+namespace vsim::ie {
+
+// ─── FormationContext ─────────────────────────────────────────────
+
+double FormationContext::formation_memory() const noexcept {
+    // Score declared formation descriptors against "known" criteria.
+    // A real implementation would integrate thermal history, diffusion,
+    // and projection loss over the run history.
+    using B = bool;
+    const std::array&lt;B, 6&gt; known = {{
+        !phase.empty()        &amp;&amp; phase        != "unknown",
+        !defect_state.empty() &amp;&amp; defect_state != "unknown",
+        !grain_state.empty()  &amp;&amp; grain_state  != "unknown",
+        temperature_K &gt; 0.0,
+        pressure_Pa   &gt; 0.0,
+        density       &gt; 0.0,
+    }};
+    const double n_known =
+        static_cast&lt;double&gt;(std::count(known.begin(), known.end(), true));
+    return n_known / static_cast&lt;double&gt;(known.size());
+}
+
+// ─── Coalescence Residual ─────────────────────────────────────────
+
+double coalescence_residual(
+    const std::vector&lt;double&gt;&amp; cluster_state,
+    const std::vector&lt;double&gt;&amp; projected_identity) noexcept
+{
+    if (cluster_state.size() != projected_identity.size()) return -1.0;
+    double sq = 0.0;
+    for (std::size_t i = 0; i &lt; cluster_state.size(); ++i) {
+        const double d = cluster_state[i] - projected_identity[i];
+        sq += d * d;
+    }
+    return std::sqrt(sq);
+}
+
+// ─── IEWriter ─────────────────────────────────────────────────────
+
+IEWriter::IEWriter(const std::string&amp; path, int precision)
+    : precision_(precision)
+{
+    stream_.open(path, std::ios::out | std::ios::trunc);
+    if (!stream_.is_open())
+        throw std::runtime_error("IEWriter: cannot open " + path);
+    stream_ &lt;&lt; std::fixed &lt;&lt; std::setprecision(precision_);
+}
+
+IEWriter::~IEWriter() {
+    if (!closed_) close();
+}
+
+void IEWriter::write_header() {
+    stream_ &lt;&lt;
+        "frame identity_id "
+        "J dataloss dataentropy residual hidden_activity "
+        "projection_loss recoverability coalescence_loss "
+        "lineage_depth state_quota entropy_flux formation_memory flags\n";
+    header_written_ = true;
+}
+
+void IEWriter::write(IERecord&amp; rec) {
+    if (!header_written_) write_header();
+    rec.sync();
+    stream_
+        &lt;&lt; rec.frame            &lt;&lt; ' '
+        &lt;&lt; rec.identity_id      &lt;&lt; ' '
+        &lt;&lt; rec.J                &lt;&lt; ' '
+        &lt;&lt; rec.dataloss         &lt;&lt; ' '
+        &lt;&lt; rec.dataentropy      &lt;&lt; ' '
+        &lt;&lt; rec.residual         &lt;&lt; ' '
+        &lt;&lt; rec.hidden_activity  &lt;&lt; ' '
+        &lt;&lt; rec.projection_loss  &lt;&lt; ' '
+        &lt;&lt; rec.recoverability   &lt;&lt; ' '
+        &lt;&lt; rec.coalescence_loss &lt;&lt; ' '
+        &lt;&lt; rec.lineage_depth    &lt;&lt; ' '
+        &lt;&lt; rec.state_quota      &lt;&lt; ' '
+        &lt;&lt; rec.entropy_flux     &lt;&lt; ' '
+        &lt;&lt; rec.formation_memory &lt;&lt; ' '
+        &lt;&lt; rec.flags            &lt;&lt; '\n';
+    ++rows_written_;
+    buffer_.push_back(rec);
+}
+
+void IEWriter::write_summary() {
+    if (buffer_.empty()) return;
+
+    const double mean_J =
+        std::accumulate(buffer_.begin(), buffer_.end(), 0.0,
+            [](double acc, const IERecord&amp; r) { return acc + r.J; })
+        / static_cast&lt;double&gt;(buffer_.size());
+
+    const double min_J =
+        std::min_element(buffer_.begin(), buffer_.end(),
+            [](const IERecord&amp; a, const IERecord&amp; b){ return a.J &lt; b.J; })->J;
+
+    const auto coal_events =
+        std::count_if(buffer_.begin(), buffer_.end(),
+            [](const IERecord&amp; r){ return r.coalescence_loss &gt; 0.0; });
+
+    stream_
+        &lt;&lt; "\n# SUMMARY\n"
+        &lt;&lt; "# rows          " &lt;&lt; rows_written_ &lt;&lt; '\n'
+        &lt;&lt; "# mean_J        " &lt;&lt; mean_J        &lt;&lt; '\n'
+        &lt;&lt; "# min_J         " &lt;&lt; min_J         &lt;&lt; '\n'
+        &lt;&lt; "# coal_events   " &lt;&lt; coal_events   &lt;&lt; '\n';
+}
+
+void IEWriter::close() {
+    if (closed_) return;
+    write_summary();
+    stream_.close();
+    closed_ = true;
+}
+
+} // namespace vsim::ie
+</code></pre>
+  </div>
+</div><!-- /cpp-section -->
+
+
+<!-- ════════════════════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════════════════════ -->
+<footer class="doc-footer">
+  <span>VSIM Internal &nbsp;·&nbsp; v5.2.0-internal &nbsp;·&nbsp; Theoretical–Simulation Bridge</span>
+  <span>Not for external distribution</span>
+</footer>
+
+</body>
+</html>

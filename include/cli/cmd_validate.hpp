@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * cmd_validate.hpp — vsper validate subcommand
+ * cmd_validate.hpp  -  vsper validate subcommand
  * =============================================
  *
  * Parses a .vsim script file, validates its structure, and
@@ -12,9 +12,9 @@
  *   vsper validate scripts/demo_03_graphite_stack.vsim
  *
  * Exit codes:
- *   0  — document is valid (warnings may be present)
- *   1  — document has errors
- *   2  — file not found / parse exception
+ *   0   -  document is valid (warnings may be present)
+ *   1   -  document has errors
+ *   2   -  file not found / parse exception
  *
  * WO-56C  |  v5.0.0-beta.7
  */

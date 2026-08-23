@@ -1,10 +1,10 @@
+﻿// =============================================================================
+// tests/test_macro_inference.cpp  -  Group 24
 // =============================================================================
-// tests/test_macro_inference.cpp — Group 24
-// =============================================================================
-// Task 12  — Diffusion measurement (MSD, jumps, site residence, tortuosity)
-// Task 12B — Macro transport inference (D_eff, anisotropy, mobility, class)
-// Task 13  — Bead/powder packing measurement (contact, coordination, void)
-// Task 13B — Macro packing inference (density, porosity, compressibility,
+// Task 12   -  Diffusion measurement (MSD, jumps, site residence, tortuosity)
+// Task 12B  -  Macro transport inference (D_eff, anisotropy, mobility, class)
+// Task 13   -  Bead/powder packing measurement (contact, coordination, void)
+// Task 13B  -  Macro packing inference (density, porosity, compressibility,
 //             permeability, sintering readiness)
 //
 // Interaction : pure LJ via create_lj_coulomb_model()
@@ -15,18 +15,18 @@
 //               All macro properties computed in analysis headers only.
 //
 // Task 12B cases
-//   case_ideal       — SC 3×3×3 crystal, zero velocity (localized vibration)
-//   case_vacancy     — SC 3×3×3 crystal, one atom removed
-//   case_interstitial— SC 3×3×3 crystal, one atom injected
-//   case_thermal_lo  — SC 3×3×3 crystal, low thermal jitter (low KE)
-//   case_thermal_hi  — SC 3×3×3 crystal, high thermal jitter (high KE)
-//   case_surface     — 2D slab, single layer, free surface (surface diffusion)
+//   case_ideal        -  SC 3×3×3 crystal, zero velocity (localized vibration)
+//   case_vacancy      -  SC 3×3×3 crystal, one atom removed
+//   case_interstitial -  SC 3×3×3 crystal, one atom injected
+//   case_thermal_lo   -  SC 3×3×3 crystal, low thermal jitter (low KE)
+//   case_thermal_hi   -  SC 3×3×3 crystal, high thermal jitter (high KE)
+//   case_surface      -  2D slab, single layer, free surface (surface diffusion)
 //
 // Task 13B cases
-//   pack_loose       — random bead drop into box, no compression
-//   pack_settled     — loose pack after extended relaxation
-//   pack_compressed  — compressed vs initial → compressibility proxy
-//   pack_jammed      — high-density initial placement
+//   pack_loose        -  random bead drop into box, no compression
+//   pack_settled      -  loose pack after extended relaxation
+//   pack_compressed   -  compressed vs initial -> compressibility proxy
+//   pack_jammed       -  high-density initial placement
 // =============================================================================
 
 #include <cassert>
@@ -63,9 +63,9 @@ static constexpr int    N_STEPS_D  = 12000;   // diffusion: extended for better 
 static constexpr int    N_STEPS_D_THERMAL = 20000; // thermal sweep cases: longer for Arrhenius signal
 static constexpr int    N_STEPS_P  = 3000;    // packing: enough for settling
 static constexpr int    SAMPLE     = 200;     // frames per integration block
-static constexpr double A_SC       = 3.82;    // Å — Ar simple-cubic lattice constant
-static constexpr double A_FCC      = 5.26;    // Å — Ar FCC lattice constant (σ*2^(1/6) ≈ 3.82*1.38)
-static constexpr double A_BCC      = 3.30;    // Å — Ar BCC lattice constant
+static constexpr double A_SC       = 3.82;    // Å  -  Ar simple-cubic lattice constant
+static constexpr double A_FCC      = 5.26;    // Å  -  Ar FCC lattice constant (σ*2^(1/6) ≈ 3.82*1.38)
+static constexpr double A_BCC      = 3.30;    // Å  -  Ar BCC lattice constant
 
 // =============================================================================
 // Crystal builder helpers (same Ar parameters as crystal_surface test)
@@ -121,13 +121,13 @@ static void apply_thermal_jitter(
 }
 
 // =============================================================================
-// Task 12B — Diffusion-Based Macro Transport Inference
+// Task 12B  -  Diffusion-Based Macro Transport Inference
 // =============================================================================
 
 struct DiffCase {
 	std::string case_id;
 	atomistic::State state;
-	double surface_z_min;   // Å — set < all atoms to disable surface filtering
+	double surface_z_min;   // Å  -  set < all atoms to disable surface filtering
 };
 
 static DiffCase make_diff_case(
@@ -139,7 +139,7 @@ static DiffCase make_diff_case(
 	dc.case_id       = case_id;
 	dc.surface_z_min = -1e30;
 
-	// ── Surface: 2D slab SC 5×5×1 ────────────────────────────────────────────
+	// -- Surface: 2D slab SC 5×5×1 --------------------------------------------
 	if (variant == "surface") {
 		auto uc2 = make_ar_sc(A_SC);
 		auto sc2 = atomistic::crystal::construct_supercell(uc2, 5, 5, 1);
@@ -152,7 +152,7 @@ static DiffCase make_diff_case(
 		return dc;
 	}
 
-	// ── 1D channel: thin SC slab (1×1×20) — diffusion along z ───────────────
+	// -- 1D channel: thin SC slab (1×1×20)  -  diffusion along z ---------------
 	if (variant == "channel_1d") {
 		auto uc2 = make_ar_sc(A_SC);
 		auto sc2 = atomistic::crystal::construct_supercell(uc2, 1, 1, 20);
@@ -165,7 +165,7 @@ static DiffCase make_diff_case(
 		return dc;
 	}
 
-	// ── FCC 3×3×3 ─────────────────────────────────────────────────────────────
+	// -- FCC 3×3×3 -------------------------------------------------------------
 	if (variant == "fcc") {
 		auto uc2 = make_ar_fcc(A_FCC);
 		auto sc2 = atomistic::crystal::construct_supercell(uc2, 3, 3, 3);
@@ -177,7 +177,7 @@ static DiffCase make_diff_case(
 		return dc;
 	}
 
-	// ── BCC 3×3×3 ─────────────────────────────────────────────────────────────
+	// -- BCC 3×3×3 -------------------------------------------------------------
 	if (variant == "bcc") {
 		auto uc2 = make_ar_bcc(A_BCC);
 		auto sc2 = atomistic::crystal::construct_supercell(uc2, 3, 3, 3);
@@ -189,7 +189,7 @@ static DiffCase make_diff_case(
 		return dc;
 	}
 
-	// ── All SC-based variants share the same 3×3×3 base ──────────────────────
+	// -- All SC-based variants share the same 3×3×3 base ----------------------
 	auto uc = make_ar_sc(A_SC);
 	auto sc = atomistic::crystal::construct_supercell(uc, 3, 3, 3);
 	dc.state = sc.state;
@@ -229,7 +229,7 @@ static DiffCase make_diff_case(
 		apply_thermal_jitter(dc.state, 0.05, seed);
 
 	} else if (variant == "mixed_defect") {
-		// Vacancy + interstitial simultaneously — crossed defects, max transport perturbation
+		// Vacancy + interstitial simultaneously  -  crossed defects, max transport perturbation
 		auto& s = dc.state;
 		// Remove atom nearest to centroid
 		vsepr::Vec3 cm{0,0,0};
@@ -261,7 +261,7 @@ static DiffCase make_diff_case(
 		apply_thermal_jitter(dc.state, 0.30, seed);   // ~6× higher kinetic activity
 
 	} else if (variant == "thermal_vhi") {
-		apply_thermal_jitter(dc.state, 0.55, seed);   // very high — near melting proxy
+		apply_thermal_jitter(dc.state, 0.55, seed);   // very high  -  near melting proxy
 	}
 
 	return dc;
@@ -277,7 +277,7 @@ static vsepr::diffusion::TransportInference run_diffusion_case(
 	using namespace vsepr::diffusion;
 
 	DiffusionTracker tracker;
-	tracker.r_jump        = 2.5;   // Å — > 2/3 of Ar lattice constant
+	tracker.r_jump        = 2.5;   // Å  -  > 2/3 of Ar lattice constant
 	tracker.surface_z_min = dc.surface_z_min;
 	tracker.set_reference(dc.state.X);
 	model.eval(dc.state, mp);
@@ -318,7 +318,7 @@ static void test_diffusion_macro_inference() {
 	auto model = atomistic::create_lj_coulomb_model();
 	atomistic::ModelParams mp; mp.rc = 10.0;
 
-	// ── Case table ────────────────────────────────────────────────────────────
+	// -- Case table ------------------------------------------------------------
 	// id, variant, dim, n_steps, role_for_formation_context
 	struct CaseDef {
 		std::string id;
@@ -339,7 +339,7 @@ static void test_diffusion_macro_inference() {
 		{"case_fcc",           "fcc",          3, N_STEPS_D,         "fcc"},
 		{"case_bcc",           "bcc",          3, N_STEPS_D,         "bcc"},
 
-		// Thermal activation sweep (4 temperatures → proper Arrhenius proxy)
+		// Thermal activation sweep (4 temperatures -> proper Arrhenius proxy)
 		{"case_thermal_lo",    "thermal_lo",   3, N_STEPS_D_THERMAL, "thermal_lo"},
 		{"case_thermal_med",   "thermal_med",  3, N_STEPS_D_THERMAL, "thermal_med"},
 		{"case_thermal_hi",    "thermal_hi",   3, N_STEPS_D_THERMAL, "thermal_hi"},
@@ -362,7 +362,7 @@ static void test_diffusion_macro_inference() {
 		results.push_back(inf);
 	}
 
-	// ── Formation-context annotation ─────────────────────────────────────────
+	// -- Formation-context annotation -----------------------------------------
 	// Stamp ref_energy_per_atom onto ideal first, then annotate all others
 	vsepr::diffusion::annotate_formation_context_ideal(results[0],
 		results[0].energy_per_atom * static_cast<double>(27),  // approx N for SC 3^3
@@ -383,7 +383,7 @@ static void test_diffusion_macro_inference() {
 			results[i].formation_context = "surface_case";
 	}
 
-	// ── Defect transport ratios vs SC ideal ───────────────────────────────────
+	// -- Defect transport ratios vs SC ideal -----------------------------------
 	for (auto& r : results)
 		vsepr::diffusion::annotate_defect_ratios(r, results[0]);
 
@@ -391,8 +391,8 @@ static void test_diffusion_macro_inference() {
 	for (const auto& r : results)
 		std::printf("%s\n", r.to_tsv().c_str());
 
-	// ── Activation trend (4-point thermal sweep) ─────────────────────────────
-	// indices 6–9 are thermal_lo, med, hi, vhi
+	// -- Activation trend (4-point thermal sweep) -----------------------------
+	// indices 6-9 are thermal_lo, med, hi, vhi
 	std::vector<vsepr::diffusion::TransportInference> thermal_cases = {
 		results[6], results[7], results[8], results[9]};
 	// KE proxies: use anisotropy_ratio as a rough structural temperature proxy
@@ -405,12 +405,12 @@ static void test_diffusion_macro_inference() {
 		ke_proxy(results[8]), ke_proxy(results[9])};
 	auto act = vsepr::diffusion::ActivationTrend::fit(thermal_cases, ke_vals);
 
-	std::printf("\n[Activation trend proxy — 4-point thermal sweep]\n");
-	std::printf("  lo→med→hi→vhi  slope_proxy = %+.6f  r2 = %.4f  class = %s\n",
+	std::printf("\n[Activation trend proxy  -  4-point thermal sweep]\n");
+	std::printf("  lo->med->hi->vhi  slope_proxy = %+.6f  r2 = %.4f  class = %s\n",
 		act.slope_proxy, act.r2, act.activation_class.c_str());
 	std::printf("  activation_energy_proxy = %.4f\n", act.activation_energy_proxy);
 
-	// ── Per-axis MSD summary (anisotropy audit) ────────────────────────────────
+	// -- Per-axis MSD summary (anisotropy audit) --------------------------------
 	std::printf("\n[Per-axis diffusivity summary (anisotropy audit)]\n");
 	std::printf("  %-20s  Dx        Dy        Dz        aniso_ratio  class\n", "case_id");
 	for (const auto& r : results) {
@@ -419,7 +419,7 @@ static void test_diffusion_macro_inference() {
 			r.anisotropy_ratio, r.anisotropy_class.c_str());
 	}
 
-	// ── Formation-context coupling table ─────────────────────────────────────
+	// -- Formation-context coupling table -------------------------------------
 	std::printf("\n[Formation-context coupling table (analysis-only)]\n");
 	std::printf("  %-20s  %-22s  ref_E/atom  E/atom     ΔU_proxy   D_eff\n", "case_id", "formation_context");
 	for (const auto& r : results) {
@@ -432,47 +432,47 @@ static void test_diffusion_macro_inference() {
 			r.D_eff_analysis_only);
 	}
 
-	// ── Formation codebase survey (printed for record) ────────────────────────
-	std::puts("\n═══════════════════════════════════════════════════════════════");
-	std::puts("  FORMATION CODEBASE SURVEY — existing infrastructure");
-	std::puts("═══════════════════════════════════════════════════════════════");
+	// -- Formation codebase survey (printed for record) ------------------------
+	std::puts("\n===============================================================");
+	std::puts("  FORMATION CODEBASE SURVEY  -  existing infrastructure");
+	std::puts("===============================================================");
 	std::puts("  Layer                  File / Symbol");
-	std::puts("  ─────────────────────────────────────────────────────────────");
+	std::puts("  -------------------------------------------------------------");
 	std::puts("  Formation loop (MD)    src/cli/actions_form.cpp");
-	std::puts("                         → LangevinDynamics::integrate() with");
+	std::puts("                         -> LangevinDynamics::integrate() with");
 	std::puts("                           T-schedule, write_snapshot, formation.log");
 	std::puts("  Formation priors       apps/phase4_formation_priors.cpp");
-	std::puts("                         → crystal preset → UnitCell → to_state()");
-	std::puts("                           → single-point energy per preset");
+	std::puts("                         -> crystal preset -> UnitCell -> to_state()");
+	std::puts("                           -> single-point energy per preset");
 	std::puts("  Thermodynamics         include/thermo/thermodynamics.hpp");
-	std::puts("                         → ThermoData {H_f, S, G_f, Cp}");
-	std::puts("                         → ThermoDatabase (NIST/CRC reference data)");
-	std::puts("                         → GibbsCalculator::calculate()");
-	std::puts("                         → estimate_H_formation(mol)");
+	std::puts("                         -> ThermoData {H_f, S, G_f, Cp}");
+	std::puts("                         -> ThermoDatabase (NIST/CRC reference data)");
+	std::puts("                         -> GibbsCalculator::calculate()");
+	std::puts("                         -> estimate_H_formation(mol)");
 	std::puts("  Fingerprinting         atomistic/classify/fingerprints.hpp");
-	std::puts("                         → ProtoFingerprint  (topology hash, RDF, CN)");
-	std::puts("                         → DefectFingerprint (occupancy, vacancy, sub)");
-	std::puts("                         → weisfeiler_lehman_hash()");
+	std::puts("                         -> ProtoFingerprint  (topology hash, RDF, CN)");
+	std::puts("                         -> DefectFingerprint (occupancy, vacancy, sub)");
+	std::puts("                         -> weisfeiler_lehman_hash()");
 	std::puts("  Structure clustering   atomistic/classify/cluster.hpp");
-	std::puts("                         → cluster_by_proto()  — polymorph detection");
-	std::puts("                         → cluster_by_defect() — defect microstate");
-	std::puts("                         → classify_polymorphs / isomorphs / defects");
+	std::puts("                         -> cluster_by_proto()   -  polymorph detection");
+	std::puts("                         -> cluster_by_defect()  -  defect microstate");
+	std::puts("                         -> classify_polymorphs / isomorphs / defects");
 	std::puts("  Potential energy       src/pot/energy.hpp");
-	std::puts("                         → EnergyResult {UvdW, UCoul, total}");
-	std::puts("                         → BondParams, AngleParams, TorsionParams");
+	std::puts("                         -> EnergyResult {UvdW, UCoul, total}");
+	std::puts("                         -> BondParams, AngleParams, TorsionParams");
 	std::puts("  Formation regime       tests/test_runners.hpp");
-	std::puts("                         → FormationRegimeRecord, FormationHistory");
-	std::puts("                         → build_regime_record(), relaxation_time()");
-	std::puts("  ─────────────────────────────────────────────────────────────");
+	std::puts("                         -> FormationRegimeRecord, FormationHistory");
+	std::puts("                         -> build_regime_record(), relaxation_time()");
+	std::puts("  -------------------------------------------------------------");
 	std::puts("  Integration path for 12B ↔ Formation:");
-	std::puts("    trajectory → DiffusionTracker → TransportInference");
+	std::puts("    trajectory -> DiffusionTracker -> TransportInference");
 	std::puts("    + annotate_formation_context(ref_energy_per_atom from preset)");
-	std::puts("    + ThermoDatabase::get(formula) → H_f for true ΔH comparison");
-	std::puts("    + cluster_by_defect() on snapshots → microstate classification");
-	std::puts("    → formation_energy_proxy is a ΔU bridge between D_eff and H_f");
-	std::puts("═══════════════════════════════════════════════════════════════");
+	std::puts("    + ThermoDatabase::get(formula) -> H_f for true ΔH comparison");
+	std::puts("    + cluster_by_defect() on snapshots -> microstate classification");
+	std::puts("    -> formation_energy_proxy is a ΔU bridge between D_eff and H_f");
+	std::puts("===============================================================");
 
-	// ── Pass conditions ───────────────────────────────────────────────────────
+	// -- Pass conditions -------------------------------------------------------
 
 	for (const auto& r : results) {
 		assert(std::isfinite(r.D_eff_analysis_only) && "T12B: D_eff not finite");
@@ -510,7 +510,7 @@ static void test_diffusion_macro_inference() {
 }
 
 // =============================================================================
-// Task 13B — Packing-Based Macro Property Inference
+// Task 13B  -  Packing-Based Macro Property Inference
 // =============================================================================
 
 struct PackCase {
@@ -546,7 +546,7 @@ static PackCase make_pack_case(
 		}
 
 	} else if (variant == "settled" || variant == "compressed") {
-		// Semi-ordered SC packing — moderate density (~0.35–0.45)
+		// Semi-ordered SC packing  -  moderate density (~0.35-0.45)
 		const double spacing = 2.0 * R + 0.5;   // Å between bead centers
 		int n = 0;
 		for (double x = R; x < L - R; x += spacing)
@@ -586,7 +586,7 @@ static PackCase make_pack_case(
 	return pc;
 }
 
-// Run a packing case: no atomistic integrator needed — pure geometry analysis.
+// Run a packing case: no atomistic integrator needed  -  pure geometry analysis.
 // Positions are held fixed; we compute multiple frames with tiny random kicks
 // to show settled/dynamic distinction.
 static vsepr::packing::PackingInference run_packing_case(
@@ -618,7 +618,7 @@ static vsepr::packing::PackingInference run_packing_case(
 			p.x += jitter(rng); p.y += jitter(rng); p.z += jitter(rng);
 		}
 		t += SAMPLE * DT;
-		// Dummy energy that drifts <1% — stays within "stable" threshold
+		// Dummy energy that drifts <1%  -  stays within "stable" threshold
 		const double E = E_dummy * (1.0 + 0.001 * block / (N_STEPS_P/SAMPLE));
 		auto row = tracker.compute(
 			static_cast<uint64_t>(block+1), t, E,
@@ -681,7 +681,7 @@ static void test_packing_macro_inference() {
 		}
 	}
 
-	// ── Pass conditions ───────────────────────────────────────────────────────
+	// -- Pass conditions -------------------------------------------------------
 
 	// All cases: porosity must be in [0,1] and finite
 	for (const auto& r : results) {
@@ -707,7 +707,7 @@ static void test_packing_macro_inference() {
 	assert(results[0].permeability_proxy >= results[3].permeability_proxy &&
 		   "T13B: loose pack should have >= permeability proxy than jammed");
 
-	// No macro property stored in state (audit — compile-time guarantee by design)
+	// No macro property stored in state (audit  -  compile-time guarantee by design)
 	std::puts("\n[xyzFull audit: no porosity, bulk_density, compressibility in state]");
 	std::puts("PASS  test_packing_macro_inference");
 }
@@ -721,25 +721,25 @@ static void print_inference_dashboard(
 	const std::vector<vsepr::packing::PackingInference>&     pack_inf)
 {
 	std::printf("\n");
-	std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-	std::printf("║         Macro Inference Layer — Status Dashboard             ║\n");
-	std::printf("╠══════════════════════════════════════════════════════════════╣\n");
-	std::printf("║  Task 12B — Diffusion/Transport Inference                    ║\n");
-	std::printf("╠═══════════════════════╦══════════════════════╦══════════════╣\n");
-	std::printf("║  case_id              ║  transport_class     ║  D_eff       ║\n");
-	std::printf("╠═══════════════════════╬══════════════════════╬══════════════╣\n");
+	std::printf("+==============================================================+\n");
+	std::printf("|         Macro Inference Layer  -  Status Dashboard             |\n");
+	std::printf("╠==============================================================╣\n");
+	std::printf("|  Task 12B  -  Diffusion/Transport Inference                    |\n");
+	std::printf("╠=======================╦======================╦==============╣\n");
+	std::printf("|  case_id              |  transport_class     |  D_eff       |\n");
+	std::printf("╠=======================╬======================╬==============╣\n");
 	for (const auto& r : diff_inf)
-		std::printf("║  %-21s║  %-20s║  %12.6g  ║\n",
+		std::printf("|  %-21s|  %-20s|  %12.6g  |\n",
 			r.case_id.c_str(), r.transport_class.c_str(), r.D_eff_analysis_only);
-	std::printf("╠══════════════════════════════════════════════════════════════╣\n");
-	std::printf("║  Task 13B — Packing Inference                                ║\n");
-	std::printf("╠═══════════════════════╦══════════════════════╦══════════════╣\n");
-	std::printf("║  case_id              ║  packing_class       ║  porosity    ║\n");
-	std::printf("╠═══════════════════════╬══════════════════════╬══════════════╣\n");
+	std::printf("╠==============================================================╣\n");
+	std::printf("|  Task 13B  -  Packing Inference                                |\n");
+	std::printf("╠=======================╦======================╦==============╣\n");
+	std::printf("|  case_id              |  packing_class       |  porosity    |\n");
+	std::printf("╠=======================╬======================╬==============╣\n");
 	for (const auto& r : pack_inf)
-		std::printf("║  %-21s║  %-20s║  %12.6f  ║\n",
+		std::printf("|  %-21s|  %-20s|  %12.6f  |\n",
 			r.case_id.c_str(), r.packing_macro_class.c_str(), r.porosity_inferred);
-	std::printf("╚══════════════════════════════════════════════════════════════╝\n");
+	std::printf("+==============================================================+\n");
 	std::printf("  B-layer status: both 12B and 13B produce analysis-only outputs.\n");
 	std::printf("  No inferred property written back into simulation state.\n");
 }
@@ -755,7 +755,7 @@ int main() {
 	// Run Task 13B
 	test_packing_macro_inference();
 
-	// Dashboard (re-run to collect for display — lightweight geometry only)
+	// Dashboard (re-run to collect for display  -  lightweight geometry only)
 	{
 		auto model = atomistic::create_lj_coulomb_model();
 		atomistic::ModelParams mp; mp.rc = 10.0;

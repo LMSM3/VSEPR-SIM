@@ -1,5 +1,5 @@
-/**
- * Unified Molecular File System — Implementation
+﻿/**
+ * Unified Molecular File System  -  Implementation
  *
  * Single-point implementation for all molecular structure I/O.
  * Wraps XYZReader / XYZWriter / XYZAReader / XYZAWriter /
@@ -218,7 +218,7 @@ Result<XYZMolecule> load_structure(const std::string& filename,
 
 Status save_structure(const std::string& filename, const XYZMolecule& mol,
                       const IOOptions& opts) {
-    // Determine what to write — optionally filter invalid atoms
+    // Determine what to write  -  optionally filter invalid atoms
     XYZMolecule to_write;
     to_write.comment  = opts.comment.value_or(mol.comment);
     to_write.bonds    = mol.bonds;
@@ -239,7 +239,7 @@ Status save_structure(const std::string& filename, const XYZMolecule& mol,
         to_write.atoms = mol.atoms;
     }
 
-    // Optional coordinate validation (strict — fails on bad coords)
+    // Optional coordinate validation (strict  -  fails on bad coords)
     if (opts.validate_coords) {
         const auto report = validate_structure(to_write);
         if (!report.passed()) {
@@ -332,7 +332,7 @@ Status save_trajectory(const std::string& filename, const XYZTrajectory& traj,
 }
 
 // ============================================================================
-// TrajectoryWriter — streaming, frame-by-frame
+// TrajectoryWriter  -  streaming, frame-by-frame
 // ============================================================================
 
 struct TrajectoryWriter::Impl {
@@ -417,7 +417,7 @@ bool TrajectoryWriter::is_open() const {
 }
 
 // ============================================================================
-// TrajectoryReader — streaming, frame-by-frame
+// TrajectoryReader  -  streaming, frame-by-frame
 // ============================================================================
 
 struct TrajectoryReader::Impl {
@@ -517,7 +517,7 @@ Result<std::vector<XYZMolecule>> load_directory(const std::string& dir_path,
                                                   const IOOptions& opts) {
     std::vector<XYZMolecule> results;
 
-    // Determine extension from pattern (e.g. "*.xyz" → ".xyz")
+    // Determine extension from pattern (e.g. "*.xyz" -> ".xyz")
     std::string ext_filter;
     const size_t star = pattern.rfind('*');
     if (star != std::string::npos) {

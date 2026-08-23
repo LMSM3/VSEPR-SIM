@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * version_manifest.hpp — VSEPR-SIM Version Lineage & Scale Registry
+ * version_manifest.hpp  -  VSEPR-SIM Version Lineage & Scale Registry
  * =================================================================
  *
  * Authoritative version map tracing kernel evolution from v0.1 through
@@ -8,7 +8,7 @@
  * in the kernel's capability surface.
  *
  * Lineage:
- *   Kernel v0.1   Initial commit → LJ dimer, basic State
+ *   Kernel v0.1   Initial commit -> LJ dimer, basic State
  *   Kernel v0.2   Bonded model, FIRE minimizer, PBC
  *   Kernel v0.3   VSEPR seeds, crystal presets, deep verification
  *   User   2.2.0  First tagged release, formula pipeline
@@ -26,11 +26,11 @@
  *   beta-7        Pipeline wiring: display arc closed; report pipeline open
  *
  * Scale Registry:
- *   Scale 1  Atomistic         (Å, fs, kcal/mol)     — kernel v0.1+
- *   Scale 2  Coarse-grained    (nm, ps, kJ/mol)      — kernel v0.3+
- *   Scale 3  Grain/continuum   (µm, ns, Pa)           — 4.0-LB
- *   Scale 4  Component         (mm, µs, MPa)           — 4.0-LB target
- *   Scale 5  Macroscopic       (m, s, engineering)      — 4.0-LB target
+ *   Scale 1  Atomistic         (Å, fs, kcal/mol)      -  kernel v0.1+
+ *   Scale 2  Coarse-grained    (nm, ps, kJ/mol)       -  kernel v0.3+
+ *   Scale 3  Grain/continuum   (µm, ns, Pa)            -  4.0-LB
+ *   Scale 4  Component         (mm, µs, MPa)            -  4.0-LB target
+ *   Scale 5  Macroscopic       (m, s, engineering)       -  4.0-LB target
  */
 
 #include <cstdint>
@@ -65,22 +65,22 @@ struct SemanticVersion {
 // Current Version
 // ============================================================================
 
-inline constexpr SemanticVersion CURRENT_VERSION = {5, 0, 0, "beta-7"};
+inline constexpr SemanticVersion CURRENT_VERSION = {5, 16, 0, "release"};
 
 // ============================================================================
 // Kernel Lineage Checkpoint
 // ============================================================================
 
 enum class KernelEra {
-    Genesis,        // v0.1 — initial commit, LJ dimer, basic State
-    Foundation,     // v0.2 — bonded model, FIRE, PBC, topology
-    Formation,      // v0.3 — VSEPR seeds, crystal presets, verification
-    Methodology,    // 2.5  — 13-section LaTeX formalization
-    Verification,   // 2.7  — deep verification (194 checks, 7 phases)
-    Integration,    // 2.9  — 1013 tests, CG layer, modular build
-    Audit,          // 3.0  — code audit freeze, terminology purge
-    MultiScale,     // 4.0  — multi-scale property search
-    Pipeline,       // 5.0  — passive display + report-generation pipeline (current)
+    Genesis,        // v0.1  -  initial commit, LJ dimer, basic State
+    Foundation,     // v0.2  -  bonded model, FIRE, PBC, topology
+    Formation,      // v0.3  -  VSEPR seeds, crystal presets, verification
+    Methodology,    // 2.5   -  13-section LaTeX formalization
+    Verification,   // 2.7   -  deep verification (194 checks, 7 phases)
+    Integration,    // 2.9   -  1013 tests, CG layer, modular build
+    Audit,          // 3.0   -  code audit freeze, terminology purge
+    MultiScale,     // 4.0   -  multi-scale property search
+    Pipeline,       // 5.0   -  passive display + report-generation pipeline (current)
 };
 
 struct KernelCheckpoint {
@@ -93,7 +93,7 @@ struct KernelCheckpoint {
 
 inline constexpr KernelCheckpoint KERNEL_LINEAGE[] = {
     {"v0.1",    KernelEra::Genesis,
-     "3ca9159", "Initial commit — LJ dimer, basic State container",               0},
+     "3ca9159", "Initial commit  -  LJ dimer, basic State container",               0},
 
     {"v0.2",    KernelEra::Genesis,
      "db4922f", "Complete source structure, minimal implementations",              0},
@@ -117,7 +117,7 @@ inline constexpr KernelCheckpoint KERNEL_LINEAGE[] = {
      "8faa5fe", "Empirical lookup table Z=1-118, alpha booklet 37pp",             80},
 
     {"v2.7.1",  KernelEra::Verification,
-     "6443450", "Deep verification milestone — 194 checks, 7 phases",           194},
+     "6443450", "Deep verification milestone  -  194 checks, 7 phases",           194},
 
     {"v2.7.2",  KernelEra::Verification,
      "",        "Desktop system, 3D visualization, trajectory viewer",           194},
@@ -126,10 +126,10 @@ inline constexpr KernelCheckpoint KERNEL_LINEAGE[] = {
      "70f41f2", "1013 tests, modular testing, CG layer, animated demos",        1013},
 
     {"v3.0.1",  KernelEra::Audit,
-     "",        "Code audit checkpoint — terminology purge, frozen reference",   1013},
+     "",        "Code audit checkpoint  -  terminology purge, frozen reference",   1013},
 
     {"v4.0.1",  KernelEra::MultiScale,
-     "",        "CMake version — multi-scale architecture, property search",     1013},
+     "",        "CMake version  -  multi-scale architecture, property search",     1013},
 
     {"v4.0-LB", KernelEra::MultiScale,
      "",        "Legacy-beta: multi-scale property search, 3-5 scale bridge, Z=94 core active, C++23 (N4950)", 1013},
@@ -142,20 +142,32 @@ inline constexpr KernelCheckpoint KERNEL_LINEAGE[] = {
 
     {"v5.0.0-beta7-display", KernelEra::Pipeline,
      "f1587c4",  "beta-7 display arc closed: VizMode::BATCH_PASSIVE, BatchWindowBridge, ContinuousRunDisplay, Window::run_batch(), xyz_to_snapshot, metal_gen integration, stress suite 12/12, API+usage docs", 1013},
+
+    {"v5.15.0", KernelEra::Pipeline,
+     "",         "VSIM parser/runtime parity: ChemPlus classify bridge, dense-record runtime, two-line terminal status loop (WO-93A)", 197},
+
+    {"v5.16.0", KernelEra::Pipeline,
+      "",         "Integrated live-runtime architecture: observer-based live export, bounded render frames, gas trajectory restoration, and v5 compatibility baseline", 0},
+
+    {"v6.0.0 (planned)", KernelEra::Pipeline,
+     "",         "Intent-first language; typed IR; v5 translation; shared runtime/export architecture; existing-physics parity", 0},
+
+    {"v6.1.0 (planned)", KernelEra::Pipeline,
+     "",         "DFAE runtime; electron lifecycle; field coupling; comparative benchmarks; live electron visualization", 0},
 };
 
 inline constexpr size_t LINEAGE_COUNT = sizeof(KERNEL_LINEAGE) / sizeof(KernelCheckpoint);
 
 // ============================================================================
-// Scale Registry — the 3-5 scale hierarchy
+// Scale Registry  -  the 3-5 scale hierarchy
 // ============================================================================
 
 enum class SimulationScale : uint8_t {
-    Atomistic       = 1,    // Å, fs, kcal/mol   — LJ, bonded, Coulomb
-    CoarseGrained   = 2,    // nm, ps, kJ/mol    — beads, environment-responsive
-    Grain           = 3,    // µm, ns, Pa        — grain boundaries, defects
-    Component       = 4,    // mm, µs, MPa       — FEA-coupled, part-level
-    Macroscopic     = 5,    // m, s, engineering  — system-level, digital twin
+    Atomistic       = 1,    // Å, fs, kcal/mol    -  LJ, bonded, Coulomb
+    CoarseGrained   = 2,    // nm, ps, kJ/mol     -  beads, environment-responsive
+    Grain           = 3,    // µm, ns, Pa         -  grain boundaries, defects
+    Component       = 4,    // mm, µs, MPa        -  FEA-coupled, part-level
+    Macroscopic     = 5,    // m, s, engineering   -  system-level, digital twin
 };
 
 struct ScaleDescriptor {
@@ -174,43 +186,43 @@ inline constexpr ScaleDescriptor SCALE_REGISTRY[] = {
     {SimulationScale::Atomistic,      "Atomistic",
      "Å",  "fs",  "kcal/mol",
      "active",
-     "Fragment → Bead mapping (Morgan + inertia frame)",
-     "—",
+     "Fragment -> Bead mapping (Morgan + inertia frame)",
+     " - ",
      KernelEra::Genesis},
 
     {SimulationScale::CoarseGrained,  "Coarse-Grained",
      "nm", "ps",  "kJ/mol",
      "active",
-     "Bead ensemble → continuum properties (Boltzmann averaging)",
-     "Bead → fragment back-mapping (restrained MD)",
+     "Bead ensemble -> continuum properties (Boltzmann averaging)",
+     "Bead -> fragment back-mapping (restrained MD)",
      KernelEra::Formation},
 
     {SimulationScale::Grain,          "Grain / Microstructure",
      "µm", "ns",  "Pa",
      "partial",
-     "Grain ensemble → effective medium (Voigt-Reuss-Hill)",
-     "Grain → CG back-resolution (defect microstate injection)",
+     "Grain ensemble -> effective medium (Voigt-Reuss-Hill)",
+     "Grain -> CG back-resolution (defect microstate injection)",
      KernelEra::MultiScale},
 
     {SimulationScale::Component,      "Component / Part",
      "mm", "µs",  "MPa",
      "planned",
-     "FEA mesh → system assembly (contact + BC)",
-     "Hotspot → grain-level refinement (adaptive zoom)",
+     "FEA mesh -> system assembly (contact + BC)",
+     "Hotspot -> grain-level refinement (adaptive zoom)",
      KernelEra::MultiScale},
 
     {SimulationScale::Macroscopic,    "Macroscopic / System",
      "m",  "s",   "engineering units",
      "planned",
-     "— (top level: digital twin output)",
-     "System → component decomposition (load extraction)",
+     " -  (top level: digital twin output)",
+     "System -> component decomposition (load extraction)",
      KernelEra::MultiScale},
 };
 
 inline constexpr size_t SCALE_COUNT = sizeof(SCALE_REGISTRY) / sizeof(ScaleDescriptor);
 
 // ============================================================================
-// Property Search Domain — what the multi-scale search can find
+// Property Search Domain  -  what the multi-scale search can find
 // ============================================================================
 
 enum class PropertyDomain : uint8_t {
@@ -235,14 +247,14 @@ inline constexpr PropertyTarget SEARCH_TARGETS[] = {
     // Structural (Scale 1)
     {PropertyDomain::Structural, "Bond length",              "Å",     SimulationScale::Atomistic,     "geom_scraper"},
     {PropertyDomain::Structural, "Bond angle",               "deg",   SimulationScale::Atomistic,     "geom_scraper"},
-    {PropertyDomain::Structural, "Coordination number",      "—",     SimulationScale::Atomistic,     "coordination_shell"},
+    {PropertyDomain::Structural, "Coordination number",      " - ",     SimulationScale::Atomistic,     "coordination_shell"},
     {PropertyDomain::Structural, "RDF peak positions",       "Å",     SimulationScale::Atomistic,     "rdf_accumulator"},
 
     // Mechanical (Scale 2-3)
     {PropertyDomain::Mechanical, "Young's modulus",          "GPa",   SimulationScale::CoarseGrained, "elastic_tensor"},
     {PropertyDomain::Mechanical, "Shear modulus",            "GPa",   SimulationScale::CoarseGrained, "elastic_tensor"},
     {PropertyDomain::Mechanical, "Bulk modulus",             "GPa",   SimulationScale::CoarseGrained, "elastic_tensor"},
-    {PropertyDomain::Mechanical, "Poisson ratio",            "—",     SimulationScale::CoarseGrained, "elastic_tensor"},
+    {PropertyDomain::Mechanical, "Poisson ratio",            " - ",     SimulationScale::CoarseGrained, "elastic_tensor"},
 
     // Thermal (Scale 1-3)
     {PropertyDomain::Thermal,    "Heat capacity (Cp)",       "J/mol·K", SimulationScale::Atomistic,   "thermo_scraper"},
@@ -257,9 +269,9 @@ inline constexpr PropertyTarget SEARCH_TARGETS[] = {
     // Stability (Scale 1-2)
     {PropertyDomain::Stability,  "Formation energy",         "eV/atom", SimulationScale::Atomistic,   "energy_scraper"},
     {PropertyDomain::Stability,  "Thermal stability",        "K",       SimulationScale::Atomistic,   "thermal_runner"},
-    {PropertyDomain::Stability,  "HGST viability",           "—",       SimulationScale::Atomistic,   "hgst_scorer"},
+    {PropertyDomain::Stability,  "HGST viability",           " - ",       SimulationScale::Atomistic,   "hgst_scorer"},
 
-    // Nuclear (Scale 1-3) — the reason this matters
+    // Nuclear (Scale 1-3)  -  the reason this matters
     {PropertyDomain::Nuclear,    "Displacement energy (Ed)", "eV",    SimulationScale::Atomistic,     "cascade_sim"},
     {PropertyDomain::Nuclear,    "Frenkel pair formation",   "eV",    SimulationScale::Atomistic,     "defect_energy"},
     {PropertyDomain::Nuclear,    "Radiation tolerance",      "dpa",   SimulationScale::Grain,         "damage_accumulator"},

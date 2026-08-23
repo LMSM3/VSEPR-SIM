@@ -1,19 +1,19 @@
-#pragma once
+﻿#pragma once
 /**
  * combustion_model.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * Metallic Particle Combustion and Reactive Multiphase Flow
  *
  * Models the combustion of five fuel types observed in EHD-coupled systems
- * (cf. Figure Z.3 — Bergthorson 2015):
+ * (cf. Figure Z.3  -  Bergthorson 2015):
  *
- *   1. Methane (CH₄)       — gaseous premixed flame, reference baseline
- *   2. Iron (Fe)            — surface oxidation, Fe₂O₃ product, orange emission
- *   3. Aluminum (Al)        — vapour-phase, Al₂O₃ product, white/bright flame
- *   4. Boron/Aluminum (B/Al)— hybrid oxidation, B₂O₃+Al₂O₃, green emission (BO₂)
- *   5. Zirconium (Zr)       — surface + vapour-phase, ZrO₂ product, spark shower
+ *   1. Methane (CH₄)        -  gaseous premixed flame, reference baseline
+ *   2. Iron (Fe)             -  surface oxidation, Fe₂O₃ product, orange emission
+ *   3. Aluminum (Al)         -  vapour-phase, Al₂O₃ product, white/bright flame
+ *   4. Boron/Aluminum (B/Al) -  hybrid oxidation, B₂O₃+Al₂O₃, green emission (BO₂)
+ *   5. Zirconium (Zr)        -  surface + vapour-phase, ZrO₂ product, spark shower
  *
  * Physics implemented:
  *
@@ -70,11 +70,11 @@ namespace combustion_constants {
 // ============================================================================
 
 enum class FuelType {
-    METHANE,           // CH₄ — gaseous reference
-    IRON,              // Fe  — heterogeneous surface oxidation
-    ALUMINUM,          // Al  — vapour-phase combustion
-    BORON_ALUMINUM,    // B/Al alloy — mixed-mode
-    ZIRCONIUM          // Zr  — hybrid combustion, spark emission
+    METHANE,           // CH₄  -  gaseous reference
+    IRON,              // Fe   -  heterogeneous surface oxidation
+    ALUMINUM,          // Al   -  vapour-phase combustion
+    BORON_ALUMINUM,    // B/Al alloy  -  mixed-mode
+    ZIRCONIUM          // Zr   -  hybrid combustion, spark emission
 };
 
 // ============================================================================
@@ -120,16 +120,16 @@ struct FuelData {
     // --- Combustion thermodynamics ---
     double heat_of_combustion;  // ΔH_c (J/kg), positive for exothermic
     double stoich_air_fuel;     // stoichiometric air-to-fuel mass ratio
-    double activation_energy;   // E_a (J/mol) — Arrhenius
-    double pre_exponential;     // A (1/s) — Arrhenius pre-exponential
+    double activation_energy;   // E_a (J/mol)  -  Arrhenius
+    double pre_exponential;     // A (1/s)  -  Arrhenius pre-exponential
 
     // --- d²-law parameters ---
-    double burning_rate_K;      // K (m²/s) — burning-rate constant at 300 K, 21% O₂
+    double burning_rate_K;      // K (m²/s)  -  burning-rate constant at 300 K, 21% O₂
     double burning_rate_n;      // d^n law exponent (2 for classical d² law)
 
     // --- Radiative properties ---
-    double emissivity;          // ε_p — effective particle emissivity
-    double peak_wavelength_nm;  // λ_peak (nm) — characteristic emission
+    double emissivity;          // ε_p  -  effective particle emissivity
+    double peak_wavelength_nm;  // λ_peak (nm)  -  characteristic emission
     std::string emission_species; // Emitting species (e.g., "BO₂", "AlO", "FeO")
 
     // --- Adiabatic flame temperature ---
@@ -140,7 +140,7 @@ struct FuelData {
 };
 
 // ============================================================================
-// Thermodynamic Database — Five fuels from Figure Z.3
+// Thermodynamic Database  -  Five fuels from Figure Z.3
 // ============================================================================
 
 /**
@@ -171,7 +171,7 @@ inline FuelData get_fuel_data(FuelType fuel) {
             /* K           */ 0.0,        // Not applicable to gas
             /* n           */ 2.0,
             /* emissivity  */ 0.10,       // low luminosity (blue flame)
-            /* λ_peak      */ 431.0,      // nm — CH band
+            /* λ_peak      */ 431.0,      // nm  -  CH band
             /* emission    */ "CH*",
             /* T_ad        */ 2223.0,     // K
             /* oxide       */ {"CO2", 0.04401, 194.7, 216.6, 1562.0}
@@ -187,14 +187,14 @@ inline FuelData get_fuel_data(FuelType fuel) {
             /* T_melt      */ 1811.0,
             /* T_boil      */ 3134.0,
             /* c_p         */ 449.0,
-            /* ΔH_c        */ 7.4e6,      // 7.4 MJ/kg (→ Fe₂O₃)
+            /* ΔH_c        */ 7.4e6,      // 7.4 MJ/kg (-> Fe₂O₃)
             /* AF_stoich   */ 1.29,
             /* E_a         */ 168.0e3,    // J/mol (iron oxidation)
             /* A           */ 2.1e6,
             /* K           */ 3.0e-7,     // m²/s (surface-reaction limited)
             /* n           */ 1.0,        // d^1 law for surface regime
             /* emissivity  */ 0.85,       // high emissivity, orange glow
-            /* λ_peak      */ 590.0,      // nm — FeO orange-red emission
+            /* λ_peak      */ 590.0,      // nm  -  FeO orange-red emission
             /* emission    */ "FeO",
             /* T_ad        */ 2340.0,
             /* oxide       */ {"Fe2O3", 0.15969, 1839.0, 3414.0, 5250.0}
@@ -210,14 +210,14 @@ inline FuelData get_fuel_data(FuelType fuel) {
             /* T_melt      */ 933.5,
             /* T_boil      */ 2743.0,
             /* c_p         */ 897.0,
-            /* ΔH_c        */ 31.1e6,     // 31.1 MJ/kg (→ Al₂O₃)
+            /* ΔH_c        */ 31.1e6,     // 31.1 MJ/kg (-> Al₂O₃)
             /* AF_stoich   */ 3.97,
             /* E_a         */ 73.6e3,     // J/mol
             /* A           */ 1.5e7,
             /* K           */ 2.0e-6,     // m²/s (classical d² law)
             /* n           */ 2.0,
             /* emissivity  */ 0.95,       // very bright white flame
-            /* λ_peak      */ 484.0,      // nm — AlO B-X band, broad continuum
+            /* λ_peak      */ 484.0,      // nm  -  AlO B-X band, broad continuum
             /* emission    */ "AlO",
             /* T_ad        */ 3673.0,     // K (highest of common metal fuels)
             /* oxide       */ {"Al2O3", 0.10196, 2345.0, 3250.0, 3950.0}
@@ -240,7 +240,7 @@ inline FuelData get_fuel_data(FuelType fuel) {
             /* K           */ 1.5e-6,
             /* n           */ 2.0,
             /* emissivity  */ 0.88,       // green-tinted emission
-            /* λ_peak      */ 546.0,      // nm — BO₂ green system
+            /* λ_peak      */ 546.0,      // nm  -  BO₂ green system
             /* emission    */ "BO2",
             /* T_ad        */ 3450.0,
             /* oxide       */ {"B2O3+Al2O3", 0.0696, 723.0, 2133.0, 2550.0}
@@ -256,14 +256,14 @@ inline FuelData get_fuel_data(FuelType fuel) {
             /* T_melt      */ 2128.0,
             /* T_boil      */ 4682.0,
             /* c_p         */ 278.0,
-            /* ΔH_c        */ 12.0e6,     // 12 MJ/kg (→ ZrO₂)
+            /* ΔH_c        */ 12.0e6,     // 12 MJ/kg (-> ZrO₂)
             /* AF_stoich   */ 1.75,
             /* E_a         */ 142.0e3,
             /* A           */ 3.0e6,
             /* K           */ 4.0e-7,     // m²/s (slower than Al)
             /* n           */ 1.8,        // slightly sub-d² behaviour
             /* emissivity  */ 0.80,       // sparking, bright yellow-white
-            /* λ_peak      */ 560.0,      // nm — ZrO bands, broadband
+            /* λ_peak      */ 560.0,      // nm  -  ZrO bands, broadband
             /* emission    */ "ZrO",
             /* T_ad        */ 2950.0,
             /* oxide       */ {"ZrO2", 0.12322, 2988.0, 4573.0, 5680.0}
@@ -493,7 +493,7 @@ struct ParticleCloud {
  * Volume-averaged heat source from N_p particles in a cell of volume V_cell:
  *   S_h = (N_p / V_cell) · Q_dot_per_particle
  *
- * Returns W/m³ — added to the energy equation RHS.
+ * Returns W/m³  -  added to the energy equation RHS.
  */
 inline double volumetric_heat_source(double Q_dot_per_particle,
                                       double N_p_per_volume) {
@@ -734,7 +734,7 @@ inline std::vector<FuelComparison> build_fuel_comparison() {
 }
 
 // ============================================================================
-// EHD–Combustion Coupling
+// EHD-Combustion Coupling
 // ============================================================================
 
 /**

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * atomistic-sim: Unified Molecular Simulation & Prediction Tool
  * 
  * Replaces old batch system with integrated workflow:
@@ -56,10 +56,10 @@ namespace fs = std::filesystem;
 
 void print_header() {
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║         atomistic-sim: Molecular Simulation & Prediction         ║\n";
-    std::cout << "║              Integrated VSEPR + Force Field Engine           ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==============================================================+\n";
+    std::cout << "|         atomistic-sim: Molecular Simulation & Prediction         |\n";
+    std::cout << "|              Integrated VSEPR + Force Field Engine           |\n";
+    std::cout << "+==============================================================+\n";
     std::cout << "\n";
 }
 
@@ -147,7 +147,7 @@ std::string timestamp() {
 // ============================================================================
 
 void mode_energy(const SimConfig& config) {
-    std::cout << "═══ MODE: Single-Point Energy ═══\n\n";
+    std::cout << "=== MODE: Single-Point Energy ===\n\n";
     
     // Load structure
     vsepr::io::XYZReader reader;
@@ -181,7 +181,7 @@ void mode_energy(const SimConfig& config) {
         E_total += s_nb.E.UvdW + s_nb.E.UCoul;
     }
     
-    std::cout << "─────────────────────────────────\n";
+    std::cout << "---------------------------------\n";
     std::cout << "Total energy:     " << E_total << " kcal/mol\n\n";
     
     // Save output
@@ -198,7 +198,7 @@ void mode_energy(const SimConfig& config) {
 // ============================================================================
 
 void mode_optimize(const SimConfig& config) {
-    std::cout << "═══ MODE: Geometry Optimization ═══\n\n";
+    std::cout << "=== MODE: Geometry Optimization ===\n\n";
     
     vsepr::io::XYZReader reader;
     vsepr::io::XYZMolecule mol;
@@ -287,7 +287,7 @@ void mode_optimize(const SimConfig& config) {
 // ============================================================================
 
 void mode_conformers(const SimConfig& config) {
-    std::cout << "═══ MODE: Conformer Ensemble ═══\n\n";
+    std::cout << "=== MODE: Conformer Ensemble ===\n\n";
     
     vsepr::io::XYZReader reader;
     vsepr::io::XYZMolecule mol;

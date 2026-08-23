@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * kinetic_event_record.hpp
  * ========================
@@ -42,7 +42,7 @@ struct GenericTransportEvent {
 };
 
 // ============================================================================
-// Event payload — type-safe union of all physics-specific events
+// Event payload  -  type-safe union of all physics-specific events
 // ============================================================================
 
 using EventPayload = std::variant<

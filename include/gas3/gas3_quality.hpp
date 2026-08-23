@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas3_quality.hpp
  * ----------------
  * Quality Scoring and Tier Classification for Gas3 Module.
@@ -75,7 +75,7 @@ inline QualityPenalties compute_penalties(const GasStateRecord& r) {
     // 1. Convergence
     if (!r.converged) {
         p.not_converged = -100.0;
-        return p;  // Automatic Q0 — no further analysis meaningful
+        return p;  // Automatic Q0  -  no further analysis meaningful
     }
 
     // 2. Physical validity

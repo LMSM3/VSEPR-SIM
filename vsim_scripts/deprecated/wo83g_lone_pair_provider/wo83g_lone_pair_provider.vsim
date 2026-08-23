@@ -1,0 +1,62 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83g_lone_pair_provider.vsim
+# Tier B — native replacement for demo_wo83g_lone_pair_provider.py
+#
+# STUB: [classify.providers] section does not exist in vsim_document.hpp yet.
+#       LonePairProvider is a C++-only interface; no VSIM-language entry point.
+#
+# What works today:  NH3 and H2O lone pairs are inferred from element table
+#                    (N=1 lone pair, O=2 lone pairs) — element-based path only.
+# What is deferred:  Provider-backed lone pairs, transition metals, f-block (WO-84B).
+#
+# Python equivalent:
+#   assert "vsepr_report" in nh3
+#   assert "site[" in nh3           # at least one classified site present
+
+[project]
+name    = wo83g_lone_pair_provider_nh3
+version = v5.0.0
+
+[material]
+formula = NH3
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.providers]
+# lone_pair = element_inference     # STUB: field not parsed (WO-84A)
+#                                   # DEFERRED WO-84B: ElementLonePairProvider
+#                                   # must cover Xe, Kr, Rn, d/f-block before
+#                                   # this field has real effect
+#
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "site["
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83g_lone_pair_provider_h2o
+version = v5.0.0
+
+[material]
+formula = H2O
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.providers]
+# lone_pair = element_inference     # STUB: field not parsed (WO-84A)
+#
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "site["
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

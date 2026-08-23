@@ -1,14 +1,14 @@
-/**
- * test_energy_units.cpp  —  Energy unit system verification tests
+﻿/**
+ * test_energy_units.cpp   -   Energy unit system verification tests
  * ================================================================
  * VSEPR-SIM 3.0.1
  *
  * Tests:
- *   T1 : Hartree→eV conversion (CODATA)
- *   T2 : Hartree→kcal/mol conversion
- *   T3 : Hartree→kJ/mol conversion
- *   T4 : Round-trip: Ha→eV→Ha identity
- *   T5 : Round-trip: Ha→kcal→Ha identity
+ *   T1 : Hartree->eV conversion (CODATA)
+ *   T2 : Hartree->kcal/mol conversion
+ *   T3 : Hartree->kJ/mol conversion
+ *   T4 : Round-trip: Ha->eV->Ha identity
+ *   T5 : Round-trip: Ha->kcal->Ha identity
  *   T6 : Energy::from_ev construction
  *   T7 : Energy arithmetic (+, -, *, negation)
  *   T8 : Thermal accessibility at 298 K
@@ -66,7 +66,7 @@ static int g_failed = 0;
         throw std::runtime_error(std::string("Expected \"") + (needle) + "\" in: " + (s)); } } while(0)
 
 // ============================================================================
-// T1: Hartree → eV
+// T1: Hartree -> eV
 // ============================================================================
 
 static void test_hartree_to_ev() {
@@ -75,7 +75,7 @@ static void test_hartree_to_ev() {
 }
 
 // ============================================================================
-// T2: Hartree → kcal/mol
+// T2: Hartree -> kcal/mol
 // ============================================================================
 
 static void test_hartree_to_kcalmol() {
@@ -84,7 +84,7 @@ static void test_hartree_to_kcalmol() {
 }
 
 // ============================================================================
-// T3: Hartree → kJ/mol
+// T3: Hartree -> kJ/mol
 // ============================================================================
 
 static void test_hartree_to_kjmol() {
@@ -93,7 +93,7 @@ static void test_hartree_to_kjmol() {
 }
 
 // ============================================================================
-// T4: Round-trip Ha → eV → Ha
+// T4: Round-trip Ha -> eV -> Ha
 // ============================================================================
 
 static void test_roundtrip_ev() {
@@ -104,7 +104,7 @@ static void test_roundtrip_ev() {
 }
 
 // ============================================================================
-// T5: Round-trip Ha → kcal → Ha
+// T5: Round-trip Ha -> kcal -> Ha
 // ============================================================================
 
 static void test_roundtrip_kcal() {
@@ -448,7 +448,7 @@ int main() {
     TEST(energy_comparison)
     TEST(rq_multi_unit)
 
-    std::cout << "\n  ──────────────────────────────────────────────\n";
+    std::cout << "\n  ----------------------------------------------\n";
     std::cout << "  Results: " << g_passed << " passed, " << g_failed << " failed\n";
 
     if (g_failed == 0) {

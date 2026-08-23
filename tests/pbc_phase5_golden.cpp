@@ -1,8 +1,8 @@
-// =============================================================================
-// tests/pbc_phase5_golden.cpp — Group 25: PBC Core
+﻿// =============================================================================
+// tests/pbc_phase5_golden.cpp  -  Group 25: PBC Core
 // =============================================================================
 //
-// Phase 5 — Golden Regression Tests:
+// Phase 5  -  Golden Regression Tests:
 //   2-particle across boundary, 64-particle edge cloud, FCC 4×4×4 (256).
 //   Lock down physics for future refactors.
 //
@@ -11,7 +11,7 @@
 /*
 pbc_phase5_golden.cpp
 ---------------------
-Phase 5 — Golden Regression Tests
+Phase 5  -  Golden Regression Tests
 
 Lock down correctness across refactors with fixed-seed scenarios:
 1. Two particles across boundary (dist=0.2)
@@ -386,9 +386,9 @@ void test_fcc_lattice_4x4x4(int& passed, int& failed) {
 int main() {
     std::cout << std::fixed << std::setprecision(10);
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PBC Phase 5 — Golden Regression Tests                   ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  PBC Phase 5  -  Golden Regression Tests                   |\n";
+    std::cout << "+============================================================+\n";
     std::cout << "\nThese tests lock down correctness for future refactors.\n";
     std::cout << "Golden values are computed once and stored in the code.\n";
     std::cout << "\nLennard-Jones Parameters:\n";
@@ -414,15 +414,15 @@ int main() {
     std::cout << "Tests Failed: " << failed << "\n";
     
     if (failed == 0) {
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✓✓✓ PHASE 5 COMPLETE — GOLDEN TESTS PASS            ✓✓✓ ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ✓✓✓ PHASE 5 COMPLETE  -  GOLDEN TESTS PASS            ✓✓✓ |\n";
+        std::cout << "+============================================================+\n";
         std::cout << "\nPhysics locked down. Safe to refactor.\n\n";
         return 0;
     } else {
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✗✗✗ PHASE 5 FAILED — REGRESSION DETECTED            ✗✗✗ ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ✗✗✗ PHASE 5 FAILED  -  REGRESSION DETECTED            ✗✗✗ |\n";
+        std::cout << "+============================================================+\n";
         std::cout << "\nCheck for numerical drift or physics changes.\n\n";
         return 1;
     }

@@ -1,0 +1,1651 @@
+\documentclass[11pt,a4paper]{article}
+
+%% ── Encoding & fonts ──────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+%% ── Core packages ────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathrsfs}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{mdframed}
+\usepackage{setspace}
+
+%% ── Page geometry ────────────────────────────────────────────────────────────
+\geometry{
+  left=2.5cm, right=2.5cm,
+  top=3.0cm,  bottom=2.8cm,
+  headheight=15pt
+}
+
+%% ── Hyperref ─────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=black,
+  pdftitle={Unified Identity, Information, and Scale-Coalescence Formulation},
+  pdfauthor={Theoretical Division}
+}
+
+%% ── Listings style ───────────────────────────────────────────────────────────
+\definecolor{codebg}{gray}{0.93}
+\lstset{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codebg},
+  frame=single,
+  framerule=0.4pt,
+  rulecolor=\color{black!40},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=2,
+  showstringspaces=false,
+  captionpos=b,
+  xleftmargin=6pt,
+  xrightmargin=6pt
+}
+
+%% ── Section title styling ────────────────────────────────────────────────────
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.6em}{}[\vspace{-2pt}\rule{\textwidth}{0.4pt}]
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\itshape}{\thesubsubsection}{0.5em}{}
+
+%% ── Header / footer (body pages) ─────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize\textsc{UIISCF} \textbar{} \textit{Identity, Information, and Scale-Coalescence}}
+\rhead{\footnotesize Rev.~1.0}
+\lfoot{\footnotesize\today}
+\rfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+%% ── Notation macros ──────────────────────────────────────────────────────────
+\newcommand{\Pid}{\mathscr{P}}
+\newcommand{\Rec}{\Xi}
+\newcommand{\Cond}{\mho}
+\newcommand{\Quota}{\mathcal{Q}}
+\newcommand{\Qvec}{\mathbf{Q}}
+\newcommand{\avec}{\mathbf{a}}
+\newcommand{\bvec}{\mathbf{b}}
+\newcommand{\rvec}{\mathbf{r}}
+\newcommand{\vvec}{\mathbf{v}}
+\newcommand{\Fvec}{\mathbf{F}}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\newcommand{\kB}{k_{\mathrm{B}}}
+\newcommand{\eV}{\,\mathrm{eV}}
+\newcommand{\ang}{\,\text{\AA}}
+\newcommand{\fs}{\,\mathrm{fs}}
+\newcommand{\amu}{\,\mathrm{amu}}
+\newcommand{\lbond}{\ell_{\mathrm{bond}}}
+
+%% ── SM's Law interjection environment ────────────────────────────────────────
+\newmdenv[
+  topline=true,
+  bottomline=true,
+  rightline=false,
+  leftline=false,
+  linewidth=1.2pt,
+  linecolor=black,
+  innertopmargin=8pt,
+  innerbottommargin=8pt,
+  innerleftmargin=0pt,
+  innerrightmargin=0pt,
+  skipabove=12pt,
+  skipbelow=12pt
+]{smlaw}
+
+%% ── Captioning ───────────────────────────────────────────────────────────────
+\captionsetup{font=small, labelfont=bf}
+
+%% ═════════════════════════════════════════════════════════════════════════════
+\begin{document}
+%% ═════════════════════════════════════════════════════════════════════════════
+
+%%─────────────────────────────────────────────────────────────────────────────
+%% TITLE PAGE
+%%─────────────────────────────────────────────────────────────────────────────
+\thispagestyle{empty}
+
+\vspace*{3cm}
+
+\begin{center}
+  \noindent\rule{\textwidth}{1.2pt}
+  \vspace{1.2em}
+
+  {\fontsize{22}{28}\selectfont\bfseries
+    Unified Identity, Information,\\[0.3em]
+    and Scale-Coalescence Formulation
+  }
+
+  \vspace{0.9em}
+  \noindent\rule{\textwidth}{0.5pt}
+  \vspace{0.9em}
+
+  {\large\itshape
+    A Theory of Particle Identity, Information Propagation,\\[0.2em]
+    and Emergent Structure Across Physical Scales
+  }
+
+  \vspace{2.4em}
+
+  {\normalsize
+    \textsc{Theoretical Division}\\[0.5em]
+    \textit{Particle Physics and Molecular Simulation Research Group}
+  }
+
+  \vspace{2em}
+
+  {\small
+    \begin{tabular}{rl}
+      \textbf{Document identifier:} & UIISCF-1.0 \\[0.3em]
+      \textbf{Revision:}            & 1.0 \\[0.3em]
+      \textbf{Date:}                & \today \\[0.3em]
+      \textbf{Status:}              & Theoretical specification \\
+    \end{tabular}
+  }
+
+  \vspace{3cm}
+
+  \noindent\rule{\textwidth}{0.5pt}
+  \vspace{0.9em}
+
+  \begin{minipage}{0.82\textwidth}
+  \small\textbf{Abstract.}\quad
+  This document formalises the Unified Identity, Information, and
+  Scale-Coalescence Formulation (UIISCF): a theoretical framework that
+  unifies classical molecular dynamics, subatomic particle identity,
+  information accounting, and emergent structure under a single symbolic
+  layer.  The formulation is grounded in measured data from high-energy
+  collider experiments and calibrated against the established hadron spectrum,
+  nuclear binding energies, and atomic ionisation data.  Four primitives
+  organise the theory: the identity-bearing particle $\Pid_i$, the recoverable
+  information $\Rec_i$, the interaction conductance $\Cond_{ij}$, and the
+  active scale-identity quota $\Quota_S$.  Two governing laws constrain all
+  interactions and emergence events.  Nineteen sections cover the complete
+  theoretical and implementation specification, from global state representation
+  through detector reconstruction, solver comparison, and version gating.
+  \end{minipage}
+
+  \vspace{0.9em}
+  \noindent\rule{\textwidth}{1.2pt}
+\end{center}
+
+\newpage
+
+%%─────────────────────────────────────────────────────────────────────────────
+%% TABLE OF CONTENTS
+%%─────────────────────────────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Motivation and Theoretical Basis}\label{sec:motivation}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Problem with Particle Identity}
+
+In orthodox quantum field theory, a particle is a quantised excitation of a
+field --- an eigenstate of the particle-number operator.  This description is
+mathematically complete but operationally opaque.  At a particle collider,
+no particle is ever directly observed: the detector records energy deposits,
+timing signals, and ionisation trails.  What experimenters call a ``proton''
+or an ``electron'' is a reconstruction: a chain of inference from raw detector
+hits through track-fitting algorithms, calorimeter clustering, and
+vertex-finding to an assigned identity label and four-momentum.  The particle,
+in this sense, is the output of an information-processing pipeline, not a
+primitive input to it.
+
+This observation is not merely philosophical.  The reconstruction efficiency,
+the mis-identification rate, the momentum resolution --- all of these are
+information-theoretic quantities.  When a $\pi^+$ and a $\pi^-$ are produced
+in the same collision, the question of which track belongs to which pion is a
+question about recoverable information, not about the ``true'' identities of
+the particles in any absolute sense.  The identities are exactly as
+distinguishable as the data permits them to be.
+
+The Unified Identity, Information, and Scale-Coalescence Formulation takes
+this observation seriously and elevates it to a design principle.  Identity
+is not a God-given label attached to a particle at creation; it is a quantity
+of distinguishability that is budgeted, transferred, and depleted as
+particles interact.  The recoverable information $\Rec_i$ is the
+formal expression of this budget.
+
+\subsection{Grounding in CERN Experimental Data}
+
+The scale ladder at the heart of UIISCF is not arbitrary.  Each rung
+corresponds to a level of matter at which experimental data is available to
+constrain the parameters.
+
+\textbf{Scale 0 --- Quarks and the Cornell potential.}
+The confining potential between quarks,
+$E_{\mathrm{conf}}(r) = \kappa r + \alpha_s / r$, was not invented for this
+formalism.  It was extracted from quarkonium spectroscopy data: the $J/\psi$,
+$\Upsilon$, and charmonium excited-state mass splittings measured at SLAC,
+CERN, and the Tevatron constrain $\kappa \approx 0.18\,\mathrm{GeV}^2$ and
+$\alpha_s \approx 0.12$--$0.30$ at hadronic scales.  The colour-averaged
+interaction (CAI) model used here is a direct approximation to the effective
+quark-antiquark potential inferred from these spectra, not a first-principles
+QCD calculation.  The \texttt{full\_qcd = false} flag is mandatory precisely
+because the distinction matters.
+
+\textbf{Scale 1 --- Hadron formation and nuclear binding.}
+The bonding threshold $\lbond^{(1)} \approx 10^{-4}\ang$ and the birth
+criterion $m \geq 2$ (meson) or $m \geq 3$ (baryon) are set by the measured
+hadron sizes from electron--proton scattering at HERA and the proton charge
+radius from precision hydrogen spectroscopy.  The baryon asymmetry in
+scale-1 coalescence --- that three quarks form a baryon more readily than two
+--- is a direct consequence of the colour-neutrality constraint on the
+triplet state.
+
+\textbf{Scale 2 --- Atoms and classical MD.}
+At the atomic scale the formalism reduces exactly to classical molecular
+dynamics.  The force fields (Lennard-Jones, Morse, CHARMM, AMBER) used at
+this scale are calibrated against crystal structure data, neutron scattering
+spectra, and ab initio quantum chemical calculations.  The classical MD bridge
+(Section~\ref{sec:cmd}) makes this reduction exact and not approximate: no
+information from the subatomic layers leaks into the classical layer unless
+\texttt{info\_track} is explicitly enabled.
+
+\textbf{Scales 3--4 --- Molecules and clusters.}
+Bonding thresholds at the molecular and cluster scales are set from measured
+bond lengths (crystallographic databases), dissociation energies (gas-phase
+thermochemistry), and cluster stability data from mass spectrometry.
+
+\subsection{Why These Four Primitives}
+
+The choice of $\Pid_i$, $\Rec_i$, $\Cond_{ij}$, and $\Quota_S$ as the four
+primitives of the formalism is not arbitrary.  Together they form a minimal
+complete basis for describing identity, information, coupling, and emergence.
+
+The \emph{identity-bearing particle} $\Pid_i$ is the carrier: it is the
+thing that has properties, occupies space, and participates in interactions.
+Without an identity carrier, there is nothing to track.  The calligraphic
+$\mathscr{P}$ notation is chosen to distinguish it from the Hamiltonian
+operator $\hat{H}$ or the momentum $p$, with which it must coexist in the
+same equations.
+
+The \emph{recoverable information} $\Rec_i$ quantifies how distinguishable
+$\Pid_i$ is from its environment.  This is the quantity that decreases when
+particles interact (SM's First Law) and is partially inherited when new
+identities form (SM's Second Law).  Using the Greek capital $\Xi$ --- a letter
+with no strong prior claim in this domain --- deliberately avoids confusion
+with entropy $S$, energy $E$, or the wavefunction $\Psi$.  The unit choice
+(nats) is deliberate: nats are the natural unit of information in continuous
+distributions, compatible with the thermodynamic entropy in the same units
+via $S = k_{\mathrm{B}} \Rec$.
+
+The \emph{interaction conductance} $\Cond_{ij}$ encodes the rate at which
+information flows between $\Pid_i$ and $\Pid_j$ when they interact.  The
+siemens-derived symbol $\mho$ is a deliberate analogy: just as electrical
+conductance governs charge flow between two nodes, interaction conductance
+governs information flow between two identities.  A high-conductance pair
+exchanges information rapidly; a zero-conductance pair does not interact.
+
+The \emph{scale-identity quota} $\Quota_S$ counts how many active identities
+exist at each scale.  It is an integer quantity because identity is discrete:
+you cannot have half a proton.  Its dynamics (SM's Second Law) describe
+emergence --- the birth of higher-scale identities from lower-scale
+coalescence --- in a way that is countable, verifiable, and conserved within
+the constraints of baryon number and lepton number.
+
+\subsection{A More Intuitive Representation of Matter}
+
+The standard approach to multi-scale simulation runs separate models at
+separate scales and couples them at boundaries: a quantum mechanics / molecular
+mechanics (QM/MM) boundary, or a coarse-grained / fine-grained boundary.
+These boundaries are artificial and generate artefacts: force discontinuities,
+energy drift, and ambiguity about which particles belong to which region.
+
+UIISCF removes the explicit boundary by treating scale as a dynamic property
+of the identity, not a property of the simulation domain.  A carbon atom is a
+scale-2 identity.  If sufficient energy is deposited, it can be ionised (losing
+recoverable information to the environment) or, in extreme conditions,
+resolved into its nuclear constituents (a scale-1 event, only reachable with
+the subatomic channels active).  The same state vector $\Omega(t)$ holds the
+atom regardless of which channels are active; the active channels determine
+which interactions are resolved and which are approximated.
+
+This architecture mirrors how matter actually works: the nucleus is always
+there inside the atom, but at chemical energies its internal degrees of
+freedom are frozen out.  UIISCF makes this freezing-out explicit through
+version gating and scale-channel weights, rather than hiding it inside a
+force field.  The result is a representation of matter that can be understood
+from the bottom up, starting with quarks and building to clusters, rather
+than bolted together from separate codes that happen to share a boundary.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Notation Layer}\label{sec:notation}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Four primitive symbols are introduced.  All subsequent formalism is expressed
+in terms of these primitives and the standard MD state.  The motivation for
+each choice is discussed in Section~\ref{sec:motivation}; here the symbols
+are defined precisely.
+
+\begin{table}[H]
+\centering
+\caption{UIISCF primitive notation.}
+\label{tab:notation}
+\begin{tabular}{@{}clll@{}}
+\toprule
+Symbol & \LaTeX\ macro & Meaning & Units / Domain \\
+\midrule
+$\Pid_i$ & \texttt{\textbackslash mathscr\{P\}\_i} &
+  Identity-bearing particle at scale $n$ &
+  Dimensionless label \\
+$\Rec_i$ & \texttt{\textbackslash Xi\_i} &
+  Recoverable distinguishability (information) of $\Pid_i$ &
+  nats \\
+$\Cond_{ij}$ & \texttt{\textbackslash mho\_\{ij\}} &
+  Interaction conductance between $\Pid_i$ and $\Pid_j$ &
+  $[\mathrm{nats\,fs^{-1}}]$ \\
+$\Quota_S$ & \texttt{\textbackslash mathcal\{Q\}\_S} &
+  Active scale-identity quota at scale $S$ &
+  $\mathbb{Z}_{\geq 0}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The symbol $n$ denotes scale level: $n=0$ (quark), $n=1$ (hadron/nucleus),
+$n=2$ (atom), $n=3$ (molecule), and so on.  Scale levels are open-ended;
+an implementation gates which levels are active via version constraints
+(Section~\ref{sec:version}).
+
+\bigskip
+
+The two governing laws are stated here in full and recur as interjections
+throughout the formalism wherever they constrain a derivation.
+
+\begin{smlaw}
+\textbf{First Law of Identity --- Conservation of Distinguishability.}\\[4pt]
+Every pairwise interaction redistributes or consumes recoverable information.
+No interaction is information-neutral.  Formally:
+\[
+  \Pid_i \leftrightarrow \Pid_j
+  \;\implies\;
+  \Delta\Rec_{ij} < 0 \;\;\text{or}\;\; \Delta S_{ij} > 0 ,
+\]
+where $\Delta\Rec_{ij} = \Rec_i' + \Rec_j' - \Rec_i - \Rec_j$ is the change
+in total recoverable information and $\Delta S_{ij}$ is the entropy produced
+by the interaction.  Equality $\Delta\Rec_{ij}=0,\;\Delta S_{ij}=0$ is
+forbidden for any physical interaction.
+\end{smlaw}
+
+\begin{smlaw}
+\textbf{Second Law of Identity --- Scale-Coalescence Birth Criterion.}\\[4pt]
+When $m \geq 3$ lower-scale identities satisfy mutual proximity and bond
+maturity, a new higher-scale identity is born:
+\[
+  m \geq 3,\quad
+  d_{ij}^{(n)} \leq \lbond^{(n)},\quad
+  B_n\!\left(C_n\right) \geq \tau_B
+  \;\implies\;
+  \mathrm{Exist}\!\left(\Pid_*^{(n+1)}\right) = 1,\quad
+  \Delta\Quota_S = +1 ,
+\]
+where $d_{ij}^{(n)}$ is the pairwise separation at scale $n$,
+$\lbond^{(n)}$ is the scale-$n$ bonding length threshold,
+$B_n(C_n)$ is the bond maturity functional evaluated on bond count $C_n$,
+and $\tau_B$ is the maturity threshold.  The new identity $\Pid_*^{(n+1)}$
+inherits summed mass, net charge, and a fresh $\Rec$ budget.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Global State}\label{sec:global}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The simulation state at time $t$ is the tuple
+\[
+  \Omega(t) \;=\;
+  \bigl(
+    \mathbf{R}(t),\;
+    \mathbf{V}(t),\;
+    \mathbf{F}(t),\;
+    \mathbf{M},\;
+    \mathbf{Z},\;
+    \boldsymbol{\Rec}(t),\;
+    \boldsymbol{\Cond}(t),\;
+    \Quota_S(t),\;
+    \mathbf{H}(t),\;
+    E_{\mathrm{tot}}(t),\;
+    t,\;
+    \Delta t
+  \bigr) ,
+\]
+where $\mathbf{R}$, $\mathbf{V}$, $\mathbf{F} \in \mathbb{R}^{N \times 3}$
+are position, velocity, and force arrays over $N$ particles;
+$\mathbf{M} \in \mathbb{R}^N$ is the mass vector;
+$\mathbf{Z} \in \mathbb{Z}^N$ is the atomic-number / particle-species vector;
+$\boldsymbol{\Rec}(t) \in \mathbb{R}^N$ is the per-particle recoverable
+information vector;
+$\boldsymbol{\Cond}(t)$ is the sparse conductance matrix (non-zero only for
+bonded or proximate pairs);
+$\Quota_S(t) \in \mathbb{Z}_{\geq 0}$ is the active identity count at each
+scale;
+$\mathbf{H}(t)$ is the $3\times3$ cell matrix;
+$E_{\mathrm{tot}}$ is total energy; and $\Delta t$ is the current timestep.
+
+\noindent
+Compared to classical MD, the state $\Omega$ carries two new blocks:
+$\boldsymbol{\Rec}$ and $\boldsymbol{\Cond}$.  These blocks are dormant
+(zero-cost) when information tracking is disabled and active only when
+explicitly requested.  This design ensures full backward compatibility with
+existing MD workflows: a simulation that never writes to these blocks
+behaves identically to a classical MD run.
+
+\subsection{State-Vector Projection}
+
+The universal state vector $\Qvec$ projects onto $\Omega$ via:
+\[
+  \Qvec(t) \;=\;
+  \bigl[\,\mathbf{R}^\top \;\big|\; \mathbf{V}^\top \;\big|\;
+         \boldsymbol{\Rec}^\top \;\big|\; \mathrm{vec}(\boldsymbol{\Cond}) \,\bigr]^\top .
+\]
+Every observable (pressure, temperature, spectra, identity counts) is a
+projection $\mathcal{P}_\alpha(\Qvec)$ for some projection operator
+$\mathcal{P}_\alpha$.  The identity-information block
+$[\boldsymbol{\Rec}^\top \mid \mathrm{vec}(\boldsymbol{\Cond})]$ is new in
+UIISCF and was absent from the classical MD projection.
+
+\subsection{Initialisation Invariants}
+
+At $t=0$ the following must hold:
+\begin{enumerate}[leftmargin=1.5em]
+  \item $\Rec_i(0) = \Rec_i^{\mathrm{birth}}$ for every particle, set from
+    the species registry.
+  \item $\Cond_{ij}(0) = 0$ for all pairs unless an explicit bond is declared
+    in the input block.
+  \item $\Quota_S(0) = N$ (all particles are scale-$n$ identities).
+  \item $\mathbf{H}(0)$ is orthonormal and volume-positive:
+    $\det(\mathbf{H}) > 0$.
+\end{enumerate}
+
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Scale Identity Ladder}\label{sec:ladder}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The scale ladder is the structural backbone of UIISCF.  Rather than
+committing to a single level of description, the formalism assigns each
+identity to a rung $n$ and allows transitions between rungs through
+coalescence (upward) and dissociation (downward).  The parameters at each
+rung are not freely adjustable: they are anchored to measured data.  The
+bonding lengths come from scattering cross-sections and structural databases;
+the birth thresholds come from nuclear and molecular stability measurements;
+the maturity exponents are calibrated so that the formation rate of common
+hadrons and small molecules reproduces known reaction rates at the relevant
+temperatures.
+
+The reason for requiring $m \geq 3$ as the minimum coalescence count
+(rather than two, as in a naive bonding model) is both physical and
+computational.  Physically, two-body encounters rarely produce stable bound
+states without a third body to carry away excess momentum: this is the
+standard three-body recombination argument in atomic and nuclear physics.
+Computationally, requiring a minimum of three participants prevents spurious
+coalescence events from cascading through the identity ladder during periods
+of high-density fluctuation.
+
+Particles are organised on a discrete scale ladder.  Each rung $n$ has its own
+bonding threshold, maturity functional, and information budget.
+
+\begin{table}[H]
+\centering
+\caption{Scale identity ladder rungs.  Thresholds are calibrated from
+  experimental data as described in Section~\ref{sec:motivation}.}
+\label{tab:ladder}
+\begin{tabular}{@{}clccc@{}}
+\toprule
+Scale $n$ & Entity type & $\lbond^{(n)}$ (\AA) &
+  $\tau_B$ & Birth criterion (min.\ $m$) \\
+\midrule
+0 & Quark & $10^{-5}$ & 0.90 & 3 (colour-neutral triplet) \\
+1 & Hadron / nucleus & $10^{-4}$ & 0.85 & 2 (meson) or 3 (baryon) \\
+2 & Atom & 2.5 & 0.70 & 2 \\
+3 & Molecule & 5.0 & 0.65 & 3 \\
+4 & Cluster & 15.0 & 0.60 & 5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Bond Maturity Functional}
+
+The bond maturity functional is chosen to be a saturating exponential:
+\[
+  B_n(C_n) \;=\; 1 - \exp\!\left(-\lambda_n C_n\right),
+\]
+where $C_n$ is the cumulative bond-event count at scale $n$ and
+$\lambda_n > 0$ is the maturity rate parameter.  This functional form is
+chosen deliberately.  A linear maturity criterion would allow coalescence
+to trigger on the first interaction, which is too aggressive.  A hard
+threshold on $C_n$ would produce discontinuous birth rates.  The saturating
+exponential is the simplest functional that is continuous, monotonically
+increasing, bounded in $[0,1)$, and parameterised by a single rate constant
+whose physical interpretation is straightforward: $1/\lambda_n$ is the
+characteristic interaction count for maturation.  Default values:
+$\lambda_0 = 5,\; \lambda_1 = 3,\; \lambda_2 = 1.5,\; \lambda_3 = 0.8$.
+
+\subsection{Information Budget at Birth}
+
+When the Second Law of Identity fires and $\Pid_*^{(n+1)}$ is born:
+\[
+  \Rec_*^{(n+1)} \;=\;
+  \eta \sum_{i \in \mathcal{C}} \Rec_i^{(n)}
+  \;-\; \Delta S_{\mathrm{coal}} ,
+\]
+where $\mathcal{C}$ is the coalescing set, $\eta \in (0,1]$ is the
+information-transfer efficiency (default $\eta = 0.95$), and
+$\Delta S_{\mathrm{coal}} > 0$ is the coalescence entropy cost.  The deficit
+$\sum_i \Rec_i - \Rec_*/\eta$ is written to the entropy ledger.
+
+\begin{smlaw}
+\textbf{First Law of Identity} applies at coalescence: the information loss
+$\sum_i \Rec_i^{(n)} - \Rec_*^{(n+1)} > 0$ must be strictly positive.  A
+coalescence that conserves or increases total recoverable information is
+rejected with error \texttt{ERR\_COAL\_INFO\_NONZERO}.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Classical MD Bridge}\label{sec:cmd}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+For scale-2 (atomic) identities the UIISCF reduces exactly to standard
+molecular dynamics.  This is not a coincidence or a special case; it is an
+explicit design requirement.  The classical MD literature represents decades
+of validated force fields, thermostat algorithms, barostat algorithms, and
+long-range solvers.  Any formalism that introduces a subatomic layer while
+breaking the classical layer loses the trust of the community that already
+uses classical MD.  The bridge is therefore designed so that activating
+information tracking adds exactly two new ODEs per particle ($\dot{\Rec}_i$
+and $\dot{\Cond}_{ij}$) without modifying the existing force, position, or
+velocity equations.
+
+\subsection{Equations of Motion}
+
+\[
+  m_i \ddot{\rvec}_i \;=\; \Fvec_i \;=\; -\nabla_{\rvec_i} U ,
+\]
+\[
+  U \;=\; \sum_{i<j} \phi(r_{ij}) \;+\;
+          \sum_{\mathrm{bonds}} V_{\mathrm{bond}} \;+\;
+          \sum_{\mathrm{angles}} V_{\mathrm{angle}} \;+\;
+          \sum_{\mathrm{dihedrals}} V_{\mathrm{dihed}} .
+\]
+Periodic boundary conditions apply via the minimum-image convention using
+cell matrix $\mathbf{H}$:
+\[
+  \rvec_{ij}^{\mathrm{MIC}} \;=\;
+  \mathbf{H}\!\left(
+    \mathbf{s}_{ij} - \mathrm{round}(\mathbf{s}_{ij})
+  \right),
+  \quad
+  \mathbf{s}_{ij} = \mathbf{H}^{-1}(\rvec_i - \rvec_j) .
+\]
+
+\subsection{Information Coupling to MD}
+
+At scale 2 the recoverable information $\Rec_i$ is a passive bookkeeping
+quantity computed alongside positions.  For every force evaluation step:
+\[
+  \dot{\Rec}_i \;=\;
+  -\sum_{j \neq i} \Cond_{ij} \,\bigl(\Rec_i - \Rec_j\bigr)
+  \;-\; \gamma_i \Rec_i ,
+\]
+where $\gamma_i \geq 0$ is a species-specific information dissipation rate and
+the conductance $\Cond_{ij}$ is proportional to the pair interaction strength.
+This equation has the structure of a heat diffusion equation on the interaction
+graph: information flows from high-$\Rec$ particles to low-$\Rec$ particles
+along edges weighted by conductance, and dissipates at rate $\gamma_i$.
+The analogy with heat conduction is intentional and makes the physical
+interpretation transparent.
+
+\begin{lstlisting}[language={}, caption={Classical MD configuration block (reference scripting format).}]
+[run]
+integrator   = "velocity_verlet"
+dt           = 0.5          # fs
+steps        = 200000
+thermostat   = "nose_hoover"
+barostat     = "parrinello_rahman"
+info_track   = true         # enable Xi / mho bookkeeping
+info_dissip  = 0.001        # gamma_i default (fs^-1)
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Matrix-Force Policy}\label{sec:matforce}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Classical MD codes hard-code force-computation loops: one loop for pair
+potentials, one for bonds, one for angles, and so on.  Adding a subatomic
+force channel in this paradigm requires modifying the innermost loops, which
+risks breaking validated classical behaviour and makes it difficult to gate
+subatomic contributions by scale or version.
+
+The matrix-force policy solves this by routing all force computation through
+a weighted dispatch table.  Each force channel contributes a force vector
+$\Fvec_i^{(\alpha)}$; the total force is a weighted sum.  Channel weights
+are set to zero by default for all subatomic channels and raised to 1.0 only
+when the corresponding scale is active.  This architecture means that adding
+a new channel --- colour-averaged interaction, gluon proxy, weak proxy ---
+never modifies an existing channel, and can always be validated in isolation
+before being combined.  The classical path is preserved exactly: with all
+subatomic weights at zero, the dispatch table produces the identical result
+to the original hard-coded loops.
+
+\subsection{Force Dispatch Table}
+
+\[
+  \Fvec_i \;=\; \sum_{\alpha} w_\alpha \, \Fvec_i^{(\alpha)} ,
+\]
+where $\alpha$ indexes active force channels and $w_\alpha$ is a channel
+weight gated by the version and active-scale flags.
+
+\begin{table}[H]
+\centering
+\caption{Force channel dispatch table.}
+\label{tab:dispatch}
+\begin{tabular}{@{}lllc@{}}
+\toprule
+Channel $\alpha$ & Description & Default $w_\alpha$ & Min.\ version \\
+\midrule
+\texttt{pair}    & Pair potential (LJ, Morse, \ldots) & 1.0 & v5.1.4 \\
+\texttt{bond}    & Harmonic/FENE bond & 1.0 & v5.1.4 \\
+\texttt{angle}   & Valence angle & 1.0 & v5.1.4 \\
+\texttt{dihedral}& Dihedral torsion & 1.0 & v5.1.4 \\
+\texttt{coulomb} & Long-range Coulomb (PPPM) & 1.0 & v5.1.4 \\
+\texttt{cai}     & Colour-averaged interaction (subatomic) & 0.0 & v5.1.5 \\
+\texttt{gluon}   & Cornell proxy (effective QCD) & 0.0 & v5.1.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Policy Enforcement}
+
+The engine validates the weight vector before every run:
+\begin{enumerate}[leftmargin=1.5em]
+  \item $\sum_\alpha w_\alpha > 0$ (at least one active channel).
+  \item Subatomic channels (\texttt{cai}, \texttt{gluon}) require
+    \texttt{subatomic\_mode = true} and kernel $\geq$ v5.1.5.
+  \item If \texttt{gluon} weight $> 0$ then \texttt{full\_qcd = false}
+    \emph{must} be explicitly set.  Omission raises
+    \texttt{ERR\_QCD\_FLAG\_MISSING}.
+\end{enumerate}
+
+\begin{smlaw}
+\textbf{First Law of Identity} constrains channel coupling: enabling a new
+force channel always changes $\Rec$ accounting.  Adding \texttt{cai} or
+\texttt{gluon} without enabling \texttt{info\_track} is forbidden; the
+implementation will reject the configuration with
+\texttt{ERR\_INFO\_TRACK\_REQUIRED}.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Per-Atom Event-Energy State}\label{sec:event}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Continuous force integration handles the smooth evolution of positions and
+velocities but is not the right tool for discontinuous events: bond formation,
+bond breakage, coalescence, annihilation.  These events change the topology
+of the interaction graph instantaneously and deposit or release discrete
+amounts of energy.  Tracking them requires a dedicated event-energy register
+per particle, separate from the running kinetic and potential energy.
+
+Separating event energy from kinetic and potential energy also provides a
+natural diagnostic: the event-energy trace is a record of every discrete
+transition that occurred, in time order, with position, energy, and
+information-change metadata.  This trace can be replayed, audited, and
+compared across solver runs independently of the continuous trajectory.
+
+Each particle carries:
+\[
+  \mathcal{E}_i(t) \;=\;
+  \bigl(
+    E_i^{\mathrm{kin}},\;
+    E_i^{\mathrm{pot}},\;
+    E_i^{\mathrm{event}},\;
+    \Rec_i,\;
+    n_i^{\mathrm{evt}}
+  \bigr) ,
+\]
+where $E_i^{\mathrm{event}}$ is the cumulative energy from discrete events and
+$n_i^{\mathrm{evt}}$ is the event counter.
+
+\subsection{Event Types}
+
+\begin{table}[H]
+\centering
+\caption{Discrete event types and their energy/information effects.}
+\label{tab:events}
+\begin{tabular}{@{}lllll@{}}
+\toprule
+Event type & Code & $\Delta E^{\mathrm{event}}$ & $\Delta\Rec$ & $\Delta\Quota_S$ \\
+\midrule
+Bond formation & \texttt{BOND\_FORM} & $-E_{\mathrm{bond}}$ & $< 0$ & 0 \\
+Bond break     & \texttt{BOND\_BREAK} & $+E_{\mathrm{bond}}$ & $< 0$ & 0 \\
+Coalescence    & \texttt{COAL} & $-\Delta E_{\mathrm{coal}}$ & $\leq -\Delta S_{\mathrm{coal}}$ & $+1$ \\
+Dissociation   & \texttt{DISSOC} & $+\Delta E_{\mathrm{dissoc}}$ & $< 0$ & $-1$ \\
+Annihilation   & \texttt{ANNIH} & $+2m_ic^2$ & $-\Rec_i - \Rec_{\bar\imath}$ & $-2$ \\
+Excitation     & \texttt{EXCITE} & $+E_\gamma$ & $< 0$ & 0 \\
+De-excitation  & \texttt{DEEXCITE} & $-E_\gamma$ & $< 0$ & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Event Log Format}
+
+Each event is appended to the event log (\texttt{.evlog} artifact) as:
+\begin{lstlisting}
+STEP  TYPE        ID_A   ID_B   SCALE  dE_eV        dXi
+12500 BOND_FORM   1042   2107   2      -4.32100e+00  -0.0023
+12501 COAL        0133   0134   1      -1.20000e+02  -1.4400
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Event Limiter}\label{sec:limiter}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Unconstrained event rates can destabilise numerical integration.  A single
+timestep that generates hundreds of coalescence events deposits a large
+impulsive energy into the system, causing temperature spikes and, in extreme
+cases, the velocity-Verlet integrator to step a particle through a potential
+barrier.  The event limiter is a numerical stability mechanism, not a physical
+one: it does not claim that real matter has a maximum event rate, only that
+the discrete-time integrator does.
+
+The rate ceiling is set proportional to $N \cdot \Delta t$ so that the
+ceiling scales appropriately with system size and timestep, avoiding the
+pathological situation where a fine-grained timestep unexpectedly allows
+more events per step than a coarse one.
+
+\subsection{Rate Ceiling}
+
+\[
+  n_{\mathrm{evt}}^{\mathrm{step}} \;\leq\; \left\lfloor
+    \lambda_{\mathrm{evt}} \cdot N \cdot \Delta t
+  \right\rfloor ,
+\]
+where $\lambda_{\mathrm{evt}}$ is the maximum event rate density
+(events per particle per fs), default $\lambda_{\mathrm{evt}} = 0.01$.
+Events exceeding the ceiling in a single step are deferred to the next step
+via a FIFO queue.
+
+\subsection{Energy-Change Guard}
+
+For any single event:
+\[
+  \left|\Delta E_i^{\mathrm{event}}\right| \;\leq\;
+  \alpha_{\mathrm{guard}} \cdot E_i^{\mathrm{kin}} ,
+\]
+where $\alpha_{\mathrm{guard}} = 5.0$ by default.  Events violating this
+guard are logged as \texttt{GUARD\_CLIP} and the energy change is clamped.
+
+\begin{smlaw}
+\textbf{First Law of Identity} applies to clamped events: even a clipped
+energy change must satisfy $\Delta\Rec < 0$.  A clamp that would produce
+$\Delta\Rec \geq 0$ is rejected entirely and logged as
+\texttt{ERR\_GUARD\_INFO\_VIOLATION}.
+\end{smlaw}
+
+\begin{lstlisting}[language={}, caption={Event limiter configuration block.}]
+[kernel]
+event_rate_density  = 0.01    # events per particle per fs
+event_energy_guard  = 5.0     # alpha_guard
+event_queue_depth   = 1000    # max deferred events
+event_log_path      = "sim.evlog"
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Formation-Defect Bridge}\label{sec:formation}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Coalescence and dissociation leave traces in the trajectory record beyond
+the continuous position and velocity data.  The formation-defect bridge is
+the mechanism by which these traces are captured in a dedicated formation
+trajectory format and linked back to the identity ladder.
+
+The information-loss fraction $\delta_{\mathrm{defect}}$ at dissociation
+provides a physically meaningful severity classification that has no analogue
+in purely energetic defect classification schemes.  A clean split
+($\delta < 0.02$) indicates that the two fragments carry nearly the same
+distinguishability they had before binding; the information was stored in
+the interaction, not consumed.  A fragmentation event ($\delta > 0.1$)
+indicates that most of the identity information of the parent was lost to
+the environment --- the fragments are fundamentally different objects,
+not simply pieces of the original.
+
+The formation trajectory connects formation events to coalescence transitions
+on the identity ladder.  Defect events connect to dissociation and bond-break
+transitions.
+
+\subsection{Formation Event Record}
+
+A formation event is triggered when the Second Law of Identity fires:
+\begin{lstlisting}
+# formation event at step 50000
+FORM  parent_ids=[1042,1043,1044]  child_id=5000  scale=2->3
+      mass_sum=28.054 charge_sum=0  Xi_child=2.8500
+      dS_coal=0.0247  bond_maturity=0.9200
+\end{lstlisting}
+
+\subsection{Defect Classification}
+
+Defects are classified by the information change at dissociation:
+\[
+  \delta_{\mathrm{defect}} \;=\;
+  \frac{\Rec_{\mathrm{parent}} -
+        \sum_{k} \Rec_k^{\mathrm{fragment}}}
+       {\Rec_{\mathrm{parent}}} .
+\]
+\begin{table}[H]
+\centering
+\caption{Defect classification by information loss fraction.}
+\label{tab:defect}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Class & $\delta_{\mathrm{defect}}$ range & Label & Severity \\
+\midrule
+Clean split   & $[0, 0.02)$  & \texttt{DEFECT\_CLEAN}  & Low \\
+Lossy split   & $[0.02, 0.1)$& \texttt{DEFECT\_LOSSY}  & Medium \\
+Fragmentation & $[0.1, 1.0]$ & \texttt{DEFECT\_FRAG}   & High \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{smlaw}
+\textbf{Second Law of Identity} sets the lower bound on coalescence count:
+$m \geq 3$.  Any two-body coalescence at scale $n \geq 2$ is promoted to a
+\texttt{COAL\_PROBE} event and only finalised if a third proximate particle
+joins within $\tau_{\mathrm{probe}} = 5\fs$ (configurable).
+\end{smlaw}
+
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Quark Component Matrix}\label{sec:quark}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The quark sector is the point at which this formalism is most directly
+accountable to measured data.  The parameters that appear here are not
+fitted to a simulation objective; they are inherited from experimental
+hadron physics.  The Cornell potential string tension $\kappa \approx
+0.18\,\mathrm{GeV}^2$ is the value inferred from the linear Regge trajectories
+of light-quark mesons as measured at CERN's NA series and the Fermilab fixed-
+target experiments.  The running coupling $\alpha_s \approx 0.18$ at the
+relevant hadronic scale is consistent with the world average from the PDG
+compilation of $\alpha_s(m_Z) = 0.1179 \pm 0.0010$ evolved down to
+$Q \sim 1\,\mathrm{GeV}$ using two-loop running.  The hyperfine coupling
+$V_{\mathrm{hyp}}$ is calibrated from the $J/\psi$--$\eta_c$ and
+$\Upsilon$--$\eta_b$ mass splittings.
+
+Working backwards from CERN collision data to a tractable simulation model
+reveals something useful: quark identity is less a property of the quark
+itself than of the hadron it inhabits.  A quark confined in a proton is
+a different object --- in terms of its effective mass, its coupling, and its
+contribution to conserved quantum numbers --- from a quark in a pion or in
+the deconfined quark-gluon plasma produced in heavy-ion collisions at the LHC.
+The quark component matrix encodes this context-dependence explicitly through
+the recoverable information column $\Rec_i^{(0)}$, which varies between
+hadronic environments.
+
+At scale $n=0$ each quark is an identity $\Pid_i^{(0)}$ carrying colour
+charge $c_i \in \{R, G, B, \bar R, \bar G, \bar B\}$, flavour $f_i$, and
+spin $\sigma_i = \pm\tfrac{1}{2}$.  The quark component matrix $\mathbf{Q}^{(0)}$
+has one row per quark:
+\[
+  Q^{(0)}_{ik} \;=\;
+  \begin{cases}
+    m_i / m_u     & k=1 \quad\text{(mass in units of } m_u\text{)} \\
+    q_i           & k=2 \quad\text{(electric charge)} \\
+    c_i^{\mathrm{int}} & k=3 \quad\text{(colour integer: } 1\ldots 6\text{)} \\
+    f_i^{\mathrm{int}} & k=4 \quad\text{(flavour: } u=1,d=2,s=3,c=4,b=5,t=6\text{)} \\
+    \sigma_i       & k=5 \quad\text{(spin: } \pm 1\text{)} \\
+    \Rec_i^{(0)}   & k=6 \quad\text{(recoverable information)} \\
+  \end{cases}
+\]
+
+\subsection{Colour-Neutral Hadron Formation}
+
+Quarks form hadrons when a colour-neutral triplet (or pair for mesons)
+satisfies the Second Law of Identity at scale 0.  The colour-neutrality
+condition:
+\[
+  \bigoplus_{i \in \mathcal{C}} c_i \;=\; \text{white} ,
+\]
+where $\oplus$ denotes colour addition.  Colour neutrality is checked
+before applying the birth criterion.
+
+\subsection{Colour-Averaged Interaction (CAI)}
+
+Because full QCD is not implemented, a colour-averaged interaction (CAI)
+channel approximates the strong force between quarks.  The CAI potential:
+\[
+  V_{\mathrm{CAI}}(r_{ij}) \;=\;
+  -\frac{\alpha_s}{r_{ij}} \,\delta_{c_i \bar c_j}
+  \;+\; \kappa_{\mathrm{str}} r_{ij}
+  \;+\; V_{\mathrm{hyp}} ,
+\]
+where $\alpha_s \approx 0.12$--$0.30$, $\kappa_{\mathrm{str}} \approx
+0.18\,\mathrm{GeV}^2$ (Cornell string tension), and $V_{\mathrm{hyp}}$ is
+the hyperfine correction from spin-colour coupling.
+
+\begin{lstlisting}[language={}, caption={Quark configuration block (reference implementation).}]
+[quark]
+enabled       = true
+flavours      = ["u","d","s"]  # active flavour set
+alpha_s       = 0.18
+kappa_string  = 0.18           # GeV^2
+hyp_coupling  = 0.02
+full_qcd      = false          # MANDATORY: always set false
+cai_channel   = true
+info_track    = true
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Lepton Identity Matrix}\label{sec:lepton}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Leptons are fundamental-scale identities that do not participate in the strong
+interaction.  They are among the most precisely measured particles in the
+Standard Model: the electron mass is known to 13 significant figures, the
+muon anomalous magnetic moment to 10.  This precision makes the lepton sector
+an unusually clean test of identity accounting: the recoverable information of
+an electron is its electric charge, mass, and spin --- three quantities that
+never change in any interaction short of annihilation.  $\Rec_e$ is therefore
+essentially constant until the electron annihilates, at which point it drops
+to zero discontinuously.  This is the clearest example of the First Law of
+Identity at work: no interaction changes the electron's $\Rec$ until the one
+interaction that destroys it entirely.
+
+Each lepton $\Pid_i^{(\ell)}$ occupies one row of the lepton identity matrix
+$\mathbf{L}$:
+\[
+  L_{ik} \;=\;
+  \begin{cases}
+    m_i / m_e     & k=1 \quad\text{(mass in electron masses)} \\
+    q_i           & k=2 \quad\text{(charge: } -1, 0\text{)} \\
+    g_i           & k=3 \quad\text{(generation: 1, 2, 3)} \\
+    \sigma_i       & k=4 \quad\text{(spin)} \\
+    L_i^{\mathrm{num}} & k=5 \quad\text{(lepton number: } \pm 1\text{)} \\
+    \Rec_i^{(\ell)} & k=6 \quad\text{(recoverable information)} \\
+  \end{cases}
+\]
+
+\subsection{Lepton Interactions}
+
+Leptons interact via three channels in the reference implementation:
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Electromagnetic:} Coulomb interaction with all charged
+    particles via the PPPM long-range solver.
+  \item \textbf{Weak proxy:} A Yukawa-type screened potential approximating
+    $W/Z$-boson exchange (range $\sim 10^{-3}\ang$, gated by
+    \texttt{weak\_proxy = true}).
+  \item \textbf{Electron shell binding:} At scale 2, electrons are not
+    simulated as explicit particles by default; their effect enters via the
+    force field.  Explicit electron tracking requires
+    \texttt{explicit\_electrons = true} (v5.1.5+).
+\end{enumerate}
+
+\begin{smlaw}
+\textbf{First Law of Identity} is especially active for lepton-antilepton
+encounters.  An electron meeting a positron undergoes annihilation
+(\texttt{ANNIH}), releasing $\Delta\Rec = -\Rec_e - \Rec_{\bar e}$ and
+energy $2m_e c^2 + E_{\mathrm{kin}}$.  The information is written to the
+entropy ledger irreversibly.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Boson Identity Matrix}\label{sec:boson}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Gauge bosons occupy an unusual position in the UIISCF framework.  In the
+Standard Model they are the carriers of forces; in the simulation they are
+either handled analytically (photons, via potential energy) or approximated
+by proxy potentials (gluons, via the Cornell model; $W/Z$, via Yukawa
+screening).  The decision to represent bosons as transient matrix entries
+rather than persistent identities reflects a deliberate modelling choice:
+at the timescales and length scales of the simulation, an exchanged virtual
+photon has a lifetime many orders of magnitude shorter than the timestep.
+Treating it as a persistent particle would be physically inaccurate and
+computationally wasteful.
+
+The boson identity matrix is therefore a log of mediator events, not a
+roster of persistent particles.
+
+Gauge bosons are mediator particles represented as transient entries in
+the boson identity matrix $\mathbf{B}$:
+\[
+  B_{ik} \;=\;
+  \begin{cases}
+    m_i^{\mathrm{eff}} & k=1 \quad\text{(effective mass in GeV$/c^2$)} \\
+    q_i               & k=2 \quad\text{(charge)} \\
+    s_i               & k=3 \quad\text{(spin: 0, 1, 2)} \\
+    \tau_i^{\mathrm{life}} & k=4 \quad\text{(lifetime in fs, or } \infty\text{)} \\
+    \mathrm{type}_i   & k=5 \quad\text{(photon, $W^\pm$, $Z^0$, gluon, Higgs proxy)} \\
+    \Rec_i^{(b)}       & k=6 \quad\text{(near zero for gauge bosons)} \\
+  \end{cases}
+\]
+
+\subsection{Gluon Proxy Model}
+
+\textbf{The gluon proxy is an effective model.  Full QCD colour dynamics are
+not implemented.}  The Cornell potential governs quark confinement in place of
+explicit gluon exchange:
+\[
+  E_{\mathrm{conf}}(r) \;=\; \kappa r \;+\; \frac{\alpha_s}{r},
+  \quad
+  \kappa \approx 0.18\,\mathrm{GeV}^2,
+  \quad
+  \alpha_s \approx 0.1\text{--}0.3 .
+\]
+This is a Cornell string-plus-Coulomb potential calibrated to reproduce
+hadron mass splittings at low energy.  Its parameters are taken directly
+from quarkonium spectroscopy, as described in Section~\ref{sec:quark}.
+It is \emph{not} a perturbative QCD calculation.
+
+\begin{smlaw}
+\textbf{Mandatory disclaimer:} Any configuration using quark or boson channels
+must explicitly set \texttt{full\_qcd = false}.  Omission raises
+\texttt{ERR\_QCD\_FLAG\_MISSING} at parse time.  This requirement exists to
+prevent Cornell-proxy results from being cited as genuine QCD predictions.
+\end{smlaw}
+
+\subsection{Photon Emission Proxy}
+
+Photon emission (de-excitation) is handled as an event in the event log,
+not as a propagating particle.  The emitted energy is $E_\gamma = \Delta E$,
+recorded as \texttt{DEEXCITE}.  Photon absorption is the time-reverse.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Relation-Particle Matrix}\label{sec:relation}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Classical MD tracks particles and their properties but rarely tracks the
+history of individual interactions in structured form.  The relation-particle
+matrix fills this gap by recording, for every currently active particle pair,
+the current conductance, separation, information history, and bond type.  This
+matrix is the information substrate on which the First Law operates: the
+$\Delta\Rec_{ij}^{\mathrm{last}}$ column is a direct record of information
+transferred at each event, and $\Delta S_{ij}^{\mathrm{cum}}$ is the running
+entropy produced by the pair.
+
+The relation-particle matrix $\mathbf{R}_{\mathrm{rel}}$ encodes pairwise
+relationships.  Each row is a directed pair $(i, j)$:
+\[
+  (R_{\mathrm{rel}})_{(ij),k} \;=\;
+  \begin{cases}
+    \Cond_{ij}       & k=1 \quad\text{(interaction conductance)} \\
+    d_{ij}            & k=2 \quad\text{(current separation)} \\
+    \Delta\Rec_{ij}^{\mathrm{last}} & k=3 \quad\text{(information delta at last event)} \\
+    \Delta S_{ij}^{\mathrm{cum}}    & k=4 \quad\text{(cumulative entropy from pair)} \\
+    t_{ij}^{\mathrm{last}}          & k=5 \quad\text{(time of last event)} \\
+    \mathrm{bond}_{ij}              & k=6 \quad\text{(bond type: 0=none, 1=covalent, 2=ionic,\ldots)} \\
+  \end{cases}
+\]
+
+\subsection{Conductance Dynamics}
+
+The conductance $\Cond_{ij}$ evolves between force steps:
+\[
+  \dot{\Cond}_{ij} \;=\;
+  \alpha_{\Cond} \bigl(
+    \Cond_{ij}^{\mathrm{eq}}(r_{ij}) - \Cond_{ij}
+  \bigr)
+  \;-\; \beta_{\Cond} \Cond_{ij} ,
+\]
+where $\Cond_{ij}^{\mathrm{eq}}(r)$ is the equilibrium conductance
+(decreasing with $r$, zero beyond $r_{\mathrm{cut}}$), $\alpha_{\Cond}$
+is the relaxation rate, and $\beta_{\Cond}$ is the natural decay rate.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Proper-Time Identity Matrix}\label{sec:propertime}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+At sub-relativistic velocities ($v \ll c$) proper time coincides with
+simulation time and the proper-time identity matrix is diagonal:
+$T_{ii} = t$.  The full relativistic extension is anticipated for a
+future release and is sketched here for completeness.
+
+\subsection{Lorentz Factor Correction}
+
+For a particle with velocity $v_i$:
+\[
+  \tau_i(t) \;=\; \int_0^t
+    \sqrt{1 - \frac{v_i^2(t')}{c^2}} \, dt'
+  \;\approx\;
+  t \left(1 - \frac{\langle v_i^2 \rangle}{2c^2}\right) .
+\]
+The proper-time lag $T_{ij} = \tau_i(t) - \tau_j(t)$ for $i \neq j$
+becomes significant in beam-simulation scenarios where particles are
+accelerated to relativistic energies: two quarks produced in the same
+collision but boosted in opposite directions accumulate different proper
+times and therefore age their identity information at different rates.
+
+\subsection{Information Age}
+
+The proper-time formalism provides a natural measure of information age:
+\[
+  \Rec_i^{\mathrm{age}}(\tau) \;=\;
+  \Rec_i(0) \exp(-\kappa_{\mathrm{age}} \tau_i) ,
+\]
+where $\kappa_{\mathrm{age}}$ is an information half-life parameter, relevant
+for long-lived radioactive species where the identity information of the
+parent nucleus degrades as it approaches decay.
+
+\begin{smlaw}
+\textbf{First Law of Identity} in the relativistic frame: the interaction
+must satisfy $\Delta\Rec_{ij} < 0$ or $\Delta S_{ij} > 0$ in the lab frame.
+Lorentz boosts do not exempt an interaction from the law; information
+accounting is performed in the lab frame before any boost is applied.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Dark-Sector Projection}\label{sec:dark}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The dark-sector projection is included in the UIISCF not because the nature
+of dark matter is understood, but precisely because it is not.  The
+information-theoretic framework provides a natural language for dark matter:
+a dark-sector particle $\Pid_i^{(\mathrm{dk})}$ is an identity that carries
+mass and therefore participates in gravitational clustering, but carries
+zero electromagnetic charge and therefore contributes nothing to detector
+hits.  Its recoverable information is sequestered: it cannot be transferred
+to standard-model particles through the channels available at collider
+energies.
+
+This sequestration is the formal expression of why dark matter is dark.
+It is not absent from the simulation; it is present but its $\Rec$ is not
+accessible to any standard-model detector projection operator.
+
+Dark-sector particles carry mass but do not participate in electromagnetic
+or strong interactions:
+\[
+  D_{ik} \;=\;
+  \begin{cases}
+    m_i^{\mathrm{dk}}    & k=1 \\
+    0                    & k=2 \quad\text{(no EM charge)} \\
+    \sigma_i^{\mathrm{dk}} & k=3 \\
+    \xi_i^{\mathrm{dk}}  & k=4 \quad\text{(dark coupling)} \\
+    \Rec_i^{(\mathrm{dk})} & k=5 \\
+  \end{cases}
+\]
+
+\subsection{Dark-Sector Force Channel}
+
+The dark-sector force is modelled as a Yukawa potential:
+\[
+  V_{\mathrm{dk}}(r_{ij}) \;=\;
+  -\xi_i \xi_j \, \frac{e^{-m_{\mathrm{med}} r_{ij}}}{r_{ij}} ,
+\]
+where $m_{\mathrm{med}}$ is the dark mediator mass.  In the limit
+$m_{\mathrm{med}} \to 0$ this reduces to a gravitational-like $1/r$ potential.
+The projection is explicitly \emph{phenomenological}: no claim is made
+regarding correspondence with any particular dark matter model.
+
+\begin{lstlisting}[language={}, caption={Dark-sector configuration block.}]
+[dark_sector]
+enabled        = false         # off by default
+mediator_mass  = 1.0e-4       # GeV/c^2
+coupling       = 0.001
+info_track     = true
+full_qcd       = false
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Event/Annihilation Matrix}\label{sec:annihilation}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Annihilation is the most dramatic event in the UIISCF framework: two
+identities are extinguished and their rest mass converted to radiation.
+From an information-theoretic perspective, annihilation is the maximum
+possible violation of identity continuity.  The incoming particles have
+well-defined identity ($\Rec_e, \Rec_{\bar e} > 0$); the outgoing photons
+carry no recoverable identity information ($\Rec_\gamma \approx 0$).
+The entire information budget of two particles is written to the entropy
+ledger in a single step.
+
+The annihilation matrix records this event comprehensively.  The record is
+designed to be auditable after the fact: given the annihilation matrix, one
+can verify that lepton number was conserved (one electron and one positron
+entered), that energy-momentum was conserved (the photon energies sum to
+$2m_e c^2 + E_{\mathrm{kin}}$), and that the entropy increase matches the
+total information destroyed.
+
+\[
+  A_{(ij),k} \;=\;
+  \begin{cases}
+    m_i + m_j               & k=1 \quad\text{(total annihilated mass)} \\
+    2(m_i + m_j)c^2 + E_{\mathrm{kin}} & k=2 \quad\text{(energy released, eV)} \\
+    t_{\mathrm{annihil}}    & k=3 \quad\text{(simulation time)} \\
+    \rvec_{\mathrm{annihil}} & k=4 \quad\text{(position)} \\
+    \Rec_i + \Rec_j          & k=5 \quad\text{(total information destroyed)} \\
+    \Delta S_{\mathrm{annihil}} & k=6 \quad\text{(entropy produced)} \\
+  \end{cases}
+\]
+
+\subsection{Annihilation Guard Conditions}
+
+Annihilation is triggered when:
+\begin{enumerate}[leftmargin=1.5em]
+  \item The pair $(i, j)$ are confirmed particle-antiparticle.
+  \item $d_{ij} \leq r_{\mathrm{annihil}}$ (default $10^{-4}\ang$ for
+    leptons, $10^{-5}\ang$ for hadrons).
+  \item $E_{\mathrm{kin}}^{\mathrm{rel}} \leq E_{\mathrm{annihil}}^{\mathrm{max}}$.
+\end{enumerate}
+
+\begin{smlaw}
+\textbf{First Law of Identity} at annihilation: the information destroyed,
+$\Rec_i + \Rec_j$, is entirely unrecoverable.  The engine writes the full
+$\Rec$ budget to the entropy ledger and increments the global annihilation
+entropy counter $S_{\mathrm{annihil}}^{\mathrm{glob}}$.  Annihilation without
+entropy accounting raises \texttt{ERR\_ANNIHIL\_INFO\_MISSING}.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Detector Projection and Reconstruction}\label{sec:detector}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The detector projection module is the formal bridge between simulation and
+experiment.  It mirrors the actual reconstruction pipeline used at particle
+colliders: raw detector hits are processed through clustering, track-seeding,
+momentum fitting, and vertex-finding to produce a list of reconstructed
+particles with four-momenta and identity assignments.
+
+In a real experiment this pipeline runs in the opposite direction to the
+simulation: measured hits are the inputs and reconstructed particles are the
+outputs.  Here the pipeline runs forward: true particle states are the inputs
+and synthetic hits are generated, then processed by the same reconstruction
+algorithm.  This allows direct comparison between truth-level identity
+(from $\Omega(t)$) and reconstructed identity ($\tilde{\Pid}$), which is the
+key figure of merit for the identity formalism: if the reconstruction fails
+to separate two particles that the formalism treats as distinguishable, their
+$\Rec$ values are too close and should be revised.
+
+The detector module therefore acts as a continuous test of the information
+accounting: it tells you whether the $\Rec$ values you have assigned to your
+particles are experimentally meaningful or not.
+
+\subsection{Projection Operator}
+
+A detector $D_\alpha$ with acceptance function $A_\alpha(\Pid_i)$ produces
+the hit vector:
+\[
+  \mathbf{h}^{(\alpha)}(t) \;=\;
+  \sum_i A_\alpha(\Pid_i) \,
+  \boldsymbol{\delta}\!\left(\rvec_i - \rvec_{D_\alpha}\right)
+  \otimes \mathcal{E}_i(t) ,
+\]
+where $\otimes$ denotes the detector response convolution.
+
+\subsection{Reconstruction Algorithm}
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Hit clustering:} Group hits within spatial resolution
+    $\delta x_{\mathrm{det}}$ and time window $\delta t_{\mathrm{det}}$.
+  \item \textbf{Track seeding:} Each cluster with $n_{\mathrm{hit}} \geq 3$
+    seeds a candidate track.
+  \item \textbf{Kalman filter:} Propagate track hypothesis through the
+    material budget and fit momentum.
+  \item \textbf{Vertex finding:} Intersect compatible tracks at the primary
+    vertex; record secondary vertices for decay topologies.
+  \item \textbf{Identity assignment:} Assign reconstructed identity
+    $\tilde{\Pid}$ and compare to truth-level $\Pid$ from simulation state.
+\end{enumerate}
+
+\begin{lstlisting}
+# detector reconstruction output (.reco)
+STEP   TRACK_ID  PX_GEV  PY_GEV  PZ_GEV  MASS_GEV  PID_TRUE  PID_RECO
+50000  0001      0.4523  0.1204  2.3311   0.1396    211       211
+50000  0002      -0.3901 0.0891  1.9823   0.1396    -211      -211
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Solver Comparison State}\label{sec:solver}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The solver comparison state introduces a new dimension to numerical
+validation.  Classical MD validation typically checks energy conservation
+and trajectory divergence between different integrators.  UIISCF adds
+a third metric: information divergence $\delta\Rec_{\alpha\beta}$.
+
+The significance of this metric is that it reveals a class of solver pathology
+that energy conservation alone cannot detect.  A non-symplectic integrator
+(Runge-Kutta 4, Adams-Bashforth) can conserve energy to high precision on
+short runs while silently misattributing information flow between particle
+pairs.  The $\delta\Rec$ metric catches this because the information-flow
+equation is sensitive to the order of force evaluation in a way that the
+energy integral is not.  Symplectic integrators (velocity Verlet, PEFRL,
+Yoshida 6) preserve the information budget automatically because they preserve
+the symplectic structure of the phase space; non-symplectic integrators do not.
+
+Two or more solver threads share the same initial state $\Omega(0)$ and evolve
+independently.  Comparison at checkpoints:
+\[
+  \delta\Rec_{\alpha\beta}(t_c) \;=\;
+  \left|
+    \sum_i \Rec_i^{(\alpha)}(t_c) - \sum_i \Rec_i^{(\beta)}(t_c)
+  \right| .
+\]
+
+\begin{table}[H]
+\centering
+\caption{Available integrators for solver comparison.}
+\label{tab:solvers}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Integrator & Code & Order & Symplectic \\
+\midrule
+Velocity Verlet  & \texttt{vv}    & 2 & Yes \\
+Leapfrog         & \texttt{lf}    & 2 & Yes \\
+Runge-Kutta 4    & \texttt{rk4}   & 4 & No \\
+PEFRL            & \texttt{pefrl} & 4 & Yes \\
+Yoshida 6        & \texttt{y6}    & 6 & Yes \\
+Adams-Bashforth  & \texttt{ab4}   & 4 & No \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{smlaw}
+\textbf{First Law of Identity} provides a solver-independent invariant:
+$\delta\Rec_{\alpha\beta}$ grows monotonically for non-symplectic solvers
+due to artificial information injection, while symplectic solvers maintain
+bounded $\delta\Rec$.  A symplectic solver showing unbounded $\delta\Rec$
+growth indicates a force-field bug, not a solver defect.
+\end{smlaw}
+
+\begin{lstlisting}[language={}, caption={Solver comparison configuration block.}]
+[solver_compare]
+enabled             = true
+solvers             = ["vv","pefrl"]
+checkpoint_interval = 1000
+compare_metrics     = ["pos_rmsd","energy_drift","info_divergence"]
+output_path         = "solver_cmp.csv"
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Slimmed-Down Runtime Block}\label{sec:runtime}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Full UIISCF bookkeeping has a cost.  The per-particle $\Rec$ ODE adds one
+float per particle per step; the sparse conductance matrix adds memory
+proportional to the number of proximate pairs; the event log grows with
+simulation time.  For large-scale production runs --- millions of atoms,
+millions of steps --- this cost may be unacceptable.
+
+The slim mode addresses this by suspending all information-theoretic
+bookkeeping while preserving the classical conservation checks.  The
+fundamental invariants (energy, momentum, charge, particle count) are still
+validated.  The identity-information block is frozen: $\Rec_i$ and
+$\Cond_{ij}$ are not updated.  Event logging is reduced to a summary.
+The result is a run that is indistinguishable from a classical MD run in
+terms of output, but which can be trivially upgraded to full UIISCF mode
+by changing one configuration line.
+
+\begin{table}[H]
+\centering
+\caption{Feature availability in full vs.\ slim runtime modes.}
+\label{tab:slim}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+Feature & Full UIISCF & Slim mode \\
+\midrule
+Positions, velocities, forces  & \checkmark & \checkmark \\
+Kinetic / potential energy      & \checkmark & \checkmark \\
+Thermostat / barostat           & \checkmark & \checkmark \\
+Per-atom $\Rec_i$ tracking      & \checkmark & --- \\
+Conductance matrix $\Cond_{ij}$ & \checkmark & --- \\
+Scale quota $\Quota_S$          & \checkmark & Aggregate only \\
+Event log (\texttt{.evlog})     & \checkmark & Summary only \\
+Subatomic identity matrices     & \checkmark & --- \\
+Solver comparison               & \checkmark & --- \\
+Dark-sector projection          & \checkmark & --- \\
+Detector reconstruction         & \checkmark & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Version Constraints}\label{sec:version}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The UIISCF is implemented in stages, gated by version.  This is a deliberate
+engineering decision: delivering the full formalism at once would require
+users to adopt the entire information-tracking infrastructure before they
+have any practical need for it.  Version gating allows the formalism to be
+introduced incrementally, with each version boundary corresponding to a
+tested, validated capability plateau.
+
+Version 5.1.4 is the classical MD baseline.  Everything up to and including
+the matrix-force dispatch table, event logging, and formation-defect tracking
+is available without any subatomic content.  This version is suitable for
+the vast majority of chemistry and materials-science simulations.
+
+Version 5.1.5 activates the subatomic layer: quarks, leptons, bosons,
+information tracking, annihilation, and the full UIISCF state vector.  It
+requires explicit opt-in for every subatomic feature and will reject
+configurations that enable subatomic channels without the information tracking
+infrastructure.
+
+\begin{table}[H]
+\centering
+\caption{Feature version gate table.}
+\label{tab:version}
+\begin{tabular}{@{}llp{7.2cm}@{}}
+\toprule
+Feature & Min.\ version & Notes \\
+\midrule
+Classical MD, matrix-force policy  & v5.1.4 & Baseline \\
+Event logging (\texttt{.evlog})    & v5.1.4 & Bond, formation, defect events \\
+Formation-defect bridge            & v5.1.4 & Formation trajectory format required \\
+Per-atom $\Rec_i$ tracking         & v5.1.5 & \texttt{info\_track = true} \\
+Conductance matrix $\Cond_{ij}$    & v5.1.5 & Sparse; max $10^6$ non-zeros \\
+Scale identity ladder (subatomic)  & v5.1.5 & \texttt{subatomic\_mode = true} \\
+Quark/lepton identity matrices     & v5.1.5 & Requires \texttt{full\_qcd = false} \\
+Boson identity matrix              & v5.1.5 & Photon proxy + weak proxy \\
+Annihilation events                & v5.1.5 & Lepton and hadron channels \\
+Solver comparison state            & v5.1.5 & Any two registered integrators \\
+Dark-sector projection             & v5.1.5 & Phenomenological only \\
+Detector projection/reconstruction & v5.1.5 & Synthetic; no hardware interface \\
+Proper-time correction             & v5.2   & \textit{Planned} \\
+Explicit electron tracking         & v5.2   & \textit{Planned} \\
+Full relativistic boost            & v5.2   & \textit{Planned} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Activation Checklist (v5.1.5)}
+
+Before enabling any subatomic feature, verify:
+\begin{enumerate}[leftmargin=1.5em]
+  \item \texttt{subatomic\_mode = true} in the kernel block.
+  \item \texttt{info\_track = true} in the run or kernel block.
+  \item \texttt{full\_qcd = false} in any quark or boson block (no default).
+  \item Kernel version declared at \texttt{"5.1.5"} or higher.
+  \item Event log path configured.
+\end{enumerate}
+
+\begin{smlaw}
+\textbf{Second Law of Identity} applies at the version level: a configuration
+with $m \geq 3$ concurrent v5.1.5 feature blocks enabled and all guard
+conditions satisfied will automatically activate the full UIISCF state.
+A partial configuration raises \texttt{ERR\_PARTIAL\_UIISCF} and is rejected.
+Partial activation is not supported; the formalism is all-or-nothing at v5.1.5.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Conservation Summary and Global Invariants}\label{sec:conservation}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{table}[H]
+\centering
+\caption{Global invariants in UIISCF.}
+\label{tab:invariants}
+\begin{tabular}{@{}lllp{5.5cm}@{}}
+\toprule
+Quantity & Symbol & Conservation type & Violation handler \\
+\midrule
+Total energy       & $E_{\mathrm{tot}}$ & Approximate (NVE) & Rescale thermostat \\
+Total momentum     & $\mathbf{P}$       & Exact             & Fatal error \\
+Total charge       & $Q_{\mathrm{tot}}$ & Exact             & Fatal error \\
+Particle count     & $N$                & Exact (non-annihil)& Fatal error \\
+Lepton number      & $L_{\mathrm{tot}}$ & Exact             & Fatal error \\
+Baryon number      & $B_{\mathrm{tot}}$ & Exact             & Fatal error \\
+Total $\Rec$       & $\sum_i \Rec_i$    & Monotone non-increasing & Logged; not fatal \\
+Entropy            & $S_{\mathrm{tot}}$ & Monotone non-decreasing & Logged; not fatal \\
+Scale quota sum    & $\sum_S \Quota_S$  & Bounded change per step & Warning if $|\Delta\Quota_S| > 10$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The information invariants (rows 7--8) are soft: they are tracked and logged
+but do not cause fatal errors.  This is intentional.  The First Law of
+Identity is a physical law, not an implementation constraint, and apparent
+violations indicate interesting physics rather than bugs.  Only a spontaneous
+\emph{increase} in $\sum_i \Rec_i$ without a corresponding event is treated
+as a bug (\texttt{ERR\_INFO\_CREATED}).
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Complete Reference Script}\label{sec:refblock}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+A complete annotated configuration script demonstrating all UIISCF features:
+
+\begin{lstlisting}[language={}, caption={Complete UIISCF reference configuration (v5.1.5).}]
+[meta]
+version        = "5.1.5"
+script_id      = "UIISCF-REF-001"
+description    = "Full UIISCF feature demonstration"
+
+[material]
+file           = "system.xyz"
+format         = "xyz"
+
+[run]
+integrator     = "velocity_verlet"
+dt             = 0.5
+steps          = 500000
+thermostat     = "nose_hoover"
+thermostat_T   = 300.0
+barostat       = "parrinello_rahman"
+barostat_P     = 1.0
+info_track     = true
+info_dissip    = 0.001
+
+[kernel]
+mode                = "full"
+subatomic_mode      = true
+event_rate_density  = 0.01
+event_energy_guard  = 5.0
+event_queue_depth   = 1000
+event_log_path      = "run.evlog"
+energy_tol          = 1.0e-4
+momentum_tol        = 1.0e-6
+
+[quark]
+enabled         = true
+flavours        = ["u","d","s"]
+alpha_s         = 0.18
+kappa_string    = 0.18
+full_qcd        = false          # MANDATORY
+cai_channel     = true
+
+[boson]
+enabled         = true
+photon_proxy    = true
+weak_proxy      = false
+full_qcd        = false          # MANDATORY
+
+[dark_sector]
+enabled         = false
+
+[solver_compare]
+enabled             = true
+solvers             = ["vv","pefrl"]
+checkpoint_interval = 5000
+output_path         = "solver_cmp.csv"
+
+[observe]
+interval        = 100
+properties      = ["temperature","pressure","energy","Xi_total","quota_S"]
+output          = "observables.chart"
+
+[export]
+trajectory          = "run.xyza"
+formation           = "run.xyzf"
+checkpoint          = "run.xyzc"
+checkpoint_interval = 10000
+reco_output         = "run.reco"
+\end{lstlisting}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section*{Summary of the Two Laws}
+\addcontentsline{toc}{section}{Summary of the Two Laws}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\begin{smlaw}
+\textbf{First Law of Identity --- Conservation of Distinguishability (canonical form).}
+\[
+  \Pid_i \leftrightarrow \Pid_j
+  \;\implies\;
+  \Delta\Rec_{ij} < 0 \;\;\text{or}\;\; \Delta S_{ij} > 0 .
+\]
+No physical interaction preserves or increases total recoverable
+distinguishability.  Information is either converted to entropy or lost to
+the environment.  This law holds at all scales and is scale-independent.
+It is the reason detector reconstruction is a lossy process; it is the reason
+annihilation destroys identity irreversibly; it is the reason that every
+interaction in any simulation must reduce the information budget of at least
+one participant.
+\end{smlaw}
+
+\begin{smlaw}
+\textbf{Second Law of Identity --- Scale-Coalescence Birth Criterion (canonical form).}
+\[
+  m \geq 3,\quad
+  d_{ij}^{(n)} \leq \lbond^{(n)},\quad
+  B_n\!\left(C_n\right) \geq \tau_B
+  \;\implies\;
+  \mathrm{Exist}\!\left(\Pid_*^{(n+1)}\right) = 1,\quad
+  \Delta\Quota_S = +1 .
+\]
+Complexity emerges through coalescence.  Every stable higher-scale identity
+requires at minimum three lower-scale identities satisfying proximity and
+bond maturity.  The new identity inherits a reduced but positive information
+budget, consistent with the First Law.  Quarks become hadrons; nucleons become
+nuclei; atoms become molecules.  The universe does this at every scale,
+continuously, and has done so for $1.4 \times 10^{10}$ years before anyone
+wrote it down.
+\end{smlaw}
+
+%%─────────────────────────────────────────────────────────────────────────────
+%% Colophon
+%%─────────────────────────────────────────────────────────────────────────────
+\vspace{2em}
+\noindent\rule{\textwidth}{0.6pt}
+
+\begin{center}
+\small\textit{%
+  What CERN produces in abundance is not particles but information about
+  interactions.\\[3pt]
+  Working backwards from that information to a coherent picture of identity
+  is the whole problem.\\[4pt]
+  Theoretical Division \quad\textbar\quad
+  UIISCF Rev.~1.0 \quad\textbar\quad \today
+}
+\end{center}
+
+\end{document}

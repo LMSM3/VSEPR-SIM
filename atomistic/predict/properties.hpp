@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "atomistic/core/state.hpp"
 #include <string>
 #include <vector>
@@ -68,7 +68,7 @@ ReactivityIndices predict_reactivity(const State& s,
 GeometryPrediction predict_geometry_from_vsepr(const State& s);
 
 /**
- * Predict reaction energy (ΔE) for A + B → C + D
+ * Predict reaction energy (ΔE) for A + B -> C + D
  * Fast estimate using bond energies and strain corrections
  */
 double predict_reaction_energy(const State& reactants_A,

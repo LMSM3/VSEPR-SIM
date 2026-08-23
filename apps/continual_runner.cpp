@@ -1,9 +1,9 @@
-/**
- * continual_runner.cpp — Continual Formation Engine Worker
+﻿/**
+ * continual_runner.cpp  -  Continual Formation Engine Worker
  *
  * A lean, deterministic simulation worker that:
  *   1. Reads formulas from a queue file (one per line)
- *   2. Runs tiered simulation: SCREEN → MEDIUM → DEEP
+ *   2. Runs tiered simulation: SCREEN -> MEDIUM -> DEEP
  *   3. Writes structured JSON results per formula
  *   4. Appends to a master CSV ledger
  *   5. Checkpoints progress so it can be killed and resumed
@@ -12,9 +12,9 @@
  *   continual_runner --queue work_queue.txt --out results/ [--tier deep]
  *
  * Tiers:
- *   screen  — 100 FIRE steps,   fast reject/accept (< 0.5 s per formula)
- *   medium  — 1000 FIRE steps,  decent convergence  (< 5 s per formula)
- *   deep    — 5000 FIRE steps,  publication-quality  (< 30 s per formula)
+ *   screen   -  100 FIRE steps,   fast reject/accept (< 0.5 s per formula)
+ *   medium   -  1000 FIRE steps,  decent convergence  (< 5 s per formula)
+ *   deep     -  5000 FIRE steps,  publication-quality  (< 30 s per formula)
  *
  * The orchestrator (Python) feeds the queue; this binary only consumes.
  * Anti-black-box: every result is a JSON with full provenance.
@@ -156,10 +156,10 @@ static void append_ledger_row(const std::string& ledger, const FormationResult& 
 }
 
 // ============================================================================
-// Formula → State builder (self-contained, no external builder dependency)
+// Formula -> State builder (self-contained, no external builder dependency)
 // ============================================================================
 
-// Minimal atomic mass table (Z → mass in amu)
+// Minimal atomic mass table (Z -> mass in amu)
 static const std::map<int, double> ATOMIC_MASS = {
     {1,1.008},{2,4.003},{3,6.941},{4,9.012},{5,10.81},{6,12.011},{7,14.007},
     {8,15.999},{9,18.998},{10,20.18},{11,22.99},{12,24.305},{13,26.982},
@@ -168,7 +168,7 @@ static const std::map<int, double> ATOMIC_MASS = {
     {28,58.693},{29,63.546},{30,65.38},{35,79.904},{53,126.904},{79,196.967}
 };
 
-// Minimal symbol → Z table
+// Minimal symbol -> Z table
 static const std::map<std::string, int> SYMBOL_TO_Z = {
     {"H",1},{"He",2},{"Li",3},{"Be",4},{"B",5},{"C",6},{"N",7},{"O",8},
     {"F",9},{"Ne",10},{"Na",11},{"Mg",12},{"Al",13},{"Si",14},{"P",15},
@@ -177,7 +177,7 @@ static const std::map<std::string, int> SYMBOL_TO_Z = {
     {"I",53},{"Au",79}
 };
 
-// Z → symbol (reverse map)
+// Z -> symbol (reverse map)
 static std::string z_to_symbol(int Z) {
     for (auto& [sym, z] : SYMBOL_TO_Z) {
         if (z == Z) return sym;
@@ -185,7 +185,7 @@ static std::string z_to_symbol(int Z) {
     return "X";
 }
 
-// Parse chemical formula string → vector of (Z, count)
+// Parse chemical formula string -> vector of (Z, count)
 static std::vector<std::pair<int,int>> parse_formula(const std::string& formula) {
     std::vector<std::pair<int,int>> composition;
     size_t i = 0;
@@ -385,7 +385,7 @@ static std::string pop_formula(const std::string& queue_file) {
 
 void print_help() {
     std::cout << R"(
-continual_runner — Continual Formation Engine Worker
+continual_runner  -  Continual Formation Engine Worker
 
 USAGE:
   continual_runner --queue <file> --out <dir> [options]
@@ -440,21 +440,21 @@ int main(int argc, char** argv) {
     else if (cfg.tier == "deep") max_steps = cfg.deep_steps;
     if (cfg.override_steps > 0) max_steps = cfg.override_steps;  // --steps wins
 
-    std::cout << "╔═══════════════════════════════════════════════╗\n";
-    std::cout << "║  Continual Formation Engine — Worker          ║\n";
-    std::cout << "╠═══════════════════════════════════════════════╣\n";
-    std::cout << "║  Queue:  " << cfg.queue_file << "\n";
-    std::cout << "║  Output: " << cfg.output_dir << "\n";
-    std::cout << "║  Tier:   " << cfg.tier << " (" << max_steps << " steps)\n";
-    std::cout << "║  Seeds:  " << cfg.seeds_per_formula << " per formula\n";
-    std::cout << "╚═══════════════════════════════════════════════╝\n\n";
+    std::cout << "+===============================================+\n";
+    std::cout << "|  Continual Formation Engine  -  Worker          |\n";
+    std::cout << "╠===============================================╣\n";
+    std::cout << "|  Queue:  " << cfg.queue_file << "\n";
+    std::cout << "|  Output: " << cfg.output_dir << "\n";
+    std::cout << "|  Tier:   " << cfg.tier << " (" << max_steps << " steps)\n";
+    std::cout << "|  Seeds:  " << cfg.seeds_per_formula << " per formula\n";
+    std::cout << "+===============================================+\n\n";
 
     int total_formations = 0;
     int total_stable = 0;
     int total_converged = 0;
     auto session_start = std::chrono::steady_clock::now();
 
-    // Main consumption loop — runs until queue is empty
+    // Main consumption loop  -  runs until queue is empty
     while (true) {
         std::string formula = pop_formula(cfg.queue_file);
         if (formula.empty()) {
@@ -463,7 +463,7 @@ int main(int argc, char** argv) {
                 std::cout << "\n[STOP signal received]\n";
                 break;
             }
-            // Queue empty — wait and retry (orchestrator may refill)
+            // Queue empty  -  wait and retry (orchestrator may refill)
             std::this_thread::sleep_for(std::chrono::seconds(2));
             formula = pop_formula(cfg.queue_file);
             if (formula.empty()) break; // truly done
@@ -497,7 +497,7 @@ int main(int argc, char** argv) {
             if (cfg.verbose) {
                 std::cout << "[" << total_formations << "] "
                           << formula << " s=" << seed
-                          << " → " << res.classification
+                          << " -> " << res.classification
                           << " E/N=" << std::fixed << std::setprecision(2)
                           << res.energy_per_atom
                           << " t=" << std::setprecision(1) << res.wall_time_ms << "ms\n";
@@ -517,7 +517,7 @@ int main(int argc, char** argv) {
     auto elapsed = std::chrono::duration<double>(
         std::chrono::steady_clock::now() - session_start).count();
 
-    std::cout << "\n\n═══ SESSION COMPLETE ═══\n";
+    std::cout << "\n\n=== SESSION COMPLETE ===\n";
     std::cout << "  Total formations: " << total_formations << "\n";
     std::cout << "  Stable:           " << total_stable << "\n";
     std::cout << "  Converged:        " << total_converged << "\n";

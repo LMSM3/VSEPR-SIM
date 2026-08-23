@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iostream>
+#include <mutex>
 
 namespace vsepr {
 namespace dynamic {

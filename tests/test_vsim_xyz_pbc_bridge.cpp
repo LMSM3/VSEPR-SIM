@@ -1,8 +1,8 @@
-/**
- * test_vsim_xyz_pbc_bridge.cpp — xyz comment-line → runtime → pbc bridge tests
+﻿/**
+ * test_vsim_xyz_pbc_bridge.cpp  -  xyz comment-line -> runtime -> pbc bridge tests
  * ===============================================================================
  *
- * WO-VSEPR-SIM-57D gate — xyz/PBC bridge integration.
+ * WO-VSEPR-SIM-57D gate  -  xyz/PBC bridge integration.
  *
  * Tests:
  *   B1  parse_xyz_comment_cell parses cell= key correctly
@@ -32,13 +32,13 @@
 using namespace vsim;
 using namespace vsepr;
 
-// ── Test infrastructure ───────────────────────────────────────────────────────
+// -- Test infrastructure -------------------------------------------------------
 
 static int g_pass = 0, g_fail = 0;
 
 static void PASS(const char* name) { std::printf("  [PASS] %s\n", name); ++g_pass; }
 static void FAIL(const char* name, const char* reason) {
-	std::fprintf(stderr, "  [FAIL] %s — %s\n", name, reason); ++g_fail;
+	std::fprintf(stderr, "  [FAIL] %s  -  %s\n", name, reason); ++g_fail;
 }
 
 #define REQUIRE(name, cond, msg) \
@@ -48,13 +48,13 @@ static void FAIL(const char* name, const char* reason) {
 		char _b[256]; std::snprintf(_b, sizeof(_b), "%s: got %.15g expected %.15g", \
 			msg, (double)(got), (double)(expected)); FAIL(name, _b); return; } } while(0)
 
-// ── XYZ comment-line PBC parser ───────────────────────────────────────────────
+// -- XYZ comment-line PBC parser -----------------------------------------------
 // Parses keys of the form:
 //   cell="Lx Ly Lz"         or  cell="Lx Ly Lz"
 //   boundary="p p p"        or  boundary="o o o"
 //   units="angstrom"
 //
-// Boundary tokens: p / periodic → Periodic;  o / open → Open
+// Boundary tokens: p / periodic -> Periodic;  o / open -> Open
 
 struct XYZCommentMeta {
 	std::optional<std::array<double, 3>> cell_lengths;
@@ -111,7 +111,7 @@ static XYZCommentMeta parse_xyz_comment_cell(const std::string& comment) {
 	return meta;
 }
 
-// ── load_xyz_frame_with_pbc ───────────────────────────────────────────────────
+// -- load_xyz_frame_with_pbc ---------------------------------------------------
 // Parses a minimal in-memory xyz string (N / comment / atom lines) and builds
 // a PBCInterpreterRuntime. Caller may override cell/boundary after loading.
 //
@@ -173,10 +173,10 @@ static PBCInterpreterRuntime load_xyz_frame_with_pbc(const std::string& xyz_text
 	return rt;
 }
 
-// ── B1: parse_xyz_comment_cell — cell lengths ─────────────────────────────────
+// -- B1: parse_xyz_comment_cell  -  cell lengths ---------------------------------
 
 static void test_B1_cell_lengths() {
-	const char* name = "B1 — parse_xyz_comment_cell cell= key";
+	const char* name = "B1  -  parse_xyz_comment_cell cell= key";
 	auto meta = parse_xyz_comment_cell(
 		R"(cell="10.0 12.0 8.0" boundary="p p p" units="angstrom")");
 	REQUIRE(name, meta.cell_lengths.has_value(), "cell_lengths missing");
@@ -186,10 +186,10 @@ static void test_B1_cell_lengths() {
 	PASS(name);
 }
 
-// ── B2: parse_xyz_comment_cell — boundary "p p p" ────────────────────────────
+// -- B2: parse_xyz_comment_cell  -  boundary "p p p" ----------------------------
 
 static void test_B2_boundary_periodic() {
-	const char* name = "B2 — boundary=\"p p p\" maps all axes to Periodic";
+	const char* name = "B2  -  boundary=\"p p p\" maps all axes to Periodic";
 	auto meta = parse_xyz_comment_cell(
 		R"(cell="10.0 10.0 10.0" boundary="p p p")");
 	REQUIRE(name, meta.boundary.has_value(), "boundary missing");
@@ -199,10 +199,10 @@ static void test_B2_boundary_periodic() {
 	PASS(name);
 }
 
-// ── B3: parse_xyz_comment_cell — boundary "o o o" ────────────────────────────
+// -- B3: parse_xyz_comment_cell  -  boundary "o o o" ----------------------------
 
 static void test_B3_boundary_open() {
-	const char* name = "B3 — boundary=\"o o o\" maps all axes to Open";
+	const char* name = "B3  -  boundary=\"o o o\" maps all axes to Open";
 	auto meta = parse_xyz_comment_cell(
 		R"(cell="10.0 10.0 10.0" boundary="o o o")");
 	REQUIRE(name, meta.boundary.has_value(), "boundary missing");
@@ -212,10 +212,10 @@ static void test_B3_boundary_open() {
 	PASS(name);
 }
 
-// ── B4: Mixed boundary "p p o" ───────────────────────────────────────────────
+// -- B4: Mixed boundary "p p o" -----------------------------------------------
 
 static void test_B4_boundary_mixed() {
-	const char* name = "B4 — mixed boundary \"p p o\"";
+	const char* name = "B4  -  mixed boundary \"p p o\"";
 	auto meta = parse_xyz_comment_cell(
 		R"(cell="10.0 10.0 10.0" boundary="p p o")");
 	REQUIRE(name, meta.boundary.has_value(), "boundary missing");
@@ -225,10 +225,10 @@ static void test_B4_boundary_mixed() {
 	PASS(name);
 }
 
-// ── B5: load_xyz_frame_with_pbc builds correct runtime ───────────────────────
+// -- B5: load_xyz_frame_with_pbc builds correct runtime -----------------------
 
 static void test_B5_load_frame() {
-	const char* name = "B5 — load_xyz_frame_with_pbc populates runtime correctly";
+	const char* name = "B5  -  load_xyz_frame_with_pbc populates runtime correctly";
 	PBCInterpreterRuntime rt = load_xyz_frame_with_pbc(
 		"2\n"
 		"cell=\"10.0 10.0 10.0\" boundary=\"p p p\" units=\"angstrom\"\n"
@@ -246,10 +246,10 @@ static void test_B5_load_frame() {
 	PASS(name);
 }
 
-// ── B6: script [cell]/[boundary] takes precedence over xyz comment ────────────
+// -- B6: script [cell]/[boundary] takes precedence over xyz comment ------------
 
 static void test_B6_script_overrides_xyz() {
-	const char* name = "B6 — script cell takes precedence over xyz comment meta";
+	const char* name = "B6  -  script cell takes precedence over xyz comment meta";
 	// Load an xyz with cell=9.0, then override with a larger cell
 	PBCInterpreterRuntime rt = load_xyz_frame_with_pbc(
 		"1\n"
@@ -265,10 +265,10 @@ static void test_B6_script_overrides_xyz() {
 	PASS(name);
 }
 
-// ── B7: pbc.distance on xyz-loaded positions ──────────────────────────────────
+// -- B7: pbc.distance on xyz-loaded positions ----------------------------------
 
 static void test_B7_pbc_distance_from_xyz() {
-	const char* name = "B7 — pbc.distance via interpreter on xyz-loaded positions";
+	const char* name = "B7  -  pbc.distance via interpreter on xyz-loaded positions";
 	PBCInterpreterRuntime rt = load_xyz_frame_with_pbc(
 		"2\n"
 		"cell=\"10.0 10.0 10.0\" boundary=\"p p p\" units=\"angstrom\"\n"
@@ -287,10 +287,10 @@ static void test_B7_pbc_distance_from_xyz() {
 	PASS(name);
 }
 
-// ── B8: xyz comment cell= initializes runtime.cell.lengths ───────────────────
+// -- B8: xyz comment cell= initializes runtime.cell.lengths -------------------
 
 static void test_B8_cell_from_xyz_comment() {
-	const char* name = "B8 — xyz comment cell= initializes runtime.cell.lengths";
+	const char* name = "B8  -  xyz comment cell= initializes runtime.cell.lengths";
 	PBCInterpreterRuntime rt = load_xyz_frame_with_pbc(
 		"1\n"
 		"cell=\"9.0 9.0 9.0\" boundary=\"p p p\" units=\"angstrom\"\n"
@@ -304,15 +304,15 @@ static void test_B8_cell_from_xyz_comment() {
 	PASS(name);
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
 	std::printf(
 		"\n"
-		"╔══════════════════════════════════════════════════════════════╗\n"
-		"║   test_vsim_xyz_pbc_bridge — WO-VSEPR-SIM-57D gate        ║\n"
-		"║   xyz comment-line → PBCInterpreterRuntime → pbc.*        ║\n"
-		"╚══════════════════════════════════════════════════════════════╝\n\n"
+		"+==============================================================+\n"
+		"|   test_vsim_xyz_pbc_bridge  -  WO-VSEPR-SIM-57D gate        |\n"
+		"|   xyz comment-line -> PBCInterpreterRuntime -> pbc.*        |\n"
+		"+==============================================================+\n\n"
 	);
 
 	test_B1_cell_lengths();
@@ -327,14 +327,14 @@ int main() {
 	std::printf("\nResults: %d passed, %d failed\n\n", g_pass, g_fail);
 	if (g_fail == 0) {
 		std::printf(
-			"╔══════════════════════════════════════════════════════════════╗\n"
-			"║  ALL TESTS PASS — WO-57D bridge gate: CLEAR              ║\n"
-			"╚══════════════════════════════════════════════════════════════╝\n\n");
+			"+==============================================================+\n"
+			"|  ALL TESTS PASS  -  WO-57D bridge gate: CLEAR              |\n"
+			"+==============================================================+\n\n");
 		return 0;
 	}
 	std::fprintf(stderr,
-		"╔══════════════════════════════════════════════════════════════╗\n"
-		"║  FAILURES DETECTED — see [FAIL] lines above               ║\n"
-		"╚══════════════════════════════════════════════════════════════╝\n\n");
+		"+==============================================================+\n"
+		"|  FAILURES DETECTED  -  see [FAIL] lines above               |\n"
+		"+==============================================================+\n\n");
 	return 1;
 }

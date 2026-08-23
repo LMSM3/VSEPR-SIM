@@ -1,0 +1,467 @@
+﻿"Batch","Script","OK","Output"
+"1","vsim_scripts\promoted\demo_acid_contamination_fe2o3\demo_acid_contamination_fe2o3.vsim","False","[0;31mparse error:[0m vsim parse error at line 112: expected '=' in: 2[Fe(H2O)5(OSO3)^+]_{aq} <-> [Fe(H2O)4-O-SO2-O-Fe(H2O)4]^{4+}_{aq} + 2[H2O]_{l}"
+"1","vsim_scripts\promoted\golden_tests\golden_tests.vsim","False","[0;31mparse error:[0m vsim parse error at line 382: expected '=' in: group:ionic_crystal,"
+"1","vsim_scripts\promoted\golden_tests_1\golden_tests_1.vsim","False","[0;31mparse error:[0m vsim parse error at line 382: expected '=' in: group:ionic_crystal,"
+"1","vsim_scripts\promoted\green_carbon_ree_capture_fibre\green_carbon_ree_capture_fibre.vsim","False","[0;31mparse error:[0m vsim parse error at line 50: [boundary] unknown mode 'flow'; expected: periodic | open"
+"1","vsim_scripts\promoted\green_loom_regeneration_retention\green_loom_regeneration_retention.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\green_loom_regeneration_retention\green_loom_regeneration_retention.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\green_loom_regeneration_retention\green_loom_regeneration_retention.vsim
+  [project]
+    name        = green_loom_regeneration_retention
+    version     = v0.1.0
+    seed_base   = 51201
+    determinism = true
+    description = Repeated thermal-vacuum CO2 regeneration retention test for carbon/REE fibre
+  [simulation]
+    molecules   = 6 species
+      C  x4096  T=338 K  lattice=graphitic_fibre_bundle
+      CeO2  x96  T=338 K  lattice=surface_nanocluster
+      La2O3  x64  T=338 K  lattice=surface_nanocluster
+      CO2  x420  T=338 K  lattice=inlet_random
+      N2  x1540  T=338 K  lattice=inlet_random
+      H2O  x140  T=338 K  lattice=inlet_random
+    fire_max_steps = 250
+    box_size_ang   = 50
+    periodic       = false
+  [export]
+    xyz                    = yes
+    xyzf                   = yes
+    xyzfull                = yes
+    pdb                    = no
+    analysis_json          = yes
+    metrics_tsv            = yes
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = yes
+    symbolic_trace_json    = no
+    report_md              = yes
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = yes
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+    output_dir             = out/green_energy/green_loom_regeneration_retention
+  [export.visual]
+    svg_figures            = yes
+    png_snapshots          = no
+    rdf_svg                = yes
+    energy_trace_svg       = yes
+    packing_heatmap_svg    = no
+    defect_map_svg         = no
+    cluster_map_svg        = no
+    trajectory_gif         = no
+    overlay_cycle_gif      = no
+    html_dashboard         = yes
+    webgl_bundle           = no
+    report_pdf             = no
+    report_html            = no
+    visual_output_dir      = figures/green_loom_regeneration_retention/
+  [visual]
+    output_type            = terminal_chart
+    animation_mode         = none
+    show_proxy_table       = yes
+    show_convergence_trace = yes
+    show_steady_state      = yes
+    show_event_timeline    = yes
+    show_bar_chart         = no
+    show_symbolic_trace    = no
+    show_snapshot_chart    = no
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] parsed, disabled
+------------------------------------------------------------
+[1;33m  warning:[0m [run] mode 'reactive_transport' is unrecognized  -  will pass through to runtime
+
+[0;32mOK[0m  -  document is valid (1 warning(s))
+"
+"1","vsim_scripts\promoted\green_northwind_magnet_optimiser\green_northwind_magnet_optimiser.vsim","False","[0;31mparse error:[0m vsim parse error at line 42: [cell] unknown units 'nanometer'; expected angstrom"
+"1","vsim_scripts\promoted\green_sunwire_pv_optimiser\green_sunwire_pv_optimiser.vsim","False","[0;31mparse error:[0m vsim parse error at line 41: [cell] unknown units 'millimeter'; expected angstrom"
+"1","vsim_scripts\promoted\group_27_kernel_safety_tests\group_27_kernel_safety_tests.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\group_27_kernel_safety_tests\group_27_kernel_safety_tests.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\group_27_kernel_safety_tests\group_27_kernel_safety_tests.vsim
+  [project]
+    name        = group_27_kernel_safety_tests
+    version     = v5.0.0-beta.7.1
+    seed_base   = 2700
+    determinism = true
+    description = Group 27: Day #2 runtime safety and dispatch tests
+  [simulation]
+    molecules   = 1 species
+      Ar  x64  T=300 K  lattice=none
+    fire_max_steps = 200
+    box_size_ang   = 0
+    periodic       = false
+  [export]
+    xyz                    = yes
+    xyzf                   = yes
+    xyzfull                = no
+    pdb                    = no
+    analysis_json          = yes
+    metrics_tsv            = yes
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = no
+    symbolic_trace_json    = yes
+    report_md              = no
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = no
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+    output_dir             = out/group_27/
+  [export.visual]
+    svg_figures            = no
+    png_snapshots          = no
+    rdf_svg                = no
+    energy_trace_svg       = yes
+    packing_heatmap_svg    = no
+    defect_map_svg         = no
+    cluster_map_svg        = no
+    trajectory_gif         = no
+    overlay_cycle_gif      = no
+    html_dashboard         = no
+    webgl_bundle           = no
+    report_pdf             = no
+    report_html            = no
+    visual_output_dir      = figures/group_27/
+  [visual.external]
+    enabled        = yes
+    render         = state_current
+    format         = svg
+  [variance]
+    D_var  field=displacement  window=all
+  [N_evolution]
+    particle_spawn  target=particle_count  window=last
+    particle_remove  target=particle_count  window=last
+    particle_stable  target=particle_count  window=all
+  [while]
+    while_loop_safety_cap  cond=""variance D_var > 0.001""  steps=50  max=20
+    cached_metric_guard  cond=""variance D_var > 0.001""  steps=50  max=20
+  [batch]
+    job=defect_sweep  seeds=1
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] parsed, disabled
+------------------------------------------------------------
+[0;32mOK[0m  -  document is valid
+"
+"1","vsim_scripts\promoted\group_27_kernel_safety_tests_1\group_27_kernel_safety_tests_1.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\group_27_kernel_safety_tests_1\group_27_kernel_safety_tests_1.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\group_27_kernel_safety_tests_1\group_27_kernel_safety_tests_1.vsim
+  [project]
+    name        = group_27_kernel_safety_tests
+    version     = v5.0.0-beta.7.1
+    seed_base   = 2700
+    determinism = true
+    description = Group 27: Day #2 runtime safety and dispatch tests
+  [simulation]
+    molecules   = 1 species
+      Ar  x64  T=300 K  lattice=none
+    fire_max_steps = 200
+    box_size_ang   = 0
+    periodic       = false
+  [export]
+    xyz                    = yes
+    xyzf                   = yes
+    xyzfull                = no
+    pdb                    = no
+    analysis_json          = yes
+    metrics_tsv            = yes
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = no
+    symbolic_trace_json    = yes
+    report_md              = no
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = no
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+    output_dir             = out/group_27/
+  [export.visual]
+    svg_figures            = no
+    png_snapshots          = no
+    rdf_svg                = no
+    energy_trace_svg       = yes
+    packing_heatmap_svg    = no
+    defect_map_svg         = no
+    cluster_map_svg        = no
+    trajectory_gif         = no
+    overlay_cycle_gif      = no
+    html_dashboard         = no
+    webgl_bundle           = no
+    report_pdf             = no
+    report_html            = no
+    visual_output_dir      = figures/group_27/
+  [visual.external]
+    enabled        = yes
+    render         = state_current
+    format         = svg
+  [variance]
+    D_var  field=displacement  window=all
+  [N_evolution]
+    particle_spawn  target=particle_count  window=last
+    particle_remove  target=particle_count  window=last
+    particle_stable  target=particle_count  window=all
+  [while]
+    while_loop_safety_cap  cond=""variance D_var > 0.001""  steps=50  max=20
+    cached_metric_guard  cond=""variance D_var > 0.001""  steps=50  max=20
+  [batch]
+    job=defect_sweep  seeds=1
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] parsed, disabled
+------------------------------------------------------------
+[0;32mOK[0m  -  document is valid
+"
+"1","vsim_scripts\promoted\ikk3_carbon_allotropes_batch\ikk3_carbon_allotropes_batch.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\ikk3_carbon_allotropes_batch\ikk3_carbon_allotropes_batch.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\ikk3_carbon_allotropes_batch\ikk3_carbon_allotropes_batch.vsim
+  [project]
+    name        = ikk3_carbon_allotropes_batch
+    version     = v5.1.13.5
+    seed_base   = 6060
+    determinism = true
+  [simulation]
+    molecules   = 0 species
+    fire_max_steps = 500
+    box_size_ang   = 50
+    periodic       = false
+  [export]
+    xyz                    = yes
+    xyzf                   = no
+    xyzfull                = no
+    pdb                    = no
+    analysis_json          = no
+    metrics_tsv            = no
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = no
+    symbolic_trace_json    = no
+    report_md              = no
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = no
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+  [visual]
+    output_type            = terminal_overlay_cycle
+    animation_mode         = overlay
+    show_proxy_table       = yes
+    show_convergence_trace = yes
+    show_steady_state      = yes
+    show_event_timeline    = yes
+    show_bar_chart         = yes
+    show_symbolic_trace    = yes
+    show_snapshot_chart    = no
+    smooth_resim   = true
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] parsed, disabled
+------------------------------------------------------------
+[1;33m  warning:[0m [simulation] no molecules specified  -  empty run
+
+[0;32mOK[0m  -  document is valid (1 warning(s))
+"
+"1","vsim_scripts\promoted\ikk3_matrix_wave_bridge_si_1\ikk3_matrix_wave_bridge_si_1.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\ikk3_matrix_wave_bridge_si_1\ikk3_matrix_wave_bridge_si_1.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\ikk3_matrix_wave_bridge_si_1\ikk3_matrix_wave_bridge_si_1.vsim
+  [project]
+    name        = ikk3_matrix_wave_bridge_si
+    version     = v5.0.0-beta.9
+    seed_base   = 2048
+    determinism = true
+  [simulation]
+    molecules   = 0 species
+    fire_max_steps = 500
+    box_size_ang   = 50
+    periodic       = false
+  [export]
+    xyz                    = yes
+    xyzf                   = yes
+    xyzfull                = no
+    pdb                    = no
+    analysis_json          = yes
+    metrics_tsv            = yes
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = yes
+    symbolic_trace_json    = yes
+    report_md              = yes
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = yes
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+    output_dir             = out/ikk3_si
+  [visual]
+    output_type            = terminal_overlay_cycle
+    animation_mode         = overlay
+    show_proxy_table       = yes
+    show_convergence_trace = yes
+    show_steady_state      = yes
+    show_event_timeline    = yes
+    show_bar_chart         = yes
+    show_symbolic_trace    = yes
+    show_snapshot_chart    = no
+    smooth_resim   = true
+  [variance]
+    energy_var  field=""energy.total""  window=""last
+  [while]
+    name  cond=""pre_pulse_equilibrate""  steps=100  max=20
+    condition  cond=""energy_var > 0.005""  steps=500  max=10
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] runtime-wired: enabled, RDF/MSD, frame thresholds, PBC unwrap
+------------------------------------------------------------
+[1;33m  warning:[0m [simulation] no molecules specified  -  empty run
+
+[0;32mOK[0m  -  document is valid (1 warning(s))
+"
+"1","vsim_scripts\promoted\scale_ladder_n2_to_km_fe_1\scale_ladder_n2_to_km_fe_1.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\scale_ladder_n2_to_km_fe_1\scale_ladder_n2_to_km_fe_1.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\scale_ladder_n2_to_km_fe_1\scale_ladder_n2_to_km_fe_1.vsim
+  [project]
+    name        = scale_ladder_n2_to_km_fe
+    version     = v5.1.13.5
+    seed_base   = 7700
+    determinism = true
+  [simulation]
+    molecules   = 0 species
+    fire_max_steps = 500
+    box_size_ang   = 50
+    periodic       = false
+  [export]
+    xyz                    = yes
+    xyzf                   = no
+    xyzfull                = no
+    pdb                    = no
+    analysis_json          = yes
+    metrics_tsv            = yes
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = no
+    symbolic_trace_json    = no
+    report_md              = yes
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = yes
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+    output_dir             = out/scale_ladder
+  [visual]
+    output_type            = terminal_overlay_cycle
+    animation_mode         = none
+    show_proxy_table       = yes
+    show_convergence_trace = yes
+    show_steady_state      = yes
+    show_event_timeline    = no
+    show_bar_chart         = yes
+    show_symbolic_trace    = no
+    show_snapshot_chart    = no
+    smooth_resim   = true
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] runtime-wired: enabled, RDF/MSD, frame thresholds, PBC unwrap
+------------------------------------------------------------
+[1;33m  warning:[0m [simulation] no molecules specified  -  empty run
+
+[0;32mOK[0m  -  document is valid (1 warning(s))
+"
+"1","vsim_scripts\promoted\suite_ceramic_oxide_properties\suite_ceramic_oxide_properties.vsim","False","[0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ﻿"
+"1","vsim_scripts\promoted\suite_gas_plasma_properties\suite_gas_plasma_properties.vsim","False","[0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ﻿"
+"1","vsim_scripts\promoted\suite_metal_steam_properties\suite_metal_steam_properties.vsim","False","[0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ﻿"
+"1","vsim_scripts\promoted\vsim_3d_demo_showcase\vsim_3d_demo_showcase.vsim","False","
+[1mvsper validate[0m  C:\R\VSPER-SIM\vsim_scripts\promoted\vsim_3d_demo_showcase\vsim_3d_demo_showcase.vsim
+------------------------------------------------------------
+
+vsim document: C:\R\VSPER-SIM\vsim_scripts\promoted\vsim_3d_demo_showcase\vsim_3d_demo_showcase.vsim
+  [project]
+    name        = vsim_3d_demo_showcase
+    version     = v5.1.13.5
+    seed_base   = 9000
+    determinism = true
+  [simulation]
+    molecules   = 1 species
+      NaCl  x64  T=300 K  lattice=fcc_ionic
+    fire_max_steps = 500
+    box_size_ang   = 50
+    periodic       = true
+  [export]
+    xyz                    = yes
+    xyzf                   = yes
+    xyzfull                = no
+    pdb                    = no
+    analysis_json          = yes
+    metrics_tsv            = yes
+    cluster_json           = no
+    fingerprint_json       = no
+    events_json            = yes
+    symbolic_trace_json    = yes
+    report_md              = yes
+    summary_csv            = no
+    dashboard_json         = no
+    manifest_json          = yes
+    step_file              = no
+    vtp_mesh               = no
+    actual_hashes_tsv      = no
+    output_dir             = out/demo_3d_showcase
+  [visual]
+    output_type            = gl_overlay_cycle
+    animation_mode         = overlay
+    show_proxy_table       = yes
+    show_convergence_trace = yes
+    show_steady_state      = yes
+    show_event_timeline    = yes
+    show_bar_chart         = yes
+    show_symbolic_trace    = yes
+    show_snapshot_chart    = no
+    gl_window              = 1280x800
+    gl_overlay_hold_s      = 3.000000
+    smooth_resim   = true
+  [visual.external]
+    enabled        = yes
+    format         = png
+  [variance]
+    energy_var  field=""energy.total""  window=""last
+  [while]
+    name  cond=""thermal_equilibration""  steps=100  max=20
+    condition  cond=""energy_var > 0.008""  steps=300  max=20
+
+------------------------------------------------------------
+[1mCapability status[0m
+  [dissolution]       parsed, disabled
+  [analysis.sampling] runtime-wired: enabled, RDF/MSD, frame thresholds, PBC unwrap
+------------------------------------------------------------
+[0;32mOK[0m  -  document is valid
+"

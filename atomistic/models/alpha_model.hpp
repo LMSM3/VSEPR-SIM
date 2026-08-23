@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 /**
- * alpha_model.hpp  —  Alpha Method D (v2.8.X)
+ * alpha_model.hpp   -   Alpha Method D (v2.8.X)
  * ============================================
  * Empirical-primary polarizability prediction.
  *
  * Prediction path:
- *   Z = 1-118  →  ALPHA_EMPIRICAL[Z-1]  (compile-time table, 0% error by construction)
- *   Z > 118    →  generative model fallback (see below)
+ *   Z = 1-118  ->  ALPHA_EMPIRICAL[Z-1]  (compile-time table, 0% error by construction)
+ *   Z > 118    ->  generative model fallback (see below)
  *
  * Generative fallback model (Z > 118):
  *   alpha(Z) = r_eff(Z)^3 * g_block(Z) * g_period(Z) * g_f(n_f(Z)) * g_bind(Z)
@@ -20,8 +20,8 @@
  *   g_bind    = 1 / (1 + b_bind * I_1(Z))
  *
  * Empirical table sources:
- *   Miller1990        — Miller, JACS 112, 8533 (1990)        [Z=1-54, gas-phase exp.]
- *   Schwerdtfeger2019 — Schwerdtfeger & Nagle, Mol. Phys. 117, 1200 (2019)  [Z=21-118, DHF/CCSD(T)]
+ *   Miller1990         -  Miller, JACS 112, 8533 (1990)        [Z=1-54, gas-phase exp.]
+ *   Schwerdtfeger2019  -  Schwerdtfeger & Nagle, Mol. Phys. 117, 1200 (2019)  [Z=21-118, DHF/CCSD(T)]
  *
  * Drude coupling (for SCF/Drude polarization solver):
  *   k_D(Z) = q_D^2 / alpha(Z)
@@ -43,7 +43,7 @@ namespace atomistic {
 namespace polarization {
 
 // ============================================================================
-// Empirical polarizability table — Z = 1-118  (Angstrom^3)
+// Empirical polarizability table  -  Z = 1-118  (Angstrom^3)
 // Sources: Miller 1990 (Z=1-54), Schwerdtfeger & Nagle 2019 (Z=21-118).
 // Index: ALPHA_EMPIRICAL[Z-1]  (Z=1 at index 0, Z=118 at index 117).
 // ============================================================================
@@ -170,11 +170,11 @@ constexpr double ALPHA_EMPIRICAL[118] = {
 };
 
 // ============================================================================
-// Fitted model parameters — Alpha Method D (v2.8.X)
+// Fitted model parameters  -  Alpha Method D (v2.8.X)
 // ============================================================================
 
 /**
- * AlphaModelParams — 23 coefficients fitted offline.
+ * AlphaModelParams  -  23 coefficients fitted offline.
  *
  * Default values are cold-start (physically motivated starting point,
  * not yet fitted).  Run tools/fit_alpha_model to train against the
@@ -204,15 +204,15 @@ struct AlphaModelParams {
     };
 
     // Relativistic radius correction: r_eff = r_cov * (1 + c_rel * Z^2)
-    // Negative c_rel → contraction for heavy atoms.
+    // Negative c_rel -> contraction for heavy atoms.
     double c_rel = 0.0;
 
     // F-electron shielding contraction:
     //   r_eff *= (1 - beta_f * n_f/14)
-    // 4f/5f electrons are poor shielders — as they fill, the effective
+    // 4f/5f electrons are poor shielders  -  as they fill, the effective
     // nuclear charge seen by valence electrons increases, contracting
     // the polarisable cloud beyond what r_cov captures.
-    // beta_f = 0 → no extra contraction; beta_f = 0.15 → 15% at full filling.
+    // beta_f = 0 -> no extra contraction; beta_f = 0.15 -> 15% at full filling.
     double beta_f = 0.0;
 
     // F-block multiplicative: g_f(n_f) = 1 + a_f1*(n_f/14) + a_f2*G(7) + a_f3*G(14)
@@ -228,7 +228,7 @@ struct AlphaModelParams {
     // Drude coupling: k_D = q_drude^2 / alpha
     double q_drude = 1.0;     // Drude particle charge (e)
 
-    // Additive correction blob — f-block electronic configuration discontinuities.
+    // Additive correction blob  -  f-block electronic configuration discontinuities.
     // alpha(Z) = alpha_smooth + blob_f_lin*n_f + blob_f_half*δ_half + blob_f_full*δ_full
     // The smooth r_cov^3 basis is structurally incapable of representing the
     // non-monotonic subshell stabilization anomalies (Eu bump, Yb drop, Nd>La).
@@ -240,7 +240,7 @@ struct AlphaModelParams {
 };
 
 // ============================================================================
-// Runtime prediction — Alpha Method D
+// Runtime prediction  -  Alpha Method D
 // ============================================================================
 
 /**
@@ -296,7 +296,7 @@ inline double alpha_predict(uint32_t Z, const AlphaModelParams& params = {}) noe
 
     // Additive correction blob: electronic configuration discontinuities
     // in the f-block that the smooth r_cov^3 basis cannot represent.
-    // Gated to f-block elements only — zero contribution elsewhere.
+    // Gated to f-block elements only  -  zero contribution elsewhere.
     if (b == 3) {
         alpha += params.blob_f_lin  * static_cast<double>(nf)
                + params.blob_f_half * desc::f_half_shell_proximity(Z)
@@ -307,7 +307,7 @@ inline double alpha_predict(uint32_t Z, const AlphaModelParams& params = {}) noe
 }
 
 // ============================================================================
-// Drude spring constant — converts alpha into a Drude particle k_D
+// Drude spring constant  -  converts alpha into a Drude particle k_D
 // ============================================================================
 
 /**

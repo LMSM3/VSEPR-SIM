@@ -1,0 +1,75 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83h_formal_charge_stub.vsim
+# Tier B — native replacement for demo_wo83h_formal_charge_stub.py
+#
+# STUB: [classify.providers] section does not exist in vsim_document.hpp yet.
+#       FormalChargeProvider is a C++-only interface; no VSIM-language entry point.
+#
+# What works today:  NH4, SO4, PO4 all classify without crashing (null provider path).
+#                    Charge assignment is NOT performed — the script only verifies
+#                    "no crash" and "no fake charge assignment".
+# What is deferred:  Correct reactive-site and polarity computation gated on real
+#                    FormalChargeProvider data (WO-84A).
+#
+# Python equivalent:
+#   assert "vsepr_report" in out    # no crash = null-charge path works
+#   print(f"{formula}: no crash, no fake charge assignment — OK")
+
+[project]
+name    = wo83h_formal_charge_nh4
+version = v5.0.0
+
+[material]
+formula = NH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.providers]
+# formal_charge = null              # STUB: field not parsed (WO-84A)
+#                                   # DEFERRED WO-84A: FormalChargeProvider affects
+#                                   # reactive site and polarity; null = safe defaults only
+#
+# [classify.expect]
+# contains = "vsepr_report"
+# not_contains = "charge: [^0]"    # must not assign a fake nonzero charge
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83h_formal_charge_so4
+version = v5.0.0
+
+[material]
+formula = SO4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify.providers]
+# formal_charge = null              # STUB
+# [classify.expect]
+# contains = "vsepr_report"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83h_formal_charge_po4
+version = v5.0.0
+
+[material]
+formula = PO4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify.providers]
+# formal_charge = null              # STUB
+# [classify.expect]
+# contains = "vsepr_report"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

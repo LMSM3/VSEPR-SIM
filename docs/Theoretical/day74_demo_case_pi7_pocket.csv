@@ -1,0 +1,79 @@
+field,value,status,notes
+continual_run_id,CONTINUAL_RUN_0001,confirmed,First generation record for pi_7 biological pocket case
+parent_run_id,SIM_RUN_0073,confirmed,Parent simulation from Day 73
+generation_index,1,confirmed,First continual refinement generation
+source_type,simulation,confirmed,Output from VSIM internal engine
+object_id,pi_7,confirmed,Seven pi-bond composite field object
+family,pi_N,confirmed,Pi interaction family
+instance_number,7,confirmed,N = 7 pi bonds
+label,seven_pi_bond_composite_field,confirmed,
+substance_id,flavonoid_like_001,confirmed,
+substance_class,organic_conjugated_molecule,confirmed,
+substance_primary_state,biological_pocket,confirmed,Environmental state of parent substance
+substance_secondary_state,solution,confirmed,Secondary context: solvated ligand
+phase_detail,solvated_ligand,confirmed,
+interaction_partner,pocket_residue_field,confirmed,
+families_active,"pi_N, HB_N, vdW_N, sign_halo, ion_dipole, solvation",confirmed,All simultaneously active interaction families
+primary_scale,S3,confirmed,Dominant recovered length scale: molecular/contact
+secondary_scales,"S2, S4",confirmed,Electronic (S2) and environmental (S4) contributions
+z_scale_1,0.05,confirmed,S1 membership fraction
+z_scale_2,0.18,confirmed,S2 membership fraction (electronic)
+z_scale_3,0.62,confirmed,S3 membership fraction (dominant)
+z_scale_4,0.14,confirmed,S4 membership fraction (environmental)
+z_scale_5,0.01,confirmed,S5 membership fraction
+z_scale_6,0.00,confirmed,S6 membership fraction
+carrier,field,confirmed,
+field_object,F_pi_7,confirmed,
+force_channel,f_pi_7,confirmed,
+casting_primary,field_field,confirmed,
+casting_secondary,force_force,confirmed,
+topology,conjugated_branched,confirmed,
+geometry_mode,slipped_parallel,confirmed,
+temperature_K,298.15,confirmed,Physiological temperature
+pressure_Pa,101325,confirmed,Standard atmospheric pressure
+solvent,water,confirmed,
+dielectric_epsilon,78.4,confirmed,Bulk water dielectric; pocket local value may differ
+ionic_strength,0.15,confirmed,Physiological ionic strength (mol/L)
+pH,7.4,confirmed,Physiological pH
+charge_state,neutral,confirmed,
+protonation_state,partial_phenolic,confirmed,
+spin_state,singlet,confirmed,
+Lambda_prior_nm,1.10,confirmed,Prior estimate from state_prior_table + family offset
+Lambda_state_avg_nm,0.95,confirmed,State average from biological_pocket row
+Lambda_sim_nm,1.18,confirmed,Recovered from SIM_RUN_0073 output
+Lambda_data_nm,pending,pending,No empirical data imported yet; gap_label reflects this
+Lambda_solved_nm,pending,pending,Cannot solve until Lambda_data_nm is available
+sigma_Lambda_nm,0.22,confirmed,Simulation uncertainty
+observed_length_nm,1.34,confirmed,Geometric measurement from simulation output
+scale_ratio,1.14,confirmed,observed_length / Lambda_sim = 1.34 / 1.18
+recovery_class,above_ideal_weakened,confirmed,ell > Lambda: interaction present but less prominent than ideal
+resolution_status,resolved,confirmed,Lambda recovered within S3 scale bounds
+UFF_pi7_pocket,pending,pending,
+CFF_pi7_steric,pending,pending,
+E_total,pending,pending,
+eta_scale,pending,pending,
+eta_orientation,pending,pending,
+eta_environment,pending,pending,
+eta_sign,null,confirmed,Not applicable for pi_N in this geometry
+UFF_before,pending,pending,
+UFF_after,pending,pending,
+dUFF,pending,pending,
+CFF_before,pending,pending,
+CFF_after,pending,pending,
+dCFF,pending,pending,
+E_before,pending,pending,
+E_after,pending,pending,
+dE,pending,pending,
+run_id,SIM_RUN_0073,confirmed,
+method,vsepr_sim_internal,confirmed,
+version,v5.2.0-dev,confirmed,
+timestamp,pending,pending,
+coverage_count,1,confirmed,Single simulation record; empirical coverage zero
+confidence,medium,confirmed,
+confidence_score,0.62,confirmed,Preliminary; will update when empirical data is imported
+gap_label,insufficient_data,confirmed,No empirical Lambda_data_nm available for comparison
+next_action,import_data_sweep,confirmed,Flag for empiricalDB expansion; cannot validate without external reference
+fit_quality,preliminary,confirmed,
+coverage_score,low,confirmed,
+validation_status,unvalidated_sim_prediction,confirmed,
+notes,pi_7 demo case for WO-74 continual refinement pipeline; biological_pocket state; awaiting empirical data import,confirmed,

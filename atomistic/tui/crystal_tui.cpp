@@ -1,5 +1,5 @@
-/**
- * crystal_tui.cpp  —  Terminal crystal lattice viewer (implementation)
+﻿/**
+ * crystal_tui.cpp   -   Terminal crystal lattice viewer (implementation)
  * VSEPR-SIM 3.0.0
  */
 

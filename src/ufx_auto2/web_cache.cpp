@@ -1,4 +1,4 @@
-// src/ufx_auto2/web_cache.cpp
+﻿// src/ufx_auto2/web_cache.cpp
 // UFX_AUTO_2 Phase 5 -- Web Cache Implementation
 // VSEPR-SIM v5 beta8 -> beta9 target
 
@@ -152,7 +152,7 @@ WebResponse CachingFetcher::fetch(const WebQuery& query) {
 	if (cached.has_value()) {
 		// Reconstruct a minimal WebResponse from cached file.
 		// We delegate to the inner fetcher's parse logic by calling fetch with
-		// a synthetic response — instead, we build a minimal "cache hit" response.
+		// a synthetic response  -  instead, we build a minimal "cache hit" response.
 		WebResponse resp;
 		resp.source            = query.source;
 		resp.formula           = query.formula;
@@ -164,7 +164,7 @@ WebResponse CachingFetcher::fetch(const WebQuery& query) {
 		return resp;
 	}
 
-	// Cache miss — delegate to inner fetcher
+	// Cache miss  -  delegate to inner fetcher
 	WebResponse resp = inner_.fetch(query);
 
 	// Store result regardless of found/not-found (prevents repeat queries)

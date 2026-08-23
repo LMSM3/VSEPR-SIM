@@ -1,0 +1,129 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build",
+      "toolchainFile": "",
+      "environment": {
+        "PATH": "C:/msys64/ucrt64/bin;C:/Program Files/Microsoft Visual Studio/18/Insiders/Common7/IDE/CommonExtensions/Microsoft/TeamFoundation/Team Explorer/Git/cmd;$penv{PATH}"
+      },
+      "cacheVariables": {
+        "CMAKE_MAKE_PROGRAM":  "C:/msys64/ucrt64/bin/ninja.exe",
+        "CMAKE_C_COMPILER":    "C:/msys64/ucrt64/bin/gcc.exe",
+        "CMAKE_CXX_COMPILER":  "C:/msys64/ucrt64/bin/g++.exe",
+        "CMAKE_PREFIX_PATH":   "C:/msys64/ucrt64",
+        "CMAKE_EXE_LINKER_FLAGS": "-static -static-libgcc -static-libstdc++",
+        "CMAKE_COLOR_DIAGNOSTICS": "ON"
+      }
+    },
+
+    {
+      "name": "release",
+      "displayName": "Release (Ninja)",
+      "description": "Optimised release build — primary distribution target",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS":      "ON",
+        "BUILD_APPS":       "ON",
+        "BUILD_VIS":        "OFF",
+        "BUILD_DEMOS":      "ON"
+      }
+    },
+
+    {
+      "name": "debug",
+      "displayName": "Debug (Ninja)",
+      "description": "Debug build with full symbols",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build_debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "BUILD_TESTS":      "ON",
+        "BUILD_APPS":       "ON",
+        "BUILD_VIS":        "OFF",
+        "BUILD_DEMOS":      "OFF"
+      }
+    },
+
+    {
+      "name": "test",
+      "displayName": "Test-only (Ninja)",
+      "description": "Minimal headless build: tests + core, no apps or vis",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build_test_ninja",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS":      "ON",
+        "BUILD_APPS":       "OFF",
+        "BUILD_VIS":        "OFF",
+        "BUILD_DEMOS":      "OFF"
+      }
+    },
+
+    {
+      "name": "vis",
+      "displayName": "Visualisation (Ninja)",
+      "description": "Build including the supported VTK + Qt3D viewer",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build_vis",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "BUILD_TESTS":      "ON",
+        "BUILD_APPS":       "ON",
+        "BUILD_VIS":        "ON",
+        "BUILD_DEMOS":      "OFF"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "release",
+      "displayName": "Build release",
+      "configurePreset": "release",
+      "jobs": 0,
+      "nativeToolOptions": ["-k", "0"]
+    },
+    {
+      "name": "debug",
+      "displayName": "Build debug",
+      "configurePreset": "debug",
+      "jobs": 0
+    },
+    {
+      "name": "test",
+      "displayName": "Build test-only",
+      "configurePreset": "test",
+      "jobs": 0
+    },
+    {
+      "name": "vis",
+      "displayName": "Build visualisation",
+      "configurePreset": "vis",
+      "jobs": 0
+    }
+  ],
+
+  "testPresets": [
+    {
+      "name": "release",
+      "displayName": "CTest release",
+      "configurePreset": "release",
+      "output": { "verbosity": "default" },
+      "execution": { "stopOnFailure": false }
+    },
+    {
+      "name": "test",
+      "displayName": "CTest test-only",
+      "configurePreset": "test",
+      "output": { "verbosity": "verbose" },
+      "execution": { "stopOnFailure": false }
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e24_surface_while_loop_convergence.vsim
+# =============================================================================
+# E24  --  While-Loop Convergence on Flux Stationarity
+#
+# Purpose: Couple the [while] convergence guard to a surface flux metric.
+#          The simulation continues until the flux variance drops below
+#          a stationarity threshold, ensuring quasi-steady-state flow.
+#
+# Key concepts:
+#   [while] criteria = "flux_variance < 1e-4" (symbolic; manual check).
+#   Flux sidecar is polled externally or via a sentinel field in the doc.
+#   Demonstrates iterative simulation gated on analysis metrics.
+# =============================================================================
+
+[project]
+name        = "e24_surface_while_convergence"
+version     = "v5.0.14"
+seed_base   = 2400
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 1024
+temperature = 450.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 1000
+dt_fs     = 2.0
+converge  = false
+
+[variance]
+name         = "flux_variance"
+target       = 0.0001
+tolerance    = 0.00005
+check_every  = 200
+max_restarts = 5
+
+[while]
+criteria    = "flux_variance"
+max_cycles  = 10
+cycle_steps = 1000
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e24"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e24/surfaces"
+
+[[object.surface]]
+name          = "flux_convergence_probe"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 0.0
+normal_y      = 1.0
+normal_z      = 0.0
+width         = 25.0
+height        = 25.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_while"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 200
+

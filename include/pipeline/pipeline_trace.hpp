@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * pipeline_trace.hpp — Symbolic Trace and Animation Cue Types
+ * pipeline_trace.hpp  -  Symbolic Trace and Animation Cue Types
  * ============================================================
  *
  * Provides the data structures that let the beta-7 pipeline stages record
@@ -22,7 +22,7 @@
 namespace vsepr::pipeline {
 
 // ============================================================================
-// SymbolicTrace — one derived metric, fully documented
+// SymbolicTrace  -  one derived metric, fully documented
 // ============================================================================
 
 /**
@@ -51,7 +51,7 @@ struct SymbolicTrace {
 };
 
 // ============================================================================
-// AnimationCue — one declarative dashboard instruction
+// AnimationCue  -  one declarative dashboard instruction
 // ============================================================================
 
 /**
@@ -66,8 +66,8 @@ struct SymbolicTrace {
  *   id         Unique cue identifier (e.g. "anim_stability_gauge_Al")
  *   stage      Which stage emitted this cue
  *   cue_type   Kind of animation (gauge_fill, pulse, flash, bar_grow,
- *              network_grow, step, …)
- *   target     What is being animated (symbol name, registry name, …)
+ *              network_grow, step, ...)
+ *   target     What is being animated (symbol name, registry name, ...)
  *   label      Human-readable label for the animated quantity
  *   value0     Start value (commonly 0.0)
  *   value1     End / peak value
@@ -90,7 +90,7 @@ struct AnimationCue {
 };
 
 // ============================================================================
-// StageTraceBundle — container carried inside each pipeline record
+// StageTraceBundle  -  container carried inside each pipeline record
 // ============================================================================
 
 /**

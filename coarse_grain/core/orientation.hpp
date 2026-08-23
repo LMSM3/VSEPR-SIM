@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * orientation.hpp — Bead Orientation and Pairwise Invariants
+ * orientation.hpp  -  Bead Orientation and Pairwise Invariants
  *
  * Defines the orientation representation for anisotropic CG beads
  * and the scalar invariants that characterize their relative alignment.
@@ -28,7 +28,7 @@
 namespace coarse_grain {
 
 /**
- * BeadOrientation — orientation state of a single bead.
+ * BeadOrientation  -  orientation state of a single bead.
  *
  * The normal vector n̂ is the principal axis corresponding to the
  * largest moment of inertia (axis3 of InertiaFrame). For planar
@@ -60,16 +60,16 @@ struct BeadOrientation {
 };
 
 /**
- * OrientationInvariants — the three scalar invariants characterizing
+ * OrientationInvariants  -  the three scalar invariants characterizing
  * the relative alignment of two anisotropic beads.
  *
  * These are rotationally invariant: they depend only on the
  * geometry of the two beads, not on the global coordinate frame.
  */
 struct OrientationInvariants {
-    double cos_theta_A{};     // n̂_A · r̂   — alignment of A normal with separation axis
-    double cos_theta_B{};     // n̂_B · r̂   — alignment of B normal with separation axis
-    double cos_phi{};         // n̂_A · n̂_B — mutual alignment of normals
+    double cos_theta_A{};     // n̂_A · r̂    -  alignment of A normal with separation axis
+    double cos_theta_B{};     // n̂_B · r̂    -  alignment of B normal with separation axis
+    double cos_phi{};         // n̂_A · n̂_B  -  mutual alignment of normals
 
     double r{};               // |R_B - R_A| separation distance (Å)
 
@@ -77,10 +77,10 @@ struct OrientationInvariants {
      * Classification of the dimer configuration.
      *
      * Returns a human-readable label based on the invariants:
-     *   "face-to-face"  — normals parallel, both aligned with axis (stacking)
-     *   "edge-to-face"  — one normal perpendicular to axis (T-shaped)
-     *   "edge-to-edge"  — both normals perpendicular to axis
-     *   "offset"        — intermediate angles
+     *   "face-to-face"   -  normals parallel, both aligned with axis (stacking)
+     *   "edge-to-face"   -  one normal perpendicular to axis (T-shaped)
+     *   "edge-to-edge"   -  both normals perpendicular to axis
+     *   "offset"         -  intermediate angles
      */
     const char* classify() const {
         double abs_cos_phi = std::abs(cos_phi);

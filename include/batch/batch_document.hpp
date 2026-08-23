@@ -1,14 +1,14 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_document.hpp
  * ==================================
- * WO-VSIM-62C — Batch Layer Parser & Static Axis Runtime
+ * WO-VSIM-62C  -  Batch Layer Parser & Static Axis Runtime
  *
  * BatchDocument is the top-level struct for a parsed study (.vsim file with
  * a [study] block).  It owns all sub-sections from the spec §1.9.
  *
- * Stochastic axis runtime (kind = "stochastic") → v5.1.0
- * Formation stage execution (kind = "formation") → v5.2.0
+ * Stochastic axis runtime (kind = "stochastic") -> v5.1.0
+ * Formation stage execution (kind = "formation") -> v5.2.0
  *
  * WO-VSIM-62C | beta-12
  */

@@ -1,22 +1,22 @@
-#pragma once
+﻿#pragma once
 /**
- * xyz_tui_bridge.hpp -- Universal XYZ → TUI translation layer
+ * xyz_tui_bridge.hpp -- Universal XYZ -> TUI translation layer
  * =============================================================
  * VSEPR-SIM  |  WO-ID: DEV54-XYZ-SPEC-INTEGRATION
  *
  * This is the architectural connector described in the WO:
  *
  *   .xyz / .xyza / .xyzc / .xyzf
- *           ↓
+ *           v
  *    Unified Reader  (xyz_reader.hpp)
- *           ↓
+ *           v
  *        XYZData
- *           ↓
- *    xyz_tui_bridge    ← YOU ARE HERE
- *           ↓
+ *           v
+ *    xyz_tui_bridge    <- YOU ARE HERE
+ *           v
  *    TUISnapshot / FrameRenderer<XYZFrame>
- *           ↓
- *    FrameBuffer → ANSI → Terminal stdout
+ *           v
+ *    FrameBuffer -> ANSI -> Terminal stdout
  *
  * Three main entry points:
  *
@@ -34,12 +34,12 @@
  *      Blocks until 'q' or EOF.
  *
  * Projection:
- *   3D atom positions (Å, Cartesian) → 2D terminal grid via
+ *   3D atom positions (Å, Cartesian) -> 2D terminal grid via
  *   projection.hpp Projection2D (XY by default; configurable).
  *
  * Design:
  *   - No raw terminal cursor manipulation outside enter/exit helpers
- *   - Deterministic: same XYZFrame → same rendered frame
+ *   - Deterministic: same XYZFrame -> same rendered frame
  *   - Zero coupling to the atomistic MD engine or any simulation type
  */
 
@@ -64,7 +64,7 @@ namespace vsepr {
 namespace io {
 
 // ============================================================================
-// proj_iso() — bridge-local helper (projection.hpp has project_iso() only)
+// proj_iso()  -  bridge-local helper (projection.hpp has project_iso() only)
 // Returns a Projection2D that approximates isometric view via XY axes.
 // For true 3D iso, the renderer layer can call project_iso() directly.
 // ============================================================================
@@ -75,7 +75,7 @@ inline atomistic::tui::Projection2D proj_iso() {
 }
 
 // ============================================================================
-// BridgeConfig — visual settings for the translation layer
+// BridgeConfig  -  visual settings for the translation layer
 // ============================================================================
 
 struct BridgeTUIConfig {
@@ -105,7 +105,7 @@ struct BridgeTUIConfig {
 };
 
 // ============================================================================
-// 1. frame_to_snapshot — XYZFrame → atomistic::tui::TUISnapshot
+// 1. frame_to_snapshot  -  XYZFrame -> atomistic::tui::TUISnapshot
 // ============================================================================
 //
 // Converts the unified AtomRecord vector into the TUISnapshot struct used by
@@ -122,7 +122,7 @@ inline atomistic::tui::TUISnapshot frame_to_snapshot(const XYZFrame& frame) {
 	if (frame.energy)      snap.U_total = *frame.energy;
 	if (frame.temperature) snap.T       = *frame.temperature;
 
-	// Box → lattice metrics
+	// Box -> lattice metrics
 	if (frame.box) {
 		snap.a = frame.box->ax;
 		snap.b = frame.box->ay;
@@ -173,7 +173,7 @@ inline atomistic::tui::TUISnapshot frame_to_snapshot(const XYZFrame& frame) {
 }
 
 // ============================================================================
-// 2. make_xyz_renderer — pre-configured FrameRenderer<XYZFrame>
+// 2. make_xyz_renderer  -  pre-configured FrameRenderer<XYZFrame>
 // ============================================================================
 //
 // Returns a FrameRenderer with all standard layers attached.
@@ -302,7 +302,7 @@ make_xyz_renderer(const BridgeTUIConfig& cfg = {})
 		auto axis_label = [](Axis ax) -> const char* {
 			return ax == Axis::X ? "x" : ax == Axis::Y ? "y" : "z";
 		};
-		std::string hlabel = std::string("  ") + axis_label(proj.horiz) + " →";
+		std::string hlabel = std::string("  ") + axis_label(proj.horiz) + " ->";
 		std::string vlabel = std::string("↑ ") + axis_label(proj.vert);
 		fb.put_string(vp.x + 2, vp.y + vp.h - 2, hlabel, dim);
 		fb.put_string(vp.x + 2, vp.y + 2,        vlabel, dim);
@@ -399,7 +399,7 @@ make_xyz_renderer(const BridgeTUIConfig& cfg = {})
 
 	// ---- Layer 4: footer (controls / source) ----
 	if (cfg.show_footer) {
-		renderer.add_footer_layer(" [q] quit  |  [→] next  |  [←] prev  |  VSEPR-SIM XYZ Viewer",
+		renderer.add_footer_layer(" [q] quit  |  [->] next  |  [<-] prev  |  VSEPR-SIM XYZ Viewer",
 								   {80, 80, 80});
 	}
 
@@ -407,15 +407,15 @@ make_xyz_renderer(const BridgeTUIConfig& cfg = {})
 }
 
 // ============================================================================
-// 3. animate_xyzf — terminal animation loop for .xyzf trajectories
+// 3. animate_xyzf  -  terminal animation loop for .xyzf trajectories
 // ============================================================================
 //
 // Drives a FrameRenderer<XYZFrame> through a vector of frames at target_fps.
 // This is the "now your terminal actually shows trajectories" path from the WO.
 //
 // Controls:
-//   q / Q / ESC  → quit
-//   (frame pacing via sleep; no interactive key-polling — add platform
+//   q / Q / ESC  -> quit
+//   (frame pacing via sleep; no interactive key-polling  -  add platform
 //    layer if needed; the renderer remains keyboard-agnostic here)
 
 inline void animate_xyzf(const XYZData& data,
@@ -452,7 +452,7 @@ inline void animate_xyzf(const XYZData& data,
 }
 
 // ============================================================================
-// 4. Static preview — single-frame display (.xyz / .xyza / .xyzc)
+// 4. Static preview  -  single-frame display (.xyz / .xyza / .xyzc)
 // ============================================================================
 
 inline void display_xyz_frame(const XYZFrame& frame,
@@ -466,7 +466,7 @@ inline void display_xyz_frame(const XYZFrame& frame,
 }
 
 // ============================================================================
-// 5. from_path — load + display in one call
+// 5. from_path  -  load + display in one call
 // ============================================================================
 //
 // Detects format, loads, and either previews or animates.

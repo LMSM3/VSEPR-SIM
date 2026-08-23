@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * test_runners.hpp — Test Execution, Analysis, and Assertion Infrastructure
+ * test_runners.hpp  -  Test Execution, Analysis, and Assertion Infrastructure
  *
  * Provides:
  *   1. EtaTrajectory + run_trajectory: single-bead time evolution
@@ -14,14 +14,14 @@
  *   9. PairwiseCell, CoordinationHistogram: analysis structures
  *
  * Variable hierarchy (for reference):
- *   geometry / neighborhood  →  rho, C, P2       (measured local state)
- *   normalized transforms    →  rho_hat, P2_hat   (rescaled forms)
- *   control / relaxation     →  target_f           (driving field)
- *   dynamical response       →  eta                (stateful memory)
+ *   geometry / neighborhood  ->  rho, C, P2       (measured local state)
+ *   normalized transforms    ->  rho_hat, P2_hat   (rescaled forms)
+ *   control / relaxation     ->  target_f           (driving field)
+ *   dynamical response       ->  eta                (stateful memory)
  *
  * C in this context is the coordination number: the soft-weighted count
  * of neighbours within the interaction range. It is NOT a generic "C"
- * variable — it measures how many beads are nearby.
+ * variable  -  it measures how many beads are nearby.
  *
  * Reference: Suite #2/#3 specification from development sessions
  */
@@ -43,7 +43,7 @@ namespace test_util {
 // ============================================================================
 
 /**
- * EtaTrajectory — records the evolution of eta over time.
+ * EtaTrajectory  -  records the evolution of eta over time.
  */
 struct EtaTrajectory {
     std::vector<double> eta;
@@ -190,7 +190,7 @@ inline bool is_finite(const std::vector<double>& v) {
 // ============================================================================
 
 /**
- * StatSummary — descriptive statistics for a sample.
+ * StatSummary  -  descriptive statistics for a sample.
  */
 struct StatSummary {
     double mean{};
@@ -315,11 +315,11 @@ inline bool groups_separated(
 }
 
 // ============================================================================
-// Run Record — Robustness Trial
+// Run Record  -  Robustness Trial
 // ============================================================================
 
 /**
- * RunRecord — captures one complete robustness trial.
+ * RunRecord  -  captures one complete robustness trial.
  */
 struct RunRecord {
     uint32_t seed{};
@@ -379,7 +379,7 @@ inline RunRecord run_robustness_trial(
 // ============================================================================
 
 /**
- * ResponseRecord — one measurement in a single-variable sweep.
+ * ResponseRecord  -  one measurement in a single-variable sweep.
  */
 struct ResponseRecord {
     double input_value{};
@@ -394,7 +394,7 @@ struct ResponseRecord {
 };
 
 /**
- * AtlasRow — summary of a single-variable sweep across one scene.
+ * AtlasRow  -  summary of a single-variable sweep across one scene.
  */
 struct AtlasRow {
     const char* variable_name{};
@@ -413,7 +413,7 @@ struct AtlasRow {
 };
 
 /**
- * PairwiseCell — one cell in a pairwise coupling grid.
+ * PairwiseCell  -  one cell in a pairwise coupling grid.
  */
 struct PairwiseCell {
     double x_val{};
@@ -427,7 +427,7 @@ struct PairwiseCell {
 // ============================================================================
 
 /**
- * SweepConfig — configuration for a single-variable sweep.
+ * SweepConfig  -  configuration for a single-variable sweep.
  */
 struct SweepConfig {
     double lo{};               // sweep range start
@@ -501,7 +501,7 @@ inline std::vector<double> extract_sweep_variable(
 // ============================================================================
 
 /**
- * CoordinationHistogram — binned coordination counts for large-N analysis.
+ * CoordinationHistogram  -  binned coordination counts for large-N analysis.
  *
  * C (coordination number) is the soft-weighted count of neighbours
  * within the interaction range. bin[i] counts beads with C in [i, i+1).
@@ -544,18 +544,18 @@ inline CoordinationHistogram build_coord_histogram(
 }
 
 // ============================================================================
-// Stage 4 — Parameter Schedule
+// Stage 4  -  Parameter Schedule
 // ============================================================================
 
 /**
- * ParameterSchedule — lightweight scheduling for parameter sweeps over time.
+ * ParameterSchedule  -  lightweight scheduling for parameter sweeps over time.
  *
  * Controls time-dependent variation of a single parameter (spacing,
  * alignment bias, alpha, beta, tau, etc.) during formation experiments.
  *
  * Modes:
  *   Constant:    value = start_value for all steps
- *   LinearRamp:  linearly interpolate start_value → end_value over
+ *   LinearRamp:  linearly interpolate start_value -> end_value over
  *                [start_step, end_step]
  *   Step:        start_value before start_step, end_value from start_step
  *   UpDownRamp:  ramp up to end_value at midpoint, then ramp back down
@@ -607,11 +607,11 @@ struct ParameterSchedule {
 };
 
 // ============================================================================
-// Stage 4 — Formation History Runner
+// Stage 4  -  Formation History Runner
 // ============================================================================
 
 /**
- * FormationSnapshot — per-step aggregate of all bead states.
+ * FormationSnapshot  -  per-step aggregate of all bead states.
  */
 struct FormationSnapshot {
     int step{};
@@ -622,7 +622,7 @@ struct FormationSnapshot {
 };
 
 /**
- * FormationHistory — full time-evolution record for a multi-bead system.
+ * FormationHistory  -  full time-evolution record for a multi-bead system.
  */
 struct FormationHistory {
     std::vector<FormationSnapshot> snapshots;
@@ -680,11 +680,11 @@ inline FormationHistory run_formation_history(
 }
 
 // ============================================================================
-// Stage 4 — Bulk/Edge Classification
+// Stage 4  -  Bulk/Edge Classification
 // ============================================================================
 
 /**
- * BulkEdgeStats — aggregate statistics split by bulk vs edge classification.
+ * BulkEdgeStats  -  aggregate statistics split by bulk vs edge classification.
  *
  * Classification uses coordination number: beads with C >= threshold
  * are "bulk"; beads below are "edge".
@@ -754,11 +754,11 @@ inline BulkEdgeStats classify_bulk_edge(
 }
 
 // ============================================================================
-// Stage 4 — Formation Regime Record
+// Stage 4  -  Formation Regime Record
 // ============================================================================
 
 /**
- * FormationRegimeRecord — summary of one formation experiment.
+ * FormationRegimeRecord  -  summary of one formation experiment.
  *
  * Captures final-state statistics, bulk/edge split, relaxation timing,
  * and a regime label for classification.

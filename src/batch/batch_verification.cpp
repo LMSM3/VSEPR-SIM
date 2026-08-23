@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/batch_verification.cpp
  * ==================================
- * WO-VSEPR-SIM-62B — Batch Verification Aggregation Kernel
+ * WO-VSEPR-SIM-62B  -  Batch Verification Aggregation Kernel
  *
  * Reads verify_report.json outputs from per-run folders, classifies
  * failure modes, groups results by declared axes, evaluates pass-rate
@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-// ─── minimal JSON value extraction (no external dep) ─────────────────────────
+// --- minimal JSON value extraction (no external dep) -------------------------
 static bool json_bool(const std::string& json, const std::string& key, bool def = false) {
 	auto pos = json.find("\"" + key + "\"");
 	if (pos == std::string::npos) return def;
@@ -61,12 +61,12 @@ static double json_double(const std::string& json, const std::string& key, doubl
 	try { return std::stod(json.substr(vstart)); } catch (...) { return def; }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 namespace vsim {
 namespace batch {
 
-// ── load_verification_record ──────────────────────────────────────────────────
+// -- load_verification_record --------------------------------------------------
 
 VerificationRunRecord load_verification_record(const std::string& run_id,
 											   const std::string& run_dir) {
@@ -108,7 +108,7 @@ VerificationRunRecord load_verification_record(const std::string& run_id,
 	return rec;
 }
 
-// ── classify_failure_modes ───────────────────────────────────────────────────
+// -- classify_failure_modes ---------------------------------------------------
 
 void classify_failure_modes(VerificationRunRecord& rec) {
 	if (rec.status == "MISSING") {
@@ -129,7 +129,7 @@ void classify_failure_modes(VerificationRunRecord& rec) {
 		rec.failure_modes.push_back(to_string(BatchFailureMode::FAIL_MSD_SOLID_BOUND));
 }
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static std::string group_key(const VerificationRunRecord&    rec,
 							  const std::vector<std::string>& group_by) {
@@ -148,7 +148,7 @@ static double safe_rate(int num, int den) {
 	return (den > 0) ? static_cast<double>(num) / den : 0.0;
 }
 
-// ── aggregate_verification ────────────────────────────────────────────────────
+// -- aggregate_verification ----------------------------------------------------
 
 BatchVerificationSummary aggregate_verification(
 	const std::vector<VerificationRunRecord>& records,
@@ -256,7 +256,7 @@ BatchVerificationSummary aggregate_verification(
 	return sum;
 }
 
-// ── evaluate_gates ────────────────────────────────────────────────────────────
+// -- evaluate_gates ------------------------------------------------------------
 
 void evaluate_gates(BatchVerificationSummary&              summary,
 					const BatchAggregateVerifyGatesSection& gates)
@@ -283,7 +283,7 @@ void evaluate_gates(BatchVerificationSummary&              summary,
 	check(summary.msd_pass_rate,       gates.min_msd_pass_rate,       "msd_pass_rate");
 }
 
-// ── write_batch_verify_summary ────────────────────────────────────────────────
+// -- write_batch_verify_summary ------------------------------------------------
 
 void write_batch_verify_summary(const BatchVerificationSummary& summary,
 								const std::string& path) {
@@ -320,7 +320,7 @@ void write_batch_verify_summary(const BatchVerificationSummary& summary,
 	}
 }
 
-// ── write_batch_verify_matrix ─────────────────────────────────────────────────
+// -- write_batch_verify_matrix -------------------------------------------------
 
 void write_batch_verify_matrix(const BatchVerificationSummary& summary,
 							   const std::string& path) {
@@ -348,7 +348,7 @@ void write_batch_verify_matrix(const BatchVerificationSummary& summary,
 	}
 }
 
-// ── write_batch_failure_modes ─────────────────────────────────────────────────
+// -- write_batch_failure_modes -------------------------------------------------
 
 void write_batch_failure_modes(const BatchVerificationSummary& summary,
 							   const std::string& path) {
@@ -370,7 +370,7 @@ void write_batch_failure_modes(const BatchVerificationSummary& summary,
 	}
 }
 
-// ── write_batch_empirical_report ──────────────────────────────────────────────
+// -- write_batch_empirical_report ----------------------------------------------
 
 void write_batch_empirical_report(const BatchVerificationSummary& summary,
 								  const std::string& study_name,
@@ -381,7 +381,7 @@ void write_batch_empirical_report(const BatchVerificationSummary& summary,
 	auto fmt4 = [](double v) { std::ostringstream s; s << std::fixed << std::setprecision(4) << v; return s.str(); };
 	auto pct  = [&](double v) { std::ostringstream s; s << std::fixed << std::setprecision(1) << v * 100.0 << "%"; return s.str(); };
 
-	f << "# Batch Empirical Report — " << study_name << "\n\n";
+	f << "# Batch Empirical Report  -  " << study_name << "\n\n";
 
 	f << "## Summary\n\n";
 	f << summary.total_runs << " runs completed. "

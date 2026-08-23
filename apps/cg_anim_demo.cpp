@@ -1,62 +1,59 @@
-/**
- * cg_anim_demo.cpp — Animated Ensemble Proxy Demo
+﻿/**
+ * cg_anim_demo.cpp  -  Animated Ensemble Proxy Demo
  *
  * Demonstrates eta relaxation and ensemble proxy evolution across four
  * bead scene families. Reuses the test scene infrastructure directly
  * (scene_factory.hpp / test_runners.hpp) to construct deterministic
  * scenes, run them to convergence, and then visualise the resulting
- * states with an animated overlay cycle in CGVizViewer.
+ * scenes and exports a renderer-neutral Day 89 artifact package. It is the
+ * canonical producer for the VTK + Qt3D viewer vsepr-view.
  *
  * Scene families:
- *   1. Cubic lattice (tight, 3 A)   — high cohesion, regular structure
- *   2. Cubic lattice (loose, 6 A)   — sparse, reduced cohesion
- *   3. Aligned stack cloud (bias 1) — high texture proxy (P2 alignment)
- *   4. Random cluster (N=27)        — low uniformity, high surface sensitivity
+ *   1. Cubic lattice (tight, 3 A)    -  high cohesion, regular structure
+ *   2. Cubic lattice (loose, 6 A)    -  sparse, reduced cohesion
+ *   3. Aligned stack cloud (bias 1)  -  high texture proxy (P2 alignment)
+ *   4. Random cluster (N=27)         -  low uniformity, high surface sensitivity
  *
- * Animation per scene (~14 s auto, then manual):
- *   density    → orbit  → coordination  → orbit
- *   eta/memory → orbit  → orient-order  → orbit
- *   reset camera → close
- *
- * Controls during animation:
- *   Right-drag   orbit camera
- *   Scroll       zoom
- *   O            cycle overlay manually
- *   ESC          skip to next scene
- *
- * Flags:
- *   --headless   print proxy table only, skip viewer
- *   --help       show usage
+ * Optional stress fixture:
+ *   --stress-particles N  append a deterministic lattice of N^3 particles
+ *   --headless            print proxy table only, skip windowed display
+ *   --help                show usage
  *
  * Architecture position:
  *   test_util scene builders + runners  (test infrastructure reuse)
- *         ↓
+ *         v
  *   EnvironmentState (converged, 500 steps)
- *         ↓
+ *         v
  *   EnsembleProxySummary  (printed to terminal)
- *         ↓
- *   CGVizViewer  (animated overlay display — BUILD_VIS required)
+ *         v
+ *   dual-backend 3D data package  (vsepr.dual_backend_3d.v1)
+ *         v
+ *   vsepr-view  (VTK + Qt3D consumer, optional BUILD_VIS)
  *
  * Reference: Emergent Effective Medium Mapping specification (Suite #5)
  */
 
 #include "tests/scene_factory.hpp"
 #include "coarse_grain/analysis/ensemble_proxy.hpp"
-#include "cli/system_state.hpp"
 #include "coarse_grain/core/bead.hpp"
 
-#ifdef BUILD_VISUALIZATION
-#  include "coarse_grain/vis/cg_viz_viewer.hpp"
-#endif
+// Note: BUILD_VISUALIZATION no longer enables an OpenGL/GLFW/ImGui window.
+// The supported interactive consumer is vsepr-view (VTK + Qt3D).  When that
+// target is available the artifact is consumed through include/vis/day89_artifact.hpp
+// and apps/vtk_qt3d_multiscale_viewer.cpp, not by this headless producer.
 
 #include <cmath>
+#include <chrono>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <string>
 #include <vector>
 
 // ============================================================================
-// Default environment parameters — mirrors default_params() in Suite #5
+// Default environment parameters  -  mirrors default_params() in Suite #5
 // ============================================================================
 
 static coarse_grain::EnvironmentParams make_params() {
@@ -74,6 +71,66 @@ static coarse_grain::EnvironmentParams make_params() {
     return p;
 }
 
+template <typename RunResult>
+static void write_demo_artifacts(const std::filesystem::path& output_dir,
+                                 const std::vector<RunResult>& results,
+                                 int n_steps,
+                                 double dt,
+                                 double generation_ms) {
+    std::filesystem::create_directories(output_dir);
+
+    std::ofstream scenes(output_dir / "scenes.csv");
+    std::ofstream particles(output_dir / "particles.csv");
+    std::ofstream manifest(output_dir / "manifest.json");
+    if (!scenes || !particles || !manifest) {
+        throw std::runtime_error("Unable to create dual-backend demo artifacts in " + output_dir.string());
+    }
+
+    scenes.imbue(std::locale::classic());
+    particles.imbue(std::locale::classic());
+    scenes << std::setprecision(12);
+    particles << std::setprecision(12);
+
+    scenes << "scene_id,scene_name,particle_count,cohesion_proxy,texture_proxy,"
+              "stabilization_proxy,density_mean,coordination_mean\n";
+    particles << "scene_id,particle_id,x,y,z,radius,state_value\n";
+
+    for (size_t scene_id = 0; scene_id < results.size(); ++scene_id) {
+        const auto& result = results[scene_id];
+        std::string scene_name = result.name;
+        for (size_t pos = 0; (pos = scene_name.find('"', pos)) != std::string::npos; pos += 2)
+            scene_name.insert(pos, 1, '"');
+
+        scenes << scene_id << ",\"" << scene_name << "\"," << result.scene.size() << ','
+               << result.proxy.cohesion_proxy << ',' << result.proxy.texture_proxy << ','
+               << result.proxy.stabilization_proxy << ',' << result.proxy.mean_rho << ','
+               << result.proxy.mean_C << '\n';
+
+        for (size_t particle_id = 0; particle_id < result.scene.size(); ++particle_id) {
+            const auto& position = result.scene[particle_id].position;
+            particles << scene_id << ',' << particle_id << ','
+                      << position.x << ',' << position.y << ',' << position.z << ','
+                      << 0.45 << ',' << result.states[particle_id].eta << '\n';
+        }
+    }
+
+    manifest << "{\n"
+             << "  \"schema\": \"vsepr.dual_backend_3d.v1\",\n"
+             << "  \"generator\": \"cg-anim-demo\",\n"
+             << "  \"steps\": " << n_steps << ",\n"
+             << "  \"dt_fs\": " << dt << ",\n"
+             << "  \"generation_ms\": " << generation_ms << ",\n"
+             << "  \"scene_count\": " << results.size() << ",\n"
+             << "  \"particle_count\": " << [&results] {
+                    size_t count = 0;
+                    for (const auto& result : results) count += result.scene.size();
+                    return count;
+                }() << ",\n"
+             << "  \"scenes_csv\": \"scenes.csv\",\n"
+             << "  \"particles_csv\": \"particles.csv\"\n"
+             << "}\n";
+}
+
 // ============================================================================
 // Demo scene descriptor
 // ============================================================================
@@ -83,7 +140,7 @@ struct DemoScene {
     std::vector<test_util::SceneBead> beads;
 };
 
-static std::vector<DemoScene> build_demo_scenes() {
+static std::vector<DemoScene> build_demo_scenes(int stress_particles) {
     std::vector<DemoScene> demos;
 
     demos.push_back({"Cubic Lattice  (tight, 3 A, N=27)",
@@ -98,36 +155,23 @@ static std::vector<DemoScene> build_demo_scenes() {
     demos.push_back({"Random Cluster (N=27, box=12 A)",
                      test_util::scene_random_cluster(27, 12.0, 99)});
 
+    if (stress_particles > 0) {
+        const int side = static_cast<int>(std::ceil(std::cbrt(static_cast<double>(stress_particles))));
+        auto beads = test_util::scene_cubic_lattice(side, 3.0);
+        beads.resize(static_cast<size_t>(stress_particles));
+        demos.push_back({"Deterministic Stress Lattice", std::move(beads)});
+    }
+
     return demos;
 }
 
 // ============================================================================
-// Convert SceneBead + EnvironmentState vectors → CGSystemState
+// Convert SceneBead + EnvironmentState vectors -> CGSystemState
 // ============================================================================
 
-static vsepr::cli::CGSystemState make_cg_state(
-    const std::string&                              name,
-    const std::vector<test_util::SceneBead>&        scene,
-    const std::vector<coarse_grain::EnvironmentState>& states,
-    const coarse_grain::EnvironmentParams&          params,
-    int                                             step_count)
-{
-    vsepr::cli::CGSystemState cg;
-    cg.scene_name  = name;
-    cg.env_params  = params;
-    cg.step_count  = step_count;
-
-    for (size_t i = 0; i < scene.size(); ++i) {
-        coarse_grain::Bead b;
-        b.position = scene[i].position;
-        b.mass     = 1.0;
-        cg.beads.push_back(b);
-        cg.orientations.push_back(scene[i].n_hat);
-        cg.orientation_valid.push_back(scene[i].has_orientation);
-        cg.env_states.push_back(states[i]);
-    }
-    return cg;
-}
+// make_cg_state() and the CGVizViewer OpenGL path are archived. Legacy
+// BUILD_VISUALIZATION branches in this file are intentionally idle. The active
+// consumer is vsepr-view (VTK + Qt3D) using the Day 89 artifact package.
 
 // ============================================================================
 // Terminal output helpers
@@ -157,52 +201,12 @@ static void print_proxy_row(const char* name,
                 p.valid ? "yes" : "no");
 }
 
-// ============================================================================
-// Build animated VizConfig for one scene
-// ============================================================================
-
-#ifdef BUILD_VISUALIZATION
-static coarse_grain::vis::VizConfig make_anim_config() {
-    using CV = coarse_grain::vis::VizCommand;
-    using OM = coarse_grain::vis::OverlayMode;
-
-    coarse_grain::vis::VizConfig cfg;
-    cfg.show_axes       = true;
-    cfg.show_neighbours = true;
-    cfg.window_width    = 1280;
-    cfg.window_height   = 800;
-
-    // Overlay cycle: density → coordination → eta/memory → orient-order
-    // Each overlay held for 2.5 s, camera orbits 0.4 rad between each.
-    cfg.commands = {
-        CV::set_overlay(OM::Density),
-        CV::wait(2.5f),
-        CV::orbit(0.4f, 0.0f),
-        CV::wait(1.0f),
-
-        CV::set_overlay(OM::Coordination),
-        CV::wait(2.5f),
-        CV::orbit(0.4f, 0.05f),
-        CV::wait(1.0f),
-
-        CV::set_overlay(OM::Memory),
-        CV::wait(2.5f),
-        CV::orbit(0.4f, 0.0f),
-        CV::wait(1.0f),
-
-        CV::set_overlay(OM::OrientOrder),
-        CV::wait(2.5f),
-        CV::orbit(-0.35f, 0.05f),
-        CV::wait(1.0f),
-
-        CV::reset_camera(),
-        CV::wait(0.5f),
-        CV::close()
-    };
-
-    return cfg;
-}
-#endif // BUILD_VISUALIZATION
+// Legacy OpenGL/GLFW animated VizConfig cycle is archived. VTK + Qt3D
+// presentation cycles are handled by vsepr-view overlays*(1) and are not
+// compiled into this headless producer.
+//
+// (1) Overlay modes are defined in the viewer runtime; the producer only emits
+//     state and proxy data to the Day 89 artifact package.
 
 // ============================================================================
 // Main
@@ -210,28 +214,46 @@ static coarse_grain::vis::VizConfig make_anim_config() {
 
 int main(int argc, char** argv) {
     bool headless = false;
+    int stress_particles = 0;
+    int n_steps = 500;
+    bool steps_explicit = false;
+    std::filesystem::path output_dir = "out/dual_backend_3d";
     for (int i = 1; i < argc; ++i) {
         if (std::strcmp(argv[i], "--headless") == 0) headless = true;
+        if (std::strcmp(argv[i], "--output") == 0 && i + 1 < argc) output_dir = argv[++i];
+        if (std::strcmp(argv[i], "--stress-particles") == 0 && i + 1 < argc) stress_particles = std::stoi(argv[++i]);
+        if (std::strcmp(argv[i], "--steps") == 0 && i + 1 < argc) {
+            n_steps = std::stoi(argv[++i]);
+            steps_explicit = true;
+        }
         if (std::strcmp(argv[i], "--help") == 0 ||
             std::strcmp(argv[i], "-h") == 0) {
-            std::printf("Usage: cg-anim-demo [--headless] [--help]\n");
+            std::printf("Usage: cg-anim-demo [--headless] [--output DIR] [--stress-particles N] [--steps N] [--help]\n");
             std::printf("  --headless   Print proxy table only; skip viewer.\n");
+            std::printf("  --output DIR Write shared CSV/JSON artifacts to DIR.\n");
+            std::printf("  --stress-particles N  Append a deterministic lattice with N particles.\n");
+            std::printf("  --steps N    Environment update steps (stress default: 1).\n");
             return 0;
         }
     }
 
+    if (stress_particles < 0 || n_steps < 1) {
+        std::fprintf(stderr, "Particle count must be non-negative and steps must be positive.\n");
+        return 2;
+    }
+    if (stress_particles > 0 && !steps_explicit) n_steps = 1;
+
     std::printf("\n");
-    std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-    std::printf("║   VSEPR-SIM  Animated Ensemble Proxy Demo                   ║\n");
-    std::printf("║   η relaxation + macroscopic proxy evolution                ║\n");
-    std::printf("╚══════════════════════════════════════════════════════════════╝\n");
+    std::printf("+==============================================================+\n");
+    std::printf("|   VSEPR-SIM  Animated Ensemble Proxy Demo                   |\n");
+    std::printf("|   η relaxation + macroscopic proxy evolution                |\n");
+    std::printf("+==============================================================+\n");
     std::printf("\n");
 
     constexpr double dt      = 10.0;
-    constexpr int    n_steps = 500;
-
     auto params = make_params();
-    auto demos  = build_demo_scenes();
+    auto demos  = build_demo_scenes(stress_particles);
+    const auto generation_started = std::chrono::steady_clock::now();
 
     std::printf("Scenes: %zu    Steps: %d    dt: %.0f fs\n\n",
                 demos.size(), n_steps, dt);
@@ -280,49 +302,23 @@ int main(int argc, char** argv) {
     print_ruler();
     std::printf("\n");
 
-#ifdef BUILD_VISUALIZATION
-    if (headless) {
-        std::printf("(--headless: viewer skipped)\n\n");
-        return 0;
+    try {
+        const double generation_ms = std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - generation_started).count();
+        write_demo_artifacts(output_dir, results, n_steps, dt, generation_ms);
+        std::printf("Shared artifacts: %s\n\n", output_dir.string().c_str());
+    } catch (const std::exception& error) {
+        std::fprintf(stderr, "Artifact export failed: %s\n", error.what());
+        return 2;
     }
 
-    std::printf("Opening animated viewer for each scene (~14 s auto-cycle).\n");
-    std::printf("Controls: right-drag=orbit  scroll=zoom  O=cycle overlay  ESC=next scene\n\n");
-
-    for (size_t idx = 0; idx < results.size(); ++idx) {
-        const auto& r = results[idx];
-        std::printf("─── Scene %zu/%zu: %s ───\n",
-                    idx + 1, results.size(), r.name);
-        print_proxy_row(r.name, r.proxy);
-        std::printf("  Opening viewer...\n");
-        std::fflush(stdout);
-
-        // Scene name shown in the viewer window title bar
-        char title[256];
-        std::snprintf(title, sizeof(title),
-            "%s  [coh=%.3f  tex=%.3f  stab=%.3f]",
-            r.name,
-            r.proxy.cohesion_proxy,
-            r.proxy.texture_proxy,
-            r.proxy.stabilization_proxy);
-
-        auto cg_state = make_cg_state(
-            std::string(title), r.scene, r.states, params, n_steps);
-
-        coarse_grain::vis::CGVizViewer::run(cg_state, make_anim_config());
-
-        std::printf("  Viewer closed.\n\n");
-    }
-
-    std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-    std::printf("║   Demo complete. All %zu scenes shown.                       ║\n",
-                results.size());
-    std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
-
-#else
+if (headless) {
+    std::printf("(--headless: VTK + Qt3D viewer skipped; artifact written)\n\n");
+} else {
     (void)headless;
-    std::printf("(BUILD_VIS=OFF — rebuild with cmake -DBUILD_VIS=ON for viewer)\n\n");
-#endif
+    std::printf("(Headless artifact producer: use vsepr-view --artifact %s to visualize.)\n\n",
+                output_dir.string().c_str());
+}
 
-    return 0;
+return 0;
 }

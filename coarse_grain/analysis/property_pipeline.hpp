@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * property_pipeline.hpp — Property Learning Pipeline
+ * property_pipeline.hpp  -  Property Learning Pipeline
  *
  * Supervised learning system that maps bead-resolved proxy distributions
  * and macroscopic precursor channels to property-scale outputs, with
@@ -8,19 +8,19 @@
  *
  * Architecture position:
  *   Environment-state evaluation
- *       ↓
+ *       v
  *   Ensemble statistics / spatial field summaries   (ensemble_proxy.hpp)
- *       ↓
- *   Macroscopic response proxies → precursors        (macro_precursor.hpp)
- *       ↓
- *   Property learning pipeline                       ← this module
- *       ↓
+ *       v
+ *   Macroscopic response proxies -> precursors        (macro_precursor.hpp)
+ *       v
+ *   Property learning pipeline                       <- this module
+ *       v
  *   Calibrated property predictions
  *
  * THREE-LAYER SEPARATION (strict, enforced by architecture):
- *   1. Descriptor layer  — computes proxy/precursor.  NO learned params.
- *   2. Calibration layer — fits model from dataset.   NO simulation logic.
- *   3. Inference layer   — applies fitted model.      NO fitting, NO simulation.
+ *   1. Descriptor layer   -  computes proxy/precursor.  NO learned params.
+ *   2. Calibration layer  -  fits model from dataset.   NO simulation logic.
+ *   3. Inference layer    -  applies fitted model.      NO fitting, NO simulation.
  *
  * Formula fusion PROHIBITED. Layers communicate through defined data
  * structures only. A system in which physics and learning are fused
@@ -55,7 +55,7 @@
 namespace coarse_grain::pipeline {
 
 // ============================================================================
-// Model Parameters — documented, inspectable
+// Model Parameters  -  documented, inspectable
 // ============================================================================
 
 /**
@@ -93,9 +93,9 @@ constexpr int PIPELINE_MAX_FEATURES = 256;
 // ============================================================================
 
 /**
- * PropertySourceType — classification of target value origin.
+ * PropertySourceType  -  classification of target value origin.
  *
- * Deployment order: synthetic → ordinal → atomistic → experimental.
+ * Deployment order: synthetic -> ordinal -> atomistic -> experimental.
  * This ordering reflects practical difficulty, not model limitation.
  */
 enum class PropertySourceType {
@@ -106,7 +106,7 @@ enum class PropertySourceType {
 };
 
 /**
- * PropertyTarget — one target observable for a dataset row.
+ * PropertyTarget  -  one target observable for a dataset row.
  *
  * Missing targets are represented with available=false.
  * They are NEVER silently substituted with zero.
@@ -119,7 +119,7 @@ struct PropertyTarget {
 };
 
 /**
- * DatasetProvenance — Block A: identity and provenance.
+ * DatasetProvenance  -  Block A: identity and provenance.
  *
  * Records the complete origin of a dataset row for reproducibility.
  */
@@ -134,7 +134,7 @@ struct DatasetProvenance {
 };
 
 /**
- * TrainingMetadata — Block E: training-logic metadata.
+ * TrainingMetadata  -  Block E: training-logic metadata.
  *
  * split_group: key for grouped partitioning.
  *   All perturbed variants of the same base structure share a split_group
@@ -151,7 +151,7 @@ struct TrainingMetadata {
 };
 
 /**
- * PropertyDatasetRow — fundamental unit of the learning pipeline.
+ * PropertyDatasetRow  -  fundamental unit of the learning pipeline.
  *
  * Five contiguous blocks:
  *   A. Identity and provenance (DatasetProvenance)
@@ -173,7 +173,7 @@ struct PropertyDatasetRow {
     // Block C: Precursor channels
     MacroPrecursorState precursor_state;
 
-    // Block D: Property targets (name → target)
+    // Block D: Property targets (name -> target)
     std::vector<std::pair<std::string, PropertyTarget>> targets;
 
     // Block E: Training metadata
@@ -222,7 +222,7 @@ struct PropertyDatasetRow {
 // ============================================================================
 
 /**
- * MissingPolicy — how to handle missing/invalid feature values.
+ * MissingPolicy  -  how to handle missing/invalid feature values.
  *
  * Never silently dropped or filled without recording the imputation.
  */
@@ -233,7 +233,7 @@ enum class MissingPolicy {
 };
 
 /**
- * ModelFeatureConfig — specifies which feature blocks to include.
+ * ModelFeatureConfig  -  specifies which feature blocks to include.
  *
  * Drives ablation studies: turning off blocks changes vector length.
  * Column ordering is stable within a given config.
@@ -262,7 +262,7 @@ struct ModelFeatureConfig {
 };
 
 /**
- * FeatureVector — fixed-length numeric feature vector.
+ * FeatureVector  -  fixed-length numeric feature vector.
  *
  * Column ordering is deterministic and preserved across runs.
  * Column names are stored for traceability and attribution.
@@ -289,7 +289,7 @@ inline double apply_missing_policy(double v, MissingPolicy policy, int& n_impute
 }
 
 /**
- * vectorize — convert a PropertyDatasetRow to a fixed-length FeatureVector.
+ * vectorize  -  convert a PropertyDatasetRow to a fixed-length FeatureVector.
  *
  * Deterministic column ordering:
  *   Block 1 (proxy scalars): cohesion, texture, uniformity, stabilization,
@@ -300,7 +300,7 @@ inline double apply_missing_policy(double v, MissingPolicy policy, int& n_impute
  *   Block 4 (confidence/support): convergence_confidence, valid (0/1),
  *     converged (0/1), bead_count, frac_bulk, frac_edge
  *
- * This function is PURE: same input + config → identical output.
+ * This function is PURE: same input + config -> identical output.
  * No learned parameters, no hidden state.
  */
 inline FeatureVector vectorize(const PropertyDatasetRow& row,
@@ -381,7 +381,7 @@ inline FeatureVector vectorize(const PropertyDatasetRow& row,
 // ============================================================================
 
 /**
- * FeatureAttribution — contribution of one feature to a prediction.
+ * FeatureAttribution  -  contribution of one feature to a prediction.
  *
  * Computed as |w_i * x_i| for linear models. Ranked by magnitude.
  */
@@ -391,7 +391,7 @@ struct FeatureAttribution {
 };
 
 /**
- * PropertyPrediction — output of the inference layer.
+ * PropertyPrediction  -  output of the inference layer.
  *
  * Every prediction carries four fields:
  *   1. value:        predicted scalar or class label
@@ -411,7 +411,7 @@ struct PropertyPrediction {
 };
 
 /**
- * LinearModelCoefficients — Tier 1 transparent linear baseline.
+ * LinearModelCoefficients  -  Tier 1 transparent linear baseline.
  *
  * Regularized linear regression: y = X w + bias + ε
  * with L2 penalty λ ||w||^2.
@@ -446,13 +446,13 @@ struct LinearModelCoefficients {
 };
 
 // ============================================================================
-// Calibration Layer — model fitting (NO simulation logic)
+// Calibration Layer  -  model fitting (NO simulation logic)
 // ============================================================================
 
 namespace detail {
 
 /**
- * solve_linear_system — Gaussian elimination with partial pivoting.
+ * solve_linear_system  -  Gaussian elimination with partial pivoting.
  *
  * Solves Ax = b for dense n×n system.
  * Returns empty vector on singular system.
@@ -502,7 +502,7 @@ inline std::vector<double> solve_linear_system(
 }
 
 /**
- * compute_ranks — rank-transform a vector (average ranks for ties).
+ * compute_ranks  -  rank-transform a vector (average ranks for ties).
  */
 inline std::vector<double> compute_ranks(const std::vector<double>& v) {
     int n = static_cast<int>(v.size());
@@ -525,7 +525,7 @@ inline std::vector<double> compute_ranks(const std::vector<double>& v) {
 }
 
 /**
- * pearson_correlation — Pearson product-moment correlation.
+ * pearson_correlation  -  Pearson product-moment correlation.
  */
 inline double pearson_correlation(const std::vector<double>& x,
                                   const std::vector<double>& y) {
@@ -552,7 +552,7 @@ inline double pearson_correlation(const std::vector<double>& x,
 } // namespace detail
 
 /**
- * fit_linear_model — Tier 1 ridge regression.
+ * fit_linear_model  -  Tier 1 ridge regression.
  *
  * Solves: w = (X^T X + λI)^{-1} X^T y
  *
@@ -656,11 +656,11 @@ inline LinearModelCoefficients fit_linear_model(
 }
 
 // ============================================================================
-// Inference Layer — prediction (NO fitting, NO simulation)
+// Inference Layer  -  prediction (NO fitting, NO simulation)
 // ============================================================================
 
 /**
- * predict_linear — apply a fitted Tier 1 linear model.
+ * predict_linear  -  apply a fitted Tier 1 linear model.
  *
  * INFERENCE LAYER: contains no simulation logic, no fitting.
  * Applies the trained coefficients to a new feature vector.
@@ -740,7 +740,7 @@ inline PropertyPrediction predict_linear(
 // ============================================================================
 
 /**
- * EvaluationMetrics — regression and ranking metrics.
+ * EvaluationMetrics  -  regression and ranking metrics.
  *
  * All metrics are reported together for complete evaluation.
  * Metrics are chosen per task type:
@@ -758,7 +758,7 @@ struct EvaluationMetrics {
 };
 
 /**
- * SplitAssignment — train/validation/test partition indices.
+ * SplitAssignment  -  train/validation/test partition indices.
  *
  * Constructed by grouped_split() to ensure all perturbed variants
  * of a single base structure remain in the same partition.
@@ -774,7 +774,7 @@ struct SplitAssignment {
 };
 
 /**
- * evaluate_regression — compute regression and ranking metrics.
+ * evaluate_regression  -  compute regression and ranking metrics.
  *
  * Inputs must have the same length. Ignores NaN values.
  */
@@ -840,7 +840,7 @@ inline EvaluationMetrics evaluate_regression(
 }
 
 /**
- * grouped_split — partition dataset with family-fingerprint leak prevention.
+ * grouped_split  -  partition dataset with family-fingerprint leak prevention.
  *
  * Groups rows by TrainingMetadata::split_group. All rows sharing a
  * split_group are assigned to the same partition.
@@ -970,7 +970,7 @@ inline bool verify_split_discipline(
 // ============================================================================
 
 /**
- * SyntheticSweepResult — output of a controlled perturbation sweep.
+ * SyntheticSweepResult  -  output of a controlled perturbation sweep.
  *
  * Each row in the sweep was generated by varying one variable
  * monotonically while holding others fixed. The ground-truth ordering
@@ -983,7 +983,7 @@ struct SyntheticSweepResult {
 };
 
 /**
- * verify_monotone — check that a sequence of predictions is monotonically
+ * verify_monotone  -  check that a sequence of predictions is monotonically
  * non-decreasing.
  *
  * Used to validate synthetic supervision: if the model fails to recover
@@ -1002,7 +1002,7 @@ inline bool verify_monotone(const std::vector<double>& predictions,
 }
 
 /**
- * verify_monotone_decreasing — check monotonically non-increasing.
+ * verify_monotone_decreasing  -  check monotonically non-increasing.
  */
 inline bool verify_monotone_decreasing(const std::vector<double>& predictions,
                                        double tolerance = 0.0) {
@@ -1015,7 +1015,7 @@ inline bool verify_monotone_decreasing(const std::vector<double>& predictions,
 }
 
 /**
- * OrdinalClass — coarse ordinal labels for Stage 2 supervision.
+ * OrdinalClass  -  coarse ordinal labels for Stage 2 supervision.
  */
 enum class OrdinalClass {
     Low    = 0,
@@ -1024,7 +1024,7 @@ enum class OrdinalClass {
 };
 
 /**
- * assign_ordinal_label — derive ordinal class from a precursor channel.
+ * assign_ordinal_label  -  derive ordinal class from a precursor channel.
  *
  * Stage 2 supervision: weak labels from domain rules.
  * Thresholds: low < 0.33, medium ∈ [0.33, 0.67), high ≥ 0.67.
@@ -1041,7 +1041,7 @@ inline OrdinalClass assign_ordinal_label(double channel_value) {
 }
 
 /**
- * build_synthetic_sweep — generate a controlled perturbation sweep dataset.
+ * build_synthetic_sweep  -  generate a controlled perturbation sweep dataset.
  *
  * Takes a base proxy summary + precursor state, varies one proxy field
  * through a monotone range, and produces dataset rows whose relative
@@ -1095,7 +1095,7 @@ inline SyntheticSweepResult build_synthetic_sweep(
 }
 
 /**
- * end_to_end_pipeline — convenience function demonstrating the full pipeline.
+ * end_to_end_pipeline  -  convenience function demonstrating the full pipeline.
  *
  * 1. Vectorize dataset rows
  * 2. Split into train/val

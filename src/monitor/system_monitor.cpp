@@ -1,4 +1,4 @@
-/**
+﻿/**
  * system_monitor.cpp
  * ===================
  * Implementation of system monitoring
@@ -28,8 +28,8 @@ namespace monitor {
 std::string MiniGraph::render(size_t width) const {
     if (history_.empty()) return std::string(width, ' ');
     
-    // Sparkline characters: ▁▂▃▄▅▆▇█
-    static const char* blocks[] = {" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"};
+    // Sparkline characters: ▁▂▃▄▅▆▇#
+    static const char* blocks[] = {" ", "▁", "▂", "▃", "▄", "▅", "▆", "▇", "#"};
     
     // Determine range
     double min_v = min_val_;
@@ -62,7 +62,7 @@ std::string MiniGraph::render_bar(double percent, size_t width) {
     size_t empty = width - filled;
     
     std::string bar = "[";
-    bar += std::string(filled, '█');
+    bar += std::string(filled, '#');
     bar += std::string(empty, '░');
     bar += "] ";
     
@@ -486,13 +486,13 @@ std::string SystemMonitor::render_disk_status() const {
 
 std::string SystemMonitor::render_full_status() const {
     std::ostringstream ss;
-    ss << "┌─ System Monitor ─────────────────────────────────┐\n";
-    ss << "│ " << render_gpu_status() << "\n";
-    ss << "│ " << render_network_status() << "\n";
-    ss << "│ " << render_disk_status() << "\n";
-    ss << "│ CPU: " << MiniGraph::render_bar(cpu_graph_.latest(), 15);
+    ss << "+- System Monitor ---------------------------------+\n";
+    ss << "| " << render_gpu_status() << "\n";
+    ss << "| " << render_network_status() << "\n";
+    ss << "| " << render_disk_status() << "\n";
+    ss << "| CPU: " << MiniGraph::render_bar(cpu_graph_.latest(), 15);
     ss << " " << cpu_graph_.render(20) << "\n";
-    ss << "└──────────────────────────────────────────────────┘";
+    ss << "+--------------------------------------------------+";
     return ss.str();
 }
 

@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * ensemble_proxy.hpp — Ensemble-Level Macroscopic Response Proxies
+ * ensemble_proxy.hpp  -  Ensemble-Level Macroscopic Response Proxies
  *
  * Emergent Effective Medium Mapping layer.
  *
@@ -10,11 +10,11 @@
  *
  * Architecture position:
  *   Environment-state evaluation
- *       ↓
- *   Ensemble statistics / spatial field summaries   ← this module
- *       ↓
- *   Macroscopic response proxies                    ← this module
- *       ↓
+ *       v
+ *   Ensemble statistics / spatial field summaries   <- this module
+ *       v
+ *   Macroscopic response proxies                    <- this module
+ *       v
  *   Later constitutive or transport models
  *
  * What this module does NOT claim:
@@ -47,7 +47,7 @@
 namespace coarse_grain {
 
 // ============================================================================
-// Model Parameters — documented, inspectable, not buried in formulas
+// Model Parameters  -  documented, inspectable, not buried in formulas
 // ============================================================================
 
 /**
@@ -71,7 +71,7 @@ constexpr double PROXY_CONVERGENCE_THRESH = 1e-4;
  * PROXY_VARIANCE_FLOOR
  *   Lower bound applied to variance values in proxy denominators to
  *   prevent division by zero on degenerate (all-identical) inputs.
- *   Does not affect the stored var_* fields — only internal proxy computation.
+ *   Does not affect the stored var_* fields  -  only internal proxy computation.
  */
 constexpr double PROXY_VARIANCE_FLOOR = 1e-12;
 
@@ -80,7 +80,7 @@ constexpr double PROXY_VARIANCE_FLOOR = 1e-12;
 // ============================================================================
 
 /**
- * EnsembleProxySummary — stable output object for high-N ensemble analysis.
+ * EnsembleProxySummary  -  stable output object for high-N ensemble analysis.
  *
  * Sections:
  *   A. Global first moments
@@ -229,21 +229,21 @@ struct EnsembleProxySummary {
 // ============================================================================
 
 /**
- * classify_bulk_edge — explicit, per-bead bulk/edge classifier.
+ * classify_bulk_edge  -  explicit, per-bead bulk/edge classifier.
  *
  * A bead is classified as EDGE (surface) if it fails EITHER criterion:
  *
  *   1. Coordination criterion (always active):
- *      C_i < c_thresh  →  edge.
+ *      C_i < c_thresh  ->  edge.
  *      c_thresh: if < 0 the median C of the ensemble is used automatically.
- *      This is a MODEL PARAMETER — it sets the definition of "surface".
+ *      This is a MODEL PARAMETER  -  it sets the definition of "surface".
  *      The auto-median mode is a reasonable default for homogeneous systems
  *      but should be pinned to an explicit value for comparative studies.
  *
  *   2. Geometric depth criterion (active when surface_depth > 0):
  *      Bead is within surface_depth Å of the radial boundary (maximum
- *      centroid distance) of the ensemble  →  edge.
- *      Precedence: OR logic — failing EITHER criterion marks as edge.
+ *      centroid distance) of the ensemble  ->  edge.
+ *      Precedence: OR logic  -  failing EITHER criterion marks as edge.
  *      This is conservative: it classifies more beads as surface rather
  *      than fewer, reducing false bulk classification near boundaries.
  *
@@ -373,7 +373,7 @@ inline double spatial_autocorrelation(
  *      The slope b = -1/ξ gives ξ = -1/b.
  *
  * Failure modes (all return NaN):
- *   - var < 1e-30 (uniform field — ξ is undefined)
+ *   - var < 1e-30 (uniform field  -  ξ is undefined)
  *   - Fewer than 2 bins have enough pairs
  *   - All positive-correlation bins are exhausted (non-monotone decay)
  *   - Regression slope >= 0 (correlation not decaying)
@@ -418,7 +418,7 @@ inline double spatial_correlation_length(
         }
     }
 
-    // Build log-linear fit: log(C(r)) = a + b*r → b = -1/ξ
+    // Build log-linear fit: log(C(r)) = a + b*r -> b = -1/ξ
     std::vector<double> r_pts, log_c_pts;
     for (int k = 0; k < n_bins; ++k) {
         if (bin_count[k] < min_pairs) continue;
@@ -457,7 +457,7 @@ inline double spatial_correlation_length(
  * @param positions        Per-bead position vectors (same ordering as states)
  * @param coord_threshold  Coordination threshold for bulk/edge split.
  *                         If < 0, uses median C (automatic).
- *                         This IS a model parameter — pin it explicitly for
+ *                         This IS a model parameter  -  pin it explicitly for
  *                         comparative studies. See PROXY_MIN_BEADS note.
  * @param neighbor_cutoff  Distance cutoff for spatial autocorrelation (Å).
  *                         Default matches EnvironmentParams::r_cutoff.
@@ -531,7 +531,7 @@ inline EnsembleProxySummary compute_ensemble_proxy(
     s.var_target_f = var_tf / n;
 
     // ==== C. Edge vs bulk contrasts ====
-    // Uses classify_bulk_edge() — see that function for precedence rules.
+    // Uses classify_bulk_edge()  -  see that function for precedence rules.
     {
         double ct_out = 0.0;
         std::vector<bool> is_bulk = classify_bulk_edge(
@@ -551,7 +551,7 @@ inline EnsembleProxySummary compute_ensemble_proxy(
             }
         }
 
-        // Guard: NaN when one class is empty — gap is undefined, not zero.
+        // Guard: NaN when one class is empty  -  gap is undefined, not zero.
         if (s.n_bulk > 0 && s.n_edge > 0) {
             double b_mean_rho = b_rho / s.n_bulk;
             double b_mean_C   = b_C   / s.n_bulk;
@@ -620,7 +620,7 @@ inline EnsembleProxySummary compute_ensemble_proxy(
 
     // F.2 Uniformity proxy: low spread in eta and rho_hat
     //   For [0,1]-bounded variables, max std ≈ 0.5.
-    //   Normalize: 2*std maps [0, 0.5] → [0, 1].
+    //   Normalize: 2*std maps [0, 0.5] -> [0, 1].
     double var_rho_hat = 0;
     for (const auto& st : states) {
         double d = st.rho_hat - s.mean_rho_hat;
@@ -661,7 +661,7 @@ inline EnsembleProxySummary compute_ensemble_proxy(
 }
 
 // ============================================================================
-// Time Evolution — compute_proxy_delta
+// Time Evolution  -  compute_proxy_delta
 // ============================================================================
 
 /**
@@ -675,7 +675,7 @@ inline EnsembleProxySummary compute_ensemble_proxy(
  *   |delta_mean_mismatch|  < PROXY_CONVERGENCE_THRESH
  *
  * Without this, high mismatch could mean "still converging" (delta > 0,
- * improving) or "actively diverging" (delta < 0, worsening) — those are
+ * improving) or "actively diverging" (delta < 0, worsening)  -  those are
  * opposite situations requiring opposite responses.
  *
  * @param curr  Current snapshot (returned modified with delta fields set)
@@ -695,11 +695,11 @@ inline EnsembleProxySummary compute_proxy_delta(
 }
 
 // ============================================================================
-// Reference Distributions — EnsembleProxyReference + apply_reference
+// Reference Distributions  -  EnsembleProxyReference + apply_reference
 // ============================================================================
 
 /**
- * EnsembleProxyReference — stores reference proxy summaries for
+ * EnsembleProxyReference  -  stores reference proxy summaries for
  * contextualising absolute proxy values.
  *
  * Usage:
@@ -717,8 +717,8 @@ inline EnsembleProxySummary compute_proxy_delta(
  * Reference configurations should match the target N and density.
  */
 struct EnsembleProxyReference {
-    EnsembleProxySummary ideal;      // ideal lattice — structural upper bound
-    EnsembleProxySummary random;     // randomised positions — lower bound
+    EnsembleProxySummary ideal;      // ideal lattice  -  structural upper bound
+    EnsembleProxySummary random;     // randomised positions  -  lower bound
     EnsembleProxySummary disordered; // structured positions, random orientations
     bool populated{false};
 };

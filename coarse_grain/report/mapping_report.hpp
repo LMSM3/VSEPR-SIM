@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * mapping_report.hpp — Standalone Mapping Report Generator
+ * mapping_report.hpp  -  Standalone Mapping Report Generator
  *
  * Produces a Markdown file documenting every mapping decision.
  * This is the file-export counterpart to the visual inspector.

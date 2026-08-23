@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * environment_state.hpp — Environment-Responsive Bead State (X_B)
+ * environment_state.hpp  -  Environment-Responsive Bead State (X_B)
  *
  * Implements the environment-responsive extension as specified in
  * "Environment-Responsive Coarse-Grained Bead Dynamics" (ERB document).
@@ -43,7 +43,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * EnvironmentParams — inspectable parameters for environment-responsive
+ * EnvironmentParams  -  inspectable parameters for environment-responsive
  * observables and coupling.
  *
  * Parameter set (ERB §8.5):
@@ -85,7 +85,7 @@ struct EnvironmentParams {
 // ============================================================================
 
 /**
- * EnvironmentState — per-bead environment-responsive state.
+ * EnvironmentState  -  per-bead environment-responsive state.
  *
  * Fast observables (recomputed each step):
  *   rho:   local density
@@ -153,7 +153,7 @@ inline double density_weight(double r, double sigma, double r_c, double delta) {
 // ============================================================================
 
 /**
- * NeighbourInfo — minimal per-neighbour data for observable computation.
+ * NeighbourInfo  -  minimal per-neighbour data for observable computation.
  *
  * Avoids requiring full Bead objects; only the fields needed for
  * rho, C, and P2 are carried.

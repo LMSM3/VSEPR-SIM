@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/batch_expander.cpp
  * ==============================
- * WO-VSIM-62C — Factorial Run Expansion Implementation
+ * WO-VSIM-62C  -  Factorial Run Expansion Implementation
  *
  * WO-VSIM-62C | beta-12
  */
@@ -17,11 +17,11 @@
 namespace vsim {
 namespace batch {
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 // Compute the cartesian product of value-lists.
 // Input:  vector of { name, [values] }
-// Output: vector of { name → value } maps (one per combination)
+// Output: vector of { name -> value } maps (one per combination)
 static std::vector<std::map<std::string, std::string>> cartesian_product(
 	const std::vector<BatchAxisEntry>& axes)
 {
@@ -43,7 +43,7 @@ static std::vector<std::map<std::string, std::string>> cartesian_product(
 	return result;
 }
 
-// ── BatchExpander::expand ─────────────────────────────────────────────────────
+// -- BatchExpander::expand -----------------------------------------------------
 
 std::vector<BatchRunSpec> BatchExpander::expand(
 	const BatchDocument&      doc,
@@ -131,7 +131,7 @@ std::vector<BatchRunSpec> BatchExpander::expand(
 	return specs;
 }
 
-// ── BatchExpander::write_batch_plan ──────────────────────────────────────────
+// -- BatchExpander::write_batch_plan ------------------------------------------
 
 void BatchExpander::write_batch_plan(const std::vector<BatchRunSpec>& specs,
 									 const BatchDocument&             doc,

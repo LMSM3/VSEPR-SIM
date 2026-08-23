@@ -1,0 +1,29 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83d_vsepr_report.vsim
+# Tier A — native replacement for demo_wo83d_vsepr_report.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# Python equivalent:
+#   r = subprocess.run([EXE, "classify", tmp], ...)
+#   assert "vsepr_report" in r.stdout
+#   assert "trigonal_pyramidal" in r.stdout or "tetrahedral" in r.stdout
+
+[project]
+name    = wo83d_vsepr_report
+version = v5.0.0
+
+[material]
+formula = NH3
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.expect]
+# contains        = "vsepr_report"
+# any_geometry    = ["trigonal_pyramidal", "tetrahedral"]
+# result          = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

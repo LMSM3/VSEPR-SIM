@@ -1,12 +1,12 @@
-/**
+﻿/**
  * test_alpha_calibrator.cpp
  * =========================
- * v2.6.1 — AlphaCalibrator validation suite.
+ * v2.6.1  -  AlphaCalibrator validation suite.
  *
  * Tests:
- *   C1  Accept a value within 1% — override is stored, get() returns it.
- *   C2  Reject a value outside 1% — override unchanged, false returned.
- *   C3  Progressive refinement — each accepted update is checked against
+ *   C1  Accept a value within 1%  -  override is stored, get() returns it.
+ *   C2  Reject a value outside 1%  -  override unchanged, false returned.
+ *   C3  Progressive refinement  -  each accepted update is checked against
  *       the override (not the original model), converging step-by-step.
  *   C4  reset(Z) reverts to model; reset_all() clears everything.
  *   C5  set_override() bypasses threshold (forced assignment).
@@ -29,7 +29,7 @@
 
 using namespace atomistic::polarization;
 
-// ── minimal harness ──────────────────────────────────────────────────────────
+// -- minimal harness ----------------------------------------------------------
 
 static int g_pass = 0, g_fail = 0;
 
@@ -41,11 +41,11 @@ static int g_pass = 0, g_fail = 0;
 
 #define SECTION(s) std::printf("\n[%s]\n", (s))
 
-// ── helpers ──────────────────────────────────────────────────────────────────
+// -- helpers ------------------------------------------------------------------
 
 static double nudge(double val, double frac) { return val * (1.0 + frac); }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 static void test_C1_accept_within_1pct() {
     SECTION("C1: Accept value within 1%");
@@ -80,7 +80,7 @@ static void test_C2_reject_outside_1pct() {
 }
 
 static void test_C3_progressive_refinement() {
-    SECTION("C3: Progressive refinement — checked against override, not model");
+    SECTION("C3: Progressive refinement  -  checked against override, not model");
     AlphaCalibrator cal;
     double v0 = alpha_predict(11);  // Na: ~24.1
 
@@ -102,7 +102,7 @@ static void test_C3_progressive_refinement() {
     CHECK(r2.update_count == 2, "update_count == 2 after two accepts");
     CHECK(std::abs(cal.get(11) - v2) < 1e-12, "get(11) == v2 after step 2");
 
-    // Step 3: try to jump 2% from current — rejected
+    // Step 3: try to jump 2% from current  -  rejected
     double v3 = nudge(cal.get(11), +0.02);
     auto r3 = cal.calibrate(11, v3);
     CHECK(!r3.accepted, "step 3 (+2% from override) rejected");
@@ -133,7 +133,7 @@ static void test_C5_set_override_bypass() {
     SECTION("C5: set_override() bypasses threshold");
     AlphaCalibrator cal;
     double base = alpha_predict(79);   // Au: ~5.8
-    double forced = base * 2.0;        // 100% delta — would be rejected by calibrate()
+    double forced = base * 2.0;        // 100% delta  -  would be rejected by calibrate()
 
     auto r = cal.calibrate(79, forced);
     CHECK(!r.accepted, "calibrate() rejects 100% delta");
@@ -276,13 +276,13 @@ static void test_C13_custom_threshold() {
     AlphaCalibrator cal(0.005);   // 0.5% threshold
     double base = alpha_predict(17);  // Cl: ~2.18
 
-    auto r_ok  = cal.calibrate(17, nudge(base, +0.004));  // 0.4% — accept
-    auto r_bad = cal.calibrate(17, nudge(base, +0.008));  // 0.8% — reject
+    auto r_ok  = cal.calibrate(17, nudge(base, +0.004));  // 0.4%  -  accept
+    auto r_bad = cal.calibrate(17, nudge(base, +0.008));  // 0.8%  -  reject
     // Note: r_bad is checked against the updated override (after r_ok), but
     // the delta from the override is still 0.8% - 0.4% ≈ 0.4%, so we need
     // to check from a fresh cal to get a clean rejection.
     AlphaCalibrator cal2(0.005);
-    auto r_bad2 = cal2.calibrate(17, nudge(base, +0.008));  // 0.8% from model — reject
+    auto r_bad2 = cal2.calibrate(17, nudge(base, +0.008));  // 0.8% from model  -  reject
 
     CHECK(r_ok.accepted,   "0.4% accepted with 0.5% threshold");
     CHECK(!r_bad2.accepted, "0.8% rejected with 0.5% threshold");
@@ -308,11 +308,11 @@ static void test_C14_override_count() {
     CHECK(cal.override_count() == 0, "count == 0 after reset_all()");
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 int main() {
     std::printf("============================================================\n");
-    std::printf(" v2.6.1 — AlphaCalibrator (1%% auto-override gate)\n");
+    std::printf(" v2.6.1  -  AlphaCalibrator (1%% auto-override gate)\n");
     std::printf("============================================================\n");
 
     test_C1_accept_within_1pct();

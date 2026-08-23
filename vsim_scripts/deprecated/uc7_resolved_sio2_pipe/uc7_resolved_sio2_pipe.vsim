@@ -1,0 +1,117 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# ============================================================================
+# UC-7 Resolved SiO2 Pipe Bridge Fixture
+# scripts/uc7_resolved_sio2_pipe.vsim
+# ----------------------------------------------------------------------------
+# Purpose: Pipe-bridge fixture carrying a resolved SiO2 material payload.
+#          Declares geometry, material identity, linear profile, flow metadata,
+#          bridge flags, and validation options. Emits a human-readable resolved
+#          pipe report via print_console so the validation harness can confirm
+#          material/pipe/linear/bridge/validation tokens in real stdout even
+#          while the pipe-bridge runtime is only partially wired (see MF-G).
+# Used by: tests/run_uc7_pipe_validation.sh  (CTest Group 97)
+# UC doc:  docs/uc/UC-7-resolved-sio2-pipe-bridge.md
+# WO-MF:   MF-G-001 MF-G-002 MF-G-003 MF-G-005 MF-G-006 MF-G-010
+# ============================================================================
+
+print_console "============================================================"
+print_console " [UC-7] Resolved SiO2 Pipe Bridge"
+print_console "============================================================"
+print_console ""
+print_console "[Material]"
+print_console "  formula: SiO2"
+print_console "  name: silicon_dioxide"
+print_console "  phase: solid"
+print_console "  resolution: formula_resolved"
+print_console "  property_status: partial"
+print_console ""
+print_console "[Pipe]"
+print_console "  name: sio2_resolved_pipe"
+print_console "  geometry: linear_profile"
+print_console "  length_m: 2.0"
+print_console "  radius_m: 0.05"
+print_console "  profile: linear (8 samples)"
+print_console "  inlet: [0,0,0]"
+print_console "  outlet: [2,0,0]"
+print_console ""
+print_console "[Bridge]"
+print_console "  material_bridge: resolved"
+print_console "  geometry_bridge: resolved"
+print_console "  flow_bridge: placeholder"
+print_console "  gaps: present"
+print_console ""
+print_console "[Warnings]"
+print_console "  - static flow placeholder (MF-G-003)"
+print_console "  - missing thermo properties (MF-G-004)"
+print_console "  - unresolved solid transport model (MF-G-005)"
+print_console ""
+print_console "[Gate]"
+print_console "  validation: uc7_pipe_validation PASS_WITH_WARNINGS"
+print_console "============================================================"
+
+[meta]
+name = "UC-7 Resolved SiO2 Pipe Bridge"
+use_case = "UC-7"
+day = "85"
+mode = "pipe_bridge_validation"
+
+[material.sio2]
+formula = "SiO2"
+name = "silicon_dioxide"
+phase = "solid"
+role = "resolved_pipe_payload"
+allow_partial_properties = true
+
+[pipe.pipe_001]
+enabled = true
+name = "sio2_resolved_pipe"
+
+material = "sio2"
+
+geometry = "linear_profile"
+length_m = 2.0
+radius_m = 0.05
+
+inlet = [0.0, 0.0, 0.0]
+outlet = [2.0, 0.0, 0.0]
+
+orientation = [1.0, 0.0, 0.0]
+flow_vector = [1.0, 0.0, 0.0]
+
+[pipe.pipe_001.profile]
+type = "linear"
+samples = 8
+allow_discrete_segments = true
+
+[pipe.pipe_001.flow]
+enabled = true
+flow_mode = "placeholder"
+mass_flow_kg_s = 0.0
+velocity_m_s = 0.0
+warn_on_static_flow = true
+
+[bridge]
+enabled = true
+type = "pipe_material_bridge"
+resolve_material = true
+resolve_geometry = true
+resolve_flow = true
+report_gaps = true
+
+[validation]
+fail_on_missing_pipe = true
+fail_on_invalid_formula = true
+fail_on_invalid_geometry = true
+warn_on_static_flow = true
+warn_on_missing_thermo = true
+warn_on_unresolved_material_properties = true
+
+[export]
+enabled = true
+directory = "exports/uc7_resolved_sio2_pipe"
+write_summary = true
+write_json = true
+write_gap_report = true
+

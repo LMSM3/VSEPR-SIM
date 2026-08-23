@@ -1,0 +1,58 @@
+# UC-2 fixture — Batch Crystal Sweep
+# uc2_sio2_sweep.vsim
+# Purpose: 4x4 lattice-parameter sweep of alpha-quartz SiO2.
+# Used by: tests/automation/uc2_run.sh
+# UC doc:  docs/uc/UC-2-batch-crystal-sweep.md
+# WO-MF:   MF-A01 MF-A02 MF-A03 (writers) MF-B01 MF-B02 (sweep runtime)
+#          MF-D01 MF-D02 MF-D03 (gap classifier/filter/fitter)
+
+[project]
+name        = "uc2_sio2_sweep"
+version     = "v5.0.14"
+description = "UC-2 automation fixture: SiO2 lattice-param sweep, 16 runs"
+
+[material]
+formula     = "SiO2"
+prototype   = "quartz"
+phase       = "solid"
+
+# [sweep] runtime wiring is pending (MF-B01).
+# When implemented the dispatcher will iterate the cartesian product of
+# lattice_a x lattice_c producing 16 independent run sub-directories.
+[sweep]
+param               = "lattice_a"
+range               = [4.80, 4.90, 5.00, 5.10]
+secondary           = "lattice_c"
+secondary_range     = [5.30, 5.40, 5.50, 5.60]
+output_prefix       = "run"
+collect_summary     = true
+
+[run]
+mode        = "minimize"
+max_steps   = 200
+dt_fs       = 0.5
+converge    = true
+tol_force   = 5.0e-4
+script_type = "newleaf_type2_crystal"
+
+[analysis.structure]
+compute_fingerprint  = true
+fingerprint_cutoff   = 6.0
+cluster_method       = "dbscan"
+cluster_eps          = 0.05
+cluster_min_samples  = 2
+
+[analysis.length_scale]
+fit_length_scale     = true           # MF-D03: validation pending
+
+[export]
+write_xyz                = true
+write_fingerprint_json   = true       # MF-A02: writer pending
+write_cluster_json       = true       # MF-A01: writer pending
+write_summary_csv        = true       # MF-A03: writer pending
+write_analysis_json      = true
+write_metrics_tsv        = true
+write_manifest_json      = true
+output_dir               = "out/uc2_sio2_sweep"
+
+# No [visual] — headless sweep automation.

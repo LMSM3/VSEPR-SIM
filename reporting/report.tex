@@ -10,6 +10,40 @@
 
 \geometry{letterpaper, margin=1in}
 
+% ============================================================================
+% IKK / MIR Notation Macro Set  (WO-75A Deliverable D)
+% Follows IKK Notation Registry v1.0
+% ============================================================================
+
+% Core IKK symbols
+\newcommand{\Dfrak}{\mathfrak{D}}           % fraktur-D  distinguishability
+\newcommand{\Ifrak}{\mathfrak{I}}           % fraktur-I  identity content
+\newcommand{\etaab}{\eta_{ab}}              % cross-scale coupling coefficient
+\newcommand{\Psihid}{|\Psi^{\mathrm{hid}}\rangle}  % hidden residual ket
+
+% Scale-regime labels  (S0, S2, S3, S4, S_mat)
+\newcommand{\Sn}[1]{S_{#1}}                % usage: \Sn{3} -> S_3
+
+% IKK end-section macro: \ikkendsection{BADGE}{key=value,...}
+% BADGE is PASS, WARN, or FAIL (colours set by badge macros below).
+% The second argument is a comma-separated key=value annotation string.
+\newcommand{\ikkendsection}[2]{%
+  \par\noindent\rule{\linewidth}{0.4pt}\par
+  \noindent\textbf{IKK End-Tag:}~%
+  \ifstrequal{#1}{PASS}{\Dpass{#1}}{%
+    \ifstrequal{#1}{WARN}{\Dwarn{#1}}{\Dfail{#1}}}%
+  \quad\texttt{\small #2}\par
+  \noindent\rule{\linewidth}{0.4pt}\par
+}
+
+% Second-law badge colouring
+\newcommand{\Dpass}[1]{\colorbox{green!20}{\texttt{#1}}}
+\newcommand{\Dwarn}[1]{\colorbox{yellow!40}{\texttt{#1}}}
+\newcommand{\Dfail}[1]{\colorbox{red!20}{\texttt{#1}}}
+
+% Require xstring for \ifstrequal used in \ikkendsection
+\usepackage{xstring}
+
 \lstset{
   basicstyle=\ttfamily\small,
   keywordstyle=\color{blue},

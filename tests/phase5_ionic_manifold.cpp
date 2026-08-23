@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase5_ionic_manifold.cpp
  * ==========================
  * Phase 5 Testing: IONIC manifold + mixed-regime materials
@@ -38,13 +38,13 @@ using namespace vsepr;
 //=============================================================================
 
 void print_header(const std::string& title) {
-    std::cout << "\n╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ " << std::left << std::setw(60) << title << " ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==============================================================+\n";
+    std::cout << "| " << std::left << std::setw(60) << title << " |\n";
+    std::cout << "+==============================================================+\n\n";
 }
 
 void print_section(const std::string& title) {
-    std::cout << "\n─── " << title << " ───\n";
+    std::cout << "\n--- " << title << " ---\n";
 }
 
 struct IonicMetrics {
@@ -177,7 +177,7 @@ void test_lif() {
                       << " (init=" << std::fixed << std::setprecision(2) << init_sep << " Å)"
                       << ": final Li-F = " << metrics.cation_anion_distance << " Å"
                       << ", min_dist = " << metrics.min_distance << " Å"
-                      << " → " << (metrics.collapsed ? "COLLAPSED ✗" : reasonable ? "stable ✓" : "unusual ⚠")
+                      << " -> " << (metrics.collapsed ? "COLLAPSED ✗" : reasonable ? "stable ✓" : "unusual ⚠")
                       << "\n";
         }
     }
@@ -256,7 +256,7 @@ void test_nacl() {
         if (seed < 3 || metrics.collapsed) {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": Na-Cl = " << std::fixed << std::setprecision(3) << metrics.cation_anion_distance << " Å"
-                      << " → " << (reasonable ? "stable ✓" : "unusual ⚠")
+                      << " -> " << (reasonable ? "stable ✓" : "unusual ⚠")
                       << "\n";
         }
     }
@@ -325,7 +325,7 @@ void test_mgo() {
         if (seed < 3 || metrics.collapsed) {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": Mg-O = " << std::fixed << std::setprecision(3) << metrics.cation_anion_distance << " Å"
-                      << " → " << (reasonable ? "stable ✓" : "unusual ⚠")
+                      << " -> " << (reasonable ? "stable ✓" : "unusual ⚠")
                       << "\n";
         }
     }
@@ -417,7 +417,7 @@ void test_caf2() {
         if (seed < 3 || collapsed) {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": min_dist = " << std::fixed << std::setprecision(3) << min_dist << " Å"
-                      << " → " << (collapsed ? "COLLAPSED ✗" : "stable ✓")
+                      << " -> " << (collapsed ? "COLLAPSED ✗" : "stable ✓")
                       << "\n";
         }
     }
@@ -446,12 +446,12 @@ int main() {
         test_caf2();
         
         std::cout << "\n";
-        std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  PHASE 5 Testing Complete                                 ║\n";
-        std::cout << "║  • Ionic pairs remain stable (no collapse)                ║\n";
-        std::cout << "║  • Repulsive core prevents unphysical overlap             ║\n";
-        std::cout << "║  • Cation-anion separations converge reproducibly         ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+        std::cout << "+============================================================+\n";
+        std::cout << "|  PHASE 5 Testing Complete                                 |\n";
+        std::cout << "|  • Ionic pairs remain stable (no collapse)                |\n";
+        std::cout << "|  • Repulsive core prevents unphysical overlap             |\n";
+        std::cout << "|  • Cation-anion separations converge reproducibly         |\n";
+        std::cout << "+============================================================+\n\n";
         
         return 0;
     } catch (const std::exception& e) {

@@ -1,0 +1,9 @@
+[project]
+name = stress_a_small
+[material]
+formula = CH4
+[run]
+max_steps = 10
+[visual]
+output_type = terminal_chart
+render_interval = 1

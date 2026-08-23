@@ -1,0 +1,21 @@
+[project]
+name = stress_gas_injection
+[simulation]
+box_size_ang = 100.0
+[[simulation.molecule]]
+formula = N2
+count = 10
+temperature_K = 1200
+region = corner_xnyp
+velocity_drift = 0.01
+[[simulation.molecule]]
+formula = O2
+count = 10
+temperature_K = 1200
+region = corner_xpyp
+velocity_drift = 0.01
+[run]
+max_steps = 50
+[visual]
+output_type = terminal_chart
+render_interval = 5

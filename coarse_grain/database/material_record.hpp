@@ -1,19 +1,19 @@
-#pragma once
+﻿#pragma once
 /**
- * material_record.hpp — Material Database Record M_k
+ * material_record.hpp  -  Material Database Record M_k
  *
  * Implements the formal definition:
  *
  *   M_k = (I_k, C_k, ρ_k, φ_k, Π_k, Γ_k, H_k)
  *
  * where:
- *   I_k  — material identity
- *   C_k  — composition (stoichiometric or mass-fraction)
- *   ρ_k  — density / bulk density
- *   φ_k  — phase state
- *   Π_k  — engineering property vector
- *   Γ_k  — hazard / environment descriptor
- *   H_k  — provenance hash block
+ *   I_k   -  material identity
+ *   C_k   -  composition (stoichiometric or mass-fraction)
+ *   ρ_k   -  density / bulk density
+ *   φ_k   -  phase state
+ *   Π_k   -  engineering property vector
+ *   Γ_k   -  hazard / environment descriptor
+ *   H_k   -  provenance hash block
  *
  * A material is not an element.
  * Materials are stored as typed overlays rather than collapsed into element records.
@@ -91,11 +91,11 @@ inline const char* material_class_name(MaterialClass c) {
 }
 
 // ============================================================================
-// Composition Block  C_k — elemental mass or mole fractions
+// Composition Block  C_k  -  elemental mass or mole fractions
 // ============================================================================
 
 struct CompositionBlock {
-    std::map<std::string, double> fractions;  ///< element symbol → fraction
+    std::map<std::string, double> fractions;  ///< element symbol -> fraction
     bool is_mole_fraction = true;             ///< true = mole, false = mass
 
     double total() const {

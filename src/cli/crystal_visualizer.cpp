@@ -1,4 +1,4 @@
-#include "crystal_visualizer.hpp"
+﻿#include "crystal_visualizer.hpp"
 #include <iostream>
 #include <map>
 #include <cmath>
@@ -81,7 +81,7 @@ float covalent_radius(const std::string& element) {
 }
 
 // ============================================================================
-// Conversion: CLI Atoms → render::CrystalStructure
+// Conversion: CLI Atoms -> render::CrystalStructure
 // ============================================================================
 
 render::CrystalStructure atoms_to_crystal_structure(
@@ -96,7 +96,7 @@ render::CrystalStructure atoms_to_crystal_structure(
     structure.space_group_number = space_group;
     structure.space_group_symbol = space_symbol;
     
-    // Convert atomistic::crystal::Lattice → render::LatticeVectors
+    // Convert atomistic::crystal::Lattice -> render::LatticeVectors
     atomistic::Vec3 a_vec = lattice.A.col(0);
     atomistic::Vec3 b_vec = lattice.A.col(1);
     atomistic::Vec3 c_vec = lattice.A.col(2);
@@ -105,7 +105,7 @@ render::CrystalStructure atoms_to_crystal_structure(
     structure.lattice.b = {b_vec.x, b_vec.y, b_vec.z};
     structure.lattice.c = {c_vec.x, c_vec.y, c_vec.z};
     
-    // Convert atoms: Cartesian → fractional
+    // Convert atoms: Cartesian -> fractional
     structure.atoms.reserve(atoms.size());
     
     for (const auto& atom : atoms) {
@@ -156,17 +156,17 @@ int launch_crystal_visualizer(
     const std::string& name)
 {
 #ifndef ENABLE_CRYSTAL_VIZ
-    std::cerr << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    std::cerr << "\n--------------------------------------------------\n";
     std::cerr << "  ERROR: Visualization Not Enabled\n";
-    std::cerr << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    std::cerr << "--------------------------------------------------\n\n";
     std::cerr << "The --viz flag requires the project to be built with:\n";
     std::cerr << "  cmake -DBUILD_VIS=ON ...\n\n";
     std::cerr << "Falling back to XYZ output instead.\n\n";
     return 1;
 #else
-    std::cout << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    std::cout << "\n--------------------------------------------------\n";
     std::cout << "  Launching Native Crystal Visualizer\n";
-    std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    std::cout << "--------------------------------------------------\n\n";
 
     // Convert to render format
     int na = supercell.empty() ? 1 : supercell[0];
@@ -215,7 +215,7 @@ int launch_crystal_visualizer(
     std::cout << "  ESC: Close window\n\n";
 
     std::cout << "Starting render loop...\n";
-    std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    std::cout << "--------------------------------------------------\n\n";
 
     try {
         // Launch renderer (blocks until window closed)

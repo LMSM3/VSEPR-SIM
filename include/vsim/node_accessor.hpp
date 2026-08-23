@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * include/vsim/node_accessor.hpp
  * ================================
@@ -13,8 +13,8 @@
  *     geometry, so nothing regresses in a headless / BUILD_DESKTOP=OFF build.
  *
  * Supported NodePaths (v1):
- *   "run.history"   → helix_rows()  — ContinualReportEvent sequence
- *   "room.solver"   → heat_rows()   — ContinualReportEvent filtered by formula
+ *   "run.history"   -> helix_rows()   -  ContinualReportEvent sequence
+ *   "room.solver"   -> heat_rows()    -  ContinualReportEvent filtered by formula
  *
  * WO-VSIM-VIS-OVERHAUL-01
  */
@@ -28,7 +28,7 @@
 namespace vsim {
 
 // ============================================================================
-// HelixRow — one data point for the calibration.helix window
+// HelixRow  -  one data point for the calibration.helix window
 // ============================================================================
 
 struct HelixRow {
@@ -42,7 +42,7 @@ struct HelixRow {
 };
 
 // ============================================================================
-// HeatRow — one voxel for the room.heatfield window
+// HeatRow  -  one voxel for the room.heatfield window
 // ============================================================================
 
 struct HeatRow {
@@ -64,19 +64,19 @@ public:
 		: formula_filter_(std::move(formula_filter)) {}
 
 	// ------------------------------------------------------------------
-	// "run.history" → calibration helix rows
+	// "run.history" -> calibration helix rows
 	//
 	// Returns one HelixRow per ContinualReportEvent in frame_id order.
 	// Temperature is normalised over [T_min, T_max] of the full sequence.
 	// Regime transitions are inferred from FormationEvent records where
-	// converged changes from false→true within a 10-frame window.
+	// converged changes from false->true within a 10-frame window.
 	// Loop boundaries are every `boundary_every` frames (default 40).
 	// ------------------------------------------------------------------
 	[[nodiscard]] std::vector<HelixRow>
 	helix_rows(int boundary_every = 40) const;
 
 	// ------------------------------------------------------------------
-	// "room.solver" → heat field voxel rows
+	// "room.solver" -> heat field voxel rows
 	//
 	// Returns one HeatRow per ContinualReportEvent (filtered by formula).
 	// temperature_K is mapped to a 2D grid position using frame_id as
@@ -88,7 +88,7 @@ public:
 
 	// ------------------------------------------------------------------
 	// Scalar summary for data.scalar.panel
-	// Returns key→value string pairs for properties display.
+	// Returns key->value string pairs for properties display.
 	// ------------------------------------------------------------------
 	[[nodiscard]] std::vector<std::pair<std::string, std::string>>
 	scalar_summary() const;

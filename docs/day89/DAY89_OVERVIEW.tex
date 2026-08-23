@@ -1,0 +1,85 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.72in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\setlist{nosep,leftmargin=1.3em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.3em}
+\title{Day 89: VSIM Visual Scale and Near-Meso Bead Return}
+\author{VSEPR-SIM Authoritative Day Overview}
+\date{Release line v5.14.1}
+\begin{document}
+\maketitle
+
+\section*{Purpose}
+Day 89 establishes scale evidence for the VSIM scripting and visual pipeline above 1,000 particles and restores the bead as a first-class near-meso control volume. The day is not complete when a large array renders once. Completion requires deterministic script generation, renderer-neutral artifacts, parity across independent consumers, explicit bead packet semantics, and conservation evidence for open-system exchange.
+
+The three visual consumers are the OpenGL/CGVizViewer path, the BGFX path, and the native CPU/GDI path. They may differ in projection, shading, controls, and performance, but they shall consume the same scene identity, positions, state values, and particle count. Presentation never owns scientific state.
+
+\section*{Stress doctrine}
+The lower acceptance boundary is strictly greater than 1,000 particles. A stress fixture shall define seed, scene construction, particle count, bounds, output cadence, and runtime limits. Evidence includes parse success, execution success, generated row counts, memory/timing observations, artifact validation, and renderer capability results. Test discovery or source compilation alone does not satisfy the gate.
+
+The shared artifact shall contain schema identity, generator/version, source hash or script identity, seed, scene metadata, particle positions, represented state values, and manifest links. Each renderer shall either load the complete fixture or produce a precise capability failure. Silent truncation, renderer-local randomization, and implicit particle decimation are prohibited unless explicitly declared in the manifest.
+
+\section*{Bead doctrine}
+A bead represents a classical near-meso control volume, not merely a sphere. Its resolved example packet contains an identity summary, represented mass, center position, momentum, internal energy, local observables, internal memory variables, species inventory where applicable, and provenance. The packet may refer to a fully resolved representative sample while exposing reduced state to the larger simulation.
+
+Flux may cross a bead boundary. For bead $b$ and face or exchange channel $f$,
+\[
+\Delta M_b = \Delta t\sum_f \dot m_{b,f},\qquad
+\Delta\mathbf{P}_b = \Delta t\sum_f \dot{\mathbf p}_{b,f}+\mathbf{J}_b,\qquad
+\Delta E_b = \Delta t\sum_f \dot E_{b,f}+Q_b+W_b.
+\]
+Every source, sink, transfer, merge, or split is represented by an event carrying before/after state, channel identity, units, and provenance. Closed boundaries require net exchange consistent with zero within tolerance. Open boundaries require declared source/sink ownership and a residual ledger.
+
+\newpage
+\section*{Lettered execution map}
+Day 89 uses A--V for ordinary execution. W--Z are reserved and remain unassigned unless late critical work, a cross-cutting correction, release evidence, or recovery requires them.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}llX@{}}
+\toprule
+Range & Theme & Required outcome \\
+\midrule
+A/B & Baseline and deterministic fixture & Combined measured baseline and greater-than-1,000-particle fixture \\
+C & Artifact contract & Manifest, scene, particle, and sidecar invariants \\
+D/E & OpenGL and BGFX boundary & Shared consumer contract and deterministic parity inputs \\
+F--G & Native and parity & Native CPU/GDI evidence and cross-renderer comparison \\
+H--I & Bead packet & Typed identity/state and resolved representative contents \\
+J--N & Exchange physics & Mass, momentum, energy, species, and boundary accounting \\
+O--P & VSIM and output & Script authoring, runtime dispatch, trajectory/replay artifacts \\
+Q--R & Reporting and browser & R/XLSX outputs and static HTML package \\
+S--U & Failure, tests, readiness & Reproductions, conservation tests, measured readiness \\
+V & Handoff & Day close and bounded Day 90 carry-forward \\
+W--Z & Reserved & No ordinary pre-assignment \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Day 89-A and Day 89-B are consolidated as one completed baseline/fixture gate; their original TeX authorities remain retained as detailed evidence. Day 89-D and Day 89-E are consolidated as one OpenGL/BGFX boundary work order because both consume the same neutral artifact. This D/E record is open until the renderer acceptance gate is executed.
+
+Each completed letter requires its own approximately two-page TeX authority. The overview establishes direction but does not replace the detailed authority for scientific state, exchange laws, visual contracts, or validation thresholds.
+
+\section*{Validation and limits}
+A renderer pass demonstrates successful artifact consumption and bounded presentation, not physical correctness. A conservation pass demonstrates ledger closure for the implemented exchange model, not experimental validation. Performance statements require measured timing and memory evidence on a named fixture and environment.
+
+The day shall preserve deterministic ordering and seed behavior. Any reduction used for visualization must be recorded as a derived presentation artifact while the complete scientific particle set remains available. More than 1,000 particles is the initial floor, not a claim of final near-meso scale.
+
+\section*{Exit criteria}
+Day 89 may close when the following are verified:
+\begin{itemize}
+\item a VSIM-driven fixture emits more than 1,000 particles and a manifest;
+\item all three renderers agree on scene identity, count, bounds, and state input, or carry explicit blockers;
+\item bead packet fields and serialization are stable;
+\item mass, momentum, energy, and declared species exchanges have event and residual accounting;
+\item focused stress, conservation, artifact, and renderer tests have executed;
+\item reporting products identify model-derived and presentation-only outputs;
+\item letter authorities and the Day 89 close ledger exist.
+\end{itemize}
+
+Day 90 begins from the verified bead/artifact foundation and moves toward active molecular-registry dynamics. Unfinished Day 89 work is carried explicitly; it is never hidden inside a new day label.
+\end{document}

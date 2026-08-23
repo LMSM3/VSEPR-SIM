@@ -1,9 +1,9 @@
-/**
+﻿/**
  * HGST Matrix - Hierarchical Graph State Theory
  * Chemistry governor matrix for actinide and complex molecular systems
  * 
  * State vector: x = [ρD, Γ, S, Π, Q]
- * - ρD: Donor confidence (N→An coordination quality)
+ * - ρD: Donor confidence (N->An coordination quality)
  * - Γ: Geometry score (VSEPR alignment, symmetry)
  * - S: Steric penalty (crowding, repulsion)
  * - Π: Agostic propensity (B-H-An interactions)

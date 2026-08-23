@@ -1,4 +1,4 @@
-// src/ufx_auto2/molecular_descriptor_generator.cpp
+﻿// src/ufx_auto2/molecular_descriptor_generator.cpp
 // UFX_AUTO_2 Phase 6 -- Molecular Descriptor Generator
 // VSEPR-SIM v5 beta9
 
@@ -24,7 +24,7 @@ namespace vsepr::ufx {
 // Atomic data tables
 // ============================================================================
 
-// monoisotopic_mass_table: unique data not available in other headers — kept.
+// monoisotopic_mass_table: unique data not available in other headers  -  kept.
 static const std::unordered_map<std::string, double>& monoisotopic_mass_table() {
 	static const std::unordered_map<std::string, double> tbl = {
 		{"H",  1.00783}, {"C",  12.0000}, {"N",  14.0031}, {"O",  15.9949},

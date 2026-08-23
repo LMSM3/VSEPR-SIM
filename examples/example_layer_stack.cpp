@@ -1,13 +1,13 @@
-/**
+﻿/**
  * example_layer_stack.cpp
  *
  * End-to-end demonstration of the five-layer vertical integration stack.
  *
  * Scenario: Iron ore processing simulation.
- *   Step 1 — L1 catalog: Fe2O3 (hematite), H2SO4, Fe (target product)
- *   Step 2 — L2 states:  Fe³⁺ in acid leach environment
- *   Step 3 — L2↔L4 boundary evaluation on a small bead system
- *   Step 4 — L5 macro body: a steel pipe under corrosive conditions
+ *   Step 1  -  L1 catalog: Fe2O3 (hematite), H2SO4, Fe (target product)
+ *   Step 2  -  L2 states:  Fe³⁺ in acid leach environment
+ *   Step 3  -  L2↔L4 boundary evaluation on a small bead system
+ *   Step 4  -  L5 macro body: a steel pipe under corrosive conditions
  *
  * Exits 0 on success.
  */
@@ -24,10 +24,10 @@
 using namespace layer_stack;
 using namespace coarse_grain;
 
-// ── utilities ─────────────────────────────────────────────────────────────────
+// -- utilities -----------------------------------------------------------------
 
 static void section(const char* title) {
-    std::printf("\n── %s ─────────────────────────────────────\n", title);
+    std::printf("\n-- %s -------------------------------------\n", title);
 }
 
 static void check(bool cond, const char* msg) {
@@ -35,10 +35,10 @@ static void check(bool cond, const char* msg) {
     std::printf("[PASS] %s\n", msg);
 }
 
-// ── Step 1: L1 paper identity catalog ─────────────────────────────────────────
+// -- Step 1: L1 paper identity catalog -----------------------------------------
 
 static void demo_l1() {
-    section("L1 — Paper Identity Catalog");
+    section("L1  -  Paper Identity Catalog");
 
     // Hematite
     L1_PaperIdentity hematite;
@@ -90,17 +90,17 @@ static void demo_l1() {
                 r_hematite.score, r_h2so4.score, r_iron.score);
 }
 
-// ── Step 2: L2 atomistic state — Fe³⁺ in acid leach ──────────────────────────
+// -- Step 2: L2 atomistic state  -  Fe³⁺ in acid leach --------------------------
 
 static void demo_l2() {
-    section("L2 — Atomistic State (Fe³⁺ in acid leach)");
+    section("L2  -  Atomistic State (Fe³⁺ in acid leach)");
 
     // Fe in ore body: metallic, neutral
     L2_AtomisticState fe_ore;
     fe_ore.Z              = 26;
     fe_ore.A              = 56;
     fe_ore.Q              = 0.0;
-    fe_ore.epsilon        = 0.13;   // kcal/mol — metallic Fe (TraPPE-derived)
+    fe_ore.epsilon        = 0.13;   // kcal/mol  -  metallic Fe (TraPPE-derived)
     fe_ore.sigma          = 2.60;   // Å
     fe_ore.structural_role  = StructuralRole::Metallic;
     fe_ore.stability_class  = StabilityClass::BulkLattice;
@@ -111,11 +111,11 @@ static void demo_l2() {
 
     // Fe³⁺ in acid leach: ionic, +3 charge, higher epsilon
     L2_AtomisticState fe_aq;
-    fe_aq.Z              = 26;  // same Z — invariant holds
-    fe_aq.A              = 56;  // same A — invariant holds
+    fe_aq.Z              = 26;  // same Z  -  invariant holds
+    fe_aq.A              = 56;  // same A  -  invariant holds
     fe_aq.Q              = 3.0; // +3 charge state
-    fe_aq.epsilon        = 0.55; // kcal/mol — ionic Fe in solution
-    fe_aq.sigma          = 2.10; // Å — smaller hydrated radius
+    fe_aq.epsilon        = 0.55; // kcal/mol  -  ionic Fe in solution
+    fe_aq.sigma          = 2.10; // Å  -  smaller hydrated radius
     fe_aq.structural_role  = StructuralRole::IonicDominant; // role changed
     fe_aq.stability_class  = StabilityClass::AmbientStable;
     fe_aq.phase          = chemistry::Phase::AQUEOUS;
@@ -147,7 +147,7 @@ static void demo_l2() {
                 structural_role_name(fe_aq.structural_role));
 }
 
-// ── Step 3: L2↔L4 boundary evaluation ────────────────────────────────────────
+// -- Step 3: L2↔L4 boundary evaluation ----------------------------------------
 
 static void demo_boundary() {
     section("L2↔L4 Boundary Evaluation");
@@ -158,7 +158,7 @@ static void demo_boundary() {
 
     sys.beads[0].position       = {0.0, 0.0, 0.0};
     sys.beads[0].mass           = 55.845;
-    sys.beads[0].charge         = 3.0;    // Fe³⁺ — ionic
+    sys.beads[0].charge         = 3.0;    // Fe³⁺  -  ionic
     sys.beads[0].structural_role  = StructuralRole::Metallic;  // pre-transition (stale)
     sys.beads[0].stability_class  = StabilityClass::AmbientStable;
 
@@ -198,10 +198,10 @@ static void demo_boundary() {
     check(report.n_beads_checked == 2, "boundary checked 2 beads");
     check(!report.bead_records.empty(), "bead records populated");
 
-    // B4: Fe bead had stale Σ=Metallic with Q=3.0 — should be updated to Ionic
+    // B4: Fe bead had stale Σ=Metallic with Q=3.0  -  should be updated to Ionic
     const auto& fe_rec = report.bead_records[0];
     check(fe_rec.sigma_changed,
-          "B4: Fe structural role updated (Metallic→Ionic for Q=3.0)");
+          "B4: Fe structural role updated (Metallic->Ionic for Q=3.0)");
     check(sys.beads[0].structural_role == StructuralRole::IonicDominant,
           "B4: Fe bead Σ is now IonicDominant in-place");
 
@@ -216,10 +216,10 @@ static void demo_boundary() {
                 fe_rec.energy_gap, fe_rec.charge_error, fe_rec.mapping_residual);
 }
 
-// ── Step 4: L5 macro body — steel pipe under corrosive conditions ─────────────
+// -- Step 4: L5 macro body  -  steel pipe under corrosive conditions -------------
 
 static void demo_l5() {
-    section("L5 — Macro Geometry (Steel Pipe)");
+    section("L5  -  Macro Geometry (Steel Pipe)");
 
     L5_MacroGeometry pipe;
     pipe.body_id          = "pipe-001";
@@ -249,7 +249,7 @@ static void demo_l5() {
     check(pipe.is_valid(), "Pipe L5 valid");
 
     // Simulate one corrosion increment (driven by L4 chemistry in a real run)
-    double corrosion_rate_m_per_s = 2e-12;  // ~0.06 mm/year — typical for mild steel in H2SO4
+    double corrosion_rate_m_per_s = 2e-12;  // ~0.06 mm/year  -  typical for mild steel in H2SO4
     double dt_s = 3600.0 * 24 * 365;        // one year
     pipe.surface.corrosion_depth_m += corrosion_rate_m_per_s * dt_s;
 
@@ -281,12 +281,12 @@ static void demo_l5() {
           "L5 material_formula preserves L1 back-reference to Fe (Z=26)");
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
-    std::printf("VSEPR-SIM — Five-Layer Vertical Integration Stack Demo\n");
+    std::printf("VSEPR-SIM  -  Five-Layer Vertical Integration Stack Demo\n");
     std::printf("========================================================\n");
-    std::printf("Scenario: Iron ore processing — cradle to product\n");
+    std::printf("Scenario: Iron ore processing  -  cradle to product\n");
 
     demo_l1();
     demo_l2();
@@ -296,9 +296,9 @@ int main() {
     section("Result");
     std::printf("All checks passed.\n");
     std::printf("\nLayer stack summary:\n");
-    std::printf("  L1  Paper Identity   : hematite, H2SO4, Fe — catalog valid\n");
-    std::printf("  L2  Atomistic        : Fe³⁺ (Q=+3, ε=0.55) — propagation invariant holds\n");
-    std::printf("  L2↔L4 Boundary       : B4 role update fired (Metallic→Ionic)\n");
+    std::printf("  L1  Paper Identity   : hematite, H2SO4, Fe  -  catalog valid\n");
+    std::printf("  L2  Atomistic        : Fe³⁺ (Q=+3, ε=0.55)  -  propagation invariant holds\n");
+    std::printf("  L2↔L4 Boundary       : B4 role update fired (Metallic->Ionic)\n");
     std::printf("  L5  Macro            : 12 m pipe, 1-year corrosion modelled\n");
     return 0;
 }

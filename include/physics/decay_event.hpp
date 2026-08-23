@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * decay_event.hpp
  * ===============
- * Deterministic decay event record — captures a single nuclear decay
+ * Deterministic decay event record  -  captures a single nuclear decay
  * transition with parent/daughter IDs, emitted particles, energy
  * partitioning, and damage scoring.
  *

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * physics_status.hpp
  * ------------------
@@ -30,7 +30,7 @@ struct PhysicsTerm {
 };
 
 // ============================================================================
-// Registry — add entries here when a term changes state.
+// Registry  -  add entries here when a term changes state.
 // ============================================================================
 
 inline constexpr PhysicsTerm PHYSICS_REGISTRY[] = {

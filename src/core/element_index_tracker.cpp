@@ -1,10 +1,10 @@
-/**
+﻿/**
  * element_index_tracker.cpp
  * =========================
  * Implementation of persistent particle identity and index tracking.
  *
  * Every operation is logged. Every map mutation is verified.
- * No silent failures — structured errors via ErrorContext::code.
+ * No silent failures  -  structured errors via ErrorContext::code.
  */
 
 #include "core/element_index_tracker.hpp"
@@ -155,7 +155,7 @@ Status ElementIndexTracker::update_index(uint64_t persistent_id, size_t new_inde
 Status ElementIndexTracker::remap_after_reorder(
     const std::vector<size_t>& old_to_new, uint32_t step)
 {
-    // Clear the index→id map; we rebuild it
+    // Clear the index->id map; we rebuild it
     index_to_id_.clear();
 
     size_t remap_count = 0;
@@ -300,7 +300,7 @@ size_t ElementIndexTracker::active_count() const {
 }
 
 // ============================================================================
-// Export — CSV
+// Export  -  CSV
 // ============================================================================
 
 std::string ElementIndexTracker::to_csv() const {
@@ -325,7 +325,7 @@ std::string ElementIndexTracker::to_csv() const {
 }
 
 // ============================================================================
-// Export — Event log
+// Export  -  Event log
 // ============================================================================
 
 std::string ElementIndexTracker::events_to_string() const {

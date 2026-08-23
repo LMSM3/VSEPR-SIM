@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * fragment_view.hpp — Atomistic Fragment View (Scale Boundary Object)
+ * fragment_view.hpp  -  Atomistic Fragment View (Scale Boundary Object)
  *
  * Defines the clean interface between the atomistic (source-of-truth)
  * layer and downstream consumers such as coarse_grain::. This is the
@@ -11,7 +11,7 @@
  * consumes them. The reverse dependency must never exist.
  *
  * Data flow:
- *   atomistic structure → FragmentView → unified descriptor → bead interactions
+ *   atomistic structure -> FragmentView -> unified descriptor -> bead interactions
  *
  * Anti-black-box:
  *   - Every atom, bond, charge, and frame is explicitly stored
@@ -35,7 +35,7 @@ namespace atomistic {
 // ============================================================================
 
 /**
- * FragmentStatus — explicit failure codes for fragment validation.
+ * FragmentStatus  -  explicit failure codes for fragment validation.
  *
  * The atomistic layer must produce either a valid FragmentView or
  * an explicit failure with a reason code. Silent propagation of
@@ -72,7 +72,7 @@ inline const char* fragment_status_name(FragmentStatus s) {
 // ============================================================================
 
 /**
- * AtomRecord — one atom within a fragment view.
+ * AtomRecord  -  one atom within a fragment view.
  *
  * Contains position, identity, charge, and classification flags.
  * Uses the project's native Vec3 type (no external dependencies).
@@ -105,7 +105,7 @@ struct AtomRecord {
 // ============================================================================
 
 /**
- * BondRecord — one bond within a fragment view.
+ * BondRecord  -  one bond within a fragment view.
  *
  * Indices are local to the fragment (0-based into the atoms vector).
  */
@@ -120,7 +120,7 @@ struct BondRecord {
 // ============================================================================
 
 /**
- * LocalFrame — local coordinate frame derived from structure.
+ * LocalFrame  -  local coordinate frame derived from structure.
  *
  * Constructed from the inertia tensor principal axes. Provides the
  * orientation reference for all directional properties.
@@ -138,7 +138,7 @@ struct LocalFrame {
 // ============================================================================
 
 /**
- * FragmentView — the scale boundary object.
+ * FragmentView  -  the scale boundary object.
  *
  * Packages all atomistic information needed for coarse-grained
  * descriptor construction into a single, validated interface.
@@ -289,7 +289,7 @@ inline FragmentView build_fragment_view(
     }
 
     // --- Extract bonds from state edge list ---
-    // Build a local index map: original_index → local_index
+    // Build a local index map: original_index -> local_index
     // Only bonds where both endpoints are in the fragment are included
     std::vector<int> local_map(state.N, -1);
     for (uint32_t i = 0; i < static_cast<uint32_t>(indices.size()); ++i) {

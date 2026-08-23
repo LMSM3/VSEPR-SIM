@@ -1,15 +1,15 @@
-/**
- * phase1_kernel_audit.cpp — Phase 1: Revalidate the Core Kernel
+﻿/**
+ * phase1_kernel_audit.cpp  -  Phase 1: Revalidate the Core Kernel
  *
  * Self-testing executable.  Reports pass/fail for every check.
  * No external test framework, no scripts, no JSON config.
  *
  * Checks:
  *   1.1  Energy ledger consistency  (total == sum of components)
- *   1.2  Deterministic evaluation   (two identical calls → identical output)
+ *   1.2  Deterministic evaluation   (two identical calls -> identical output)
  *   1.3a Force finiteness           (no NaN / Inf anywhere)
  *   1.3b Physical sanity            (Ar dimer at equilibrium: F ≈ 0, U ≈ −ε)
- *   1.3c Force–energy consistency   (F ≈ −dU/dx via finite difference)
+ *   1.3c Force-energy consistency   (F ≈ −dU/dx via finite difference)
  */
 
 #include "atomistic/core/state.hpp"
@@ -76,7 +76,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 1 — Core Kernel Audit\n");
+    std::printf("  Phase 1  -  Core Kernel Audit\n");
     std::printf("=============================================================\n\n");
 
     auto model = create_lj_coulomb_model();
@@ -108,7 +108,7 @@ int main()
         // NOTE: Coulomb is currently disabled in the kernel.
         // Record this fact as a declared limitation.
         check(s.E.UCoul == 0.0,
-              "Coulomb term is zero (disabled — declared limitation)");
+              "Coulomb term is zero (disabled  -  declared limitation)");
     }
 
     // ------------------------------------------------------------------
@@ -130,8 +130,8 @@ int main()
                 s1.F[i].z != s2.F[i].z) { f_match = false; break; }
         }
 
-        check(e_match, "identical inputs → identical energy (bitwise)");
-        check(f_match, "identical inputs → identical forces (bitwise)");
+        check(e_match, "identical inputs -> identical energy (bitwise)");
+        check(f_match, "identical inputs -> identical forces (bitwise)");
     }
 
     // ------------------------------------------------------------------
@@ -150,7 +150,7 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 1.3b  Physical sanity — Ar dimer at equilibrium
+    // 1.3b  Physical sanity  -  Ar dimer at equilibrium
     // ------------------------------------------------------------------
     std::printf("\n--- 1.3b Physical Sanity (Ar Dimer) ---\n");
     {
@@ -189,7 +189,7 @@ int main()
     }
 
     // ------------------------------------------------------------------
-    // 1.3c  Force–energy consistency (finite-difference check)
+    // 1.3c  Force-energy consistency (finite-difference check)
     // ------------------------------------------------------------------
     std::printf("\n--- 1.3c Force-Energy Consistency ---\n");
     {

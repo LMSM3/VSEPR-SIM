@@ -1,0 +1,148 @@
+# e27_surface_full_analysis_showcase.vsim
+# =============================================================================
+# E27  --  Full Surface-Analysis Showcase (All Metrics + IVec + Species)
+#
+# Purpose: Capstone example for the surface-analysis module.  Deploys five
+#          probes on a NaCl crystal with embedded Ar impurities and activates
+#          every surface metric plus the IVec coupling and species filters.
+#          Intended as a documentation test-bed and integration smoke-test.
+#
+# Surfaces deployed:
+#   surf_A  --  rectangular XY plane, all-species Phi+Q+P
+#   surf_B  --  disk midplane Z,  Na-only species flux
+#   surf_C  --  disk midplane Z,  Cl-only species flux
+#   surf_D  --  rectangular XZ plane, Ar mass flux
+#   surf_E  --  disk at crystal top, IVec flux
+#
+# Doctrine:
+#   All five surfaces are analysis-only.  They produce entries in a single
+#   out/e27/surfaces/e27.surface.json.  Truth-state .xyz is unaffected.
+# =============================================================================
+
+[project]
+name        = "e27_surface_full_showcase"
+version     = "v5.0.14"
+seed_base   = 2700
+determinism = true
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+cell      = "6x6x6"
+phase     = "solid"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 64
+temperature = 300.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 8000
+dt_fs     = 1.0
+converge  = false
+
+[analysis.ivec]
+enabled         = true
+write_json      = true
+convergence_eps = 1.0e-5
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = "out/e27"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e27/surfaces"
+
+# surf_A: full-spectrum rectangular probe (XY plane at z=0)
+[[object.surface]]
+name                    = "surf_A_full"
+geometry                = "rectangle"
+center_x                = 0.0
+center_y                = 0.0
+center_z                = 0.0
+normal_x                = 0.0
+normal_y                = 0.0
+normal_z                = 1.0
+width                   = 30.0
+height                  = 30.0
+log_crossings           = true
+compute_flux            = true
+compute_energy_flux     = true
+compute_momentum_flux   = true
+compute_mass_flux       = true
+output_tag              = "surf_A"
+
+# surf_B: Na-only species flux disk (XY plane at z=0)
+[[object.surface]]
+name                 = "surf_B_Na"
+geometry             = "disk"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 0.0
+normal_x             = 0.0
+normal_y             = 0.0
+normal_z             = 1.0
+radius               = 10.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Na"]
+output_tag           = "surf_B_Na"
+
+# surf_C: Cl-only species flux disk (same plane as B)
+[[object.surface]]
+name                 = "surf_C_Cl"
+geometry             = "disk"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 0.0
+normal_x             = 0.0
+normal_y             = 0.0
+normal_z             = 1.0
+radius               = 10.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Cl"]
+output_tag           = "surf_C_Cl"
+
+# surf_D: Ar mass flux through XZ plane (Y=0)
+[[object.surface]]
+name                 = "surf_D_Ar_mass"
+geometry             = "rectangle"
+center_x             = 0.0
+center_y             = 0.0
+center_z             = 0.0
+normal_x             = 0.0
+normal_y             = 1.0
+normal_z             = 0.0
+width                = 30.0
+height               = 30.0
+log_crossings        = true
+compute_mass_flux    = true
+species_filter       = ["Ar"]
+output_tag           = "surf_D_Ar"
+
+# surf_E: IVec flux disk at crystal top (z = +15)
+[[object.surface]]
+name               = "surf_E_ivec_top"
+geometry           = "disk"
+center_x           = 0.0
+center_y           = 0.0
+center_z           = 15.0
+normal_x           = 0.0
+normal_y           = 0.0
+normal_z           = 1.0
+radius             = 8.0
+log_crossings      = true
+compute_ivec_flux  = true
+output_tag         = "surf_E_ivec"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 400

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase6_7_verification_sessions.cpp
  * Phase 6: Build Deterministic Test-and-Verify Sessions
  * Phase 7: Run the Session Ladder (Block A, B, C)
@@ -6,20 +6,20 @@
  * Each named session:
  *   - runs a reproducible computation with explicit pass/fail thresholds
  *   - writes two artifacts to verification/<group>/<id>/
- *       report.txt  — full metrics table, geometry, energy decomposition
- *       status.txt  — single word: PASS or FAIL
+ *       report.txt   -  full metrics table, geometry, energy decomposition
+ *       status.txt   -  single word: PASS or FAIL
  *
  * Session ladder:
- *   Block A — Structural energy sweeps
+ *   Block A  -  Structural energy sweeps
  *       se_001  H2 distance sweep
  *       se_002  H2O O-H bond stretch
  *       se_003  CH4 bond stretch
  *       se_004  Ar2 pair sweep (nonbonded reference)
- *   Block B — Relaxation
+ *   Block B  -  Relaxation
  *       rx_001  Ar3 cluster FIRE
  *       rx_002  H2O nonbonded FIRE
  *       rx_003  BCC Fe 2x2x2 crystal FIRE
- *   Block C — Crystal structure
+ *   Block C  -  Crystal structure
  *       xtal_001  FCC Al
  *       xtal_002  BCC Fe
  *       xtal_003  NaCl
@@ -55,7 +55,7 @@ static int g_total = 0, g_pass = 0, g_fail = 0;
 static void mkdir_p(const std::string& path)
 {
 #ifdef _WIN32
-    // path may use forward slashes — convert
+    // path may use forward slashes  -  convert
     std::string p = path;
     for (char& c : p) if (c == '/') c = '\\';
     std::string cmd = "mkdir \"" + p + "\" 2>nul";
@@ -66,7 +66,7 @@ static void mkdir_p(const std::string& path)
 #endif
 }
 
-// Session context — accumulates report lines, tracks pass/fail
+// Session context  -  accumulates report lines, tracks pass/fail
 struct Session {
     std::string id;
     std::string dir;
@@ -205,7 +205,7 @@ static double nn_dist(const State& s)
 }
 
 // ============================================================================
-// Block A — Structural Energy Sweeps
+// Block A  -  Structural Energy Sweeps
 // ============================================================================
 
 static void se_001_h2_sweep(IModel& model, const ModelParams& mp)
@@ -389,7 +389,7 @@ static void se_004_ar2_sweep(IModel& model, const ModelParams& mp)
 }
 
 // ============================================================================
-// Block B — Relaxation
+// Block B  -  Relaxation
 // ============================================================================
 
 static void rx_001_ar3(IModel& model, const ModelParams& mp)
@@ -505,7 +505,7 @@ static void rx_003_bcc_fe(IModel& model, const ModelParams& mp)
 }
 
 // ============================================================================
-// Block C — Crystal verification
+// Block C  -  Crystal verification
 // ============================================================================
 
 static void crystal_session(
@@ -597,7 +597,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 6/7 — Verification Session Ladder\n");
+    std::printf("  Phase 6/7  -  Verification Session Ladder\n");
     std::printf("=============================================================\n");
     std::printf("  Artifacts written to:  verification/\n\n");
 
@@ -610,7 +610,7 @@ int main()
     mp.rc = 10.0;
 
     // ---- Block A: Structural Energy ----
-    std::printf("Block A — Structural Energy Sweeps\n");
+    std::printf("Block A  -  Structural Energy Sweeps\n");
     std::printf("%s\n", std::string(60, '-').c_str());
     se_001_h2_sweep(*model, mp);
     se_002_h2o_stretch(*model, mp);
@@ -618,14 +618,14 @@ int main()
     se_004_ar2_sweep(*model, mp);
 
     // ---- Block B: Relaxation ----
-    std::printf("Block B — Relaxation Sessions\n");
+    std::printf("Block B  -  Relaxation Sessions\n");
     std::printf("%s\n", std::string(60, '-').c_str());
     rx_001_ar3(*model, mp);
     rx_002_h2o(*model, mp);
     rx_003_bcc_fe(*model, mp);
 
     // ---- Block C: Crystal ----
-    std::printf("Block C — Crystal Sessions\n");
+    std::printf("Block C  -  Crystal Sessions\n");
     std::printf("%s\n", std::string(60, '-').c_str());
 
     crystal_session("xtal_001_fcc_al", "FCC Al",

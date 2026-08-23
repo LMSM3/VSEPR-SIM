@@ -1,5 +1,5 @@
-/**
- * test_beta7_pipeline.cpp — beta-7 Pipeline Full Round-Trip Test
+﻿/**
+ * test_beta7_pipeline.cpp  -  beta-7 Pipeline Full Round-Trip Test
  * ==============================================================
  *
  * Validates all five pipeline stages using the v4 reference dataset
@@ -66,7 +66,7 @@ static std::vector<v4::FormationRecord> load_reference() {
 }
 
 // ============================================================================
-// T1 — Stage 1: stage_fingerprint
+// T1  -  Stage 1: stage_fingerprint
 // ============================================================================
 
 static void test_stage_fingerprint() {
@@ -83,23 +83,23 @@ static void test_stage_fingerprint() {
 		CHECK_GE("feat[7] >= 0: " + f.symbol, fp.features[7], 0.0);
 	}
 
-	// Converged cases: Au, Ag, Cu, Al, Fe, W, Mo, Cr, Ti — should have no NotConverged warning
+	// Converged cases: Au, Ag, Cu, Al, Fe, W, Mo, Cr, Ti  -  should have no NotConverged warning
 	auto fp_au = vsepr::pipeline::stage_fingerprint(dataset[0]); // Au, converged
 	bool has_nc = false;
 	for (auto w : fp_au.warnings)
 		if (w == vsepr::pipeline::WarningCode::NotConverged) has_nc = true;
-	CHECK("Au converged — no NotConverged warning", !has_nc);
+	CHECK("Au converged  -  no NotConverged warning", !has_nc);
 
 	// Pt (index 3) is NOT converged
 	auto fp_pt = vsepr::pipeline::stage_fingerprint(dataset[3]); // Pt, not converged
 	bool has_nc_pt = false;
 	for (auto w : fp_pt.warnings)
 		if (w == vsepr::pipeline::WarningCode::NotConverged) has_nc_pt = true;
-	CHECK("Pt not converged — NotConverged warning present", has_nc_pt);
+	CHECK("Pt not converged  -  NotConverged warning present", has_nc_pt);
 }
 
 // ============================================================================
-// T2 — Stage 2: stage_cluster
+// T2  -  Stage 2: stage_cluster
 // ============================================================================
 
 static void test_stage_cluster() {
@@ -137,7 +137,7 @@ static void test_stage_cluster() {
 }
 
 // ============================================================================
-// T3 — Stage 3: stage_analysis
+// T3  -  Stage 3: stage_analysis
 // ============================================================================
 
 static void test_stage_analysis() {
@@ -182,7 +182,7 @@ static void test_stage_analysis() {
 }
 
 // ============================================================================
-// T4 — Stage 4: stage_report
+// T4  -  Stage 4: stage_report
 // ============================================================================
 
 static void test_stage_report() {
@@ -209,7 +209,7 @@ static void test_stage_report() {
 }
 
 // ============================================================================
-// T5 — Stage 5: stage_dashboard
+// T5  -  Stage 5: stage_dashboard
 // ============================================================================
 
 static void test_stage_dashboard() {
@@ -241,7 +241,7 @@ static void test_stage_dashboard() {
 }
 
 // ============================================================================
-// T6 — run_pipeline convenience function
+// T6  -  run_pipeline convenience function
 // ============================================================================
 
 static void test_run_pipeline() {
@@ -274,7 +274,7 @@ static void test_run_pipeline() {
 }
 
 // ============================================================================
-// T7 — Determinism: two identical runs produce identical cluster IDs
+// T7  -  Determinism: two identical runs produce identical cluster IDs
 // ============================================================================
 
 static void test_determinism() {
@@ -289,7 +289,7 @@ static void test_determinism() {
 		CHECK_EQ("cluster_id deterministic: " + r1[i].formation.symbol,
 				 r1[i].cluster.cluster_id,
 				 r2[i].cluster.cluster_id);
-		// stability_score should be identical (same inputs → same outputs)
+		// stability_score should be identical (same inputs -> same outputs)
 		CHECK("stability_score deterministic: " + r1[i].formation.symbol,
 			  std::abs(r1[i].analysis.stability_score -
 					   r2[i].analysis.stability_score) < 1e-12);
@@ -297,7 +297,7 @@ static void test_determinism() {
 }
 
 // ============================================================================
-// T8 — CSV header matches csv_row column count
+// T8  -  CSV header matches csv_row column count
 // ============================================================================
 
 static void test_csv_consistency() {
@@ -330,7 +330,7 @@ static void test_csv_consistency() {
 
 int main() {
 	std::cout << "================================================================\n";
-	std::cout << "  test_beta7_pipeline  — beta-7 research pipeline round-trip\n";
+	std::cout << "  test_beta7_pipeline   -  beta-7 research pipeline round-trip\n";
 	std::cout << "================================================================\n";
 
 	test_stage_fingerprint();

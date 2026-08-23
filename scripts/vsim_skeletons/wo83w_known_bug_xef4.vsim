@@ -1,0 +1,40 @@
+# scripts/vsim_skeletons/wo83w_known_bug_xef4.vsim
+# Tier C — native replacement for repro_wo83w_known_bug.py
+#
+# DEFERRED WO-84B: infer_lone_pairs_from_element() has no case for Xe (Z=54).
+#                  XeF4 should be AX4E2 → square_planar.
+#                  Current output: likely tetrahedral or irregular (wrong).
+#
+# The Python script captures the bug visibly rather than hiding it:
+#   if "square_planar" not in out:
+#       print("KNOWN BUG: XeF4 not classified as square_planar")
+#       print("  Cause: infer_lone_pairs_from_element() has no case for Xe (Z=54)")
+#       print("  Fix:   add Xe to element lone-pair table, or wire LonePairProvider")
+#       print("  WO:    WO-84 BondOrder + LonePair provider series")
+#
+# The [classify.expect_limitation] concept lets this be expressed in the
+# VSIM language once that section is designed.
+# Until then, this file is documentation only.
+
+[project]
+name    = wo83w_known_bug_xef4
+version = v5.0.0
+
+[material]
+formula = XeF4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.expect_limitation]        # CONCEPT ONLY — not in VSIM language yet
+# known_wrong_field = geometry_central
+# known_wrong_value = "tetrahedral"   # what the classifier currently produces
+# correct_value     = "square_planar" # AX4E2 — correct Xe chemistry
+# cause             = "infer_lone_pairs_from_element() has no case for Xe (Z=54)"
+# fix               = "add Xe to element lone-pair table, or wire LonePairProvider"
+# deferred_wo       = WO-84B
+#
+# [classify.expect]
+# result = PASS_KNOWN_BUG             # bug captured, not hidden
+# ── STUB END ───────────────────────────────────────────────────────────────

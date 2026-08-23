@@ -1,18 +1,18 @@
-#pragma once
+﻿#pragma once
 /**
- * input_record.hpp — Generic Scientific Record X_i and Dimension Block D_i
+ * input_record.hpp  -  Generic Scientific Record X_i and Dimension Block D_i
  *
  * Implements the formal definition:
  *
  *   X_i = (I_i, T_i, D_i, P_i, S_i, H_i)
  *
  * where:
- *   I_i  — identity block (name, symbol, canonical ID)
- *   T_i  — type block (element, compound, material, precursor, ...)
- *   D_i  — dimension block: (n_state, n_geom, n_chem, n_nuc, n_aux)
- *   P_i  — payload block (physical / chemical / nuclear data)
- *   S_i  — seed / deterministic initialization block
- *   H_i  — hash / provenance block
+ *   I_i   -  identity block (name, symbol, canonical ID)
+ *   T_i   -  type block (element, compound, material, precursor, ...)
+ *   D_i   -  dimension block: (n_state, n_geom, n_chem, n_nuc, n_aux)
+ *   P_i   -  payload block (physical / chemical / nuclear data)
+ *   S_i   -  seed / deterministic initialization block
+ *   H_i   -  hash / provenance block
  *
  * Also defines:
  *   - SemanticType enum  (§2.3)
@@ -75,12 +75,12 @@ enum class StorageType : uint8_t {
     F64       = 3,      ///< Scientific numeric values
     STR       = 4,      ///< Names, symbols, tags
     BOOL      = 5,      ///< Flags, response switches
-    VEC_I32   = 6,      ///< vec<i32> — ordered integer arrays
-    VEC_F64   = 7,      ///< vec<f64> — ordered real arrays
-    SET_I32   = 8,      ///< set<i32> — non-duplicate integer collections
-    SET_STR   = 9,      ///< set<str> — non-duplicate string collections
-    MAP_S_S   = 10,     ///< map<str,str> — keyed string lookup
-    MAP_S_F   = 11,     ///< map<str,f64> — keyed numeric lookup
+    VEC_I32   = 6,      ///< vec<i32>  -  ordered integer arrays
+    VEC_F64   = 7,      ///< vec<f64>  -  ordered real arrays
+    SET_I32   = 8,      ///< set<i32>  -  non-duplicate integer collections
+    SET_STR   = 9,      ///< set<str>  -  non-duplicate string collections
+    MAP_S_S   = 10,     ///< map<str,str>  -  keyed string lookup
+    MAP_S_F   = 11,     ///< map<str,f64>  -  keyed numeric lookup
     HASH256   = 12,     ///< 256-bit record integrity
     HASH562   = 13      ///< 562-bit deep provenance digest
 };
@@ -201,7 +201,7 @@ struct IdentityBlock {
 };
 
 // ============================================================================
-// Payload — variant-based scientific data container
+// Payload  -  variant-based scientific data container
 // ============================================================================
 
 using PayloadValue = std::variant<

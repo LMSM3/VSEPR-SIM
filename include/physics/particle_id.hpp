@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * particle_id.hpp
  * ===============
@@ -11,17 +11,17 @@
  *                        0..108  element Z (H=1 .. Og=118, 0=placeholder)
  *                        > 118   engine-assigned molecule / candidate IDs
  *
- *   species_code <  0   reserved class space — nonsta                          ndard or derived
+ *   species_code <  0   reserved class space  -  nonsta                          ndard or derived
  *                        entities that have coordinates but are not
  *                        ordinary atoms
  *
  * Reserved negative ladder
- * ─────────────────────────────────────────────────────────────────────
+ * ---------------------------------------------------------------------
  * Physical emission / decay particles
  *   -1   alpha               He-4 nucleus emitted in alpha decay
  *   -2   beta_minus          electron emitted in beta-minus decay
  *   -3   gamma               gamma photon (isomeric transition)
- *   -4   eta                 QMD energy packet — abstract high-definition
+ *   -4   eta                 QMD energy packet  -  abstract high-definition
  *                             energy carrier for QMD simulations; extra
  *                             to the standard kernel energy unit
  *   -5   antineutrino        antineutrino loss token (beta-minus partner)
@@ -40,11 +40,11 @@
  * Defect / structural / bookkeeping entities
  *  -15   vacancy             lattice vacancy defect token
  *  -16   interstitial        lattice interstitial defect token
- *  -17   ghost               ghost particle — virtual, massless positional
+ *  -17   ghost               ghost particle  -  virtual, massless positional
  *                             sentinel for field evaluation, constraint
  *                             anchoring, or higher-order virtual entities
  *  -18   transition_state    transition-state marker (reaction coordinate)
- * ─────────────────────────────────────────────────────────────────────
+ * ---------------------------------------------------------------------
  *
  * XYZ geometry table integration:
  *   Every row carries a species_code column.  Readers and writers use
@@ -85,7 +85,7 @@ enum class ParticleID : std::int32_t {
     // Nonnegative: ordinary matter (Z or engine-assigned molecule ID)
     placeholder            =  0,   // generic / unresolved species
 
-    // ── Physical emission / decay particles ─────────────────────────────
+    // -- Physical emission / decay particles -----------------------------
     alpha                  = -1,   // He-4 nucleus
     beta_minus             = -2,   // electron (beta-minus decay)
     gamma                  = -3,   // gamma photon
@@ -96,7 +96,7 @@ enum class ParticleID : std::int32_t {
     neutron_free           = -7,   // free neutron
     proton_free            = -8,   // free proton
 
-    // ── Energy / field / abstract carriers ──────────────────────────────
+    // -- Energy / field / abstract carriers ------------------------------
     excitation_packet      = -9,   // electronic excitation carrier
     ionization_event       = -10,  // ionization bookkeeping token
     heat_packet            = -11,  // phonon / thermal packet
@@ -104,10 +104,10 @@ enum class ParticleID : std::int32_t {
     field_source           = -13,  // field-origin sentinel
     field_probe            = -14,  // field-sampling sentinel
 
-    // ── Defect / structural / bookkeeping entities ───────────────────────
+    // -- Defect / structural / bookkeeping entities -----------------------
     vacancy                = -15,  // lattice vacancy
     interstitial           = -16,  // lattice interstitial
-    ghost                  = -17,  // ghost particle — virtual massless
+    ghost                  = -17,  // ghost particle  -  virtual massless
                                    // sentinel (field eval, constraints,
                                    // higher-order virtual entities)
     transition_state       = -18   // transition-state marker
@@ -184,8 +184,8 @@ enum class ParticleID : std::int32_t {
 // ============================================================================
 
 /// Returns the canonical label string used in XYZ geometry table rows.
-/// Positive species codes (atom Z) are NOT handled here — the caller
-/// maps Z → element symbol via the periodic table.
+/// Positive species codes (atom Z) are NOT handled here  -  the caller
+/// maps Z -> element symbol via the periodic table.
 [[nodiscard]] constexpr std::string_view to_string(ParticleID id) noexcept {
     switch (id) {
         case ParticleID::placeholder:         return "X";
@@ -216,7 +216,7 @@ enum class ParticleID : std::int32_t {
 // ============================================================================
 
 /// Convert a raw species_code integer to its geometry-table label.
-/// For positive codes (atom Z), returns the placeholder "?" — callers
+/// For positive codes (atom Z), returns the placeholder "?"  -  callers
 /// must resolve element symbols separately.
 [[nodiscard]] constexpr std::string_view species_code_to_label(std::int32_t code) noexcept {
     if (code > 0) return "?";   // caller resolves Z -> element symbol

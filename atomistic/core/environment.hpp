@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * environment.hpp
  * ---------------
@@ -11,9 +11,9 @@
  *
  * Three primary classes (Step 10.2):
  *
- *   NearVacuum       — intrinsic pair interactions dominate, low screening
- *   DryCondensed     — packing, sterics, local lattice effects matter
- *   Solution         — screened electrostatics, solvation, ion concentration
+ *   NearVacuum        -  intrinsic pair interactions dominate, low screening
+ *   DryCondensed      -  packing, sterics, local lattice effects matter
+ *   Solution          -  screened electrostatics, solvation, ion concentration
  *
  * Usage:
  *   ModelParams mp;
@@ -28,7 +28,7 @@
  *     - isolated cluster energetics
  *
  *   DryCondensed:
- *     - effective dielectric 2–5 (bulk organic/inorganic)
+ *     - effective dielectric 2-5 (bulk organic/inorganic)
  *     - packing and sterics drive structure
  *     - no solvation correction
  *
@@ -51,7 +51,7 @@ enum class MediumType {
     NearVacuum,       // gas phase / isolated cluster
     DryCondensed,     // bulk solid, thin film, dry powder
     Solution,         // aqueous or polar solvent
-    Unknown,          // not specified — falls back to NearVacuum behaviour
+    Unknown,          // not specified  -  falls back to NearVacuum behaviour
 };
 
 // ============================================================================

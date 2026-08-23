@@ -1,4 +1,4 @@
-/*
+﻿/*
 example_quantum_workflow.cpp
 -----------------------------
 Complete example demonstrating quantum module integration.
@@ -30,9 +30,9 @@ using namespace vsepr::quantum;
 // Example 1: Benzene - Chromophore Library
 // ============================================================================
 void example_benzene() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   Example 1: Benzene UV-Vis Spectrum                    ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|   Example 1: Benzene UV-Vis Spectrum                    |\n";
+    std::cout << "+==========================================================+\n\n";
     
     // Get benzene excitation data from library
     auto excitation = ChromophoreLibrary::benzene();
@@ -75,9 +75,9 @@ void example_benzene() {
 // Example 2: Conjugated System - Simple Hückel Theory
 // ============================================================================
 void example_huckel() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   Example 2: Hückel Theory - Butadiene                  ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|   Example 2: Hückel Theory - Butadiene                  |\n";
+    std::cout << "+==========================================================+\n\n";
     
     // Compute π-system for butadiene (4 conjugated carbons)
     auto excitation = SimpleHuckel::compute_pi_system(4, false);
@@ -99,16 +99,16 @@ void example_huckel() {
     std::cout << "\nHOMO-LUMO Gap Comparison (6 π-electrons):\n";
     std::cout << "  Benzene (cyclic):     " << cyclic.get_homo_lumo_gap_ev() << " eV\n";
     std::cout << "  Hexatriene (linear):  " << linear.get_homo_lumo_gap_ev() << " eV\n";
-    std::cout << "  → Cyclic systems are more stable (larger gap)\n";
+    std::cout << "  -> Cyclic systems are more stable (larger gap)\n";
 }
 
 // ============================================================================
 // Example 3: Carbonyl Chromophore
 // ============================================================================
 void example_carbonyl() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   Example 3: Carbonyl Group (n→π* transition)           ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|   Example 3: Carbonyl Group (n->π* transition)           |\n";
+    std::cout << "+==========================================================+\n\n";
     
     auto excitation = ChromophoreLibrary::carbonyl();
     
@@ -134,9 +134,9 @@ void example_carbonyl() {
 // Example 4: Complete Workflow with Mock Molecule
 // ============================================================================
 void example_complete_workflow() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   Example 4: Complete Workflow (Mock Molecule)          ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|   Example 4: Complete Workflow (Mock Molecule)          |\n";
+    std::cout << "+==========================================================+\n\n";
     
     // Create a mock benzene molecule (in real code, use builder)
     Molecule mol;
@@ -218,9 +218,9 @@ void example_complete_workflow() {
 // Example 5: Spectral Line Shapes
 // ============================================================================
 void example_line_shapes() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   Example 5: Spectral Line Broadening                   ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|   Example 5: Spectral Line Broadening                   |\n";
+    std::cout << "+==========================================================+\n\n";
     
     auto excitation = ChromophoreLibrary::benzene();
     
@@ -257,12 +257,12 @@ void example_line_shapes() {
 // ============================================================================
 int main() {
     std::cout << R"(
-╔════════════════════════════════════════════════════════════════╗
-║                                                                ║
-║   VSEPR-Sim Quantum Module - Complete Workflow Example        ║
-║   Version 1.0 - January 17, 2026                              ║
-║                                                                ║
-╚════════════════════════════════════════════════════════════════╝
++================================================================+
+|                                                                |
+|   VSEPR-Sim Quantum Module - Complete Workflow Example        |
+|   Version 1.0 - January 17, 2026                              |
+|                                                                |
++================================================================+
 )";
     
     try {
@@ -273,24 +273,24 @@ int main() {
         example_complete_workflow();
         
         std::cout << R"(
-╔════════════════════════════════════════════════════════════════╗
-║                                                                ║
-║   ✓ All Examples Completed Successfully                       ║
-║                                                                ║
-║   Output Files:                                                ║
-║   - benzene_absorption.csv                                     ║
-║   - benzene_spectrum.html                                      ║
-║   - carbonyl_spectrum.json                                     ║
-║   - benzene_Gaussian.csv                                       ║
-║   - benzene_Lorentzian.csv                                     ║
-║   - benzene_Voigt.csv                                          ║
-║   - benzene_quantum.json                                       ║
-║   - benzene_abs.csv                                            ║
-║   - benzene_em.csv                                             ║
-║                                                                ║
-║   Open benzene_spectrum.html in a browser to view!            ║
-║                                                                ║
-╚════════════════════════════════════════════════════════════════╝
++================================================================+
+|                                                                |
+|   ✓ All Examples Completed Successfully                       |
+|                                                                |
+|   Output Files:                                                |
+|   - benzene_absorption.csv                                     |
+|   - benzene_spectrum.html                                      |
+|   - carbonyl_spectrum.json                                     |
+|   - benzene_Gaussian.csv                                       |
+|   - benzene_Lorentzian.csv                                     |
+|   - benzene_Voigt.csv                                          |
+|   - benzene_quantum.json                                       |
+|   - benzene_abs.csv                                            |
+|   - benzene_em.csv                                             |
+|                                                                |
+|   Open benzene_spectrum.html in a browser to view!            |
+|                                                                |
++================================================================+
 )";
         
         return 0;

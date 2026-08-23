@@ -1,0 +1,48 @@
+# VSEPR-SIM Uless Visual Demo - Robust Run Commands
+# Copy and paste each block into PowerShell (run from C:\R\VSPER-SIM)
+
+# ----------------------------------------------------------------------------
+# 1. Configure release preset (only needed once or after CMake changes)
+# ----------------------------------------------------------------------------
+C:\msys64\ucrt64\bin\cmake.exe --preset release
+
+# ----------------------------------------------------------------------------
+# 2. Full release build (parallel 4)
+# ----------------------------------------------------------------------------
+C:\msys64\ucrt64\bin\cmake.exe --build build --parallel 4
+
+# ----------------------------------------------------------------------------
+# 3. Run only the Day 89 + Uless focused tests
+# ----------------------------------------------------------------------------
+C:\msys64\ucrt64\bin\ctest.exe --test-dir build --output-on-failure -L "day89|uless"
+
+# ----------------------------------------------------------------------------
+# 4. Run the Uless .vsim demo script
+# ----------------------------------------------------------------------------
+.\build\vsepr.exe run scripts\demo_uless_visual.vsim
+
+# ----------------------------------------------------------------------------
+# 5. Verify the produced XYZ artifact exists
+# ----------------------------------------------------------------------------
+Test-Path .\out\demo_uless_visual\demo_uless_visual.xyz
+Get-ChildItem .\out\demo_uless_visual
+
+# ----------------------------------------------------------------------------
+# 6. Validate the Day 89 stress artifact package
+# ----------------------------------------------------------------------------
+.\build\dual-backend-3d-data.exe --headless --output out/day89_dg_check --stress-particles 1331
+python tests\test_dual_backend_3d_artifacts.py out/day89_dg_check --stress
+
+# ----------------------------------------------------------------------------
+# 7. Optional: try opening the viewer (will report blocker if Qt3D missing)
+# ----------------------------------------------------------------------------
+# This requires the vsepr-view target to be built. It is skipped by default
+# because Qt6 Qt3D components are not available in UCRT64.
+# If installed, build it with: cmake --build build --target vsepr-view
+# Then run:
+# .\build\vsepr-view.exe --artifact out/day89_dg_check --scene 4 --uless-indicator --uless-label obs --uless-value 0.75 --uless-max 1.0
+
+# ----------------------------------------------------------------------------
+# 8. Full test suite (slower)
+# ----------------------------------------------------------------------------
+C:\msys64\ucrt64\bin\ctest.exe --test-dir build --output-on-failure

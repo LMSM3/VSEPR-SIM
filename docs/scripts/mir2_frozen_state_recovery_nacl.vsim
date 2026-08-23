@@ -1,0 +1,137 @@
+# MIR II — Frozen-State Recovery
+# NaCl equilibrate then single_point freeze. P5 = [x,p,q,s,D].
+# Theory: MIR II §1-7 — recoverable identity content from frozen snapshot.
+
+[project]
+name        = "mir2_frozen_state_recovery_nacl"
+version     = "v5.1.13.5"
+seed_base   = 2020
+determinism = true
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[while]
+name          = "thermal_equilibration"
+condition     = "energy_var > 0.008"
+max_iters     = 15
+body_steps    = 400
+measure       = energy_var
+
+[variance]
+energy_var = "energy.total" "last 80" 0.008
+
+[run]
+mode         = "single_point"
+max_steps    = 1
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[simulation]
+periodic    = true
+use_ewald   = true
+ewald_alpha = 0.3
+ewald_rcut  = 12.0
+ewald_kmax  = 5
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]
+rve_window_lengths_A             = [2.82, 5.64, 11.28, 22.56]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+spatial_cv_threshold             = 0.30
+temporal_drift_threshold         = 0.10
+scale_drift_threshold            = 0.25
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.6
+contact_cutoff_A  = 3.0
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = false
+min_frames_for_msd    = 999
+unwrap_pbc            = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 1
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+dynamic_energy   = true
+
+[verify]
+enabled             = true
+profile             = "mir2_frozen_recovery_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.82
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.82, 3.99, 4.88]
+peak_tolerance_A   = 0.22
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_scale_sampling_json = true
+write_manifest_json       = true
+output_dir                = "out/mir2_nacl_frozen"
+
+[report]
+title                   = "MIR II — Frozen-State Recovery: NaCl"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 1
+show_convergence_trace = true
+show_symbolic_trace    = true
+overlay_sequence       = energy_map,coordination,rdf

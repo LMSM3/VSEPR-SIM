@@ -1,0 +1,214 @@
+# =============================================================================
+# IKK II — Projection, Scale Intervals, and Observable Form
+# VSIM implementation: NaCl rocksalt MD
+#
+# Theory claim (IKK II):
+#   Observation is not identity. Observation is projected identity access.
+#   The projection operator Π_{a→b}: I_{S_a} → O_{S_b} maps identity content
+#   at scale S_a to observables at scale S_b. Information is lost in the
+#   projection — the residual R_{a|b} = I_{S_a} - O_{S_b} is real and
+#   non-zero for any non-trivial projection.
+#
+# Computational test:
+#   Run NaCl MD across a scale ladder of RVE windows. Each window is one
+#   step on the scale interval S_a → S_b. Measure:
+#     - field_projection: how much identity content survives each step
+#     - spatial_cv: variance at each scale — increases as projection compresses
+#     - scale_drift: successive-window difference = numerical residual R_{a|b}
+#     - emergence_candidate: does coherent structure appear at projected scale?
+#
+#   If emergence_candidate = false at the unit-cell window but true at the
+#   supercell window, the observable (RDF peaks, coordination) only exists
+#   as a projected structure, not at the point-identity scale. That is the
+#   claim: O_{S_b} is not I_{S_a}.
+#
+# Traditional system: NaCl rocksalt (B1 prototype)
+#   Canonical ionic crystal. Coordination-6 structure. Ewald summation
+#   appropriate. RDF peaks textbook. Projection loss should be measurable
+#   because the charge distribution is long-range — projection across scale
+#   cuts long-range correlations.
+#
+# IKK II sections mapped:
+#   §1 Scale Ladder        → rve_window_lengths_A: one NaCl unit cell → supercell
+#   §2 Identity vs Observable → field_projection distinguishes I from O
+#   §3 Projection Operator → compute_field_projection = true
+#   §4 Projection Loss     → scale_drift_threshold, spatial_cv_threshold
+#   §5 Observable Formation → [observe] metrics = rdf, coordination
+#   §6 Coexisting Identities → periodic = true: all images exist simultaneously
+#   §7 Notation Warnings   → [report] symbolic_trace separates layers
+# =============================================================================
+
+[project]
+name        = "ikk2_projection_operator_nacl"
+version     = "v5.0.0-beta.9"
+seed_base   = 1001
+determinism = true
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300
+converge    = false
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 300
+pressure    = 0.0
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[simulation]
+fire_max_steps = 500
+fire_dt_fs     = 1.0
+periodic       = true
+use_ewald      = true
+ewald_alpha    = 0.3
+ewald_rcut     = 12.0
+ewald_kmax     = 5
+
+# ---------------------------------------------------------------------------
+# Scale sampling — projection operator implementation
+# IKK II §1: scale ladder S_a → S_b
+# NaCl a = 5.64 Å. Windows: a/2, a, 2a, 4a = half-cell to supercell.
+# Each doubling is one projection step down the scale ladder.
+#
+# IKK II §4: projection loss
+#   scale_drift = successive_window_difference = numerical R_{a|b}
+#   spatial_cv rising with window size → identity compressed into fewer
+#   observable degrees of freedom at coarser scale
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                            = true
+compute_field_projection           = true
+compute_rve_sampling               = true
+compute_emergence_metrics          = true
+field_grid                         = [8, 8, 8]
+rve_window_lengths_A               = [2.82, 5.64, 11.28, 22.56]
+rve_windows_per_level              = 6
+rve_window_placement               = "grid"
+min_particles_for_scale_sampling   = 64
+spatial_cv_threshold               = 0.30
+temporal_drift_threshold           = 0.15
+scale_drift_threshold              = 0.25
+temporal_drift_metric              = "block_difference"
+scale_drift_metric                 = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.6
+contact_cutoff_A  = 3.0
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 10
+unwrap_pbc            = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"   # scale evidence hard-blocks macro_ready
+
+# ---------------------------------------------------------------------------
+# Observables — O_{S_b} layer (IKK II §5)
+# rdf and coordination are observables at the projected scale.
+# They do not exist at the point-identity scale (single atom has no RDF).
+# That asymmetry is the projection claim.
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 20
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Verification — EVM III §2 compatibility gate
+# RDF peaks for NaCl rocksalt a = 5.64 Å:
+#   1st shell Na-Cl:    2.82 Å  (a/2)
+#   2nd shell same-ion: 3.99 Å  (a/√2)
+#   3rd shell:          4.88 Å  (a√3/2)
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "ikk2_nacl_projection_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.82
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.82, 3.99, 4.88]
+peak_tolerance_A   = 0.20
+require_peak_order = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.0
+max_slope_late       = 0.001
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_dashboard_svg        = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/ikk2_nacl"
+
+[report]
+title                   = "ikk2_projection_operator_nacl"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 40
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_symbolic_trace      = true
+overlay_sequence         = energy_map,coordination,rdf

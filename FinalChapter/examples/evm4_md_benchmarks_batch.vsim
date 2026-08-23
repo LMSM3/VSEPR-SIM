@@ -1,0 +1,306 @@
+# =============================================================================
+# EVM IV — Empirical Consequence and Optional Predictions
+# VSIM implementation: MD benchmark batch, cross-scale consistency
+#
+# Theory claim (EVM IV):
+#   The base theory does not depend on Tier IV success.
+#   Tier IV tests derived applications. A framework whose core survives
+#   Tier I–III and whose derived predictions fail Tier IV is not destroyed
+#   — it is refined.
+#
+#   Key Tier IV claims:
+#   §2 Deformed Born rule:
+#     η_i ≠ η_j ⟹ p_i = η_i|α_i|² / Σ_j η_j|α_j|²
+#
+#     In MD terms: if the scale access efficiency η differs between
+#     two RVE windows (η_small ≠ η_large), the probability distribution
+#     over observable states should show a systematic shift relative to
+#     the uniform-access prediction.
+#
+#     Test: compare spatial_cv at small vs large RVE window.
+#     If spatial_cv(small) ≈ spatial_cv(large): η uniform → standard statistics.
+#     If spatial_cv(small) >> spatial_cv(large): η non-uniform → look for shift
+#     in RDF peak positions between fine and coarse analysis.
+#
+#   §4 Scale-dependent measurement statistics:
+#     Does projection mismatch produce detectable distributional shifts?
+#     Three-material batch: NaCl (ionic), Si (covalent), Al (FCC metallic).
+#     Same run conditions, different material classes. If the framework
+#     is correct, scale_drift should be material-class-dependent, not
+#     just size-dependent.
+#
+#   §6 MD simulation benchmarks:
+#     Cross-scale consistency: run each material at two temperatures.
+#     η measured at each temperature and each window.
+#     Consistent η across temperature sweep = scale-access structure is
+#     temperature-independent (identity-level property, not thermal artifact).
+#
+#   §7 Failure conditions:
+#     Each job includes a tight verify gate.
+#     If verify fails AND scale_sampling shows non-uniform η: this is
+#     the falsification condition for that job's Tier IV claim.
+#     Not the whole framework — just that specific derived prediction.
+#
+#   §8 Honest assessment:
+#     Comments in each job clearly state: what the framework predicts,
+#     what it merely permits, and what counts as a fail.
+# =============================================================================
+
+[project]
+name        = "evm4_md_benchmarks_batch"
+version     = "v5.1.13.5"
+seed_base   = 4040
+determinism = true
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Job 1: NaCl 300 K — ionic baseline
+# EVM IV §4: η should be uniform (ionic crystal is ordered)
+# Prediction: spatial_cv(2.82) ≈ spatial_cv(22.56) → no Born deformation
+# ============================================================
+[[batch.job]]
+name            = "nacl_300k_ionic_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic = true
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.82, 5.64, 11.28, 22.56]
+
+
+# ============================================================
+# Job 2: NaCl 900 K — ionic high-temperature
+# EVM IV §4: at 900 K, thermal disorder should break uniformity.
+# Prediction: spatial_cv(2.82) > spatial_cv(22.56) as local disorder
+# increases. This IS a Born-rule deformation signal — if large.
+# If the shift is within thermal broadening alone: standard statistics.
+# ============================================================
+[[batch.job]]
+name            = "nacl_900k_ionic_high_temp"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 900
+
+[batch.job.environment]
+periodic    = true
+temperature = 900
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.82, 5.64, 11.28, 22.56]
+
+
+# ============================================================
+# Job 3: Si 300 K — covalent baseline
+# EVM IV §4: covalent has different scale_drift profile than ionic.
+# Prediction: if scale_drift(Si) ≠ scale_drift(NaCl) at same window,
+# the drift is material-class-dependent — identity-level property.
+# ============================================================
+[[batch.job]]
+name            = "si_300k_covalent_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 0.5
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+
+
+# ============================================================
+# Job 4: Al FCC 300 K — metallic, close-packed
+# EVM IV §4: metallic has highest symmetry → most uniform η.
+# Prediction: scale_drift(Al) < scale_drift(NaCl) < scale_drift(Si)
+# Al close-packed symmetry should produce the flattest η profile.
+# ============================================================
+[[batch.job]]
+name            = "al_300k_metallic_fcc_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Al"
+prototype = "A1_Al"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+
+[batch.job.scale_sampling]
+# Al FCC a = 4.05 Å. Windows: bond → unit cell → supercell
+rve_window_lengths_A = [2.86, 4.05, 8.10, 20.25]
+
+
+# ============================================================
+# Job 5: Al 900 K — metallic high-temperature
+# EVM IV §7 failure condition test: Al melting point ~933 K.
+# At 900 K Al is close to melting. If verify.msd fails (MSD unbounded):
+# the identity structure is thermally destroyed, not projection-limited.
+# That is an honest Tier IV failure — clearly labelled as such.
+# ============================================================
+[[batch.job]]
+name            = "al_900k_metallic_near_melt"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Al"
+prototype = "A1_Al"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 900     # near melt — potential Tier IV failure case
+
+[batch.job.environment]
+periodic    = true
+temperature = 900
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.86, 4.05, 8.10, 20.25]
+spatial_cv_threshold = 0.70    # very loose: near-melt expected to be disordered
+
+
+# ---------------------------------------------------------------------------
+# Shared analysis — identical across all five jobs
+# This uniformity is required by EVM IV §6: cross-scale consistency
+# means same measurement protocol, not same results
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+spatial_cv_threshold             = 0.30    # baseline; overridden per-job where needed
+temporal_drift_threshold         = 0.20
+scale_drift_threshold            = 0.30
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 3.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 40
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+defect_events  = true
+dynamic_energy = true
+
+# ---------------------------------------------------------------------------
+# Verification — EVM IV §7 failure conditions explicitly annotated
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "evm4_md_benchmarks"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 3.0
+max_slope_late       = 0.002
+expect_regime        = "solid_bounded"
+# Note: Job 5 (Al 900 K) is expected to potentially fail this check.
+# That failure is a valid Tier IV result, not a system error.
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_scale_sampling_json = true
+write_verify_report       = true
+write_verify_tsv          = true
+write_manifest_json       = true
+output_dir                = "out/evm4_benchmarks"
+
+[report]
+title                   = "EVM IV — MD Benchmarks: NaCl/Si/Al × 300K/900K Cross-Scale Consistency"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 50
+show_bar_chart   = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination

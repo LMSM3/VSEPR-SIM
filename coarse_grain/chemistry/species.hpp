@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * species.hpp — Chemical Species Definition
+ * species.hpp  -  Chemical Species Definition
  *
  * Defines individual atomic and molecular species for the universal
  * chemical reaction engine.  Each species carries full thermodynamic,
@@ -8,7 +8,7 @@
  * prediction, and report generation.
  *
  * Anti-black-box: every property is inspectable and sourced.
- * Deterministic: identical inputs → identical species tables.
+ * Deterministic: identical inputs -> identical species tables.
  *
  * Reference: copilot-instructions.md §2, §5
  */
@@ -119,7 +119,7 @@ struct BondEntry {
 // ============================================================================
 
 /**
- * ChemicalSpecies — a fully described molecular or atomic species.
+ * ChemicalSpecies  -  a fully described molecular or atomic species.
  *
  * Carries structural, thermodynamic, and atomistic data for
  * simulation, bonding prediction, and engineering report output.

@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * provenance_record.hpp — 3-Tier Hash Audit & Provenance Record
+ * provenance_record.hpp  -  3-Tier Hash Audit & Provenance Record
  * ==============================================================
  *
  * Formalizes the identity-and-provenance layer as a structured record:
@@ -8,7 +8,7 @@
  *   Tier 1: Identity
  *     - species (formula)
  *     - atom count, bond count
- *     - composition map {Z → count}
+ *     - composition map {Z -> count}
  *     - canonical atom ordering
  *
  *   Tier 2: Topology
@@ -87,15 +87,15 @@ inline const char* geometry_class_name(GeometryClass gc) {
 
 enum class SymmetryClass {
     Unknown,
-    Cinfv,   // C∞v — linear (heteronuclear)
-    Dinfh,   // D∞h — linear (homonuclear)
-    C2v,     // C2v — bent
-    C3v,     // C3v — pyramidal
-    Td,      // Td  — tetrahedral
-    D4h,     // D4h — square planar
-    D3h,     // D3h — trigonal planar / bipyramidal
-    Oh,      // Oh  — octahedral
-    C1,      // C1  — no symmetry
+    Cinfv,   // C∞v  -  linear (heteronuclear)
+    Dinfh,   // D∞h  -  linear (homonuclear)
+    C2v,     // C2v  -  bent
+    C3v,     // C3v  -  pyramidal
+    Td,      // Td   -  tetrahedral
+    D4h,     // D4h  -  square planar
+    D3h,     // D3h  -  trigonal planar / bipyramidal
+    Oh,      // Oh   -  octahedral
+    C1,      // C1   -  no symmetry
     Other
 };
 
@@ -295,7 +295,7 @@ inline SymmetryClass classify_symmetry(const Molecule& mol, GeometryClass gc) {
 }
 
 // ============================================================================
-// Bond Signature — canonical bond-type string
+// Bond Signature  -  canonical bond-type string
 // ============================================================================
 
 /**
@@ -373,7 +373,7 @@ struct ProvenanceRecord {
     std::string          species;             // Hill system formula
     uint32_t             atom_count;
     uint32_t             bond_count;
-    std::map<uint8_t, int> composition;       // {Z → count}
+    std::map<uint8_t, int> composition;       // {Z -> count}
     std::string          canonical_order;     // "O,H,H"
 
     // === Tier 2: Topology ===

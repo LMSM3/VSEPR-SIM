@@ -1,0 +1,13 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name = wo84u_override
+
+[formula]
+formula = NH3
+
+[chem_plus]
+reaction = N2 + 3H2 -> 2NH3 + 92 kJ
+class_override = synthesis
+

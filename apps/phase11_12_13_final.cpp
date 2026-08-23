@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase11_12_13_final.cpp
  * Phase 11: Compose BondedModel + LJCoulomb
  * Phase 12: Bridge Integration (EmitCrystal, EnvironmentContext propagation)
@@ -129,7 +129,7 @@ static void phase_11(ModelParams& mp)
         check(std::isfinite(sch4.E.total()), "CH4 composite: total finite");
     }
 
-    // 11.2 H2O relaxation with composite → tight convergence
+    // 11.2 H2O relaxation with composite -> tight convergence
     std::printf("\n  11.2 H2O composite relaxation\n");
     {
         State s = parse(mol_H2O(1.10, 120.0));  // distorted: r=1.10, theta=120
@@ -325,7 +325,7 @@ static void phase_13()
               (std::string(r.name) + ": exit code 0").c_str());
     }
 
-    // Phase 6/7 writes to verification/ — run from parent dir
+    // Phase 6/7 writes to verification/  -  run from parent dir
     int rc67 = std::system("./phase6_7_verification_sessions");
     check(rc67 == 0, "Phase 6/7: exit code 0");
 }
@@ -338,7 +338,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 11/12/13 — Composite Model, Bridge, Final Regression\n");
+    std::printf("  Phase 11/12/13  -  Composite Model, Bridge, Final Regression\n");
     std::printf("=============================================================\n");
 
     ModelParams mp;

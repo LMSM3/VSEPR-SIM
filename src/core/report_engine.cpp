@@ -1,4 +1,4 @@
-/**
+﻿/**
  * report_engine.cpp
  * -----------------
  * Autonomous report-generation engine implementation.
@@ -75,7 +75,7 @@ static std::string timestamp_now() {
 }
 
 // ============================================================================
-// Material Property Engine — Element Table
+// Material Property Engine  -  Element Table
 // ============================================================================
 
 // Curated table of real element properties (selected elements with known values)
@@ -167,7 +167,7 @@ MaterialPropertyEngine::find_element(uint8_t Z) const {
 }
 
 // ============================================================================
-// Material Property Engine — Implementation
+// Material Property Engine  -  Implementation
 // ============================================================================
 
 MaterialPropertyEngine::MaterialPropertyEngine() {}
@@ -205,7 +205,7 @@ MaterialProperties MaterialPropertyEngine::element_properties(uint8_t Z) const {
         if (needs_fallback) {
             // Estimate E from bulk modulus of condensed phase or nearest solid
             // Noble gases solidify under pressure; use ~1 GPa as lower bound.
-            // Halogens are soft molecular solids; use ~5–10 GPa.
+            // Halogens are soft molecular solids; use ~5-10 GPa.
             bool is_noble = (Z == 2 || Z == 10 || Z == 18 || Z == 36 || Z == 54);
             bool is_halogen = (Z == 9 || Z == 17 || Z == 35 || Z == 53);
             bool is_diatomic_gas = (Z == 1 || Z == 7 || Z == 8);
@@ -240,7 +240,7 @@ MaterialProperties MaterialPropertyEngine::element_properties(uint8_t Z) const {
             if (props.ultimate_strength_MPa > 0) {
                 props.fatigue_endurance_MPa = props.ultimate_strength_MPa * 0.35;
             }
-            props.confidence_score = 0.55;  // reduced — condensed-phase estimate
+            props.confidence_score = 0.55;  // reduced  -  condensed-phase estimate
         }
     } else {
         // Synthetic interpolation for elements not in table
@@ -481,7 +481,7 @@ MaterialCase CaseGenerator::generate_next() {
 }
 
 MaterialCase CaseGenerator::generate_at_level(ComplexityLevel level) {
-    // Bypass escalation — generate at the explicitly requested level
+    // Bypass escalation  -  generate at the explicitly requested level
     MaterialCase mc;
 
     switch (level) {
@@ -934,7 +934,7 @@ ExperimentResult ExperimentRunner::thermal_expansion(const MaterialCase& mc) con
     r.numerical_stability = 1.0;
     if (alpha < 1.0e-12) {
         r.physical_plausibility = 0.3;
-        r.notes = "WARNING: Near-zero thermal expansion coefficient — data unreliable";
+        r.notes = "WARNING: Near-zero thermal expansion coefficient  -  data unreliable";
     } else {
         r.physical_plausibility = (strain < 0.1) ? 1.0 : 0.7;
     }
@@ -976,7 +976,7 @@ ExperimentResult ExperimentRunner::thermal_stress(const MaterialCase& mc) const 
     r.numerical_stability = (std::isfinite(sigma)) ? 1.0 : 0.0;
     if (E < 1.0e-6 && alpha < 1.0e-12) {
         r.physical_plausibility = 0.3;
-        r.notes = "WARNING: Near-zero modulus and expansion — stress data unreliable";
+        r.notes = "WARNING: Near-zero modulus and expansion  -  stress data unreliable";
     } else {
         r.physical_plausibility = (safety_factor > 0.01) ? 1.0 : 0.5;
         r.notes = (safety_factor < 1.0) ? "WARNING: Yield exceeded" : "Within elastic range";
@@ -1481,7 +1481,7 @@ void AutonomousEngine::analyze_report(TechnicalReport& report) {
         report.findings.push_back("Material approaches or exceeds melting point under thermal load");
     }
     if (report.deformation_score > 1.0) {
-        report.findings.push_back("Yield stress exceeded — plastic deformation expected");
+        report.findings.push_back("Yield stress exceeded  -  plastic deformation expected");
         report.warnings.push_back("Yield exceeded at peak temperature");
     }
     if (report.overall_stability_score < 0.7) {
@@ -1504,7 +1504,7 @@ void AutonomousEngine::analyze_report(TechnicalReport& report) {
     }
 
     if (report.material_case.effective.is_synthetic) {
-        report.findings.push_back("Contains synthetic material components — reduced confidence");
+        report.findings.push_back("Contains synthetic material components  -  reduced confidence");
     }
 
     if (!report.material_case.defects.empty()) {
@@ -1605,15 +1605,15 @@ int AutonomousEngine::run() {
     std::filesystem::create_directories(config_.output_dir);
 
     if (config_.print_progress) {
-        std::cout << "╔════════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  VSEPR-SIM Autonomous Report Engine v5.0.0                   ║\n";
-        std::cout << "║  Work Order: WO-TMS-CRG-001                                  ║\n";
-        std::cout << "║  Target Reports: " << std::setw(6) << config_.target_reports
-                  << "                                        ║\n";
-        std::cout << "║  Output: " << std::setw(50) << config_.output_dir << " ║\n";
-        std::cout << "║  Seed: " << std::setw(12) << config_.base_seed
-                  << "                                        ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════════╝\n\n";
+        std::cout << "+================================================================+\n";
+        std::cout << "|  VSEPR-SIM Autonomous Report Engine v5.0.0                   |\n";
+        std::cout << "|  Work Order: WO-TMS-CRG-001                                  |\n";
+        std::cout << "|  Target Reports: " << std::setw(6) << config_.target_reports
+                  << "                                        |\n";
+        std::cout << "|  Output: " << std::setw(50) << config_.output_dir << " |\n";
+        std::cout << "|  Seed: " << std::setw(12) << config_.base_seed
+                  << "                                        |\n";
+        std::cout << "+================================================================+\n\n";
         std::cout << "Escalation: L2@" << config_.threshold_l2
                   << " L3@" << config_.threshold_l3
                   << " L4@" << config_.threshold_l4
@@ -1640,13 +1640,13 @@ int AutonomousEngine::run() {
     double elapsed_ms = std::chrono::duration<double, std::milli>(end - start).count();
 
     if (config_.print_progress) {
-        std::cout << "\n════════════════════════════════════════════\n";
+        std::cout << "\n============================================\n";
         std::cout << "  Completed: " << reports_generated_ << " reports\n";
         std::cout << "  Time:      " << fmt_double(elapsed_ms, 1) << " ms\n";
         std::cout << "  Rate:      " << fmt_double(reports_generated_ / (elapsed_ms / 1000.0), 1) << " reports/s\n";
         std::cout << "  Final Level: " << complexity_name(current_level()) << "\n";
         std::cout << "  Output:    " << config_.output_dir << "/\n";
-        std::cout << "════════════════════════════════════════════\n";
+        std::cout << "============================================\n";
     }
 
     return 0;

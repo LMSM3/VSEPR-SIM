@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * alloy_generator.hpp — Stochastic Metallic Alloy Generator
+ * alloy_generator.hpp  -  Stochastic Metallic Alloy Generator
  *
  * Generates random copper-base alloy compositions with a configurable
  * chaos factor that controls:
@@ -11,10 +11,10 @@
  *   - Grain boundary segregation fraction
  *
  * The chaos factor χ ∈ (0, ∞):
- *   χ < 1.0   — near-ideal binary/ternary, low disorder
- *   χ = 1.0   — balanced stochastic composition
- *   χ > 1.0   — high compositional disorder, secondary phases, defect beads
- *   χ = 1.25  — the intended operating point: metallic chaos, rich bead variety
+ *   χ < 1.0    -  near-ideal binary/ternary, low disorder
+ *   χ = 1.0    -  balanced stochastic composition
+ *   χ > 1.0    -  high compositional disorder, secondary phases, defect beads
+ *   χ = 1.25   -  the intended operating point: metallic chaos, rich bead variety
  *
  * Every alloy bead generated carries full L2 identity (Z, A, Q, ε) and the
  * correct StructuralRole for a metallic species.  The chaos factor perturbs
@@ -22,24 +22,24 @@
  * invariant).
  *
  * Copper-base alloy element pool (Z values):
- *   Cu  (29) — base metal
- *   Zn  (30) — brass former
- *   Sn  (50) — bronze former
- *   Ni  (28) — cupro-nickel, Monel
- *   Al  (13) — aluminium bronze
- *   Mn  (25) — manganese bronze
- *   Si  (14) — silicon bronze
- *   Be  ( 4) — beryllium copper (high-strength)
- *   P   (15) — phosphor bronze
- *   Fe  (26) — iron-bearing copper
+ *   Cu  (29)  -  base metal
+ *   Zn  (30)  -  brass former
+ *   Sn  (50)  -  bronze former
+ *   Ni  (28)  -  cupro-nickel, Monel
+ *   Al  (13)  -  aluminium bronze
+ *   Mn  (25)  -  manganese bronze
+ *   Si  (14)  -  silicon bronze
+ *   Be  ( 4)  -  beryllium copper (high-strength)
+ *   P   (15)  -  phosphor bronze
+ *   Fe  (26)  -  iron-bearing copper
  *
  * Anti-black-box: every bead's ε perturbation, its site-swap probability,
  * and its secondary-phase flag are recorded in AlloyBeadRecord.
  *
- * Deterministic: provide the same seed → same alloy every time.
+ * Deterministic: provide the same seed -> same alloy every time.
  *
  * Reference: include/layer_stack.hpp (L2, L4 layers)
- *            docs/section_layer_stack.tex §3–§4
+ *            docs/section_layer_stack.tex §3-§4
  */
 
 #include "include/layer_stack.hpp"
@@ -58,15 +58,15 @@
 namespace alloy {
 
 // ============================================================================
-// LJ sigma table (Å) for the alloy element pool — metallic atomic radii
+// LJ sigma table (Å) for the alloy element pool  -  metallic atomic radii
 // ============================================================================
 
 struct ElementRecord {
     uint8_t     Z;
     uint8_t     A;           // Most-abundant isotope
     double      mass;        // amu
-    double      sigma;       // Å  — metallic radius × 2 (LJ σ)
-    double      epsilon_ref; // kcal/mol — base value from LJ table
+    double      sigma;       // Å   -  metallic radius × 2 (LJ σ)
+    double      epsilon_ref; // kcal/mol  -  base value from LJ table
     const char* symbol;
     const char* role_hint;   // "solvent", "solute-substitutional", "interstitial"
 };
@@ -94,7 +94,7 @@ static constexpr uint32_t CU_IDX = 7;
 // ============================================================================
 
 /**
- * ChaosFactor — named chaos parameter with derived sub-factors.
+ * ChaosFactor  -  named chaos parameter with derived sub-factors.
  *
  * χ = 1.25 produces:
  *   disorder_amp  = 0.31   (31% relative spread in site occupation)
@@ -105,7 +105,7 @@ static constexpr uint32_t CU_IDX = 7;
 struct ChaosFactor {
     double chi{1.0};
 
-    // Derived amplitudes — documented, not magic
+    // Derived amplitudes  -  documented, not magic
     double disorder_amplitude()  const { return 0.25 * chi; }           // site-swap spread
     double precipitation_prob()  const { return 0.15 * chi; }           // secondary phase
     double epsilon_noise_frac()  const { return 0.125 * chi; }          // ε noise fraction
@@ -118,7 +118,7 @@ struct ChaosFactor {
 // ============================================================================
 
 /**
- * AlloyBeadRecord — the anti-black-box provenance record for one alloy bead.
+ * AlloyBeadRecord  -  the anti-black-box provenance record for one alloy bead.
  *
  * Every decision made by the generator is recorded here so that the
  * alloy can be inspected, reproduced, or audited.
@@ -170,12 +170,12 @@ struct AlloyComposition {
 // ============================================================================
 
 /**
- * generate_copper_alloy — main entry point.
+ * generate_copper_alloy  -  main entry point.
  *
  * @param n_beads    Number of CG beads to generate
  * @param chaos      ChaosFactor (χ = 1.25 for high metallic disorder)
- * @param seed       RNG seed (same seed → same alloy)
- * @param cu_base_fraction  Nominal Cu fraction (default 0.60 — 60 at% Cu)
+ * @param seed       RNG seed (same seed -> same alloy)
+ * @param cu_base_fraction  Nominal Cu fraction (default 0.60  -  60 at% Cu)
  *
  * Algorithm:
  *  1. Draw site occupation probability vector from Dirichlet-like distribution
@@ -196,7 +196,7 @@ inline AlloyComposition generate_copper_alloy(
 {
     std::mt19937_64 rng(seed);
 
-    // ── 1. Build nominal composition fractions ──────────────────────────────
+    // -- 1. Build nominal composition fractions ------------------------------
     // Cu gets cu_base_fraction.  Remaining (1 - cu_base_fraction) is split
     // across the 9 alloying elements with disorder perturbation.
 
@@ -231,12 +231,12 @@ inline AlloyComposition generate_copper_alloy(
     cdf[0] = base_frac[0];
     for (int i = 1; i < N_ELEM; ++i) cdf[i] = cdf[i-1] + base_frac[i];
 
-    // ── 2. Set up per-bead noise ────────────────────────────────────────────
+    // -- 2. Set up per-bead noise --------------------------------------------
     std::normal_distribution<double>  eps_noise(0.0, 1.0);
     std::uniform_real_distribution<double> uniform01(0.0, 1.0);
     std::normal_distribution<double>  charge_noise(0.0, 0.05 * chaos.chi);
 
-    // ── 3. Generate beads ───────────────────────────────────────────────────
+    // -- 3. Generate beads ---------------------------------------------------
     AlloyComposition alloy;
     alloy.chi     = chaos.chi;
     alloy.n_beads = n_beads;
@@ -304,7 +304,7 @@ inline AlloyComposition generate_copper_alloy(
         alloy.beads.push_back(rec);
     }
 
-    // ── 4. Statistics ───────────────────────────────────────────────────────
+    // -- 4. Statistics -------------------------------------------------------
     for (int i = 0; i < N_ELEM; ++i)
         alloy.mole_fraction[static_cast<size_t>(i)] = mf[static_cast<size_t>(i)]
                                                       / static_cast<double>(n_beads);
@@ -324,11 +324,11 @@ inline AlloyComposition generate_copper_alloy(
 }
 
 // ============================================================================
-// Alloy → BeadSystem converter
+// Alloy -> BeadSystem converter
 // ============================================================================
 
 /**
- * alloy_to_bead_system — place alloy beads on a 3D FCC-like lattice with
+ * alloy_to_bead_system  -  place alloy beads on a 3D FCC-like lattice with
  * chaos-driven positional jitter, producing a BeadSystem ready for
  * the layer stack.
  *
@@ -342,7 +342,7 @@ inline coarse_grain::BeadSystem alloy_to_bead_system(
 {
     std::mt19937_64 rng(position_seed);
 
-    // Mean sigma → lattice constant (FCC: a ≈ 2^(1/3) * sigma for close-pack)
+    // Mean sigma -> lattice constant (FCC: a ≈ 2^(1/3) * sigma for close-pack)
     double mean_sigma = 0.0;
     for (auto& br : alloy.beads) mean_sigma += br.sigma;
     mean_sigma /= alloy.beads.size();

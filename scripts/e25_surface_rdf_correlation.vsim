@@ -1,0 +1,74 @@
+# e25_surface_rdf_correlation.vsim
+# =============================================================================
+# E25  --  Surface Flux + RDF Correlation Analysis
+#
+# Purpose: Simultaneously activate [analysis.structure] (RDF) and surface
+#          probes to correlate flux variation with local coordination
+#          environment.  Demonstrates cross-module analysis coupling.
+#
+# Key concepts:
+#   [analysis.structure] compute_rdf = true  →  .rdf.json sidecar.
+#   [object.surface] compute_flux = true     →  .surface.json sidecar.
+#   Post-analysis correlates RDF peak height vs surface flux magnitude.
+#   Useful for liquid–solid interface studies.
+# =============================================================================
+
+[project]
+name        = "e25_surface_rdf_correlation"
+version     = "v5.0.14"
+seed_base   = 2500
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "liquid"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 864
+temperature = 100.0
+lattice     = "fcc"
+
+[run]
+mode      = "md"
+max_steps = 6000
+dt_fs     = 1.0
+converge  = false
+
+[analysis.structure]
+enabled     = true
+compute_rdf = true
+rdf_rmax    = 10.0
+rdf_nbins   = 200
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_rdf           = true
+output_dir          = "out/e25"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e25/surfaces"
+
+[[object.surface]]
+name          = "interface_probe"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 0.0
+normal_y      = 0.0
+normal_z      = 1.0
+width         = 20.0
+height        = 20.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_rdf"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 300

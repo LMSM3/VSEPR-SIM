@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * sh_rotation.hpp — Real Spherical Harmonic Coefficient Rotation
+ * sh_rotation.hpp  -  Real Spherical Harmonic Coefficient Rotation
  *
  * Provides rotation of real SH coefficients between local frames.
  * The Anisotropic Bead Model specification (§4) requires rotating
@@ -19,7 +19,7 @@
  * Anti-black-box: rotation is applied per-ℓ block; intermediate
  * rotated coefficients are inspectable.
  *
- * Reference: "Anisotropic Bead Model — Implementation Specification"
+ * Reference: "Anisotropic Bead Model  -  Implementation Specification"
  *            section of section_anisotropic_beads.tex
  */
 
@@ -46,7 +46,7 @@ inline Mat3 compute_relative_rotation(const InertiaFrame& frame_A,
 {
     // Q_A columns: axis1, axis2, axis3
     // Q_B columns: axis1, axis2, axis3
-    // R = Q_A^T · Q_B  →  R(i,j) = dot(A.axis_i, B.axis_j)
+    // R = Q_A^T · Q_B  ->  R(i,j) = dot(A.axis_i, B.axis_j)
 
     Mat3 R;
     atomistic::Vec3 A[3] = {frame_A.axis1, frame_A.axis2, frame_A.axis3};
@@ -78,17 +78,17 @@ inline Mat3 compute_relative_rotation(const InertiaFrame& frame_A,
  *   D^1_{m'm} = R reordered as [y,z,x] rows/cols
  *
  * That is, if we define the permutation P = {1, 2, 0} mapping
- * {-1, 0, +1} → {y, z, x}, then D^1 = P^T · R · P.
+ * {-1, 0, +1} -> {y, z, x}, then D^1 = P^T · R · P.
  */
 inline void rotate_l1_block(const double* in, double* out, const Mat3& R)
 {
-    // Map: m=-1 → y(1), m=0 → z(2), m=+1 → x(0)
+    // Map: m=-1 -> y(1), m=0 -> z(2), m=+1 -> x(0)
     // in[0] = c_{1,-1}, in[1] = c_{1,0}, in[2] = c_{1,+1}
     // Cartesian vector: v = (in[2], in[0], in[1]) = (x, y, z)
 
-    double vx = in[2];  // c_{1,+1} → x
-    double vy = in[0];  // c_{1,-1} → y
-    double vz = in[1];  // c_{1,0}  → z
+    double vx = in[2];  // c_{1,+1} -> x
+    double vy = in[0];  // c_{1,-1} -> y
+    double vz = in[1];  // c_{1,0}  -> z
 
     // Apply R: w = R · v
     double wx = R(0, 0) * vx + R(0, 1) * vy + R(0, 2) * vz;
@@ -96,9 +96,9 @@ inline void rotate_l1_block(const double* in, double* out, const Mat3& R)
     double wz = R(2, 0) * vx + R(2, 1) * vy + R(2, 2) * vz;
 
     // Back to SH ordering
-    out[0] = wy;  // c_{1,-1} ← y
-    out[1] = wz;  // c_{1,0}  ← z
-    out[2] = wx;  // c_{1,+1} ← x
+    out[0] = wy;  // c_{1,-1} <- y
+    out[1] = wz;  // c_{1,0}  <- z
+    out[2] = wx;  // c_{1,+1} <- x
 }
 
 // ============================================================================
@@ -132,7 +132,7 @@ inline void rotate_l2_block(const double* in, double* out, const Mat3& R)
     // Row m'=-2 (xy component)
     D[0][0] = r00*r11 + r01*r10;          // (-2,-2)
     D[0][1] = r01*r12 + r02*r11;          // (-2,-1)
-    D[0][2] = r02*r12*std::sqrt(3.0)      // (-2, 0) — scale for 3z²-r²
+    D[0][2] = r02*r12*std::sqrt(3.0)      // (-2, 0)  -  scale for 3z²-r²
             - (r00*r10 + r01*r11 + r02*r12) / std::sqrt(3.0)
             + r02*r12*std::sqrt(3.0);
     // Simplified: use the explicit traceless form
@@ -150,7 +150,7 @@ inline void rotate_l2_block(const double* in, double* out, const Mat3& R)
     // Row m'=0 (3z²-r² component, needs sqrt(3) factors)
     D[2][0] = std::sqrt(3.0) * (r20*r21);
     // Full form for m'=0 row:
-    D[2][0] = std::sqrt(3.0) * (r20*r01 + r21*r00);  // wrong — let me use the standard form
+    D[2][0] = std::sqrt(3.0) * (r20*r01 + r21*r00);  // wrong  -  let me use the standard form
 
     // The explicit Wigner D^2 matrix for real SH is complex to write out.
     // Use the general formula: apply R to the 5 quadrupole basis tensors.
@@ -162,7 +162,7 @@ inline void rotate_l2_block(const double* in, double* out, const Mat3& R)
     //   Q_ij = traceless symmetric tensor from SH coefficients
     // in[0]=c_{2,-2}, in[1]=c_{2,-1}, in[2]=c_{2,0}, in[3]=c_{2,+1}, in[4]=c_{2,+2}
 
-    // SH → Cartesian quadrupole (unnormalised, up to common factors)
+    // SH -> Cartesian quadrupole (unnormalised, up to common factors)
     double c2m2 = in[0], c2m1 = in[1], c20 = in[2], c2p1 = in[3], c2p2 = in[4];
 
     // Traceless symmetric tensor Q from real SH:

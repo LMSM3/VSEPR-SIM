@@ -1,30 +1,30 @@
-/**
+﻿/**
  * example_catalytic_dissociation.cpp
  *
- * Example 2: Special Reaction — Catalytic H₂ Dissociation on Platinum
+ * Example 2: Special Reaction  -  Catalytic H₂ Dissociation on Platinum
  * =====================================================================
  *
  * Models the dissociative chemisorption of molecular hydrogen (H₂) on a
- * platinum (Pt) catalyst surface — one of the most fundamental reactions
+ * platinum (Pt) catalyst surface  -  one of the most fundamental reactions
  * in heterogeneous catalysis.
  *
  * Three bead types (special reaction: 3-species dissociation):
- *   Type 0 — Pt (catalyst surface):  σ = 2.475 Å, ε = 7.20 kcal/mol
- *   Type 1 — H₂ (molecular hydrogen): σ = 2.93 Å, ε = 0.068 kcal/mol
- *   Type 2 — H  (dissociated atomic H): σ = 2.50 Å, ε = 0.034 kcal/mol
+ *   Type 0  -  Pt (catalyst surface):  σ = 2.475 Å, ε = 7.20 kcal/mol
+ *   Type 1  -  H₂ (molecular hydrogen): σ = 2.93 Å, ε = 0.068 kcal/mol
+ *   Type 2  -  H  (dissociated atomic H): σ = 2.50 Å, ε = 0.034 kcal/mol
  *
  * Reaction modelled:
- *   H₂(g) → 2H(ads)  on Pt surface
+ *   H₂(g) -> 2H(ads)  on Pt surface
  *
  * The environment-responsive layer captures the special reaction physics:
- *   - Pt surface beads: dense, high coordination → strong modulation
+ *   - Pt surface beads: dense, high coordination -> strong modulation
  *   - H₂ molecular beads: approach surface, experience increasing ρ
  *   - When η exceeds a dissociation threshold (η > η_diss), molecular H₂
  *     beads are replaced by two atomic H beads at adjacent Pt sites
  *   - Post-dissociation: H atoms relax into Pt surface hollow sites
  *
  * This is a "special reaction" because:
- *   1. The bead type changes mid-simulation (H₂ → 2H)
+ *   1. The bead type changes mid-simulation (H₂ -> 2H)
  *   2. The bead count changes (N increases by n_H₂ at dissociation)
  *   3. The reaction is triggered by environment state (η threshold)
  *   4. Three distinct species interact simultaneously
@@ -45,7 +45,7 @@
  *
  * Usage:
  *   catalytic-dissociation [n_pt] [n_h2]
- *   (defaults: 36 Pt beads, 12 H₂ beads → up to 24 H atoms)
+ *   (defaults: 36 Pt beads, 12 H₂ beads -> up to 24 H atoms)
  */
 
 #include "coarse_grain/models/seed_bead_stepper.hpp"
@@ -76,7 +76,7 @@ struct DissociationEvent {
 };
 
 // ============================================================================
-// System Builder — 3-Species Catalytic System
+// System Builder  -  3-Species Catalytic System
 // ============================================================================
 
 struct CatalyticConfig {
@@ -84,7 +84,7 @@ struct CatalyticConfig {
     SeedBeadParams params;
     uint32_t n_pt{};
     uint32_t n_h2{};
-    double eta_dissociation{0.45};   // η threshold for H₂ → 2H
+    double eta_dissociation{0.45};   // η threshold for H₂ -> 2H
     std::vector<bool> is_molecular;  // Track which H beads are still H₂
     std::vector<DissociationEvent> events;
 };
@@ -93,7 +93,7 @@ struct CatalyticConfig {
  * Build a Pt surface slab with H₂ molecules above it.
  *
  * Pt slab: 6×6×1 = 36 beads in a (111)-like surface arrangement
- * H₂ molecules: placed 3–5 Å above the Pt surface
+ * H₂ molecules: placed 3-5 Å above the Pt surface
  */
 CatalyticConfig build_catalytic_system(
     uint32_t n_pt = 36,
@@ -105,34 +105,34 @@ CatalyticConfig build_catalytic_system(
 
     // --- Bead types ---
 
-    // Type 0: Platinum (Pt) — catalyst surface
+    // Type 0: Platinum (Pt)  -  catalyst surface
     // σ = a₀/2^(1/6) ≈ 3.924/1.122 ≈ 3.497, scaled for CG
     // ε from cohesive energy: 5.84 eV / 6 ≈ 0.973 eV ≈ 22.44 kcal/mol, scaled
     BeadType pt_type;
     pt_type.name = "Pt";
     pt_type.id = 0;
-    pt_type.sigma = 2.475;      // Pt–Pt effective σ (Å)
-    pt_type.epsilon = 7.20;     // Pt–Pt effective ε (kcal/mol)
+    pt_type.sigma = 2.475;      // Pt-Pt effective σ (Å)
+    pt_type.epsilon = 7.20;     // Pt-Pt effective ε (kcal/mol)
     cfg.system.bead_types.push_back(pt_type);
 
-    // Type 1: Molecular hydrogen (H₂) — intact molecule
+    // Type 1: Molecular hydrogen (H₂)  -  intact molecule
     // σ from Silvera-Goldman: ~2.93 Å
     // ε from well depth: ~3.0 meV ≈ 0.068 kcal/mol
     BeadType h2_type;
     h2_type.name = "H2";
     h2_type.id = 1;
-    h2_type.sigma = 2.93;      // H₂–H₂ σ (Å)
-    h2_type.epsilon = 0.068;   // H₂–H₂ ε (kcal/mol)
+    h2_type.sigma = 2.93;      // H₂-H₂ σ (Å)
+    h2_type.epsilon = 0.068;   // H₂-H₂ ε (kcal/mol)
     cfg.system.bead_types.push_back(h2_type);
 
-    // Type 2: Atomic hydrogen (H) — dissociated product
+    // Type 2: Atomic hydrogen (H)  -  dissociated product
     // σ smaller than H₂ (single atom)
-    // ε also smaller — binding dominated by Pt–H interaction
+    // ε also smaller  -  binding dominated by Pt-H interaction
     BeadType h_type;
     h_type.name = "H";
     h_type.id = 2;
-    h_type.sigma = 2.50;       // H–H σ (Å)
-    h_type.epsilon = 0.034;    // H–H ε (kcal/mol)
+    h_type.sigma = 2.50;       // H-H σ (Å)
+    h_type.epsilon = 0.034;    // H-H ε (kcal/mol)
     cfg.system.bead_types.push_back(h_type);
 
     // --- Pt surface slab ---
@@ -175,7 +175,7 @@ CatalyticConfig build_catalytic_system(
     }
 
     // --- H₂ molecules above the surface ---
-    // Place in a grid 3.5–5 Å above the Pt plane
+    // Place in a grid 3.5-5 Å above the Pt plane
     double z_approach = 4.0;    // Starting height above surface (Å)
     int nh_side = static_cast<int>(std::ceil(std::sqrt(static_cast<double>(n_h2))));
     double h_spacing = d_nn * 1.5;
@@ -210,7 +210,7 @@ CatalyticConfig build_catalytic_system(
     cfg.params.snapshot_interval = 20;
     cfg.params.record_positions = true;
 
-    // Environment coupling: strong — catalytic surface is highly responsive
+    // Environment coupling: strong  -  catalytic surface is highly responsive
     cfg.params.env_params.tau = 40.0;             // Fast response (catalytic)
     cfg.params.env_params.alpha = 0.7;            // Density-dominated
     cfg.params.env_params.beta = 0.3;
@@ -225,7 +225,7 @@ CatalyticConfig build_catalytic_system(
 }
 
 // ============================================================================
-// Dissociation Logic — Special Reaction Step
+// Dissociation Logic  -  Special Reaction Step
 // ============================================================================
 
 /**
@@ -266,10 +266,10 @@ void check_dissociation(
         evt.position = cfg.system.beads[i].position;
         cfg.events.push_back(evt);
 
-        // Convert this H₂ bead → first H atom (in-place)
+        // Convert this H₂ bead -> first H atom (in-place)
         cfg.system.beads[i].type_id = 2;        // H (atomic)
         cfg.system.beads[i].mass = 1.008;        // Single H atom
-        cfg.system.beads[i].position.x -= 0.37;  // Displace ~0.74 Å apart (H–H bond)
+        cfg.system.beads[i].position.x -= 0.37;  // Displace ~0.74 Å apart (H-H bond)
         cfg.system.beads[i].position.z -= 0.5;    // Closer to surface
 
         // Create second H atom
@@ -292,7 +292,7 @@ void check_dissociation(
 }
 
 // ============================================================================
-// Report Generator — Catalytic Reaction Study
+// Report Generator  -  Catalytic Reaction Study
 // ============================================================================
 
 std::string generate_catalytic_report(
@@ -306,7 +306,7 @@ std::string generate_catalytic_report(
     md << "# Special Reaction Study: H₂ Dissociation on Platinum\n\n";
     md << "**System:** Molecular hydrogen (H₂) dissociative chemisorption "
        << "on Pt(111) surface\n\n";
-    md << "**Reaction:** H₂(g) → 2H(ads) on Pt catalyst\n\n";
+    md << "**Reaction:** H₂(g) -> 2H(ads) on Pt catalyst\n\n";
     md << "**Generated by VSEPR-SIM Seed-and-Bead Stepper**\n\n";
     md << "---\n\n";
 
@@ -341,7 +341,7 @@ std::string generate_catalytic_report(
                               cfg.system.bead_types[b].sigma);
             double e = std::sqrt(cfg.system.bead_types[a].epsilon *
                                  cfg.system.bead_types[b].epsilon);
-            md << "| " << cfg.system.bead_types[a].name << "–"
+            md << "| " << cfg.system.bead_types[a].name << "-"
                << cfg.system.bead_types[b].name
                << " | " << s << " | " << e << " |\n";
         }
@@ -413,7 +413,7 @@ std::string generate_catalytic_report(
     md << "| Steric | " << collector.g_steric_series.final_val()
        << " | Pt surface hardening |\n";
     md << "| Electrostatic | " << collector.g_elec_series.final_val()
-       << " | Charge redistribution at Pt–H interface |\n";
+       << " | Charge redistribution at Pt-H interface |\n";
     md << "| Dispersion | " << collector.g_disp_series.final_val()
        << " | Chemisorption binding enhancement |\n";
     md << "\n";
@@ -422,21 +422,21 @@ std::string generate_catalytic_report(
     md << "## 6. Scientific Context\n\n";
     md << "H₂ dissociative adsorption on Pt(111) is the prototypical "
        << "example of catalytic\n";
-    md << "bond-breaking driven by surface–adsorbate interaction.\n\n";
+    md << "bond-breaking driven by surface-adsorbate interaction.\n\n";
     md << "Key physics captured in this simulation:\n";
-    md << "- **Environment-triggered dissociation:** H₂ → 2H when η > η_diss\n";
+    md << "- **Environment-triggered dissociation:** H₂ -> 2H when η > η_diss\n";
     md << "- **Bead identity change:** type_id transitions from H₂ (1) to H (2)\n";
     md << "- **Bead count change:** N increases as each H₂ produces 2 H atoms\n";
-    md << "- **3-species Lorentz-Berthelot mixing:** Pt–Pt, Pt–H₂, Pt–H, "
-       << "H₂–H₂, H₂–H, H–H\n";
-    md << "- **Catalytic kernel modulation:** strong γ_disp enhances Pt–H binding\n\n";
+    md << "- **3-species Lorentz-Berthelot mixing:** Pt-Pt, Pt-H₂, Pt-H, "
+       << "H₂-H₂, H₂-H, H-H\n";
+    md << "- **Catalytic kernel modulation:** strong γ_disp enhances Pt-H binding\n\n";
     md << "Applications:\n";
-    md << "- Fuel cell anode half-reaction: H₂ → 2H⁺ + 2e⁻\n";
+    md << "- Fuel cell anode half-reaction: H₂ -> 2H⁺ + 2e⁻\n";
     md << "- Catalytic hydrogenation precursor step\n";
     md << "- Hydrogen storage / release dynamics\n\n";
 
     md << "---\n";
-    md << "*Report generated by VSEPR-SIM v2.8.0 — "
+    md << "*Report generated by VSEPR-SIM v2.8.0  -  "
        << "Deterministic atomistic platform*\n";
 
     return md.str();
@@ -447,7 +447,7 @@ std::string generate_catalytic_report(
 // ============================================================================
 
 int main(int argc, char* argv[]) {
-    std::cout << "=== VSEPR-SIM: Special Reaction — Catalytic H2 Dissociation ===\n";
+    std::cout << "=== VSEPR-SIM: Special Reaction  -  Catalytic H2 Dissociation ===\n";
     std::cout << "H2(g) -> 2H(ads) on Pt(111) surface\n";
     std::cout << "3-species 6+9 Steady-State Step Function with Reaction Events\n\n";
 

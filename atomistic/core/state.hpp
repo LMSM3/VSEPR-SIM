@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <cstdint>
 #include <vector>
 #include <string>
@@ -6,7 +6,7 @@
 #include <cmath>
 #include <limits>
 #include "core/math_vec3.hpp"
-#include "box/pbc.hpp"   // vsepr::BoxOrtho — canonical PBC primitive
+#include "box/pbc.hpp"   // vsepr::BoxOrtho  -  canonical PBC primitive
 
 namespace atomistic {
 
@@ -19,7 +19,7 @@ using vsepr::dot;
 using vsepr::norm;
 
 // Day #57A: BoxPBC unified with vsepr::BoxOrtho.
-// External name preserved — all State-based code (box.enabled, box.delta, etc.)
+// External name preserved  -  all State-based code (box.enabled, box.delta, etc.)
 // continues to compile unchanged.  Underlying implementation is now canonical.
 using BoxPBC = vsepr::BoxOrtho;
 

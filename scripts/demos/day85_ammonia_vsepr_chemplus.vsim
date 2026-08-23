@@ -1,0 +1,81 @@
+# day85_ammonia_vsepr_chemplus.vsim
+# =============================================================================
+# Day 85 — Ammonia VSEPR + ChemPlus live simulation demonstration
+#
+# Run:      vsepr run scripts/demos/day85_ammonia_vsepr_chemplus.vsim
+# Classify: vsepr classify scripts/demos/day85_ammonia_vsepr_chemplus.vsim
+# =============================================================================
+
+print_console "VSEPR-SIM Day 85: ammonia chemical-scene demonstration"
+print_console "Target geometry: AX3E, trigonal pyramidal"
+
+[project]
+name        = "day85_ammonia_vsepr_chemplus"
+version     = "v5.1.4"
+seed_base   = 8515
+determinism = true
+description = "Deterministic NH3 formation, VSEPR classification, and ChemPlus linkage"
+tags        = "day85 ammonia vsepr chemplus formation viewer"
+
+[formula]
+formula = "NH3"
+
+[formation]
+enabled                 = true
+history                 = true
+track_events            = true
+track_energy_path       = true
+track_structure_changes = true
+
+[simulation]
+box_size_ang     = 18.0
+periodic         = false
+fire_max_steps   = 200
+fire_dt_fs       = 1.0
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "NH3"
+count         = 1
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode            = "md"
+num_steps       = 500
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 25
+render_interval = 25
+
+# The reaction is classified alongside NH3; it does not alter the MD trajectory.
+[chem_plus]
+reaction   = "N2 + 3H2 -> 2NH3 + 92 kJ"
+vsepr_link = true
+
+[analysis]
+rmsd         = true
+energy_trace = true
+stationarity = true
+coordination = true
+
+[export]
+output_dir              = "out/day85_ammonia_vsepr_chemplus"
+write_xyz               = true
+write_xyzfull           = true
+write_analysis_json     = true
+write_events_json       = true
+write_report_md         = true
+write_manifest_json     = true
+
+[visual]
+output_type       = "gl_live_60fps"
+gl_spin           = true
+gl_spin_axis      = "y"
+gl_spin_deg_per_s = 30.0
+gl_show_axes      = true
+gl_window_width   = 960
+gl_window_height  = 720
+
+print_console "NH3 classified as AX3E; viewer rotation is presentation-only."

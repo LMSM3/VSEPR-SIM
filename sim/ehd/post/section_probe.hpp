@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * section_probe.hpp
  *
- * Electrohydrodynamic Simulation — Stage 5: Postprocessing
+ * Electrohydrodynamic Simulation  -  Stage 5: Postprocessing
  *
  * Extracts field quantities along axial or radial cross-sections.
  * Produces 1D profiles suitable for line plots (velocity profile, E(r), c(z), etc.).

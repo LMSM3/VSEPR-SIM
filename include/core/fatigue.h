@@ -1,6 +1,6 @@
 ﻿/**
  * @file fatigue.h
- * @brief S-N fatigue analysis library — ISO/Shigley conventions
+ * @brief S-N fatigue analysis library  -  ISO/Shigley conventions
  *
  * Covers:
  *   1. Loading type classification (reversed, repeated, fluctuating)

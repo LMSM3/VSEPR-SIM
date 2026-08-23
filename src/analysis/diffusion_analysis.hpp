@@ -1,21 +1,21 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/analysis/diffusion_analysis.hpp
 // =============================================================================
-// Task 12  — Diffusion measurement layer (MSD, jumps, site residence, tortuosity)
-// Task 12B — Macro transport inference layer (D_eff, anisotropy, mobility,
+// Task 12   -  Diffusion measurement layer (MSD, jumps, site residence, tortuosity)
+// Task 12B  -  Macro transport inference layer (D_eff, anisotropy, mobility,
 //             transport class, activation trend)
 //
 // Core principle
-// ──────────────
+// --------------
 //  The diffusion coefficient is NOT an input.
 //  It is dragged out of the trajectory via MSD slope, as nature intended.
 //
 // Property hierarchy
-// ──────────────────
-//  xyzFull row          → positions / velocities / identities only
-//  DiffusionRecord      → per-frame trajectory measurement (12)
-//  TransportInference   → per-case macro inference (12B)
+// ------------------
+//  xyzFull row          -> positions / velocities / identities only
+//  DiffusionRecord      -> per-frame trajectory measurement (12)
+//  TransportInference   -> per-case macro inference (12B)
 //
 // Forbidden in state/xyzFull
 //   diffusion_coefficient, mobility, transport_class, activation_energy
@@ -59,7 +59,7 @@
 namespace vsepr::diffusion {
 
 // =============================================================================
-// Task 12 — Per-frame measurement record
+// Task 12  -  Per-frame measurement record
 // =============================================================================
 
 struct DiffusionRecord {
@@ -112,7 +112,7 @@ struct DiffusionRecord {
 };
 
 // =============================================================================
-// Task 12B — Per-case macro transport inference record
+// Task 12B  -  Per-case macro transport inference record
 // =============================================================================
 
 struct TransportInference {
@@ -199,7 +199,7 @@ struct TransportInference {
 };
 
 // =============================================================================
-// Helpers — linear least-squares slope fit  (Σ(x-x̄)(y-ȳ) / Σ(x-x̄)²)
+// Helpers  -  linear least-squares slope fit  (Σ(x-x̄)(y-ȳ) / Σ(x-x̄)²)
 // =============================================================================
 
 struct LinFitResult {
@@ -237,23 +237,23 @@ inline LinFitResult linear_fit(
 }
 
 // =============================================================================
-// Task 12 — DiffusionTracker
+// Task 12  -  DiffusionTracker
 // =============================================================================
 // Feed frames of positions + velocities; get a DiffusionRecord per frame.
 //
 // Usage
 //   DiffusionTracker tr;
 //   tr.set_reference(initial_positions);
-//   tr.set_surface_z(z_threshold);     // optional — enables surface/interior
-//   tr.set_jump_radius(r_site);        // optional — enables jump counting
+//   tr.set_surface_z(z_threshold);     // optional  -  enables surface/interior
+//   tr.set_jump_radius(r_site);        // optional  -  enables jump counting
 //   tr.set_baseline(E0);
 //   for each frame:
 //     auto row = tr.compute(frame, time, E_total, positions, velocities);
 
 struct DiffusionTracker {
 	// Configuration (all public)
-	double r_jump         = 3.5;   // Å — displacement > r_jump = site transition
-	double surface_z_min  = 1e30;  // Å — z above which = "surface"
+	double r_jump         = 3.5;   // Å  -  displacement > r_jump = site transition
+	double surface_z_min  = 1e30;  // Å  -  z above which = "surface"
 	double E0             = 0.0;
 
 	void set_reference(const std::vector<vsepr::Vec3>& ref) {
@@ -288,7 +288,7 @@ struct DiffusionTracker {
 
 		const int N = static_cast<int>(std::min(pos.size(), ref_pos_.size()));
 
-		// ── MSD per axis ─────────────────────────────────────────────────────
+		// -- MSD per axis -----------------------------------------------------
 		double sum_x2 = 0, sum_y2 = 0, sum_z2 = 0;
 		for (int i = 0; i < N; ++i) {
 			const double dx = pos[i].x - ref_pos_[i].x;
@@ -303,14 +303,14 @@ struct DiffusionTracker {
 		row.MSD_z     = sum_z2 / N;
 		row.MSD_total = row.MSD_x + row.MSD_y + row.MSD_z;
 
-		// ── Net displacement (centroid tracer) ────────────────────────────────
+		// -- Net displacement (centroid tracer) --------------------------------
 		// Mean displacement of all atoms from their starting positions
 		double sum_d = 0;
 		for (int i = 0; i < N; ++i)
 			sum_d += (pos[i] - ref_pos_[i]).norm();
 		row.net_displacement = sum_d / N;
 
-		// ── Path length accumulation ──────────────────────────────────────────
+		// -- Path length accumulation ------------------------------------------
 		double total_path = 0;
 		int    jumps      = 0;
 		int    n_exc      = 0;
@@ -329,17 +329,17 @@ struct DiffusionTracker {
 		row.path_length      = total_path / N;
 		row.neighbor_exchange_count = n_exc;
 
-		// ── Tortuosity ────────────────────────────────────────────────────────
+		// -- Tortuosity --------------------------------------------------------
 		row.tortuosity_proxy = (row.net_displacement > 1e-6)
 			? row.path_length / row.net_displacement : 1.0;
 
-		// ── Residence time ───────────────────────────────────────────────────
+		// -- Residence time ---------------------------------------------------
 		// Frames since last jump on atom 0 (tracer proxy)
 		if (jumps > 0 && N > 0) residence_frames_ = 0;
 		else                     ++residence_frames_;
 		row.residence_time = static_cast<double>(residence_frames_);
 
-		// ── KE proxy (mean KE per atom, raw velocity units) ──────────────────
+		// -- KE proxy (mean KE per atom, raw velocity units) ------------------
 		if (!vel.empty()) {
 			double ke = 0;
 			const int Nv = static_cast<int>(std::min(vel.size(), pos.size()));
@@ -348,7 +348,7 @@ struct DiffusionTracker {
 			row.KE_proxy = ke / Nv;
 		}
 
-		// ── Surface/interior classification ──────────────────────────────────
+		// -- Surface/interior classification ----------------------------------
 		int surf_count = 0;
 		for (int i = 0; i < N; ++i)
 			if (pos[i].z >= surface_z_min) ++surf_count;
@@ -378,7 +378,7 @@ private:
 };
 
 // =============================================================================
-// Task 12B — TransportAnalyzer
+// Task 12B  -  TransportAnalyzer
 // =============================================================================
 // Consumes a DiffusionRecord log and produces a TransportInference.
 //
@@ -391,8 +391,8 @@ private:
 struct TransportAnalyzer {
 	double dt               = 0.02;   // fs per step
 	double fit_fraction     = 0.5;    // fraction of tail to use for linear fit
-	double drift_threshold  = 0.05;   // rel energy drift → "unstable"
-	double jump_threshold_A = 3.5;    // Å — same as DiffusionTracker
+	double drift_threshold  = 0.05;   // rel energy drift -> "unstable"
+	double jump_threshold_A = 3.5;    // Å  -  same as DiffusionTracker
 	int    dim              = 3;      // default: 3D bulk
 
 	TransportInference infer(
@@ -407,7 +407,7 @@ struct TransportAnalyzer {
 			return inf;
 		}
 
-		// ── Energy status ─────────────────────────────────────────────────────
+		// -- Energy status -----------------------------------------------------
 		const double max_drift = [&](){
 			double m = 0;
 			for (const auto& r : log) m = std::max(m, std::abs(r.E_rel_drift));
@@ -417,13 +417,13 @@ struct TransportAnalyzer {
 			inf.energy_status             = "unstable";
 			inf.valid_for_macro_inference = false;
 			inf.transport_class           = "invalid_energy_drift";
-			// Still compute D from trajectory — mark as suspicious
+			// Still compute D from trajectory  -  mark as suspicious
 		} else {
 			inf.energy_status = "stable";
 			inf.valid_for_macro_inference = true;
 		}
 
-		// ── MSD linear fit on tail fraction ──────────────────────────────────
+		// -- MSD linear fit on tail fraction ----------------------------------
 		const int N = static_cast<int>(log.size());
 		const int fit_start = std::max(0, static_cast<int>(N * (1.0 - fit_fraction)));
 		std::vector<double> t_fit, msd_total, msd_x, msd_y, msd_z;
@@ -447,7 +447,7 @@ struct TransportAnalyzer {
 		inf.D_fit_quality        = fit_total.valid ? fit_total.r2 : 0.0;
 
 		if (fit_total.valid) {
-			// MSD = 2*dim*D*t  →  D = slope / (2*dim)
+			// MSD = 2*dim*D*t  ->  D = slope / (2*dim)
 			inf.MSD_slope           = fit_total.slope;
 			inf.D_eff_analysis_only = fit_total.slope / (2.0 * dim);
 		}
@@ -455,7 +455,7 @@ struct TransportAnalyzer {
 		if (fit_y.valid) inf.D_y = fit_y.slope / 2.0;
 		if (fit_z.valid) inf.D_z = fit_z.slope / 2.0;
 
-		// ── Anisotropy ────────────────────────────────────────────────────────
+		// -- Anisotropy --------------------------------------------------------
 		const double dmax = std::max({inf.D_x, inf.D_y, inf.D_z});
 		double dmin = std::numeric_limits<double>::max();
 		for (double d : {inf.D_x, inf.D_y, inf.D_z})
@@ -470,7 +470,7 @@ struct TransportAnalyzer {
 		else if (inf.anisotropy_ratio > 1.2)  inf.anisotropy_class = "weakly_anisotropic";
 		else                                  inf.anisotropy_class = "isotropic_transport";
 
-		// ── Jump / mobility metrics ───────────────────────────────────────────
+		// -- Jump / mobility metrics -------------------------------------------
 		inf.jump_count = log.back().jump_count;
 		const double total_time = log.back().time - log.front().time;
 		inf.jump_rate = (total_time > 0) ? inf.jump_count / total_time : 0.0;
@@ -480,7 +480,7 @@ struct TransportAnalyzer {
 		for (const auto& r : log) tor_sum += r.tortuosity_proxy;
 		inf.path_tortuosity = tor_sum / N;
 
-		// Site escape frequency — jumps per total frames × N atoms
+		// Site escape frequency  -  jumps per total frames × N atoms
 		inf.site_escape_frequency = (N > 0) ? static_cast<double>(inf.jump_count) / N : 0.0;
 		inf.trap_strength_proxy   = (inf.site_escape_frequency > 1e-12) ?
 			1.0 / inf.site_escape_frequency : 9999.0;  // sentinel: no escapes observed
@@ -498,7 +498,7 @@ struct TransportAnalyzer {
 		}();
 		inf.mobility_proxy = (mean_ke > 1e-12) ? inf.D_eff_analysis_only / mean_ke : 0.0;
 
-		// ── Transport class ───────────────────────────────────────────────────
+		// -- Transport class ---------------------------------------------------
 		if (!inf.valid_for_macro_inference) {
 			inf.transport_class = "invalid_energy_drift";
 		} else if (inf.D_eff_analysis_only < 1e-10 && inf.jump_count < 2) {
@@ -519,7 +519,7 @@ struct TransportAnalyzer {
 };
 
 // =============================================================================
-// Task 12B — Defect transport comparison
+// Task 12B  -  Defect transport comparison
 // =============================================================================
 // Compute D_ratio_vs_ideal for a set of inferences; fills D_ratio_vs_ideal.
 
@@ -541,7 +541,7 @@ inline void annotate_defect_ratios(
 }
 
 // =============================================================================
-// Task 12B — Activation trend (multi-temperature sweep)
+// Task 12B  -  Activation trend (multi-temperature sweep)
 // =============================================================================
 // Fit ln(D_eff) vs 1/KE_proxy over a set of inferences at different activities.
 
@@ -602,7 +602,7 @@ struct ActivationTrend {
 // Inputs: the ideal reference inference (for ref_energy_per_atom),
 //         the initial total energy of this case, and its atom count.
 // The formation_energy_proxy = energy_per_atom - ref_energy_per_atom
-// is a ΔU proxy only — not a true DFT formation enthalpy.
+// is a ΔU proxy only  -  not a true DFT formation enthalpy.
 // It is labelled "proxy" because we cannot claim Arrhenius without a
 // physically calibrated temperature model.
 

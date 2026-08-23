@@ -1,0 +1,113 @@
+﻿# demo_day72_nuclear_clad.vsim
+# Day-72 demonstration: weighted selection + smart loop + until stop-condition.
+# Mirrors the nuclear cladding material screening table from the Day-72 session.
+# Run: VSEPR scripts/demo_day72_nuclear_clad.vsim
+
+[project]
+name      = "nuclear_clad_day72"
+version   = "v5.0.2"
+seed_base = 7200
+
+# ── Weighted material selection ──────────────────────────────────────────────
+
+[select]
+name         = "cladding_choice"
+candidates   = ["Zircaloy-4", "ZIRLO/M5FeCrAl", "SiC/SiC", "SS316"]
+print_table  = true
+print_winner = true
+output_json  = false
+
+[[select.criterion]]
+name   = "Strength and stiffness"
+weight = 0.25
+scores = [3, 4, 5, 3]
+
+[[select.criterion]]
+name   = "Creep and thermal stability"
+weight = 0.20
+scores = [3, 3, 5, 3]
+
+[[select.criterion]]
+name   = "Toughness and fracture resistance"
+weight = 0.15
+scores = [4, 4, 2, 5]
+
+[[select.criterion]]
+name   = "Corrosion and oxidation resistance"
+weight = 0.15
+scores = [3, 4, 5, 3]
+
+[[select.criterion]]
+name   = "Density"
+weight = 0.10
+scores = [3, 2, 5, 2]
+
+[[select.criterion]]
+name   = "Cost and manufacturability"
+weight = 0.15
+scores = [5, 5, 2, 5]
+
+# ── Material system (Zircaloy proxy) ────────────────────────────────────────
+
+[material]
+formula   = "Zr"
+structure = "hcp"
+cell      = "3x3x3"
+
+[environment]
+periodic    = true
+temperature = 300
+
+[run]
+mode      = "md"
+max_steps = 1000
+converge  = true
+
+# ── Smart loop: thermal ramp with random jitter ───────────────────────────
+
+[loop]
+name         = "thermal_ramp"
+iterations   = 12
+body_steps   = 200
+stop_condition = "energy_var < 0.0005"
+record_each  = true
+export_each  = false
+rand_seed    = 7201
+perturb_mode = "combo"
+
+var = "temperature  start=300  stop=1100  delta=66  mode=linear"
+var = "defect_seed  start=0    stop=0     delta=0   mode=random  noise=50"
+
+# ── Until stop-loop: drive toward order target ────────────────────────────
+
+[until]
+name          = "order_anneal"
+condition     = "molecule[0].order_param >= 0.98"
+max_iters     = 25
+body_steps    = 400
+measure       = [order_param, energy_var]
+iter_delay_ms = 0
+export_each   = true
+
+# ── Variance and convergence probes ──────────────────────────────────────
+
+[variance]
+energy_var = "energy.total" "last 50" 0.001
+
+# ── Export ───────────────────────────────────────────────────────────────
+
+[export]
+write_xyz            = true
+write_report_md      = true
+write_metrics_tsv    = true
+write_manifest_json  = true
+output_dir           = "out/nuclear_clad_day72"
+
+[visual]
+output_type = "terminal_overlay_cycle"
+render_interval = 25
+
+[report]
+title                  = "nuclear_clad_day72"
+include_material_cards = true
+include_metric_tables  = true

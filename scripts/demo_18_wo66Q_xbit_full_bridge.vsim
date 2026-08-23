@@ -1,0 +1,86 @@
+# scripts/demo_18_wo66Q_xbit_full_bridge.vsim
+# VSEPR-SIM v5.1.4  |  Demo 18 -- WO-66Q Non-Molecular Objects + XBIT + DEM/FEA Bridge
+# Full non-molecular object pipeline:
+#   PipeGeometry -> WallSurface -> InletSource -> OutletSink -> AmbientEnv
+#   DEMBridge (hard-sphere/Hertz-Mindlin contact events + erosion proxy)
+#   FEABridge  (von Mises stress, thermal expansion, fatigue)
+#   XBIT tier: auto node cloud + axial/radial/hoop connectivity
+# Material: Inconel-625 pipe, H2O-NaCl brine fluid
+# Outputs: von Mises TSV, DEM contact map TSV, pressure/shear profile TSVs,
+#          wall residence histogram, cavitation events log, full HTML dashboard.
+# Run: vsper run scripts/demo_18_wo66Q_xbit_full_bridge.vsim
+
+[project]
+name        = "demo_18_wo66Q_xbit_full_bridge"
+version     = "v5.1.4"
+seed_base   = 18001
+determinism = true
+description = "WO-66Q complete non-molecular object + XBIT + DEM/FEA bridge pipeline -- Inconel-625 pipe, brine flow"
+
+[objects]
+system.geometry.pipe = PipeGeometry(radius = 0.075, length = 3.0, material = inconel625, xbit = auto)
+system.surface.wall  = WallSurface(geometry = system.geometry.pipe, roughness = 0.0015, slip = 0.04, track_pressure = true, track_shear = true, track_temperature = true, track_cavitation = true, track_impacts = true, track_residence = true, xbit = auto)
+system.source.inlet  = InletSource(species = H2O, rate = 3000, velocity_x = 2.0, velocity_y = 0.0, velocity_z = 0.0, seed = 18101)
+system.sink.outlet   = OutletSink(mode = absorb, conserve_log = true)
+system.env.brine     = AmbientEnv(species = H2O, count = 150000, temperature_K = 330.0, pressure_Pa = 200000.0, seed = 18201)
+
+[bridge]
+dem.pipe = DEMBridge(surface = system.surface.wall, geometry = system.geometry.pipe, inlet = system.source.inlet, outlet = system.sink.outlet, packing_model = hard_sphere, contact_model = hertz_mindlin, friction = 0.38, restitution = 0.22, output_contact_events = true, output_wall_collision_map = true, output_residence_histogram = true, output_erosion_proxy = true)
+fea.pipe = FEABridge(surface = system.surface.wall, geometry = system.geometry.pipe, material = inconel625, criterion = von_mises, fatigue = true, thermal_expansion = true, map = surface_to_mesh, export_json = true, export_tsv = true, export_vtk_proxy = true)
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+[run]
+mode          = "relax"
+max_steps     = 500
+dt_fs         = 0.5
+temperature_K = 330.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "pressure", "shear", "temperature", "cavitation", "wall_stress", "dem_contacts", "fea_von_mises"]
+output_format = "json"
+every_n_steps = 25
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.tables]
+pressure_profile_tsv    = "reports/demo_18/pressure_profile.tsv"
+shear_profile_tsv       = "reports/demo_18/shear_profile.tsv"
+wall_stress_tsv         = "reports/demo_18/wall_stress.tsv"
+fea_von_mises_tsv       = "reports/demo_18/fea_von_mises.tsv"
+dem_contacts_tsv        = "reports/demo_18/dem_contacts.tsv"
+cavitation_events_tsv   = "reports/demo_18/cavitation_events.tsv"
+residence_histogram_tsv = "reports/demo_18/wall_residence_histogram.tsv"
+erosion_proxy_tsv       = "reports/demo_18/erosion_proxy.tsv"
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_18/
+
+[visual]
+output_type              = "gl_interactive"
+animation_mode           = "none"
+show_convergence_trace   = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1440
+gl_window_height         = 900
+render_interval          = 10
+
+[open]
+enabled = false

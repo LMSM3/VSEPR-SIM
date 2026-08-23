@@ -1,0 +1,798 @@
+% ============================================================================
+%  Inverse Kaluza-Klein Scale Symmetry
+%  LIVE NOTATION REGISTRY  ---  v1.0
+%
+%  Purpose: Track, classify, and stabilise all symbols used across the
+%           IKK / VSEPR-SIM theoretical development.
+%           This document is updated whenever a symbol is introduced,
+%           redefined, promoted, demoted, or deprecated.
+%
+%  Status tags:  GREEN   Solid / accepted
+%                YELLOW  Caution / needs clarification
+%                ORANGE  Conflict / collision
+%                RED     Phasing out / deprecated
+%                BLUE    Newly introduced / provisional
+%
+%  Compile: pdflatex (twice for ToC)
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% --- Geometry ----------------------------------------------------------------
+\usepackage[top=1.0in, bottom=1.0in, left=1.1in, right=1.1in,
+            headheight=14pt]{geometry}
+
+% --- Fonts / encoding --------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Math --------------------------------------------------------------------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{mathrsfs}   % \mathscr for script layer
+
+% --- Tables ------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{colortbl}   % row / cell colouring
+
+% --- Colour ------------------------------------------------------------------
+\usepackage{xcolor}
+
+% Status palette
+\definecolor{GreenBG}{HTML}{D4EDDA}
+\definecolor{GreenFG}{HTML}{155724}
+\definecolor{YellowBG}{HTML}{FFF3CD}
+\definecolor{YellowFG}{HTML}{856404}
+\definecolor{OrangeBG}{HTML}{FFE0B2}
+\definecolor{OrangeFG}{HTML}{7F3300}
+\definecolor{RedBG}{HTML}{F8D7DA}
+\definecolor{RedFG}{HTML}{721C24}
+\definecolor{BlueBG}{HTML}{CCE5FF}
+\definecolor{BlueFG}{HTML}{004085}
+
+% Status badge commands
+\newcommand{\GRN}{\colorbox{GreenBG}{\textcolor{GreenFG}{\small\bfseries GREEN}}}
+\newcommand{\YEL}{\colorbox{YellowBG}{\textcolor{YellowFG}{\small\bfseries YELLOW}}}
+\newcommand{\ORG}{\colorbox{OrangeBG}{\textcolor{OrangeFG}{\small\bfseries ORANGE}}}
+\newcommand{\RED}{\colorbox{RedBG}{\textcolor{RedFG}{\small\bfseries RED}}}
+\newcommand{\BLU}{\colorbox{BlueBG}{\textcolor{BlueFG}{\small\bfseries BLUE}}}
+
+% Source-comment macros (for use in .tex source annotations)
+\newcommand{\SGRN}[1]{%
+  \noindent\colorbox{GreenBG}{\textcolor{GreenFG}{\texttt{[GREEN]}\;#1}}\par}
+\newcommand{\SYEL}[1]{%
+  \noindent\colorbox{YellowBG}{\textcolor{YellowFG}{\texttt{[YELLOW]}\;#1}}\par}
+\newcommand{\SORG}[1]{%
+  \noindent\colorbox{OrangeBG}{\textcolor{OrangeFG}{\texttt{[ORANGE]}\;#1}}\par}
+\newcommand{\SRED}[1]{%
+  \noindent\colorbox{RedBG}{\textcolor{RedFG}{\texttt{[RED]}\;#1}}\par}
+\newcommand{\SBLU}[1]{%
+  \noindent\colorbox{BlueBG}{\textcolor{BlueFG}{\texttt{[BLUE]}\;#1}}\par}
+
+% --- Notation layer macros ---------------------------------------------------
+%  Primitive / theoretical  (Fraktur)
+\newcommand{\IdTrue}{\mathfrak{I}_{\mathrm{true}}}
+\newcommand{\IdN}{\mathfrak{I}_n}
+\newcommand{\IdTop}{\mathfrak{I}_{\mathrm{top}}}
+\newcommand{\Dist}{\mathfrak{D}}
+\newcommand{\DistN}{\mathfrak{D}_n}
+\newcommand{\DistRec}{\mathfrak{D}_{\mathrm{rec}}}
+\newcommand{\Bundle}{\mathfrak{B}}
+\newcommand{\Anchor}{\mathfrak{A}}
+\newcommand{\PrimRel}{\mathfrak{R}}
+\newcommand{\PrimKernel}{\mathfrak{K}}
+
+%  Operational / projection  (calligraphic)
+\newcommand{\ProjOp}[2]{\mathcal{P}_{#1 \to #2}}
+\newcommand{\CoupOp}[2]{\mathcal{C}_{#1 #2}}
+\newcommand{\ResOp}[1]{\mathcal{R}_{#1}}
+\newcommand{\MeasOp}[1]{\mathcal{M}_{#1}}
+\newcommand{\ObsOp}[2]{\mathcal{O}_{#2}^{(#1)}}
+\newcommand{\EvolOp}{\mathcal{U}}
+
+%  Empirical / data  (bold / blackboard)
+\newcommand{\DataD}{\mathbb{D}}
+\newcommand{\xvec}{\mathbf{x}}
+\newcommand{\vvec}{\mathbf{v}}
+\newcommand{\Fvec}{\mathbf{F}}
+\newcommand{\TAB}{\mathbf{T}_{AB}}
+\newcommand{\RAB}{\mathbf{R}_{AB}}
+
+% --- Headers / footers -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{IKK Notation Registry}}
+\fancyhead[R]{\small\textit{LIVE DOCUMENT --- v1.0 --- 2026-05-24}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section formatting ------------------------------------------------------
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+% --- Hyperlinks --------------------------------------------------------------
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+            urlcolor=blue]{hyperref}
+
+% --- Table column types ------------------------------------------------------
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\large\scshape VSEPR-SIM Theoretical Division\par}
+  \vspace{0.3cm}
+  {\small\bfseries LIVE DOCUMENT --- update on every symbol change\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries IKK Notation Registry\par}
+  \vspace{0.5cm}
+  {\LARGE Inverse Kaluza-Klein Scale Symmetry\par}
+  \vspace{0.4cm}
+  {\large Symbol Status, Collision Tracking, and Promotion Log\par}
+  \vspace{1.4cm}
+  \begin{tabular}{l l l}
+    \GRN & Solid / accepted & Use freely \\[4pt]
+    \YEL & Caution / needs clarification & Define before expanding \\[4pt]
+    \ORG & Conflict / collision & Rename, type, or namespace \\[4pt]
+    \RED & Phasing out / deprecated & Replace in new writing \\[4pt]
+    \BLU & Provisional / newly introduced & Test before promoting \\
+  \end{tabular}
+  \vspace{1.4cm}
+
+  {\normalsize
+    Covers: Doc I (Schr\"{o}dinger Alternative),
+    Doc II (Initial Draft --- Axioms A--J),\\[0.3em]
+    Doc III (Kernel V4),
+    Doc IV (5D Interval and Projection Mechanics),\\[0.3em]
+    and all future IKK / VSEPR-SIM documents.
+  \par}
+  \vspace{1.5cm}
+  {\normalsize Version 1.0 --- 2026-05-24\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Status Legend}
+\label{sec:legend}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{C{1.5cm} L{3.5cm} L{4cm} L{5cm}}
+  \toprule
+  \textbf{Tag} & \textbf{Name} & \textbf{Meaning} & \textbf{Action} \\
+  \midrule
+  \GRN  & Solid / Accepted &
+    Stable, defined, safe. &
+    Use in papers, diagrams, summaries. \\[4pt]
+  \YEL  & Caution / Needs Clarification &
+    Useful but ambiguous. &
+    Define tightly before expanding use. \\[4pt]
+  \ORG  & Conflict / Collision &
+    Collides with other symbol or convention. &
+    Rename, add subscript, or namespace. \\[4pt]
+  \RED  & Deprecated / Legacy &
+    Too ambiguous; replaced. &
+    Do not use in new writing. \\[4pt]
+  \BLU  & Provisional / New &
+    Newly introduced; untested. &
+    Test against full system before promoting. \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent\textbf{Notation layer hierarchy.}
+Three tiers govern which font a symbol uses:
+\begin{itemize}
+  \item \textbf{Primitive / theoretical layer} --- Fraktur:
+    $\mathfrak{I}, \mathfrak{D}, \mathfrak{B}, \mathfrak{A},
+     \mathfrak{R}, \mathfrak{K}$
+  \item \textbf{Operational / projection layer} --- Calligraphic:
+    $\mathcal{P}, \mathcal{C}, \mathcal{R}, \mathcal{M},
+     \mathcal{O}, \mathcal{U}$
+  \item \textbf{Empirical / data layer} --- Bold or blackboard bold:
+    $\mathbb{D},\;\mathbf{x},\;\mathbf{v},\;\mathbf{F},\;\mathbf{T}_{AB}$
+\end{itemize}
+
+% ============================================================================
+\section{Core Accepted Symbols}
+\label{sec:core}
+% ============================================================================
+
+\begin{longtable}{C{1.6cm} L{4.5cm} C{1.5cm} L{5.8cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\mathfrak{I}$ & Primitive / true identity content & \GRN &
+    Fraktur layer. Never equals $\IdTop$ or $\mathcal{O}$. \\[4pt]
+  $\mathfrak{D}$ & Distinguishability / recoverable identity information & \GRN &
+    Primary information variable. Replaces bare $I$ or $D$. \\[4pt]
+  $P$ & Particle / identity-bearing object & \GRN &
+    Roman $P$. Never use for projection; that is $\mathcal{P}$. \\[4pt]
+  $S_n$ & Scale level & \GRN &
+    See Sec.~\ref{sec:scale_ladder}. Core triple. \\[4pt]
+  $\mathcal{P}_{a \to b}$ & Projection operator & \GRN &
+    Calligraphic only. Canonical form. \\[4pt]
+  $\mathcal{O}_b^{(a)}$ & Observable at $S_b$ of identity from $S_a$ & \GRN &
+    Clean projection output symbol. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Canonical identity equation:}} \\[2pt]
+  \multicolumn{4}{l}{%
+    $\IdTrue \;\neq\; \IdTop \;\neq\; \mathcal{O}_b^{(a)}$
+  } \\[4pt]
+  \multicolumn{4}{l}{\textbf{Canonical projection equation:}} \\[2pt]
+  \multicolumn{4}{l}{%
+    $\mathcal{P}_{a \to b}[\mathfrak{I}_a]
+     = \mathcal{R}_b\!\left(\mathcal{C}_{ab}[\mathfrak{I}_a]\right)
+     = \mathcal{O}_b^{(a)}$
+  } \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Projection and Resolution Symbols}
+\label{sec:projection}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.2cm} C{1.5cm} L{5.5cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\mathcal{P}_{a \to b}$ & Projection operator from $S_a$ resolved at $S_b$ & \GRN &
+    Core operator. Defined in Doc IV Eq.~(6.1). \\[4pt]
+  $\mathcal{C}_{ab}$ & Cross-scale coupling rule & \GRN &
+    Gives projection physical content. \\[4pt]
+  $\mathcal{R}_b$ & Resolution operator of observing scale $S_b$ & \GRN &
+    Separates access from resolution. \\[4pt]
+  $\mathcal{O}_b^{(a)}$ & Observable at $S_b$ of identity from $S_a$ & \GRN &
+    Projection output. \\[4pt]
+  $\mathcal{M}_b$ & Measurement map & \YEL &
+    Useful but not always needed. Define role vs.\ $\mathcal{R}_b$. \\[4pt]
+  $\chi_{ab}$ & Scale compatibility / access condition & \BLU &
+    Candidate. Whether projection $a \to b$ is permitted. \\[4pt]
+  $\eta_{ab}$ & Projection efficiency / coupling strength & \BLU &
+    Candidate. Partial access weight. \\[4pt]
+  $\epsilon_{ab}$ & Projection error / mismatch & \BLU &
+    Candidate. Formalise loss term. \\[4pt]
+  $\Pi_{m \leftarrow n}$ & Scale projection operator (Doc IV) & \GRN &
+    Arrow notation from Doc IV. Equivalent to $\mathcal{P}_{n \to m}$. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Canonical form:}\;
+    $\mathcal{P}_{a \to b}
+     = \mathcal{M}_b \circ \mathcal{R}_b \circ \mathcal{C}_{ab}$} \\[4pt]
+  \multicolumn{4}{l}{\textbf{Simple form:}\;
+    $\mathcal{P}_{a \to b}
+     = \mathcal{R}_b \circ \mathcal{C}_{ab}$} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Scale Ladder Symbols}
+\label{sec:scale_ladder}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.8cm} C{1.5cm} L{5cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $S_n$ & Scale level $n$ & \GRN &
+    Central object. \\[4pt]
+  $S_a,\, S_b$ & Source / target scale labels & \GRN &
+    Use $a \to b$ for cross-scale direction. \\[4pt]
+  $a \to b$ & Cross-scale resolution direction & \GRN &
+    Means ``resolved from $a$ into $b$''; not transport. \\[4pt]
+  $D_n$ & Dimensional degree of freedom at $S_n$ & \GRN &
+    Do not confuse with $\mathfrak{D}$ (distinguishability). \\[4pt]
+  $M_n$ & Mediator / matrix / metric entry & \YEL &
+    Currently ambiguous. Choose one meaning per document. \\[4pt]
+  $L_n$ & Characteristic length scale & \GRN &
+    Stable. Core scale parameter. \\[4pt]
+  $\ell_n$ & Local / measured length & \YEL &
+    Use when distinct from $L_n$. \\[4pt]
+  $\lambda_n$ & Scale multiplier / wavelength & \YEL &
+    Collision with wave mechanics. Use $\lambda_{\mathrm{scale}}$ if needed. \\[4pt]
+  $\Delta S$ & Scale separation & \YEL &
+    Define as $|S_b - S_a|$ or log ratio. \\[4pt]
+  $w$ & Fifth / scale coordinate & \YEL &
+    Doc-specific. Superseded by $u = \ln(\ell/\ell_0)$ in Doc IV. \\[4pt]
+  $u$ & Logarithmic scale coordinate & \GRN &
+    $u = \ln(\ell/\ell_0)$, $du = d\ell/\ell$. Defined in Doc IV. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Core triple:}\;
+    $S_n = (D_n,\, M_n,\, L_n)$} \\[4pt]
+  \multicolumn{4}{l}{%
+    \parbox{13cm}{\small\textit{Warning:} $M_n$ is currently wearing
+    three fake moustaches (mediator / matrix / metric).
+    Resolve before use in any new section.}} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Identity-Layer Symbols}
+\label{sec:identity}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.5cm} C{1.5cm} L{5.2cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\mathfrak{I}_{\mathrm{true}}$ & Full primitive true identity & \GRN &
+    Deepest identity. Never observable directly. \\[4pt]
+  $\mathfrak{I}_n$ & Identity at scale $S_n$ & \GRN &
+    Native-scale identity. \\[4pt]
+  $\mathfrak{I}_{\mathrm{top}}$ & Top-layer identity & \GRN &
+    Highest-scale packed identity. $\neq \mathfrak{I}_{\mathrm{true}}$. \\[4pt]
+  $\mathfrak{B}$ & Identity bundle & \GRN &
+    Packed / coexisting multi-scale identity object. \\[4pt]
+  $\mathfrak{A}$ & Identity anchor & \YEL &
+    Fixed reference point in identity space. Role needs formalising. \\[4pt]
+  $r_F$ & Fuzz radius & \YEL &
+    Use only where scale fuzz is formally defined. \\[4pt]
+  $P_n$ & Identity object at scale (Doc IV form) & \GRN &
+    $P_n = (x^\mu, \mathbb{C}_p, D_n, M_n, L_n)$. \\[4pt]
+  $\mathbb{C}_p$ & Complex fibre above point $p$ & \GRN &
+    Introduced Doc IV. Gives local phase structure. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Key rule:}\;
+    $\IdTrue \;\neq\; \IdTop \;\neq\; \mathcal{O}_b^{(a)}$} \\[4pt]
+  \multicolumn{4}{l}{\parbox{13cm}{\small
+    This inequality should appear early in any new paper.
+    Readers will conflate these three unless corrected
+    before they have time to form opinions.}} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Matrix-Wave Bridge Symbols}
+\label{sec:matrix_wave}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.5cm} C{1.5cm} L{5.2cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\psi$ & Wavefunction & \GRN &
+    Projection-side object. Not the primitive identity. \\[4pt]
+  $\Psi$ & Full wave state / state vector & \GRN &
+    Standard quantum comparison symbol. \\[4pt]
+  $\hat{H}$ & Hamiltonian operator & \GRN &
+    Always hatted. \\[4pt]
+  $\hat{\rho}$ & Density operator & \GRN &
+    Hatted to distinguish from $\rho_m$ (mass density). \\[4pt]
+  $\mathcal{U}$ & Evolution operator & \GRN &
+    $\mathcal{U}(t) = e^{-i\hat{H}t/\hbar}$. \\[4pt]
+  $M$ & Matrix-state representation & \YEL &
+    Define whether true state or representational. \\[4pt]
+  $H$ & Bare Hamiltonian / HGST / field driver & \ORG &
+    Three meanings. Use $\hat{H}$, $H_{\mathrm{HGST}}$, or $H_\nabla$. \\[4pt]
+  $\rho$ & Density / density matrix / donor quality & \ORG &
+    Type every instance: $\hat{\rho}$, $\rho_m$, $D_\rho$. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Bridge statement:}\;
+    $\psi_b^{(a)} \sim \mathcal{P}_{a \to b}[\mathfrak{I}_a]$} \\[4pt]
+  \multicolumn{4}{l}{\textbf{Scale-dependent form (Doc IV):}\;
+    $\psi(x,t;\,L) = \langle x, L \,|\, \mathfrak{I}_{\mathrm{true}} \rangle$} \\[4pt]
+  \multicolumn{4}{l}{\parbox{13cm}{\small
+    $\psi$ is not the primitive identity.
+    It is the projected / resolved form at a chosen scale and position.}} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Relation and Entanglement Symbols}
+\label{sec:entanglement}
+% ============================================================================
+
+\begin{longtable}{C{2.3cm} L{4cm} C{1.5cm} L{5.2cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\mathbf{T}_{AB}$ & Trinary relation vector between $A$ and $B$ & \GRN &
+    Values in $\{-1, 0, +1\}^m$. Doc II Eq.~(G.2). \\[4pt]
+  $\mathbf{R}_{AB}$ & Primitive relation-state & \GRN &
+    Full relation object. \\[4pt]
+  $[0,0,0,0 \mid \mathbf{T}_{AB}]$ & Zero spacetime displacement + relation vector & \GRN &
+    Very distinctive. Use to keep entanglement away from signal language. \\[4pt]
+  $\Gamma_{AB}$ & Relation / coupling graph & \BLU &
+    Candidate. For graph-identity formalism. \\[4pt]
+  $\kappa_{AB}$ & Coupling strength & \BLU &
+    Candidate. Interaction / access strength scalar. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Canonical form:}\;
+    $\mathbf{R}_{AB} = [0,\,0,\,0,\,0 \mid \mathbf{T}_{AB}]$} \\[4pt]
+  \multicolumn{4}{l}{\parbox{13cm}{\small
+    Entanglement is a real relation-state with zero ordinary spacetime
+    displacement. It is not a signal.
+    It is not mystical.
+    It is a structure.}} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Information and Entropy Symbols}
+\label{sec:info_entropy}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.5cm} C{1.5cm} L{5.2cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\mathfrak{D}$ & Distinguishability / recoverable identity content & \GRN &
+    Primary information symbol in the theory. \\[4pt]
+  $S$ & Entropy & \GRN &
+    Use $S$ for thermodynamic entropy. Not bare $S$ (scale collision). \\[4pt]
+  $\Delta S$ & Entropy change & \GRN & Standard. \\[4pt]
+  $\Delta\mathfrak{D}$ & Distinguishability change & \GRN &
+    Useful for SM's law. \\[4pt]
+  $\mathfrak{L}_D$ & Information-loss functional & \BLU &
+    Candidate. Cleaner than vague ``loss.'' \\[4pt]
+  $\Lambda_D$ & Information-loss operator & \BLU &
+    Optional. Useful if formalising dynamics. \\[4pt]
+  $\mu_D$ & Mean distinguishability & \BLU &
+    Optional. Statistical sections. \\[4pt]
+  $\sigma_D$ & Distinguishability variance & \BLU &
+    Optional. Measurement uncertainty sections. \\[4pt]
+  $I$ & Information / identity (legacy) & \RED &
+    Retire. Replace with $\mathfrak{I}$ or $\mathfrak{D}$. \\[4pt]
+  $S$ & Scale / entropy / steric penalty (bare) & \ORG &
+    Three meanings. Use $S_n$, $S_{\mathrm{ent}}$, $S_{\mathrm{steric}}$. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Core relation:}\;
+    $\Delta S \propto -\Delta\mathfrak{D}_{\mathrm{rec}}$} \\[4pt]
+  \multicolumn{4}{l}{%
+    $\Delta S > 0 \;\Longleftrightarrow\; \Delta\mathfrak{D} < 0$} \\[4pt]
+  \multicolumn{4}{l}{\parbox{13cm}{\small
+    Entropy is loss of recoverable distinguishability.
+    This is the IKK restatement of the second law.}} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Particle-by-5 and State Symbols}
+\label{sec:particle5}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.5cm} C{1.5cm} L{5.2cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $P_i$ & Particle / identity-bearing object & \GRN & Core. \\[4pt]
+  $x_i$ & Position & \GRN & Standard. \\[4pt]
+  $p_i$ & Momentum & \GRN & Preferred over $v_i$ in theoretical sections. \\[4pt]
+  $v_i$ & Velocity & \GRN & Use in simulation / VSIM sections. \\[4pt]
+  $m_i$ & Mass & \GRN & Standard. \\[4pt]
+  $q_i$ & Charge & \GRN & Standard. \\[4pt]
+  $\chi_i$ & Internal identity state & \YEL &
+    Candidate replacement for $s_i$. Better when spin is also present. \\[4pt]
+  $s_i$ & Spin / state / scale & \ORG &
+    Too overloaded. Prefer $\chi_i$ for internal state. \\[4pt]
+  $\theta_i$ & Phase / orientation & \YEL &
+    Type by context: $\theta_{\mathrm{phase}}$, $\theta_{\mathrm{orient}}$. \\[4pt]
+  $\omega_i$ & Angular frequency / angular velocity & \GRN & Standard. \\[4pt]
+  $Q_i$ & Charge / state matrix & \ORG &
+    Also used in HGST state vector. Type subscript. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Theory form:}\;
+    $P_i = [x_i,\; p_i,\; q_i,\; \mathfrak{D}_i,\; \mathfrak{I}_i]$} \\[4pt]
+  \multicolumn{4}{l}{\textbf{Simulation form:}\;
+    $P_i = [x_i,\; v_i,\; m_i,\; q_i,\; \chi_i]$} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Force and Field Symbols}
+\label{sec:forces}
+% ============================================================================
+
+\begin{longtable}{C{2.0cm} L{4.3cm} C{1.5cm} L{5cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $F_i$ & Total force on object $i$ & \GRN & Standard. \\[4pt]
+  $F_{i,\mathrm{bond}}$ & Bonded force & \GRN & Stable. \\[4pt]
+  $F_{i,\mathrm{near}}$ & Near-field force & \GRN & Stable. \\[4pt]
+  $F_{i,\mathrm{far}}$ & Far-field force & \GRN & Stable. \\[4pt]
+  $F_{i,\mathrm{flux}}$ & Flux-mediated force & \GRN & Stable. \\[4pt]
+  $\Phi_k$ & Field potential $k$ & \GRN & Good. \\[4pt]
+  $\nabla\Phi_k$ & Field gradient & \GRN & Conventional and clean. \\[4pt]
+  $\mathbf{B}$ & Magnetic field & \GRN &
+    Bold $\mathbf{B}$. Reserve for magnetism only. \\[4pt]
+  $\mathfrak{B}$ & Identity bundle & \GRN &
+    Fraktur $\mathfrak{B}$. Does not collide with $\mathbf{B}$. \\[4pt]
+  $H$ & Gradient driver / field driver & \ORG &
+    Collides with Hamiltonian. Use $H_\nabla$ or $\hat{H}$. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{Force split:}\;
+    $F_i = F_{i,\mathrm{bond}} + F_{i,\mathrm{near}} + F_{i,\mathrm{far}} + F_{i,\mathrm{flux}}$} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Geometry and Fifth-Dimension Symbols}
+\label{sec:geometry}
+% ============================================================================
+
+\begin{longtable}{C{2.0cm} L{4.5cm} C{1.5cm} L{5cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $x^\mu$ & Spacetime 4-vector & \GRN & Standard. \\[4pt]
+  $ds_4^2$ & 4D spacetime interval & \GRN & Standard SR form. \\[4pt]
+  $ds_5^2$ & 5D scale-extended interval & \GRN &
+    Defined Doc IV. $= -c^2 dT^2 + dr^2 + \eta_u (d\ell/\ell)^2$. \\[4pt]
+  $u$ & Logarithmic scale coordinate & \GRN &
+    $u = \ln(\ell/\ell_0)$. \\[4pt]
+  $\eta_u$ & Scale-axis metric coefficient & \YEL &
+    Free parameter. Needs experimental constraint. \\[4pt]
+  $a_i(\ell)$ & Scale-modulated metric coefficient & \GRN &
+    $a_i \in [0,1]$. Defined Doc IV Eq.~(3.2). \\[4pt]
+  $D_{\mathrm{eff}}(\ell)$ & Effective dimension at scale $\ell$ & \GRN &
+    $= \sum_i a_i(\ell) + a_u(\ell)$. \\[4pt]
+  $g_{\mu\nu}$ & Metric tensor & \GRN & Standard. \\[4pt]
+  $\ell_0$ & Reference length scale & \GRN &
+    Fixed normalisation for $u$. \\[4pt]
+  $A_Q(\ell)$ & Property activation function & \GRN &
+    Sigmoid in log-scale. Doc IV Eq.~(8.2). \\[4pt]
+  $L_Q$ & Activation length for property $Q$ & \GRN &
+    Inflection point of $A_Q$. \\[4pt]
+  $k_Q$ & Sharpness of activation & \YEL &
+    Free parameter per property. Needs calibration. \\[4pt]
+  $\chi_w$ & Dark-scale proper-time correction & \YEL &
+    Partially identified in Doc IV Eq.~(2.6).
+    Needs $\eta_u$ to close. \\[4pt]
+  $w$ & Old fifth-coordinate label & \RED &
+    Replace with $u$ in new writing. \\[4pt]
+  \midrule
+  \multicolumn{4}{l}{\textbf{5D interval:}\;
+    $ds_5^2 = -c^2\,dT^2 + dr^2
+              + \eta_u\!\left(\dfrac{d\ell}{\ell}\right)^2$} \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Project-Specific / VSEPR-SIM Symbols}
+\label{sec:vsepr}
+% ============================================================================
+
+\noindent These symbols belong to the VSEPR-SIM simulation namespace.
+Do not import them into pure theory sections without typed subscripts.
+
+\begin{longtable}{C{2.3cm} L{4.3cm} C{1.5cm} L{5cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\mathbf{x}_{\mathrm{chem}}$ & Chemical state vector & \GRN &
+    $= [D_\rho,\; \Gamma_{\mathrm{geom}},\; S_{\mathrm{steric}},\;
+       \Pi_{\mathrm{ox}},\; Q_{\mathrm{state}}]$ \\[4pt]
+  $D_\rho$ & Donor coordination quality & \GRN &
+    Formerly $\rho_D$ (ambiguous). \\[4pt]
+  $\Gamma_{\mathrm{geom}}$ & VSEPR geometry / symmetry score & \GRN &
+    Fine in chemistry context. \\[4pt]
+  $S_{\mathrm{steric}}$ & Steric penalty & \GRN &
+    Typed to avoid collision with $S_n$ and $S_{\mathrm{ent}}$. \\[4pt]
+  $\Pi_{\mathrm{ox}}$ & Oxidation plausibility & \GRN &
+    $\Pi$ reserved for chemistry context only. \\[4pt]
+  $Q_{\mathrm{state}}$ & Charge / oxidation state quality & \GRN &
+    Typed. \\[4pt]
+  $H_{\mathrm{HGST}}$ & HGST transform matrix & \GRN &
+    Always typed. \\[4pt]
+  $\bar{\eta}$ & Average packing / coordination metric & \YEL &
+    Project-side use only. \\[4pt]
+  $S$ & Steric penalty (bare) & \RED &
+    Replace with $S_{\mathrm{steric}}$. \\[4pt]
+  $\Pi$ & Oxidation plausibility (bare) & \ORG &
+    Do not use for projection. $\Pi_{\mathrm{ox}}$ only. \\[4pt]
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Operator and Transformation Symbols}
+\label{sec:operators}
+% ============================================================================
+
+\begin{longtable}{C{1.8cm} L{4.5cm} C{1.5cm} L{5.2cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} & \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+  $\hat{A}$ & Generic quantum operator & \GRN & Hatted. Standard. \\[4pt]
+  $\mathcal{U}$ & Evolution operator & \GRN &
+    $\mathcal{U}(t) = e^{-i\hat{H}t/\hbar}$. Standard quantum-friendly. \\[4pt]
+  $\mathfrak{K}$ & Primitive kernel operator & \GRN &
+    Fraktur layer. Foundation-level. \\[4pt]
+  $K$ & Kernel operator (operational) & \GRN &
+    Calligraphic or roman $K$ depending on context. \\[4pt]
+  $\mathcal{M}_b$ & Measurement map at $S_b$ & \YEL &
+    Useful; needs defined role vs.\ $\mathcal{R}_b$. \\[4pt]
+  $T$ & Transformation / time ordering & \YEL &
+    Could collide with $\mathbf{T}_{AB}$. Use $\hat{T}$ for time ordering. \\[4pt]
+  $E$ & Evolution / energy & \ORG &
+    Use $\mathcal{U}$ for evolution, $E$ only for energy eigenvalues. \\[4pt]
+  $G$ & Gate / geometry / graph & \ORG &
+    Define explicitly by context. \\[4pt]
+  $N$ & Noise / nullspace / normalisation & \YEL &
+    Needs explicit meaning in each section. \\[4pt]
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Deprecated and Legacy Symbols}
+\label{sec:deprecated}
+% ============================================================================
+
+\noindent
+All symbols in this section carry status \RED.
+Do not use in new writing.
+Quote in legacy context with explicit deprecation note.
+
+\begin{longtable}{C{1.8cm} L{3.8cm} L{3.8cm} L{3.8cm}}
+  \toprule
+  \textbf{Deprecated} & \textbf{Replace with} & \textbf{Reason} & \textbf{First deprecated} \\
+  \midrule
+  \endhead
+  $I$ (plain) & $\mathfrak{I}$ or $\mathfrak{D}$ &
+    Identity / information / current collision. & Doc IV, 2026-05-24 \\[4pt]
+  $P$ (projection) & $\mathcal{P}_{a \to b}$ &
+    Collides with particle $P$ and probability. & Doc IV, 2026-05-24 \\[4pt]
+  $O$ (plain) & $\mathcal{O}_b^{(a)}$ &
+    Too plain; unreadable in equations. & Doc IV, 2026-05-24 \\[4pt]
+  $S$ (bare scale) & $S_n$ &
+    Collides with entropy and steric penalty. & Doc II \\[4pt]
+  $H$ (bare) & $\hat{H}$, $H_{\mathrm{HGST}}$, $H_\nabla$ &
+    Hamiltonian / HGST / driver collision. & Doc II \\[4pt]
+  $D$ (bare dim) & $D_n$, $\mathfrak{D}$, $D_\rho$ &
+    Dimension / distinguishability / donor collision. & Doc IV \\[4pt]
+  $M$ (bare) & $M_n$, $\mathbf{M}$, $m_i$, $\mathcal{M}$ &
+    Matrix / mediator / mass / manifold collision. & Doc II \\[4pt]
+  $w$ (5th coord) & $u = \ln(\ell/\ell_0)$ &
+    Superseded by logarithmic coordinate in Doc IV. & Doc IV, 2026-05-24 \\[4pt]
+  $\rho_D$ (donor) & $D_\rho$ &
+    Looks like density times $D$. & VSEPR-SIM docs \\[4pt]
+  $S$ (steric) & $S_{\mathrm{steric}}$ &
+    Collides with entropy and scale. & VSEPR-SIM docs \\[4pt]
+  $\Pi$ (bare proj) & $\mathcal{P}_{a \to b}$ or $\Pi_{\mathrm{ox}}$ &
+    Projection / oxidation plausibility collision. & Doc IV \\[4pt]
+  $P_{a \to b} : I_S$ & $\mathcal{P}_{a \to b}[\mathfrak{I}_a]$ &
+    Old projection form. Implied migration. & Doc II \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Open Symbol Questions}
+\label{sec:open}
+% ============================================================================
+
+\noindent
+These are unresolved questions in the notation system.
+Each item here blocks finalization of the section it belongs to.
+
+\begin{longtable}{L{2.2cm} L{4.0cm} L{7.0cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Section} & \textbf{Open question} \\
+  \midrule
+  \endhead
+  $M_n$ & Scale Ladder (\S\ref{sec:scale_ladder}) &
+    Mediator, matrix, or metric?
+    Must choose one canonical meaning before Doc V. \\[4pt]
+  $\eta_u$ & Geometry (\S\ref{sec:geometry}) &
+    Free parameter in the 5D interval.
+    Needs experimental or theoretical constraint. \\[4pt]
+  $k_Q$ & Geometry (\S\ref{sec:geometry}) &
+    Sharpness of activation sigmoid.
+    Requires calibration against data for each property. \\[4pt]
+  $\hat{H}_w$ & Matrix-Wave (\S\ref{sec:matrix_wave}) &
+    Dark-scale Hamiltonian.
+    Without this the theory has no new quantitative predictions. \\[4pt]
+  $\chi_{ab}$ & Projection (\S\ref{sec:projection}) &
+    Is scale compatibility a Boolean gate or a continuous weight?
+    Relation to $\eta_{ab}$ unclear. \\[4pt]
+  $\mathfrak{A}$ & Identity (\S\ref{sec:identity}) &
+    Anchor role: weighted mean of components,
+    or something stronger (e.g.\ attractor in identity space)? \\[4pt]
+  $\mathbf{T}_{AB}$ & Entanglement (\S\ref{sec:entanglement}) &
+    Space defined $(\{-1,0,+1\}^m)$, but dynamics of
+    $\mathbf{T}_{AB}$ over time are not yet defined. \\[4pt]
+  $\Gamma_{AB}$ vs $\kappa_{AB}$ & Entanglement (\S\ref{sec:entanglement}) &
+    Both are \BLU. Decide whether both are needed or
+    one subsumes the other. \\[4pt]
+  $D_{\mathrm{eff}}(\ell)$ functional form & Geometry (\S\ref{sec:geometry}) &
+    $a_i(\ell)$ curves are defined abstractly.
+    Explicit functional form from first principles needed. \\
+  \bottomrule
+\end{longtable}
+
+% ============================================================================
+\section{Promotion and Demotion Log}
+\label{sec:log}
+% ============================================================================
+
+\noindent
+This log is updated whenever a symbol changes status.
+Most recent entry first.
+
+\begin{longtable}{L{2.2cm} L{1.8cm} C{1.5cm} C{1.5cm} L{5.8cm}}
+  \toprule
+  \textbf{Date} & \textbf{Symbol} & \textbf{From} & \textbf{To} & \textbf{Reason} \\
+  \midrule
+  \endhead
+  2026-05-24 &
+    $u = \ln(\ell/\ell_0)$ & --- & \GRN &
+    Introduced in Doc IV as canonical logarithmic scale coordinate.
+    Supersedes bare $w$. \\[4pt]
+  2026-05-24 &
+    $w$ & \YEL & \RED &
+    Replaced by $u$ in Doc IV. \\[4pt]
+  2026-05-24 &
+    $\Pi_{m \leftarrow n}$ & \BLU & \GRN &
+    Accepted as Doc IV projection notation.
+    Equivalent to $\mathcal{P}_{n \to m}$. \\[4pt]
+  2026-05-24 &
+    $A_Q(\ell)$ & --- & \GRN &
+    Activation function introduced Doc IV.
+    Sigmoid form accepted. \\[4pt]
+  2026-05-24 &
+    $\mathbb{C}_p$ & --- & \GRN &
+    Complex fibre introduced Doc IV.
+    Fibre bundle structure accepted. \\[4pt]
+  2026-05-24 &
+    $ds_5^2$ & \BLU & \GRN &
+    5D interval fully formalised in Doc IV. \\[4pt]
+  2026-05-24 &
+    $I$ (plain) & \YEL & \RED &
+    Replaced by $\mathfrak{I}$ and $\mathfrak{D}$. \\[4pt]
+  2026-05-24 &
+    $\mathcal{P}_{a \to b}$ & \BLU & \GRN &
+    Accepted as canonical projection operator. \\[4pt]
+  2026-05-24 &
+    $S$ (bare) & \YEL & \ORG &
+    Collision confirmed: scale $S_n$ vs entropy $S$ vs steric $S_{\mathrm{steric}}$. \\[4pt]
+  2026-05-24 &
+    $\chi_{ab}$ & --- & \BLU &
+    Candidate scale-access compatibility variable introduced. \\[4pt]
+  2026-05-24 &
+    $\eta_{ab}$ & --- & \BLU &
+    Candidate projection efficiency variable introduced. \\[4pt]
+  2026-05-24 &
+    $\epsilon_{ab}$ & --- & \BLU &
+    Candidate projection error variable introduced. \\[4pt]
+  2026-05-24 &
+    $\Gamma_{AB}$ & --- & \BLU &
+    Candidate relation-graph symbol introduced. \\[4pt]
+  2026-05-24 &
+    $\kappa_{AB}$ & --- & \BLU &
+    Candidate coupling-strength scalar introduced. \\[4pt]
+  \midrule
+  \multicolumn{5}{c}{\textit{--- add new entries above this line, most recent first ---}} \\
+  \bottomrule
+\end{longtable}
+
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{IKK Notation Registry --- VSEPR-SIM Theoretical Division.
+  A symbol without a status tag is a disaster waiting for an audience.}
+\end{center}
+
+\end{document}

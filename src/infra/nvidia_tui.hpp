@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * nvidia_tui.hpp
  * ---------------
@@ -6,10 +6,10 @@
  * Accessed via hidden keypress during the VSEPR-MOTD boot sequence.
  *
  * Secret keys (during 2s boot window):
- *   '1'  →  NVIDIA subsystem monitor (live TUI)
- *   '0'  →  list all secret keys
+ *   '1'  ->  NVIDIA subsystem monitor (live TUI)
+ *   '0'  ->  list all secret keys
  *
- * The boot window is invisible — no prompt, no cursor change.
+ * The boot window is invisible  -  no prompt, no cursor change.
  * You either know about it or you don't.
  */
 
@@ -20,7 +20,7 @@ namespace infra {
  * Brief non-blocking input window during boot.
  * Waits up to timeout_ms for a keypress.
  * Returns the key character, or '\0' if nothing was pressed.
- * No visible prompt — truly secret.
+ * No visible prompt  -  truly secret.
  */
 char check_secret_keys(int timeout_ms = 2000);
 

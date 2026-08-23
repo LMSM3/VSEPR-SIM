@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 thermal_properties.hpp
 ----------------------
@@ -369,7 +369,7 @@ inline double ThermalPropertyCalculator::estimate_heat_capacity(
     // Dulong-Petit law: Cv ≈ 3R per atom (classical limit)
     const double R = 8.314;  // J/mol·K
     
-    // At high T, Cv → 3R per atom
+    // At high T, Cv -> 3R per atom
     // At low T, quantum corrections apply
     
     double Cv = 3.0 * R * mol.num_atoms();
@@ -455,9 +455,9 @@ inline std::string ThermalPropertyCalculator::render_spatial_grid_2d(
     const SpatialGrid& grid, int slice_axis) {
     
     std::string output;
-    output += "\n╔══════════════════════════════════════════╗\n";
-    output += "║  Spatial Distribution (20x20 grid)      ║\n";
-    output += "╚══════════════════════════════════════════╝\n\n";
+    output += "\n+==========================================+\n";
+    output += "|  Spatial Distribution (20x20 grid)      |\n";
+    output += "+==========================================+\n\n";
     
     // Take middle slice
     int slice_index = SpatialGrid::GRID_SIZE / 2;

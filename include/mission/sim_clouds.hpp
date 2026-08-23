@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * sim_clouds.hpp
  * ==============
- * V2 — Gas Clouds
+ * V2  -  Gas Clouds
  * Scale Mission: Particles, Clouds, Lattice, and Pipe Gas 3
  *
  * Statistical / semi-discrete gas ensemble simulation.
@@ -18,12 +18,12 @@
  *   - Optional reaction readiness
  *
  * Core cloud state:
- *   C = {ρ, T, P, u, χ_1, χ_2, …, χ_n}
+ *   C = {ρ, T, P, u, χ_1, χ_2, ..., χ_n}
  *
  * Stress bands (from mission work order):
  *   Instant    : 1 cloud, static property solve
- *   Short_50ms : 1–3 clouds, one-step estimate
- *   Medium_5s  : 1–10 clouds, time evolution, mixing + pressure changes
+ *   Short_50ms : 1-3 clouds, one-step estimate
+ *   Medium_5s  : 1-10 clouds, time evolution, mixing + pressure changes
  *   Long_5min  : many clouds, broad P-T sweeps, cloud-cloud interaction
  *
  * Deliverables:
@@ -33,10 +33,10 @@
  *   - gas3-compatible summary output
  *
  * Integrates with:
- *   include/mission/mission_profile.hpp  — shared profile + entity layer
- *   include/gas2/gas2_engine.hpp         — EOS + kinetic + thermal
- *   include/gas2/gas2_species.hpp        — GasSpecies database
- *   include/gas3/gas3_state_record.hpp   — QualityTier for output records
+ *   include/mission/mission_profile.hpp   -  shared profile + entity layer
+ *   include/gas2/gas2_engine.hpp          -  EOS + kinetic + thermal
+ *   include/gas2/gas2_species.hpp         -  GasSpecies database
+ *   include/gas3/gas3_state_record.hpp    -  QualityTier for output records
  */
 
 #include "mission/mission_profile.hpp"
@@ -124,7 +124,7 @@ inline RuntimeProfile profile_for(MissionScale s) {
 }
 
 // ============================================================================
-// Species fraction — one component of a mixture
+// Species fraction  -  one component of a mixture
 // ============================================================================
 
 struct SpeciesFraction {
@@ -134,7 +134,7 @@ struct SpeciesFraction {
 };
 
 // ============================================================================
-// Cloud state  C = {ρ, T, P, u, χ_1…χ_n}
+// Cloud state  C = {ρ, T, P, u, χ_1...χ_n}
 // ============================================================================
 
 struct CloudState {
@@ -279,7 +279,7 @@ struct CloudSystem {
 };
 
 // ============================================================================
-// Main run — deterministic cloud scheduler
+// Main run  -  deterministic cloud scheduler
 // ============================================================================
 
 inline MissionDeliverable run(CloudSystem& sys) {
@@ -340,7 +340,7 @@ inline MissionDeliverable run(CloudSystem& sys) {
 }
 
 // ============================================================================
-// CSV export — cloud state table
+// CSV export  -  cloud state table
 // ============================================================================
 
 inline std::string to_csv(const CloudSystem& sys) {
@@ -365,7 +365,7 @@ inline std::string to_csv(const CloudSystem& sys) {
 
 inline std::string report(const CloudSystem& sys, const MissionDeliverable& d) {
     std::ostringstream o;
-    o << "\n  V2 Gas Clouds — " << mission_scale_name(sys.profile.scale) << "\n";
+    o << "\n  V2 Gas Clouds  -  " << mission_scale_name(sys.profile.scale) << "\n";
     o << "  " << std::string(60, '-') << "\n";
     o << "  Clouds    : " << d.entity_count << "\n";
     o << "  Steps     : " << d.steps_run << "\n";

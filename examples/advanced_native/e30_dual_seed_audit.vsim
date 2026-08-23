@@ -1,0 +1,148 @@
+# E30 - Dual-seed audit with deterministic PBC and Dynx intent.
+# Compatibility: parser-supported; Dynx emission depends on the selected runner.
+
+[project]
+name        = "e30_dual_seed_audit"
+version     = "v5.14.1-examples-1"
+seed_base   = 30030
+determinism = true
+description = "Audit deterministic NaCl formation under dual-seed identity assignment"
+
+[example]
+catalog_id        = "E30"
+compatibility     = "SUPPORTED_PARSE_PARTIAL_DISPATCH"
+execution_surface = "vsepr validate; vsepr run"
+primary_reference = "VSIM_REFERENCE.md seed and dynx sections"
+truth_boundary    = "seed_metadata_may_label_birth_identity_but_must_not_rewrite_physics"
+
+[seed]
+foundation = 30030
+defect     = 33030
+formation  = 36030
+thermal    = 38030
+placement  = 41030
+world_seed = "7f4a7c159e3779b97f4a7c159e3779b97f4a7c159e3779b97f4a7c159e3779b9"
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "3x3x3"
+phase     = "solid"
+
+[cell]
+type  = "orthorhombic"
+lx    = 16.89
+ly    = 16.89
+lz    = 16.89
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+box_size_ang     = 16.89
+periodic         = true
+fire_max_steps   = 600
+fire_dt_fs       = 0.5
+formation_preset = "ionic"
+use_ewald        = true
+ewald_alpha      = 0.30
+ewald_rcut       = 8.0
+ewald_kmax       = 5
+
+[[simulation.molecule]]
+formula       = "NaCl"
+count         = 27
+temperature_K = 100.0
+lattice       = "rocksalt"
+
+[run]
+mode         = "relax"
+max_steps    = 600
+dt_fs        = 0.5
+temperature  = 100.0
+converge     = true
+output_level = "standard"
+
+[environment]
+periodic    = true
+temperature = 100.0
+pressure    = 0.0
+medium      = "vacuum"
+
+[observe]
+metrics       = ["formation", "energy_map", "coordination"]
+output_format = "json"
+every_n_steps = 20
+
+[dynx]
+emit_mode       = "on_complete"
+rich_frames     = true
+live_cache      = false
+output_path     = "out/advanced_native/e30/e30_dual_seed_audit.dynx"
+frame_skip      = 2
+write_provenance = true
+compress        = false
+
+[verify]
+enabled             = true
+profile             = "e30_dual_seed_nacl"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.815
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                  = true
+write_xyzfull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+output_dir                 = "out/advanced_native/e30"
+
+[export.demo]
+enabled          = true
+demo_frames      = 12
+strategy         = "uniform"
+write_demo_dynx  = true
+write_demo_bundle = true
+include_source   = true
+include_manifest = true
+bundle_name      = "e30_dual_seed_audit"
+
+[report]
+title                   = "E30 Dual-Seed Audit"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type      = "none"
+gl_auto_orbit    = false
+gl_spin          = false
+render_interval  = 20
+
+[open]
+enabled = false
+

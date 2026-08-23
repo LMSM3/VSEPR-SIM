@@ -1,0 +1,56 @@
+# UI-001 minimum operator workflow demonstration
+# Checklist: docs/UI_OPERATOR_WORKFLOW.md
+# Run: vsepr run scripts/demos/ui_workflow_h2o.vsim
+
+print_console "UI-001 workflow: generate, inspect, control, and replay water output"
+
+[project]
+name        = "ui_workflow_h2o"
+version     = "v5.1.4"
+seed_base   = 85003
+determinism = true
+description = "Minimum interactive operator workflow demonstration"
+
+[simulation]
+fire_max_steps   = 25
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "organic"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 1
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode            = "md"
+num_steps       = 25
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 5
+render_interval = 5
+
+[analysis]
+rmsd         = true
+energy_trace = true
+stationarity = true
+
+[export]
+output_dir          = "out/ui_workflow_h2o"
+write_xyz           = true
+write_xyzfull       = true
+write_analysis_json = true
+write_report_md     = true
+write_manifest_json = true
+
+[visual]
+output_type      = "gl_interactive"
+gl_spin          = true
+gl_spin_axis     = "y"
+gl_spin_deg_per_s = 20.0
+gl_show_axes     = true
+gl_window_width  = 960
+gl_window_height = 720

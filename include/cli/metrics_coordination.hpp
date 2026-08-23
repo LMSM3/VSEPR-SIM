@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "atomistic/core/state.hpp"
 #include "cli/metrics_rdf.hpp"
@@ -19,7 +19,7 @@ namespace cli {
  * Counts neighbors within first coordination shell (defined by RDF minimum).
  * 
  * For each atom i of species A:
- *   CN_A→B(i) = #{j ∈ B | r_ij < r_cut_A,B}
+ *   CN_A->B(i) = #{j ∈ B | r_ij < r_cut_A,B}
  * 
  * Where r_cut_A,B = first RDF minimum for pair (A,B)
  */

@@ -1,18 +1,18 @@
-/**
+﻿/**
  * batch_display_stress.cpp
  * ========================
  * VSEPR-SIM | beta.7 | Stress test for BatchWindowBridge + ContinuousRunDisplay
  *
  * Tests:
  *   T1  push/pull basic round-trip
- *   T2  high-frequency producer (10 000 frames) — drop-oldest, no deadlock
+ *   T2  high-frequency producer (10 000 frames)  -  drop-oldest, no deadlock
  *   T3  frame count monotonicity
  *   T4  status snapshot consistency under concurrent updates
  *   T5  elapsed-time monotonicity
  *   T6  display_tick throttle (respects fps limit)
  *   T7  start / finish lifecycle; is_done() state machine
- *   T8  multi-cycle: start → finish → start → finish
- *   T9  ContinuousRunDisplay console loop — live threaded integration
+ *   T8  multi-cycle: start -> finish -> start -> finish
+ *   T9  ContinuousRunDisplay console loop  -  live threaded integration
  *   T10 push_frame with empty label (no status overwrite)
  *   T11 late consumer (producer finishes before display ever ticks)
  *   T12 zero-atom XYZFrame round-trip (edge case)
@@ -107,7 +107,7 @@ static bool t1_basic_roundtrip() {
 }
 
 // ---------------------------------------------------------------------------
-// T2: high-frequency producer — 10 000 frames, no deadlock, no block
+// T2: high-frequency producer  -  10 000 frames, no deadlock, no block
 // ---------------------------------------------------------------------------
 static bool t2_high_freq_producer() {
 	BatchWindowBridge b;
@@ -310,7 +310,7 @@ static bool t8_multi_cycle() {
 }
 
 // ---------------------------------------------------------------------------
-// T9: ContinuousRunDisplay console loop — threaded integration
+// T9: ContinuousRunDisplay console loop  -  threaded integration
 // ---------------------------------------------------------------------------
 static bool t9_console_loop_integration() {
 	ContinuousRunDisplay display;
@@ -354,7 +354,7 @@ static bool t9_console_loop_integration() {
 }
 
 // ---------------------------------------------------------------------------
-// T10: push_frame with empty label — no status.run_label overwrite
+// T10: push_frame with empty label  -  no status.run_label overwrite
 // ---------------------------------------------------------------------------
 static bool t10_empty_label() {
 	BatchWindowBridge b;

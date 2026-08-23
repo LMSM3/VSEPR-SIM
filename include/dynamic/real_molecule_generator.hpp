@@ -27,6 +27,7 @@
 #include <random>
 #include <atomic>
 #include <thread>
+#include <mutex>
 #include <deque>
 #include <set>
 #include <map>

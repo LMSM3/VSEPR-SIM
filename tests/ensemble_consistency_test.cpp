@@ -1,4 +1,4 @@
-/**
+﻿/**
  * ensemble_consistency_test.cpp
  * ------------------------------
  * Ensemble Consistency & Perturbation Invariance Test
@@ -323,9 +323,9 @@ public:
 // ============================================================================
 
 void test_carbon_dimer() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Test 1: Carbon Dimer (C₂)                              ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|  Test 1: Carbon Dimer (C₂)                              |\n";
+    std::cout << "+==========================================================+\n\n";
     
     // Create simple C2 molecule
     CoreState initial;
@@ -370,9 +370,9 @@ void test_carbon_dimer() {
 }
 
 void test_perturbation_invariance() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Test 2: Perturbation Invariance                        ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|  Test 2: Perturbation Invariance                        |\n";
+    std::cout << "+==========================================================+\n\n";
     
     // Create simple system (4-atom carbon chain)
     CoreState initial;
@@ -431,9 +431,9 @@ void test_perturbation_invariance() {
 }
 
 void test_defect_insertion() {
-    std::cout << "\n╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Test 3: Defect Insertion Robustness                    ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==========================================================+\n";
+    std::cout << "|  Test 3: Defect Insertion Robustness                    |\n";
+    std::cout << "+==========================================================+\n\n";
     
     // Create small cluster
     CoreState initial;
@@ -497,12 +497,12 @@ void test_defect_insertion() {
 // ============================================================================
 
 int main() {
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Ensemble Consistency & Perturbation Invariance Test      ║\n";
-    std::cout << "╠════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  Testing if structure predictions are physically robust   ║\n";
-    std::cout << "║  or just artifacts of numerical luck.                     ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  Ensemble Consistency & Perturbation Invariance Test      |\n";
+    std::cout << "╠============================================================╣\n";
+    std::cout << "|  Testing if structure predictions are physically robust   |\n";
+    std::cout << "|  or just artifacts of numerical luck.                     |\n";
+    std::cout << "+============================================================+\n";
     
     try {
         // Test 1: Seed invariance
@@ -515,16 +515,16 @@ int main() {
         test_defect_insertion();
         
         // Summary
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ALL TESTS PASSED                                          ║\n";
-        std::cout << "╠════════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  ✅ Ensemble statistics are seed-invariant                 ║\n";
-        std::cout << "║  ✅ System is robust to micro-perturbations                ║\n";
-        std::cout << "║  ✅ Low-rate defects don't destroy ensemble structure      ║\n";
-        std::cout << "╠════════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Conclusion: Your structure predictions are physically     ║\n";
-        std::cout << "║              robust, not numerical artifacts.              ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ALL TESTS PASSED                                          |\n";
+        std::cout << "╠============================================================╣\n";
+        std::cout << "|  ✅ Ensemble statistics are seed-invariant                 |\n";
+        std::cout << "|  ✅ System is robust to micro-perturbations                |\n";
+        std::cout << "|  ✅ Low-rate defects don't destroy ensemble structure      |\n";
+        std::cout << "╠============================================================╣\n";
+        std::cout << "|  Conclusion: Your structure predictions are physically     |\n";
+        std::cout << "|              robust, not numerical artifacts.              |\n";
+        std::cout << "+============================================================+\n\n";
         
     } catch (const std::exception& e) {
         std::cerr << "\n❌ TEST FAILED: " << e.what() << "\n\n";

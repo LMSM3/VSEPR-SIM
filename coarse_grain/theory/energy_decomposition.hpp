@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * energy_decomposition.hpp — Full Energy Decomposition (Theory §3.1)
+ * energy_decomposition.hpp  -  Full Energy Decomposition (Theory §3.1)
  *
  * Implements the formal energy decomposition for the coarse-grained system:
  *
@@ -11,14 +11,14 @@
  * absorbed into the SH-expanded orientation channels.  The energy terms
  * that survive in the CG representation are:
  *
- *   U_vdW    → LJ 12-6 isotropic + dispersion modulation [B9]
- *   U_Coul   → electrostatic channel + modulation [B8]
- *   U_steric → steric channel + modulation [B7]
- *   U_orient → orientational coupling via SH dot products
- *   U_pol    → polarisation energy from QM L0 α-proxy
- *   U_decay  → η-relaxation dissipation (slow state energy)
- *   U_resp   → environment-responsive coupling energy
- *   U_ext    → external field coupling (placeholder)
+ *   U_vdW    -> LJ 12-6 isotropic + dispersion modulation [B9]
+ *   U_Coul   -> electrostatic channel + modulation [B8]
+ *   U_steric -> steric channel + modulation [B7]
+ *   U_orient -> orientational coupling via SH dot products
+ *   U_pol    -> polarisation energy from QM L0 α-proxy
+ *   U_decay  -> η-relaxation dissipation (slow state energy)
+ *   U_resp   -> environment-responsive coupling energy
+ *   U_ext    -> external field coupling (placeholder)
  *
  * Pairwise mixed interaction structure (§3.3):
  *
@@ -84,7 +84,7 @@ inline const char* channel_name(EnergyChannel ch) {
 // ============================================================================
 
 /**
- * ChannelEnergy — a single resolved energy contribution.
+ * ChannelEnergy  -  a single resolved energy contribution.
  *
  * Carries the value in kcal/mol and the channel tag for provenance.
  */
@@ -99,7 +99,7 @@ struct ChannelEnergy {
 // ============================================================================
 
 /**
- * EnergyDecomposition — full decomposition of U_tot into §3.1 channels.
+ * EnergyDecomposition  -  full decomposition of U_tot into §3.1 channels.
  *
  * U_tot = Σ_k  channels[k].value
  *
@@ -136,7 +136,7 @@ struct EnergyDecomposition {
 // ============================================================================
 
 /**
- * PairInteraction — decomposed pairwise energy U_ij^{xy}
+ * PairInteraction  -  decomposed pairwise energy U_ij^{xy}
  *
  *   U_ij^{xy} = U_{ij,steric} + U_{ij,elec} + U_{ij,disp}
  *             + U_{ij,orient}  + U_{ij,decay-coupled}
@@ -281,7 +281,7 @@ inline double decay_energy_per_bead(double f_target, double eta,
  *
  * U_resp = Σ_{ij} Σ_k (g_k − 1) · U_{ij,k}^{base}
  *
- * This is the *excess* energy due to environment modulation — the
+ * This is the *excess* energy due to environment modulation  -  the
  * difference between modulated and unmodulated interaction.
  *
  * Per-pair, per-channel:

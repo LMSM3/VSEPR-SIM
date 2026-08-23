@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "engine.hpp"
 #include "../core/state.hpp"
 #include <vector>
@@ -25,7 +25,7 @@ struct Motif {
 /**
  * Reaction pattern: frequently observed transformation
  * 
- * Example: "carbonyl + nucleophile → tetrahedral intermediate"
+ * Example: "carbonyl + nucleophile -> tetrahedral intermediate"
  */
 struct ReactionPattern {
     std::string name;
@@ -247,7 +247,7 @@ double compute_motif_similarity(const Motif& a, const Motif& b);
  * 
  * @param reactions List of reactions
  * @param similarity_threshold Merge clusters if similarity > threshold
- * @return Cluster assignments (reaction_index → cluster_id)
+ * @return Cluster assignments (reaction_index -> cluster_id)
  */
 std::vector<uint32_t> cluster_reactions(
     const std::vector<ProposedReaction>& reactions,

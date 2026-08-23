@@ -1,4 +1,4 @@
-/**
+﻿/**
  * fit_alpha_model.cpp
  * ===================
  * Offline deterministic fitter for Alpha Method D (v2.8.X).
@@ -29,10 +29,10 @@
  *   This constrains group-wise trend direction, not just pointwise values.
  *
  * Chemistry-aware weights (initial):
- *   Noble gases  (group 18):          x4.0  — shell-closure regime
- *   Halogens     (group 17):          x2.5  — late p-block before closure
- *   Alkalis      (group 1):           x2.5  — s-block trend anchors
- *   Early actinides (Th-Am, Z=90-95): x2.0  — 5f/6d crossover
+ *   Noble gases  (group 18):          x4.0   -  shell-closure regime
+ *   Halogens     (group 17):          x2.5   -  late p-block before closure
+ *   Alkalis      (group 1):           x2.5   -  s-block trend anchors
+ *   Early actinides (Th-Am, Z=90-95): x2.0   -  5f/6d crossover
  *   Heavy-Z amplification:            x(1 + lambda*(Z/100)^p)
  *
  * Auto-weight update rule (per outer iteration):
@@ -120,7 +120,7 @@ static std::vector<RefEntry> load_csv(const char* path) {
 }
 
 // ============================================================================
-// T3 — Training coverage check
+// T3  -  Training coverage check
 // ============================================================================
 
 static void check_coverage(const std::vector<RefEntry>& data) {
@@ -278,7 +278,7 @@ static void update_weights(std::vector<RefEntry>& data,
 }
 
 // ============================================================================
-// Inner coordinate descent — one full sweep over all 19 parameters
+// Inner coordinate descent  -  one full sweep over all 19 parameters
 // Alpha Method D (v2.8.X)
 // ============================================================================
 
@@ -466,7 +466,7 @@ static AlphaModelParams fit(std::vector<RefEntry>& data,
     std::printf("Initial loss: %.6f\n", best_loss);
 
     // Track the best unweighted RMS checkpoint separately from the weighted loss.
-    // The weighted loss will keep rising as weights saturate — we want the params
+    // The weighted loss will keep rising as weights saturate  -  we want the params
     // at the lowest *unweighted* RMS, not the final ones.
     AlphaModelParams best_rms_params = best;
     double best_rms = 1e9;
@@ -611,7 +611,7 @@ static void report(const std::vector<RefEntry>& data,
 }
 
 // ============================================================================
-// JSON writer — Alpha Method D (v2.8.X)
+// JSON writer  -  Alpha Method D (v2.8.X)
 // ============================================================================
 
 static void write_json(const char* path, const AlphaModelParams& p) {
@@ -729,7 +729,7 @@ static bool try_load_warmstart(const char* path, AlphaModelParams& params) {
 }
 
 // ============================================================================
-// Stochastic perturbation — jitter warm-start params so each run explores
+// Stochastic perturbation  -  jitter warm-start params so each run explores
 // a different trajectory through the coupled 19-D parameter space.
 // ============================================================================
 
@@ -756,7 +756,7 @@ static void perturb_params(AlphaModelParams& p, std::mt19937& rng, double scale)
 }
 
 // ============================================================================
-// Stochastic data subsampling — each run trains on a random subset so
+// Stochastic data subsampling  -  each run trains on a random subset so
 // different runs explore different loss landscapes.  Final evaluation is
 // always on the full dataset.
 // ============================================================================
@@ -783,7 +783,7 @@ int main() {
     std::setvbuf(stdout, nullptr, _IOLBF, 0);  // line-buffered for TUI monitor
     std::printf("=== Alpha Method D Fitter (v2.8.X) ===\n\n");
 
-    // ── Stochastic seed (from FIT_SEED env or random_device) ──
+    // -- Stochastic seed (from FIT_SEED env or random_device) --
     uint32_t seed = 0;
     const char* seed_env = std::getenv("FIT_SEED");
     if (seed_env && seed_env[0]) {
@@ -801,7 +801,7 @@ int main() {
 
     WeightConfig cfg;
 
-    // ── Warm-start with perturbation ──
+    // -- Warm-start with perturbation --
     AlphaModelParams start_params;
     const char* json_path = "config/alpha_model_params.json";
     bool warm = try_load_warmstart(json_path, start_params);
@@ -817,7 +817,7 @@ int main() {
         std::printf("[Cold-start] Using defaults.\n");
     }
 
-    // ── Stochastic data subsampling ──
+    // -- Stochastic data subsampling --
     auto train_data = subsample(full_data, rng, 0.88);
     std::printf("Training on %zu/%zu entries (stochastic subsample)\n\n",
                 train_data.size(), full_data.size());
@@ -844,11 +844,11 @@ int main() {
     std::printf("  blob_f_half = %.6f\n", params.blob_f_half);
     std::printf("  blob_f_full = %.6f\n", params.blob_f_full);
 
-    // ── Report on full dataset (not the subsample) ──
+    // -- Report on full dataset (not the subsample) --
     auto full_pairs = build_group_pairs(full_data);
     report(full_data, params, full_pairs);
 
-    // ── Conditional write: only update JSON if this run improved ──
+    // -- Conditional write: only update JSON if this run improved --
     auto final_m = compute_metrics(full_data, params, full_pairs);
     if (final_m.rms_global < incumbent_rms) {
         write_json(json_path, params);

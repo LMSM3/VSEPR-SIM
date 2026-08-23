@@ -1,5 +1,5 @@
-/**
- * test_descriptor_enrichment.cpp — Tests for Multi-Channel & Higher-Order Descriptors
+﻿/**
+ * test_descriptor_enrichment.cpp  -  Tests for Multi-Channel & Higher-Order Descriptors
  *
  * Validates the descriptor enrichment subsystem:
  *   1. Dynamic SH evaluation (runtime ℓ_max)
@@ -286,17 +286,17 @@ static void test_multi_channel_potential() {
     A.init(4);
     B.init(4);
 
-    // Identical steric profiles → positive coupling
+    // Identical steric profiles -> positive coupling
     A.steric.coeffs[0] = 1.0;
     A.steric.coeffs[sh_index(2, 0)] = 0.5;
     B.steric.coeffs[0] = 1.0;
     B.steric.coeffs[sh_index(2, 0)] = 0.5;
 
-    // Different electrostatic → lower coupling
+    // Different electrostatic -> lower coupling
     A.electrostatic.coeffs[0] = 1.0;
     B.electrostatic.coeffs[0] = -1.0;
 
-    // Zero dispersion → zero dispersion contribution
+    // Zero dispersion -> zero dispersion contribution
     // (already zero from init)
 
     MultiChannelPotentialParams params;
@@ -353,17 +353,17 @@ static void test_adaptive_complexity() {
     using namespace coarse_grain;
 
     check(MultiChannelDescriptor::suggest_l_max(0.05) == 2,
-          "nearly isotropic → ℓ_max = 2");
+          "nearly isotropic -> ℓ_max = 2");
     check(MultiChannelDescriptor::suggest_l_max(0.2) == 4,
-          "moderate anisotropy → ℓ_max = 4");
+          "moderate anisotropy -> ℓ_max = 4");
     check(MultiChannelDescriptor::suggest_l_max(0.5) == 6,
-          "strong anisotropy → ℓ_max = 6");
+          "strong anisotropy -> ℓ_max = 6");
     check(MultiChannelDescriptor::suggest_l_max(0.8) == 8,
-          "complex anisotropy → ℓ_max = 8");
+          "complex anisotropy -> ℓ_max = 8");
     check(MultiChannelDescriptor::suggest_l_max(0.0) == 2,
-          "zero anisotropy → ℓ_max = 2");
+          "zero anisotropy -> ℓ_max = 2");
     check(MultiChannelDescriptor::suggest_l_max(1.0) == 8,
-          "maximum anisotropy → ℓ_max = 8");
+          "maximum anisotropy -> ℓ_max = 8");
 }
 
 // ============================================================================
@@ -404,7 +404,7 @@ static void test_backward_compatibility() {
     // Existing compile-time constants still valid
     check(SH_L_MAX == 4, "SH_L_MAX still 4");
     check(SH_NUM_COEFFS == 25, "SH_NUM_COEFFS still 25");
-    check(sh_index(2, 1) == 6, "sh_index(2,1) still 6");
+    check(sh_index(2, 1) == 7, "sh_index(2,1) == 7  (formula: l²+l+m)");
 
     // Fixed API still works
     auto Y = evaluate_all_harmonics(0.5, 1.0);

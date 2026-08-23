@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas2_species.hpp
  * ----------------
  * Species Database and Fluid Property Definitions for gas2 Module.
@@ -175,7 +175,7 @@ inline std::optional<GasSpecies> make_monatomic_species(int Z) {
     gs.k_thermal_mWmK = 15.0;                        // approximate
     gs.d_kinetic_pm  = ns->d_kinetic_pm;
     // VdW parameters: approximate from Tc/Pc if available, else from ionisation proxy
-    // Use London-dispersion scaling: a ∝ (alpha_pol * I) — proxy from molar mass
+    // Use London-dispersion scaling: a ∝ (alpha_pol * I)  -  proxy from molar mass
     gs.vdw_a         = 0.012 * ns->molar_mass_g;     // crude proxy; Pa·m^6/mol^2 order
     gs.vdw_b         = 2.5e-5 * std::cbrt(ns->molar_mass_g);  // Tc/Pc proxy
     // Critical point: approximate using Tc ~ 0.64 * boiling_K (Trouton-type)

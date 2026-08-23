@@ -1,0 +1,650 @@
+% ============================================================================
+%  Inverse Kaluza-Klein Scale Symmetry Framework
+%  Document I: An Alternative Solution Framework for the Schrodinger Equation
+%  via Scale-Projected Identity Decomposition
+%  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% --- Geometry ----------------------------------------------------------------
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% --- Fonts / encoding --------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Math --------------------------------------------------------------------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{physics}
+
+% --- Tables ------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+
+% --- Lists -------------------------------------------------------------------
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% --- Headers / footers -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Inverse KK Scale Symmetry}}
+\fancyhead[R]{\small\textit{Doc I --- Alternative Schrodinger Framework}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section formatting ------------------------------------------------------
+\usepackage{titlesec}
+\titleformat{\section}
+  {\Large\bfseries}
+  {\S\thesection}{1em}{}
+\titleformat{\subsection}
+  {\large\bfseries}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}
+  {\thesubsubsection}{1em}{}
+
+% --- Hyperlinks --------------------------------------------------------------
+\usepackage[
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue
+]{hyperref}
+
+% --- Theorem-like environments -----------------------------------------------
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+% --- Custom operators --------------------------------------------------------
+\DeclareMathOperator{\Proj}{Proj}
+\newcommand{\Id}{\mathcal{I}}
+\newcommand{\IKKRes}{\mathcal{R}}
+\newcommand{\Obs}{\mathcal{O}}
+\newcommand{\Pack}{\Pi}
+\newcommand{\Anch}{\mathcal{A}}
+\newcommand{\Scale}{S}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries Inverse Kaluza-Klein Scale Symmetry\par}
+  \vspace{0.8cm}
+  {\LARGE Document I\par}
+  \vspace{0.5cm}
+  {\Large An Alternative Solution Framework for the\\
+  Schr\"{o}dinger Equation via\\
+  Scale-Projected Identity Decomposition\par}
+  \vspace{2cm}
+  {\large VSEPR-SIM Theoretical Division\par}
+  \vspace{0.4cm}
+  {\large Development Day 64\par}
+  \vspace{3cm}
+  \begin{abstract}
+	\noindent
+	The standard Schr\"{o}dinger equation operates on a wavefunction
+	$\Psi(\mathbf{r}, t)$ defined over classical 3D space plus time.
+	This document proposes an alternative framework in which the wavefunction
+	is reinterpreted as the \emph{scale-projected shadow} of a fuller
+	identity structure $\mathcal{I}$ defined over an extended scale ladder
+	$\{S_0, S_1, \ldots, S_D\}$.
+	The standard solution is recovered at the $S_3$--$S_4$ projection;
+	corrections at higher scales produce measurable residuals that map onto
+	dark-sector and quantum-gravity phenomenology.
+	The framework does not modify the Schr\"{o}dinger equation's algebra;
+	it reinterprets what the wavefunction \emph{is} and why it succeeds and
+	fails where it does.
+  \end{abstract}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{The Standard Framework and Its Projection Assumption}
+
+\subsection{The Schr\"{o}dinger Equation as Usually Stated}
+
+The time-dependent Schr\"{o}dinger equation is:
+\begin{equation}
+  i\hbar\,\frac{\partial}{\partial t}\Psi(\mathbf{r}, t)
+  = \hat{H}\,\Psi(\mathbf{r}, t)
+  \label{eq:TDSE}
+\end{equation}
+where $\hat{H}$ is the Hamiltonian operator, $\mathbf{r} \in \mathbb{R}^3$,
+and $\Psi$ is complex-valued. The Born rule assigns probability density:
+\begin{equation}
+  \rho(\mathbf{r}, t) = |\Psi(\mathbf{r}, t)|^2
+\end{equation}
+
+This framework is extraordinarily predictive at the scale $S_3$--$S_4$
+(spatial/binding + time-ordered). It fails or requires patching at:
+\begin{itemize}
+  \item Very high energy / short distance: ultraviolet divergences
+  \item Many-body regimes: exponential Hilbert space scaling
+  \item Gravitational coupling: no consistent quantum gravity
+  \item Cosmological scale: dark matter and dark energy residuals
+  \item Measurement: wavefunction collapse has no agreed dynamics
+\end{itemize}
+
+\begin{remark}
+These failure modes are not random. Under the present framework they are
+systematic projection losses: physics that exists at scales beyond $S_4$
+but is not captured by the $\Psi(\mathbf{r},t)$ representation.
+\end{remark}
+
+\subsection{The Implicit Projection Assumption}
+
+The standard equation contains a hidden assumption:
+\begin{equation}
+  \boxed{
+	\Psi(\mathbf{r},t) \equiv P_{S_3 \cup S_4}(\mathcal{I})
+  }
+  \label{eq:implicit-projection}
+\end{equation}
+That is, the wavefunction \emph{is} the identity state. This is the
+assumption the present framework relaxes. Instead:
+\begin{equation}
+  \Psi(\mathbf{r},t) = P_{S_3 \cup S_4}(\mathcal{I})
+  \quad \text{with} \quad
+  \mathcal{I} \supset P_{S_3 \cup S_4}(\mathcal{I})
+  \label{eq:relaxed}
+\end{equation}
+The residual is:
+\begin{equation}
+  \mathcal{R}_{S_3} = \mathcal{U}_{S_3}(\mathcal{I}) - \mathcal{E}_{S_3}(\Psi)
+  \label{eq:residual}
+\end{equation}
+where $\mathcal{U}_{S_3}$ is the full unprojected identity content at scale
+$S_3$ and $\mathcal{E}_{S_3}$ is the classical expectation recovery.
+
+% ============================================================================
+\section{Identity Structure and Scale Ladder}
+
+\subsection{Scale Ladder Definition}
+
+\begin{definition}[Scale entry]
+  Each scale level $S_n$ is a triple:
+  \begin{equation}
+	S_n = (D_n,\; M_n,\; L_n)
+  \end{equation}
+  where $D_n$ is the degree of freedom / dimensional permission added at
+  scale $n$, $M_n$ is the associated mediator or force carrier, and $L_n$
+  is the observational limit (the scale below which $S_n$ becomes relevant).
+\end{definition}
+
+\begin{table}[h]
+  \centering
+  \begin{tabularx}{\linewidth}{c l l l}
+	\toprule
+	Scale & Meaning & Mediator & Observational limit \\
+	\midrule
+	$S_0$ & Binary existence $E \in \{0,1\}$ & --- & Planck? \\
+	$S_1$ & Linear vector permission & --- & Sub-nuclear \\
+	$S_2$ & Relational / angular & Gluons (color) & Nuclear \\
+	$S_3$ & Spatial / binding structure & Photons (EM) & Atomic \\
+	$S_4$ & Time-ordered transformation & $W, Z$ bosons & Weak \\
+	$S_5$ & Mass-energy curvature & Graviton (hypothetical) & Cosmological \\
+	$S_D$ & Dark-scale permission $w$ & $X_D$ (unknown) & $L_\text{EM}$ \\
+	\bottomrule
+  \end{tabularx}
+  \caption{Scale ladder. Time $t$ is the sequencing parameter of
+  $\mathcal{I}(t)$, not a scale level itself.}
+  \label{tab:scale-ladder}
+\end{table}
+
+\subsection{Identity Bundle and Identity Anchor}
+
+A particle is not a point. It is an identity bundle:
+\begin{equation}
+  \mathcal{I}_i(t) = \{c_{i1}, c_{i2}, \ldots, c_{im}\}
+  \label{eq:identity-bundle}
+\end{equation}
+where each component $c_{ik}$ carries a scale-level tag.
+
+The identity anchor (generalized center) is:
+\begin{equation}
+  \mathcal{A}_i(t)
+  = \frac{\sum_k \alpha_{ik}\, c_{ik}(t)}{\sum_k \alpha_{ik}}
+  = \frac{\bm{\alpha}_i^\top \mathbf{C}_i}{\bm{\alpha}_i^\top \mathbf{1}}
+  \label{eq:anchor}
+\end{equation}
+
+The observed 3D position is only the projection:
+\begin{equation}
+  \vec{r}_i^{\,\text{obs}} = P_{3D}\!\left(\mathcal{A}_i\right)
+\end{equation}
+
+The fuzz radius measures internal spread at the observed scale:
+\begin{equation}
+  r_f^2 =
+  \frac{\sum_k \alpha_k \left\|P_{3D}(c_k) - \vec{r}^{\,\text{obs}}\right\|^2}
+	   {\sum_k \alpha_k}
+  \label{eq:fuzz-radius}
+\end{equation}
+
+\begin{definition}[Fuzz ratio]
+  \begin{equation}
+	\Phi_S = \frac{r_f}{\ell_S}
+  \end{equation}
+  where $\ell_S$ is the characteristic length of scale $S$.
+  \begin{align*}
+	\Phi_S \ll 1 &\implies \text{point-like at scale } S \\
+	\Phi_S \sim 1 &\implies \text{fuzz-zone} \\
+	\Phi_S > 1  &\implies \text{non-point-defined at scale } S
+  \end{align*}
+\end{definition}
+
+% ============================================================================
+\section{The Alternative Wavefunction}
+
+\subsection{Extended State Space}
+
+In the standard framework, the state space is:
+\begin{equation}
+  \Psi: \mathbb{R}^3 \times \mathbb{R} \to \mathbb{C}
+\end{equation}
+
+In the extended framework, the full identity state lives in:
+\begin{equation}
+  \Psi_\text{full}: \mathbb{R}^3 \times w \times \mathbb{R} \to \mathbb{C}
+  \qquad
+  \Psi_\text{full} = \Psi(x, y, z, w;\, t)
+  \label{eq:extended-state}
+\end{equation}
+where $w$ is the dark-scale coordinate. The observed wavefunction is the
+projection:
+\begin{equation}
+  \Psi_\text{obs}(\mathbf{r}, t)
+  = \int \Psi_\text{full}(\mathbf{r}, w, t)\, K_\text{EM}(w)\, dw
+  \label{eq:projected-wavefunction}
+\end{equation}
+with $K_\text{EM}(w)$ the electromagnetic projection kernel.
+
+\subsection{The Extended Schr\"{o}dinger Equation}
+
+Replace $\hat{H}$ with the extended Hamiltonian:
+\begin{equation}
+  \hat{H}_\text{eff} = \hat{H}_{S_3} + \hat{H}_{S_4} + \hat{H}_w
+  \label{eq:extended-H}
+\end{equation}
+where $\hat{H}_w$ is the dark-scale Hamiltonian term. The extended equation
+becomes:
+\begin{equation}
+  \boxed{
+	i\hbar\,\frac{\partial}{\partial t}\Psi_\text{full}(\mathbf{r}, w, t)
+	= \hat{H}_\text{eff}\,\Psi_\text{full}(\mathbf{r}, w, t)
+  }
+  \label{eq:extended-TDSE}
+\end{equation}
+
+Integrating out $w$ with kernel $K_\text{EM}(w)$ recovers~\eqref{eq:TDSE}
+exactly when $\hat{H}_w$ is negligible, plus a correction term:
+\begin{equation}
+  i\hbar\,\frac{\partial \Psi_\text{obs}}{\partial t}
+  = \hat{H}_{S_3}\,\Psi_\text{obs}
+  + \underbrace{\int \hat{H}_w\,\Psi_\text{full}\, K_\text{EM}(w)\, dw}
+			   _{\displaystyle\delta\hat{H}_w[\Psi_\text{obs}]}
+  \label{eq:corrected-TDSE}
+\end{equation}
+
+\begin{remark}
+  $\delta\hat{H}_w$ is the residual Hamiltonian term invisible to EM
+  projection. It encodes exactly the physics that the standard equation
+  misses. In regimes where $\hat{H}_w \approx 0$, standard QM is
+  recovered without modification.
+\end{remark}
+
+\subsection{Cancellation and Hidden Active Structure}
+
+A critical property of the extended framework is that observable channel
+cancellation does not imply internal inactivity.
+
+Define the projected observable $I_j$ and hidden intensity $H_j$ for
+component $j$:
+\begin{align}
+  I_j &= \bm{\alpha}^\top \mathbf{c}_j \label{eq:observable-channel}\\
+  H_j &= \mathbf{c}_j^\top \mathbf{W}\, \mathbf{c}_j \label{eq:hidden-intensity}
+\end{align}
+
+The hidden-active condition:
+\begin{equation}
+  \boxed{I_j = 0, \quad H_j > 0}
+  \label{eq:hidden-active}
+\end{equation}
+
+\textbf{Example: neutron-like charge cancellation.}
+\begin{equation}
+  I_\text{charge} = +\tfrac{2}{3} - \tfrac{1}{3} - \tfrac{1}{3} = 0
+\end{equation}
+\begin{equation}
+  H_\text{charge}
+  = \left(\tfrac{2}{3}\right)^2
+  + \left(-\tfrac{1}{3}\right)^2
+  + \left(-\tfrac{1}{3}\right)^2
+  = \tfrac{2}{3} \neq 0
+\end{equation}
+The particle appears charge-neutral (zero observable channel) but has
+nonzero internal charge intensity. This structure is hidden from the
+$K_\text{EM}$ projection but present in $\hat{H}_w$.
+
+This generalizes to:
+\begin{center}
+  \begin{tabular}{ll}
+	\toprule
+	Observable channel & Hidden-active mechanism \\
+	\midrule
+	Electric charge & Quark charge cancellation \\
+	Color charge & Color neutrality (confinement) \\
+	Spin & Singlet pairing \\
+	Linear momentum & Bound-state internal motion \\
+	Angular momentum & $L + S = J = 0$ nuclear ground states \\
+	Magnetic moment & Quenched orbital contributions \\
+	Defect pairs & Frenkel / Schottky charge balance \\
+	Mechanical stress & Residual stress in balanced structures \\
+	\bottomrule
+  \end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Projection Failure and Exactness}
+
+\subsection{Many-to-One Projection}
+
+\begin{definition}[Projection non-injectivity]
+  A projection $P_S$ is non-injective when:
+  \begin{equation}
+	P_S(\mathcal{I}_a) = P_S(\mathcal{I}_b)
+	\quad \text{while} \quad
+	\mathcal{I}_a \neq \mathcal{I}_b
+  \end{equation}
+\end{definition}
+
+\begin{theorem}[Exactness failure]
+  When $P_S$ is non-injective:
+  \begin{equation}
+	P_S^{-1}(\Obs_S) \text{ is not unique.}
+  \end{equation}
+  Exact reconstruction from observation at scale $S$ is impossible.
+\end{theorem}
+
+\begin{proof}[Sketch]
+  Two distinct identity states $\mathcal{I}_a \neq \mathcal{I}_b$ produce
+  identical observations $\Obs_S$. No measurement at scale $S$ can
+  distinguish them. A unique inverse map would require information not
+  present at scale $S$. \qed
+\end{proof}
+
+\subsection{Destructive Inverse Packing}
+
+Packing is the forward process:
+\begin{equation}
+  \mathbf{C}^{(n)} \xrightarrow{\Pi_n} \mathbf{I}^{(n+1)}
+  \label{eq:packing}
+\end{equation}
+The inverse (annihilation / separation):
+\begin{equation}
+  \mathbf{I}^{(n+1)} \xrightarrow{\mathcal{A}} \mathbf{C}_\text{out}^{(n)}
+  \label{eq:annihilation}
+\end{equation}
+necessarily \emph{destroys or transforms} the original packed identity.
+
+\begin{proposition}
+  Complete hidden-variable maps require destructive inverse packing.
+  Therefore exact mapping cannot preserve the system being mapped.
+\end{proposition}
+
+This connects to the quantum no-cloning theorem and to the irreversibility
+of measurement. It is not an epistemological limitation; it is a structural
+consequence of packing.
+
+% ============================================================================
+\section{Entanglement as a Relation-Particle}
+
+\subsection{The Relation Object}
+
+Two entangled particles $A$ and $B$ share a relation object:
+\begin{equation}
+  \mathcal{R}_{AB} = \bigl[0,\, 0,\, 0,\, 0\;\big|\;\mathbf{T}_{AB}\bigr]
+  \label{eq:relation-object}
+\end{equation}
+The first four entries are spacetime displacement channels:
+\begin{equation}
+  \Delta x = \Delta y = \Delta z = \Delta t = 0
+\end{equation}
+The trinary relation vector:
+\begin{equation}
+  \mathbf{T}_{AB} \in \{-1, 0, +1\}^m
+\end{equation}
+carries the real correlational content.
+
+\begin{remark}
+  $[0,0,0,0]$ means \emph{no spacetime displacement}, not
+  \emph{no physical existence}. The relation object is real,
+  deterministic, and non-spatiotemporal.
+\end{remark}
+
+\subsection{Pair Decomposition and Measurement}
+
+The joint identity decomposes as:
+\begin{equation}
+  \mathcal{I}_{AB} \;\to\; \mathcal{I}_A + \mathcal{I}_B + \mathcal{R}_{AB}
+  \label{eq:pair-decomposition}
+\end{equation}
+
+Measurement outcomes are scale-projected with the relation object:
+\begin{align}
+  O_A &= P_a\!\left(\mathcal{I}_A,\, \mathcal{R}_{AB}\right) \\
+  O_B &= P_b\!\left(\mathcal{I}_B,\, \mathcal{R}_{AB}\right)
+\end{align}
+
+The correlation function:
+\begin{equation}
+  E(a,b) = \langle O_A\, O_B \rangle
+\end{equation}
+reproduces quantum-mechanical predictions because $\mathcal{R}_{AB}$ is
+a fixed structure in identity-space, not a propagating signal.
+
+% ============================================================================
+\section{Dark Matter as Higher-Scale Projection Residual}
+
+\subsection{The Projection Gap}
+
+\begin{equation}
+  \rho_\text{dark}(x,y,z;\,t)
+  = P_G(\rho) - P_\text{EM}(\rho)
+  \label{eq:dark-def}
+\end{equation}
+
+In kernel form, integrating over the dark coordinate $w$:
+\begin{equation}
+  \boxed{
+	\rho_\text{dark}(x,y,z;\,t)
+	= \int \rho(x,y,z,w;\,t)
+	  \left[K_G(w) - K_\text{EM}(w)\right] dw
+  }
+  \label{eq:dark-kernel}
+\end{equation}
+
+$K_G(w)$ is the gravitational projection kernel (couples to all scales);
+$K_\text{EM}(w)$ is the electromagnetic projection kernel (truncates at
+$L_\text{EM}$).
+
+\subsection{Dark-Scale Entry}
+
+The dark-scale level in the ladder:
+\begin{equation}
+  S_D = (w,\; X_D,\; L_\text{EM})
+\end{equation}
+where $w$ is the dark-scale degree of freedom, $X_D$ is the (presently
+unknown) dark mediator, and $L_\text{EM}$ marks where electromagnetic
+projection fails.
+
+\textbf{Central claim:}
+\begin{equation}
+  \boxed{
+	\text{dark matter} = \text{gravitational signature of
+	an unresolved higher-scale permission}
+  }
+\end{equation}
+
+This is distinct from standard extra-dimensional models:
+\begin{align*}
+  \text{Standard:} &\quad \text{dimension first} \to \text{dark behavior} \\
+  \text{Inverse KK:} &\quad \text{force-scale residuals first}
+							  \to \text{inferred dimension}
+\end{align*}
+
+% ============================================================================
+\section{Effective Proper Time with Dark-Scale Correction}
+
+\subsection{Classical and Quantum Proper Time}
+
+Classical relativistic proper time:
+\begin{equation}
+  d\tau_\text{4D}
+  = dt\sqrt{1 - \frac{v^2}{c^2} + \frac{2\Phi_G}{c^2}}
+  \label{eq:classical-proper-time}
+\end{equation}
+
+Recent optical ion clock work establishes:
+\begin{equation}
+  \hat{\tau} \equiv \tau(\hat{x}, \hat{p})
+  \label{eq:quantum-proper-time}
+\end{equation}
+Proper time becomes quantum-linked; $\hat{\tau}$ is an observable with
+spread $R_\tau = \hat{\tau} - \langle\hat{\tau}\rangle$.
+
+\subsection{Dark-Scale Extension}
+
+Extend to:
+\begin{equation}
+  \boxed{
+	d\tau_\text{eff}
+	= dt\sqrt{
+		1 - \frac{v^2}{c^2}
+		+ \frac{2\Phi_G}{c^2}
+		+ \chi_w(w)
+	  }
+  }
+  \label{eq:effective-proper-time}
+\end{equation}
+where $\chi_w(w)$ is the dark-scale metric correction term.
+
+In differential form:
+\begin{equation}
+  d\tau_\text{eff} = d\tau_\text{4D} + d\tau_w
+  \label{eq:tau-decomp}
+\end{equation}
+
+The full proper-time identity structure:
+\begin{equation}
+  \mathcal{I}_\tau
+  = \left(\hat{x},\, \hat{p},\, \hat{\tau},\, H_c,\, H_m,\, w\right)
+  \label{eq:proper-time-identity}
+\end{equation}
+where $H_c$ is the clock Hamiltonian and $H_m$ is the motional Hamiltonian.
+The clock-motion relation object:
+\begin{equation}
+  \mathcal{R}_{cm} = [0, 0, 0, 0 \mid \mathbf{T}_{cm}]
+\end{equation}
+
+\begin{remark}
+  $\chi_w(w)$ remains formally undefined here. Constraining it requires
+  either: (a) a specific model for $\hat{H}_w$, or (b) comparison with
+  clock-discrepancy data in strong gravitational fields or extreme
+  velocities where 4D relativity is insufficient.
+\end{remark}
+
+% ============================================================================
+\section{Recovery of Standard Quantum Mechanics}
+
+The critical consistency check: the standard Schr\"{o}dinger equation must
+be exactly recovered in the appropriate limit.
+
+\begin{proposition}[Standard QM recovery]
+  When $\hat{H}_w \approx 0$ (dark-scale Hamiltonian negligible) and
+  $\chi_w(w) \approx 0$ (proper-time correction negligible), the
+  extended framework reduces exactly to:
+  \begin{align}
+	\Psi_\text{obs}(\mathbf{r},t) &\approx \Psi(\mathbf{r},t) \\
+	i\hbar\,\partial_t\Psi &= \hat{H}_{S_3}\Psi
+  \end{align}
+  which is~\eqref{eq:TDSE}.
+\end{proposition}
+
+The framework is therefore a \emph{conservative extension}. No existing
+prediction is contradicted; corrections appear only where the extended
+terms are non-negligible: strong gravity, cosmological scales, and
+dark-sector phenomenology.
+
+% ============================================================================
+\section{Open Problems}
+
+\begin{enumerate}
+  \item \textbf{Form of $K_\text{EM}(w)$ and $K_G(w)$.}
+	These projection kernels determine the magnitude of all dark-sector
+	corrections. They are presently unconstrained.
+
+  \item \textbf{Form of $\hat{H}_w$.}
+	Without a specific dark-scale Hamiltonian the theory has no
+	new quantitative predictions.
+
+  \item \textbf{Form of $\chi_w(w)$.}
+	The dark-scale metric correction in~\eqref{eq:effective-proper-time}
+	needs a physical derivation or at minimum a phenomenological ansatz.
+
+  \item \textbf{Trinary relation vector $\mathbf{T}_{AB}$.}
+	The space $\{-1, 0, +1\}^m$ must be given a dynamics. How does
+	$\mathbf{T}_{AB}$ evolve under local operations?
+
+  \item \textbf{Packing operator $\Pi_n$.}
+	The map from $\mathbf{C}^{(n)}$ to $\mathbf{I}^{(n+1)}$ is stated
+	as an axiom. Its explicit form at each scale level is needed.
+
+  \item \textbf{Connection to existing field theory.}
+	The extended equation~\eqref{eq:extended-TDSE} must be
+	Lorentz-covariant. The dark coordinate $w$ must respect causality
+	or explain why it does not.
+\end{enumerate}
+
+% ============================================================================
+\appendix
+\section{Notation Summary}
+
+\begin{tabular}{ll}
+  \toprule
+  Symbol & Meaning \\
+  \midrule
+  $\mathcal{I}$ & Full identity state \\
+  $P_S$ & Projection onto scale $S$ \\
+  $\mathcal{R}_S$ & Residual at scale $S$: $\mathcal{U}_S(\mathcal{I}) - \mathcal{E}_S(\Obs_S)$ \\
+  $S_n = (D_n, M_n, L_n)$ & Scale entry: DOF, mediator, observational limit \\
+  $w$ & Dark-scale degree of freedom \\
+  $\mathcal{A}_i$ & Identity anchor (eq.~\ref{eq:anchor}) \\
+  $r_f$ & Fuzz radius (eq.~\ref{eq:fuzz-radius}) \\
+  $\Phi_S$ & Fuzz ratio \\
+  $\Pi_n$ & Packing operator \\
+  $\mathcal{R}_{AB}$ & Relation-particle object (eq.~\ref{eq:relation-object}) \\
+  $\mathbf{T}_{AB}$ & Trinary relation vector \\
+  $K_G(w), K_\text{EM}(w)$ & Gravitational / EM projection kernels \\
+  $\chi_w(w)$ & Dark-scale metric correction \\
+  $d\tau_\text{eff}$ & Effective proper time (eq.~\ref{eq:effective-proper-time}) \\
+  \bottomrule
+\end{tabular}
+
+\end{document}

@@ -1,16 +1,16 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_merger.hpp
  * ================================
- * WO-VSIM-62C — Axis Application & Template Loading
+ * WO-VSIM-62C  -  Axis Application & Template Loading
  *
  * BatchMerger provides two services:
  *
- *  1. load_template()    — parse a .vsim template file via VsimParser
- *  2. apply_axis_values()— mutate a VsimDocument by dot-path axis values
+ *  1. load_template()     -  parse a .vsim template file via VsimParser
+ *  2. apply_axis_values() -  mutate a VsimDocument by dot-path axis values
  *
  * Dot-path resolution follows the table in spec §2.4.
- * Unknown paths produce warnings (not hard errors — the hard check is in
+ * Unknown paths produce warnings (not hard errors  -  the hard check is in
  * BatchParser::validate()).
  *
  * WO-VSIM-62C | beta-12
@@ -26,11 +26,11 @@ namespace batch {
 
 class BatchMerger {
 public:
-	// Load and parse a .vsim template.  Errors → throws std::runtime_error.
+	// Load and parse a .vsim template.  Errors -> throws std::runtime_error.
 	static VsimDocument load_template(const std::string& path,
 									  std::vector<std::string>& errors);
 
-	// Apply axis values (dot-path → string) to a VsimDocument.
+	// Apply axis values (dot-path -> string) to a VsimDocument.
 	// Returns mutated copy.  Unrecognised paths pushed into warnings_out.
 	static VsimDocument apply_axis_values(
 		const VsimDocument&                         base,

@@ -1,0 +1,232 @@
+# =============================================================================
+# pi_7 Biological Pocket — Bridge Demo
+# VSEPR-SIM first bridge artifact: minimal runnable loop
+#
+# Purpose:
+#   Demonstrate the complete bridge loop:
+#   simulation → comparison → gap_label → next_run → calibration → backmatter
+#
+# System:
+#   pi_7 interaction in a biological pocket (flavonoid-like ligand, solvated).
+#   This is the canonical first bridge case from Day74_Self_Refining_Continual_Multiscale_Runs.md.
+#
+# Identity bridge features used:
+#   - identity_entropy in [observe] metrics
+#   - formation context via [material].family and [[simulation.molecule]].family
+#   - write_identity_entropy_sidecar = true in [export]
+#   - [empirical] comparison block
+#   - gap_label auto-assignment from run_generation_rules
+#
+# Expected output files:
+#   out/pi7_bridge/pi7_bridge_demo.xyz
+#   out/pi7_bridge/pi7_bridge_demo.ie        ← identity entropy sidecar
+#   out/pi7_bridge/pi7_bridge_demo.comparison.json
+#   out/pi7_bridge/pi7_bridge_demo.continual_run.json
+#   out/pi7_bridge/pi7_bridge_demo.report.md
+#   out/pi7_bridge/pi7_bridge_demo.manifest.json
+#
+# Bridge loop status:
+#   Lambda_data_nm = pending (no empirical data imported yet)
+#   Expected gap_label = "insufficient_data"
+#   Expected next_run_family = "pi_N_solution_comparison"
+#   This run establishes Lambda_sim_nm as the simulation prior.
+# =============================================================================
+
+[project]
+name        = "pi7_pocket_bridge_demo"
+version     = "v5.1.13.5"
+seed_base   = 73
+determinism = true
+
+# ---------------------------------------------------------------------------
+# Material — pi_7 interaction object
+# Formation context: biological_pocket state, pi_N family, instance 7
+# These fields populate StateCarrier.state_label and .interaction_family
+# Decision 3: persistent identity fields set at formation, never overwritten
+# ---------------------------------------------------------------------------
+[material]
+formula         = "flavonoid_pi7_proxy"
+structure       = "molecular"
+phase           = "biological_pocket"
+family          = "pi_N"
+instance        = 7
+
+# ---------------------------------------------------------------------------
+# Run — MD in solvated biological pocket conditions
+# Temperature 298.15 K (physiological), implicit solvent via medium
+# ---------------------------------------------------------------------------
+[run]
+mode         = "md"
+max_steps    = 2000
+dt_fs        = 0.5
+temperature  = 298.15
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 298.15
+medium      = "water"        # dielectric environment for pi-pi stacking
+pressure    = 0.0
+
+[simulation]
+fire_max_steps   = 500
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+step_delay_ms    = 0
+
+# pi_7: aromatic system proxy — conjugated pi-system, 7 rings
+# family and instance fields carry through to StateCarrier identity
+[[simulation.molecule]]
+formula           = "pi_system_proxy"
+count             = 1
+temperature       = 298.15
+family            = "pi_N"
+instance          = 7
+state             = "biological_pocket"
+interaction_partner = "aromatic_pocket_001"
+geometry_mode     = "slipped_parallel"
+topology          = "conjugated_branched"
+
+# ---------------------------------------------------------------------------
+# Bridge: identity entropy observable
+# Decision 3: identity_entropy reads StateCarrier overlays — never writes back
+# CR-8: ObservableDispatch routes "identity_entropy" to IdentityEntropyAnalysis
+# ---------------------------------------------------------------------------
+[observe]
+metrics = [
+    "energy_map",
+    "coordination",
+    "rdf",
+    "identity_entropy",     # bridge metric — computes H over recoverability dist
+    "formation_memory",     # bridge metric — exp(-Δ_state / τ_memory)
+    "projection_loss"       # bridge metric — IKK projection residual
+]
+output_format = "json"
+every_n_steps = 100
+
+# ---------------------------------------------------------------------------
+# Kernel — event log captures interaction history H_i(t)
+# transport_events capture pi-pi stacking geometry changes
+# dynamic_energy tracks the pi field energy surface
+# ---------------------------------------------------------------------------
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true
+defect_events    = false
+transport_events = true     # pi geometry mode shifts are transport events
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Analysis
+# scale_sampling: pi_7 characteristic length ~ 1.0–1.4 nm
+# Windows: bond scale → pi-ring scale → interaction radius → beyond
+# IKK II: emergence_candidate at 1.2 nm window = pi field coherent at that scale
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [6, 6, 6]
+rve_window_lengths_A             = [1.4, 4.0, 8.0, 14.0]
+rve_windows_per_level            = 4
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 4
+spatial_cv_threshold             = 0.45
+temporal_drift_threshold         = 0.25
+scale_drift_threshold            = 0.35
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 2.0
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = false
+unwrap_pbc  = false
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Empirical comparison — MIR comparison pass
+# Lambda_data_nm = pending: first run establishes simulation prior only
+# gap_label will auto-assign to "insufficient_data"
+# next_run_family will be set to "pi_N_solution_comparison"
+# ---------------------------------------------------------------------------
+[empirical]
+object_id              = "pi_7"
+family                 = "pi_N"
+state                  = "biological_pocket"
+Lambda_data_nm         = pending    # import from empirical DB when available
+Lambda_sim_expected_nm = 1.18       # from Day74 master record; used as sanity check
+gap_policy             = "auto"     # auto-assign from run_generation_rules
+next_run_policy        = "auto"     # derive from gap_label
+
+# ---------------------------------------------------------------------------
+# Export — bridge outputs
+# write_identity_entropy_sidecar: produces <prefix>.ie alongside .xyz
+# CR-4/CR-8: IEWriter triggered by this flag + "identity_entropy" in metrics
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                        = true
+write_analysis_json              = true
+write_metrics_tsv                = true
+write_report_md                  = true
+write_events_json                = true
+write_symbolic_trace_json        = true
+write_manifest_json              = true
+write_scale_sampling_json        = true
+write_identity_entropy_sidecar   = true    # → <prefix>.ie
+write_comparison_json            = true    # → <prefix>.comparison.json
+write_continual_run_json         = true    # → <prefix>.continual_run.json
+output_dir                       = "out/pi7_bridge"
+output_prefix                    = "pi7_bridge_demo"
+
+# ---------------------------------------------------------------------------
+# Verification
+# MIR III: recovery at the pi interaction length scale (~8-14 Å window)
+# If scale_sampling shows emergence_candidate = true at 8 Å:
+#   pi field identity is coherent at that scale → consistent with Lambda_sim ~ 1.18 nm
+# If false: scale window is above the pi field's natural projection radius
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "pi7_bridge_demo"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Report — includes bridge-specific fields
+# ---------------------------------------------------------------------------
+[report]
+title                     = "pi_7 Biological Pocket — Bridge Demo"
+include_material_cards    = true
+include_metric_tables     = true
+include_expected_trends   = true
+include_symbolic_trace    = true
+include_bridge_summary    = true    # bridge-specific: gap_label, Lambda_sim, next_run
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 100
+show_event_timeline    = true
+show_symbolic_trace    = true
+overlay_sequence       = energy_map,identity_entropy,formation_memory,coordination

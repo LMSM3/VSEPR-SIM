@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * pbc.hpp — Periodic Boundary Conditions
+ * pbc.hpp  -  Periodic Boundary Conditions
  * ========================================
  *
  * Public boundary/geometry primitive.  Used by potentials, FIRE, neighbor
@@ -9,10 +9,10 @@
  * Canonical type:  vsepr::BoxOrtho
  *
  * Orthogonal box with:
- *   wrap()       — position into primary cell [0, L)       via floor()
- *   delta()      — minimum-image displacement (-L/2, L/2]  via nearbyint()
- *   dist2/dist() — MIC distance helpers
- *   wrap_coords()— in-place flat-array wrap
+ *   wrap()        -  position into primary cell [0, L)       via floor()
+ *   delta()       -  minimum-image displacement (-L/2, L/2]  via nearbyint()
+ *   dist2/dist()  -  MIC distance helpers
+ *   wrap_coords() -  in-place flat-array wrap
  *
  * enabled flag:
  *   Stored as a data member (bool enabled) so State-based code can read and
@@ -20,11 +20,11 @@
  *   can be overridden at runtime (e.g. to temporarily disable PBC).
  *
  * Rounding doctrine:
- *   delta() uses std::nearbyint() — ties to even, IEEE 754 default.
+ *   delta() uses std::nearbyint()  -  ties to even, IEEE 754 default.
  *   This is the canonical choice.  Do not introduce a second implementation
- *   using std::round() — that is how silent ambiguity breeds.
+ *   using std::round()  -  that is how silent ambiguity breeds.
  *
- * Day #57A: moved from src/box/pbc.hpp → include/box/pbc.hpp (public tree).
+ * Day #57A: moved from src/box/pbc.hpp -> include/box/pbc.hpp (public tree).
  */
 
 #include "core/math_vec3.hpp"
@@ -37,7 +37,7 @@ namespace vsepr {
 struct BoxOrtho {
     Vec3 L;       // Box lengths (Lx, Ly, Lz)
     Vec3 invL;    // Cached 1/L for performance
-    bool enabled; // PBC on/off — true when all dimensions > 0
+    bool enabled; // PBC on/off  -  true when all dimensions > 0
 
     // Disabled box (default)
     BoxOrtho() : L{0, 0, 0}, invL{0, 0, 0}, enabled(false) {}
@@ -52,7 +52,7 @@ struct BoxOrtho {
         : BoxOrtho(lengths.x, lengths.y, lengths.z)
     {}
 
-    // Volume (unchecked — caller should verify enabled first)
+    // Volume (unchecked  -  caller should verify enabled first)
     double volume() const { return L.x * L.y * L.z; }
 
     // Update box size and re-derive enabled + invL
@@ -71,7 +71,7 @@ struct BoxOrtho {
     /**
      * Wrap position into primary cell [0, L).
      * floor() handles negative coordinates correctly.
-     *   r = -0.5, L = 10  →  floor(-0.05) = -1  →  r' = 9.5
+     *   r = -0.5, L = 10  ->  floor(-0.05) = -1  ->  r' = 9.5
      */
     Vec3 wrap(const Vec3& r) const {
         if (!enabled) return r;
@@ -84,7 +84,7 @@ struct BoxOrtho {
 
     /**
      * Minimum-image displacement: dr = rj - ri, wrapped into (-L/2, L/2].
-     * nearbyint() — ties to even (IEEE 754 default, most numerically stable).
+     * nearbyint()  -  ties to even (IEEE 754 default, most numerically stable).
      */
     Vec3 delta(const Vec3& ri, const Vec3& rj) const {
         Vec3 dr = rj - ri;
@@ -122,9 +122,9 @@ struct BoxOrtho {
     }
 };
 
-// Legacy name aliases — same type, no overhead
+// Legacy name aliases  -  same type, no overhead
 using Box    = BoxOrtho;
-using BoxPBC = BoxOrtho;   // Day #57A: unification alias — use vsepr::BoxOrtho directly in new code
+using BoxPBC = BoxOrtho;   // Day #57A: unification alias  -  use vsepr::BoxOrtho directly in new code
 
 // ============================================================================
 // WO-VSEPR-SIM-57A  Canonical PBC API
@@ -136,24 +136,24 @@ using BoxPBC = BoxOrtho;   // Day #57A: unification alias — use vsepr::BoxOrth
 // bindings (57C).
 //
 // Naming canon:
-//   PeriodicCell          — orthorhombic periodic cell with per-axis flags
-//   BoundaryMode          — open / periodic / reflective / absorbing
-//   BoundaryConfig        — per-axis mode + cell
-//   ImageCount            — cumulative boundary crossings per particle
-//   wrap_scalar           — 1-D wrap into [0, L)
-//   wrap_position         — 3-D wrap using PeriodicCell
-//   minimum_image_scalar  — 1-D MIC correction
-//   minimum_image_delta   — 3-D MIC displacement vector
-//   pbc_distance          — MIC distance scalar
-//   update_image_count    — advance image counters (call BEFORE wrap)
-//   unwrap_position       — reconstruct continuous position from image count
+//   PeriodicCell           -  orthorhombic periodic cell with per-axis flags
+//   BoundaryMode           -  open / periodic / reflective / absorbing
+//   BoundaryConfig         -  per-axis mode + cell
+//   ImageCount             -  cumulative boundary crossings per particle
+//   wrap_scalar            -  1-D wrap into [0, L)
+//   wrap_position          -  3-D wrap using PeriodicCell
+//   minimum_image_scalar   -  1-D MIC correction
+//   minimum_image_delta    -  3-D MIC displacement vector
+//   pbc_distance           -  MIC distance scalar
+//   update_image_count     -  advance image counters (call BEFORE wrap)
+//   unwrap_position        -  reconstruct continuous position from image count
 // ============================================================================
 
 enum class BoundaryMode {
     Open,
     Periodic,
-    Reflective,   // reserved — throws if used in math path
-    Absorbing     // reserved — throws if used in math path
+    Reflective,   // reserved  -  throws if used in math path
+    Absorbing     // reserved  -  throws if used in math path
 };
 
 struct PeriodicCell {
@@ -193,7 +193,7 @@ struct ImageCount {
     int iz = 0;
 };
 
-// ── Core free functions ────────────────────────────────────────────────────
+// -- Core free functions ----------------------------------------------------
 
 // Wrap scalar coordinate into [0, L)
 inline double wrap_scalar(double x, double L) {

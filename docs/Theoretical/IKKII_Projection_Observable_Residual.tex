@@ -1,0 +1,693 @@
+
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage[top=0.85in,bottom=0.85in,left=0.95in,right=0.95in,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,array,tabularx,longtable}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
+
+\setlist{leftmargin=1.4em,itemsep=0.25em,topsep=0.25em}
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.8em}{}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{theorem}{Theorem}[section]
+
+%% ================================================================
+%%  MACRO SET --- IKK II v2.0
+%%  Harmonised with IKK III v2.0 and IKK IV v1.0
+%% ================================================================
+
+%% ---- Identity objects ----
+\newcommand{\Ia}{I_a}
+\newcommand{\Ib}{I_b}
+\newcommand{\Itrue}{\mathfrak{I}_{\mathrm{true}}}
+\newcommand{\Ihid}{\mathfrak{I}_{\mathrm{hidden}}}
+\newcommand{\Inull}{\mathfrak{I}_{\mathrm{null}}}
+\newcommand{\Ihat}{\widehat{\mathfrak{I}}_a}
+
+%% ---- Typed spaces ----
+\newcommand{\Ha}{\mathfrak{H}_a}
+\newcommand{\Hb}{\mathcal{H}_b}
+\newcommand{\Hahat}{\widehat{\mathfrak{H}}_a}
+\newcommand{\Kab}{\mathfrak{K}_{ab}}
+\newcommand{\Osp}{\mathcal{O}_b}
+
+%% ---- Projection operator anatomy ----
+%  Full projection
+\newcommand{\Pab}{\mathcal{P}_{a\to b}}
+%  Source encoding operator
+\newcommand{\Ca}{\mathcal{C}_a}
+%  Access operator
+\newcommand{\Aab}{\mathcal{A}_{a\to b}}
+%  Readout/resolution operator
+\newcommand{\Rb}{\mathcal{R}_b}
+%  Complement of access (hidden part)
+\newcommand{\Qab}{\mathcal{Q}_{a\to b}}
+%  Pseudoinverse
+\newcommand{\Ppinv}{P_{a\to b}^{+}}
+%  Reconstruction/inference operator
+\newcommand{\Jba}{\mathcal{J}_{b\to a}}
+
+%% ---- Encoded identity fields ----
+\newcommand{\PhiA}{\Phi_a}              % full encoded field
+\newcommand{\PhiAb}{\Phi_{a|b}}         % accessible portion
+\newcommand{\PhiHid}{\Phi_{\mathrm{hid}}}  % hidden portion
+
+%% ---- Distinguishability measures ----
+\newcommand{\D}{\mathfrak{D}}
+\newcommand{\Da}{\mathfrak{D}_a}
+\newcommand{\Db}{\mathfrak{D}_b}
+\newcommand{\Dhid}{\mathfrak{D}_{\mathrm{hid}}}
+\newcommand{\Dacc}{\mathfrak{D}_{\mathrm{acc}}}
+\newcommand{\Rhid}{\mathfrak{R}_{a|b}}
+
+%% ---- Efficiency ----
+\newcommand{\etaab}{\eta_{ab}}
+\newcommand{\etak}{\eta_k(w)}
+
+%% ---- w coordinates ----
+\newcommand{\wa}{w_a}
+\newcommand{\wb}{w_b}
+\newcommand{\Dab}{\Delta_{ab}}
+
+%% ---- Wave state ----
+\newcommand{\psiab}{\psi_b}
+\newcommand{\Wab}{\mathcal{W}_{a\to b}}
+
+%% ---- Other shorthands ----
+\newcommand{\Oh}{\mathcal{O}}
+\newcommand{\Loss}{\mathcal{L}_\Pi}
+\newcommand{\Rel}[2]{R_{#1#2}}
+\newcommand{\MM}{\mathbb{M}}
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\CC}{\mathbb{C}}
+\newcommand{\TT}{\mathbb{T}}
+\newcommand{\wcoord}{w}
+
+%% ================================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Inverse Kaluza-Klein Framework --- IKK Paper Set}}
+\fancyhead[R]{\small\textit{IKK II v2.0}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{titlepage}
+\centering
+\vspace*{1.1cm}
+{\large\scshape VSEPR-SIM Theoretical Division / IKK Paper Set\par}
+\vspace{1.1cm}
+{\Huge\bfseries IKK II\par}
+\vspace{0.35cm}
+{\Large\bfseries Projection, Observable Form, and Residual Identity\par}
+\vspace{0.2cm}
+{\large Version 2.0\par}
+\vspace{1.1cm}
+{\normalsize
+This document upgrades the projection foundation of the IKK framework.
+The projection operator is given explicit anatomy:
+$\Pab = \Rb\,\Aab\,\Ca$.
+The source encoding operator $\Ca$ prepares primitive identity for projection.
+The access operator $\Aab(\wa, \wb, \Dab)$ determines what fraction of
+encoded identity is accessible from observation domain $b$,
+giving the fifth coordinate $\wcoord$ an explicit operational role.
+The readout operator $\Rb$ maps accessible identity to observable form.
+Distinguishability is defined as a norm ratio,
+the Born rule is derived as normalized observed distinguishability,
+and hidden content is identified as the projection-kernel content of identity.
+\par}
+\vfill
+{\large Companion: IKK I (foundations), IKK III (matrix/wave bridge), IKK IV (scale intervals)\par}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+%% ================================================================
+\section{Scope and Upgrade Summary}
+%% ================================================================
+
+IKK II is the projection-foundation document of the IKK paper set. Version~2 retains the conceptual spine of v1 --- existence gate, inverse inference, typed spaces, hidden residual --- and adds the formal construction that was previously absent:
+
+\[
+\boxed{\Pab = \Rb\,\Aab\,\Ca.}
+\]
+
+This gives the projection operator \emph{anatomy}. The operator is no longer a bare arrow; it has three identifiable components with distinct mathematical roles. The central consequences:
+
+\begin{enumerate}
+\item Distinguishability is defined as a norm ratio, not a vague ordering.
+\item The coordinate $\wcoord$ acquires an explicit operational role inside $\Aab$.
+\item The Born rule follows as normalized observed distinguishability.
+\item Hidden content is exactly the projection-kernel content of the identity state.
+\item A reconstruction operator $\Jba = \Ppinv$ is defined, with its null-space gap made precise.
+\end{enumerate}
+
+\textbf{What moved:} dark matter kernels, proper-time dynamics, relation-particle chains, and code prototypes remain in later documents.
+
+%% ================================================================
+\section{Central Thesis}
+%% ================================================================
+
+\[
+\boxed{O_b = \Pab[\Ia] = \Rb\,\Aab\,\Ca[\Ia],\qquad O_b \neq \Ia.}
+\]
+
+The observable $O_b$ is not the identity object $\Ia$. It is the result of encoding $\Ia$ into a projectable field, filtering that field through an access operator parameterized by $\wcoord$, and reading out the accessible portion in the target domain $b$.
+
+Every equation in IKK~II follows from this factorization.
+
+%% ================================================================
+\section{Inverse Direction of Inference}
+%% ================================================================
+
+Standard Kaluza-Klein infers observable force behavior from an assumed extra dimension:
+\[
+\text{KK:}\quad D_{\mathrm{extra}} \longrightarrow F_{\mathrm{obs}}.
+\]
+
+IKK reverses this:
+\[
+\boxed{\text{IKK:}\quad F_{\mathrm{obs}}(S) \longrightarrow D_{\mathrm{perm}}(S).}
+\]
+
+$D_{\mathrm{perm}}$ is a permission structure: a hidden-access condition required for the observed force-scale behavior to be representable. IKK begins with observed residuals or representation loss and asks what access structure must exist for such observations to be recoverable.
+
+%% ================================================================
+\section{Existence Gate}
+%% ================================================================
+
+\begin{axiom}[Existence gate]
+Every identity-bearing object satisfies
+$E \in \{0,1\}.$
+$E = 1$ admits the object into the identity accounting.
+It does not yet specify visibility, measurability, or projection accessibility.
+\end{axiom}
+
+\[
+E(\Ia) = 1 \;\not\Rightarrow\; \Ia = O_b.
+\]
+
+Existence is separated from observability. An object may exist and produce no observable output under a given projection basis.
+
+%% ================================================================
+\section{Typed Identity Spaces}
+%% ================================================================
+
+\begin{definition}[Source identity space]
+$\Ha$ is the source identity space carrying the full identity content of a system before projection. Objects in $\Ha$ are not in general directly readable as Hilbert-space states.
+\end{definition}
+
+\begin{definition}[Observable space]
+$\Osp$ is the target observable space. Objects in $\Osp$ are readable under the projection basis.
+\end{definition}
+
+The projection operator maps between them:
+\[
+\Pab : \Ha \longrightarrow \Osp.
+\]
+
+$\Ha$ is not assumed to be a Hilbert space. The structure of $\Ha$ constrains what $\Ca$ can do; the structure of $\Osp$ constrains what $\Rb$ can produce.
+
+%% ================================================================
+\section{Projection Operator: Full Anatomy}
+%% ================================================================
+
+The projection operator has three components.
+
+\[
+\boxed{\Pab = \Rb\,\Aab\,\Ca}
+\]
+
+Each component has a distinct role.
+
+\subsection{Component 1: Source Encoding Operator $\Ca$}
+
+$\Ca$ prepares the primitive identity for projection. It maps $\Ia$ into an encoded identity field $\PhiA$ that lives in an intermediate space of dimension $N$:
+
+\begin{definition}[Source encoding]
+\[
+\Ca : \Ia \mapsto \PhiA,\qquad \PhiA = \Ca[\Ia].
+\]
+$\Ca \in \mathbb{C}^{N \times n}$ in the finite matrix model, where $\Ia \in \mathbb{C}^n$ and $N \geq n$.
+\end{definition}
+
+This matters because the primitive identity $\Ia$ may not directly live in the same mathematical space as the observable representation. The encoding lifts $\Ia$ into an intermediate field space where projection can act.
+
+\begin{remark}
+$\Ia \neq \psiab$ in general. But $\Ca[\Ia]$ may produce something wave-like after encoding. The wavefunction is not the primitive identity; it is a post-encoding, post-projection readout.
+\end{remark}
+
+\subsection{Component 2: Access Operator $\Aab$}
+
+$\Aab$ determines what fraction of the encoded field $\PhiA$ is accessible from observation domain $b$:
+
+\begin{definition}[Access operator]
+\[
+\Aab : \PhiA \mapsto \PhiAb,\qquad \PhiAb = \Aab[\PhiA].
+\]
+$\PhiAb$ is the portion of source identity accessible from domain $b$.
+\end{definition}
+
+The access operator depends on the projection coordinates of the source and observer and on the domain mismatch:
+
+\[
+\boxed{\Aab = \mathcal{A}(\wa,\, \wb,\, \Dab)}
+\]
+
+where:
+\begin{itemize}
+\item $\wa$ = source projection coordinate;
+\item $\wb$ = observer/probe projection coordinate;
+\item $\Dab$ = scale/domain mismatch between $a$ and $b$.
+\end{itemize}
+
+This makes $\wcoord$ \emph{operational}. It is not a spatial axis. It is not a length scale. It controls which channels of encoded identity survive projection into a given observation domain.
+
+\subsection{Component 3: Readout Operator $\Rb$}
+
+$\Rb$ maps accessible identity into the observable representation:
+
+\begin{definition}[Readout operator]
+\[
+\Rb : \PhiAb \mapsto O_b,\qquad O_b = \Rb[\PhiAb].
+\]
+$\Rb \in \mathbb{C}^{m \times N}$ in the finite matrix model.
+\end{definition}
+
+\subsection{The Factored Equation}
+
+Combining:
+\[
+\boxed{O_b = \Pab[\Ia] = \Rb\,\Aab\,\Ca[\Ia].}
+\]
+
+This is the central equation of IKK~II v2. The projection has anatomy: encoding, access filtering, readout.
+
+%% ================================================================
+\section{Matrix Version}
+%% ================================================================
+
+For a finite model with $\Ia \in \mathbb{C}^n$, $O_b \in \mathbb{C}^m$, and intermediate dimension $N$:
+
+\[
+\Ca \in \mathbb{C}^{N \times n},\qquad
+\Aab \in \mathbb{C}^{N \times N},\qquad
+\Rb \in \mathbb{C}^{m \times N}.
+\]
+
+\[
+\boxed{P_{a\to b} = R_b\, A_{a\to b}\, C_a \;\in\; \mathbb{C}^{m \times n}.}
+\]
+
+The projected observable amplitude:
+\[
+\psiab = P_{a\to b}\,\Ia = R_b\, A_{a\to b}\, C_a\,\Ia.
+\]
+
+This is now computable. Given explicit matrices $C_a$, $A_{a\to b}$, $R_b$, and an identity vector $\Ia$, the observable $O_b$ is a matrix product. The framework is no longer purely formal.
+
+%% ================================================================
+\section{Distinguishability as a Norm}
+%% ================================================================
+
+\begin{definition}[Source distinguishability]
+\[
+\Da(\Ia) = \|\Ca\,\Ia\|^2.
+\]
+\end{definition}
+
+\begin{definition}[Observed distinguishability]
+\[
+\Db(\Ia) = \|\Pab\,\Ia\|^2 = \|\Rb\,\Aab\,\Ca\,\Ia\|^2.
+\]
+\end{definition}
+
+\begin{definition}[Projection efficiency]
+\[
+\boxed{\etaab = \frac{\|\Rb\,\Aab\,\Ca\,\Ia\|^2}{\|\Ca\,\Ia\|^2} = \frac{\Db(\Ia)}{\Da(\Ia)}.}
+\]
+\end{definition}
+
+$\etaab \in [0,1]$. The efficiency is now not a declaration but a ratio of norms. When $\Aab = I$ and $\Rb\,\Ca$ is unitary, $\etaab = 1$.
+
+This is the first version of $\etaab = \Db / \Da$ that actually means something. It says: $\etaab$ is the fraction of source identity distinguishability retained after encoding, filtering, and readout.
+
+%% ================================================================
+\section{Projection Decomposition}
+%% ================================================================
+
+Define the complement of the access operator:
+\[
+\Qab = I - \Aab.
+\]
+
+Then the hidden portion of the encoded field is:
+\[
+\PhiHid = \Qab\,\Ca\,\Ia.
+\]
+
+\begin{proposition}[Orthogonal decomposition]
+If $\Aab$ is an orthogonal projector ($\Aab^2 = \Aab$, $\Aab^\dagger = \Aab$), then:
+\[
+\|\PhiA\|^2 = \|\Aab\,\PhiA\|^2 + \|(I - \Aab)\,\PhiA\|^2.
+\]
+\end{proposition}
+
+This gives a bookkeeping law:
+
+\[
+\boxed{\Da = \Dacc + \Dhid}
+\]
+
+where $\Dacc = \|\Aab\,\Ca\,\Ia\|^2$ and $\Dhid = \|\Qab\,\Ca\,\Ia\|^2$.
+
+Equivalently:
+\[
+\boxed{\Da = \Db + \Rhid}
+\]
+
+where $\Rhid = \|\Qab\,\Ca\,\Ia\|^2$ is the hidden residual distinguishability. Hidden content is not a free parameter. It is constrained by $\Rhid = \Da - \Db \geq 0$.
+
+This prevents the hidden residual from becoming a theoretical escape clause. No free excuses.
+
+%% ================================================================
+\section{The Access Operator and the Role of $w$}
+%% ================================================================
+
+In the diagonal basis of the encoded identity channels, define per-channel access factors:
+
+\begin{definition}[Diagonal access operator]
+\[
+\Aab(w) = \mathrm{diag}\!\left(\sqrt{\eta_1(w)},\,\sqrt{\eta_2(w)},\,\ldots,\sqrt{\eta_N(w)}\right)
+\]
+where $0 \leq \eta_k(w) \leq 1$ for each channel $k$.
+\end{definition}
+
+The encoded field component at channel $k$ survives with amplitude:
+\[
+\Phi_{a|b,\,k} = \sqrt{\etak}\;\Phi_{a,k}.
+\]
+
+$\wcoord$ controls how much of each channel survives projection. Two candidate forms:
+\[
+\eta_k(w) = \exp\!\left[-\lambda_k(\wa - \wb)^2\right]
+\]
+\[
+\eta_k(w) = \frac{1}{1 + \lambda_k(\wa - \wb)^2}
+\]
+
+where $\lambda_k$ controls the sensitivity of channel $k$ to projection mismatch. When $\wa = \wb$, every channel survives. When $|\wa - \wb| \gg \lambda_k^{-1/2}$, channel $k$ is suppressed.
+
+\begin{definition}[Operational role of $w$]
+\[
+\boxed{w \text{ controls channel-wise access to source identity.}}
+\]
+$w$ is the coordinate governing projective accessibility between the source identity domain and the observation domain.
+\end{definition}
+
+This is not "length scale." It is not "another spatial dimension." It is the access parameter embedded in $\Aab$. This definition is parallel to, and made explicit by, the interval-level $\chi_w$ construction in IKK~IV.
+
+%% ================================================================
+\section{Wavefunction as Projection Output}
+%% ================================================================
+
+The wavefunction is not primitive. It is the readout form of accessible identity:
+
+\[
+\boxed{\psiab = \Rb\,\Aab(w)\,\Ca\,\Ia.}
+\]
+
+Written through the wave-state recovery map $\Wab = \Rb \circ \Aab \circ \Ca : \Ha \to \Hb$:
+\[
+\psiab = \Wab(\Ia) \in \Hb.
+\]
+
+The core interpretive statement:
+\begin{quote}
+The wavefunction is the projected observable amplitude produced when primitive identity $\Ia$ is encoded by $\Ca$, filtered for accessibility by $\Aab(w)$, and read out by $\Rb$. It is not the identity object. It is the portion of encoded identity that survives projection into the observation domain.
+\end{quote}
+
+This is the wave-particle bridge in one sentence. The wavefunction is real, useful, and predictive precisely because $\Hb$ preserves the quantities that quantum mechanics needs. It is not a falsehood. It is a projection.
+
+%% ================================================================
+\section{Born Rule as Normalized Distinguishability}
+%% ================================================================
+
+In the finite model, let $i$ index the output channels of $\Rb$. Measurement probability in channel $i$ is:
+
+\[
+\boxed{p_i = \frac{\left|(R_b\,A_{a\to b}\,C_a\,\Ia)_i\right|^2}{\displaystyle\sum_j \left|(R_b\,A_{a\to b}\,C_a\,\Ia)_j\right|^2}.}
+\]
+
+The Born rule is not "wavefunction magic." It is normalized observed distinguishability. The probability of observing outcome $i$ is the fraction of total observed distinguishability carried by channel $i$.
+
+\begin{proposition}[Born rule recovery]
+When $\Ca = I$, $\Rb = I$, and $\Aab = \sqrt{\eta}\,I$ (uniform access), the above reduces to:
+\[
+p_i = \frac{|(\Ia)_i|^2}{\sum_j |(\Ia)_j|^2},
+\]
+which is the standard Born rule under normalization $\|\Ia\| = 1$.
+\end{proposition}
+
+%% ================================================================
+\section{Minimal Example: Two-Channel Identity}
+%% ================================================================
+
+Let $\Ia = [\alpha,\,\beta]^T$, $\Ca = I$, $\Rb = I$, and:
+\[
+A_{a\to b}(w) = \begin{bmatrix} \sqrt{\eta_1} & 0 \\ 0 & \sqrt{\eta_2} \end{bmatrix}.
+\]
+
+Then:
+\[
+\psiab = \begin{bmatrix} \sqrt{\eta_1}\,\alpha \\ \sqrt{\eta_2}\,\beta \end{bmatrix}.
+\]
+
+Observed distinguishability by channel:
+\[
+\mathfrak{D}_{b,1} = \eta_1|\alpha|^2,\qquad \mathfrak{D}_{b,2} = \eta_2|\beta|^2.
+\]
+
+Measurement probabilities:
+\[
+\boxed{p_1 = \frac{\eta_1|\alpha|^2}{\eta_1|\alpha|^2 + \eta_2|\beta|^2},\qquad p_2 = \frac{\eta_2|\beta|^2}{\eta_1|\alpha|^2 + \eta_2|\beta|^2}.}
+\]
+
+When $\eta_1 = \eta_2$, the $\eta$ factors cancel and the standard Born probabilities $|\alpha|^2$ and $|\beta|^2$ are recovered (assuming normalization). When $\eta_1 \neq \eta_2$, the probabilities are weighted by differential accessibility. This is the first deformation equation: a prediction of modified measurement statistics when projection accessibility is channel-dependent.
+
+%% ================================================================
+\section{The Three Projection Regimes}
+%% ================================================================
+
+\paragraph{Regime I: Perfect projection.}
+$\Aab = I$. Full accessibility.
+\[
+\psiab = \Ca\,\Ia,\qquad \etaab = 1,\qquad \Rhid = 0.
+\]
+
+\paragraph{Regime II: Uniform lossy projection.}
+$\Aab = \sqrt{\eta}\,I$ for scalar $\eta \in (0,1)$.
+\[
+\psiab = \sqrt{\eta}\,\Ca\,\Ia.
+\]
+Relative probabilities recover the standard Born rule after normalization. Total detectability is reduced. All channels are suppressed equally. This corresponds to weak coupling or symmetric scale mismatch.
+
+\paragraph{Regime III: Channel-dependent projection.}
+$\Aab = \mathrm{diag}(\sqrt{\eta_1},\ldots,\sqrt{\eta_N})$ with $\eta_i \neq \eta_j$.
+\[
+p_i = \frac{\eta_i\,|\psi_i|^2}{\sum_j \eta_j\,|\psi_j|^2}.
+\]
+
+Regime III predicts deviations from ordinary quantum measurement statistics. This is where EVM begins: testing whether physical systems exhibit channel-dependent access and whether the deformation follows the predicted $\eta_k(w)$ form.
+
+%% ================================================================
+\section{Hidden Residual and the Complement Operator}
+%% ================================================================
+
+\begin{definition}[Hidden residual field]
+\[
+\PhiHid = \Qab\,\Ca\,\Ia = (I - \Aab)\,\Ca\,\Ia.
+\]
+\end{definition}
+
+The hidden residual $\PhiHid$ is not destroyed content. It is the complement of $\PhiAb$ under $\Aab$. Its norm is:
+\[
+\Dhid = \|\Qab\,\Ca\,\Ia\|^2 = \Da - \Dacc.
+\]
+
+By the bookkeeping law (\S\ref{sec:decomp}):
+\[
+0 \leq \Rhid \leq \Da.
+\]
+
+The hidden residual is finite and bounded. It cannot exceed the total source distinguishability. This is the formal version of "hidden residual is not a magic trash bin."
+
+\label{sec:decomp}
+
+%% ================================================================
+\section{Hidden Variables as Projection-Kernel Content}
+%% ================================================================
+
+\begin{definition}[Projection kernel]
+\[
+\ker(\Pab) = \{\Ia \in \Ha : \Pab\,\Ia = 0\}.
+\]
+\end{definition}
+
+\begin{definition}[Hidden content]
+Identity content in $\ker(\Pab)$ produces no observable output under projection $\Pab$.
+\[
+\Ihid \in \ker(\Pab).
+\]
+\end{definition}
+
+\[
+\boxed{\text{Hidden} = \text{identity content in the projection kernel of the current observation map.}}
+\]
+
+This is a precise statement about hidden variables. It is not "there might be hidden variables somewhere." It is: hidden identity content is specifically and only the content lying in $\ker(\Pab)$.
+
+The kernel also resolves the temporal distinction introduced in IKK~II v1:
+
+\begin{itemize}
+\item $H_t$: hidden but time-dependent --- content in $\ker(P^{(x,y,z)})$ but not in $\ker(P^{(x,y,z,t)})$.
+\item $H_{\neg t}$: hidden and time-independent --- content in $\ker(P^{(x,y,z,t)})$.
+\end{itemize}
+
+In symbolic form:
+\[
+\ker(P_{\mathrm{space}}) \neq \ker(P_{\mathrm{spacetime}}).
+\]
+
+A system may be temporally observable but spatially hidden, or hidden from both. The projection map determines the answer. This lets WIC handle both interpretations with the same formalism.
+
+%% ================================================================
+\section{Reconstruction Operator}
+%% ================================================================
+
+Given $O_b = \Pab\,\Ia$, define the reconstruction operator:
+\[
+\Jba : \Osp \longrightarrow \Hahat,\qquad \Ihat = \Jba[O_b] = \Ppinv\,O_b.
+\]
+
+where $\Ppinv$ denotes the Moore-Penrose pseudoinverse of $P_{a\to b}$.
+
+The pseudoinverse does not recover $\Ia$ exactly. It recovers only the component of $\Ia$ in the orthogonal complement of $\ker(\Pab)$:
+\[
+\Ppinv\,P_{a\to b}\,\Ia = \Pi_{\mathrm{rec}}\,\Ia.
+\]
+
+Consequently:
+\[
+\boxed{\Ia = \Ihat + \Inull,\qquad \Inull \in \ker(\Pab).}
+\]
+
+$\Ihat$ is the recoverable portion. $\Inull$ is the null-space component --- exactly the hidden content. The gap between $\Ia$ and $\Ihat$ is not failure of the reconstruction; it is the mathematically necessary consequence of projection loss.
+
+\begin{remark}
+The null-space gap is not a defect of the framework. It is the formal statement that projection is lossy. Any framework claiming perfect recovery from incomplete projection data is wrong. This one does not.
+\end{remark}
+
+%% ================================================================
+\section{Matrix Mechanics and Wave Mechanics as Parallel Projections}
+%% ================================================================
+
+Both matrix mechanics and wave mechanics emerge from the same factored projection with different choices of $\Ca$, $\Aab$, $\Rb$:
+
+\[
+\Ia \xrightarrow{\;P_M\;} M \in \Hb \qquad \text{(matrix projection: } C_a^M,\, A^M,\, R_b^M\text{)}
+\]
+\[
+\Ia \xrightarrow{\;P_\psi\;} \psiab \in \Hb \qquad \text{(wave projection: } C_a^\psi,\, A^\psi,\, R_b^\psi\text{)}
+\]
+
+The two are equivalent at the level of $\Hb$ predictions when the two projection chains factor through the same intermediate space $\Kab$ with compatible bases. IKK~III provides the full typed bridge $\Wab = \Rb \circ \Aab \circ \Ca$ and the conditions under which $M$ and $\psiab$ produce identical Born-rule outputs.
+
+%% ================================================================
+\section{MIR Bridge}
+%% ================================================================
+
+IKK~II provides the projection ontology. The MIR paper set provides representation-quality scoring.
+
+The three representation domains enter here only as a bridge:
+\[
+\mathbb{M}_\RR(S),\qquad \mathbb{M}_\CC(S),\qquad \mathbb{M}_\TT(S).
+\]
+
+IKK~II establishes: $O_b = \Rb\,\Aab\,\Ca\,\Ia$ and $\etaab = \Db/\Da$. MIR ranks representations by how well they encode and recover identity under these projections. The argument that efficient storage proves truth is not a scientific argument. Efficiency is evidence, not ontology.
+
+%% ================================================================
+\section{Forward References}
+%% ================================================================
+
+\paragraph{Dark matter residuals.} Projection residuals at galactic scales: $R_{\mathrm{gal}} = \mathcal{D}_{\mathrm{obs}} - \mathcal{D}_{\mathrm{visible}}$. Forward reference: IKK~V, EVM~I.
+
+\paragraph{Proper-time extension.} Two systems with identical $(x,y,z,t)$ trajectories may differ in recovered identity history if $\wcoord$ evolves differently. Forward reference: IKK~IV \S6.
+
+\paragraph{Relation identity.} $\Rel{A}{B} \neq A + B$; the relation is a distinct element. Forward reference: WIC~III.
+
+%% ================================================================
+\section{Overclaim Guardrails}
+%% ================================================================
+
+\begin{enumerate}
+\item Projection formalism does not prove a hidden ontology. The formal structure requires empirical testing of $\eta_k(w)$.
+\item Wavefunction-as-projection must recover standard QM in the limit $\eta_1 = \eta_2 = \cdots = \eta_N$. If it does not, the framework fails.
+\item Regime III (channel-dependent access) is a prediction, not an explanation. It must be tested before being used to explain anomalies.
+\item Hidden residuals have a bookkeeping law: $\Rhid = \Da - \Db \geq 0$. Claimed residuals must respect it.
+\item The null-space gap $\Inull$ is fixed by $\ker(\Pab)$; it is not a free variable.
+\end{enumerate}
+
+%% ================================================================
+\section{Abstract and Thesis}
+%% ================================================================
+
+\textbf{Abstract.} This document develops the projection anatomy of the Inverse Kaluza-Klein framework. The projection operator is factored as $\Pab = \Rb\,\Aab\,\Ca$, giving each component an explicit mathematical role. The source encoding operator $\Ca$ lifts primitive identity into an intermediate field space. The access operator $\Aab(\wa,\wb,\Dab)$ gives the fifth coordinate $\wcoord$ an operational definition: it controls channel-wise accessibility between source and observation domain. The readout operator $\Rb$ maps accessible field content to the observable space. Distinguishability is defined as a norm ratio $\etaab = \|\Pab\,\Ia\|^2/\|\Ca\,\Ia\|^2$. The Born rule follows as normalized observed distinguishability. Channel-uniform access recovers standard quantum probability; channel-dependent access predicts a deformed Born rule testable by the EVM series. Hidden content is defined as projection-kernel content, giving hidden variables a precise and bounded meaning.
+
+\[
+\boxed{O_b = \Rb\,\Aab(w)\,\Ca\,\Ia,\qquad \etaab = \frac{\Db}{\Da},\qquad \Ia = \Ihat + \Inull,\quad \Inull \in \ker(\Pab).}
+\]
+
+%% ================================================================
+\section{Document Structure Map}
+%% ================================================================
+
+\begin{longtable}{p{0.10\linewidth}p{0.32\linewidth}p{0.48\linewidth}}
+\toprule
+Pages & Section & Function \\
+\midrule
+1--2   & Scope; upgrade summary       & What v2 adds over v1. \\
+2--3   & Central thesis; inference     & $O_b = R_b A C_a I_a$; IKK reversal. \\
+3--4   & Existence gate; typed spaces  & $E=1$; $\Ha$, $\Osp$ defined. \\
+4--7   & Projection anatomy            & $C_a$, $A_{a\to b}$, $R_b$; matrix version. \\
+7--9   & Distinguishability as norm    & $\eta_{ab}$; decomposition; bookkeeping law. \\
+9--11  & Access operator and $w$       & Diagonal $A$; $\eta_k(w)$ forms; $w$ defined. \\
+11--13 & Wavefunction; Born rule       & $\psi_b = R_b A C_a I_a$; normalized $\mathfrak{D}$. \\
+13--14 & Two-channel example           & Explicit $2\times 2$ derivation; deformation. \\
+14--15 & Three regimes                 & Perfect, uniform lossy, channel-dependent. \\
+15--17 & Hidden residual; kernel       & $\mathfrak{Q}$; bookkeeping; $\ker(P)$ = hidden. \\
+17--18 & Reconstruction operator       & $J_{b\to a} = P^+$; null-space gap. \\
+18--20 & Matrix/wave parallel; MIR    & Two projection chains; representation scoring. \\
+20--21 & Forward refs; guardrails      & IKK V, WIC III, IKK IV; five limits. \\
+21--22 & Abstract; map                 & Thesis and structure. \\
+\bottomrule
+\end{longtable}
+
+\end{document}

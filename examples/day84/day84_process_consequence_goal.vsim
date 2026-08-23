@@ -1,0 +1,28 @@
+﻿# day84_process_consequence_goal.vsim
+# Day 84 - Long-Term Goal: Process Consequence Engine
+# Status: GOAL_ONLY
+
+print_console "Day 84 -- VSEPR Revival Arc"
+print_console "Work Order: Day84-ProcessConsequence"
+print_console "Status: GOAL_ONLY"
+print_console "Purpose: define the process consequence engine transformation target"
+print_console "Expected: inferred chemistry -> process environment interpretation"
+print_console ""
+print_console "Example target (SiO2 pipe with organic residue):"
+print_console "  -> inorganic host object detected"
+print_console "  -> surface sites detected"
+print_console "  -> ethanol: polar adsorbate"
+print_console "  -> acetone: carbonyl-containing adsorbate"
+print_console "  -> benzene: aromatic contaminant"
+print_console "  -> carbonaceous residue flagged as fouling candidate"
+print_console "  -> process meaning reported"
+print_console ""
+print_console "Current SceneHints status (WO-84E):"
+print_console "  derive_scene_hints() -> conservative host/adsorbate/residue classification"
+print_console "  unsupported_features always listed explicitly"
+print_console ""
+print_console "Known gaps:"
+print_console "  Process-environment interpretation not yet wired to SceneHints"
+print_console "  Host-object binding geometry not resolved"
+print_console "  Adsorbate-host distance classification not implemented"
+print_console "  Radiolysis / thermal degradation fragment classification not implemented"

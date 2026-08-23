@@ -1,0 +1,762 @@
+% ============================================================================
+%  chapter_19_red_planet.tex
+%  Chapter 19: The Red Planet
+%  chem+ Applied Chemistry and Planetary Materials Science
+%  VSEPR-SIM Theoretical Division
+%  Compile: pdflatex (twice for refs / TOC)
+% ============================================================================
+\documentclass[11pt,a4paper]{article}
+
+%% ── Encoding & fonts ──────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+%% ── Core packages ────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{mdframed}
+\usepackage{graphicx}
+
+%% ── Page geometry ────────────────────────────────────────────────────────────
+\geometry{left=2.8cm,right=2.8cm,top=3.2cm,bottom=3.0cm,headheight=15pt}
+
+%% ── Hyperref ─────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black,
+  pdftitle={Chapter 19 -- The Red Planet},
+  pdfsubject={chem+ Applied Chemistry: Mars Regolith and Iron Oxidation States}
+}
+
+%% ── Section numbering: 19.0 through 19.9 ────────────────────────────────────
+\renewcommand{\thesection}{19.\arabic{section}}
+\setcounter{section}{-1}
+\renewcommand{\thesubsection}{\Alph{subsection}}
+
+%% ── Section styling ──────────────────────────────────────────────────────────
+\titleformat{\section}
+  {\normalfont\large\bfseries}{\thesection.}{0.6em}{}
+  [\vspace{-2pt}\rule{\textwidth}{0.4pt}]
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\itshape}{\thesubsubsection.}{0.5em}{}
+
+%% ── Header / footer ──────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize\textit{chem+}\;\textbar\;Chapter~19}
+\rhead{\footnotesize\textit{The Red Planet}}
+\lfoot{\footnotesize\today}
+\rfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+%% ── Chem+ identity bracket notation ─────────────────────────────────────────
+%%
+%%  \cid {species}{super}{sub}   full identity block:  [[species]]^super_sub
+%%  \cidb{species}{sub}          subscript only:        [[species]]_sub
+%%  \cidp{species}{super}        superscript only:      [[species]]^super
+%%  \cidn{species}               bare brackets:         [[species]]
+%%
+\newcommand{\cid}[3]{\!\left[\!\left[\,#1\,\right]^{\!#2}_{\!#3}\!\right]}
+\newcommand{\cidb}[2]{\!\left[\!\left[\,#1\,\right]_{\!#2}\!\right]}
+\newcommand{\cidp}[2]{\!\left[\!\left[\,#1\,\right]^{\!#2}\!\right]}
+\newcommand{\cidn}[1]{\!\left[\!\left[\,#1\,\right]\!\right]}
+
+%% ── Named objects used throughout this chapter ───────────────────────────────
+\newcommand{\Rmars}{\vec{R}_{\mathrm{Mars}}}   % regolith identity vector
+\newcommand{\Fmag}{\vec{F}_{\mathrm{mag}}}     % magnetite state vector
+\newcommand{\Rmat}{\mathcal{R}_{\mathrm{Mars}}}% regolith state matrix
+\newcommand{\Proc}{\mathcal{P}}                % processing operator
+
+%% ── Key-result box ───────────────────────────────────────────────────────────
+\newmdenv[
+  topline=true, bottomline=true, rightline=false, leftline=false,
+  linewidth=1.2pt, linecolor=black,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=4pt, innerrightmargin=4pt,
+  skipabove=10pt, skipbelow=10pt
+]{keybox}
+
+%% ── Commentary / interjection box ────────────────────────────────────────────
+\newmdenv[
+  topline=true, bottomline=true, rightline=false, leftline=false,
+  linewidth=1.2pt, linecolor=black,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=0pt, innerrightmargin=0pt,
+  skipabove=12pt, skipbelow=12pt
+]{smlaw}
+
+\captionsetup{font=small,labelfont=bf}
+
+%% ═════════════════════════════════════════════════════════════════════════════
+\begin{document}
+%% ═════════════════════════════════════════════════════════════════════════════
+
+%% ── Chapter opening ──────────────────────────────────────────────────────────
+\thispagestyle{plain}
+\vspace*{0.6cm}
+
+\begin{center}
+  \noindent\rule{\textwidth}{1.2pt}\vspace{0.8em}
+
+  {\small\scshape Chapter~19}\vspace{0.3em}
+
+  {\fontsize{22}{28}\selectfont\bfseries The Red Planet}
+
+  \vspace{0.5em}
+  \noindent\rule{\textwidth}{0.5pt}\vspace{0.5em}
+
+  {\itshape
+	Mars regolith as a chem+ system: iron oxidation states,
+	contamination pathways,\\[0.2em]
+	and the engineering chemistry of surface processing.
+  }
+\end{center}
+
+\vspace{1.0em}
+\noindent\rule{\textwidth}{0.4pt}
+\vspace{0.8em}
+
+\tableofcontents
+\newpage
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Core Idea}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Mars is red because the surface is dominated by oxidised iron-bearing minerals.
+In chem+ language, the visible planet is basically a planetary-scale
+contamination layer:
+
+\[
+\cid{\mathrm{Mars~Regolith}}
+	{\mathrm{Fe/O/Si/Al/Mg/Ca/Cl/S}}
+	{s}
+\]
+
+with the red identity carried mainly by:
+
+\begin{gather*}
+\cid{\mathrm{Fe_2O_3}}{\mathrm{Fe{-}O{-}Fe}}{s}\\[6pt]
+\cid{\mathrm{FeOOH}}{\mathrm{Fe{-}O{-}H}}{s}\\[6pt]
+\cid{\mathrm{Fe_3O_4}}{\mathrm{Fe^{2+}/Fe^{3+}}}{s}
+\end{gather*}
+
+So the surface colour is not ``Mars is red,'' like a children's book written
+by a committee.  It is:
+
+\begin{keybox}
+\[
+\cidb{\mathrm{Fe}}{\text{reduced/rock},\;s}
+\;\rightarrow\;
+\cid{\mathrm{Fe^{3+}{-}O}}{\text{oxidised dust}}{s}
+\]
+\end{keybox}
+
+The planet is red because iron has been converted into oxidised surface-state
+solids.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Red Planet Identity Vector}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Define the regolith identity vector:
+
+\[
+\Rmars
+=
+\begin{bmatrix}
+\mathrm{SiO_2}\\[2pt]
+\mathrm{Fe_2O_3}\\[2pt]
+\mathrm{Al_2O_3}\\[2pt]
+\mathrm{MgO}\\[2pt]
+\mathrm{CaO}\\[2pt]
+\mathrm{SO_4^{2-}}\\[2pt]
+\mathrm{ClO_4^-}\\[2pt]
+\mathrm{H_2O_{ads}}
+\end{bmatrix}
+\]
+
+In compressed chem+ notation:
+
+\[
+\cid{\mathrm{Regolith}}
+	{\mathrm{silicate/oxide/sulfate/perchlorate}}
+	{s}
+\]
+
+Expanded:
+
+\begin{align*}
+\cidb{\mathrm{Regolith}}{\mathrm{Mars}}
+={}&
+  \cidb{\mathrm{Si{-}O{-}Si}}{s}
+  +\cidb{\mathrm{Fe{-}O{-}Fe}}{s}
+  +\cidb{\mathrm{Al{-}O{-}Si}}{s}\\
+&+\cidb{\mathrm{Mg{-}O}}{s}
+  +\cidb{\mathrm{Ca{-}SO_4}}{s}
+  +\cidb{\mathrm{ClO_4^-}}{salt}
+  +\cidb{\mathrm{H_2O}}{ads}
+\end{align*}
+
+The iron oxide piece is the red-state carrier:
+
+\begin{keybox}
+\[
+\cid{\mathrm{Fe{-}O{-}Fe}}{\text{red chromophore}}{s}
+\]
+\end{keybox}
+
+\begin{smlaw}
+Yes, the planet's branding department is rust.  Space has no shame.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Red-State Formation Pathway}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+A simplified oxidation path:
+
+\[
+\cidb{\mathrm{Fe}}{\text{metal/silicate},\;s}
+\;+\;\cidb{\mathrm{O_2}}{atm}
+\;+\;\cidb{\mathrm{H_2O}}{ads}
+\;\rightarrow\;
+\cidb{\mathrm{FeOOH}}{s}
+\]
+
+Then dehydration / ageing:
+
+\[
+2\,\cidb{\mathrm{FeOOH}}{s}
+\;\rightarrow\;
+\cidb{\mathrm{Fe_2O_3}}{s}
+\;+\;\cidb{\mathrm{H_2O}}{g/ads}
+\]
+
+Chem+ flow:
+
+\[
+\cidp{\mathrm{Fe}}{\text{reduced}}_{\!\text{rock}}
+\;\rightarrow\;
+\cid{\mathrm{Fe{-}OH}}{\text{weathered}}{\text{surface}}
+\;\rightarrow\;
+\cid{\mathrm{Fe{-}O{-}Fe}}{\text{oxidised}}{\text{dust}}
+\]
+
+Main state transition:
+
+\begin{keybox}
+\[
+\mathrm{Fe^0/Fe^{2+}}
+\;\rightarrow\;
+\mathrm{Fe^{3+}}
+\]
+\end{keybox}
+
+Bond transition:
+
+\begin{keybox}
+\[
+\cidb{\mathrm{Fe{-}Si/O}}{\text{rock}}
+\;\rightarrow\;
+\cidb{\mathrm{Fe{-}OH}}{\text{weathered}}
+\;\rightarrow\;
+\cidb{\mathrm{Fe{-}O{-}Fe}}{\text{oxide}}
+\]
+\end{keybox}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{The Red Planet Contamination Lesson}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The earlier acid-leach contamination pathway becomes important because Mars
+regolith contains iron oxides everywhere.  The danger is not merely that iron
+exists.  The danger is this conversion:
+
+\begin{keybox}
+\[
+\cid{\mathrm{Fe}}{\text{immobile oxide}}{s}
+\;\rightarrow\;
+\cid{\mathrm{Fe}}{\text{mobile ferric}}{aq}
+\]
+\end{keybox}
+
+On Mars, this matters for:
+
+\begin{center}
+\medskip
+\begin{tabular}{@{}lll@{}}
+$\cidn{\text{water extraction}}$   &
+$\cidn{\text{oxygen production}}$  &
+$\cidn{\text{regolith processing}}$\\[6pt]
+$\cidn{\text{construction binders}}$ &
+$\cidn{\text{metal extraction}}$   &
+$\cidn{\text{sample purity}}$
+\end{tabular}
+\medskip
+\end{center}
+
+because any acidic or reactive processing can drag iron into the liquid phase
+and ruin separation.
+
+\begin{smlaw}
+Humanity goes to Mars and immediately has to ask: ``How do we not dissolve
+the entire red problem into our product stream?''
+Charming species.  Very focused.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Revised Mars Contamination Pathway}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Using the earlier pathway, the full acid-dissolution sequence for a surface
+iron oxide is:
+
+\begin{align*}
+&\cid{\mathrm{Fe_2O_3}}{\mathrm{Fe^{3+}{-}O^{2-}{-}Fe^{3+}}}{s}\\[8pt]
+&\quad\xrightarrow{+\,\mathrm{H^+}}\;
+  \cid{\mathrm{Fe{-}OH{-}Fe}}{\text{protonated}}{\text{surface}}\\[8pt]
+&\quad\xrightarrow{+\,\mathrm{H^+}}\;
+  \cid{\mathrm{Fe{-}OH_2^+}}{\text{leaving}}{\text{surface}}\\[8pt]
+&\quad\xrightarrow{\text{cleavage}}\;
+  \cid{\mathrm{Fe^{3+}}}{\text{mobile}}{aq}\\[8pt]
+&\quad\xrightarrow{+\,\mathrm{H_2O}}\;
+  \cid{\mathrm{Fe(H_2O)_6^{3+}}}{\text{aquo}}{aq}\\[8pt]
+&\quad\xrightarrow{+\,\mathrm{SO_4^{2-}}}\;
+  \cid{\mathrm{FeSO_4^+}}{\text{inner/outer sphere}}{aq}\\[8pt]
+&\quad\xrightarrow{\text{cluster}}\;
+  \cid{\mathrm{Fe{-}}\mu\mathrm{SO_4{-}Fe}}{\text{bridged}}{aq}
+\end{align*}
+
+Mars version, combining multiple dissolved iron species:
+
+\begin{align*}
+&\cid{\mathrm{Mars~dust}}{\mathrm{Fe_2O_3/FeOOH}}{s}
+ \;+\;\cid{\mathrm{acidic~brine}}{\mathrm{H^+/SO_4^{2-}/Cl^-}}{aq}\\[6pt]
+&\quad\rightarrow\;
+  \cid{\mathrm{Fe^{3+}}}{\text{mobile}}{aq}
+  \;+\;\cidb{\mathrm{FeSO_4^+}}{aq}
+  \;+\;\cidb{\mathrm{FeCl^{2+}}}{aq}
+  \;+\;\cidb{\mathrm{FeOH^{2+}}}{aq}
+\end{align*}
+
+So the Mars red-state problem becomes:
+
+\begin{keybox}
+\[
+\text{red dust}
+\;\rightarrow\;
+\text{dissolved ferric contamination}
+\;\rightarrow\;
+\text{dirty brine chemistry}
+\]
+\end{keybox}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Chem+ Bond-Pattern Library for Mars Iron}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection{Hematite-like Oxide}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cid{\mathrm{Fe_2O_3}}{\mathrm{Fe^{3+}{-}O^{2-}{-}Fe^{3+}}}{s}
+\]
+
+Bond motif:
+\begin{keybox}
+\[\mathrm{Fe{-}O{-}Fe}\]
+\end{keybox}
+
+State:
+\[
+\cidb{\mathrm{Fe}}{+3,\;\text{oxide}}
+\]
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection{Hydroxide / Oxyhydroxide Surface}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cid{\mathrm{FeOOH}}{\mathrm{Fe{-}O{-}H}}{s}
+\]
+
+Bond motif:
+\begin{keybox}
+\[\mathrm{Fe{-}OH}\]
+\end{keybox}
+
+Surface hydrated form:
+\[
+\cid{\mathrm{Fe{-}OH}}{\text{surface}}{\text{dust}}
+\]
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection{Magnetite-like Mixed Iron State}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cid{\mathrm{Fe_3O_4}}{\mathrm{Fe^{2+}/Fe^{3+}}}{s}
+\]
+
+State vector:
+\[
+\Fmag
+=
+\begin{bmatrix}
+\mathrm{Fe^{2+}}\\[2pt]
+\mathrm{Fe^{3+}}\\[2pt]
+\mathrm{O^{2-}}
+\end{bmatrix}
+\]
+
+Mixed redox identity:
+\[
+\cid{\mathrm{Fe_3O_4}}{\text{mixed valence}}{s}
+\]
+
+This is important because mixed-valence iron can shift under chemical
+processing:
+\[
+\mathrm{Fe^{2+}}
+\;\rightleftharpoons\;
+\mathrm{Fe^{3+}} + e^-
+\]
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection{Ferric Aquo Contaminant}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cidb{\mathrm{Fe^{3+}}}{aq}
+\;+\; 6\,\cidb{\mathrm{H_2O}}{l}
+\;\rightarrow\;
+\cidb{\mathrm{Fe(H_2O)_6^{3+}}}{aq}
+\]
+
+Chem+:
+\[
+\cidp{\mathrm{Fe}}{+3}_{\!aq}
+\;\cdot\;
+\cid{\mathrm{OH_2}}{\sigma\text{ donor}}{6}
+\]
+
+Bond motif:
+\begin{keybox}
+\[\mathrm{Fe{-}OH_2}\]
+\end{keybox}
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection{Ferric Sulfate Contaminant}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cidb{\mathrm{Fe^{3+}}}{aq}
+\;+\;\cidb{\mathrm{SO_4^{2-}}}{aq}
+\;\rightleftharpoons\;
+\cidb{\mathrm{FeSO_4^+}}{aq}
+\]
+
+Chem+:
+\[
+\cid{\mathrm{Fe{-}O{-}SO_3}}{\text{sulfate bound}}{aq}
+\]
+
+Bond motif:
+\begin{keybox}
+\[\mathrm{Fe{-}O{-}S}\]
+\end{keybox}
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection{Bridged Ferric Sulfate Cluster}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+2\,\cidb{\mathrm{Fe^{3+}}}{aq}
+\;+\;\cidb{\mathrm{SO_4^{2-}}}{aq}
+\;\rightarrow\;
+\cidb{\mathrm{Fe{-}O{-}SO_2{-}O{-}Fe}}{4+,\;aq}
+\]
+
+Chem+:
+\[
+\cid{\mathrm{Fe{-}}\mu\mathrm{SO_4{-}Fe}}{\text{bridged}}{aq}
+\]
+
+Bond motif:
+\begin{keybox}
+\[\mathrm{Fe{-}O{-}S{-}O{-}Fe}\]
+\end{keybox}
+
+\begin{smlaw}
+This is where the dissolved iron stops being a clean ion and becomes a
+coordination mess wearing a fake moustache.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Mars Processing Comparison}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection*{Acidic Route}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\begin{align*}
+&\cid{\mathrm{Mars~Regolith}}{\mathrm{Fe_2O_3/SiO_2/Al_2O_3}}{s}
+ \;+\;\cidb{\mathrm{H^+}}{aq}\\[6pt]
+&\quad\rightarrow\;
+  \cidb{\mathrm{Fe^{3+}}}{aq}
+  \;+\;\cidb{\mathrm{Al^{3+}}}{aq}
+  \;+\;\cidb{\mathrm{Mg^{2+}}}{aq}
+  \;+\;\cidb{\mathrm{Ca^{2+}}}{aq}
+  \;+\;\cidb{\mathrm{SiO_2}}{\text{residue}}
+\end{align*}
+
+Problem:
+\begin{keybox}
+\[
+\cidb{\mathrm{Fe_2O_3}}{s}
+\;\rightarrow\;
+\cidb{\mathrm{Fe^{3+}}}{aq}
+\]
+\end{keybox}
+
+Acid makes extraction stronger but dirtier.
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection*{Basic Route}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\begin{align*}
+\cidb{\mathrm{Mars~Regolith}}{s}
+\;+\;\cidb{\mathrm{OH^-}}{aq}
+\;\rightarrow\;
+\cidb{\text{silicate/aluminate}}{aq}
+\;+\;\cidb{\mathrm{Fe_2O_3}}{s/\text{residue}}
+\end{align*}
+
+Ideal selectivity:
+\[
+\cidb{\mathrm{Fe_2O_3}}{s}
+\;\not\rightarrow\;
+\cidb{\mathrm{Fe^{3+}}}{aq}
+\]
+
+\begin{keybox}
+\[\text{basic leach keeps more iron locked as solid oxide}\]
+\end{keybox}
+
+\begin{smlaw}
+The base route may be less aggressive, but it is cleaner for keeping red iron
+out of solution.  Naturally, the slower path is the more civilised one.
+Annoying but typical.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Regolith State Matrix}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Define the Mars regolith state matrix:
+
+\[
+\Rmat
+=
+\begin{bmatrix}
+\mathrm{Fe_2O_3}   & \mathrm{FeOOH}       & \mathrm{Fe_3O_4}  \\[4pt]
+\mathrm{SiO_2}     & \mathrm{Al_2O_3}     & \mathrm{MgO}      \\[4pt]
+\mathrm{CaSO_4}    & \mathrm{NaCl/MgCl_2} & \mathrm{ClO_4^-}
+\end{bmatrix}
+\]
+
+\noindent
+Rows:
+\[
+\begin{bmatrix}
+\text{redox / iron}\\[2pt]
+\text{silicate structure}\\[2pt]
+\text{salts / reactive contaminants}
+\end{bmatrix}
+\]
+
+\noindent
+Columns:
+\[
+\begin{bmatrix}
+\text{oxide} & \text{hydrated / surface} & \text{reactive / mobile}
+\end{bmatrix}
+\]
+
+A processing operation acts on this matrix:
+
+\[
+\Proc : \Rmat \;\rightarrow\; \Rmat'
+\]
+
+\medskip\noindent
+Four canonical operators:
+
+\begin{align*}
+\Proc_{\text{acid}}    &:\;
+  \cidb{\mathrm{Fe{-}O{-}Fe}}{s}
+  \;\rightarrow\;
+  \cidb{\mathrm{Fe^{3+}}}{aq}
+\\[8pt]
+\Proc_{\text{base}}    &:\;
+  \cidb{\mathrm{Si{-}O{-}Al}}{s}
+  \;\rightarrow\;
+  \cidb{\text{silicate/aluminate}}{aq}
+\\[8pt]
+\Proc_{\text{thermal}} &:\;
+  \cidb{\mathrm{H_2O}}{ads}
+  \;\rightarrow\;
+  \cidb{\mathrm{H_2O}}{g}
+\\[8pt]
+\Proc_{\text{redox}}   &:\;
+  \cidb{\mathrm{Fe^{3+}}}{s}
+  + 3e^-
+  \;\rightarrow\;
+  \cidb{\mathrm{Fe^0}}{s/l}
+\end{align*}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Red Planet Extraction Decision}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The main engineering question:
+
+\begin{keybox}
+\[\text{Do we want iron mobile, fixed, reduced, or separated?}\]
+\end{keybox}
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection*{Path 1 --- Preserve iron as solid contamination}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cidb{\mathrm{Fe_2O_3}}{s}
+\;\rightarrow\;
+\cidb{\mathrm{Fe_2O_3}}{\text{residue}}
+\]
+
+Useful when extracting water, salts, or light elements.
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection*{Path 2 --- Dissolve iron intentionally}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cidb{\mathrm{Fe_2O_3}}{s}
+\;+\; 6\,\cidb{\mathrm{H^+}}{aq}
+\;\rightarrow\;
+2\,\cidb{\mathrm{Fe^{3+}}}{aq}
+\;+\; 3\,\cidb{\mathrm{H_2O}}{l}
+\]
+
+Useful for chemical analysis, but bad for clean product streams.
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection*{Path 3 --- Reduce iron to metal}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cidb{\mathrm{Fe_2O_3}}{s}
+\;+\; 3\,\cidb{\mathrm{H_2}}{g}
+\;\rightarrow\;
+2\,\cidb{\mathrm{Fe}}{s}
+\;+\; 3\,\cidb{\mathrm{H_2O}}{g}
+\]
+
+Chem+:
+\[
+\cidb{\mathrm{Fe^{3+}{-}O}}{s}
+\;\rightarrow\;
+\cidb{\mathrm{Fe^0}}{s}
+\]
+
+Useful for metallurgy and construction feedstock.
+
+%%─────────────────────────────────────────────────────────────────────────────
+\subsection*{Path 4 --- Convert oxide oxygen into useful oxygen}
+%%─────────────────────────────────────────────────────────────────────────────
+
+\[
+\cidb{\mathrm{MO}}{s}
+\;\rightarrow\;
+\cidb{\mathrm{M}}{s/l}
+\;+\;\cidb{\mathrm{O_2}}{g}
+\]
+
+General oxygen extraction:
+\[
+\cidb{\text{oxide}}{\text{regolith}}
+\;\rightarrow\;
+\cidn{\text{metal/silicate}}
+\;+\;\cidn{\mathrm{O_2}}
+\]
+
+\begin{smlaw}
+On Mars, oxygen extraction is not just life support.  It is propellant,
+combustion, welding, processing, and not dying stupidly in a very expensive
+desert.
+\end{smlaw}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{The Red Planet as a Chem+ System}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+Final chapter identity:
+
+\begin{keybox}
+\begin{align*}
+\cid{\mathrm{Mars}}{\text{red}}{\text{planet}}
+={}&\cidb{\text{silicate body}}{\text{rock}}\\
+&+\;\cidb{\mathrm{Fe^{3+}{-}O}}{\text{dust}}\\
+&+\;\cidb{\text{salts/perchlorates}}{\text{surface}}\\
+&+\;\cidb{\mathrm{CO_2}}{\text{atm}}\\
+&+\;\cidb{\mathrm{H_2O}}{\text{ice/ads}}
+\end{align*}
+\end{keybox}
+
+The useful abstraction:
+
+\[
+\cidn{\text{Mars surface}}
+\;=\;
+\cidn{\text{structure}}
++\cidn{\text{oxidation}}
++\cidn{\text{salt}}
++\cidn{\text{dust}}
++\cidn{\text{volatile}}
+\]
+
+Or in one clean chem+ statement:
+
+\begin{keybox}
+\begin{align*}
+\cidn{\text{Red Planet}}
+={}&
+  \cid{\mathrm{Fe{-}O{-}Fe}}{\text{colour/state}}{\text{dust}}\\
+&+\;\cid{\mathrm{Si{-}O{-}Si}}{\text{structure}}{\text{rock}}\\
+&+\;\cid{\mathrm{SO_4^{2-}/ClO_4^-}}{\text{reactive salts}}{\text{regolith}}\\
+&+\;\cid{\mathrm{CO_2/H_2O}}{\text{volatile}}{\text{atm/ice}}
+\end{align*}
+\end{keybox}
+
+\end{document}

@@ -1,24 +1,24 @@
+﻿// =============================================================================
+// tests/test_crystal_surface.cpp  -  Group 23
 // =============================================================================
-// tests/test_crystal_surface.cpp — Group 23
-// =============================================================================
-// Task 9  — Crystal Imperfection Emergence Test
-// Task 10 — Surface Interaction and Damage Test
+// Task 9   -  Crystal Imperfection Emergence Test
+// Task 10  -  Surface Interaction and Damage Test
 //
 // Interaction law : pure LJ via create_lj_coulomb_model()
 //                   Ar (Z=18): σ=3.4 Å, ε=0.238 kcal/mol
 // Integrator      : VelocityVerlet (NVE)
 //
-// Task 9 — SC / FCC / BCC Ar 3×3×3 supercells.
+// Task 9  -  SC / FCC / BCC Ar 3×3×3 supercells.
 //   Perturbation variants per crystal:
 //     1. ideal (baseline)
 //     2. interstitial injection
 //     3. vacancy (remove one atom)
-//     4. substitutional (change type of one atom — identity mismatch)
+//     4. substitutional (change type of one atom  -  identity mismatch)
 //     5. thermal jitter (random displacement of all atoms)
 //     6. localized impulse (kick one atom)
 //     7. multi-site perturbation (kick 3 atoms)
 //
-// Task 10 — Ar slab (SC 3×3×5, free surface, PBC off).
+// Task 10  -  Ar slab (SC 3×3×5, free surface, PBC off).
 //   Six incoming-atom velocity cases:
 //     1. low normal velocity
 //     2. medium normal velocity
@@ -59,7 +59,7 @@
 
 static constexpr double AR_MASS   = 39.948;
 static constexpr uint32_t AR_TYPE = 18;
-static constexpr double DT        = 2e-3;    // fs — larger dt for crystal stability
+static constexpr double DT        = 2e-3;    // fs  -  larger dt for crystal stability
 static constexpr int    N_STEPS   = 4000;
 static constexpr int    SAMPLE    = 200;     // 20 frames per run
 
@@ -101,7 +101,7 @@ static atomistic::crystal::UnitCell make_ar_bcc(double a) {
 	return uc;
 }
 
-// Run and collect imperfection rows — reference-free loop using analyzer
+// Run and collect imperfection rows  -  reference-free loop using analyzer
 using ImpRow = vsepr::xtal::CrystalImperfectionRow;
 
 static std::vector<ImpRow> run_crystal_analysis(
@@ -117,7 +117,7 @@ static std::vector<ImpRow> run_crystal_analysis(
 	model.eval(state, mp);
 	analyzer.set_baseline(state.E.total());
 
-	// Snapshot the type vector at t=0 — stays constant under NVE (no reactions).
+	// Snapshot the type vector at t=0  -  stays constant under NVE (no reactions).
 	// This is passed as cur_types each frame so identity_mismatch_count is live.
 	const std::vector<int> cur_types(state.type.begin(), state.type.end());
 
@@ -140,7 +140,7 @@ static std::vector<ImpRow> run_crystal_analysis(
 }
 
 // =============================================================================
-// Task 9 — Crystal Imperfection Emergence Test
+// Task 9  -  Crystal Imperfection Emergence Test
 // =============================================================================
 
 struct PerturbedCrystal {
@@ -212,7 +212,7 @@ static PerturbedCrystal make_perturbed(
 		s.N    = static_cast<uint32_t>(s.X.size());
 
 	} else if (variant_name == "substitutional") {
-		// Change type of atom 0 to Z=2 (He — different identity, same position)
+		// Change type of atom 0 to Z=2 (He  -  different identity, same position)
 		s.type[0] = 2;
 
 	} else if (variant_name == "thermal_jitter") {
@@ -300,7 +300,7 @@ static void test_crystal_imperfection() {
 				last.defect_fraction, last.N_excess,
 				last.identity_mismatch_count);
 
-			// ── Pass conditions ──────────────────────────────────────────────
+			// -- Pass conditions ----------------------------------------------
 
 			// Ideal: residual should be near-zero
 			if (var == "ideal") {
@@ -319,7 +319,7 @@ static void test_crystal_imperfection() {
 			}
 
 			// Substitutional: N_excess == 0, identity_mismatch_count >= 1
-			// Structure may look ideal if geometry is undistorted — that is correct.
+			// Structure may look ideal if geometry is undistorted  -  that is correct.
 			// The identity layer is the only honest place to record the mismatch.
 			if (var == "substitutional") {
 				assert(last.N_excess == 0 && "T9: substitutional N_excess != 0");
@@ -358,14 +358,14 @@ static void test_crystal_imperfection() {
 }
 
 // =============================================================================
-// Task 10 — Surface Interaction and Damage Test
+// Task 10  -  Surface Interaction and Damage Test
 // =============================================================================
 
 struct SurfaceCase {
 	std::string name;
 	std::string velocity_class;
-	double v_normal;      // Å/fs — normal to surface (+z = away, -z = into slab)
-	double v_tangential;  // Å/fs — along x
+	double v_normal;      // Å/fs  -  normal to surface (+z = away, -z = into slab)
+	double v_tangential;  // Å/fs  -  along x
 };
 
 static void test_surface_interaction() {
@@ -377,7 +377,7 @@ static void test_surface_interaction() {
 	auto sc_slab = atomistic::crystal::construct_supercell(uc, 3, 3, 5);
 	fill_ar_masses(sc_slab.state);
 	fill_velocities_zero(sc_slab.state);
-	sc_slab.state.box.enabled = false;   // free surface — no PBC
+	sc_slab.state.box.enabled = false;   // free surface  -  no PBC
 
 	const uint32_t SLAB_N = sc_slab.state.N;
 	const std::vector<vsepr::Vec3> slab_ref = sc_slab.state.X;
@@ -414,7 +414,7 @@ static void test_surface_interaction() {
 	for (std::size_t ci = 0; ci < cases.size(); ++ci) {
 		const auto& cas = cases[ci];
 
-		// ── Build combined state: slab + one incoming atom ────────────────────
+		// -- Build combined state: slab + one incoming atom --------------------
 		atomistic::State s;
 		s.X     = slab_ref;
 		s.V     .assign(SLAB_N, {0, 0, 0});
@@ -440,7 +440,7 @@ static void test_surface_interaction() {
 
 		const uint32_t incoming_id = SLAB_N;   // first incoming atom index
 
-		// ── Analyzer setup ────────────────────────────────────────────────────
+		// -- Analyzer setup ----------------------------------------------------
 		vsepr::surface::SurfaceAnalyzer surf;
 		surf.slab_N            = SLAB_N;
 		surf.incoming_id       = incoming_id;
@@ -459,7 +459,7 @@ static void test_surface_interaction() {
 		surf.KE_incoming_first = 0.5 * (v0.x*v0.x + v0.y*v0.y + v0.z*v0.z)
 								 * AR_MASS * 418.4;
 
-		// ── Integration ───────────────────────────────────────────────────────
+		// -- Integration -------------------------------------------------------
 		atomistic::VelocityVerletParams vvp;
 		vvp.dt = DT; vvp.n_steps = SAMPLE; vvp.print_freq = 999999; vvp.verbose = false;
 		atomistic::VelocityVerlet vv(*model, mp);
@@ -497,7 +497,7 @@ static void test_surface_interaction() {
 
 		std::printf("%s\n", res.to_tsv().c_str());
 
-		// ── Pass conditions ──────────────────────────────────────────────────
+		// -- Pass conditions --------------------------------------------------
 
 		// Low normal: should not embed (light touch)
 		if (cas.velocity_class == "low_normal") {

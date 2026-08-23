@@ -1,5 +1,5 @@
-/**
- * seed_bead_demo.cpp — Live 60fps Seed-and-Bead Model Demo
+﻿/**
+ * seed_bead_demo.cpp  -  Live 60fps Seed-and-Bead Model Demo
  *
  * Demonstrates the unified 6+9 steady-state step function with real-time
  * visualization. Builds a small nanoparticle cluster and runs the stepper
@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef BUILD_VISUALIZATION
     // Launch live 60fps viewer
-    std::string title = "VSEPR-SIM: Seed & Bead — " + std::string(ref.label);
+    std::string title = "VSEPR-SIM: Seed & Bead  -  " + std::string(ref.label);
     SeedBeadViewer::run(cfg.system, cfg.params, title);
 #else
     // Headless mode: run study and generate report

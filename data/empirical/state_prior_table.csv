@@ -1,0 +1,62 @@
+﻿state,family,lambda_prior_nm,lambda_sigma_nm,energy_prior,energy_sigma,notes
+gas,pi_N,1.05,0.25,-10.8,1.2,Isolated gas-phase pi interaction
+gas,HB_N,0.30,0.06,-22.5,2.5,Gas-phase hydrogen bond
+gas,vdW_N,0.38,0.09,-3.8,0.7,Gas-phase vdW
+gas,sign_halo,0.32,0.07,-7.1,1.0,Gas-phase sigma/pi halo
+gas,metal_ligand,0.20,0.04,-90.0,11.0,Gas-phase metal-ligand
+gas,solvation,0.45,0.15,-5.0,1.5,Gas-phase solvation (minimal)
+plasma,pi_N,0.90,0.30,-8.5,2.0,High-temp plasma pi
+plasma,HB_N,0.22,0.08,-15.0,4.0,Plasma HB (destabilised)
+plasma,vdW_N,0.30,0.10,-2.5,0.8,Plasma vdW (screened)
+plasma,sign_halo,0.28,0.09,-5.5,1.5,Plasma halo
+plasma,metal_ligand,0.18,0.05,-70.0,15.0,Plasma metal-ligand
+plasma,solvation,0.40,0.18,-3.5,1.5,Plasma solvation
+liquid,pi_N,1.15,0.28,-12.0,1.6,Liquid-phase pi stacking
+liquid,HB_N,0.31,0.06,-20.0,2.6,Liquid HB
+liquid,vdW_N,0.42,0.10,-4.0,0.8,Liquid vdW
+liquid,sign_halo,0.34,0.08,-7.5,1.1,Liquid halo
+liquid,metal_ligand,0.23,0.05,-85.0,10.5,Liquid metal-ligand
+liquid,solvation,0.58,0.18,-13.0,3.2,Liquid solvation
+solution,pi_N,1.28,0.35,-12.9,1.8,Solution pi stacking
+solution,HB_N,0.32,0.07,-18.0,2.8,Solution HB (solvent-screened)
+solution,vdW_N,0.45,0.12,-3.2,0.9,Solution vdW
+solution,sign_halo,0.36,0.09,-7.0,1.2,Solution halo
+solution,metal_ligand,0.25,0.06,-80.0,10.0,Solution metal-ligand
+solution,solvation,0.60,0.20,-15.0,3.5,Full solvation shell
+crystal,pi_N,1.20,0.30,-13.1,1.5,Crystal pi stacking (CSD)
+crystal,HB_N,0.28,0.05,-25.0,3.0,Crystal HB (neutron diffraction)
+crystal,vdW_N,0.40,0.10,-4.5,0.8,Crystal vdW
+crystal,disp_N,0.55,0.15,-6.0,1.0,Crystal dispersion
+crystal,rep_N,0.22,0.04,18.5,2.5,Crystal repulsion
+crystal,sign_halo,0.35,0.08,-8.0,1.2,Crystal sigma/pi halo
+crystal,metal_ligand,0.22,0.05,-95.0,12.0,Crystal metal-ligand
+crystal,solvation,0.50,0.16,-10.0,2.5,Crystal solvation layer
+amorphous_solid,pi_N,1.22,0.32,-12.5,1.6,Amorphous pi
+amorphous_solid,HB_N,0.29,0.06,-23.0,2.8,Amorphous HB
+amorphous_solid,vdW_N,0.41,0.11,-4.2,0.8,Amorphous vdW
+amorphous_solid,sign_halo,0.36,0.09,-7.8,1.2,Amorphous halo
+surface_adsorbed,pi_N,1.30,0.38,-14.5,2.2,Surface-adsorbed pi
+surface_adsorbed,HB_N,0.30,0.07,-21.0,2.9,Surface HB
+surface_adsorbed,vdW_N,0.44,0.12,-4.8,0.9,Surface vdW
+surface_adsorbed,surface,0.80,0.25,-22.0,5.0,Surface adsorption
+interface_bound,pi_N,1.32,0.40,-13.8,2.0,Interface-bound pi
+interface_bound,HB_N,0.31,0.07,-22.0,3.0,Interface HB
+interface_bound,vdW_N,0.43,0.11,-4.3,0.9,Interface vdW
+interface_bound,solvation,0.62,0.21,-13.5,3.3,Interface solvation
+biological_pocket,pi_N,1.35,0.40,-14.2,2.0,Ligand-pocket pi (PDB)
+biological_pocket,HB_N,0.29,0.05,-23.1,2.9,Pocket HB
+biological_pocket,vdW_N,0.41,0.11,-4.4,0.9,Pocket vdW
+biological_pocket,solvation,0.65,0.22,-12.5,3.0,Pocket solvation
+biological_pocket,sign_halo,0.34,0.08,-8.2,1.3,Pocket sigma/pi halo
+molten_salt,pi_N,0.95,0.30,-9.5,1.8,Molten-salt pi
+molten_salt,HB_N,0.25,0.07,-16.0,3.5,Molten-salt HB (degraded)
+molten_salt,metal_ligand,0.21,0.05,-88.0,12.0,Molten-salt metal-ligand
+molten_salt,solvation,0.55,0.20,-11.0,3.0,Molten-salt solvation
+supercritical_fluid,pi_N,1.10,0.33,-11.5,1.7,Supercritical pi
+supercritical_fluid,HB_N,0.28,0.07,-19.5,2.7,Supercritical HB
+supercritical_fluid,vdW_N,0.40,0.11,-4.0,0.8,Supercritical vdW
+supercritical_fluid,solvation,0.58,0.20,-13.0,3.2,Supercritical solvation
+macro_composite,pi_N,1.40,0.45,-13.0,2.2,Macro-composite pi (bulk average)
+macro_composite,HB_N,0.30,0.07,-22.0,3.0,Macro-composite HB
+macro_composite,vdW_N,0.45,0.13,-4.5,0.9,Macro-composite vdW
+macro_composite,surface,0.85,0.28,-20.0,5.5,Macro-composite surface

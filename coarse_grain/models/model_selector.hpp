@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * model_selector.hpp — Two-Tier Model Selection for CG Bead Interactions
+ * model_selector.hpp  -  Two-Tier Model Selection for CG Bead Interactions
  *
  * NOTE: SUPERSEDED by the Unified Descriptor Strategy.
  *
@@ -9,9 +9,9 @@
  * branching on atom count, metal center, anisotropy threshold) has been
  * superseded by the unified descriptor formalism in:
  *
- *   coarse_grain/core/unified_descriptor.hpp    — single adaptive descriptor
- *   coarse_grain/models/unified_potential.hpp    — single energy evaluator
- *   coarse_grain/models/descriptor_residual.hpp  — residual-driven promotion
+ *   coarse_grain/core/unified_descriptor.hpp     -  single adaptive descriptor
+ *   coarse_grain/models/unified_potential.hpp     -  single energy evaluator
+ *   coarse_grain/models/descriptor_residual.hpp   -  residual-driven promotion
  *
  * The unified approach uses the same descriptor object and energy machinery
  * for all systems, with model complexity adjusted through adaptive truncation
@@ -37,9 +37,9 @@
  *     - Higher-order SH expansion and multiple interaction channels
  *
  * Selection criteria:
- *   - Atom count ≥ 18 → promotes to Tier 2
- *   - Metal center present → promotes to Tier 2
- *   - High angular complexity (anisotropy ratio above threshold) → promotes to Tier 2
+ *   - Atom count ≥ 18 -> promotes to Tier 2
+ *   - Metal center present -> promotes to Tier 2
+ *   - High angular complexity (anisotropy ratio above threshold) -> promotes to Tier 2
  *   - Definitive criterion is angular complexity of the surface descriptor
  *
  * Anti-black-box: the selection decision, all input criteria, and the
@@ -66,7 +66,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * ModelTier — which interaction model to apply.
+ * ModelTier  -  which interaction model to apply.
  */
 enum class ModelTier {
     REDUCED  = 1,   // Tier 1: orientation-coupled reduced model
@@ -89,18 +89,18 @@ inline const char* tier_name(ModelTier tier) {
 // ============================================================================
 
 /**
- * ModelSelectionConfig — thresholds and flags for tier selection.
+ * ModelSelectionConfig  -  thresholds and flags for tier selection.
  *
  * All parameters are explicit and inspectable.
  */
 struct ModelSelectionConfig {
-    /// Atom-count heuristic threshold (N ≥ threshold → Tier 2 candidate)
+    /// Atom-count heuristic threshold (N ≥ threshold -> Tier 2 candidate)
     uint32_t atom_count_threshold = 18;
 
     /// If true, presence of a metal center forces Tier 2
     bool metal_center_promotes = true;
 
-    /// Anisotropy ratio threshold: above this → Tier 2 required
+    /// Anisotropy ratio threshold: above this -> Tier 2 required
     /// This is the definitive criterion per the theory
     double anisotropy_threshold = 0.45;
 
@@ -113,7 +113,7 @@ struct ModelSelectionConfig {
 // ============================================================================
 
 /**
- * ModelSelectionResult — records the decision and all input criteria.
+ * ModelSelectionResult  -  records the decision and all input criteria.
  *
  * Anti-black-box: every factor contributing to the selection is stored.
  */
@@ -153,7 +153,7 @@ struct ModelSelectionResult {
  * Determine the appropriate model tier for a bead.
  *
  * The selection follows the hierarchy from the theory:
- *   1. Angular complexity (definitive criterion — overrides everything)
+ *   1. Angular complexity (definitive criterion  -  overrides everything)
  *   2. Metal center presence (structural criterion)
  *   3. Atom count heuristic (guideline threshold)
  *   4. Data availability (optional override)
@@ -258,7 +258,7 @@ inline ModelSelectionResult select_model_tier_from_metrics(
 // ============================================================================
 
 /**
- * UnifiedInteractionResult — energy from either tier, with provenance.
+ * UnifiedInteractionResult  -  energy from either tier, with provenance.
  *
  * Records which tier was used and the decomposed energy so that the
  * interaction pathway is always inspectable.

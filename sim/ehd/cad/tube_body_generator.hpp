@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * tube_body_generator.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Parametric tube body generator for straight and modulated (bulged) channels.
  * Generates axial profile points that define the tube inner wall.

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * APPLICATION TEST: Thermal Formation vs Quench-Only
  * 
  * SIMPLIFIED VERSION: Pure Ar cluster (13 atoms)
@@ -169,9 +169,9 @@ Result protocol_B_thermal_formation(int seed) {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  APPLICATION TEST: Thermal vs Quench (Ar₁₃ cluster)      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  APPLICATION TEST: Thermal vs Quench (Ar₁₃ cluster)      |\n";
+    std::cout << "+===========================================================+\n\n";
     
     std::cout << "System: Ar₁₃ cluster (neutral, LJ only)\n";
     std::cout << "Target: Icosahedral structure (global minimum)\n";
@@ -195,7 +195,7 @@ int main() {
     
     std::cout << "\nRunning Protocol B (Thermal formation) for " << n_seeds << " seeds...\n";
     std::cout << "  Stage 1: Langevin at 300 K for 3 ps\n";
-    std::cout << "  Stage 2: Anneal 300 K → 50 K over 3 ps\n";
+    std::cout << "  Stage 2: Anneal 300 K -> 50 K over 3 ps\n";
     std::cout << "  Stage 3: FIRE quench\n\n";
     
     for (int seed = 0; seed < n_seeds; ++seed) {
@@ -208,9 +208,9 @@ int main() {
     }
     
     // Analysis
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  ANALYSIS                                                  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  ANALYSIS                                                  |\n";
+    std::cout << "+===========================================================+\n\n";
     
     double E_mean_A = 0.0;
     double E_min_A = results_A[0].final_energy;
@@ -239,9 +239,9 @@ int main() {
     std::cout << "  Min energy:  " << E_min_B << " kcal/mol\n\n";
     
     // Validation
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VALIDATION                                                ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  VALIDATION                                                |\n";
+    std::cout << "+===========================================================+\n\n";
     
     bool pass_mean = (E_mean_B < E_mean_A - 0.5);
     bool pass_min = (E_min_B < E_min_A);
@@ -264,14 +264,14 @@ int main() {
     std::cout << "\n";
     
     if (pass_mean && pass_min) {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✅ TEST PASSED: Thermal formation finds better minima   ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ✅ TEST PASSED: Thermal formation finds better minima   |\n";
+        std::cout << "+===========================================================+\n";
         return 0;
     } else {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ❌ TEST FAILED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ❌ TEST FAILED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 1;
     }
 }

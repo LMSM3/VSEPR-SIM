@@ -1,4 +1,4 @@
-#include "unit_cell.hpp"
+﻿#include "unit_cell.hpp"
 #include <cmath>
 
 namespace atomistic {
@@ -244,7 +244,7 @@ static void apply_bcc_centering(UnitCell& uc) {
 }
 
 // ============================================================================
-// FLUORITE-TYPE (AO₂) — Fm-3m (#225)
+// FLUORITE-TYPE (AO₂)  -  Fm-3m (#225)
 // Cation 4a: (0,0,0) + FCC translations
 // Anion  8c: (1/4,1/4,1/4) + FCC translations
 // ============================================================================
@@ -304,7 +304,7 @@ UnitCell hfo2_cubic() {
 }
 
 // ============================================================================
-// ZrO₂ / HfO₂ tetragonal — P4₂/nmc (#137), Z=2
+// ZrO₂ / HfO₂ tetragonal  -  P4₂/nmc (#137), Z=2
 // Cation 2a: (0,0,0), (0.5,0.5,0.5)
 // Anion  4d: (0,0.5,z), (0.5,0,z+0.5), (0,0.5,-z), (0.5,0,-z+0.5)
 // ============================================================================
@@ -336,7 +336,7 @@ UnitCell hfo2_tetragonal() {
 }
 
 // ============================================================================
-// ZrO₂ / HfO₂ monoclinic — P2₁/c (#14), Z=4
+// ZrO₂ / HfO₂ monoclinic  -  P2₁/c (#14), Z=4
 // Simplified: 4 cations + 8 anions in monoclinic cell
 // ============================================================================
 
@@ -388,7 +388,7 @@ UnitCell hfo2_monoclinic() {
 }
 
 // ============================================================================
-// SPINEL-TYPE (AB₂O₄) — Fd-3m (#227), Z=8, 56 atoms/conventional cell
+// SPINEL-TYPE (AB₂O₄)  -  Fd-3m (#227), Z=8, 56 atoms/conventional cell
 // Origin choice 2:
 // A (tet) 8a: primitive positions then F-centered
 // B (oct) 16d: primitive positions then F-centered
@@ -468,10 +468,10 @@ UnitCell co3o4_spinel() {
 }
 
 // ============================================================================
-// PEROVSKITE-TYPE (ABO₃) — Pm-3m (#221) for cubic, Z=1
-// A at 1b: (0.5,0.5,0.5) — cuboctahedral
-// B at 1a: (0,0,0) — octahedral
-// O at 3d: (0.5,0,0), (0,0.5,0), (0,0,0.5) — bridging
+// PEROVSKITE-TYPE (ABO₃)  -  Pm-3m (#221) for cubic, Z=1
+// A at 1b: (0.5,0.5,0.5)  -  cuboctahedral
+// B at 1a: (0,0,0)  -  octahedral
+// O at 3d: (0.5,0,0), (0,0.5,0), (0,0,0.5)  -  bridging
 // ============================================================================
 
 UnitCell srtio3_perovskite() {
@@ -586,7 +586,7 @@ UnitCell laalo3_rhombohedral() {
 }
 
 // ============================================================================
-// GARNET-TYPE (A₃B₅O₁₂) — Ia-3d (#230), Z=8, 160 atoms/conventional cell
+// GARNET-TYPE (A₃B₅O₁₂)  -  Ia-3d (#230), Z=8, 160 atoms/conventional cell
 // I-centering doubles primitive to full cell.
 // Primitive (half cell, 80 atoms):
 //   12 A (24c/2), 8 B_oct (16a/2), 12 B_tet (24d/2), 48 O (96h/2)
@@ -596,7 +596,7 @@ UnitCell y3al5o12_garnet() {
     UnitCell uc("Y3Al5O12 YAG", Lattice::cubic(12.01));
     uc.space_group_number = 230; uc.space_group_symbol = "Ia-3d";
 
-    // Y at 24c: (1/8,0,1/4) and permutations + sign changes → 12 per half-cell
+    // Y at 24c: (1/8,0,1/4) and permutations + sign changes -> 12 per half-cell
     const double yc[][3] = {
         {0.125,0.0,0.25}, {0.875,0.0,0.75}, {0.375,0.0,0.75}, {0.625,0.0,0.25},
         {0.25,0.125,0.0}, {0.75,0.875,0.0}, {0.75,0.375,0.0}, {0.25,0.625,0.0},
@@ -604,14 +604,14 @@ UnitCell y3al5o12_garnet() {
     };
     for (auto& p : yc) uc.add_atom({p[0],p[1],p[2]}, 39, +3.0, mass::Y);
 
-    // Al at 16a: (0,0,0) subset → 8 per half-cell
+    // Al at 16a: (0,0,0) subset -> 8 per half-cell
     const double oa[][3] = {
         {0.0,0.0,0.0}, {0.5,0.0,0.5}, {0.0,0.5,0.5}, {0.5,0.5,0.0},
         {0.25,0.25,0.25}, {0.75,0.25,0.75}, {0.25,0.75,0.75}, {0.75,0.75,0.25}
     };
     for (auto& p : oa) uc.add_atom({p[0],p[1],p[2]}, 13, +3.0, mass::Al);
 
-    // Al at 24d: (3/8,0,1/4) and permutations → 12 per half-cell
+    // Al at 24d: (3/8,0,1/4) and permutations -> 12 per half-cell
     const double td[][3] = {
         {0.375,0.0,0.25}, {0.625,0.0,0.75}, {0.875,0.0,0.25}, {0.125,0.0,0.75},
         {0.25,0.375,0.0}, {0.75,0.625,0.0}, {0.25,0.875,0.0}, {0.75,0.125,0.0},
@@ -619,7 +619,7 @@ UnitCell y3al5o12_garnet() {
     };
     for (auto& p : td) uc.add_atom({p[0],p[1],p[2]}, 13, +3.0, mass::Al);
 
-    // O at 96h: (x,y,z) with x≈-0.0306, y≈0.0512, z≈0.1494 → 48 per half-cell
+    // O at 96h: (x,y,z) with x≈-0.0306, y≈0.0512, z≈0.1494 -> 48 per half-cell
     constexpr double ox=-0.0306, oy=0.0512, oz=0.1494;
     // Generate 48 positions from (x,y,z) using Ia-3d half-cell operations
     const double signs[4][3] = {{1,1,1},{-1,-1,1},{-1,1,-1},{1,-1,-1}};
@@ -643,7 +643,7 @@ UnitCell y3al5o12_garnet() {
         uc.add_atom({0.5+sy, 0.5-sz, 0.5+sx}, 8, -2.0, mass::O);
     }
     // 12 + 8 + 12 + 48 = 80 atoms (half cell)
-    apply_bcc_centering(uc);  // → 160 atoms
+    apply_bcc_centering(uc);  // -> 160 atoms
     return uc;
 }
 
@@ -688,12 +688,12 @@ UnitCell gd3ga5o12_garnet() {
         uc.add_atom({0.5+sz, 0.5-sx, 0.5+sy}, 8, -2.0, mass::O);
         uc.add_atom({0.5+sy, 0.5-sz, 0.5+sx}, 8, -2.0, mass::O);
     }
-    apply_bcc_centering(uc);  // → 160 atoms
+    apply_bcc_centering(uc);  // -> 160 atoms
     return uc;
 }
 
 // ============================================================================
-// APATITE — Ca₅(PO₄)₃F — P6₃/m (#176), Z=2
+// APATITE  -  Ca₅(PO₄)₃F  -  P6₃/m (#176), Z=2
 // ============================================================================
 
 UnitCell ca5po4_3f_apatite() {
@@ -752,14 +752,14 @@ UnitCell ca5po4_3f_apatite() {
 }
 
 // ============================================================================
-// MONAZITE — LaPO₄ — P2₁/n (#14), Z=4
+// MONAZITE  -  LaPO₄  -  P2₁/n (#14), Z=4
 // ============================================================================
 
 UnitCell lapo4_monazite() {
     UnitCell uc("LaPO4 monazite",
         Lattice::from_parameters(6.831, 7.071, 6.504, 90.0, 103.27, 90.0));
     uc.space_group_number = 14; uc.space_group_symbol = "P2_1/n";
-    // La at 4e: (x,y,z) — Wyckoff general position
+    // La at 4e: (x,y,z)  -  Wyckoff general position
     constexpr double xL=0.2818, yL=0.1590, zL=0.1005;
     uc.add_atom({   xL,    yL,    zL}, 57, +3.0, mass::La);
     uc.add_atom({  -xL, 0.5+yL, 0.5-zL}, 57, +3.0, mass::La);
@@ -799,7 +799,7 @@ UnitCell lapo4_monazite() {
 }
 
 // ============================================================================
-// PYROCHLORE-TYPE (A₂B₂O₇) — Fd-3m (#227), Z=8, 88 atoms/conventional cell
+// PYROCHLORE-TYPE (A₂B₂O₇)  -  Fd-3m (#227), Z=8, 88 atoms/conventional cell
 // A at 16d, B at 16c, O1 at 48f, O2 at 8b
 // Primitive: 4A + 4B + 12O1 + 2O2 = 22, × 4 FCC = 88
 // ============================================================================
@@ -816,7 +816,7 @@ static void add_pyrochlore_basis(UnitCell& uc, uint32_t Z_A, double m_A,
     uc.add_atom({0.0, 0.25, 0.25},   Z_B, +4.0, m_B);
     uc.add_atom({0.25, 0.0, 0.25},   Z_B, +4.0, m_B);
     uc.add_atom({0.25, 0.25, 0.0},   Z_B, +4.0, m_B);
-    // O1 48f at (x,1/8,1/8) — primitive: 12 positions
+    // O1 48f at (x,1/8,1/8)  -  primitive: 12 positions
     constexpr double e = 0.125;
     uc.add_atom({x48f, e, e}, 8, -2.0, mass::O);
     uc.add_atom({e, x48f, e}, 8, -2.0, mass::O);
@@ -830,11 +830,11 @@ static void add_pyrochlore_basis(UnitCell& uc, uint32_t Z_A, double m_A,
     uc.add_atom({0.25+x48f, -e, -e}, 8, -2.0, mass::O);
     uc.add_atom({-e, 0.25+x48f, -e}, 8, -2.0, mass::O);
     uc.add_atom({-e, -e, 0.25+x48f}, 8, -2.0, mass::O);
-    // O2 8b at (3/8,3/8,3/8) — primitive: 2 positions
+    // O2 8b at (3/8,3/8,3/8)  -  primitive: 2 positions
     uc.add_atom({0.375, 0.375, 0.375}, 8, -2.0, mass::O);
     uc.add_atom({0.625, 0.625, 0.625}, 8, -2.0, mass::O);
     // 4+4+12+2 = 22 primitive atoms
-    apply_fcc_centering(uc);  // → 88 atoms
+    apply_fcc_centering(uc);  // -> 88 atoms
 }
 
 UnitCell gd2ti2o7_pyrochlore() {

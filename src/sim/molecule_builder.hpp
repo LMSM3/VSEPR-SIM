@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * molecule_builder.hpp
  * --------------------
@@ -7,7 +7,7 @@
  * NO HARD-CODED STRUCTURES ALLOWED.
  * NO HARD-CODED PERIODIC DATA ALLOWED.
  * 
- * This is a pure algorithm: formula → composition → topology → rough guess coords.
+ * This is a pure algorithm: formula -> composition -> topology -> rough guess coords.
  * The solver determines final geometry through optimization.
  * 
  * All element data comes from PeriodicTableJSON.json via periodic_db.hpp.
@@ -27,9 +27,9 @@ namespace vsepr {
 
 /**
  * Parse chemical formula into atomic composition.
- * Example: "H2O" → {1: 2, 8: 1}  (Z=1: count=2, Z=8: count=1)
+ * Example: "H2O" -> {1: 2, 8: 1}  (Z=1: count=2, Z=8: count=1)
  * 
- * Requires PeriodicTable instance for symbol→Z lookup.
+ * Requires PeriodicTable instance for symbol->Z lookup.
  */
 inline std::map<int, int> parse_formula(const std::string& formula, const PeriodicTable& periodic_table) {
     std::map<int, int> atoms;  // Z -> count
@@ -77,7 +77,7 @@ inline std::map<int, int> parse_formula(const std::string& formula, const Period
  * Build molecule from formula using algorithmic topology generation.
  * 
  * Strategy:
- * 1. Parse formula → element counts
+ * 1. Parse formula -> element counts
  * 2. Identify central atom (highest valence, lowest count, not H)
  * 3. Place central atom(s)
  * 4. Generate bonds to ligands

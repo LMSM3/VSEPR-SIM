@@ -1,0 +1,256 @@
+# =============================================================================
+# WIC I -- Identity Vector Trajectories
+# VSIM implementation: ethylene (C2H4) sp2 MD -- pi-bond worldline
+#
+# Theory claim (WIC I):
+#   A particle casts a line because identity persists.
+#   The worldline is a multidimensional identity-vector trajectory:
+#     Gamma_i = { V_i(t) | t in [t_exist, t_end] }
+#   The pi-bond in ethylene is this claim's sharpest molecular test:
+#     - the C=C pi bond is not a string connecting two carbons
+#     - it is the correlated trajectory history of two sp2 carbons
+#       whose identity vectors remain phase-coherent across time
+#     - the pi-bond electron density is the projected observable form
+#       of that correlated history, not a physical rope
+#
+# Computational test:
+#   Run C2H4 MD at 300 K. The key measurements are:
+#
+#   1. C=C bond length trajectory (post_step):
+#      Should oscillate around 1.340 A (pi-bond + sigma-bond combined).
+#      Compare with ethane C-C: 1.540 A (sigma only).
+#      The 0.200 A difference is the observable signature of the pi bond.
+#      WIC I S4: this trajectory IS the worldline shadow for C1 and C2.
+#
+#   2. H-C=C bond angle (post_step):
+#      sp2 hybridisation: H-C-C angle = 121.3 deg, H-C-H angle = 117.4 deg.
+#      Must hold throughout MD. If it collapses to tetrahedral (109.47 deg),
+#      the pi bond has been lost -- identity correlation broken.
+#
+#   3. Planarity (post_step):
+#      All 6 atoms must remain coplanar (D2h symmetry).
+#      Out-of-plane displacement > 0.3 A at 300 K = identity event.
+#
+#   4. interference observable:
+#      The pi-bond electron cloud is an interference pattern of the two
+#      carbon identity trajectories. WIC I S5: this is the projected
+#      observable shadow of the correlated trajectory pair (Gamma_1, Gamma_2).
+#
+# WIC I sections mapped:
+#   S4 Local point / historical line:
+#      At each timestep, each C atom is point-like.
+#      Across timesteps: the C=C correlated trajectory is the worldline.
+#      The pi bond exists because the two carbon identities maintain
+#      phase-coherent trajectory history -- not because a string connects them.
+#
+#   S5 Projection of worldline:
+#      rdf = projection of all pairwise distances onto r
+#      interference = wave-like structure of the pi-bond trajectory field
+#      The pi-bond density is observed at scale S_b; the trajectory is at S_a.
+#
+#   S6 Difference from string theory:
+#      The C=C line is not substance. The two C atoms are point carriers.
+#      The line exists because identity persists across time, not because
+#      an extended pi-string vibrates. C2H4 stretching modes produce
+#      continuous trajectory lines for each atom -- that is history.
+#
+# Physical reference for C2H4:
+#   C=C bond length:    1.340 A
+#   C-H bond length:    1.086 A
+#   H-C-C angle:        121.3 deg (sp2, planar)
+#   H-C-H angle:        117.4 deg
+#   Coordination (C):   3 (one C + two H)
+#   Symmetry:           D2h (planar)
+# =============================================================================
+
+[project]
+name        = "wic1_ethylene_sp2_worldline"
+version     = "v5.1.13.5"
+seed_base   = 4201
+determinism = true
+
+[material]
+formula   = "C2H4"
+structure = "molecular"
+phase     = "gas"
+
+[run]
+mode         = "md"
+max_steps    = 3000
+dt_fs        = 0.25     # short: capture fast C=C stretch modes (~1623 cm^-1)
+temperature  = 300
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 300
+medium      = "vacuum"
+
+[simulation]
+fire_max_steps   = 600
+fire_dt_fs       = 0.5
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "C2H4"
+count       = 1
+temperature = 300.0
+
+# ---------------------------------------------------------------------------
+# Post-step probes -- WIC I S4: instantaneous identity trajectory
+#
+# d_CC: C=C bond trajectory -- the worldline shadow of the pi-bond
+#   Must oscillate around 1.340 A.
+#   A drift toward 1.540 A (ethane) = pi bond breaking = identity event.
+#
+# d_CH1: C-H bond for atom 3 (one vinyl H on C1)
+#   Should oscillate around 1.086 A.
+#
+# d_HH_gem: H-H geminal distance on C1 (atoms 3 and 4)
+#   sp2: H-H geminal ~ 1.84 A. sp3: H-H geminal ~1.78 A (tetrahedral crowding).
+#   If this approaches the sp3 value, planarity is being lost.
+# ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Per-step worldline probes (WIC I S5) -- documented intent.
+# NOTE: [post_step] script_block expression execution is deferred (WO-57C);
+# the equivalent geometry is recovered post-run via [observe] bond_lengths /
+# bond_angles below.  Target expressions, for reference:
+#   d_CC     = pbc.distance(particle.position(1), particle.position(2))
+#   d_CH1    = pbc.distance(particle.position(1), particle.position(3))
+#   d_HH_gem = pbc.distance(particle.position(3), particle.position(4))
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Observables
+# interference: pi-bond correlated trajectory field -- WIC I S5
+# rdf:          projection of pairwise distances (worldline shadow)
+# bond_angles:  sp2 geometry verification -- must hold 121 deg, not 109 deg
+# energy_map:   instantaneous potential surface V_i(t) for each atom
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "bond_lengths", "bond_angles", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 15
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true    # WIC I: displacement history IS the worldline
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Scale sampling -- WIC I S7: w-projection test
+# C2H4 C-C bond = 1.340 A. Windows span sub-bond to full-molecule scale.
+# If scale_drift increases from 0.67 A to 5.0 A, the pi-bond coherence
+# only exists at the sub-A scale -- consistent with w inaccessibility.
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [4, 4, 4]
+rve_window_lengths_A             = [0.67, 1.34, 2.68, 5.36]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 6
+spatial_cv_threshold             = 0.45
+temporal_drift_threshold         = 0.25
+scale_drift_threshold            = 0.30
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 2.5
+contact_cutoff_A  = 1.2
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 30
+unwrap_pbc            = false
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Verification -- WIC I S5: projected worldline shadow
+# C=C bond 1.340 A. H-C-C sp2 angle 121.3 deg. Coordination(C) = 3.
+# MSD must stay bounded (molecule, not gas -- no center-of-mass correction
+# needed for bound molecule).
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "wic1_c2h4_sp2_worldline_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "C2H4_molecular"
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.086
+nearest_neighbor_tolerance_A = 0.08
+expected_bond_angle_deg      = 121.3
+bond_angle_tolerance_deg     = 4.0
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.086, 1.340, 2.157]
+peak_tolerance_A   = 0.12
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_dashboard_svg        = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+write_verify_report        = true
+write_verify_tsv           = true
+output_dir                 = "out/finalchapter/wic1_c2h4"
+
+[report]
+title                   = "wic1_ethylene_sp2_worldline"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 15
+show_proxy_table         = true
+show_convergence_trace   = false
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,bond_lengths,rdf,interference

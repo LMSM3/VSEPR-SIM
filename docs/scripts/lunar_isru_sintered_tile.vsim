@@ -1,0 +1,146 @@
+# =============================================================================
+# Lunar ISRU — Regolith Sintering for Bricks and Landing Pads
+# author  = "SM / VSEPR-SIM"
+# version = "v5.1.13.5"
+# status  = "concept_script"
+#
+# WARNING: Sintering physics and dust damage modules not yet implemented.
+# Required: sintering_physics, dust_damage_model, lunar_environment
+# See: dev/bridge/LUNAR_MODULE_SPEC.md
+# =============================================================================
+
+[project]
+name        = "lunar_isru_sintered_tile"
+version     = "v5.1.13.5"
+seed_base   = 1972
+determinism = true
+
+[system]
+name        = "lunar_sintered_pad_tile"
+environment = "moon_surface"
+scale       = "bead_to_macro"
+gravity     = 1.62
+pressure    = 0.0
+atmosphere  = "vacuum"
+
+# ---------------------------------------------------------------------------
+# Material
+# ---------------------------------------------------------------------------
+[material.regolith]
+source             = "local_lunar_mare_or_highland"
+composition_model  = "oxide_glass_ceramic"
+grain_model        = "angular_irregular"
+grain_count        = 12000
+grain_radius_min_um = 20
+grain_radius_max_um = 800
+dust_fraction      = 0.18
+
+# ---------------------------------------------------------------------------
+# Geometry
+# ---------------------------------------------------------------------------
+[geometry.tile]
+type              = "compressed_plate"
+length_m          = 0.5
+width_m           = 0.5
+height_m          = 0.08
+layers            = 8
+layer_fill_method = "raked_powder_bed"
+
+# ---------------------------------------------------------------------------
+# Process chain
+# ---------------------------------------------------------------------------
+[process.compaction]
+enabled                    = true
+method                     = "mechanical_press"
+target_porosity            = 0.22
+pressure_MPa               = 15.0
+hold_time_s                = 60.0
+track_particle_rearrangement = true
+
+[process.sintering]
+enabled          = true
+method           = "microwave_solar_hybrid"
+temperature_K    = 1375.0
+ramp_rate_K_per_s = 4.0
+hold_time_s      = 900.0
+cooling_rate_K_per_s = 1.5
+
+[formation.physics]
+bond_growth_model        = "neck_growth"
+surface_diffusion        = true
+viscous_flow             = true
+thermal_gradient         = true
+shrinkage_enabled        = true
+crack_initiation_enabled = true
+
+# ---------------------------------------------------------------------------
+# Load tests
+# ---------------------------------------------------------------------------
+[loads]
+compression_test   = true
+thermal_cycle_test = true
+dust_erosion_test  = true
+
+[load.compression]
+force_N          = 50000
+contact_patch_m2 = 0.01
+
+[load.thermal_cycle]
+cycles          = 20
+temperature_low_K  = 100
+temperature_high_K = 390
+
+[load.dust_erosion]
+particle_velocity_m_per_s = 150
+particle_flux             = 1000
+duration_s                = 300
+
+# ---------------------------------------------------------------------------
+# Observables
+# ---------------------------------------------------------------------------
+[observe]
+metrics = [
+    "porosity",
+    "bulk_density_proxy",
+    "crack_fraction",
+    "surface_roughness",
+    "bond_neck_radius_mean",
+    "compressive_strength_proxy",
+    "thermal_fatigue_damage",
+    "landing_pad_viability"
+]
+output_format = "json"
+every_n_steps = 200
+
+# ---------------------------------------------------------------------------
+# Run
+# ---------------------------------------------------------------------------
+[run]
+mode      = "thermal_structural"
+max_steps = 40000
+dt_fs     = 0.001
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 390.0
+medium      = "vacuum"
+pressure    = 0.0
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz           = true
+write_xyzf          = true
+write_events_json   = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_dashboard_svg = true
+write_manifest_json = true
+output_dir          = "exports/lunar_isru_sintered_tile"
+
+[visual]
+output_type     = "terminal_overlay_cycle"
+render_interval = 1000
+overlay_sequence = porosity,crack_fraction,compressive_strength_proxy,landing_pad_viability

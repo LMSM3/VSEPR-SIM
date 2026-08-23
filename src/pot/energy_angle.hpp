@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 energy_angle.hpp
 ----------------
@@ -14,7 +14,7 @@ where:
 
 Advantages of cosine formulation:
 - No acos() evaluation (faster, more stable)
-- Smooth derivatives near linear (θ → 180°)
+- Smooth derivatives near linear (θ -> 180°)
 - Numerically stable
 
 Gradient derivation:

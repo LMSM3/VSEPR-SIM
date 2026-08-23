@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * ehd_types.hpp
  *
- * Electrohydrodynamic Simulation — Fundamental Types and Constants
+ * Electrohydrodynamic Simulation  -  Fundamental Types and Constants
  *
  * Defines the core data structures shared across all five EHD stages:
  *   - Physical constants (Faraday, vacuum permittivity, Boltzmann)
@@ -38,7 +38,7 @@ namespace constants {
 } // namespace constants
 
 // ============================================================================
-// Pump Topology — The four principal EHD device configurations
+// Pump Topology  -  The four principal EHD device configurations
 // ============================================================================
 
 enum class PumpTopology {
@@ -60,13 +60,13 @@ enum class PumpMechanism {
 };
 
 // ============================================================================
-// Reactive Multiphase — enable combustion coupling
+// Reactive Multiphase  -  enable combustion coupling
 // ============================================================================
 
 struct CombustionParameters {
     bool   enabled            = false;
     int    particle_count     = 100;       // N_p injected
-    double particle_diameter  = 10.0e-6;   // d₀ (m) — initial diameter
+    double particle_diameter  = 10.0e-6;   // d₀ (m)  -  initial diameter
     double injection_velocity = 0.5;       // m/s
     double ambient_temperature = 300.0;    // T_∞ (K)
     double O2_mass_fraction   = 0.233;     // Y_O2 (air default)
@@ -74,7 +74,7 @@ struct CombustionParameters {
 };
 
 // ============================================================================
-// Basic 3D Vector — Day #56: alias to vsepr::Vec3, no local struct.
+// Basic 3D Vector  -  Day #56: alias to vsepr::Vec3, no local struct.
 // ============================================================================
 
 using Vec3 = vsepr::Vec3;
@@ -87,7 +87,7 @@ struct IonicSpecies {
     std::string name;                // e.g. "Na+", "Cl-", "X-"
     int         valence     = 0;     // z_i (signed)
     double      diffusivity = 0.0;   // D_i (m²/s)
-    double      mobility    = 0.0;   // μ_i (m²/(V·s))  — if 0, computed from Nernst-Einstein
+    double      mobility    = 0.0;   // μ_i (m²/(V·s))   -  if 0, computed from Nernst-Einstein
     double      init_conc   = 0.0;   // c_i,0 (mol/m³)
 
     /** Nernst-Einstein relation: μ = |z|·F·D / (R·T) */
@@ -123,7 +123,7 @@ struct EHDParameters {
     PumpTopology  topology  = PumpTopology::HELICAL_WIRE;
     PumpMechanism mechanism = PumpMechanism::COULOMB;
 
-    // --- Geometry (helical wire / cylindrical tube — original) ---
+    // --- Geometry (helical wire / cylindrical tube  -  original) ---
     double tube_radius_m     = 4.0e-3;    // R_tube
     double tube_length_m     = 60.0e-3;   // L
     double helix_pitch_m     = 6.0e-3;    // p_helix
@@ -133,17 +133,17 @@ struct EHDParameters {
     double inlet_length_m    = 5.0e-3;    // development region
     double outlet_length_m   = 5.0e-3;    // exit region
 
-    // --- Geometry (planar channel — config a) ---
+    // --- Geometry (planar channel  -  config a) ---
     double channel_height_m  = 2.0e-3;    // H (gap between planar electrodes)
     double channel_width_m   = 10.0e-3;   // W (electrode span, transverse)
     double channel_length_m  = 40.0e-3;   // L_ch (electrode length, streamwise)
 
-    // --- Geometry (needle-ring — config b) ---
+    // --- Geometry (needle-ring  -  config b) ---
     double needle_tip_radius_m = 50.0e-6; // r_tip (needle tip curvature)
     double ring_inner_radius_m = 2.0e-3;  // R_ring (ring electrode inner radius)
     double needle_ring_gap_m   = 5.0e-3;  // d_gap (needle tip to ring plane)
 
-    // --- Geometry (disk stack — config c) ---
+    // --- Geometry (disk stack  -  config c) ---
     double disk_radius_m       = 8.0e-3;  // R_disk (disk outer radius)
     double disk_thickness_m    = 0.5e-3;  // t_disk
     int    disk_count          = 6;        // number of disks (alternating polarity)
@@ -151,7 +151,7 @@ struct EHDParameters {
     int    perforations_per_disk = 12;     // through-holes per disk
     double perforation_radius_m = 1.0e-3; // r_perf
 
-    // --- Geometry (prism slit — config d) ---
+    // --- Geometry (prism slit  -  config d) ---
     double slit_width_m        = 1.5e-3;  // w_slit (gap between prism electrodes)
     double slit_depth_m        = 5.0e-3;  // d_slit (flow-through depth)
     double prism_base_m        = 3.0e-3;  // b_prism (triangular base width)
@@ -159,8 +159,8 @@ struct EHDParameters {
     int    prism_count         = 4;        // number of prism electrodes in array
 
     // --- Dielectrophoretic / Electroosmotic properties ---
-    double zeta_potential       = -50.0e-3;   // ζ (V) — wall zeta potential for EOF
-    double clausius_mossotti    = 0.5;        // Re[K(ω)] — CM factor for DEP
+    double zeta_potential       = -50.0e-3;   // ζ (V)  -  wall zeta potential for EOF
+    double clausius_mossotti    = 0.5;        // Re[K(ω)]  -  CM factor for DEP
 
     // --- Reactive Multiphase / Combustion ---
     CombustionParameters combustion;

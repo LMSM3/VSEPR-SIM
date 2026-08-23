@@ -191,7 +191,7 @@ public:
     explicit VizServer(const VizServerConfig& cfg = {});
     ~VizServer();
 
-    // Non-blocking start — launches two listener threads
+    // Non-blocking start  -  launches two listener threads
     bool start();
     void stop();
     bool is_running() const { return running_.load(); }

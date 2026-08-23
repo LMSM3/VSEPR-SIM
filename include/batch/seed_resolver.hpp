@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/seed_resolver.hpp
  * =================================
- * WO-VSIM-62C — Seed Derivation
+ * WO-VSIM-62C  -  Seed Derivation
  *
  * SeedResolver fills the resolved_* fields of SeedSection from the
  * declared foundation and sub-seeds.  If a sub-seed is 0, it is
@@ -27,8 +27,8 @@ public:
 	static SeedSection resolve(const SeedSection& declared);
 
 	// Derive per-replicate seed from a base seed.
-	// policy = "split" → base + replicate
-	// policy = "shift" → base + replicate * 1000
+	// policy = "split" -> base + replicate
+	// policy = "shift" -> base + replicate * 1000
 	static uint64_t replicate_seed(uint64_t base_seed,
 								   int       replicate,
 								   const std::string& policy);

@@ -1,19 +1,19 @@
-/**
+﻿/**
  * src/vsim/register_pbc_builtins.cpp
  * =====================================
  * Registers all six pbc.* built-in functions with VsimInterpreter.
  *
  * All functions accept and return XYZVec3 (script/state-facing vector type).
  * Conversion to/from vsepr::Vec3 (math backend) happens inside each binding
- * via to_pbc_vec3() / from_pbc_vec3() — the only place these types meet.
+ * via to_pbc_vec3() / from_pbc_vec3()  -  the only place these types meet.
  *
  * Particle IDs are 1-indexed in scripts; all ID-accepting functions convert
  * to 0-indexed before accessing runtime arrays.
  *
  * Guard semantics:
- *   require_pbc()          — raised when no periodic axis is configured
- *   require_track_images() — raised when pbc_config.track_images is false
- *   to_particle_index()    — validates 1-indexed ID and returns 0-indexed
+ *   require_pbc()           -  raised when no periodic axis is configured
+ *   require_track_images()  -  raised when pbc_config.track_images is false
+ *   to_particle_index()     -  validates 1-indexed ID and returns 0-indexed
  *
  * WO-VSEPR-SIM-57D  |  beta-8
  */
@@ -24,7 +24,7 @@
 
 namespace vsim {
 
-// ── Guards ────────────────────────────────────────────────────────────────────
+// -- Guards --------------------------------------------------------------------
 
 static void require_pbc(const PBCInterpreterRuntime& rt, const char* fn) {
 	if (!rt.cell.enabled())
@@ -54,20 +54,20 @@ static int to_particle_index(const Value& v, const PBCInterpreterRuntime& rt) {
 			"[PBC ERROR] Particle ID " + std::to_string(id) +
 			" out of range. System has " +
 			std::to_string(rt.particle_count()) + " particles.");
-	return id - 1;  // 1-indexed → 0-indexed
+	return id - 1;  // 1-indexed -> 0-indexed
 }
 
-// ── ImageCount → Int3 conversion ──────────────────────────────────────────────
+// -- ImageCount -> Int3 conversion ----------------------------------------------
 
 static Int3 to_int3(const vsepr::ImageCount& img) {
 	return {img.ix, img.iy, img.iz};
 }
 
-// ── Registration ──────────────────────────────────────────────────────────────
+// -- Registration --------------------------------------------------------------
 
 void register_pbc_builtins(VsimInterpreter& interp) {
 
-	// ── pbc.wrap(r) → XYZVec3 ──────────────────────────────────────────────
+	// -- pbc.wrap(r) -> XYZVec3 ----------------------------------------------
 	interp.register_builtin("pbc.wrap",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		require_pbc(rt, "wrap");
@@ -78,7 +78,7 @@ void register_pbc_builtins(VsimInterpreter& interp) {
 		return from_pbc_vec3(vsepr::wrap_position(to_pbc_vec3(r), rt.cell));
 	});
 
-	// ── pbc.delta(r_i, r_j) → XYZVec3 ────────────────────────────────────
+	// -- pbc.delta(r_i, r_j) -> XYZVec3 ------------------------------------
 	interp.register_builtin("pbc.delta",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		require_pbc(rt, "delta");
@@ -91,7 +91,7 @@ void register_pbc_builtins(VsimInterpreter& interp) {
 			vsepr::minimum_image_delta(to_pbc_vec3(ri), to_pbc_vec3(rj), rt.cell));
 	});
 
-	// ── pbc.distance(r_i, r_j) → double ───────────────────────────────────
+	// -- pbc.distance(r_i, r_j) -> double -----------------------------------
 	interp.register_builtin("pbc.distance",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		require_pbc(rt, "distance");
@@ -103,7 +103,7 @@ void register_pbc_builtins(VsimInterpreter& interp) {
 		return vsepr::pbc_distance(to_pbc_vec3(ri), to_pbc_vec3(rj), rt.cell);
 	});
 
-	// ── pbc.crossed_boundary(id) → bool ───────────────────────────────────
+	// -- pbc.crossed_boundary(id) -> bool -----------------------------------
 	interp.register_builtin("pbc.crossed_boundary",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		require_pbc(rt, "crossed_boundary");
@@ -117,7 +117,7 @@ void register_pbc_builtins(VsimInterpreter& interp) {
 			cur.ix != prev.ix || cur.iy != prev.iy || cur.iz != prev.iz);
 	});
 
-	// ── pbc.image_count(id) → Int3 ────────────────────────────────────────
+	// -- pbc.image_count(id) -> Int3 ----------------------------------------
 	interp.register_builtin("pbc.image_count",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		require_pbc(rt, "image_count");
@@ -128,7 +128,7 @@ void register_pbc_builtins(VsimInterpreter& interp) {
 		return to_int3(rt.image_counts[idx]);
 	});
 
-	// ── pbc.unwrap(id) → XYZVec3 ──────────────────────────────────────────
+	// -- pbc.unwrap(id) -> XYZVec3 ------------------------------------------
 	interp.register_builtin("pbc.unwrap",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		require_pbc(rt, "unwrap");

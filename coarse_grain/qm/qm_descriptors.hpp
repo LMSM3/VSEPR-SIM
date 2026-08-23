@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * qm_descriptors.hpp — QM Descriptor Preparation Layer (Level 0)
+ * qm_descriptors.hpp  -  QM Descriptor Preparation Layer (Level 0)
  *
  * Provides per-bead quantum-mechanical descriptor estimates computed
  * analytically from the coarse-grained state and species tables.
@@ -32,11 +32,11 @@ namespace coarse_grain {
 namespace qm {
 
 // ============================================================================
-// QM Descriptor Struct — the Level-0/1/2 interface contract
+// QM Descriptor Struct  -  the Level-0/1/2 interface contract
 // ============================================================================
 
 /**
- * QMDescriptor — per-bead quantum-mechanical evidence variables.
+ * QMDescriptor  -  per-bead quantum-mechanical evidence variables.
  *
  * Level-0 sources (all analytic/empirical):
  *
@@ -46,7 +46,7 @@ namespace qm {
  *
  *   chi_mean:     Mean electronegativity of parent atoms (Pauling scale).
  *                 χ̄ᵢ = (1/N_atoms) Σ χ_atom
- *                 Fallback: structural_role → tabulated χ̄ estimate.
+ *                 Fallback: structural_role -> tabulated χ̄ estimate.
  *
  *   alpha_proxy:  Polarisability proxy (Å³, approximate).
  *                 αᵢ ≈ (σ_bead / 2)³ · f_role
@@ -102,7 +102,7 @@ struct QMNeighbour {
 };
 
 // ============================================================================
-// Structural role → electronegativity fallback
+// Structural role -> electronegativity fallback
 // ============================================================================
 
 /**
@@ -154,7 +154,7 @@ inline double role_polarisability_factor(StructuralRole role)
  * @param env_i       Environment state of bead i
  * @param neighbours  Neighbour list for bead i
  * @param gamma_elec  Electrostatic modulation parameter (from EnvironmentParams)
- * @param sigma_i     LJ sigma of bead i (Å) — used for polarisability
+ * @param sigma_i     LJ sigma of bead i (Å)  -  used for polarisability
  * @return Populated QMDescriptor (fidelity_level = 0)
  */
 inline QMDescriptor compute_qm_descriptor_l0(
@@ -221,7 +221,7 @@ inline QMDescriptor compute_qm_descriptor_l0(
     //    Delta from environment: hard species in high-density environments
     //    donate partial charge to neighbours.
     //    delta_q = −gamma_elec · eta_i · sign(charge)
-    //    (gamma_elec < 0 → delta_q > 0 in dense environments for cations)
+    //    (gamma_elec < 0 -> delta_q > 0 in dense environments for cations)
     // ---------------------------------------------------------------
     double sign_q = (bead_i.charge > 0.0) ? 1.0
                   : (bead_i.charge < 0.0) ? -1.0 : 0.0;
@@ -256,7 +256,7 @@ inline QMDescriptor compute_qm_descriptor_l0(
 // ============================================================================
 
 /**
- * IQMBackend — abstract interface that Level-1 (semi-empirical) and
+ * IQMBackend  -  abstract interface that Level-1 (semi-empirical) and
  * Level-2 (DFT) backends must implement.
  *
  * Level-0 analytic computation does NOT use this interface.

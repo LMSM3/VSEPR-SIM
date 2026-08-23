@@ -1,4 +1,4 @@
-/**
+﻿/**
  * sensor.hpp
  * ----------
  * Virtual Sensor System for VSEPR-SIM.
@@ -8,9 +8,9 @@
  * and reports readings when fluid or material state passes through it.
  *
  * Three sensor types:
- *   WIND     — fluid speed sensor (local velocity magnitude + direction)
- *   MATERIAL — composition sensor (element fractions, species classification)
- *   ENERGY   — energy flux sensor (thermal, chemical, electrical contributions)
+ *   WIND      -  fluid speed sensor (local velocity magnitude + direction)
+ *   MATERIAL  -  composition sensor (element fractions, species classification)
+ *   ENERGY    -  energy flux sensor (thermal, chemical, electrical contributions)
  *
  * Every sensor also carries a built-in friction correction:
  *   μ_dyn ≈ 0.0014 (0.14% dynamic friction factor for fluid interaction)
@@ -23,16 +23,16 @@
  *   Normal direction n̂ = (p1 - p0) / L.
  *   Cross-section area is infinitesimal (point-sensor limit).
  *
- * The sensor does NOT store simulation history — it reports instantaneous
+ * The sensor does NOT store simulation history  -  it reports instantaneous
  * readings. Accumulation and time-averaging are done by the caller.
  *
  * Anti-black-box: every field public, every calculation explicit.
  *
  * Reference architecture:
- *   io/xyz_format.hpp      — XYZAtom, XYZMolecule
- *   gas2/gas2_kinetic.hpp  — transport properties (viscosity, MFP)
- *   gas2/gas2_species.hpp  — species database
- *   coarse_grain/core/bead.hpp — Bead dynamics state
+ *   io/xyz_format.hpp       -  XYZAtom, XYZMolecule
+ *   gas2/gas2_kinetic.hpp   -  transport properties (viscosity, MFP)
+ *   gas2/gas2_species.hpp   -  species database
+ *   coarse_grain/core/bead.hpp  -  Bead dynamics state
  */
 
 #pragma once
@@ -58,7 +58,7 @@ namespace sensor {
 
 // Dynamic friction factor for fluid sensor interaction.
 // This is the perturbation a sensor imparts to a crossing particle.
-// ~0.14% drag on the local fluid — tiny but physically honest.
+// ~0.14% drag on the local fluid  -  tiny but physically honest.
 static constexpr double MU_DYNAMIC_SENSOR = 0.0014;
 
 // ============================================================================
@@ -81,7 +81,7 @@ inline const char* sensor_type_name(SensorType t) {
 }
 
 // ============================================================================
-// 3D vector — Day #56: alias to vsepr::Vec3, no local struct.
+// 3D vector  -  Day #56: alias to vsepr::Vec3, no local struct.
 // ============================================================================
 
 using Vec3 = vsepr::Vec3;
@@ -91,7 +91,7 @@ using Vec3 = vsepr::Vec3;
 // ============================================================================
 
 /**
- * WindReading — instantaneous fluid velocity measurement.
+ * WindReading  -  instantaneous fluid velocity measurement.
  */
 struct WindReading {
     Vec3   velocity;           // Local fluid velocity vector (Å/fs or m/s)
@@ -109,7 +109,7 @@ struct WindReading {
 };
 
 /**
- * MaterialReading — local composition and species analysis.
+ * MaterialReading  -  local composition and species analysis.
  */
 struct MaterialReading {
     // Element fractions: element symbol -> mole fraction
@@ -132,7 +132,7 @@ struct MaterialReading {
 };
 
 /**
- * EnergyReading — local energy flux decomposition.
+ * EnergyReading  -  local energy flux decomposition.
  */
 struct EnergyReading {
     double thermal_energy   = 0.0;  // Kinetic energy (eV or kcal/mol)
@@ -155,7 +155,7 @@ struct EnergyReading {
 };
 
 // ============================================================================
-// Sensor — the measurement object
+// Sensor  -  the measurement object
 // ============================================================================
 
 /**
@@ -265,7 +265,7 @@ struct Sensor {
 //
 // These operate on raw particle data (position, velocity, element, charge, etc.)
 // and return typed readings. They are decoupled from any specific simulation
-// state format — the caller extracts the arrays and passes them in.
+// state format  -  the caller extracts the arrays and passes them in.
 //
 
 /**
@@ -308,7 +308,7 @@ inline WindReading measure_wind(const Sensor& s, const ParticleSnapshot& snap,
         r.direction = r.velocity.normalized();
 
         // Kinetic temperature: <KE> = (3/2) kT per particle
-        // In Å²·amu/fs² units → convert to K via kB
+        // In Å²·amu/fs² units -> convert to K via kB
         // kB = 0.00198721 kcal/(mol·K) = 8.31446e-7 amu·Å²/(fs²·K)
         constexpr double kB_internal = 8.31446e-7; // amu·Å²/(fs²·K)
         r.temperature = (2.0 / 3.0) * (ke_sum / r.particle_count) / kB_internal;

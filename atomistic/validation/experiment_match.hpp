@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * experiment_match.hpp
  * --------------------
- * Experimental data matching for the near-atomistic nanoparticle regime (4–6 nm).
+ * Experimental data matching for the near-atomistic nanoparticle regime (4-6 nm).
  *
  * Compares internal simulation state against published experimental
  * observables for nanoparticle systems:
@@ -10,7 +10,7 @@
  *   1. Geometric energy decomposition
  *      - Surface / bulk / edge / vertex energy partitioning
  *      - Cohesive energy per atom (eV or kcal/mol)
- *      - Surface energy per unit area (J/m² → kcal/mol/Å²)
+ *      - Surface energy per unit area (J/m² -> kcal/mol/Å²)
  *
  *   2. Structural metrics
  *      - Coordination number distribution
@@ -18,16 +18,16 @@
  *      - Bond angle distribution (BAD) fingerprint
  *
  *   3. Nanoparticle dynamics
- *      - Mean square displacement (MSD) → diffusion coefficient D
+ *      - Mean square displacement (MSD) -> diffusion coefficient D
  *      - Lindemann index (melting criterion)
- *      - Velocity autocorrelation → vibrational density of states
+ *      - Velocity autocorrelation -> vibrational density of states
  *
  * References matched against:
  *   - CRC Handbook of Nanoparticle Properties
  *   - Experimental surface energies (Tyson & Miller, 1977)
- *   - Nanoparticle diffusion (Stokes–Einstein + corrections)
+ *   - Nanoparticle diffusion (Stokes-Einstein + corrections)
  *
- * Regime: 4–6 nm diameter ≈ 200–6000 atoms depending on element.
+ * Regime: 4-6 nm diameter ≈ 200-6000 atoms depending on element.
  * This sits at the upper boundary of fully atomistic treatment,
  * where every atom is still individually resolved.
  */
@@ -79,7 +79,7 @@ struct ExperimentalRecord {
 
     // --- Dynamics ---
     double diffusion_coeff{};           // D (Å²/fs), 0 if unknown
-    double lindemann_threshold{};       // δ_L for melting, typ. 0.1–0.15
+    double lindemann_threshold{};       // δ_L for melting, typ. 0.1-0.15
     double melting_point_K{};           // size-corrected T_m (K), 0 if unknown
 
     // --- Tolerances for scoring ---
@@ -130,7 +130,7 @@ struct DynamicsObservables {
 };
 
 struct StructuralFingerprint {
-    // Coordination number histogram [CN] → count
+    // Coordination number histogram [CN] -> count
     std::map<int, uint32_t> cn_histogram;
     double mean_CN{};
 

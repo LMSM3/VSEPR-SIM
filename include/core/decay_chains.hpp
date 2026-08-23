@@ -1,14 +1,14 @@
-/**
+﻿/**
  * decay_chains.hpp
  * ================
  * Natural radioactive decay series (Thorium, Neptunium, Uranium, Actinium)
  * Complete decay chain tracking with branching ratios and half-lives
  * 
  * Four Major Series:
- * 1. Thorium Series (4n)       - Th-232 → Pb-208
- * 2. Neptunium Series (4n+1)   - Np-237 → Bi-209 (extinct)
- * 3. Uranium Series (4n+2)     - U-238 → Pb-206
- * 4. Actinium Series (4n+3)    - U-235 → Pb-207
+ * 1. Thorium Series (4n)       - Th-232 -> Pb-208
+ * 2. Neptunium Series (4n+1)   - Np-237 -> Bi-209 (extinct)
+ * 3. Uranium Series (4n+2)     - U-238 -> Pb-206
+ * 4. Actinium Series (4n+3)    - U-235 -> Pb-207
  */
 
 #ifndef VSEPR_DECAY_CHAINS_HPP
@@ -155,10 +155,10 @@ public:
     void export_to_dot(const std::string& filepath, const std::string& series_type) const;
     
 private:
-    DecayChain thorium_;     // 4n:   Th-232 → Pb-208
-    DecayChain neptunium_;   // 4n+1: Np-237 → Bi-209 (extinct)
-    DecayChain uranium_;     // 4n+2: U-238 → Pb-206
-    DecayChain actinium_;    // 4n+3: U-235 → Pb-207
+    DecayChain thorium_;     // 4n:   Th-232 -> Pb-208
+    DecayChain neptunium_;   // 4n+1: Np-237 -> Bi-209 (extinct)
+    DecayChain uranium_;     // 4n+2: U-238 -> Pb-206
+    DecayChain actinium_;    // 4n+3: U-235 -> Pb-207
     
     void initialize_thorium_series();
     void initialize_neptunium_series();

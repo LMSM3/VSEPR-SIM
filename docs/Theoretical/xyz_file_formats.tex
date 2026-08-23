@@ -1,0 +1,1381 @@
+% ============================================================================
+%  XYZ File Format Family --- VSEPR-SIM Reference Document
+%  VSEPR-SIM Theoretical Division
+%  Classification: TOP SECRET (internal development document)
+%
+%  Subject: Canonical specification of the .xyz, .xyza, .xyzc, .xyzf, and
+%           .xyzFull file formats used by the VSEPR-SIM simulation engine;
+%           including grammar, unit conventions, PBC encoding and lattice
+%           mathematics, bond auto-detection, neighbor-list construction,
+%           trajectory analysis (RDF, MSD, coordination), provenance hashing,
+%           per-format validation, export profile connection, interoperability,
+%           and full implementation mapping.
+%
+%  Compile: pdflatex (twice for ToC)
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+            headheight=14pt]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+            urlcolor=blue]{hyperref}
+
+% --- Code style --------------------------------------------------------------
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  numberstyle=\tiny\color{codegray},
+  numbers=left, numbersep=6pt,
+  breaklines=true, frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b, showstringspaces=false,
+  tabsize=2
+}
+
+% --- Headers -----------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{XYZ File Format Family}}
+\fancyhead[R]{\small\textit{VSEPR-SIM / TOP SECRET}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section style -----------------------------------------------------------
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% --- Math convenience --------------------------------------------------------
+\newcommand{\ang}{\text{\AA}}
+\newcommand{\fs}{\text{fs}}
+\newcommand{\eV}{\text{eV}}
+\newcommand{\amu}{\text{amu}}
+\newcommand{\rcut}{r_{\mathrm{cut}}}
+\newcommand{\rcov}{r_{\mathrm{cov}}}
+\newcommand{\avec}{\mathbf{a}}
+\newcommand{\bvec}{\mathbf{b}}
+\newcommand{\cvec}{\mathbf{c}}
+\newcommand{\rvec}{\mathbf{r}}
+\newcommand{\svec}{\mathbf{s}}
+\newcommand{\norm}[1]{\left\|#1\right\|}
+\newcommand{\kB}{k_{\mathrm{B}}}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.2cm}
+  {\large\scshape VSEPR-SIM Theoretical Division\par}
+  \vspace{0.3cm}
+  {\small TOP SECRET --- Internal Development Document\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries XYZ File Format Family\par}
+  \vspace{0.4cm}
+  {\LARGE Canonical Reference for \texttt{.xyz}, \texttt{.xyza},
+   \texttt{.xyzc},\\[0.2em]
+   \texttt{.xyzf}, and \texttt{.xyzFull}\par}
+  \vspace{1.0cm}
+  {\normalsize
+    Grammar\,|\,
+    Unit conventions\,|\,
+    PBC \& lattice mathematics\,|\,\\[0.3em]
+    Bond detection\,|\,
+    Trajectory analysis\,|\,
+    Provenance hashing\,|\,\\[0.3em]
+    Validation\,|\,
+    Interoperability\,|\,
+    Implementation mapping\par}
+  \vspace{1.4cm}
+  {\normalsize VSEPR-SIM Development Reference\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Overview}
+\label{sec:overview}
+% ============================================================================
+
+VSEPR-SIM uses a family of text-based coordinate files derived from the
+standard XYZ format. All variants are line-oriented, human-readable, and
+append-compatible. The family is ordered by information density:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lllp{5.2cm}}
+  \toprule
+  Extension & Name & Per-atom data & Primary use \\
+  \midrule
+  \texttt{.xyz}     & Standard XYZ    & species, position
+    & Import/export baseline; external tool interoperability \\
+  \texttt{.xyza}    & Extended XYZ    & + charge, velocity, force
+    & Production trajectory output \\
+  \texttt{.xyzc}    & Checkpoint XYZ  & + full header block
+    & Simulation restart; checkpoint/restart files \\
+  \texttt{.xyzf}    & Formation XYZ   & species, position (multi-frame)
+    & Formation trajectories; NEB images; defect snapshots \\
+  \texttt{.xyzFull} & Full-State XYZ  & + stress, KE, PE, image count
+    & Rich replay; analysis pipeline carrier \\
+  \bottomrule
+\end{tabular}
+\caption{Format hierarchy.}
+\label{tab:hierarchy}
+\end{table}
+
+All formats share the same per-atom coordinate block grammar. They differ
+in comment-line content, per-atom column set, and optional header blocks.
+A file in any format is a valid read target for any parser one level below
+it in the hierarchy; extra columns are discarded gracefully.
+
+% ----------------------------------------------------------------------------
+\subsection{Unit Conventions}
+\label{sec:units}
+% ----------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+  \toprule
+  Quantity & Unit & Symbol & Notes \\
+  \midrule
+  Position              & \AA ngstr\"{o}m      & $\ang$                 & \\
+  Velocity              & \AA/femtosecond      & $\ang\,\fs^{-1}$       & \\
+  Force                 & eV/\AA               & $\eV\,\ang^{-1}$       & \\
+  Charge                & elementary charge    & $e$                    & \\
+  Mass                  & atomic mass units    & $\amu$                 & \\
+  Energy (total)        & electronvolt         & $\eV$                  & per cell \\
+  Energy (per atom)     & electronvolt         & $\eV\,\text{atom}^{-1}$& in \texttt{.xyzFull} \\
+  Time                  & femtosecond          & $\fs$                  & \\
+  Stress                & eV/\AA$^3$           & $\eV\,\ang^{-3}$       & \texttt{.xyzFull} only \\
+  Temperature           & kelvin               & K                      & comment line \\
+  Pressure              & gigapascal           & GPa                    & header only \\
+  \bottomrule
+\end{tabular}
+\caption{Unit system (all formats).}
+\label{tab:units}
+\end{table}
+
+Units are implicit --- never written into the file. All readers and writers
+in the VSEPR-SIM codebase assume the above system without conversion.
+Callers receiving data from external tools must convert before passing
+frames to VSEPR-SIM APIs.
+
+% ----------------------------------------------------------------------------
+\subsection{Coordinate System}
+\label{sec:coords}
+% ----------------------------------------------------------------------------
+
+All formats use a right-handed Cartesian coordinate system with the
+$z$-axis as the primary symmetry axis for layered and planar systems.
+The origin is not fixed: positions are absolute within the simulation box,
+which may be centred at the origin or offset depending on the lattice
+generator used. For periodic systems the box is defined by three lattice
+vectors $\avec$, $\bvec$, $\cvec$ encoded in the comment line
+(see \S\ref{sec:pbc}).
+
+% ----------------------------------------------------------------------------
+\subsection{Reserved Species Tokens}
+\label{sec:reserved_tokens}
+% ----------------------------------------------------------------------------
+
+In addition to standard element symbols, the following tokens are valid
+in the species column of any XYZ variant:
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  Token & Meaning \\
+  \midrule
+  \texttt{alpha}   & Alpha particle ($^4$He$^{2+}$ proxy) \\
+  \texttt{bead}    & Coarse-grained polymer/bead particle \\
+  \texttt{ghost}   & Non-interacting probe particle \\
+  \texttt{vacancy} & Explicit vacancy marker (no mass, no force) \\
+  \texttt{dummy}   & Geometry placeholder; excluded from energy \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Reserved tokens are case-sensitive. They resolve to zero mass and zero
+covalent radius unless overridden in \texttt{element\_data.hpp}.
+
+% ----------------------------------------------------------------------------
+\subsection{Connection to the Artifact Stack}
+\label{sec:artifact_stack}
+% ----------------------------------------------------------------------------
+
+The XYZ family integrates with the wider VSEPR-SIM output stack defined
+in WO-CHART-FIELD-B:
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+  \toprule
+  XYZ format & Downstream consumers \\
+  \midrule
+  \texttt{.xyza}    & Analysis pipeline: RDF, MSD, coordination number,
+                       field projection; also \texttt{.xchart} trajectory views \\
+  \texttt{.xyzc}    & Simulation restart; checkpoint integrity hash \\
+  \texttt{.xyzf}    & Formation event timeline in \texttt{.dynx};
+                       NEB chart projections in \texttt{.xchart} \\
+  \texttt{.xyzFull} & Rich replay in Qt desktop; full analysis pipeline;
+                       input to \texttt{.xchart} property surfaces \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Standard XYZ (\texttt{.xyz})}
+\label{sec:xyz}
+% ============================================================================
+
+The standard XYZ format is the baseline interoperability format. It is
+accepted by VESTA, Ovito, ASE, and most molecular visualisation tools
+without modification.
+
+% ----------------------------------------------------------------------------
+\subsection{Grammar}
+\label{sec:xyz_grammar}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Standard XYZ grammar (EBNF sketch).}]
+xyz-file   ::= frame+
+frame      ::= atom-count NEWLINE comment NEWLINE atom-line+
+atom-count ::= INTEGER
+comment    ::= STRING        (* free-form; parsed by VSEPR-SIM convention *)
+atom-line  ::= SPECIES REAL REAL REAL NEWLINE
+SPECIES    ::= element-symbol | reserved-token
+\end{lstlisting}
+
+Fields are whitespace-delimited. Tabs and multiple spaces are both accepted.
+Trailing whitespace is ignored. Blank lines between frames are not permitted;
+they cause a parse error. The parser is strict on frame boundaries but
+lenient on internal whitespace.
+
+% ----------------------------------------------------------------------------
+\subsection{Comment Line Convention}
+\label{sec:xyz_comment}
+% ----------------------------------------------------------------------------
+
+VSEPR-SIM stores structured metadata in the comment line using a
+\texttt{key=value} syntax. Keys are lowercase and space-separated.
+Values containing spaces must be enclosed in double quotes.
+
+\begin{lstlisting}[caption={Full comment line example.}]
+step=1500 time_fs=75.000 energy_eV=-342.819 temperature_K=301.4
+  pbc="T T T" lattice="22.624 0.0 0.0  0.0 22.624 0.0  0.0 0.0 22.624"
+  label=nacl_md hash=a3f82c91
+\end{lstlisting}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+  \toprule
+  Key & Type & Meaning & Formats \\
+  \midrule
+  \texttt{step}            & int    & Simulation step index & all \\
+  \texttt{time\_fs}        & float  & Simulation time (fs)  & all \\
+  \texttt{energy\_eV}      & float  & Total system energy (eV) & all \\
+  \texttt{temperature\_K}  & float  & Instantaneous kinetic temperature (K) & all \\
+  \texttt{pbc}             & string & \texttt{"T T T"} per-axis PBC flags & all \\
+  \texttt{lattice}         & string & $3\times3$ box matrix, row-major (\AA) & all \\
+  \texttt{label}           & string & Free-text run label & all \\
+  \texttt{hash}            & string & Frame provenance hash (8 hex chars) & all \\
+  \texttt{frame\_type}     & string & Physical frame label (see \S\ref{sec:xyzf}) & \texttt{.xyzf} \\
+  \texttt{Properties}      & string & ASE column declaration & \texttt{.xyza} \\
+  \texttt{ke\_eV}          & float  & Total kinetic energy (eV) & \texttt{.xyzFull} \\
+  \texttt{pe\_eV}          & float  & Total potential energy (eV) & \texttt{.xyzFull} \\
+  \texttt{virial\_eV}      & float  & Scalar virial (eV) & \texttt{.xyzFull} \\
+  \bottomrule
+\end{tabular}
+\caption{Recognised comment-line keys.}
+\label{tab:comment_keys}
+\end{table}
+
+Unknown keys are silently ignored, enabling forward compatibility.
+
+% ----------------------------------------------------------------------------
+\subsection{Example: Water}
+\label{sec:xyz_example}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Minimal water molecule (\texttt{.xyz}).}]
+3
+step=0 time_fs=0.000 energy_eV=-14.203 label=H2O_relax
+O   0.000000   0.000000   0.119748
+H   0.000000   0.756950  -0.478993
+H   0.000000  -0.756950  -0.478993
+\end{lstlisting}
+
+% ----------------------------------------------------------------------------
+\subsection{Multi-Frame Trajectory}
+\label{sec:xyz_trajectory}
+% ----------------------------------------------------------------------------
+
+Multiple frames are concatenated without separators. A reader must
+consume exactly \texttt{atom\_count} atom lines per frame before beginning
+the next frame header. The total number of frames is not known in advance;
+readers should stream rather than pre-allocate.
+
+Frame count given file size $F$ (bytes), average bytes per atom line
+$\bar{b}$, and comment/header overhead $c$:
+\begin{equation}
+  N_{\mathrm{frames}} \approx \frac{F}{c + N_{\mathrm{atoms}}\,\bar{b}}
+  \label{eq:frame_count}
+\end{equation}
+
+This estimate is approximate because $\bar{b}$ depends on coordinate
+precision and species name length. Use it only for pre-allocation hints.
+
+% ----------------------------------------------------------------------------
+\subsection{Parsing Notes and Error Handling}
+\label{sec:xyz_parsing}
+% ----------------------------------------------------------------------------
+
+\begin{itemize}
+  \item The atom count on line~1 is authoritative. Readers must not count
+    atom lines manually.
+  \item Species tokens are case-sensitive. \texttt{Na} and \texttt{na} are
+    different tokens; only \texttt{Na} is valid.
+  \item Coordinates beyond the fourth column are ignored in \texttt{.xyz}
+    mode. They are meaningful only in \texttt{.xyza} and \texttt{.xyzFull}.
+  \item An empty comment line is valid; all comment fields default to
+    zero or empty string.
+  \item A mismatch between the declared atom count and the number of
+    atom lines before the next frame header is a \textbf{hard error}.
+    The parser throws \texttt{XyzParseError} with the offending line number.
+  \item Non-finite coordinate values (\texttt{nan}, \texttt{inf}) are
+    treated as a hard error. The simulation has diverged and the file
+    should not be silently passed to downstream tools.
+  \item Lines beginning with \texttt{\#} outside a checkpoint header block
+    are treated as comments and skipped.
+\end{itemize}
+
+% ============================================================================
+\section{Extended XYZ (\texttt{.xyza})}
+\label{sec:xyza}
+% ============================================================================
+
+The extended format appends per-atom dynamical quantities to each atom line.
+It is the primary output format for VSEPR-SIM production runs and the main
+input to the analysis pipeline.
+
+% ----------------------------------------------------------------------------
+\subsection{Grammar}
+\label{sec:xyza_grammar}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Extended XYZ atom-line grammar.}]
+atom-line ::= SPECIES  X Y Z  Q  VX VY VZ  FX FY FZ  NEWLINE
+              (* all numeric fields are REAL *)
+\end{lstlisting}
+
+Column order is fixed. A reader that encounters fewer than 11 data columns
+per atom line shall treat all missing trailing columns as zero. A reader
+encountering more than 11 columns shall ignore the excess unless it is
+operating in \texttt{.xyzFull} mode.
+
+% ----------------------------------------------------------------------------
+\subsection{Property Columns}
+\label{sec:xyza_cols}
+% ----------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rllll}
+  \toprule
+  Col & Field & Symbol & Unit & Notes \\
+  \midrule
+  1   & Species    & ---  & ---                & Element or reserved token \\
+  2   & $x$        & $x$  & $\ang$             & Cartesian $x$ position \\
+  3   & $y$        & $y$  & $\ang$             & Cartesian $y$ position \\
+  4   & $z$        & $z$  & $\ang$             & Cartesian $z$ position \\
+  5   & Charge     & $q$  & $e$                & Partial atomic charge \\
+  6   & $v_x$      & $v_x$& $\ang\,\fs^{-1}$   & Velocity $x$-component \\
+  7   & $v_y$      & $v_y$& $\ang\,\fs^{-1}$   & Velocity $y$-component \\
+  8   & $v_z$      & $v_z$& $\ang\,\fs^{-1}$   & Velocity $z$-component \\
+  9   & $F_x$      & $F_x$& $\eV\,\ang^{-1}$   & Force $x$-component \\
+  10  & $F_y$      & $F_y$& $\eV\,\ang^{-1}$   & Force $y$-component \\
+  11  & $F_z$      & $F_z$& $\eV\,\ang^{-1}$   & Force $z$-component \\
+  \bottomrule
+\end{tabular}
+\caption{Extended property columns (fixed order).}
+\label{tab:xyza_cols}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\subsection{Properties Declaration Syntax}
+\label{sec:xyza_props}
+% ----------------------------------------------------------------------------
+
+For interoperability with ASE extended-XYZ, VSEPR-SIM optionally writes a
+\texttt{Properties} key in the comment line:
+
+\begin{lstlisting}[caption={Properties key (ASE compatibility).}]
+Properties=species:S:1:pos:R:3:charge:R:1:vel:R:3:forces:R:3
+\end{lstlisting}
+
+The value is a colon-delimited list of \texttt{name:type:count} triples.
+Type codes: \texttt{S} = string, \texttt{R} = real, \texttt{I} = integer.
+This key is optional; VSEPR-SIM readers use the fixed column order
+regardless.
+
+% ----------------------------------------------------------------------------
+\subsection{Example: NaCl Unit Cell}
+\label{sec:xyza_example}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Two-ion NaCl unit at 300\,K (\texttt{.xyza}).}]
+2
+step=200 time_fs=10.000 energy_eV=-8.142 temperature_K=300.1
+  pbc="T T T" lattice="5.640 0.0 0.0  0.0 5.640 0.0  0.0 0.0 5.640"
+Na  0.000000  0.000000  0.000000  +1.0  0.023 -0.011  0.008  0.312 -0.197  0.143
+Cl  2.820000  2.820000  2.820000  -1.0 -0.023  0.011 -0.008 -0.312  0.197 -0.143
+\end{lstlisting}
+
+% ----------------------------------------------------------------------------
+\subsection{Charge Semantics}
+\label{sec:xyza_charge}
+% ----------------------------------------------------------------------------
+
+The charge column carries the value from the active charge model:
+
+\begin{center}
+\begin{tabular}{llll}
+  \toprule
+  Charge model & Source & Typical range & Continuity \\
+  \midrule
+  \texttt{formal}  & Integer valence assignment     & $\{-4,\ldots,+4\}$ & discrete \\
+  \texttt{neutral} & Zero for all species           & $0$                & --- \\
+  \texttt{bader}   & Bader partitioning             & $\sim\!\pm 2$      & continuous \\
+  \texttt{eam}     & Not applicable (metallic)      & $0$                & --- \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+The active charge model is determined by the \texttt{[material]} registry
+field \texttt{default\_charge\_model} (see \texttt{VSIM\_LANGUAGE.md}).
+Mixing charge models across frames of the same trajectory is a validation
+error (see \S\ref{sec:validation}).
+
+% ============================================================================
+\section{Checkpoint XYZ (\texttt{.xyzc})}
+\label{sec:xyzc}
+% ============================================================================
+
+The checkpoint format extends \texttt{.xyza} with a structured header block
+carrying all state required to resume a simulation without re-reading the
+original script. A single \texttt{.xyzc} file is a complete restart package.
+
+% ----------------------------------------------------------------------------
+\subsection{Header Block}
+\label{sec:xyzc_header}
+% ----------------------------------------------------------------------------
+
+The header block precedes the first frame. It begins with
+\texttt{\#\# XYZC HEADER BEGIN} and ends with \texttt{\#\# XYZC HEADER END}.
+All interior lines begin with \texttt{\#} and use \texttt{key = value} syntax.
+
+\begin{lstlisting}[caption={Checkpoint header block (\texttt{.xyzc}).}]
+## XYZC HEADER BEGIN
+# format_version = 2
+# project        = nacl_relax_v3
+# vsim_version   = v5.0.0-beta.9
+# seed_base      = 1001
+# step           = 4000
+# time_fs        = 200.000
+# dt_fs          = 0.500
+# run_mode       = md
+# solver         = verlet
+# forcefield     = ewald_formal
+# temperature_K  = 300.0
+# pressure_GPa   = 0.0
+# periodic       = true
+# pbc_flags      = T T T
+# lattice_ang    = 22.624 0.000 0.000  0.000 22.624 0.000  0.000 0.000 22.624
+# n_atoms        = 512
+# charge_model   = formal
+# label          = nacl_4x4x4_md_300K
+# file_hash      = a3f82c91d48e7b02
+## XYZC HEADER END
+512
+step=4000 time_fs=200.000 energy_eV=-17641.320 temperature_K=299.8
+Na  0.000000  0.000000  0.000000  +1.0  ...
+\end{lstlisting}
+
+% ----------------------------------------------------------------------------
+\subsection{Header Field Semantics}
+\label{sec:xyzc_fields}
+% ----------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llp{6cm}}
+  \toprule
+  Field & Type & Meaning \\
+  \midrule
+  \texttt{format\_version}  & int    & Header schema version (currently 2) \\
+  \texttt{project}          & string & Script \texttt{[project].name} value \\
+  \texttt{vsim\_version}    & string & VSEPR-SIM build version string \\
+  \texttt{seed\_base}       & int    & RNG seed used for the run \\
+  \texttt{step}             & int    & Last completed step index \\
+  \texttt{time\_fs}         & float  & Simulation time at checkpoint (fs) \\
+  \texttt{dt\_fs}           & float  & Integration timestep (fs) \\
+  \texttt{run\_mode}        & string & \texttt{relax}, \texttt{md}, \texttt{npt}, \ldots \\
+  \texttt{solver}           & string & Active integrator tag \\
+  \texttt{forcefield}       & string & Active force-field tag \\
+  \texttt{temperature\_K}   & float  & Target temperature (K) \\
+  \texttt{pressure\_GPa}    & float  & Target pressure (GPa; NPT only) \\
+  \texttt{periodic}         & bool   & PBC enabled at checkpoint \\
+  \texttt{pbc\_flags}       & string & \texttt{"T T T"} per-axis flags \\
+  \texttt{lattice\_ang}     & string & $3\times3$ lattice matrix, row-major (\AA) \\
+  \texttt{n\_atoms}         & int    & Particle count (must match frame) \\
+  \texttt{charge\_model}    & string & \texttt{formal}, \texttt{neutral}, \texttt{bader} \\
+  \texttt{label}            & string & Free-text run identifier \\
+  \texttt{file\_hash}       & string & SHA-256 prefix of the full file at write time \\
+  \bottomrule
+\end{tabular}
+\caption{Checkpoint header fields.}
+\label{tab:xyzc_header}
+\end{table}
+
+All fields are written by VSEPR-SIM. A reader encountering an absent
+field falls back to the current script's values.
+
+% ----------------------------------------------------------------------------
+\subsection{Restart Protocol}
+\label{sec:xyzc_restart}
+% ----------------------------------------------------------------------------
+
+\begin{enumerate}
+  \item Parse the \texttt{\#\# XYZC HEADER} block into a
+    \texttt{CheckpointHeader} struct.
+  \item Validate \texttt{n\_atoms} against the subsequent frame's atom
+    count. Mismatch is a hard error.
+  \item Validate the \texttt{file\_hash} field against a freshly computed
+    hash of the file's first $10\,\mathrm{KB}$ (integrity check).
+  \item Override the active script's \texttt{[run]} and \texttt{[simulation]}
+    fields with the header values: step counter, timestep, solver,
+    force-field, PBC flags, and lattice.
+  \item Load positions, velocities, forces, and charges directly into the
+    integrator's state arrays.
+  \item Resume the time loop from \texttt{step + 1}.
+\end{enumerate}
+
+\noindent\textbf{Note.} Checkpoint restart does not re-run the presolve or
+lattice-builder phases. Geometry is taken entirely from the file. If the
+original lattice-builder would produce a different geometry (e.g.\ due to
+a seed change), the checkpoint takes priority.
+
+% ----------------------------------------------------------------------------
+\subsection{Checkpoint vs.\ Trajectory}
+\label{sec:xyzc_vs_traj}
+% ----------------------------------------------------------------------------
+
+A \texttt{.xyzc} file written every $N$ steps doubles as a trajectory: the
+header block appears once at the start; subsequent frames are appended as
+plain \texttt{.xyza} blocks. To seek to frame $k$, a reader computes the
+line offset:
+
+\begin{equation}
+  \mathrm{offset}(k)
+  = N_{\mathrm{header}} + k \times (N_{\mathrm{atoms}} + 2)
+  \label{eq:frame_offset}
+\end{equation}
+
+where $N_{\mathrm{header}}$ is the number of header lines (including the
+two sentinel lines), and the $+2$ accounts for the atom-count line and the
+comment line per frame. This is deterministic given \texttt{n\_atoms}.
+
+% ============================================================================
+\section{Formation XYZ (\texttt{.xyzf})}
+\label{sec:xyzf}
+% ============================================================================
+
+The formation format records the positional trajectory of a formation or
+reaction event as a sequence of standard coordinate frames. It omits
+velocities and forces to keep file size minimal.
+
+% ----------------------------------------------------------------------------
+\subsection{Grammar}
+\label{sec:xyzf_grammar}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Formation XYZ grammar.}]
+xyzf-file  ::= frame+
+frame      ::= atom-count NEWLINE comment NEWLINE atom-line+
+atom-line  ::= SPECIES  X Y Z  NEWLINE
+\end{lstlisting}
+
+The grammar is syntactically identical to \texttt{.xyz}. The semantic
+distinction is that the comment line always carries a \texttt{frame\_type}
+key indicating the physical role of the frame.
+
+% ----------------------------------------------------------------------------
+\subsection{Comment Line Convention}
+\label{sec:xyzf_comment}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Formation XYZ comment lines over a reaction event.}]
+frame=0 frame_type=pre_formation  step=0  energy_eV=-342.100
+frame=1 frame_type=transition     step=45 energy_eV=-339.817
+frame=2 frame_type=post_formation step=80 energy_eV=-346.203
+\end{lstlisting}
+
+\begin{center}
+\begin{tabular}{lp{8cm}}
+  \toprule
+  \texttt{frame\_type} token & Meaning \\
+  \midrule
+  \texttt{pre\_formation}  & Initial, unformed state \\
+  \texttt{transition}      & Intermediate or saddle-point frame \\
+  \texttt{post\_formation} & Final, formed state \\
+  \texttt{defect\_snap}    & Defect snapshot during a longer trajectory \\
+  \texttt{neb\_image}      & Nudged-elastic-band intermediate image \\
+  \texttt{arbitrary}       & No specific physical label assigned \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% ----------------------------------------------------------------------------
+\subsection{Reaction Coordinate}
+\label{sec:xyzf_rxcoord}
+% ----------------------------------------------------------------------------
+
+For NEB pathways and reaction trajectories, VSEPR-SIM writes a
+\texttt{rxcoord} key in the comment line encoding the reaction coordinate
+$\xi \in [0,1]$:
+
+\begin{equation}
+  \xi_k = \frac{\sum_{j=1}^{k} \norm{\rvec^{(j)} - \rvec^{(j-1)}}}
+               {\sum_{j=1}^{M} \norm{\rvec^{(j)} - \rvec^{(j-1)}}}
+  \label{eq:rxcoord}
+\end{equation}
+
+where $\rvec^{(k)}$ is the concatenated position vector of all atoms at
+frame $k$, and $M+1$ is the total number of frames. This maps the
+discrete image sequence onto a normalised path length.
+
+% ----------------------------------------------------------------------------
+\subsection{Frame Independence and Variable Atom Counts}
+\label{sec:xyzf_independence}
+% ----------------------------------------------------------------------------
+
+Each frame is fully self-contained. The atom count may differ between frames
+(e.g.\ if atoms are inserted or removed during a formation event). Readers
+must re-parse the atom count at the start of each frame and must not assume
+count consistency. If frame-to-frame count changes are detected, a
+\texttt{variable\_count} flag is emitted in the metadata.
+
+% ----------------------------------------------------------------------------
+\subsection{Typical Uses}
+\label{sec:xyzf_uses}
+% ----------------------------------------------------------------------------
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+  \toprule
+  Use case & Description \\
+  \midrule
+  Formation event recording & Capture atomic positions during bond formation \\
+  Defect migration path     & Snapshot sequence along a migration trajectory \\
+  NEB pathway               & Nudged-elastic-band intermediate images \\
+  Visualisation export      & Compact trajectory for external viewers \\
+  Batch comparison          & Multiple independent frames in one file \\
+  Reaction pathway archive  & Store full reaction path with energy profile \\
+  \bottomrule
+\end{tabular}
+\caption{Common \texttt{.xyzf} applications.}
+\label{tab:xyzf_uses}
+\end{table}
+
+% ============================================================================
+\section{Full-State XYZ (\texttt{.xyzFull})}
+\label{sec:xyzFull}
+% ============================================================================
+
+The \texttt{.xyzFull} format is the richest member of the family. It extends
+\texttt{.xyza} with per-atom stress contributions, kinetic and potential
+energy decompositions, and PBC image counters. Its primary roles are rich
+trajectory replay in the Qt desktop and serving as the input carrier for the
+full analysis pipeline (RDF, MSD, field projection, scale sampling).
+
+% ----------------------------------------------------------------------------
+\subsection{Grammar}
+\label{sec:xyzFull_grammar}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={\texttt{.xyzFull} atom-line grammar.}]
+atom-line ::= SPECIES  X Y Z  Q  VX VY VZ  FX FY FZ
+              KE  PE  SXX SYY SZZ SXY SXZ SYZ
+              IX IY IZ  NEWLINE
+(* 22 fields per line: 1 string + 21 reals *)
+\end{lstlisting}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{rllll}
+  \toprule
+  Col(s) & Field & Symbol & Unit & Notes \\
+  \midrule
+  1      & Species     & ---       & ---                       & \\
+  2--4   & Position    & $x,y,z$   & $\ang$                    & \\
+  5      & Charge      & $q$       & $e$                       & \\
+  6--8   & Velocity    & $\mathbf{v}$ & $\ang\,\fs^{-1}$      & \\
+  9--11  & Force       & $\mathbf{F}$ & $\eV\,\ang^{-1}$      & \\
+  12     & KE per atom & $\varepsilon_k$ & $\eV$              & $\frac{1}{2}mv^2$ \\
+  13     & PE per atom & $\varepsilon_p$ & $\eV$              & force-field derived \\
+  14--19 & Stress tensor & $\sigma_{\alpha\beta}$ & $\eV\,\ang^{-3}$ & Voigt order: $xx,yy,zz,xy,xz,yz$ \\
+  20--22 & Image count & $n_x,n_y,n_z$ & ---                 & PBC image displacement \\
+  \bottomrule
+\end{tabular}
+\caption{\texttt{.xyzFull} property columns (fixed order).}
+\label{tab:xyzFull_cols}
+\end{table}
+
+% ----------------------------------------------------------------------------
+\subsection{Stress Tensor Convention}
+\label{sec:xyzFull_stress}
+% ----------------------------------------------------------------------------
+
+The per-atom stress tensor $\boldsymbol{\sigma}_i$ is written in Voigt
+notation: $({\sigma_{xx}}, {\sigma_{yy}}, {\sigma_{zz}},
+{\sigma_{xy}}, {\sigma_{xz}}, {\sigma_{yz}})$.
+
+The virial pressure is recovered from the per-atom contributions:
+\begin{equation}
+  P = -\frac{1}{3V} \sum_{i=1}^{N}
+      \bigl(\sigma_{xx,i} + \sigma_{yy,i} + \sigma_{zz,i}\bigr)
+  \label{eq:pressure}
+\end{equation}
+
+where $V = |\det\mathbf{H}|$ is the cell volume. This is written to the
+comment line as \texttt{virial\_eV} for convenience.
+
+% ----------------------------------------------------------------------------
+\subsection{Image Counters}
+\label{sec:xyzFull_images}
+
+For PBC trajectories, each atom accumulates an image displacement counter
+$(n_x, n_y, n_z) \in \mathbb{Z}^3$ tracking how many times it has crossed
+each periodic boundary. The \emph{unwrapped} position is:
+
+\begin{equation}
+  \rvec_i^{\mathrm{unwrap}} = \rvec_i^{\mathrm{wrap}} + \mathbf{H}^\top \mathbf{n}_i
+  \label{eq:unwrap}
+\end{equation}
+
+Unwrapped positions are required for correct MSD computation
+(see \S\ref{sec:msd}).
+
+% ----------------------------------------------------------------------------
+\subsection{Comment Line (Full-State)}
+\label{sec:xyzFull_comment}
+% ----------------------------------------------------------------------------
+
+The \texttt{.xyzFull} comment line carries all standard keys plus:
+
+\begin{lstlisting}[caption={\texttt{.xyzFull} comment line.}]
+step=1000 time_fs=50.000 energy_eV=-17641.320 temperature_K=300.2
+  ke_eV=248.411 pe_eV=-17889.731 virial_eV=-52341.8
+  pbc="T T T" lattice="22.624 0.0 0.0  0.0 22.624 0.0  0.0 0.0 22.624"
+  hash=b7d3a941
+\end{lstlisting}
+
+Energy decomposition identity:
+\begin{equation}
+  E_{\mathrm{total}} = E_k + E_p,
+  \qquad
+  E_k = \sum_{i=1}^{N} \varepsilon_{k,i},
+  \qquad
+  E_p = \sum_{i=1}^{N} \varepsilon_{p,i}
+  \label{eq:energy_decomp}
+\end{equation}
+
+% ============================================================================
+\section{Bounding Box and Periodic Boundary Conditions}
+\label{sec:pbc}
+% ============================================================================
+
+All format variants support the same PBC encoding in the comment line.
+The encoding is activated when \texttt{pbc = "T T T"} (or any
+\texttt{T}/\texttt{F} subset) appears alongside a \texttt{lattice} key.
+
+% ----------------------------------------------------------------------------
+\subsection{Comment-Line Encoding}
+\label{sec:pbc_encoding}
+% ----------------------------------------------------------------------------
+
+\begin{lstlisting}[caption={Orthorhombic box.}]
+pbc="T T T" lattice="22.624 0.0 0.0  0.0 22.624 0.0  0.0 0.0 22.624"
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Triclinic box (monoclinic example).}]
+pbc="T T T" lattice="11.312 0.0 0.0  5.656 9.797 0.0  0.0 0.0 22.624"
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Slab geometry (periodic in x,y only).}]
+pbc="T T F" lattice="22.624 0.0 0.0  0.0 22.624 0.0  0.0 0.0 60.000"
+\end{lstlisting}
+
+% ----------------------------------------------------------------------------
+\subsection{Lattice Matrix}
+\label{sec:pbc_vectors}
+% ----------------------------------------------------------------------------
+
+The nine values of the \texttt{lattice} key form the matrix $\mathbf{H}$
+in row-major order:
+
+\begin{equation}
+  \mathbf{H} =
+  \begin{bmatrix}
+    \avec^\top \\
+    \bvec^\top \\
+    \cvec^\top
+  \end{bmatrix}
+  \in \mathbb{R}^{3 \times 3}
+  \label{eq:lattice}
+\end{equation}
+
+An atom at fractional coordinates $\svec \in [0,1)^3$ has Cartesian position
+$\rvec = \mathbf{H}^\top \svec$. The cell volume is $V = |\det \mathbf{H}|$.
+For orthorhombic boxes, $\mathbf{H}$ is diagonal:
+$L_x = a_{11}$, $L_y = a_{22}$, $L_z = a_{33}$.
+
+% ----------------------------------------------------------------------------
+\subsection{Reciprocal Lattice}
+\label{sec:pbc_recip}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  \mathbf{H}^* = 2\pi \bigl(\mathbf{H}^\top\bigr)^{-1}
+  \label{eq:recip}
+\end{equation}
+
+Rows of $\mathbf{H}^*$ are the reciprocal lattice vectors $\mathbf{a}^*,
+\mathbf{b}^*, \mathbf{c}^*$ satisfying $\avec \cdot \mathbf{a}^* = 2\pi$,
+$\avec \cdot \mathbf{b}^* = 0$, etc. Used internally by the Ewald summation
+module; not written to XYZ files.
+
+% ----------------------------------------------------------------------------
+\subsection{Fractional Coordinate Conversion}
+\label{sec:pbc_frac}
+% ----------------------------------------------------------------------------
+
+Cartesian to fractional:
+\begin{equation}
+  \svec = \bigl(\mathbf{H}^\top\bigr)^{-1} \rvec
+  \label{eq:cart2frac}
+\end{equation}
+
+Wrapping a position into the primary cell:
+\begin{equation}
+  \svec_{\mathrm{wrap}} = \svec - \lfloor \svec \rfloor
+  \label{eq:wrap}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Minimum Image Convention}
+\label{sec:pbc_mic}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  \Delta\rvec_{ij}^{\mathrm{MIC}}
+  = \Delta\rvec_{ij}
+  - \mathbf{H}^\top
+    \left\lfloor \mathbf{H}^{-\top} \Delta\rvec_{ij} + \tfrac{1}{2} \right\rfloor
+  \label{eq:mic}
+\end{equation}
+
+For orthorhombic boxes:
+\begin{equation}
+  \Delta r_{\alpha,ij}^{\mathrm{MIC}}
+  = \Delta r_{\alpha,ij}
+    - L_\alpha \operatorname{round}\!\left(\frac{\Delta r_{\alpha,ij}}{L_\alpha}\right)
+  \label{eq:mic_ortho}
+\end{equation}
+
+\texttt{pbc = "T T F"} applies PBC in $x$ and $y$ only (slab geometry).
+
+% ============================================================================
+\section{Bond Auto-Detection and Neighbor Lists}
+\label{sec:bonds}
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+\subsection{Bond Detection Criterion}
+\label{sec:bonds_criterion}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  \mathrm{bonded}(i,j)
+  \iff
+  d_{ij}^{\mathrm{MIC}}
+  \;\leq\;
+  \lambda \bigl(\rcov^{(i)} + \rcov^{(j)}\bigr)
+  \label{eq:bond}
+\end{equation}
+
+Default $\lambda = 1.15$; overridable via
+\texttt{[simulation].bond\_detect\_scale}.
+
+% ----------------------------------------------------------------------------
+\subsection{Neighbor List Construction}
+\label{sec:bonds_neighborlist}
+% ----------------------------------------------------------------------------
+
+For $N > 500$ atoms, bond detection uses a cell-list neighbor structure.
+Cut-off radius:
+\begin{equation}
+  \rcut = \lambda \max_{k} \bigl(2\,\rcov^{(k)}\bigr) + 0.3\,\ang
+  \label{eq:rcut}
+\end{equation}
+
+Cells per axis:
+\begin{equation}
+  n_\alpha = \left\lfloor \frac{L_\alpha}{\rcut} \right\rfloor \geq 1
+  \label{eq:ncells}
+\end{equation}
+
+Only atoms in the same cell or 26 neighboring cells need distance evaluation,
+reducing complexity from $O(N^2)$ to $O(N)$.
+
+% ----------------------------------------------------------------------------
+\subsection{Coordination Number}
+\label{sec:bonds_coordination}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  Z_i = \bigl|\{j \neq i : \mathrm{bonded}(i,j)\}\bigr|
+  \label{eq:coordination}
+\end{equation}
+
+Mean coordination for species $s$:
+\begin{equation}
+  \bar{Z}_s = \frac{1}{N_s} \sum_{i : \mathrm{species}(i) = s} Z_i
+  \label{eq:mean_coord}
+\end{equation}
+
+Expected values: NaCl $\bar{Z}=6$; diamond Si $\bar{Z}=4$;
+graphene C $\bar{Z}=3$; BCC Fe $\bar{Z}=8$.
+
+% ----------------------------------------------------------------------------
+\subsection{Design Rationale}
+\label{sec:bonds_rationale}
+% ----------------------------------------------------------------------------
+
+\begin{itemize}
+  \item No pre-defined connectivity table is required.
+  \item $\lambda$ is a single global knob. Ionic systems may need
+    $\lambda \approx 1.3$; covalent systems use $\lambda = 1.15$.
+  \item For metallic systems, bond detection is suppressed
+    (\texttt{bond\_detect\_scale = 0.0}).
+  \item For bead/polymer systems, topology is injected by the bead-builder.
+  \item Covalent radius table in \texttt{include/vsim/element\_data.hpp}
+    covers $Z = 1$--$118$.
+\end{itemize}
+
+% ============================================================================
+\section{Trajectory Analysis}
+\label{sec:analysis}
+% ============================================================================
+
+% ----------------------------------------------------------------------------
+\subsection{Radial Distribution Function}
+\label{sec:rdf}
+% ----------------------------------------------------------------------------
+
+\begin{equation}
+  g(r) = \frac{V}{N^2}
+         \left\langle
+           \sum_{i} \sum_{j \neq i}
+           \delta\!\left(r - d_{ij}^{\mathrm{MIC}}\right)
+         \right\rangle
+  \label{eq:rdf}
+\end{equation}
+
+Discretised into bins of width $\Delta r$:
+\begin{equation}
+  g(r_k) = \frac{V}{N^2} \cdot
+            \frac{\langle n_k \rangle}{4\pi r_k^2 \Delta r}
+  \label{eq:rdf_bin}
+\end{equation}
+
+Truncated at $r_{\max} = L_{\min}/2$ to avoid double-counting.
+Species-resolved partial RDF:
+\begin{equation}
+  g_{AB}(r) = \frac{V}{N_A N_B}
+              \left\langle
+                \sum_{i \in A} \sum_{j \in B}
+                \delta\!\left(r - d_{ij}^{\mathrm{MIC}}\right)
+              \right\rangle
+  \label{eq:rdf_partial}
+\end{equation}
+
+% ----------------------------------------------------------------------------
+\subsection{Mean Squared Displacement}
+\label{sec:msd}
+% ----------------------------------------------------------------------------
+
+Requires unwrapped positions $\rvec_i^{\mathrm{unwrap}}(t)$
+from image counters in \texttt{.xyzFull}:
+
+\begin{equation}
+  \mathrm{MSD}(\tau) =
+  \frac{1}{N}
+  \left\langle
+    \sum_{i=1}^{N}
+    \left\|
+      \rvec_i^{\mathrm{unwrap}}(t_0 + \tau) - \rvec_i^{\mathrm{unwrap}}(t_0)
+    \right\|^2
+  \right\rangle_{t_0}
+  \label{eq:msd}
+\end{equation}
+
+Solid: $\mathrm{MSD}(\tau) \to C$ (bounded).
+Diffusing liquid: $\mathrm{MSD}(\tau) \sim 6D\tau$ where $D$ is the
+self-diffusion coefficient.
+
+% ----------------------------------------------------------------------------
+\subsection{Velocity Autocorrelation and VDOS}
+\label{sec:vacf}
+% ----------------------------------------------------------------------------
+
+Normalised VACF:
+\begin{equation}
+  C_v(\tau) =
+  \frac{
+    \left\langle
+      \sum_{i} \mathbf{v}_i(t_0+\tau) \cdot \mathbf{v}_i(t_0)
+    \right\rangle_{t_0}
+  }{
+    \left\langle
+      \sum_{i} \|\mathbf{v}_i(t_0)\|^2
+    \right\rangle_{t_0}
+  }
+  \label{eq:vacf}
+\end{equation}
+
+Vibrational density of states (VDOS):
+\begin{equation}
+  g(\nu) = \int_{-\infty}^{\infty} C_v(\tau)\, e^{-2\pi i \nu \tau}\, d\tau
+  \label{eq:vdos}
+\end{equation}
+
+Requires velocities; \texttt{.xyz} and \texttt{.xyzf} cannot be used.
+
+% ============================================================================
+\section{Provenance Hashing}
+\label{sec:provenance}
+% ============================================================================
+
+\subsection{Frame Hash}
+\label{sec:provenance_frame}
+
+\begin{equation}
+  H_{\mathrm{frame}} = \mathrm{SHA256}\bigl(
+    \texttt{step} \;\|\; \texttt{n\_atoms}
+    \;\|\; \texttt{species} \;\|\; \texttt{positions}
+  \bigr)[0:8]
+  \label{eq:frame_hash}
+\end{equation}
+
+Position values are rounded to 6 decimal places before hashing.
+
+\subsection{File Hash}
+\label{sec:provenance_file}
+
+\begin{equation}
+  H_{\mathrm{file}} = \mathrm{SHA256}\bigl(\mathrm{file}[0:10240]\bigr)
+  \label{eq:file_hash}
+\end{equation}
+
+Recomputed on restart; mismatch is a hard error.
+
+\subsection{Hash Chain}
+\label{sec:provenance_chain}
+
+\begin{equation}
+  H_k = \mathrm{SHA256}\bigl(H_{k-1} \,\|\, H_{\mathrm{frame},k}\bigr)[0:8]
+  \label{eq:hash_chain}
+\end{equation}
+
+Opt-in via \texttt{[kernel].symbolic\_trace = true}; stored in
+\texttt{write\_pipeline\_audit\_jsonl}.
+
+% ============================================================================
+\section{Per-Format Validation}
+\label{sec:validation}
+% ============================================================================
+
+\subsection{Universal Checks}
+\begin{enumerate}
+  \item Atom count on line~1 must equal the number of atom lines per frame.
+  \item All coordinate values must be finite (no \texttt{NaN}/\texttt{Inf}).
+  \item Species column must not be empty.
+  \item \texttt{step} $\geq 0$; \texttt{time\_fs} $\geq 0$.
+\end{enumerate}
+
+\subsection{\texttt{.xyza} Checks}
+\begin{enumerate}
+  \item Charge model must not change between frames.
+  \item Velocity and force values must be finite.
+  \item $\|\mathbf{v}_i\| < 100\,\ang\,\fs^{-1}$ (warning above this).
+  \item $\|\mathbf{F}_i\| < 10^4\,\eV\,\ang^{-1}$ (warning above this).
+\end{enumerate}
+
+\subsection{\texttt{.xyzc} Checks}
+\begin{enumerate}
+  \item Matching \texttt{BEGIN}/\texttt{END} sentinels required.
+  \item \texttt{n\_atoms} must equal the first frame's atom count.
+  \item \texttt{file\_hash} must match recomputed value on restart.
+  \item \texttt{format\_version} must be $\leq$ reader's maximum.
+\end{enumerate}
+
+\subsection{\texttt{.xyzFull} Checks}
+\begin{enumerate}
+  \item $|E_{\mathrm{total}} - (E_k + E_p)| < 10^{-6}\,\eV$.
+  \item $\varepsilon_{k,i} \geq 0$ for all atoms.
+  \item Stress Voigt components self-consistent.
+  \item $|\Delta n_\alpha| \leq 1$ per atom per axis between consecutive frames.
+\end{enumerate}
+
+% ============================================================================
+\section{Interoperability}
+\label{sec:interop}
+% ============================================================================
+
+\subsection{ASE}
+ASE \texttt{extxyz} is compatible with \texttt{.xyza} when the
+\texttt{Properties} key is present. Column mapping:
+\texttt{pos} $\leftrightarrow$ $x,y,z$;
+\texttt{charge} $\leftrightarrow$ $q$;
+\texttt{vel} $\leftrightarrow$ $v_x,v_y,v_z$;
+\texttt{forces} $\leftrightarrow$ $F_x,F_y,F_z$.
+Stress and image counters are not mapped.
+
+\subsection{VESTA}
+VESTA reads standard \texttt{.xyz}. Export with
+\texttt{XyzFormat::Xyz} and \texttt{suppress\_props = true}.
+
+\subsection{Ovito}
+Ovito reads \texttt{.xyz} and \texttt{.xyza} via its extended-XYZ parser.
+It accepts both uppercase \texttt{Lattice} and lowercase \texttt{lattice};
+VSEPR-SIM writes lowercase.
+
+% ============================================================================
+\section{Export Profile Connection}
+\label{sec:export}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \texttt{[export]} flag & File written & Format \\
+  \midrule
+  \texttt{write\_xyz = true}        & \texttt{<prefix>.xyz}            & \texttt{.xyz} \\
+  \texttt{write\_xyzf = true}       & \texttt{<prefix>.xyzf}           & \texttt{.xyzf} \\
+  \texttt{write\_xyzFull = true}    & \texttt{<prefix>.xyzFull}        & \texttt{.xyzFull} \\
+  \texttt{write\_checkpoint = true} & \texttt{<prefix>\_step\{N\}.xyzc}& \texttt{.xyzc} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Export profile expansion:
+\texttt{minimal} $\to$ \texttt{.xyz} only;
+\texttt{standard} $\to$ \texttt{.xyz}, \texttt{.xyzf};
+\texttt{research\_report} $\to$ adds \texttt{.xyzFull};
+\texttt{publication} $\to$ all + \texttt{.xyzc} every 1000 steps.
+
+% ============================================================================
+\section{Implementation Mapping}
+\label{sec:impl}
+% ============================================================================
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+  \toprule
+  Source file & Responsibility & Format(s) \\
+  \midrule
+  \texttt{xyz\_io.hpp / .cpp}         & Core reader/writer           & \texttt{.xyz}, \texttt{.xyza} \\
+  \texttt{xyz\_full.hpp / .cpp}       & Full-state reader/writer     & \texttt{.xyzFull} \\
+  \texttt{xyz\_checkpoint.hpp / .cpp} & Checkpoint I/O               & \texttt{.xyzc} \\
+  \texttt{xyz\_formation.hpp / .cpp}  & Formation trajectory I/O     & \texttt{.xyzf} \\
+  \texttt{element\_data.hpp}          & Covalent radius \& mass table & all \\
+  \texttt{pbc\_utils.hpp}             & MIC, wrap/unwrap, cell volume & all \\
+  \texttt{cell\_list.hpp}             & Neighbor-list construction    & all \\
+  \texttt{bond\_detect.hpp}           & Bond auto-detection           & all \\
+  \texttt{traj\_analysis.hpp / .cpp}  & RDF, MSD, VACF, VDOS          & \texttt{.xyza}, \texttt{.xyzFull} \\
+  \texttt{provenance.hpp}             & Frame and file hash utilities  & all \\
+  \texttt{vsim\_export.hpp / .cpp}    & Export dispatch layer         & all \\
+  \bottomrule
+\end{tabular}
+\caption{Source files implementing the XYZ format family.}
+\label{tab:impl}
+\end{table}
+
+\subsection{Core Frame Struct}
+
+\begin{lstlisting}[language=C++, caption={Core frame struct (xyz\_io.hpp).}]
+namespace vsim {
+
+struct XyzFrame {
+    int                       n_atoms;
+    XyzFormat                 format;
+    CommentFields             comment;
+    std::vector<std::string>  species;
+    std::vector<Vec3>         positions;     // Ang
+    std::vector<double>       charges;       // e
+    std::vector<Vec3>         velocities;    // Ang/fs   (.xyza+)
+    std::vector<Vec3>         forces;        // eV/Ang   (.xyza+)
+    // .xyzFull only:
+    std::vector<double>       ke_per_atom;   // eV
+    std::vector<double>       pe_per_atom;   // eV
+    std::vector<Stress3>      stress;        // eV/Ang^3, Voigt
+    std::vector<IVec3>        image_counts;  // PBC image displacement
+};
+
+} // namespace vsim
+\end{lstlisting}
+
+\subsection{Reader API}
+
+\begin{lstlisting}[language=C++, caption={XYZ reader API.}]
+namespace vsim {
+
+bool read_frame(std::istream& in, XyzFrame& out,
+                XyzFormat fmt = XyzFormat::Auto);
+
+std::vector<XyzFrame> read_all(
+    const std::filesystem::path& p,
+    XyzFormat fmt = XyzFormat::Auto);
+
+/// Seek to frame k in a .xyzc file (O(1) line offset).
+bool seek_frame(std::istream& in, int k,
+                int n_atoms, int n_header_lines);
+
+} // namespace vsim
+\end{lstlisting}
+
+\subsection{Writer API}
+
+\begin{lstlisting}[language=C++, caption={XYZ writer API.}]
+namespace vsim {
+
+struct WriteOptions {
+    int  precision_pos   = 6;
+    int  precision_other = 4;
+    bool suppress_props  = false;
+    bool write_hash      = true;
+    bool chain_hash      = false;
+};
+
+void write_frame(std::ostream& out, const XyzFrame& frame,
+                 XyzFormat fmt, const WriteOptions& opts = {});
+
+void append_frame(const std::filesystem::path& p,
+                  const XyzFrame& frame,
+                  XyzFormat fmt, const WriteOptions& opts = {});
+
+} // namespace vsim
+\end{lstlisting}
+
+\subsection{Analysis API}
+
+\begin{lstlisting}[language=C++, caption={Trajectory analysis API (traj\_analysis.hpp).}]
+namespace vsim {
+
+struct RdfResult {
+    std::vector<double> r;
+    std::vector<double> g_r;
+    double              dr;
+};
+
+struct MsdResult {
+    std::vector<double> tau;
+    std::vector<double> msd;
+    std::string         regime; // solid_bounded | diffusive | mixed
+    double              D;      // diffusion coeff (Ang^2/fs)
+};
+
+RdfResult compute_rdf(const std::vector<XyzFrame>& traj,
+                      double dr = 0.05, double r_max = 0.0);
+
+MsdResult compute_msd(const std::vector<XyzFrame>& traj);
+
+} // namespace vsim
+\end{lstlisting}
+
+% ============================================================================
+\section{Typical Energy and Observable Ranges}
+\label{sec:ranges}
+% ============================================================================
+
+\begin{center}
+\begin{tabular}{llllll}
+  \toprule
+  System & $N$ & $E_{\mathrm{total}}$ (eV) & $T$ (K) & $d_{\mathrm{NN}}$ (\AA) & $\bar{Z}$ \\
+  \midrule
+  H$_2$O (1 molecule)              & 3   & $-14$ to $-13$         & 0--600  & 0.96       & O:2 \\
+  NaCl rocksalt ($4{\times}4{\times}4$)& 512 & $-17700$ to $-17400$ & 0--1200 & 2.70--2.85 & 6 \\
+  Si diamond ($3{\times}3{\times}3$)   & 216 & $-900$ to $-860$     & 0--1600 & 2.33--2.36 & 4 \\
+  Graphene (96 C)                  & 96  & $-550$ to $-530$       & 0--2000 & 1.40--1.43 & 3 \\
+  Fe BCC ($4{\times}4{\times}4$)   & 128 & $-820$ to $-800$       & 0--1800 & 2.45--2.50 & 8 \\
+  UO$_2$ fluorite ($2{\times}2{\times}2$)& 96 & $-1900$ to $-1800$ & 0--3000 & 2.34       & U:8 \\
+  Al FCC ($4{\times}4{\times}4$)   & 256 & $-860$ to $-830$       & 0--900  & 2.85--2.87 & 12 \\
+  TiO$_2$ rutile ($2{\times}2{\times}4$)& 192& $-2800$ to $-2700$  & 0--2000 & 1.94       & Ti:6 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\noindent\textbf{Energy.} Per simulation cell, not per atom. Per-atom values
+in \texttt{.xyzFull} and \texttt{write\_analysis\_json}.
+
+\medskip
+\noindent\textbf{Temperature.} Instantaneous kinetic temperature:
+\begin{equation}
+  T = \frac{2 E_k}{3 N \kB}
+  \label{eq:T_kin}
+\end{equation}
+
+Fluctuates substantially for small $N$. Block-averaged temperature in
+\texttt{write\_metrics\_tsv}.
+
+\medskip
+\noindent\textbf{MSD plateaus (solid, 300\,K):}
+NaCl $0.05$--$0.15\,\ang^2$;
+Si $0.01$--$0.05\,\ang^2$;
+Fe $0.02$--$0.08\,\ang^2$.
+Values substantially above these suggest melting or a runaway trajectory.
+
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{XYZ File Format Family --- VSEPR-SIM Theoretical Division.
+  Plain text was good enough for Kohn and Sham; it will do.}
+\end{center}
+
+\end{document}

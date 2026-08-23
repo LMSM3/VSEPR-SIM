@@ -1,0 +1,139 @@
+# E34 - ChemPlus classification plus dissolution parameters.
+# ChemPlus and dissolution are derived/analysis overlays; neither may rewrite
+# mutable atomistic truth state.
+
+[project]
+name        = "e34_chemplus_dissolution_overlay"
+version     = "v5.14.1-examples-1"
+seed_base   = 34034
+determinism = true
+description = "Hematite acid-dissolution overlay with ChemPlus reaction metadata"
+
+[example]
+catalog_id        = "E34"
+compatibility     = "PARTIAL_CLASSIFY_AND_DISSOLUTION_BRIDGE"
+execution_surface = "vsepr validate; vsepr classify; selected chemistry runner"
+primary_reference = "VSIM_REFERENCE.md dissolution and chem_plus sections"
+truth_boundary    = "chemplus_inference_and_dissolution_scores_are_analysis_overlays"
+
+[formula]
+formula = "Fe2O3"
+
+[material]
+formula   = "Fe2O3"
+structure = "corundum"
+cell      = "3x3x2"
+phase     = "solid"
+
+[simulation]
+box_size_ang     = 32.0
+periodic         = false
+fire_max_steps   = 1000
+fire_dt_fs       = 0.5
+formation_preset = "ceramic"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 100
+temperature_K = 298.15
+lattice       = "none"
+
+[[simulation.molecule]]
+formula       = "H2SO4"
+count         = 24
+temperature_K = 298.15
+lattice       = "none"
+
+[[simulation.molecule]]
+formula       = "Fe2O3"
+count         = 8
+temperature_K = 298.15
+lattice       = "corundum"
+
+[run]
+mode         = "md"
+max_steps    = 2000
+dt_fs        = 0.5
+temperature  = 298.15
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 298.15
+pressure    = 0.000101325
+medium      = "water"
+
+[chemistry]
+chemistry             = "hydrolysis"
+heat                  = -1
+reaction_events       = true
+track_species_state   = true
+event_registry        = true
+min_score_threshold   = 0.20
+max_reactions_per_step = 12
+
+[dissolution]
+enabled                  = true
+engine                   = "protonation_ladder"
+dG_first_protonation     = -12.0
+dG_second_protonation    = -8.0
+Ea_bridging_cleavage     = 25.0
+Ea_terminal_release      = 15.0
+dG_hydration_Fe3         = -105.0
+dG_sulfate_mono          = -3.5
+dG_sulfate_bi            = -6.0
+dG_sulfate_bridge        = -8.5
+pH_reference             = 1.0
+pH_slope                 = 1.0
+T_reference              = 298.15
+Ea_apparent              = 40.0
+site_density_per_nm2     = 5.0
+
+[chem_plus]
+reaction       = "Fe2O3 + 3H2SO4 -> Fe2(SO4)3 + 3H2O"
+class_override = "acid-base"
+vsepr_link     = false
+emit_events    = true
+
+[observe]
+metrics       = ["formation", "reaction_events", "chemical_state", "exothermic_count", "avg_delta_E"]
+output_format = "json"
+every_n_steps = 20
+
+[verify]
+enabled             = true
+profile             = "e34_hematite_dissolution_overlay"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+output_dir                 = "out/advanced_native/e34"
+
+[report]
+title                   = "E34 ChemPlus Dissolution Overlay"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type     = "none"
+gl_auto_orbit   = false
+render_interval = 20
+
+[open]
+enabled = false

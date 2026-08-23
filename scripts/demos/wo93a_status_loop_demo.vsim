@@ -1,0 +1,37 @@
+# WO-93A status loop demo
+# Smooth two-line terminal HUD with colour-mapped energy/eta bars and
+# medium-Hz CPU / RAM / DISK / GPU telemetry.
+
+[project]
+name        = "wo93a_status_loop_demo"
+version     = "v5.16.0"
+determinism = true
+
+[simulation]
+box_size_ang     = 40.0
+fire_max_steps   = 300
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "Ar"
+count         = 64
+temperature_K = 300.0
+
+[run]
+num_steps      = 500
+dt             = 1.0
+sample_interval = 10
+render_interval = 10
+
+[visual]
+output_type           = "terminal_chart"
+show_convergence_trace = false
+show_status_loop      = true
+status_loop_hz        = 30.0
+hardware_monitor_hz   = 2.0
+
+[export]
+output_dir    = "out/wo93a_status_loop_demo"
+write_xyz     = true
+write_report_md  = true
+write_manifest_json = true

@@ -17,6 +17,9 @@
 #include "cli/cmd_tui.hpp"
 #include "cli/cmd_ufx.hpp"
 #include "cli/cmd_workspace.hpp"
+#if defined(BUILD_VIEWER) || defined(BUILD_VIEWER_DAEMON)
+#  include "cli/cmd_view.hpp"
+#endif
 #include <iostream>
 #include <memory>
 #include <map>
@@ -41,6 +44,10 @@ public:
         Register(std::make_unique<TuiCommand>());
         Register(std::make_unique<UfxCommand>());
         Register(std::make_unique<WorkspaceCommand>());
+#if defined(BUILD_VIEWER) || defined(BUILD_VIEWER_DAEMON)
+        Register(std::make_unique<ViewCommand>());
+        Register(std::make_unique<ViewdCommand>());
+#endif
     }
     
     void Register(std::unique_ptr<Command> cmd) {

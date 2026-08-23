@@ -1,4 +1,4 @@
-// src/ufx_auto2/thermo_generator.cpp
+﻿// src/ufx_auto2/thermo_generator.cpp
 // UFX_AUTO_2 Phase 7 -- Thermo + EOS Generator
 // VSEPR-SIM v5 beta9
 
@@ -20,7 +20,7 @@
 namespace vsepr::ufx {
 
 // ============================================================================
-// Atomic number lookup — checks empirical::LJ_REFS (UFF periodic table) first,
+// Atomic number lookup  -  checks empirical::LJ_REFS (UFF periodic table) first,
 // then falls back to a small supplemental table for elements not in LJ_REFS.
 // ============================================================================
 
@@ -356,7 +356,7 @@ void ThermoGenerator::fill(UFXMaterialRecord& rec, const AxisSample& s) const {
 									   : Tb_estimate_(Z, s.element_family);
 	}
 
-	// Cp curve — seed from tabulated Cp_298 or Dulong-Petit
+	// Cp curve  -  seed from tabulated Cp_298 or Dulong-Petit
 	double T_min = s.T_min_K.has_value() ? *s.T_min_K : 200.0;
 	double T_max = s.T_max_K.has_value() ? *s.T_max_K : 2000.0;
 	if (T_min > T_max) std::swap(T_min, T_max);

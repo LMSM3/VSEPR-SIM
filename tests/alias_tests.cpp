@@ -1,4 +1,4 @@
-/**
+﻿/**
  * alias_tests.cpp
  * ---------------
  * Tests for the molecule alias resolver.
@@ -191,7 +191,7 @@ int main() {
         EXPECT(r.value().formula == "N2O")
     END_TEST
 
-    // ---- Test 7: Empty input → oxalate ----
+    // ---- Test 7: Empty input -> oxalate ----
     TEST("empty_input_oxalate")
         auto r = vsepr::resolve_alias("", 999);
         EXPECT(r.is_ok())

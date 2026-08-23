@@ -1,0 +1,84 @@
+# scripts/demo_12_organic_diagnostics.vsim
+# VSEPR-SIM v5.1.4  |  Demo 12 -- Organic Diagnostics (WO-66O)
+# Ala3 peptide / NVT MD at 300 K with backbone + side-chain diagnostics.
+# Viewer 1: gl_live_60fps  (real-time trajectory during MD)
+# Viewer 2: vsepr-light-view (post-run frame browser)
+# Run: vsper run scripts/demo_12_organic_diagnostics.vsim
+
+[project]
+name        = "demo_12_organic_diagnostics"
+version     = "v5.1.4"
+seed_base   = 12001
+determinism = true
+description = "Ala3 peptide NVT-MD run with WO-66O organic diagnostics"
+
+[simulation]
+type          = nvt
+steps         = 10000
+dt_fs         = 1.0
+temperature_K = 300.0
+thermostat    = nose_hoover
+
+[diagnostics.organic]
+enabled                  = true
+peptide                  = true
+small_molecule           = true
+check_peptide_backbone   = true
+check_chirality          = true
+check_hydrophobic_core   = true
+check_disulfide_bridges  = false
+sample_every_n_steps     = 100
+output_format            = json
+
+[run]
+mode          = "dynamics"
+max_steps     = 10000
+dt_fs         = 1.0
+temperature_K = 300.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "rdf", "coordination", "formation"]
+output_format = "json"
+every_n_steps = 50
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_12/
+
+[visual]
+output_type              = "gl_live_60fps"
+animation_mode           = "trajectory"
+show_convergence_trace   = false
+show_steady_state_marker = false
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1280
+gl_window_height         = 800
+render_interval          = 5
+
+[open]
+enabled = true
+mode    = "advanced"
+file    = "auto"
+
+[open.advanced]
+trajectory_controls = true
+data_inspector      = true
+bond_overlay        = true
+start_paused        = false
+default_frame       = 0

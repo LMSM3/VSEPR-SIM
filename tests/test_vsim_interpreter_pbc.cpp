@@ -1,15 +1,15 @@
-/**
- * test_vsim_interpreter_pbc.cpp — VsimInterpreter pbc.* expression tests
+﻿/**
+ * test_vsim_interpreter_pbc.cpp  -  VsimInterpreter pbc.* expression tests
  * =========================================================================
  *
- * WO-VSEPR-SIM-57D gate — interpreter expression evaluation.
+ * WO-VSEPR-SIM-57D gate  -  interpreter expression evaluation.
  *
  * Tests:
  *   I1  pbc.wrap via eval() expression with xyzvec3 literal
- *   I2  pbc.delta via eval() — minimum-image across boundary
+ *   I2  pbc.delta via eval()  -  minimum-image across boundary
  *   I3  pbc.distance via eval()
- *   I4  pbc.image_count via eval() — returns Int3
- *   I5  pbc.unwrap via eval() — reconstructed continuous position
+ *   I4  pbc.image_count via eval()  -  returns Int3
+ *   I5  pbc.unwrap via eval()  -  reconstructed continuous position
  *   I6  pbc.crossed_boundary via eval()
  *   I7  Field access: result.x, result.y, result.z on XYZVec3
  *   I8  exec() assigns variable, then eval() resolves it
@@ -34,13 +34,13 @@
 using namespace vsim;
 using namespace vsepr;
 
-// ── Test infrastructure ───────────────────────────────────────────────────────
+// -- Test infrastructure -------------------------------------------------------
 
 static int g_pass = 0, g_fail = 0;
 
 static void PASS(const char* name) { std::printf("  [PASS] %s\n", name); ++g_pass; }
 static void FAIL(const char* name, const char* reason) {
-	std::fprintf(stderr, "  [FAIL] %s — %s\n", name, reason); ++g_fail;
+	std::fprintf(stderr, "  [FAIL] %s  -  %s\n", name, reason); ++g_fail;
 }
 
 #define REQUIRE(name, cond, msg) \
@@ -62,7 +62,7 @@ static void FAIL(const char* name, const char* reason) {
 			FAIL(name, _b); return; } \
 	} while(0)
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// -- Helpers -------------------------------------------------------------------
 
 static PBCInterpreterRuntime make_rt(double lx, double ly, double lz,
 									 bool px = true, bool py = true, bool pz = true)
@@ -96,10 +96,10 @@ static void add_particle(PBCInterpreterRuntime& rt, double x, double y, double z
 	rt.image_counts_prev.push_back({0, 0, 0});
 }
 
-// ── I1: pbc.wrap via eval() ───────────────────────────────────────────────────
+// -- I1: pbc.wrap via eval() ---------------------------------------------------
 
 static void test_I1_wrap_expr() {
-	const char* name = "I1 — pbc.wrap via eval() with xyzvec3 literal";
+	const char* name = "I1  -  pbc.wrap via eval() with xyzvec3 literal";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	VsimInterpreter interp;
 	setup_interp(interp, rt);
@@ -113,10 +113,10 @@ static void test_I1_wrap_expr() {
 	PASS(name);
 }
 
-// ── I2: pbc.delta via eval() ──────────────────────────────────────────────────
+// -- I2: pbc.delta via eval() --------------------------------------------------
 
 static void test_I2_delta_expr() {
-	const char* name = "I2 — pbc.delta minimum-image across boundary";
+	const char* name = "I2  -  pbc.delta minimum-image across boundary";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	VsimInterpreter interp;
 	setup_interp(interp, rt);
@@ -131,10 +131,10 @@ static void test_I2_delta_expr() {
 	PASS(name);
 }
 
-// ── I3: pbc.distance via eval() ───────────────────────────────────────────────
+// -- I3: pbc.distance via eval() -----------------------------------------------
 
 static void test_I3_distance_expr() {
-	const char* name = "I3 — pbc.distance via eval()";
+	const char* name = "I3  -  pbc.distance via eval()";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	VsimInterpreter interp;
 	setup_interp(interp, rt);
@@ -146,10 +146,10 @@ static void test_I3_distance_expr() {
 	PASS(name);
 }
 
-// ── I4: pbc.image_count via eval() ────────────────────────────────────────────
+// -- I4: pbc.image_count via eval() --------------------------------------------
 
 static void test_I4_image_count_expr() {
-	const char* name = "I4 — pbc.image_count returns Int3";
+	const char* name = "I4  -  pbc.image_count returns Int3";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	add_particle(rt, 0.5, 5.0, 5.0, 3, -1, 2);
 	VsimInterpreter interp;
@@ -164,10 +164,10 @@ static void test_I4_image_count_expr() {
 	PASS(name);
 }
 
-// ── I5: pbc.unwrap via eval() ─────────────────────────────────────────────────
+// -- I5: pbc.unwrap via eval() -------------------------------------------------
 
 static void test_I5_unwrap_expr() {
-	const char* name = "I5 — pbc.unwrap reconstructed continuous position";
+	const char* name = "I5  -  pbc.unwrap reconstructed continuous position";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	// Particle wrapped at 0.5, has crossed x-boundary twice
 	add_particle(rt, 0.5, 5.0, 5.0, 2, 0, 0);
@@ -183,10 +183,10 @@ static void test_I5_unwrap_expr() {
 	PASS(name);
 }
 
-// ── I6: pbc.crossed_boundary via eval() ──────────────────────────────────────
+// -- I6: pbc.crossed_boundary via eval() --------------------------------------
 
 static void test_I6_crossed_boundary_expr() {
-	const char* name = "I6 — pbc.crossed_boundary detects crossing";
+	const char* name = "I6  -  pbc.crossed_boundary detects crossing";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	add_particle(rt, 0.1, 5.0, 5.0, 1, 0, 0);
 	rt.image_counts_prev[0] = {0, 0, 0};  // had not crossed yet
@@ -199,10 +199,10 @@ static void test_I6_crossed_boundary_expr() {
 	PASS(name);
 }
 
-// ── I7: Field access on XYZVec3 result ───────────────────────────────────────
+// -- I7: Field access on XYZVec3 result ---------------------------------------
 
 static void test_I7_field_access() {
-	const char* name = "I7 — field access .x/.y/.z on XYZVec3 result";
+	const char* name = "I7  -  field access .x/.y/.z on XYZVec3 result";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	VsimInterpreter interp;
 	setup_interp(interp, rt);
@@ -218,10 +218,10 @@ static void test_I7_field_access() {
 	PASS(name);
 }
 
-// ── I8: exec() variable assignment ────────────────────────────────────────────
+// -- I8: exec() variable assignment --------------------------------------------
 
 static void test_I8_exec_assign() {
-	const char* name = "I8 — exec() assigns variable, eval() resolves it";
+	const char* name = "I8  -  exec() assigns variable, eval() resolves it";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	VsimInterpreter interp;
 	setup_interp(interp, rt);
@@ -239,10 +239,10 @@ static void test_I8_exec_assign() {
 	PASS(name);
 }
 
-// ── I9: particle.position(id) ────────────────────────────────────────────────
+// -- I9: particle.position(id) ------------------------------------------------
 
 static void test_I9_particle_position() {
-	const char* name = "I9 — particle.position(id) returns XYZVec3";
+	const char* name = "I9  -  particle.position(id) returns XYZVec3";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	add_particle(rt, 3.5, 4.5, 5.5);
 	VsimInterpreter interp;
@@ -257,10 +257,10 @@ static void test_I9_particle_position() {
 	PASS(name);
 }
 
-// ── I10: Unknown namespace raises VsimRuntimeError ───────────────────────────
+// -- I10: Unknown namespace raises VsimRuntimeError ---------------------------
 
 static void test_I10_unknown_namespace() {
-	const char* name = "I10 — unknown namespace raises VsimRuntimeError";
+	const char* name = "I10  -  unknown namespace raises VsimRuntimeError";
 	PBCInterpreterRuntime rt;
 	VsimInterpreter interp;
 	interp.set_runtime(rt);
@@ -272,10 +272,10 @@ static void test_I10_unknown_namespace() {
 	PASS(name);
 }
 
-// ── I11: pbc.* with no periodic cell ─────────────────────────────────────────
+// -- I11: pbc.* with no periodic cell -----------------------------------------
 
 static void test_I11_no_periodic_cell() {
-	const char* name = "I11 — pbc.wrap raises with no periodic cell";
+	const char* name = "I11  -  pbc.wrap raises with no periodic cell";
 	PBCInterpreterRuntime rt = make_open_rt();
 	VsimInterpreter interp;
 	setup_interp(interp, rt);
@@ -286,10 +286,10 @@ static void test_I11_no_periodic_cell() {
 	PASS(name);
 }
 
-// ── I12: pbc.image_count with track_images=false ─────────────────────────────
+// -- I12: pbc.image_count with track_images=false -----------------------------
 
 static void test_I12_no_track_images() {
-	const char* name = "I12 — pbc.image_count raises with track_images=false";
+	const char* name = "I12  -  pbc.image_count raises with track_images=false";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	rt.pbc_config.track_images = false;
 	add_particle(rt, 5.0, 5.0, 5.0);
@@ -302,10 +302,10 @@ static void test_I12_no_track_images() {
 	PASS(name);
 }
 
-// ── I13: particle.position(0) raises ─────────────────────────────────────────
+// -- I13: particle.position(0) raises -----------------------------------------
 
 static void test_I13_position_id_zero() {
-	const char* name = "I13 — particle.position(0) raises range error";
+	const char* name = "I13  -  particle.position(0) raises range error";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	add_particle(rt, 5.0, 5.0, 5.0);
 	VsimInterpreter interp;
@@ -317,10 +317,10 @@ static void test_I13_position_id_zero() {
 	PASS(name);
 }
 
-// ── I14: particle.position(id > N) raises ────────────────────────────────────
+// -- I14: particle.position(id > N) raises ------------------------------------
 
 static void test_I14_position_id_oob() {
-	const char* name = "I14 — particle.position(id > N) raises range error";
+	const char* name = "I14  -  particle.position(id > N) raises range error";
 	PBCInterpreterRuntime rt = make_rt(10, 10, 10);
 	add_particle(rt, 5.0, 5.0, 5.0);  // 1 particle
 	VsimInterpreter interp;
@@ -332,15 +332,15 @@ static void test_I14_position_id_oob() {
 	PASS(name);
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
 	std::printf(
 		"\n"
-		"╔══════════════════════════════════════════════════════════════╗\n"
-		"║   test_vsim_interpreter_pbc — WO-VSEPR-SIM-57D gate       ║\n"
-		"║   VsimInterpreter pbc.* expression evaluation              ║\n"
-		"╚══════════════════════════════════════════════════════════════╝\n\n"
+		"+==============================================================+\n"
+		"|   test_vsim_interpreter_pbc  -  WO-VSEPR-SIM-57D gate       |\n"
+		"|   VsimInterpreter pbc.* expression evaluation              |\n"
+		"+==============================================================+\n\n"
 	);
 
 	test_I1_wrap_expr();
@@ -361,14 +361,14 @@ int main() {
 	std::printf("\nResults: %d passed, %d failed\n\n", g_pass, g_fail);
 	if (g_fail == 0) {
 		std::printf(
-			"╔══════════════════════════════════════════════════════════════╗\n"
-			"║  ALL TESTS PASS — WO-57D interpreter gate: CLEAR          ║\n"
-			"╚══════════════════════════════════════════════════════════════╝\n\n");
+			"+==============================================================+\n"
+			"|  ALL TESTS PASS  -  WO-57D interpreter gate: CLEAR          |\n"
+			"+==============================================================+\n\n");
 		return 0;
 	}
 	std::fprintf(stderr,
-		"╔══════════════════════════════════════════════════════════════╗\n"
-		"║  FAILURES DETECTED — see [FAIL] lines above               ║\n"
-		"╚══════════════════════════════════════════════════════════════╝\n\n");
+		"+==============================================================+\n"
+		"|  FAILURES DETECTED  -  see [FAIL] lines above               |\n"
+		"+==============================================================+\n\n");
 	return 1;
 }

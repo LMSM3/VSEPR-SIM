@@ -1,7 +1,7 @@
-/**
+﻿/**
  * test_element_db_phase1.cpp
  * ===========================
- * Phase 1 — Element DB + Manifold Sanity (fast, brutal)
+ * Phase 1  -  Element DB + Manifold Sanity (fast, brutal)
  * 
  * Goal: Prove new element coverage and manifold selection don't produce garbage
  *       before you even relax a structure.
@@ -162,7 +162,7 @@ void test_manifold_routing() {
     
     const auto& chem_db = vsepr::chemistry_db();
     
-    subsection("Alkali + halide → IONIC");
+    subsection("Alkali + halide -> IONIC");
     {
         uint8_t Li = chem_db.Z_from_symbol("Li");
         uint8_t F = chem_db.Z_from_symbol("F");
@@ -174,7 +174,7 @@ void test_manifold_routing() {
         test("F is COVALENT", F_manifold == vsepr::BondingManifold::COVALENT);
     }
     
-    subsection("Main group → COVALENT");
+    subsection("Main group -> COVALENT");
     {
         uint8_t C = chem_db.Z_from_symbol("C");
         uint8_t N = chem_db.Z_from_symbol("N");
@@ -185,7 +185,7 @@ void test_manifold_routing() {
         test("O is COVALENT", chem_db.get_manifold(O) == vsepr::BondingManifold::COVALENT);
     }
     
-    subsection("Transition metal → COORDINATION");
+    subsection("Transition metal -> COORDINATION");
     {
         uint8_t Fe = chem_db.Z_from_symbol("Fe");
         uint8_t Cu = chem_db.Z_from_symbol("Cu");
@@ -196,7 +196,7 @@ void test_manifold_routing() {
         test("Zn is COORDINATION", chem_db.get_manifold(Zn) == vsepr::BondingManifold::COORDINATION);
     }
     
-    subsection("Noble gases → NOBLE_GAS");
+    subsection("Noble gases -> NOBLE_GAS");
     {
         uint8_t He = chem_db.Z_from_symbol("He");
         uint8_t Ar = chem_db.Z_from_symbol("Ar");
@@ -287,10 +287,10 @@ void test_ionic_molecules() {
 
 int main() {
     std::cout << R"(
-╔══════════════════════════════════════════════════════════════╗
-║  PHASE 1: Element DB + Manifold Sanity Tests                ║
-║  (Brutal validation before attempting structure relaxation)  ║
-╚══════════════════════════════════════════════════════════════╝
++==============================================================+
+|  PHASE 1: Element DB + Manifold Sanity Tests                |
+|  (Brutal validation before attempting structure relaxation)  |
++==============================================================+
 )";
     
     try {
@@ -322,14 +322,14 @@ int main() {
         std::cout << "  Failed: " << failed << "\n";
         
         if (failed == 0) {
-            std::cout << "\n╔══════════════════════════════════════════════════════════════╗\n";
-            std::cout << "║  ✓ PHASE 1 COMPLETE: All sanity checks passed!              ║\n";
-            std::cout << "║  Element database is ready for complex molecules.            ║\n";
-            std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+            std::cout << "\n+==============================================================+\n";
+            std::cout << "|  ✓ PHASE 1 COMPLETE: All sanity checks passed!              |\n";
+            std::cout << "|  Element database is ready for complex molecules.            |\n";
+            std::cout << "+==============================================================+\n";
         } else {
-            std::cout << "\n╔══════════════════════════════════════════════════════════════╗\n";
-            std::cout << "║  ✗ PHASE 1 FAILED: Fix element database issues               ║\n";
-            std::cout << "╚══════════════════════════════════════════════════════════════╝\n";
+            std::cout << "\n+==============================================================+\n";
+            std::cout << "|  ✗ PHASE 1 FAILED: Fix element database issues               |\n";
+            std::cout << "+==============================================================+\n";
             return 1;
         }
         

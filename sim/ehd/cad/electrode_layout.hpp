@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * electrode_layout.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Defines electrode placement and polarity within the tube.
  * Supports coaxial, helical, and opposing-pair configurations.

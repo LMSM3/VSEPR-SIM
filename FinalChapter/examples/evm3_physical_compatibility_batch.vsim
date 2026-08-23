@@ -1,0 +1,247 @@
+# =============================================================================
+# EVM III — Physical Compatibility
+# VSIM implementation: NaCl + Si combined compatibility gate batch
+#
+# Theory claim (EVM III):
+#   Reinterpretation is not contradiction.
+#   The framework must reproduce standard quantum behavior where required.
+#   Failure to do so means the framework is not an interpretation —
+#   it is a contradiction.
+#
+#   Key gates:
+#   §2 Standard Born rule recovery:
+#     η_i = η_j ⟹ p_i = |α_i|²
+#     When all scale-access channels are uniform (same window efficiency
+#     across all RVE windows), the statistical observables must match
+#     standard predictions. If they do not, the projection layer is
+#     introducing spurious deviations.
+#
+#   §4 Lorentz symmetry:
+#     The fifth coordinate w is a spatial-scale axis, not a spacetime axis.
+#     The MD simulation is non-relativistic. No Lorentz check needed here.
+#     Noted explicitly: this gate is Tier III but requires QFT-level analysis
+#     outside MD scope.
+#
+#   §6 Measurement theory compatibility:
+#     RDF peaks must appear at crystallographic positions.
+#     Any systematic shift is a projection-induced deviation — flagged by
+#     verify.rdf with tight tolerances.
+#
+#   §8 QFT boundary:
+#     The framework does not engage with QFT at this scale.
+#     Scale sampling at the largest window marks the boundary
+#     where the classical MD representation ends.
+#
+# Computational test:
+#   Two jobs:
+#     Job A — NaCl rocksalt: ionic, Ewald summation, tight verify gates
+#       Born rule test: coordination must be exactly 6 with no statistical
+#       spread beyond thermal broadening. Any deviation = projection artifact.
+#
+#     Job B — Si diamond cubic: covalent, standard LJ-neutral
+#       Born rule test: RDF peaks must be at textbook positions.
+#       Systematic shift > tolerance = framework incompatibility.
+#
+#   Both jobs use identical rve_window_lengths_A and identical
+#   scale_drift_threshold. If η is uniform across windows in both
+#   systems, the standard observables must match. That is the EVM III §2 gate.
+# =============================================================================
+
+[project]
+name        = "evm3_physical_compatibility_batch"
+version     = "v5.1.13.5"
+seed_base   = 6030
+determinism = true
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Job A — NaCl: ionic, EVM III §2 Born rule recovery gate
+# If coordination deviates from 6 beyond thermal broadening,
+# the projection framework is introducing spurious correlations.
+# ============================================================
+[[batch.job]]
+name            = "nacl_born_rule_gate"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic    = true
+use_ewald   = true
+ewald_alpha = 0.3
+ewald_rcut  = 12.0
+ewald_kmax  = 5
+
+[batch.job.scale_sampling]
+# Uniform window access test: all four windows must give consistent η
+# If η drops sharply at any window, access is non-uniform → §2 gate fails
+rve_window_lengths_A = [2.82, 5.64, 11.28, 22.56]
+spatial_cv_threshold = 0.25    # tight: ionic crystal should be highly ordered
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0    # zero tolerance: Born rule recovery requires exact
+expected_nearest_neighbor_A  = 2.82
+nearest_neighbor_tolerance_A = 0.12
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.82, 3.99, 4.88]
+peak_tolerance_A   = 0.15    # tight: EVM III §6 measurement theory gate
+require_peak_order = true
+
+
+# ============================================================
+# Job B — Si diamond cubic: covalent, EVM III §6 compatibility
+# RDF peaks must be at crystallographic positions within tolerance.
+# Systematic shift = projection-induced deviation = compatibility failure.
+# ============================================================
+[[batch.job]]
+name            = "si_measurement_theory_gate"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 0.5
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+spatial_cv_threshold = 0.25
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A4_Si"
+expected_coordination        = 4
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.35
+nearest_neighbor_tolerance_A = 0.08    # tight: EVM III gate
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.35, 3.84, 4.50]
+peak_tolerance_A   = 0.12    # tight: compatibility gate
+require_peak_order = true
+
+
+# ---------------------------------------------------------------------------
+# Shared analysis — identical across both jobs
+# EVM III §2: uniform η requires identical analysis setup
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+temporal_drift_threshold         = 0.15
+scale_drift_threshold            = 0.20    # tight: uniform access expected
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.5
+contact_cutoff_A  = 3.0
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 25
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = false
+defect_events    = true
+dynamic_energy   = true
+
+[verify]
+enabled             = true
+profile             = "evm3_physical_compatibility"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.0
+max_slope_late       = 0.001
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_scale_sampling_json  = true
+write_verify_report        = true
+write_verify_tsv           = true
+write_manifest_json        = true
+output_dir                 = "out/evm3_compatibility"
+
+[report]
+title                   = "EVM III — Physical Compatibility: NaCl Born Rule + Si Measurement Theory"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 30
+show_proxy_table = true
+show_audit_table = true
+overlay_sequence = energy_map,coordination,rdf

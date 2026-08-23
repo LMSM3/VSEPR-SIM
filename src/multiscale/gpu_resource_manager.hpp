@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * gpu_resource_manager.hpp
  * 
@@ -168,13 +168,13 @@ public:
         state_.is_confirmed = true;
         
         std::cout << "\n";
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  GPU RESOURCE ACTIVATION CONFIRMED                        ║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Scale:   " << std::left << std::setw(48) << state_.scale_name << "║\n";
-        std::cout << "║  Type:    " << std::left << std::setw(48) << state_.to_string() << "║\n";
-        std::cout << "║  Status:  ACTIVE ON GPU                                   ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  GPU RESOURCE ACTIVATION CONFIRMED                        |\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  Scale:   " << std::left << std::setw(48) << state_.scale_name << "|\n";
+        std::cout << "|  Type:    " << std::left << std::setw(48) << state_.to_string() << "|\n";
+        std::cout << "|  Status:  ACTIVE ON GPU                                   |\n";
+        std::cout << "+===========================================================+\n";
         std::cout << "\n";
         
         return true;
@@ -195,15 +195,15 @@ public:
         auto seconds = std::chrono::duration<double>(duration).count();
         
         std::cout << "\n";
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  GPU RESOURCE DEACTIVATION                                ║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  Scale:   " << std::left << std::setw(48) << state_.scale_name << "║\n";
-        std::cout << "║  Type:    " << std::left << std::setw(48) << state_.to_string() << "║\n";
-        std::cout << "║  Active:  " << std::left << std::setw(48) 
-                  << (std::to_string((int)seconds) + " seconds") << "║\n";
-        std::cout << "║  Status:  GPU NOW AVAILABLE                               ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  GPU RESOURCE DEACTIVATION                                |\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  Scale:   " << std::left << std::setw(48) << state_.scale_name << "|\n";
+        std::cout << "|  Type:    " << std::left << std::setw(48) << state_.to_string() << "|\n";
+        std::cout << "|  Active:  " << std::left << std::setw(48) 
+                  << (std::to_string((int)seconds) + " seconds") << "|\n";
+        std::cout << "|  Status:  GPU NOW AVAILABLE                               |\n";
+        std::cout << "+===========================================================+\n";
         std::cout << "\n";
         
         // Reset state
@@ -233,17 +233,17 @@ public:
         }
         
         std::cout << "\n";
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  GPU SCALE TRANSITION REQUESTED                           ║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  FROM:    " << std::left << std::setw(48) << state_.scale_name << "║\n";
-        std::cout << "║  TO:      " << std::left << std::setw(48) << to_name << "║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
-        std::cout << "║  ACTION REQUIRED:                                         ║\n";
-        std::cout << "║  1. Call deactivate_scale() to release current resources ║\n";
-        std::cout << "║  2. Call request_activation() for new scale              ║\n";
-        std::cout << "║  3. Call confirm_activation() to confirm                 ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  GPU SCALE TRANSITION REQUESTED                           |\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  FROM:    " << std::left << std::setw(48) << state_.scale_name << "|\n";
+        std::cout << "|  TO:      " << std::left << std::setw(48) << to_name << "|\n";
+        std::cout << "╠===========================================================╣\n";
+        std::cout << "|  ACTION REQUIRED:                                         |\n";
+        std::cout << "|  1. Call deactivate_scale() to release current resources |\n";
+        std::cout << "|  2. Call request_activation() for new scale              |\n";
+        std::cout << "|  3. Call confirm_activation() to confirm                 |\n";
+        std::cout << "+===========================================================+\n";
         std::cout << "\n";
         
         transition_in_progress_ = true;
@@ -272,28 +272,28 @@ public:
         std::lock_guard<std::mutex> lock(state_mutex_);
         
         std::cout << "\n";
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  GPU RESOURCE STATUS                                      ║\n";
-        std::cout << "╠═══════════════════════════════════════════════════════════╣\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  GPU RESOURCE STATUS                                      |\n";
+        std::cout << "╠===========================================================╣\n";
         
         if (state_.active_scale == GPUScaleType::NONE) {
-            std::cout << "║  Status:  GPU AVAILABLE                                   ║\n";
-            std::cout << "║  Scale:   None                                            ║\n";
+            std::cout << "|  Status:  GPU AVAILABLE                                   |\n";
+            std::cout << "|  Scale:   None                                            |\n";
         } else {
-            std::cout << "║  Status:  GPU IN USE                                      ║\n";
-            std::cout << "║  Scale:   " << std::left << std::setw(48) << state_.scale_name << "║\n";
-            std::cout << "║  Type:    " << std::left << std::setw(48) << state_.to_string() << "║\n";
-            std::cout << "║  Confirm: " << std::left << std::setw(48) 
-                      << (state_.is_confirmed ? "YES" : "PENDING") << "║\n";
+            std::cout << "|  Status:  GPU IN USE                                      |\n";
+            std::cout << "|  Scale:   " << std::left << std::setw(48) << state_.scale_name << "|\n";
+            std::cout << "|  Type:    " << std::left << std::setw(48) << state_.to_string() << "|\n";
+            std::cout << "|  Confirm: " << std::left << std::setw(48) 
+                      << (state_.is_confirmed ? "YES" : "PENDING") << "|\n";
             
             if (state_.gpu_memory_bytes > 0) {
                 double mb = state_.gpu_memory_bytes / (1024.0 * 1024.0);
-                std::cout << "║  Memory:  " << std::left << std::setw(48) 
-                          << (std::to_string((int)mb) + " MB") << "║\n";
+                std::cout << "|  Memory:  " << std::left << std::setw(48) 
+                          << (std::to_string((int)mb) + " MB") << "|\n";
             }
         }
         
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
         std::cout << "\n";
     }
 };

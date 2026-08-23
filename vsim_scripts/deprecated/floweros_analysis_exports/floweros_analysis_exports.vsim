@@ -1,0 +1,91 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name        = "floweros_analysis_exports"
+version     = "v5.14.1"
+seed_base   = 13003
+determinism = true
+description = "Analysis, verification, event, and report export example"
+
+[simulation]
+box_size_ang     = 32.0
+periodic         = false
+fire_max_steps   = 100
+fire_dt_fs       = 0.5
+formation_preset = "ionic"
+
+[[simulation.molecule]]
+formula     = "NaCl"
+count       = 12
+temperature = 300.0
+lattice     = "fcc_ionic"
+
+[environment]
+temperature = 300.0
+pressure    = 1.0
+medium      = "vacuum"
+periodic    = false
+
+[run]
+mode         = "md_nvt"
+max_steps    = 60
+dt_fs        = 0.5
+temperature  = 300.0
+converge     = true
+output_level = "standard"
+
+[analysis.structure]
+enabled              = true
+compute_coordination = true
+compute_packing      = true
+compute_displacement = true
+neighbor_cutoff_A    = 3.4
+contact_cutoff_A     = 2.4
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 5
+unwrap_pbc             = false
+
+[analysis.inference]
+enabled                    = true
+mode                       = "rule_based_61d"
+infer_packing_regime       = true
+infer_mobility_regime      = true
+infer_structural_stability = true
+infer_macro_readiness      = false
+
+[verify]
+enabled = true
+
+[verify.mass]
+enabled   = true
+max_drift = 1e-10
+
+[export]
+write_xyz            = true
+write_xyzf           = true
+write_analysis_json  = true
+write_metrics_tsv    = true
+write_events_json    = true
+write_symbolic_trace_json = true
+write_report_md      = true
+output_dir           = "out/floweros_analysis_exports"
+
+[export.visual]
+write_rdf_svg          = true
+write_energy_trace_svg = true
+write_html_dashboard   = false
+visual_output_dir      = "figures"
+
+[visual]
+output_type            = "terminal_chart"
+render_interval        = 15
+show_convergence_trace = true
+show_bar_chart         = true
+animation_mode         = "static"
+

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * alpha_model_ext.hpp
  * ===================
@@ -69,7 +69,7 @@ inline double alpha_predict_ext(uint32_t Z, const AlphaModelParams& params = {})
     if (Z > 120) return 1.76;  // fallback for undefined Z
 
     // Use the core model formula with ext descriptors.
-    // No f-electrons, no IE data for Z>118 — use simplified baseline.
+    // No f-electrons, no IE data for Z>118  -  use simplified baseline.
     const double r   = cov_radius_ext(Z);
     const double z   = static_cast<double>(Z);
     const double r_eff = r * (1.0 + params.c_rel * z * z);

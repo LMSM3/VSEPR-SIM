@@ -1,27 +1,27 @@
-// =============================================================================
-// tests/test_sim_metrics.cpp — Group 21: Simulation Health Metrics
+﻿// =============================================================================
+// tests/test_sim_metrics.cpp  -  Group 21: Simulation Health Metrics
 // =============================================================================
 // Tests all five health metrics and the SimMetrics aggregator.
 //
 // Scenarios:
-//   1.  EnergyDriftTracker — flat energy → zero drift
-//   2.  EnergyDriftTracker — linearly growing energy → increasing rel_drift
-//   3.  EnergyDriftTracker — is_drifting() threshold
-//   4.  EnergyDriftTracker — set_baseline() re-anchors drift to zero
-//   5.  RMSDTracker — identical frames → rmsd_ref = 0, rmsd_step = 0
-//   6.  RMSDTracker — shifted frame → rmsd_ref matches known value
-//   7.  RMSDTracker — converging frames → rmsd_step decreasing
-//   8.  DisplacementTracker — identical frames → mean_displacement = 0
-//   9.  DisplacementTracker — uniform shift → correct mean_displacement
-//   10. DisplacementTracker — max_displacement tracks worst atom
-//   11. StructuralResidual — identical → residual = 0, defect_fraction = 0
-//   12. StructuralResidual — one-site defect → defect_fraction = 1/N
-//   13. StructuralResidual — all sites displaced beyond threshold
-//   14. SimMetrics — complete 10-frame settling scenario (output table printed)
+//   1.  EnergyDriftTracker  -  flat energy -> zero drift
+//   2.  EnergyDriftTracker  -  linearly growing energy -> increasing rel_drift
+//   3.  EnergyDriftTracker  -  is_drifting() threshold
+//   4.  EnergyDriftTracker  -  set_baseline() re-anchors drift to zero
+//   5.  RMSDTracker  -  identical frames -> rmsd_ref = 0, rmsd_step = 0
+//   6.  RMSDTracker  -  shifted frame -> rmsd_ref matches known value
+//   7.  RMSDTracker  -  converging frames -> rmsd_step decreasing
+//   8.  DisplacementTracker  -  identical frames -> mean_displacement = 0
+//   9.  DisplacementTracker  -  uniform shift -> correct mean_displacement
+//   10. DisplacementTracker  -  max_displacement tracks worst atom
+//   11. StructuralResidual  -  identical -> residual = 0, defect_fraction = 0
+//   12. StructuralResidual  -  one-site defect -> defect_fraction = 1/N
+//   13. StructuralResidual  -  all sites displaced beyond threshold
+//   14. SimMetrics  -  complete 10-frame settling scenario (output table printed)
 //   15. SimMetricsRow::to_tsv() / tsv_header() column count consistency
-//   16. Rigid translation — Kabsch RMSD ≈ 0; raw displacement > 0
-//   17. Rigid rotation   — Kabsch RMSD ≈ 0; raw displacement > 0
-//   18. Non-rigid deformation — RMSD_ref > 0, decays over frames, gate settles
+//   16. Rigid translation  -  Kabsch RMSD ≈ 0; raw displacement > 0
+//   17. Rigid rotation    -  Kabsch RMSD ≈ 0; raw displacement > 0
+//   18. Non-rigid deformation  -  RMSD_ref > 0, decays over frames, gate settles
 // =============================================================================
 
 #include <cassert>
@@ -78,7 +78,7 @@ static void test_energy_flat() {
 }
 
 // ---------------------------------------------------------------------------
-// 2. EnergyDriftTracker — linear drift
+// 2. EnergyDriftTracker  -  linear drift
 // ---------------------------------------------------------------------------
 static void test_energy_linear_drift() {
 	vsepr::EnergyDriftTracker t;
@@ -93,7 +93,7 @@ static void test_energy_linear_drift() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. EnergyDriftTracker — is_drifting threshold
+// 3. EnergyDriftTracker  -  is_drifting threshold
 // ---------------------------------------------------------------------------
 static void test_energy_threshold() {
 	vsepr::EnergyDriftTracker t;
@@ -105,7 +105,7 @@ static void test_energy_threshold() {
 }
 
 // ---------------------------------------------------------------------------
-// 4. EnergyDriftTracker — set_baseline re-anchors
+// 4. EnergyDriftTracker  -  set_baseline re-anchors
 // ---------------------------------------------------------------------------
 static void test_energy_set_baseline() {
 	vsepr::EnergyDriftTracker t;
@@ -118,7 +118,7 @@ static void test_energy_set_baseline() {
 }
 
 // ---------------------------------------------------------------------------
-// 5. RMSDTracker — identical frames
+// 5. RMSDTracker  -  identical frames
 // ---------------------------------------------------------------------------
 static void test_rmsd_identical() {
 	const auto ref = make_frame(5);
@@ -132,7 +132,7 @@ static void test_rmsd_identical() {
 }
 
 // ---------------------------------------------------------------------------
-// 6. RMSDTracker — shifted frame
+// 6. RMSDTracker  -  shifted frame
 // ---------------------------------------------------------------------------
 static void test_rmsd_shifted() {
 	// Shift all atoms by 1 Å along X; with Kabsch alignment the RMSD is 0
@@ -144,14 +144,14 @@ static void test_rmsd_shifted() {
 	vsepr::RMSDTracker t;
 	t.set_reference(ref);
 	t.push(def);
-	// Kabsch-aligned RMSD; rough tolerance — just verify it's positive and
-	// plausible (deformation of one of three atoms by 1 Å → RMSD ≈ 0.577 Å)
+	// Kabsch-aligned RMSD; rough tolerance  -  just verify it's positive and
+	// plausible (deformation of one of three atoms by 1 Å -> RMSD ≈ 0.577 Å)
 	assert(t.rmsd_ref > 0.1 && t.rmsd_ref < 2.0 && "rmsd shifted: expected positive RMSD");
 	std::puts("PASS  test_rmsd_shifted");
 }
 
 // ---------------------------------------------------------------------------
-// 7. RMSDTracker — converging frames → rmsd_step decreasing
+// 7. RMSDTracker  -  converging frames -> rmsd_step decreasing
 // ---------------------------------------------------------------------------
 static void test_rmsd_converging() {
 	// Use a non-rigid deformation that shrinks: stretch the last atom by a
@@ -162,7 +162,7 @@ static void test_rmsd_converging() {
 	t.set_reference(ref);
 
 	double stretch = 2.0;
-	// First frame — establishes "previous"
+	// First frame  -  establishes "previous"
 	{
 		auto f = ref;
 		f[3].x += stretch;
@@ -182,7 +182,7 @@ static void test_rmsd_converging() {
 }
 
 // ---------------------------------------------------------------------------
-// 8. DisplacementTracker — identical frames
+// 8. DisplacementTracker  -  identical frames
 // ---------------------------------------------------------------------------
 static void test_displacement_identical() {
 	const auto ref = make_frame(6);
@@ -195,10 +195,10 @@ static void test_displacement_identical() {
 }
 
 // ---------------------------------------------------------------------------
-// 9. DisplacementTracker — uniform shift
+// 9. DisplacementTracker  -  uniform shift
 // ---------------------------------------------------------------------------
 static void test_displacement_uniform() {
-	// All atoms shift by 3 Å along X → mean = max = 3
+	// All atoms shift by 3 Å along X -> mean = max = 3
 	const auto ref = make_frame(4, 0.0);
 	const auto cur = make_frame(4, 3.0);
 	vsepr::DisplacementTracker t;
@@ -210,7 +210,7 @@ static void test_displacement_uniform() {
 }
 
 // ---------------------------------------------------------------------------
-// 10. DisplacementTracker — max tracks worst offender
+// 10. DisplacementTracker  -  max tracks worst offender
 // ---------------------------------------------------------------------------
 static void test_displacement_max() {
 	const std::vector<vsepr::Vec3> ref = {{0,0,0},{1,0,0},{2,0,0}};
@@ -223,7 +223,7 @@ static void test_displacement_max() {
 }
 
 // ---------------------------------------------------------------------------
-// 11. StructuralResidual — identical
+// 11. StructuralResidual  -  identical
 // ---------------------------------------------------------------------------
 static void test_residual_identical() {
 	const auto ref = make_frame(5);
@@ -236,7 +236,7 @@ static void test_residual_identical() {
 }
 
 // ---------------------------------------------------------------------------
-// 12. StructuralResidual — one-site defect
+// 12. StructuralResidual  -  one-site defect
 // ---------------------------------------------------------------------------
 static void test_residual_one_defect() {
 	// 5 atoms; last one moves by 1 Å > default threshold 0.5 Å
@@ -254,7 +254,7 @@ static void test_residual_one_defect() {
 }
 
 // ---------------------------------------------------------------------------
-// 13. StructuralResidual — all sites displaced
+// 13. StructuralResidual  -  all sites displaced
 // ---------------------------------------------------------------------------
 static void test_residual_all_defect() {
 	const auto ref = make_frame(4, 0.0);
@@ -271,7 +271,7 @@ static void test_residual_all_defect() {
 }
 
 // ---------------------------------------------------------------------------
-// 14. SimMetrics — 10-frame settling scenario
+// 14. SimMetrics  -  10-frame settling scenario
 // ---------------------------------------------------------------------------
 static void test_sim_metrics_full() {
 	const int N = 6;
@@ -333,7 +333,7 @@ static void test_tsv_columns() {
 	row.frame = 1;
 	const auto line = row.to_tsv();
 
-	// Count tabs in header and data line — should be identical
+	// Count tabs in header and data line  -  should be identical
 	auto count_tabs = [](const std::string& s) {
 		std::size_t n = 0;
 		for (char c : s) if (c == '\t') ++n;
@@ -346,7 +346,7 @@ static void test_tsv_columns() {
 }
 
 // ---------------------------------------------------------------------------
-// 16. Rigid translation — Kabsch RMSD ≈ 0; raw displacement > 0
+// 16. Rigid translation  -  Kabsch RMSD ≈ 0; raw displacement > 0
 // ---------------------------------------------------------------------------
 static void test_rigid_translation() {
 	// Kabsch removes translations: RMSD_ref and RMSD_step must both be ~0.
@@ -386,7 +386,7 @@ static void test_rigid_translation() {
 }
 
 // ---------------------------------------------------------------------------
-// 17. Rigid rotation — Kabsch RMSD ≈ 0; raw displacement > 0
+// 17. Rigid rotation  -  Kabsch RMSD ≈ 0; raw displacement > 0
 // ---------------------------------------------------------------------------
 static void test_rigid_rotation() {
 	// Use a non-collinear reference so rotation produces real displacement.
@@ -420,11 +420,11 @@ static void test_rigid_rotation() {
 }
 
 // ---------------------------------------------------------------------------
-// 18. Non-rigid deformation — RMSD_ref > 0 early, decays, gate settles
+// 18. Non-rigid deformation  -  RMSD_ref > 0 early, decays, gate settles
 // ---------------------------------------------------------------------------
 static void test_nonrigid_deformation() {
 	// Deformation: p_i.x += A(t)*0.02*i  p_i.y += A(t)*((i%2==0)?0.03:-0.03)  p_i.z += A(t)*sin(i)
-	// A(t) = 4.0 * exp(-0.6 * frame) — decays to ~0
+	// A(t) = 4.0 * exp(-0.6 * frame)  -  decays to ~0
 	const int N = 8;
 	std::vector<vsepr::Vec3> ref;
 	for (int i = 0; i < N; ++i)

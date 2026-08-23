@@ -1,4 +1,4 @@
-#include "bonded.hpp"
+﻿#include "bonded.hpp"
 #include <cmath>
 #include <algorithm>
 #include <set>
@@ -10,14 +10,14 @@ namespace atomistic {
  * Compute dihedral angle φ ∈ [-π, π] for atoms i-j-k-l
  * 
  * Geometry:
- * - b1 = rj - ri (bond i→j)
- * - b2 = rk - rj (bond j→k, rotation axis)
- * - b3 = rl - rk (bond k→l)
+ * - b1 = rj - ri (bond i->j)
+ * - b2 = rk - rj (bond j->k, rotation axis)
+ * - b3 = rl - rk (bond k->l)
  * - n1 = b1 × b2 (normal to plane ijk)
  * - n2 = b2 × b3 (normal to plane jkl)
  * - φ = atan2(b2·(n1×n2)/|b2|, n1·n2)
  * 
- * Sign convention: looking down j→k axis, φ > 0 for clockwise rotation of l
+ * Sign convention: looking down j->k axis, φ > 0 for clockwise rotation of l
  */
 double BondedModel::compute_dihedral_angle(const Vec3& ri, const Vec3& rj,
                                             const Vec3& rk, const Vec3& rl) {

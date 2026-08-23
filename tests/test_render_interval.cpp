@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // tests/test_render_interval.cpp   WO-VSEPR-SIM-57D  (Group 35)
 // =============================================================================
 // RI1  render_interval default = 1 renders every step
@@ -120,14 +120,14 @@ static void RI6() {
 // ---------------------------------------------------------------------------
 
 int main() {
-	std::puts("\n  Group 35 — WO-VSEPR-SIM-57D render_interval");
-	std::puts("  ─────────────────────────────────────────────");
+	std::puts("\n  Group 35  -  WO-VSEPR-SIM-57D render_interval");
+	std::puts("  ---------------------------------------------");
 	RI1();
 	RI2();
 	RI3();
 	RI4();
 	RI5();
 	RI6();
-	std::puts("\n  [ALL PASS]  Group 35 — render_interval\n");
+	std::puts("\n  [ALL PASS]  Group 35  -  render_interval\n");
 	return 0;
 }

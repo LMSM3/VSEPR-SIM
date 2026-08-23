@@ -1,4 +1,4 @@
-// src/ufx_auto2/crystal_generator.cpp
+﻿// src/ufx_auto2/crystal_generator.cpp
 // UFX_AUTO_2 Phase 8 -- Crystal / Solid-State Generator
 // VSEPR-SIM v5 beta9
 
@@ -289,7 +289,7 @@ static double crystal_atomic_weight(const std::string& sym) noexcept {
 // ============================================================================
 
 double CrystalGenerator::ionic_radius_(int Z, int oxidation_state) noexcept {
-	// Use Shannon table — coordination assumed 6 (most common) for this call.
+	// Use Shannon table  -  coordination assumed 6 (most common) for this call.
 	return shannon_ionic_radius(Z, 6, oxidation_state);
 }
 

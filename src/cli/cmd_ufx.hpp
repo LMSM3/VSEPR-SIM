@@ -1,4 +1,4 @@
-// src/cli/cmd_ufx.hpp
+﻿// src/cli/cmd_ufx.hpp
 // UFX AUTO2 CLI Command -- Phases 2-10
 // Handles all ufx auto2 subcommands
 
@@ -13,7 +13,7 @@
 namespace vsepr::cli {
 
 // ============================================================================
-// Block name constants — used in SQL queries; no raw strings at call sites.
+// Block name constants  -  used in SQL queries; no raw strings at call sites.
 // ============================================================================
 
 namespace ufx_blocks {
@@ -26,7 +26,7 @@ namespace ufx_blocks {
 }
 
 // ============================================================================
-// Auto2Options — parsed once, typed.  Passed to every handler.
+// Auto2Options  -  parsed once, typed.  Passed to every handler.
 // ============================================================================
 
 struct Auto2Options {
@@ -54,7 +54,7 @@ public:
 	std::string Help()        const override;
 
 private:
-	// ── Legacy handlers (Phase 2-5) — unchanged signatures ─────────────────
+	// -- Legacy handlers (Phase 2-5)  -  unchanged signatures -----------------
 	int run_init_            (const std::vector<std::string>& args) const;
 	int run_audit_           (const std::vector<std::string>& args) const;
 	int run_randomfill_      (const std::vector<std::string>& args) const;
@@ -64,7 +64,7 @@ private:
 	int run_backfill_provenance_(const std::vector<std::string>& args) const;
 	int run_clear_block_     (const std::vector<std::string>& args) const;
 
-	// ── Phase 6-10 handlers — take typed options ────────────────────────────
+	// -- Phase 6-10 handlers  -  take typed options ----------------------------
 	int run_fill_molecular_  (const Auto2Options& opt) const;
 	int run_fill_thermo_     (const Auto2Options& opt) const;
 	int run_fill_crystal_    (const Auto2Options& opt) const;
@@ -73,7 +73,7 @@ private:
 	int run_fill_macro_      (const Auto2Options& opt) const;
 	int run_score_           (const Auto2Options& opt) const;
 
-	// ── Helpers ─────────────────────────────────────────────────────────────
+	// -- Helpers -------------------------------------------------------------
 	static Auto2Options parse_auto2_options_(const std::vector<std::string>& args);
 	static std::string  resolve_db_path_    (const std::vector<std::string>& args,
 											 const std::string& default_path);

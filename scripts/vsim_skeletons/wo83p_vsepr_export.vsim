@@ -1,0 +1,35 @@
+# scripts/vsim_skeletons/wo83p_vsepr_export.vsim
+# Tier A — native replacement for demo_wo83p_vsepr_export.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+# STUB: [classify.export] JSON-lite format option not yet in vsim_document.hpp (WO-84A)
+#
+# Determinism is proven in the Python script by running classify twice and
+# comparing byte-identical stdout.  In native VSIM, determinism is asserted
+# by the [project] determinism = true contract rather than a re-run comparison.
+#
+# Required fields verified by Python:
+#   "sites:", "linear_count:", "conf=", "rms_dev="
+
+[project]
+name        = wo83p_vsepr_export
+version     = v5.0.0
+determinism = true
+
+[material]
+formula = CO2
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.export]
+# format = text                     # STUB: export format field not parsed (WO-84A)
+#                                   # STUB: JSON-lite option deferred to WO-84E
+#
+# [classify.expect]
+# contains = "sites:"
+# contains = "linear_count:"
+# contains = "conf="
+# contains = "rms_dev="
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────

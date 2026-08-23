@@ -1,0 +1,72 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83i_hybridization_hints.vsim
+# Tier A — native replacement for demo_wo83i_hybridization_hints.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# What works today:  C++ classify emits sp/sp2/sp3 hints in its stdout for
+#                    CO2, BF3, CH4 respectively (when geometry preview is ideal).
+#                    The Python script accepts approximate output gracefully.
+# Expected geometry: CO2 → sp (linear), BF3 → sp2 (trigonal_planar),
+#                    CH4 → sp3 (tetrahedral)
+#
+# Python equivalent:
+#   if expected_hint in out: print(f"hybridization={expected_hint}: OK")
+#   else: print("hint not found — acceptable in preview mode")
+
+[project]
+name    = wo83i_hybridization_co2
+version = v5.0.0
+
+[material]
+formula = CO2
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.expect]
+# contains         = "sp"           # linear center → sp hybridization hint
+# geometry_central = linear
+# result           = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83i_hybridization_bf3
+version = v5.0.0
+
+[material]
+formula = BF3
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.expect]
+# contains         = "sp2"
+# geometry_central = trigonal_planar
+# result           = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83i_hybridization_ch4
+version = v5.0.0
+
+[material]
+formula = CH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+#
+# [classify.expect]
+# contains         = "sp3"
+# geometry_central = tetrahedral
+# result           = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

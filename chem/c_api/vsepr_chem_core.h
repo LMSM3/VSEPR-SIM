@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
 /* ==========================================================================
- * VSEPR_EntityKind — what kind of simulation object is this?
+ * VSEPR_EntityKind  -  what kind of simulation object is this?
  * Assigned at creation, before any analysis.
  * ========================================================================== */
 typedef enum VSEPR_EntityKind {
@@ -50,7 +50,7 @@ typedef enum VSEPR_EntityKind {
 } VSEPR_EntityKind;
 
 /* ==========================================================================
- * VSEPR_BondKind — physical character of a bond.
+ * VSEPR_BondKind  -  physical character of a bond.
  * ========================================================================== */
 typedef enum VSEPR_BondKind {
     VSEPR_BOND_UNKNOWN       = 0,
@@ -64,7 +64,7 @@ typedef enum VSEPR_BondKind {
 } VSEPR_BondKind;
 
 /* ==========================================================================
- * VSEPR_Hybridization — electronic geometry, derivable from Z + valence.
+ * VSEPR_Hybridization  -  electronic geometry, derivable from Z + valence.
  * ========================================================================== */
 typedef enum VSEPR_Hybridization {
     VSEPR_HYB_UNKNOWN  = 0,
@@ -77,7 +77,7 @@ typedef enum VSEPR_Hybridization {
 } VSEPR_Hybridization;
 
 /* ==========================================================================
- * VSEPR_ChemRole — generic physical role of an atom.
+ * VSEPR_ChemRole  -  generic physical role of an atom.
  * Domain modules map fine-grained roles onto these for the generic runtime.
  * ========================================================================== */
 typedef enum VSEPR_ChemRole {
@@ -94,7 +94,7 @@ typedef enum VSEPR_ChemRole {
 } VSEPR_ChemRole;
 
 /* ==========================================================================
- * VSEPR_EnvironmentClass — physical thermodynamic environment.
+ * VSEPR_EnvironmentClass  -  physical thermodynamic environment.
  * Physical states only.  "Polar solvent" is a conclusion, not a state.
  * ========================================================================== */
 typedef enum VSEPR_EnvironmentClass {
@@ -106,12 +106,18 @@ typedef enum VSEPR_EnvironmentClass {
     VSEPR_ENV_SURFACE          = 5,
     VSEPR_ENV_POROUS_MEDIA     = 6,
     VSEPR_ENV_STRUCTURED_MEDIUM= 7,
-    VSEPR_ENV_POLAR_MEDIUM     = 8,
-    VSEPR_ENV_APOLAR_MEDIUM    = 9
+    VSEPR_ENV_POLAR_MEDIUM        = 8,
+    VSEPR_ENV_APOLAR_MEDIUM       = 9,
+    /* Extended environment classes (peptide / condensed-phase domains) */
+    VSEPR_ENV_DRY_CONDENSED       = 10,
+    VSEPR_ENV_POLAR_SOLVENT       = 11,
+    VSEPR_ENV_NONPOLAR_SOLVENT    = 12,
+    VSEPR_ENV_REACTIVE_FIELD      = 13,
+    VSEPR_ENV_RADIATIVE           = 14
 } VSEPR_EnvironmentClass;
 
 /* ==========================================================================
- * VSEPR_TopologyClass — large-scale connectivity, assigned by analysis.
+ * VSEPR_TopologyClass  -  large-scale connectivity, assigned by analysis.
  * ========================================================================== */
 typedef enum VSEPR_TopologyClass {
     VSEPR_TOPOLOGY_UNKNOWN   = 0,
@@ -126,7 +132,7 @@ typedef enum VSEPR_TopologyClass {
 } VSEPR_TopologyClass;
 
 /* ==========================================================================
- * VSEPR_FormationClass — broad class of the formed object.  Generic.
+ * VSEPR_FormationClass  -  broad class of the formed object.  Generic.
  * ========================================================================== */
 typedef enum VSEPR_FormationClass {
     VSEPR_FORM_UNKNOWN   = 0,
@@ -140,19 +146,27 @@ typedef enum VSEPR_FormationClass {
 } VSEPR_FormationClass;
 
 /* ==========================================================================
- * VSEPR_FormationState — pipeline stage.
+ * VSEPR_FormationState  -  pipeline stage.
  * ========================================================================== */
 typedef enum VSEPR_FormationState {
-    VSEPR_STATE_PREFORM   = 0,
-    VSEPR_STATE_BUILDING  = 1,
-    VSEPR_STATE_RELAXING  = 2,
-    VSEPR_STATE_ANALYZING = 3,
-    VSEPR_STATE_COMPLETE  = 4,
-    VSEPR_STATE_FAILED    = 5
+    VSEPR_STATE_PREFORM              = 0,
+    VSEPR_STATE_BUILDING             = 1,
+    VSEPR_STATE_RELAXING             = 2,
+    VSEPR_STATE_ANALYZING            = 3,
+    VSEPR_STATE_COMPLETE             = 4,
+    VSEPR_STATE_FAILED               = 5,
+    /* Extended formation states (peptide / multi-step formation domains) */
+    VSEPR_STATE_LOCAL_GROUP_FORMED   = 6,
+    VSEPR_STATE_MOLECULE_FORMED      = 7,
+    VSEPR_STATE_LINKED               = 8,
+    VSEPR_STATE_CONFORMATIONAL_SOLVE = 9,
+    VSEPR_STATE_LOCAL_FOLDED         = 10,
+    VSEPR_STATE_MACRO_STABLE         = 11,
+    VSEPR_STATE_DEGRADED             = 12
 } VSEPR_FormationState;
 
 /* ==========================================================================
- * VSEPR_AnnotationStatus — provenance of a field value.
+ * VSEPR_AnnotationStatus  -  provenance of a field value.
  * ========================================================================== */
 typedef enum VSEPR_AnnotationStatus {
     VSEPR_ANNOTATION_UNKNOWN    = 0,
@@ -163,7 +177,7 @@ typedef enum VSEPR_AnnotationStatus {
 } VSEPR_AnnotationStatus;
 
 /* ==========================================================================
- * VSEPR_FailureMode — class of error that caused a pipeline failure.
+ * VSEPR_FailureMode  -  class of error that caused a pipeline failure.
  * ========================================================================== */
 typedef enum VSEPR_FailureMode {
     VSEPR_FAILURE_NONE               = 0,

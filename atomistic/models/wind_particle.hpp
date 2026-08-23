@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * wind_particle.hpp  —  External directional perturbation field
+ * wind_particle.hpp   -   External directional perturbation field
  * =============================================================
  * VSEPR-SIM 3.0.0
  *
@@ -10,10 +10,10 @@
  * shock-wave fronts, deposition flux) without introducing a real particle
  * into the pair-list.
  *
- * Design choice — timestep headroom
+ * Design choice  -  timestep headroom
  * ----------------------------------
  * Wind forces are soft by construction: the maximum gradient is bounded
- * so that the integrator can safely take 1.5–2× the normal timestep
+ * so that the integrator can safely take 1.5-2× the normal timestep
  * without energy blow-up.  This is achieved by clamping the per-atom
  * force contribution to `F_max` and tapering via a smooth envelope.
  *
@@ -43,7 +43,7 @@
  *
  * Architecture:
  *   This header is self-contained and depends only on state.hpp.
- *   It is NOT an IModel — it is an additive perturbation applied
+ *   It is NOT an IModel  -  it is an additive perturbation applied
  *   after the primary model eval.  This keeps the force pipeline
  *   composable: model.eval(s, mp); wind.apply(s);
  */
@@ -66,7 +66,7 @@ struct WindParams {
     // Base force magnitude (kcal/(mol·Å))
     double strength    = 0.5;
 
-    // Force clamp — maximum per-atom contribution (kcal/(mol·Å))
+    // Force clamp  -  maximum per-atom contribution (kcal/(mol·Å))
     // This guarantees the integrator can take 1.5-2× dt safely.
     double F_max       = 2.0;
 
@@ -86,14 +86,14 @@ struct WindParams {
 };
 
 // ============================================================================
-// Wind Particle — runtime state + application
+// Wind Particle  -  runtime state + application
 // ============================================================================
 
 struct WindParticle {
     WindParams params;
     int        step_count = 0;   // current step (for ramp)
 
-    // ── Apply wind force to every atom in state ──
+    // -- Apply wind force to every atom in state --
     //
     // Adds to state.F[i] and accumulates energy in state.E.Uext.
     // Call this AFTER model.eval() so forces compose additively.
@@ -105,7 +105,7 @@ struct WindParticle {
         if (dnorm < 1e-30) return;
         const Vec3 dhat = params.direction * (1.0 / dnorm);
 
-        // Ramp factor: 0→1 over ramp_steps
+        // Ramp factor: 0->1 over ramp_steps
         const double ramp = (params.ramp_steps > 0 && step_count < params.ramp_steps)
             ? static_cast<double>(step_count) / static_cast<double>(params.ramp_steps)
             : 1.0;
@@ -142,28 +142,28 @@ struct WindParticle {
         ++step_count;
     }
 
-    // ── Effective timestep ──
+    // -- Effective timestep --
     // Returns dt * dt_factor for the caller to use when the wind
     // is the dominant perturbation source.
     double effective_dt(double dt) const noexcept {
         return dt * params.dt_factor;
     }
 
-    // ── Reset step counter (e.g., for new run) ──
+    // -- Reset step counter (e.g., for new run) --
     void reset() noexcept { step_count = 0; }
 
-    // ── Diagnostic: current ramp fraction [0,1] ──
+    // -- Diagnostic: current ramp fraction [0,1] --
     double ramp_fraction() const noexcept {
         if (params.ramp_steps <= 0) return 1.0;
         return std::min(1.0, static_cast<double>(step_count) / static_cast<double>(params.ramp_steps));
     }
 
-    // ── Diagnostic: peak force magnitude at origin ──
+    // -- Diagnostic: peak force magnitude at origin --
     double peak_force() const noexcept {
         return std::min(params.strength * ramp_fraction(), params.F_max);
     }
 
-    // ── Diagnostic: energy headroom ratio ──
+    // -- Diagnostic: energy headroom ratio --
     // Returns F_max / strength.  Values >= 1.5 are safe for dt_factor=1.5.
     double headroom_ratio() const noexcept {
         if (params.strength < 1e-30) return 1e30;

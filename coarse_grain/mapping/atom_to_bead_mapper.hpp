@@ -1,14 +1,14 @@
-#pragma once
+﻿#pragma once
 /**
- * atom_to_bead_mapper.hpp — Deterministic Atom→Bead Mapping Engine
+ * atom_to_bead_mapper.hpp  -  Deterministic Atom->Bead Mapping Engine
  *
  * Given an atomistic::State and a MappingScheme, produce a BeadSystem.
  *
- * This is the single entry point for the atomistic→CG projection.
+ * This is the single entry point for the atomistic->CG projection.
  * Every step is explicit, inspectable, and deterministic:
  *
  *   1. Validate scheme (no overlaps, full coverage).
- *   2. Resolve selectors → concrete atom index lists.
+ *   2. Resolve selectors -> concrete atom index lists.
  *   3. Compute bead centers (COM or COG).
  *   4. Aggregate mass and charge.
  *   5. Compute residual diagnostics.
@@ -32,7 +32,7 @@
 namespace coarse_grain {
 
 /**
- * Mapping result — either success with a BeadSystem, or failure with reason.
+ * Mapping result  -  either success with a BeadSystem, or failure with reason.
  */
 struct MappingResult {
     bool           ok{false};
@@ -42,7 +42,7 @@ struct MappingResult {
 };
 
 /**
- * AtomToBeadMapper — stateless, deterministic mapper.
+ * AtomToBeadMapper  -  stateless, deterministic mapper.
  *
  * Usage:
  *   AtomToBeadMapper mapper;
@@ -89,7 +89,7 @@ public:
             bead.type_id = rule.bead_type_id;
             bead.mapping_rule_id = rule.rule_id;
 
-            // Resolve selector → concrete indices
+            // Resolve selector -> concrete indices
             bead.parent_atom_indices = resolve_selector(rule.selector, state);
 
             // Aggregate mass and charge
@@ -144,7 +144,7 @@ public:
             return false;
         }
 
-        // Placeholder coverage check — resolve all selectors
+        // Placeholder coverage check  -  resolve all selectors
         // and verify full, non-overlapping coverage.
         std::vector<uint8_t> covered(n_atoms, 0);
 
@@ -183,7 +183,7 @@ public:
             }
         }
 
-        // Check full coverage (skip if BY_TYPE rules exist — deferred)
+        // Check full coverage (skip if BY_TYPE rules exist  -  deferred)
         bool has_type_selectors = false;
         for (const auto& rule : scheme.rules) {
             if (rule.selector.mode == SelectorMode::BY_TYPE) {
@@ -309,7 +309,7 @@ public:
                        << " | " << b.surface->n_samples
                        << " |\n";
                 } else {
-                    ss << "| " << i << " | — | — | — | — | — |\n";
+                    ss << "| " << i << " |  -  |  -  |  -  |  -  |  -  |\n";
                 }
             }
         }
@@ -412,7 +412,7 @@ private:
     static std::vector<std::pair<uint32_t, uint32_t>>
     infer_bead_bonds(const atomistic::State& state, const BeadSystem& sys)
     {
-        // Build atom→bead lookup
+        // Build atom->bead lookup
         std::vector<uint32_t> atom_to_bead(state.N, UINT32_MAX);
         for (uint32_t bi = 0; bi < sys.num_beads(); ++bi) {
             for (uint32_t ai : sys.beads[bi].parent_atom_indices)

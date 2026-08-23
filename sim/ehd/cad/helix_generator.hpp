@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * helix_generator.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Parametric helical electrode geometry generator.
  * Produces discretised helix centerline points for a wire electrode wound
@@ -21,7 +21,7 @@ namespace ehd {
 namespace cad {
 
 // ============================================================================
-// HelixGenerator — parametric helix centerline
+// HelixGenerator  -  parametric helix centerline
 // ============================================================================
 
 struct HelixParams {

@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 /**
  * element_descriptor.hpp
  * ======================
  * Immutable chemical element reference data.
  *
- * This is the *identity layer* — pure factual data about an element.
+ * This is the *identity layer*  -  pure factual data about an element.
  * No simulation state, no mutation, no index coupling.
  *
  * Integration:

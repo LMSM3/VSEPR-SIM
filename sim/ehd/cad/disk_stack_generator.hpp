@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * disk_stack_generator.hpp
  *
- * Electrohydrodynamic Simulation — Stage 1: CAD / Geometry
+ * Electrohydrodynamic Simulation  -  Stage 1: CAD / Geometry
  *
  * Configuration (c): Stacked perforated disk electrodes.
  * Alternating cathode/anode disks with through-hole perforations create

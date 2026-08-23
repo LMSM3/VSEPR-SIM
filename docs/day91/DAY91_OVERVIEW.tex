@@ -1,0 +1,127 @@
+\documentclass[10pt]{article}
+
+\usepackage[margin=0.65in]{geometry}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage[T1]{fontenc}
+\usepackage[hidelinks]{hyperref}
+
+\setlist{nosep,leftmargin=*}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+
+\title{VSEPR-SIM Day 91\\Geometry Diagnostics and Revision Safety}
+\author{WO-91}
+\date{2026-07-24}
+
+\begin{document}
+\maketitle
+
+\section*{Authority and Status}
+
+This overview governs the Day 91 A--Z map. Detailed implementation acceptance,
+contracts, diagrams, and evidence are maintained in
+\texttt{docs/wo/WO-91-DYNAMIC-OBJECT-GEOMETRY-BRIDGE.md}. Day labels and
+letters are planning metadata and must not become runtime schema keys, public
+CLI names, diagnostic codes, or scientific artifact identifiers.
+
+\begin{verbatim}
+[W] WO-91: geometry diagnostics, revision safety, and sampling handoff
+[D] Day 91: B-U complete or contract-frozen; A/V close remains
+[I] PARTIAL: code and verification gates pass
+[V] PASS: expanded Group 91 and Group 89 in normal/clean builds
+[P] LOCAL
+[N] Review T/U before adaptive sampling; imported STL/Pd-H excluded
+\end{verbatim}
+
+\section*{Objective}
+
+Make every geometry rejection, replacement, stale access, and unsupported
+downstream request visible and reproducible. The live viewer remains a consumer
+of immutable accepted snapshots. Geometry is the only authoritative Day 91
+payload; sampling, lower-scale evidence, material fields, meshes, and continuum
+states remain absent until their producing stages carry provenance.
+
+\section*{A--Z Map}
+
+\small
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
+\toprule
+Letter & State & Work item and completion evidence \\
+\midrule
+A & Partial & Freeze the verified primitive SDF/CSG, stable-ID, revision, and immutable-snapshot baseline; add the item-level TeX authority required for completion. \\
+B & Complete & Typed diagnostic and acknowledgement records carry stable semantic comparison keys. \\
+C & Complete & Invalid primitives fail visibly and atomically. \\
+D & Complete & Rigid/uniform-scale transforms validate; malformed, singular, non-uniform, and reflected forms fail. \\
+E & Complete & Ordered recursive CSG is deep-cloned into object truth. \\
+F & Complete & Confirmed empty and conservative possible-empty CSG outcomes are distinguished. \\
+G & Complete & Normal queries report valid, zero-gradient, or ambiguous-cusp states. \\
+H & Complete & Stable object identity and strong monotonic geometry revisions are separate. \\
+I & Complete & Stale live access fails while retained immutable snapshots survive. \\
+J & Complete & Accepted replacement clears all derived slots; absent access fails visibly. \\
+K & Complete & The supported viewer shows acknowledgements and accepted snapshot identity/bounds without fallback geometry. \\
+L & Complete & Normalized acknowledgement records compare deterministically across equivalent runs. \\
+M & Complete & Group 91 geometry, transform, bounds, normal, and rejection tests are expanded. \\
+N & Complete & Group 91 rollback, revision, stale-ID, retention, and mixed-object tests are expanded. \\
+O & Complete & Group 89 covers viewer-feed replacement, destruction, retention, and deduplication. \\
+P & Complete & The launcher and regression accept only \texttt{vsepr-view}. \\
+Q & Complete & Normal, clean, repeated, and static-analysis evidence is recorded; missing sanitizer runtimes are explicit. \\
+R & Complete & Geometry-state and revision diagrams are published in the source work order. \\
+S & Complete & Geometry query and invalidation contracts are documented. \\
+T & Contract & The future imported-surface record is frozen without claiming an importer. \\
+U & Contract & The future adaptive-sampling handoff is frozen without claiming a sampler. \\
+V & Partial & Evidence and carry-forward are reconciled; final close waits on A's item-level TeX authority. \\
+W & Reserved & Intentionally blank for late critical work. \\
+X & Reserved & Intentionally blank for cross-cutting correction. \\
+Y & Reserved & Intentionally blank for release/yield evidence. \\
+Z & Reserved & Intentionally blank for final close or emergency recovery. \\
+\bottomrule
+\end{tabularx}
+\normalsize
+
+\section*{Scientific and Ownership Boundaries}
+
+\begin{itemize}
+  \item Signed distance is negative inside, zero on the surface, and positive
+        outside. CSG is an ordered left fold: union uses minimum, intersection
+        uses maximum, and subtraction uses
+        \(\max(d_{\mathrm{left}},-d_{\mathrm{right}})\).
+  \item A geometry replacement either validates and commits as a new revision,
+        or fails without changing the object. Accepted replacement invalidates
+        every downstream product.
+  \item Retained snapshots are immutable historical views. They may outlive the
+        live object, but cannot satisfy a request that explicitly requires the
+        current geometry revision.
+  \item The renderer displays accepted snapshots and acknowledgements. It does
+        not author coordinates, infer missing geometry, or mutate simulation
+        truth.
+\end{itemize}
+
+\section*{MolecularDB Background Constraint}
+
+One canonical molecule identity owns one lazily created durable MolecularDB
+directory. A dynamic object is not automatically a molecule. When a verified
+molecular study uses a Day 91 object, its append-only evidence may reference
+the object ID, geometry revision, artifact hash, coordinate frame, and
+acknowledgement. No installation-time empty directory forest, formula-level
+duplicate ownership, reward write, or property promotion is part of Day 91.
+
+\section*{Non-Goals}
+
+No STL/STEP parsing, triangle repair, adaptive sampling implementation, XYZ or
+XBIT generation, molecular formation, material inference, density assignment,
+meshing, FEA, remeshing, state transfer, Q\#, Q+, ChemPlus language expansion,
+MolecularDB writer, or Pd--H fitting is authorized by this day.
+
+\section*{Exit Gate}
+
+Day 91 closes only when invalid inputs and stale access fail visibly; object and
+revision identity are independently inspectable; replacement rollback and
+retained-snapshot lifetime are tested; the live viewer exposes
+acknowledgements without hot-loop emission or fallback content; expanded Group
+91 and Group 89 tests pass; exact build evidence is retained; and the imported
+surface plus adaptive sampling contracts are reviewable. W--Z remain blank
+unless the close ledger records a justified exception.
+
+\end{document}

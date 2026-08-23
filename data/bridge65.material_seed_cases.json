@@ -1,0 +1,58 @@
+{
+  "schema": "vsepr.bridge65.material_seeds.v1",
+  "version": "5.1.13",
+  "cases": [
+    {
+      "name": "fe_bcc_seed",
+      "description": "BCC Fe 2×2×2 seed for material property sampling.",
+      "lattice": "BCC",
+      "a_A": 2.87,
+      "n_cells": [
+        2,
+        2,
+        2
+      ],
+      "species": "Fe",
+      "expected_properties": {
+        "density_g_cm3": 7.87,
+        "bulk_modulus_GPa": 170.0,
+        "phase": "solid"
+      }
+    },
+    {
+      "name": "nacl_rock_salt_seed",
+      "description": "NaCl rock-salt 2×2×2 seed.",
+      "lattice": "rock_salt",
+      "a_A": 5.64,
+      "n_cells": [
+        2,
+        2,
+        2
+      ],
+      "species": [
+        "Na",
+        "Cl"
+      ],
+      "expected_properties": {
+        "density_g_cm3": 2.165,
+        "phase": "solid"
+      }
+    },
+    {
+      "name": "argon_fcc_seed",
+      "description": "FCC Ar at 87 K, a=5.31 Å seed.",
+      "lattice": "FCC",
+      "a_A": 5.31,
+      "n_cells": [
+        2,
+        2,
+        2
+      ],
+      "species": "Ar",
+      "expected_properties": {
+        "density_g_cm3": 1.4,
+        "phase": "solid"
+      }
+    }
+  ]
+}

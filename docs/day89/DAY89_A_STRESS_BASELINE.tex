@@ -1,0 +1,42 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\title{Day 89-A: Visual Stress Baseline}
+\author{VSEPR-SIM Work Order Authority}
+\date{Day 89}
+\begin{document}
+\maketitle
+\section{Authority and scope}
+This document is the authoritative work-order record for Day 89-A. It fixes the pre-scale baseline for the deterministic shared-artifact producer before any large-scene behavior is introduced. The baseline command runs \texttt{build/dual-backend-3d-data.exe --headless --output out/day89\_baseline} and counts data rows in \texttt{particles.csv}.
+
+\section{Measured baseline}
+The existing four-scene fixture emitted 111 particle rows in 52.25 ms wall time on the Day 89 workstation. The scene populations were 27, 27, 30, and 27. PowerShell itself reported a 132.09 MiB working set after the child process completed; this is retained as environmental context and is not asserted as generator peak memory.
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Measure & Baseline \\
+\midrule
+Scenes & 4 \\
+Particle rows & 111 \\
+Generator wall time & 52.25 ms \\
+Simulation steps & 500 \\
+Time step & 10 fs \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Stress acceptance}
+The Day 89 stress path shall be deterministic, emit more than 1,000 rows, preserve locale-independent numeric output, and report its own generation timing and count in the manifest. Performance work must compare against measured evidence rather than infer a bottleneck from source structure. Renderer validation is bounded and noninteractive where possible.
+
+\newpage
+\section{Reproduction protocol}
+Build with the release preset and the \texttt{dual-backend-3d-data} target. Remove or select a fresh output directory, execute the headless producer, parse \texttt{particles.csv}, and retain elapsed wall time with the resulting manifest. The command must not modify the Git index or clean unrelated worktree paths.
+
+\section{Evidence interpretation}
+The 111-row fixture is a functional baseline, not a scale claim. The measured wall time includes process startup and artifact writing. Later measurements must identify particle count, step count, scene count, schema version, and command line so that apparent improvements are not obtained by silently reducing work. Peak memory requires a child-process measurement and remains open until the stress harness records it directly.
+
+\section{Exit decision}
+Day 89-A is complete when this authority exists, the baseline command is repeatable, and the measured values above are retained. Day 89-B may add a deterministic stress fixture, but it may not overwrite or reinterpret this baseline. W--Z remain reserved.
+\end{document}

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_property_scraper.cpp
  *
  * Tests for the §15 Post-Formation Property Scraper.
@@ -794,7 +794,7 @@ static void test_scrape_properties_water() {
     // Dipole: non-zero
     assert(rec.electro.dipole_magnitude > 0.1);
 
-    // VSEPR: z=2 for O, ideal 180° — but actual is 104.5°
+    // VSEPR: z=2 for O, ideal 180°  -  but actual is 104.5°
     // So VSEPR for z=2 will show deviation of ~75.5° (not recovered)
     // This is expected: water deviates from linear due to lone pairs.
     // The VSEPR ideal for coordination 2 is linear (180°), but the

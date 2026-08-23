@@ -1,4 +1,4 @@
-/**
+﻿/**
  * dynamic_molecule_builder.hpp
  * =============================
  * Dynamic complex molecule generator with live .xyz export
@@ -134,7 +134,7 @@ public:
     
     // Analyze current bunch
     struct AtomAnalysis {
-        std::map<uint8_t, int> atom_counts;      // Z → count
+        std::map<uint8_t, int> atom_counts;      // Z -> count
         std::map<uint8_t, std::string> atom_symbols;
         int total_atoms;
         int total_bonds;

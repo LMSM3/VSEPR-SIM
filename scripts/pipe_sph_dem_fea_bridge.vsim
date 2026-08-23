@@ -1,0 +1,123 @@
+# scripts/pipe_sph_dem_fea_bridge.vsim
+# VSEPR-SIM v5.1.4
+# Pipe + SPH/DEM/FEA bridge with interactive preprocessor.
+# Run: vsper run scripts/pipe_sph_dem_fea_bridge.vsim
+# The wizard will collect formula, material mode, pipe dimensions,
+# STEP or .xbit geometry, and flow parameters, then emit a resolved
+# script and run it automatically.
+
+[meta]
+name        = "pipe_sph_dem_fea_bridge_interactive"
+version     = "5.1.4"
+purpose     = "Pipe SPH/DEM/FEA bridge with formula-driven material setup and fallback .xbit geometry"
+author      = "SM / VSEPR-SIM"
+script_type = "interactive_preprocess_then_run"
+
+# -------------------------------------------------------------------
+# USER-RESOLVED INPUTS  (filled by the interactive preprocessor)
+# These ${var} tokens are substituted when the wizard writes the
+# resolved script.  Do not edit manually.
+# -------------------------------------------------------------------
+
+[input]
+molecular_formula   = "${formula}"
+material_mode       = "${material_mode}"
+geometry_source     = "${geometry_source}"
+step_file           = "${step_file}"
+xbit_file           = "generated_pipe.xbit"
+
+pipe.length         = "${pipe_length}"
+pipe.inner_diameter = "${pipe_inner_diameter}"
+pipe.outer_diameter = "${pipe_outer_diameter}"
+pipe.wall_thickness = "${wall_thickness}"
+
+flow.species        = "${flow_species}"
+flow.inlet_rate     = "${inlet_rate}"
+flow.inlet_velocity = "${inlet_velocity}"
+sph.count           = "${particle_count}"
+
+# -------------------------------------------------------------------
+# SYSTEM
+# -------------------------------------------------------------------
+
+[objects]
+system.geometry.pipe = PipeGeometry(length = ${pipe_length}, inner_diameter = ${pipe_inner_diameter}, outer_diameter = ${pipe_outer_diameter}, material = steel, xbit = auto)
+system.source.inlet  = InletSource(geometry = system.geometry.pipe, flux_rate = ${inlet_rate}, inlet_velocity_m_s = ${inlet_velocity}, velocity_profile = parabolic, xbit = auto)
+system.sink.outlet   = OutletSink(geometry = system.geometry.pipe, outlet_pressure_Pa = 98000, record_flux = true, xbit = auto)
+system.surface.wall  = WallSurface(geometry = system.geometry.pipe, pressure_ref_Pa = 101325, region_grid_n = 16, binning_mode = axis_aligned, xbit = auto)
+environment.carrier  = AmbientEnv(fluid_species = ${flow_species}, temperature_K = 300.0, pressure_Pa = 101325, xbit = auto)
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+# -------------------------------------------------------------------
+# BRIDGES
+# -------------------------------------------------------------------
+
+[bridge]
+dem.pipe_packing = DEMBridge(from = system.surface.wall, geometry = system.geometry.pipe, inlet = system.source.inlet, outlet = system.sink.outlet, packing_model = hard_sphere, contact_model = hertz_mindlin, friction = 0.35, restitution = 0.20)
+fea.pipe_wall    = FEABridge(from = system.surface.wall, target = system.geometry.pipe, map = surface_to_mesh, criterion = von_mises, fatigue = true, thermal_expansion = true)
+
+# -------------------------------------------------------------------
+# RUN
+# -------------------------------------------------------------------
+
+[run]
+mode          = "relax"
+max_steps     = 10000
+dt_fs         = 0.2
+temperature_K = 300.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "formation", "rdf"]
+output_format = "json"
+every_n_steps = 100
+
+# -------------------------------------------------------------------
+# EXPORT
+# -------------------------------------------------------------------
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.visual]
+write_energy_trace_svg = true
+write_html_dashboard   = true
+visual_output_dir      = figures/pipe_bridge/
+
+# -------------------------------------------------------------------
+# VISUAL + VIEWER
+# -------------------------------------------------------------------
+
+[visual]
+output_type              = "gl_interactive"
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 20
+
+[open]
+enabled = true
+mode    = "advanced"
+file    = "auto"
+
+[open.advanced]
+trajectory_controls = true
+data_inspector      = true
+bond_overlay        = false
+start_paused        = false
+default_frame       = 0

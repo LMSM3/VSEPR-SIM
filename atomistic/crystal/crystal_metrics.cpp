@@ -1,4 +1,4 @@
-#include "atomistic/crystal/crystal_metrics.hpp"
+﻿#include "atomistic/crystal/crystal_metrics.hpp"
 #include <cmath>
 #include <algorithm>
 #include <numeric>
@@ -12,7 +12,7 @@ namespace atomistic {
 namespace crystal {
 
 // ============================================================================
-// Element Symbol Table (Z → symbol)
+// Element Symbol Table (Z -> symbol)
 // ============================================================================
 
 static const char* element_symbol(uint32_t Z) {
@@ -715,41 +715,41 @@ void VerificationScorecard::add(const std::string& name, bool pass, double val,
 
 void VerificationScorecard::print() const {
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  CRYSTAL VERIFICATION SCORECARD: " << std::setw(30) << std::left 
-              << crystal_name << "  ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  " << std::setw(28) << std::left << "Check"
+    std::cout << "+==================================================================+\n";
+    std::cout << "|  CRYSTAL VERIFICATION SCORECARD: " << std::setw(30) << std::left 
+              << crystal_name << "  |\n";
+    std::cout << "╠==================================================================╣\n";
+    std::cout << "|  " << std::setw(28) << std::left << "Check"
               << std::setw(10) << "Status"
               << std::setw(10) << "Value"
               << std::setw(10) << "Expected"
               << std::setw(8) << "Err%"
-              << "  ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════════╣\n";
+              << "  |\n";
+    std::cout << "╠==================================================================╣\n";
     
     for (const auto& e : entries) {
-        std::cout << "║  " << std::setw(28) << std::left << e.check_name
+        std::cout << "|  " << std::setw(28) << std::left << e.check_name
                   << (e.passed ? "  ✓  " : "  ✗  ")
                   << std::setw(10) << std::fixed << std::setprecision(3) << e.value
                   << std::setw(10) << e.expected
                   << std::setw(8) << std::setprecision(1) << e.error_pct
-                  << "  ║\n";
+                  << "  |\n";
     }
     
-    std::cout << "╠══════════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  PASSED: " << passed << " / " << total_checks 
+    std::cout << "╠==================================================================╣\n";
+    std::cout << "|  PASSED: " << passed << " / " << total_checks 
               << "  (" << std::fixed << std::setprecision(1) << pass_rate << "%)";
     
     int pad = 50 - 12 - std::to_string(passed).length() - std::to_string(total_checks).length();
     for (int i = 0; i < pad; ++i) std::cout << " ";
-    std::cout << "  ║\n";
+    std::cout << "  |\n";
     
     if (failed == 0) {
-        std::cout << "║  ✓ ALL CHECKS PASSED                                            ║\n";
+        std::cout << "|  ✓ ALL CHECKS PASSED                                            |\n";
     } else {
-        std::cout << "║  ✗ " << failed << " CHECK(S) FAILED                                          ║\n";
+        std::cout << "|  ✗ " << failed << " CHECK(S) FAILED                                          |\n";
     }
-    std::cout << "╚══════════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+==================================================================+\n\n";
 }
 
 VerificationScorecard verify_against_reference(const UnitCell& uc,
@@ -862,12 +862,12 @@ CrystalMetrics compute_all_metrics(const UnitCell& uc, double cutoff) {
 
 void CrystalMetrics::print_summary() const {
     std::cout << "\n";
-    std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    std::cout << "--------------------------------------------------\n";
     std::cout << "  CRYSTAL METRICS SUMMARY\n";
-    std::cout << "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n";
+    std::cout << "--------------------------------------------------\n\n";
     
     // Identity
-    std::cout << "  ── Identity ──\n";
+    std::cout << "  -- Identity --\n";
     std::cout << "    Formula:        " << identity.reduced_formula << "\n";
     std::cout << "    Z (fu/cell):    " << identity.formula_units_Z << "\n";
     std::cout << "    Cell volume:    " << std::fixed << std::setprecision(3) 
@@ -877,14 +877,14 @@ void CrystalMetrics::print_summary() const {
     std::cout << (identity.charge_neutral ? "  ✓" : "  ✗") << "\n\n";
     
     // Symmetry
-    std::cout << "  ── Symmetry ──\n";
+    std::cout << "  -- Symmetry --\n";
     std::cout << "    Lattice system: " << symmetry.lattice_system << "\n";
     std::cout << "    Space group:    " << symmetry.space_group_number 
               << " (" << symmetry.space_group_symbol << ")\n";
     std::cout << "    Unique sites:   " << symmetry.num_unique_sites << "\n\n";
     
     // Geometry
-    std::cout << "  ── Local Geometry ──\n";
+    std::cout << "  -- Local Geometry --\n";
     for (const auto& [Z, cn] : geometry.mean_CN_by_type) {
         std::cout << "    CN(" << element_symbol(Z) << "):        " 
                   << std::setprecision(1) << cn << "\n";
@@ -899,7 +899,7 @@ void CrystalMetrics::print_summary() const {
               << geometry.max_distortion << "\n\n";
     
     // Topology
-    std::cout << "  ── Topology ──\n";
+    std::cout << "  -- Topology --\n";
     std::cout << "    Total bonds:    " << topology.total_bonds << "\n";
     std::cout << "    Connected:      " << (topology.fully_connected ? "yes" : "no") 
               << " (" << topology.num_connected_components << " component(s))\n";
@@ -907,7 +907,7 @@ void CrystalMetrics::print_summary() const {
               << std::dec << "\n\n";
     
     // Reciprocal
-    std::cout << "  ── Reciprocal Space ──\n";
+    std::cout << "  -- Reciprocal Space --\n";
     std::cout << "    Peaks (2θ<90°): " << reciprocal.num_peaks << "\n";
     if (!reciprocal.d_spacings.empty()) {
         int show = std::min(5, static_cast<int>(reciprocal.d_spacings.size()));
@@ -920,7 +920,7 @@ void CrystalMetrics::print_summary() const {
         }
     }
     
-    std::cout << "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";
+    std::cout << "\n--------------------------------------------------\n";
 }
 
 } // namespace crystal

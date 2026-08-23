@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * include/vsim/reaction_bridge.hpp
  * =================================
@@ -6,19 +6,19 @@
  *
  * Reactions are ambient physics: this bridge is called after every simulation
  * step, not only in "reaction_event" mode.  The ChemistrySection controls
- * rule selection, heat-gate level, and event verbosity — but the engine
+ * rule selection, heat-gate level, and event verbosity  -  but the engine
  * always runs whenever two or more molecule species are present.
  *
  * Architecture (WO-56C doctrine):
  *
  *   VsimDocument (chemistry + environment + simulation.molecules)
- *         ↓
+ *         v
  *   ReactionBridge::run_pass(doc, frame_id)
- *         ├── build_state_from_entry()   ← formula string → atomistic::State stub
- *         ├── ReactionEngine::identify_reactive_sites()
- *         ├── ReactionEngine::match_reactive_sites()
- *         ├── ReactionEngine::score_reaction()
- *         └── KernelEventLog::instance().record(ReactionEvent)
+ *         +-- build_state_from_entry()   <- formula string -> atomistic::State stub
+ *         +-- ReactionEngine::identify_reactive_sites()
+ *         +-- ReactionEngine::match_reactive_sites()
+ *         +-- ReactionEngine::score_reaction()
+ *         +-- KernelEventLog::instance().record(ReactionEvent)
  *
  * Truth-carrier rule: this bridge NEVER writes to .xyz / .xyzFull.
  * It only emits KernelEvents.  State files are written by the FIRE/MD runner.
@@ -42,7 +42,7 @@
 namespace vsim {
 
 // ============================================================================
-// ReactionPassResult — lightweight summary returned to the caller
+// ReactionPassResult  -  lightweight summary returned to the caller
 // ============================================================================
 
 struct ReactionPassResult {
@@ -60,13 +60,13 @@ class ReactionBridge {
 public:
 
 	// -----------------------------------------------------------------------
-	// run_pass — evaluate reactions for all molecule pairs in the document.
+	// run_pass  -  evaluate reactions for all molecule pairs in the document.
 	//
 	// Called after each FIRE/MD step.  Uses the document's chemistry section
 	// and environment temperature to configure the heat gate, then runs the
 	// reaction engine over every ordered pair of distinct molecule species.
 	//
-	// frame_id — the simulation step counter (for KernelEvent provenance).
+	// frame_id  -  the simulation step counter (for KernelEvent provenance).
 	// -----------------------------------------------------------------------
 	static ReactionPassResult run_pass(const VsimDocument& doc,
 									   uint64_t frame_id)
@@ -74,7 +74,7 @@ public:
 		ReactionPassResult result;
 
 		// Reactions are always evaluated; [chemistry] just shapes the rules.
-		// An empty chemistry string also runs — it picks up standard templates.
+		// An empty chemistry string also runs  -  it picks up standard templates.
 		const auto& chem = doc.chemistry;
 		const auto& mols = doc.simulation.molecules;
 
@@ -177,7 +177,7 @@ public:
 private:
 
 	// -----------------------------------------------------------------------
-	// build_state_from_entry — construct a minimal atomistic::State from a
+	// build_state_from_entry  -  construct a minimal atomistic::State from a
 	// MoleculeEntry.  This is a formula-level stub: no 3D geometry is placed.
 	// The reaction engine uses element Z numbers and bond topology; the bridge
 	// derives Z from the formula string, producing a single-atom representative
@@ -202,7 +202,7 @@ private:
 		return s;
 	}
 
-	// Parse first numeric Z from formula string (e.g., "H2O" → 1, "NaCl" → 11).
+	// Parse first numeric Z from formula string (e.g., "H2O" -> 1, "NaCl" -> 11).
 	// Falls back to 1 (H) for unknown formulas.
 	static uint32_t first_element_z(const std::string& formula) {
 		// Simple lookup: first 1-2 capital-letter symbol
@@ -221,7 +221,7 @@ private:
 	}
 
 	// -----------------------------------------------------------------------
-	// is_heat_activated — check whether the heat gate permits this reaction.
+	// is_heat_activated  -  check whether the heat gate permits this reaction.
 	// Uses the activation_barrier as the energetic gate: higher barrier
 	// requires higher heat (h) for the gate function to open.
 	// -----------------------------------------------------------------------
@@ -239,7 +239,7 @@ private:
 	}
 
 	// -----------------------------------------------------------------------
-	// products_from_proposal — derive a product formula string.
+	// products_from_proposal  -  derive a product formula string.
 	// -----------------------------------------------------------------------
 	static std::vector<std::string> products_from_proposal(
 		const atomistic::reaction::ProposedReaction& prop,
@@ -252,7 +252,7 @@ private:
 	}
 
 	// -----------------------------------------------------------------------
-	// emit_chemical_state — record a ChemicalStateEvent for species tracking.
+	// emit_chemical_state  -  record a ChemicalStateEvent for species tracking.
 	// -----------------------------------------------------------------------
 	static void emit_chemical_state(
 		const std::string& formula,

@@ -1,0 +1,10 @@
+{
+  "schema": "vsepr.loop-98-checkpoint.v1",
+  "run_id": "leafos-run-001",
+  "version": "v001",
+  "status": "checkpointed",
+  "resume_command": "python loop98_runner.py run --version v001",
+  "clone_command": "python loop98_runner.py clone --from-version v001 --mutation 'describe variant'",
+  "report": "C:\\R\\VSPER-SIM\\loop-98\\leafos-run-001\\v001\\report.json",
+  "created_at": "2026-07-17T10:29:13.717917+00:00"
+}

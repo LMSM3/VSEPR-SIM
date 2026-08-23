@@ -1,4 +1,4 @@
-/**
+﻿/**
  * cmd_build.cpp
  * -------------
  * Build command - create molecules from chemical formulas.
@@ -74,18 +74,18 @@ static bool is_star_like(
         }
     }
     
-    // Rule 1: Single heavy atom → star-like (CH4, NH3, H2O, etc.)
+    // Rule 1: Single heavy atom -> star-like (CH4, NH3, H2O, etc.)
     if (heavy_count == 1) {
         return true;
     }
     
-    // Rule 2: Single element type with multiple atoms → star-like
+    // Rule 2: Single element type with multiple atoms -> star-like
     // Examples: H2, O2, N2, Cl2, F2
     if (num_element_types == 1) {
         return true;
     }
     
-    // Rule 3: Two element types where one is H → likely star-like
+    // Rule 3: Two element types where one is H -> likely star-like
     // Examples: CH4, NH3, H2O, H2S, HCl, HF
     if (num_element_types == 2 && composition.count(1) > 0) {
         // One element is H, count non-H heavy atoms
@@ -162,7 +162,7 @@ static bool is_star_like(
         }
     }
     
-    // Rule 6: Multiple carbons or large organics → NOT star-like
+    // Rule 6: Multiple carbons or large organics -> NOT star-like
     for (const auto& [Z, count] : composition) {
         if (Z == 6 && count > 1) {  // Multiple carbons
             return false;  // Organic chain/ring, not star
@@ -805,7 +805,7 @@ int BuildCommand::Execute(const std::vector<std::string>& args) {
             
             Display::Step("Initializing HGST Matrix (Hierarchical Graph State Theory)...");
             Display::Info("  State vector: x = [ρD, Γ, S, Π, Q]");
-            Display::Info("  - ρD: Donor confidence (N→An coordination)");
+            Display::Info("  - ρD: Donor confidence (N->An coordination)");
             Display::Info("  - Γ:  Geometry score (VSEPR alignment)");
             Display::Info("  - S:  Steric penalty (crowding)");
             Display::Info("  - Π:  Agostic propensity (B-H-An)");
@@ -1025,7 +1025,7 @@ int BuildCommand::Execute(const std::vector<std::string>& args) {
             Display::Step("Optimizing geometry...");
             OptimizeResult result = optimizer.minimize(mol.coords, energy);
             
-            // ═══ TRUTH STATE CAPTURE ═══
+            // === TRUTH STATE CAPTURE ===
             TruthState truth;
             truth.input_formula = formula;
             truth.flags["optimize"] = "true";
@@ -1053,7 +1053,7 @@ int BuildCommand::Execute(const std::vector<std::string>& args) {
                 truth.save_json(truth_file);
                 Display::Info("Truth state saved: " + truth_file);
             }
-            // ═══ END TRUTH STATE ═══
+            // === END TRUTH STATE ===
             
             if (result.converged) {
                 Display::Success("Optimization converged in " + std::to_string(result.iterations) + " iterations");
@@ -1177,7 +1177,7 @@ OPTIONS:
   --output <file>   Write structure to XYZ file
 
 EXAMPLES:
-  ▶ vsepr build random --watch       ← Recommended demo! Generate & visualize
+  ▶ vsepr build random --watch       <- Recommended demo! Generate & visualize
 
   # Build simple molecules
   vsepr build H2O --optimize

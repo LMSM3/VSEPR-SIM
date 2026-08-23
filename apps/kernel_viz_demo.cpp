@@ -1,5 +1,5 @@
-/**
- * kernel_viz_demo.cpp — Kernel Event Log Terminal Visualization
+﻿/**
+ * kernel_viz_demo.cpp  -  Kernel Event Log Terminal Visualization
  * ==============================================================
  *
  * Renders a live terminal dashboard of the kernel event log produced
@@ -10,29 +10,29 @@
  *
  * Dashboard panels (in order):
  *
- *   Panel 1 — Event Timeline
+ *   Panel 1  -  Event Timeline
  *       Chronological lane per KernelEventKind.
  *       Each event is a block on its lane at its frame_id.
  *       Valid = filled block ▮, Invalid = hollow block ▯.
  *
- *   Panel 2 — Per-Kind Stacked Summary Bars
+ *   Panel 2  -  Per-Kind Stacked Summary Bars
  *       Horizontal bar per event kind, scaled to event count.
  *       Shows distribution of event types for this run.
  *
- *   Panel 3 — Symbolic Trace Printout
+ *   Panel 3  -  Symbolic Trace Printout
  *       For every event with a non-empty equation, print the full
  *       symbolic and numeric trace in documentation format.
  *       This is the WO-56C anti-black-box panel.
  *
- *   Panel 4 — Pipeline Trace Expressions
+ *   Panel 4  -  Pipeline Trace Expressions
  *       Loads a synthetic pipeline run (Al, Fe, C6H12, C)
  *       and prints all AnalysisRecord symbolic traces.
  *
- *   Panel 5 — Animation Cue Timeline
+ *   Panel 5  -  Animation Cue Timeline
  *       Lists all collected AnimationCues in stage order
  *       with their timing and easing parameters.
  *
- *   Panel 6 — Final Audit Table
+ *   Panel 6  -  Final Audit Table
  *       event_id | kind | frame | formula | result | unit | valid
  *
  * Usage:
@@ -40,11 +40,11 @@
  *
  * Architecture position:
  *   KernelEventLog (kernel spine)
- *         ↓
+ *         v
  *   pipeline stages (trace injection)
- *         ↓
+ *         v
  *   kernel_viz_demo (terminal dashboard)
- *         ↓
+ *         v
  *   later: SVG / dashboard JSON export (beta-8)
  *
  * WO-56C  |  v5.0.0-beta.7
@@ -98,15 +98,15 @@ static void ruler(const char* ch = "-", int width = 60) {
 
 static void panel_header(const char* title, int index) {
 	std::printf("\n%s%s", col::bold(), col::cyn());
-	ruler("\xe2\x95\x90");  // UTF-8 ═
+	ruler("\xe2\x95\x90");  // UTF-8 =
 	std::printf("  Panel %d \xe2\x80\x94 %s\n", index, title);
-	ruler("\xe2\x95\x90");  // UTF-8 ═
+	ruler("\xe2\x95\x90");  // UTF-8 =
 	std::printf("%s", col::rst());
 }
 
 static void section_line(const char* title) {
 	std::printf("%s%s  %s  %s\n", col::dim(), col::wht(), title, col::rst());
-	ruler("\xe2\x94\x80", 56);  // UTF-8 ─
+	ruler("\xe2\x94\x80", 56);  // UTF-8 -
 }
 
 // ============================================================================
@@ -144,7 +144,7 @@ static v4::FormationRecord make_formation(
 }
 
 // ============================================================================
-// Panel 1 — Event Timeline
+// Panel 1  -  Event Timeline
 // ============================================================================
 
 static void panel_timeline(const vsepr::kernel::KernelEventLog& log) {
@@ -221,7 +221,7 @@ static void panel_timeline(const vsepr::kernel::KernelEventLog& log) {
 }
 
 // ============================================================================
-// Panel 2 — Per-Kind Summary Bars
+// Panel 2  -  Per-Kind Summary Bars
 // ============================================================================
 
 static void panel_summary_bars(const vsepr::kernel::KernelEventLog& log) {
@@ -257,13 +257,13 @@ static void panel_summary_bars(const vsepr::kernel::KernelEventLog& log) {
 		int bar_len = counts[ki] * BAR_WIDTH / max_count;
 		const char* lc = g_headless ? "" : lane_colors[ki];
 		std::printf("  %s%-18s%s %s", lc, kind_name(kinds[ki]), col::rst(), col::yel());
-		for (int b = 0; b < bar_len; ++b) std::printf("█");
+		for (int b = 0; b < bar_len; ++b) std::printf("#");
 		std::printf("%s %d\n", col::rst(), counts[ki]);
 	}
 }
 
 // ============================================================================
-// Panel 3 — Symbolic Trace Printout
+// Panel 3  -  Symbolic Trace Printout
 // ============================================================================
 
 static void panel_symbolic_traces(const vsepr::kernel::KernelEventLog& log) {
@@ -293,7 +293,7 @@ static void panel_symbolic_traces(const vsepr::kernel::KernelEventLog& log) {
 }
 
 // ============================================================================
-// Panel 4 — Pipeline Trace Expressions
+// Panel 4  -  Pipeline Trace Expressions
 // ============================================================================
 
 static void panel_pipeline_traces() {
@@ -323,7 +323,7 @@ static void panel_pipeline_traces() {
 		const auto& sym    = pr.analysis.symbol;
 		const auto& traces = pr.analysis.trace.expressions;
 
-		std::printf("\n  %s%s%s — %zu symbolic traces\n",
+		std::printf("\n  %s%s%s  -  %zu symbolic traces\n",
 			col::bold(), sym.c_str(), col::rst(), traces.size());
 		section_line("");
 
@@ -336,7 +336,7 @@ static void panel_pipeline_traces() {
 				col::dim(), col::yel(), tr.substituted_expression.c_str(), col::rst());
 			std::printf("    %sResult:        %s%s%s\n",
 				col::dim(), col::grn(), tr.result_expression.c_str(), col::rst());
-			std::printf("    %sUnits:         %s%s  — %s%s%s\n",
+			std::printf("    %sUnits:         %s%s   -  %s%s%s\n",
 				col::dim(), col::wht(), tr.units.c_str(),
 				col::dim(), tr.interpretation.c_str(), col::rst());
 			std::fputc('\n', stdout);
@@ -345,11 +345,11 @@ static void panel_pipeline_traces() {
 }
 
 // ============================================================================
-// Panel 5 — Animation Cue Timeline
+// Panel 5  -  Animation Cue Timeline
 // ============================================================================
 
 static void panel_animation_cues() {
-	panel_header("Animation Cue Timeline (Declarative — Not Rendered Here)", 5);
+	panel_header("Animation Cue Timeline (Declarative  -  Not Rendered Here)", 5);
 
 	using namespace vsepr::pipeline;
 	using v4::LatticeClass;
@@ -372,7 +372,7 @@ static void panel_animation_cues() {
 
 	std::printf("  %s%-42s %-18s %-14s %-5s %-5s %-10s%s\n",
 		col::bold(), "id", "stage", "cue_type", "t0", "t1", "easing", col::rst());
-	ruler("\xe2\x94\x80", 110);  // UTF-8 ─
+	ruler("\xe2\x94\x80", 110);  // UTF-8 -
 
 	for (const auto& c : cues) {
 		const char* lc = col::cyn();
@@ -395,7 +395,7 @@ static void panel_animation_cues() {
 }
 
 // ============================================================================
-// Panel 6 — Final Audit Table
+// Panel 6  -  Final Audit Table
 // ============================================================================
 
 static void panel_audit_table(const vsepr::kernel::KernelEventLog& log) {
@@ -405,7 +405,7 @@ static void panel_audit_table(const vsepr::kernel::KernelEventLog& log) {
 		col::bold(),
 		"ID", "Kind", "Frame", "Formula", "Result", "Unit", "Valid",
 		col::rst());
-	ruler("\xe2\x94\x80", 80);  // UTF-8 ─
+	ruler("\xe2\x94\x80", 80);  // UTF-8 -
 
 	for (const auto& e : log.snapshot()) {
 		const char* vc = e.is_valid ? col::grn() : col::red();
@@ -429,7 +429,7 @@ int main(int argc, char** argv) {
 		if (std::strcmp(argv[i], "--headless") == 0) g_headless = true;
 		if (std::strcmp(argv[i], "--help") == 0) {
 			std::printf(
-				"kernel_viz_demo — Kernel Event Log Terminal Visualization\n\n"
+				"kernel_viz_demo  -  Kernel Event Log Terminal Visualization\n\n"
 				"Usage: kernel_viz_demo [options]\n\n"
 				"Options:\n"
 				"  --headless   Suppress ANSI colors (plain text output)\n"
@@ -559,9 +559,9 @@ int main(int argc, char** argv) {
 	// ----------------------------------------------------------------
 
 	std::printf("\n%s%s", col::bold(), col::cyn());
-	ruler("\xe2\x95\x90", 60);  // UTF-8 ═
+	ruler("\xe2\x95\x90", 60);  // UTF-8 =
 	std::printf("  VSEPR-SIM  |  kernel_viz_demo  |  WO-56C  |  beta-7\n");
-	ruler("\xe2\x95\x90", 60);  // UTF-8 ═
+	ruler("\xe2\x95\x90", 60);  // UTF-8 =
 	std::printf("%s\n", col::rst());
 
 	panel_timeline(log);
@@ -576,10 +576,10 @@ int main(int argc, char** argv) {
 	// ----------------------------------------------------------------
 
 	std::printf("\n%s%s", col::bold(), col::cyn());
-	ruler("\xe2\x95\x90", 60);  // UTF-8 ═
-	std::printf("  %s events in log — spine is clean — panels complete\n",
+	ruler("\xe2\x95\x90", 60);  // UTF-8 =
+	std::printf("  %s events in log  -  spine is clean  -  panels complete\n",
 		std::to_string(log.size()).c_str());
-	ruler("\xe2\x95\x90", 60);  // UTF-8 ═
+	ruler("\xe2\x95\x90", 60);  // UTF-8 =
 	std::printf("%s\n", col::rst());
 
 	return 0;

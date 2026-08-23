@@ -1,12 +1,12 @@
-/**
- * test_anisotropic_beads.cpp — Anisotropic Surface-Mapped Bead Validation
+﻿/**
+ * test_anisotropic_beads.cpp  -  Anisotropic Surface-Mapped Bead Validation
  *
  * Verifies the anisotropic bead pipeline using benzene (C6H6) as the
- * canonical test case (12 atoms → 1 anisotropic bead).
+ * canonical test case (12 atoms -> 1 anisotropic bead).
  *
  * Tests:
  *   T1: Spherical harmonics orthonormality (Y_00 = 1/√(4π))
- *   T2: Inertia frame of benzene ring (planar → κ > 0)
+ *   T2: Inertia frame of benzene ring (planar -> κ > 0)
  *   T3: Surface descriptor symmetry (benzene has strong ℓ=2 m=0)
  *   T4: Single-atom bead is isotropic (anisotropy_ratio ≈ 0)
  *   T5: Anisotropic potential decomposes isotropic + correction

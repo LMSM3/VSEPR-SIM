@@ -1,4 +1,4 @@
-/**
+﻿/**
  * atomistic-align: Molecular Structure Alignment Viewer
  * 
  * Demonstrates Kabsch alignment with camera tracking visualization
@@ -186,7 +186,7 @@ void demo_animated_alignment(State& target, const State& reference, int n_steps)
         int filled = static_cast<int>(progress * bar_width);
         std::cout << "\r[";
         for (int i = 0; i < bar_width; ++i) {
-            if (i < filled) std::cout << "█";
+            if (i < filled) std::cout << "#";
             else std::cout << " ";
         }
         std::cout << "] " << static_cast<int>(progress * 100) << "% ";
@@ -297,7 +297,7 @@ int main(int argc, char* argv[]) {
     print_header("SUMMARY");
     std::cout << "Reference:  " << ref_file << " (" << reference.N << " atoms)\n";
     std::cout << "Target:     " << tgt_file << " (" << target.N << " atoms)\n";
-    std::cout << "RMSD:       " << result.rmsd_before << " → " << result.rmsd_after << " Å\n";
+    std::cout << "RMSD:       " << result.rmsd_before << " -> " << result.rmsd_after << " Å\n";
     std::cout << "Improvement: " << (result.rmsd_before - result.rmsd_after) << " Å ";
     std::cout << "(" << (100.0 * (1.0 - result.rmsd_after / result.rmsd_before)) << "% reduction)\n";
     print_separator();

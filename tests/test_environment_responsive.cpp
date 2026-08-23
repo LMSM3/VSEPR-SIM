@@ -1,5 +1,5 @@
-/**
- * test_environment_responsive.cpp — Tests for Environment-Responsive Bead State
+﻿/**
+ * test_environment_responsive.cpp  -  Tests for Environment-Responsive Bead State
  *
  * Validates the implementation of the environment-responsive extension
  * as specified in section_environment_responsive_beads.tex:

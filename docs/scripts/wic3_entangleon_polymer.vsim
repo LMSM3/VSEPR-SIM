@@ -1,0 +1,137 @@
+# WIC III — Connectivity Particles and the Entangleon
+# 24-bead polymer chain. Connectivity as identity-bearing structure.
+# Theory: WIC III §5-7 — m_E^(2) = [κ, τ]. E_{ij} vs E_W pairwise/many-body.
+
+[project]
+name        = "wic3_entangleon_polymer"
+version     = "v5.1.13.5"
+seed_base   = 3300
+determinism = true
+
+[material]
+formula   = "polymer_chain"
+structure = "bead"
+phase     = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 6000
+dt_fs        = 2.0
+temperature  = 300.0
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 300.0
+medium      = "vacuum"
+
+[simulation]
+fire_max_steps   = 400
+fire_dt_fs       = 1.0
+box_size_ang     = 120.0
+periodic         = false
+formation_preset = "bead_spring"
+
+[[simulation.molecule]]
+formula     = "bead_chain_24"
+count       = 1
+temperature = 300.0
+
+[post_step]
+enabled = true
+script_block = """
+bond_12    = pbc.distance(particle.position(1),  particle.position(2))
+bond_mid   = pbc.distance(particle.position(12), particle.position(13))
+end_to_end = pbc.distance(particle.position(1),  particle.position(24))
+"""
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 20
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+transport_events = true
+dynamic_energy   = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [4, 4, 4]
+rve_window_lengths_A             = [4.0, 12.0, 30.0, 80.0]
+rve_windows_per_level            = 4
+rve_window_placement             = "stratified"
+min_particles_for_scale_sampling = 4
+spatial_cv_threshold             = 0.60
+temporal_drift_threshold         = 0.40
+scale_drift_threshold            = 0.50
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 8.0
+contact_cutoff_A  = 4.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = false
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[verify]
+enabled             = true
+profile             = "wic3_polymer_connectivity_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_coordination        = 2
+coordination_tolerance       = 1
+expected_nearest_neighbor_A  = 3.80
+nearest_neighbor_tolerance_A = 0.50
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = false
+max_msd_A2           = 200.0
+max_slope_late       = 0.5
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+output_dir                = "out/wic3_polymer"
+
+[report]
+title = "WIC III — Entangleon: 24-Bead Polymer Chain"
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 30
+show_event_timeline = true
+overlay_sequence = energy_map,coordination,rdf

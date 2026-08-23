@@ -1,4 +1,4 @@
-/**
+﻿/**
  * XYZW Format Implementation
  *
  * Wind particle field I/O:
@@ -22,7 +22,7 @@
 namespace vsepr {
 namespace io {
 
-// ── XYZWField helpers ──────────────────────────────────────────────────────
+// -- XYZWField helpers ------------------------------------------------------
 
 void XYZWField::clamp_omega() {
     for (auto& a : atoms)
@@ -48,7 +48,7 @@ std::vector<std::array<double, 3>> XYZWField::to_velocity_offsets() const {
     return offsets;
 }
 
-// ── XYZWReader ─────────────────────────────────────────────────────────────
+// -- XYZWReader -------------------------------------------------------------
 
 static std::string trim(const std::string& s) {
     size_t b = s.find_first_not_of(" \t\r\n");
@@ -90,7 +90,7 @@ void XYZWReader::parse_header_meta(const std::string& comment, XYZWField& field)
                 field.time = std::stod(val, &idx);
             } catch (...) {}
         } else if (key == "Direction") {
-            // Expect (dx,dy,dz) — strip parens
+            // Expect (dx,dy,dz)  -  strip parens
             std::string v = val;
             v.erase(std::remove_if(v.begin(), v.end(),
                     [](char c){ return c == '(' || c == ')'; }), v.end());
@@ -175,7 +175,7 @@ bool XYZWReader::read_stream(std::istream& input, XYZWField& field) {
     return true;
 }
 
-// ── XYZWWriter ─────────────────────────────────────────────────────────────
+// -- XYZWWriter -------------------------------------------------------------
 
 std::string XYZWWriter::build_header_comment(const XYZWField& field) const {
     std::ostringstream ss;

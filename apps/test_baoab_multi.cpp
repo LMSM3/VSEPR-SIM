@@ -1,4 +1,4 @@
-/**
+﻿/**
  * BAOAB Langevin Test - 8 atoms with forces
  * 
  * Tests that BAOAB integrator works with multi-atom systems
@@ -35,9 +35,9 @@ double compute_temp_local(const State& state) {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  BAOAB TEST: 64 Ar atoms with LJ forces                  ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  BAOAB TEST: 64 Ar atoms with LJ forces                  |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // Create system (INCREASED to 64 atoms)
     const int N = 64;
@@ -98,9 +98,9 @@ int main() {
     auto stats = dynamics.integrate(state, params, rng);
     
     // Check results
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VALIDATION                                                ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  VALIDATION                                                |\n";
+    std::cout << "+===========================================================+\n\n";
     
     double error_pct = 100.0 * (stats.T_avg - params.T_target) / params.T_target;
     

@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * level3_handoff.hpp — Level 3 → Macro-DM Handoff Record
+ * level3_handoff.hpp  -  Level 3 -> Macro-DM Handoff Record
  *
  * The Level3HandoffRecord is the formal payload passed from the
  * Level 3 Bead layer to the macro-dynamics (macro-DM) model.
@@ -33,11 +33,11 @@ namespace coarse_grain {
 namespace level3 {
 
 // ============================================================================
-// Level3HandoffRecord — macro-DM input payload
+// Level3HandoffRecord  -  macro-DM input payload
 // ============================================================================
 
 /**
- * Level3HandoffRecord — complete macro-DM input for one L3 domain.
+ * Level3HandoffRecord  -  complete macro-DM input for one L3 domain.
  *
  * Effective continuum properties (all per-domain):
  *

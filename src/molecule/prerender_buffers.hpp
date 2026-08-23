@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 // ============================================================================
-// prerender_buffers.hpp — Glass Module: Instance Buffer Builder
+// prerender_buffers.hpp  -  Glass Module: Instance Buffer Builder
 // ============================================================================
 // Converts layout positions + topology into flat instance buffers ready for
 // GPU upload. One shared sphere mesh + one shared cylinder mesh; instances
@@ -17,7 +17,7 @@ namespace vsepr {
 namespace glass {
 
 // -----------------------------------------------------------------------
-// AtomInstance — per-atom data for instanced sphere rendering.
+// AtomInstance  -  per-atom data for instanced sphere rendering.
 // -----------------------------------------------------------------------
 struct AtomInstance {
     Vec3f    position;
@@ -28,7 +28,7 @@ struct AtomInstance {
 };
 
 // -----------------------------------------------------------------------
-// BondInstance — per-bond data for instanced cylinder rendering.
+// BondInstance  -  per-bond data for instanced cylinder rendering.
 // Stores endpoints; the renderer computes midpoint/orientation/length.
 // -----------------------------------------------------------------------
 struct BondInstance {
@@ -41,7 +41,7 @@ struct BondInstance {
 };
 
 // -----------------------------------------------------------------------
-// PrerenderBuffers — output of the instance buffer builder.
+// PrerenderBuffers  -  output of the instance buffer builder.
 // -----------------------------------------------------------------------
 struct PrerenderBuffers {
     std::vector<AtomInstance> atom_instances;
@@ -53,7 +53,7 @@ struct PrerenderBuffers {
 };
 
 // -----------------------------------------------------------------------
-// PrerenderSettings — controls instance generation.
+// PrerenderSettings  -  controls instance generation.
 // -----------------------------------------------------------------------
 struct PrerenderSettings {
     float atom_radius_scale  = 0.65f;    // scale covalent_radius -> display radius
@@ -63,7 +63,7 @@ struct PrerenderSettings {
 };
 
 // -----------------------------------------------------------------------
-// MoleculePrerenderBuilder — builds instance buffers from topology + layout.
+// MoleculePrerenderBuilder  -  builds instance buffers from topology + layout.
 //
 // Usage:
 //   MoleculePrerenderBuilder builder(prerender_settings);

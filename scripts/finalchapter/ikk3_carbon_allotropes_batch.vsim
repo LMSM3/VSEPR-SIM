@@ -1,0 +1,295 @@
+# =============================================================================
+# IKK III -- Matrix Mechanics / Wave Function Bridge
+# VSIM implementation: carbon allotropes batch -- diamond vs graphite
+#
+# Theory claim (IKK III):
+#   psi is not primitive wave substance.
+#   psi is the projected observable form of a persistent identity matrix state.
+#   Matrix mechanics and wave functions describe different representational
+#   layers of the same underlying identity structure.
+#
+# Why carbon allotropes for IKK III?
+#   Diamond and graphite are the same element (C, Z=6) with identical
+#   atomic identity content:
+#     - same mass: 12.011 u
+#     - same EAM/LJ parameters for C
+#     - same charge: q_C = 0
+#
+#   But they have radically different identity MATRIX states:
+#     Diamond: sp3, tetrahedral, A4 cubic, coord=4, band gap ~5.5 eV
+#     Graphite: sp2, hexagonal, 2H AB stacking, coord=3, semimetal, ~0 eV
+#
+#   IKK III S2: psi = P(I), same I must always produce same psi.
+#   Here the identity content I is the same (C atoms). But the matrix
+#   state (the configuration) is different.
+#
+#   The spectral_response observable (the projected wave-observable O_{S_b})
+#   must be DIFFERENT between diamond and graphite, even though the atomic
+#   identity is identical. That difference is entirely explained by the
+#   difference in the identity matrix state -- the crystal structure.
+#
+#   This is the IKK III claim: psi tracks the matrix state, not the
+#   atomic identity. Two systems with identical atoms but different matrix
+#   states produce different wave observables.
+#
+#   IKK III S3: interference pattern.
+#     Diamond: no pi-bond network. Interference score should be low
+#              (no delocalised pi field).
+#     Graphite: sp2 pi network. Interference score should be higher
+#              (pi stacking = inter-layer wave-like coherence).
+#
+#   IKK III S7: limits.
+#     The classical MD cannot compute a true band gap. The spectral_response
+#     observable is an estimate from the formation-energy table plus
+#     event-log correction. A failure to distinguish diamond from graphite
+#     in spectral_response = the projection layer is too coarse.
+#
+# Measurement:
+#   Job A (diamond):
+#     spectral_response -> optical gap estimate ~ 5.5 eV
+#     interference score -> low (sp3, no pi network)
+#     coordination = 4, RDF 1st peak = 1.540 A
+#
+#   Job B (graphite):
+#     spectral_response -> optical gap estimate ~ 0.0-0.1 eV (semimetal)
+#     interference score -> higher (pi stacking)
+#     coordination = 3, RDF 1st peak = 1.420 A
+#
+#   Key discriminator: spectral_response(diamond) >> spectral_response(graphite)
+#   despite identical atomic identity content.
+#
+# Physical references:
+#   Diamond C:  A4, a = 3.567 A, C-C = 1.540 A, coord = 4, gap ~ 5.5 eV
+#   Graphite C: 2H AB, a = 2.461 A, c = 6.708 A, in-plane C-C = 1.420 A,
+#               interlayer = 3.354 A, coord = 3, semimetal
+# =============================================================================
+
+[project]
+name        = "ikk3_carbon_allotropes_batch"
+version     = "v5.1.13.5"
+seed_base   = 6060
+determinism = true    # IKK III S7: deterministic identity -> reproducible observable
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Job A: diamond (sp3 C, A4 structure)
+# IKK III: matrix state M = sp3 tetrahedral
+# Projected observable: spectral_response ~ 5.5 eV (wide bandgap)
+# interference: low (sp3, no delocalised pi)
+# ============================================================
+[[batch.job]]
+name            = "diamond_sp3_a4"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "C"
+prototype = "A4_C"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 0.5    # short: stiff diamond bonds (~1332 cm^-1 Raman)
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic         = true
+use_ewald        = false
+formation_preset = "molecular"    # sp3 covalent preset
+
+# Diamond a = 3.567 A. 4x4x4 edge = 14.27 A.
+# Windows: nearest-neighbour, unit cell, 2x, supercell.
+# IKK III S6: matrix-to-wave map. Does coherent wave-like structure
+# emerge at 7.13 A but not at 1.77 A?
+[batch.job.scale_sampling]
+rve_window_lengths_A             = [1.77, 3.57, 7.13, 14.27]
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+spatial_cv_threshold             = 0.30
+scale_drift_threshold            = 0.25
+scale_drift_metric               = "successive_window_difference"
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A4_C"
+expected_coordination        = 4
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.540
+nearest_neighbor_tolerance_A = 0.08
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.540, 2.522, 2.958]
+peak_tolerance_A   = 0.15
+require_peak_order = true
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.0
+max_slope_late       = 0.001
+expect_regime        = "solid_bounded"
+
+[batch.job.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# IKK III S2: spectral_response and interference are the wave-observable O_{S_b}
+# These are measured post-MD from the event log + formation-energy table.
+[batch.job.observe]
+metrics       = ["energy_map", "coordination", "rdf", "spectral_response", "interference"]
+output_format = "json"
+every_n_steps = 25
+
+[batch.job.kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[batch.job.kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = false
+dynamic_energy   = true
+
+[batch.job.export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/finalchapter/ikk3_diamond"
+
+
+# ============================================================
+# Job B: graphite AB Bernal (sp2 C, 2H structure)
+# IKK III: matrix state M = sp2 planar + pi network
+# Projected observable: spectral_response ~ 0.0-0.1 eV (semimetal)
+# interference: higher (pi-stacking inter-layer coherence)
+# Same atoms as Job A. Different observable because M is different.
+# ============================================================
+[[batch.job]]
+name            = "graphite_sp2_2h"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "C"
+structure = "graphite"
+cell      = "5x5x4"    # 5x5 in-plane, 4 AB layers
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 3000
+dt_fs       = 0.25    # short: capture fast in-plane phonons (~1580 cm^-1 G band)
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.simulation]
+periodic         = true
+use_ewald        = false
+formation_preset = "molecular"    # sp2 covalent; inter-layer handled by LJ
+
+# Graphite in-plane a = 2.461 A. 5x5 edge = 12.31 A.
+# Windows span C-C bond to full supercell width.
+# IKK III S3: interference should be elevated for graphite vs diamond
+# because the pi network creates a spatially coherent field at the
+# window sizes comparable to the pi-conjugation length (~10 A).
+[batch.job.scale_sampling]
+rve_window_lengths_A             = [1.42, 2.46, 4.92, 12.31]
+field_grid                       = [8, 8, 6]    # thinner in z (layered)
+rve_windows_per_level            = 8
+spatial_cv_threshold             = 0.35
+scale_drift_threshold            = 0.30
+scale_drift_metric               = "successive_window_difference"
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "graphite_2H"
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.420
+nearest_neighbor_tolerance_A = 0.08
+
+[batch.job.verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.420, 2.461, 2.840]
+peak_tolerance_A   = 0.12
+require_peak_order = true
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.5
+max_slope_late       = 0.002
+expect_regime        = "solid_bounded"
+
+[batch.job.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# IKK III S3: interference is the key discriminator from diamond.
+# interference(graphite) > interference(diamond) expected.
+[batch.job.observe]
+metrics       = ["energy_map", "coordination", "rdf", "spectral_response", "interference"]
+output_format = "json"
+every_n_steps = 25
+
+[batch.job.kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[batch.job.kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true    # inter-layer transport events = pi-stacking dynamics
+dynamic_energy   = true
+
+[batch.job.export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/finalchapter/ikk3_graphite"
+
+
+# ---------------------------------------------------------------------------
+# Top-level report and visual
+# ---------------------------------------------------------------------------
+[report]
+title                   = "ikk3_carbon_allotropes_batch"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_bar_chart           = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,spectral_response,interference,coordination

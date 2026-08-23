@@ -1,7 +1,7 @@
-/**
+﻿/**
  * gas2_engine.hpp
  * ---------------
- * Unified Gas2 Engine — Top-Level API and CLI Dispatch.
+ * Unified Gas2 Engine  -  Top-Level API and CLI Dispatch.
  *
  * This is the main entry point for the gas2 module. Composes:
  *   - gas2_constants.hpp  (physical constants)
@@ -54,7 +54,7 @@ struct Gas2Analysis {
     double n_mol;
     uint64_t seed;
 
-    // Species — molecular DB match (nullptr if unknown / monatomic fallback)
+    // Species  -  molecular DB match (nullptr if unknown / monatomic fallback)
     const GasSpecies* species;
     // Monatomic fallback storage (populated when species==nullptr but nuclear match found)
     std::optional<GasSpecies> monatomic_storage;

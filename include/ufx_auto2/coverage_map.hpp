@@ -1,4 +1,4 @@
-// include/ufx_auto2/coverage_map.hpp
+﻿// include/ufx_auto2/coverage_map.hpp
 // UFX_AUTO_2 Phase 2 -- Coverage Map (stub)
 // VSEPR-SIM v5 beta8 -> beta9
 //
@@ -27,7 +27,7 @@ using RegionKey = std::string;
 struct CoverageEntry {
 	RegionKey key;
 	int64_t   count    = 0;   // records in DB for this region
-	double    density  = 0.0; // normalised 0.0 – 1.0
+	double    density  = 0.0; // normalised 0.0 - 1.0
 };
 
 class CoverageMap {
@@ -35,7 +35,7 @@ public:
 	CoverageMap() = default;
 
 	// Load coverage counts from the material_records table.
-	// db_path may be empty — in that case the map is initialised to zero.
+	// db_path may be empty  -  in that case the map is initialised to zero.
 	void load_from_db(const std::string& db_path);
 
 	// Returns the region key with the lowest count.

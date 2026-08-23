@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * streamline_export.hpp
  *
- * Electrohydrodynamic Simulation — Stage 5: Postprocessing
+ * Electrohydrodynamic Simulation  -  Stage 5: Postprocessing
  *
  * Exports velocity-field streamline seeds and traced paths to CSV.
  * Uses simple Euler integration on the discrete velocity grid.

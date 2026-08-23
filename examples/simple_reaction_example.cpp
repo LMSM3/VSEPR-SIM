@@ -1,4 +1,4 @@
-/**
+﻿/**
  * simple_reaction_example.cpp
  * ---------------------------
  * Demonstrates a simple acid-base (proton transfer) reaction.
@@ -6,7 +6,7 @@
  * Shows current energy tracking capabilities and how heat parameter affects
  * reaction discovery.
  * 
- * Example: HCl + NH₃ → NH₄⁺Cl⁻
+ * Example: HCl + NH₃ -> NH₄⁺Cl⁻
  * 
  * Build:
  *   g++ -std=c++20 -I.. -o simple_reaction_example simple_reaction_example.cpp \
@@ -27,9 +27,9 @@ using namespace atomistic::reaction;
 // ============================================================================
 
 void print_header(const std::string& title) {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  " << std::left << std::setw(62) << title << "║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "|  " << std::left << std::setw(62) << title << "|\n";
+    std::cout << "+================================================================+\n\n";
 }
 
 void print_energy_terms(const EnergyTerms& E) {
@@ -41,7 +41,7 @@ void print_energy_terms(const EnergyTerms& E) {
     std::cout << "  van der Waals:    " << std::setw(10) << E.UvdW << " kcal/mol\n";
     std::cout << "  Coulomb:          " << std::setw(10) << E.UCoul << " kcal/mol\n";
     std::cout << "  External:         " << std::setw(10) << E.Uext << " kcal/mol\n";
-    std::cout << "  ─────────────────────────────────────\n";
+    std::cout << "  -------------------------------------\n";
     std::cout << "  Total:            " << std::setw(10) << E.total() << " kcal/mol\n";
     std::cout << "\n";
 }
@@ -167,7 +167,7 @@ void demonstrate_reaction_energetics() {
 // ============================================================================
 
 void demonstrate_proton_transfer() {
-    print_header("Example: HCl + NH₃ → NH₄⁺Cl⁻ (Proton Transfer)");
+    print_header("Example: HCl + NH₃ -> NH₄⁺Cl⁻ (Proton Transfer)");
     
     // Create molecules
     State hcl = create_hcl_molecule();
@@ -209,7 +209,7 @@ void demonstrate_proton_transfer() {
 void demonstrate_heat_gated_biochemical() {
     print_header("Heat-Gated Reaction: Peptide Bond Formation");
     
-    std::cout << "Example: Gly + Ala → Gly-Ala + H₂O\n\n";
+    std::cout << "Example: Gly + Ala -> Gly-Ala + H₂O\n\n";
     
     std::cout << "This reaction is heat-gated:\n\n";
     
@@ -220,7 +220,7 @@ void demonstrate_heat_gated_biochemical() {
               << std::setw(10) << "h"
               << std::setw(20) << "Mode"
               << std::setw(15) << "Peptide Active?\n";
-    std::cout << "────────────────────────────────────────────────────────\n";
+    std::cout << "--------------------------------------------------------\n";
     
     for (double T : temperatures) {
         uint16_t h = temperature_to_heat(T);
@@ -264,14 +264,14 @@ void demonstrate_energy_tracking_during_reaction() {
     std::cout << "Typical reaction energy profile:\n\n";
     
     std::cout << "  E\n";
-    std::cout << "  │                   TS (transition state)\n";
-    std::cout << "  │                   /\\\n";
-    std::cout << "  │                  /  \\  E_a (activation)\n";
-    std::cout << "  │                 /    \\\n";
-    std::cout << "  │  Reactants ────       ──── Products\n";
-    std::cout << "  │                          \\\n";
-    std::cout << "  │                           \\__ΔE_rxn\n";
-    std::cout << "  └────────────────────────────────────► Reaction coordinate\n\n";
+    std::cout << "  |                   TS (transition state)\n";
+    std::cout << "  |                   /\\\n";
+    std::cout << "  |                  /  \\  E_a (activation)\n";
+    std::cout << "  |                 /    \\\n";
+    std::cout << "  |  Reactants ----       ---- Products\n";
+    std::cout << "  |                          \\\n";
+    std::cout << "  |                           \\__ΔE_rxn\n";
+    std::cout << "  +------------------------------------► Reaction coordinate\n\n";
     
     std::cout << "Energy components tracked:\n\n";
     
@@ -316,10 +316,10 @@ void demonstrate_energy_tracking_during_reaction() {
 // ============================================================================
 
 int main() {
-    std::cout << "\n╔════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Simple Reaction Example — Formation Engine v0.1              ║\n";
-    std::cout << "║  Demonstrates current energy tracking and reaction discovery  ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+================================================================+\n";
+    std::cout << "|  Simple Reaction Example  -  Formation Engine v0.1              |\n";
+    std::cout << "|  Demonstrates current energy tracking and reaction discovery  |\n";
+    std::cout << "+================================================================+\n";
     
     // Show what the system currently tracks
     demonstrate_current_energy_system();
@@ -351,7 +351,7 @@ int main() {
     std::cout << "   • Rate constant via Arrhenius equation\n\n";
     
     std::cout << "✅ Heat-Gated Control:\n";
-    std::cout << "   • Temperature → heat parameter mapping\n";
+    std::cout << "   • Temperature -> heat parameter mapping\n";
     std::cout << "   • Organic vs. biochemical mode selection\n";
     std::cout << "   • Smooth template activation (Item #7)\n\n";
     

@@ -1,0 +1,59 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83u_safe_defaults.vsim
+# Tier A — native replacement for demo_wo83u_safe_defaults.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# Tests that degenerate / edge-case formulas do not crash:
+#   C   — single atom (no bonds, no lone pairs to infer)
+#   H2  — diatomic (linear trivial case)
+#   Xe  — noble gas (Z=54; lone pairs all shell-filled, no bonds)
+#
+# Python equivalent: assert rc == 0 for each formula
+
+[project]
+name    = wo83u_safe_defaults_c
+version = v5.0.0
+
+[material]
+formula = C
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+# [classify.expect]
+# exit_code = 0                     # no crash
+# result    = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83u_safe_defaults_h2
+version = v5.0.0
+[material]
+formula = H2
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+# [classify.expect]
+# exit_code = 0
+# result    = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83u_safe_defaults_xe
+version = v5.0.0
+[material]
+formula = Xe
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr
+# [classify.expect]
+# exit_code = 0
+# result    = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

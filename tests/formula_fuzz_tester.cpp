@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file formula_fuzz_tester.cpp
  * @brief Intensive fuzz testing for formula parser
  * 
@@ -109,7 +109,7 @@ void test_formula(const std::string& formula, const PeriodicTable& pt,
         stats.record_parse(formula, duration, true);
         
         if (verbose) {
-            std::cout << "✓ " << formula << " → " << to_formula(comp, pt) 
+            std::cout << "✓ " << formula << " -> " << to_formula(comp, pt) 
                       << " (" << duration.count() << "μs)\n";
         }
     } catch (const ParseError& e) {

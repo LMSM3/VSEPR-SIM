@@ -1,0 +1,142 @@
+# UC-7 fixture — SiO2 Pipe Simulation
+# uc7_sio2_pipe.vsim
+# Purpose: Fully resolved SiO2 particulate pipe simulation using the
+#          SPH/DEM/FEA bridge stack. No ${var} template tokens.
+# Used by: tests/automation/uc7_run.sh
+# UC doc:  docs/uc/UC-7-sio2-pipe-simulation.md
+# WO-MF:   MF-G01 MF-G02 MF-G03 MF-G04 MF-G05
+
+[project]
+name        = "uc7_sio2_pipe"
+version     = "v5.0.14"
+description = "UC-7: SiO2 particulate flow, 5 nm nanofluidic tube, SPH/DEM/FEA"
+seed_base   = 7001
+determinism = true
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+# Material: amorphous SiO2 (quartz prototype)
+[material]
+id        = sio2_amorphous
+formula   = "SiO2"
+prototype = "quartz"
+mode      = "atomistic"
+phase     = "solid"
+
+# Species charges and masses (consistent with val_04 quartz definitions)
+[species.Si]
+charge = +4.0
+mass   = 28.086
+
+[species.O]
+charge = -2.0
+mass   = 15.999
+
+# Pipe geometry -- all resolved values for a 5 nm nanofluidic SiO2 tube
+# inner_diameter = 20 Ang  (wide enough for >= 4 particles abreast)
+# outer_diameter = 28 Ang  (4 Ang wall = ~2 Si-O bond lengths)
+# wall_thickness = 4.0 Ang (thin-wall regime)
+# length         = 50.0 Ang (~5 nm tube)
+pipe.length         = "50.0 Ang"
+pipe.inner_diameter = "20.0 Ang"
+pipe.outer_diameter = "28.0 Ang"
+pipe.wall_thickness = "4.0 Ang"
+
+# Flow conditions
+# carrier: N2 gas (ambient), T=300 K, P=1 atm
+# inlet_rate: 1.0e13 /s -- low-flux laminar regime
+# inlet_velocity: 200 m/s -- subsonic, avoids shock formation
+# velocity_profile: parabolic (Poiseuille / no-slip at wall)
+flow.species        = "N2"
+flow.inlet_rate     = "1.0e13"
+flow.inlet_velocity = "200.0 m/s"
+sph.count           = 512
+
+# -------------------------------------------------------------------
+# OBJECTS
+# -------------------------------------------------------------------
+
+[objects]
+system.geometry.pipe = PipeGeometry(length = 50.0, inner_diameter = 20.0, outer_diameter = 28.0, material = sio2_amorphous, xbit = auto)
+system.source.inlet  = InletSource(geometry = system.geometry.pipe, flux_rate = 1.0e13, inlet_velocity_m_s = 200.0, velocity_profile = parabolic, xbit = auto)
+system.sink.outlet   = OutletSink(geometry = system.geometry.pipe, outlet_pressure_Pa = 98000, record_flux = true, xbit = auto)
+system.surface.wall  = WallSurface(geometry = system.geometry.pipe, pressure_ref_Pa = 101325, region_grid_n = 16, binning_mode = axis_aligned, xbit = auto)
+environment.carrier  = AmbientEnv(fluid_species = N2, temperature_K = 300.0, pressure_Pa = 101325, xbit = auto)
+
+# -------------------------------------------------------------------
+# BRIDGES
+# -------------------------------------------------------------------
+
+# DEM: Hertz-Mindlin hard-sphere packing
+# friction=0.35, restitution=0.20 (values from template defaults)
+[bridge]
+dem.pipe_packing = DEMBridge(from = system.surface.wall, geometry = system.geometry.pipe, inlet = system.source.inlet, outlet = system.sink.outlet, packing_model = hard_sphere, contact_model = hertz_mindlin, friction = 0.35, restitution = 0.20)
+
+# FEA: von Mises stress on SiO2 wall, fatigue tracking, thermal expansion
+fea.pipe_wall    = FEABridge(from = system.surface.wall, target = system.geometry.pipe, map = surface_to_mesh, criterion = von_mises, fatigue = true, thermal_expansion = true)
+
+# -------------------------------------------------------------------
+# RUN
+# -------------------------------------------------------------------
+
+[run]
+mode          = "relax"
+max_steps     = 10000
+dt_fs         = 0.2
+temperature_K = 300.0
+converge      = true
+output_level  = "verbose"
+
+# Observe energy, formation, and RDF every 100 steps
+[observe]
+metrics       = ["energy", "formation", "rdf"]
+output_format = "json"
+every_n_steps = 100
+
+# -------------------------------------------------------------------
+# EXPORT
+# -------------------------------------------------------------------
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true   # MF-G03: pending
+
+[export.visual]
+write_energy_trace_svg = true       # MF-G01: pending
+write_html_dashboard   = true       # MF-G02: pending
+visual_output_dir      = "figures/pipe/"
+
+# -------------------------------------------------------------------
+# VISUAL + VIEWER
+# -------------------------------------------------------------------
+
+[visual]
+output_type              = "gl_interactive"
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 20
+
+[open]
+enabled = true
+mode    = "advanced"
+file    = "auto"
+
+[open.advanced]
+trajectory_controls = true
+data_inspector      = true
+bond_overlay        = false
+start_paused        = false
+default_frame       = 0

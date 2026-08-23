@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * radiation_interaction.hpp — Deterministic Radiation Interaction Descriptors
+ * radiation_interaction.hpp  -  Deterministic Radiation Interaction Descriptors
  *
  * Computes radiation shielding and displacement damage descriptors from
  * MetalRecord data and bead system geometry. NO Monte Carlo, NO DFT.
  *
  * Physical basis:
- *   - Beer–Lambert attenuation: I(x) = I₀ · exp(−μ·ρ·x)
- *   - Kinchin–Pease displacement model: N_d = 0.8·T_dam / (2·E_d)
+ *   - Beer-Lambert attenuation: I(x) = I₀ · exp(−μ·ρ·x)
+ *   - Kinchin-Pease displacement model: N_d = 0.8·T_dam / (2·E_d)
  *   - Z-dependent form factor: f(q) ∝ Z · exp(−B·q²)
  *
  * Application contexts (from user research direction):
@@ -40,7 +40,7 @@ namespace metals {
 // ============================================================================
 
 /**
- * AttenuationResult — X-ray/gamma shielding effectiveness for a slab.
+ * AttenuationResult  -  X-ray/gamma shielding effectiveness for a slab.
  */
 struct AttenuationResult {
     std::string material;
@@ -59,10 +59,10 @@ struct AttenuationResult {
 /**
  * Compute X-ray attenuation through a slab of given metal and thickness.
  *
- * Uses Beer–Lambert law: I/I₀ = exp(−(μ/ρ)·ρ·x)
+ * Uses Beer-Lambert law: I/I₀ = exp(−(μ/ρ)·ρ·x)
  *
  * @param metal           MetalRecord with mu_mass_100keV_cm2g
- * @param density_g_cm3   Bulk density (g/cm³) — approximated from atomic data
+ * @param density_g_cm3   Bulk density (g/cm³)  -  approximated from atomic data
  * @param thickness_cm    Slab thickness (cm)
  * @param photon_keV      Photon energy (keV), default = 100 keV
  */
@@ -101,17 +101,17 @@ inline AttenuationResult compute_attenuation(
 }
 
 // ============================================================================
-// Displacement Damage (Kinchin–Pease / NRT model)
+// Displacement Damage (Kinchin-Pease / NRT model)
 // ============================================================================
 
 /**
- * DisplacementResult — radiation damage estimate for a bead cluster.
+ * DisplacementResult  -  radiation damage estimate for a bead cluster.
  */
 struct DisplacementResult {
     std::string material;
     double E_d_eV{};                ///< Displacement threshold energy (eV)
     double T_damage_eV{};           ///< Damage energy transferred to PKA (eV)
-    double N_displacements{};       ///< Kinchin–Pease: 0.8 · T_dam / (2·E_d)
+    double N_displacements{};       ///< Kinchin-Pease: 0.8 · T_dam / (2·E_d)
     double dpa_per_fluence{};       ///< Displacements per atom per unit fluence
     double hardness_factor{};       ///< E_d / 25 eV (relative to standard Cu)
     uint32_t n_beads{};             ///< Beads in the irradiated cluster
@@ -120,7 +120,7 @@ struct DisplacementResult {
 };
 
 /**
- * Compute Kinchin–Pease displacement cascade estimate.
+ * Compute Kinchin-Pease displacement cascade estimate.
  *
  * @param metal       MetalRecord
  * @param n_beads     Number of beads in cluster
@@ -138,7 +138,7 @@ inline DisplacementResult compute_displacement(
     r.n_beads       = n_beads;
 
     if (r.E_d_eV > 0) {
-        // NRT/Kinchin–Pease: N_d = 0.8 · T_dam / (2 · E_d)
+        // NRT/Kinchin-Pease: N_d = 0.8 · T_dam / (2 · E_d)
         r.N_displacements = 0.8 * T_damage_eV / (2.0 * r.E_d_eV);
         if (r.N_displacements < 1.0 && T_damage_eV > r.E_d_eV)
             r.N_displacements = 1.0;
@@ -157,10 +157,10 @@ inline DisplacementResult compute_displacement(
 // ============================================================================
 
 /**
- * ShieldingScore — unified shielding quality metric.
+ * ShieldingScore  -  unified shielding quality metric.
  *
- * Combines attenuation (high Z → high μ) with displacement resistance
- * (high E_d → fewer Frenkel pairs). A material that both blocks radiation
+ * Combines attenuation (high Z -> high μ) with displacement resistance
+ * (high E_d -> fewer Frenkel pairs). A material that both blocks radiation
  * AND resists damage is ideal for satellite/nuclear shielding.
  *
  * Score ∈ [0, 1]: higher = better shielding candidate.

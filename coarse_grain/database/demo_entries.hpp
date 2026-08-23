@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 /**
- * demo_entries.hpp — Canonical Demonstration Entries
+ * demo_entries.hpp  -  Canonical Demonstration Entries
  *
  * Provides factory functions for the demonstration records described
- * in Reports 1–7 of the Day 40C Database Architecture Demonstration Packet:
+ * in Reports 1-7 of the Day 40C Database Architecture Demonstration Packet:
  *
  *   Elements:    H, Fe, U, Pu
  *   Materials:   Copper, Steel A36, UO2, Thorium Oxalate, Pu residue
@@ -26,7 +26,7 @@ namespace database {
 namespace demo {
 
 // ============================================================================
-// Element Cores — Report 1.5
+// Element Cores  -  Report 1.5
 // ============================================================================
 
 inline InputRecord hydrogen_core() {
@@ -110,7 +110,7 @@ inline std::vector<InputRecord> element_demo_set() {
 }
 
 // ============================================================================
-// Atomistic Objects — Report 1.5 Example B
+// Atomistic Objects  -  Report 1.5 Example B
 // ============================================================================
 
 inline InputRecord plutonium_atomistic() {
@@ -134,7 +134,7 @@ inline InputRecord plutonium_atomistic() {
 }
 
 // ============================================================================
-// Bead Objects — Report 1.5 Example C
+// Bead Objects  -  Report 1.5 Example C
 // ============================================================================
 
 inline InputRecord cyclopentadienyl_bead() {
@@ -172,7 +172,7 @@ inline InputRecord hexene_bead() {
 }
 
 // ============================================================================
-// Materials — Report 3.3
+// Materials  -  Report 3.3
 // ============================================================================
 
 inline MaterialDatabaseRecord copper_material() {
@@ -269,7 +269,7 @@ inline std::vector<MaterialDatabaseRecord> material_demo_set() {
 }
 
 // ============================================================================
-// Compounds — Report 4.3
+// Compounds  -  Report 4.3
 // ============================================================================
 
 inline CompoundRecord water_compound() {
@@ -356,7 +356,7 @@ inline std::vector<CompoundRecord> compound_demo_set() {
 }
 
 // ============================================================================
-// Precursors — Report 5.3
+// Precursors  -  Report 5.3
 // ============================================================================
 
 inline PrecursorRecord hexene_bead_precursor() {
@@ -485,7 +485,7 @@ struct HybridDemoPacket {
 
     std::string summary() const {
         std::ostringstream os;
-        os << "═══ Hybrid Demo Packet: " << demo_name << " ═══\n"
+        os << "=== Hybrid Demo Packet: " << demo_name << " ===\n"
            << "Mode: " << mode << "\n"
            << "Aggregate " << aggregate_dim.summary() << "\n"
            << "Components:\n"
@@ -552,27 +552,27 @@ inline HybridDemoPacket build_hybrid_demo() {
 inline std::string full_demo_report() {
     std::ostringstream os;
 
-    os << "╔══════════════════════════════════════════════════════════╗\n"
-       << "║   Database Architecture Demonstration — Day 40C Suite   ║\n"
-       << "╚══════════════════════════════════════════════════════════╝\n\n";
+    os << "+==========================================================+\n"
+       << "|   Database Architecture Demonstration  -  Day 40C Suite   |\n"
+       << "+==========================================================+\n\n";
 
-    os << "── Element Cores ──────────────────────────────────────────\n";
+    os << "-- Element Cores ------------------------------------------\n";
     for (auto& e : element_demo_set())
         os << "  " << e.summary() << "\n";
 
-    os << "\n── Materials ──────────────────────────────────────────────\n";
+    os << "\n-- Materials ----------------------------------------------\n";
     for (auto& m : material_demo_set())
         os << "  " << m.summary() << "\n";
 
-    os << "\n── Compounds ──────────────────────────────────────────────\n";
+    os << "\n-- Compounds ----------------------------------------------\n";
     for (auto& c : compound_demo_set())
         os << "  " << c.summary() << "\n";
 
-    os << "\n── Precursors ─────────────────────────────────────────────\n";
+    os << "\n-- Precursors ---------------------------------------------\n";
     for (auto& p : precursor_demo_set())
         os << "  " << p.summary() << "\n";
 
-    os << "\n── Hybrid Demonstration Packet ────────────────────────────\n";
+    os << "\n-- Hybrid Demonstration Packet ----------------------------\n";
     auto hybrid = build_hybrid_demo();
     os << hybrid.summary();
 

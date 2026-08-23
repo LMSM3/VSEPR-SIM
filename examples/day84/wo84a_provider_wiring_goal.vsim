@@ -1,0 +1,55 @@
+# ============================================================================
+# wo84a_provider_wiring_goal.vsim  --  Day 84 / WO-84A goal script
+# ============================================================================
+# Status label: GOAL_ONLY
+#
+# This is a living artifact (goal document -> demonstration -> regression).
+# It narrates its own purpose via the print_console primitive, which Day 84
+# promotes to the standard live-scripting narration surface.
+#
+# Run it through either:
+#     vsepr classify examples/day84/wo84a_provider_wiring_goal.vsim
+#     vsepr run      examples/day84/wo84a_provider_wiring_goal.vsim
+# Both render the print_console lines in a [console] block.
+# ============================================================================
+
+print_console "Day 84 - VSEPR Revival Arc"
+print_console "Work Order: WO-84A"
+print_console "Status: GOAL_ONLY"
+print_console "Purpose: verify provider wiring into VSEPROptions and OrganicClassifier"
+print_console "Expected: available providers override fallback paths"
+print_console "Known gaps: downstream providers may still be stubs"
+print_console ""
+print_console ">> ProviderSet is now a field on VSEPROptions (defaults to null())"
+print_console ">> OrganicClassifier accepts a ProviderSet and threads lone_pair into VSEPR"
+print_console ">> When no provider is wired, deterministic element/geometry fallback stays active"
+print_console ">> classify reports lone_pair_source: provider | fallback"
+print_console ""
+print_console ">> Future regression target: CTest Group 99 (provider-present vs provider-missing)"
+
+# ----------------------------------------------------------------------------
+# [project]  --  identity block
+# ----------------------------------------------------------------------------
+
+[project]
+name        = "wo84a_provider_wiring_goal"
+description = "Day 84 WO-84A: provider wiring into VSEPR + OrganicClassifier"
+version     = "1.0.0"
+author      = "VSEPR-SIM Day 84 arc"
+tags        = "day84 wo-84a provider wiring goal_only print_console"
+seed_base   = 8401
+
+# ----------------------------------------------------------------------------
+# [formula]  --  molecular identity for the classifiers
+# ----------------------------------------------------------------------------
+# H2O (water):
+#   - Centre: O (Z=8), 2 bonded H ligands, 2 lone pairs
+#   - VSEPR:  AX2E2, bent  (lone-pair inference drives the bend)
+#   - With no provider wired, lone_pair_source should read "fallback"
+#     (element inference); a wired provider would read "provider".
+
+[formula]
+formula = "H2O"
+
+print_console ">> Declared H2O: bent geometry depends on lone-pair source"
+print_console ">> GOAL_ONLY: this script documents intent; providers may be stubs downstream"

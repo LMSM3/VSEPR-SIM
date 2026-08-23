@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * atomic_descriptors_ext.hpp
  * ==========================
@@ -9,8 +9,8 @@
  * fully-relativistic 4-component DFT/CCSD(T) predictions.
  *
  * Physical notes:
- *   Z=119: expected [Og] 8s^1  — super-heavy alkali analogue, period 8
- *   Z=120: expected [Og] 8s^2  — super-heavy alkaline-earth analogue
+ *   Z=119: expected [Og] 8s^1   -  super-heavy alkali analogue, period 8
+ *   Z=120: expected [Og] 8s^2   -  super-heavy alkaline-earth analogue
  *
  *   Relativistic effects are extreme here:
  *   - 8s orbital strongly contracted (s penetration of nuclear charge)
@@ -18,7 +18,7 @@
  *   - alpha may be SMALLER than Cs/Fr despite heavier mass (relativistic s-contraction)
  *
  * References:
- *   Schwerdtfeger & Nagle, Mol. Phys. 117, 1200 (2019) — Tables III-IV
+ *   Schwerdtfeger & Nagle, Mol. Phys. 117, 1200 (2019)  -  Tables III-IV
  *   Pershina & Borschevsky, J. Chem. Phys. 149, 204306 (2018)
  *   Fricke et al., Struct. Chem. 32, 111 (2021)
  *
@@ -90,8 +90,8 @@ inline uint32_t block_index_ext(uint32_t Z) noexcept {
 // ============================================================================
 // Extended active_valence
 //
-// Z=119: 8s^1 → 1 valence electron
-// Z=120: 8s^2 → 2 valence electrons
+// Z=119: 8s^1 -> 1 valence electron
+// Z=120: 8s^2 -> 2 valence electrons
 // Heavy relativistic effects may reduce chemical activity but the descriptor
 // uses the nominal valence count for the fitted model.
 // ============================================================================
@@ -104,7 +104,7 @@ inline uint32_t active_valence_ext(uint32_t Z) noexcept {
 }
 
 // ============================================================================
-// Extended max_valence_in_period: period 8 → 50 (8s 8p 7d 6f 5g)
+// Extended max_valence_in_period: period 8 -> 50 (8s 8p 7d 6f 5g)
 // Only s subshell fills for Z=119-120, but period ceiling sets the descriptor.
 // ============================================================================
 

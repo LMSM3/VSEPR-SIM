@@ -1,0 +1,63 @@
+# UC-3 fixture — Isomer Discovery Pipeline
+# uc3_cobalt_isomers.vsim
+# Purpose: Enumerate, relax, and classify isomers of [Co(NH3)4Cl2]+.
+# Used by: tests/automation/uc3_run.sh
+# UC doc:  docs/uc/UC-3-isomer-discovery-pipeline.md
+# WO-MF:   MF-C01 (generator) MF-C02 (tracker) MF-C03 (chirality)
+#          MF-C04 (ranked report) MF-B04 (formation library)
+
+[project]
+name        = "uc3_cobalt_isomers"
+version     = "v5.0.14"
+description = "UC-3 automation fixture: [Co(NH3)4Cl2]+ isomer discovery"
+
+[material]
+formula     = "[Co(NH3)4Cl2]+"
+prototype   = "coordination_complex"
+phase       = "solution"
+charge      = +1
+
+# [generator.isomers] runtime wiring is pending (MF-C01, WO-VSIM-03C).
+# When implemented the engine will enumerate up to max_isomers distinct
+# starting geometries, prune by symmetry, and flag chirality per candidate.
+[generator.isomers]
+method           = "permutation"
+max_isomers      = 8
+symmetry_prune   = true
+detect_chirality = true               # MF-C03: chirality detection pending
+
+[run]
+mode        = "md"
+max_steps   = 500
+dt_fs       = 0.5
+converge    = true
+tol_energy  = 1.0e-5
+tol_force   = 1.0e-4
+script_type = "newleaf_type2_md"
+
+# [analysis.isomer_tracking] runtime walker pending (MF-C02).
+[analysis.isomer_tracking]
+rmsd_threshold    = 0.15
+track_chirality   = true
+output_trajectory = true
+reference_isomer  = 0                 # index into generated isomer list
+
+[analysis]
+compute_rmsd     = true
+compute_energy   = true
+compute_dipole   = true
+
+[export]
+write_xyz              = true
+write_isomer_report    = true         # MF-C04: ranked report writer pending
+write_analysis_json    = true
+write_events_json      = true
+write_metrics_tsv      = true
+write_manifest_json    = true
+output_dir             = "out/uc3_cobalt_isomers"
+
+# No [visual] — headless automation.
+# For an interactive version with GL overlay add:
+#   [visual]
+#   output_type  = "gl_overlay_cycle"
+#   gl_auto_orbit = true

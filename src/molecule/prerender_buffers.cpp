@@ -1,5 +1,5 @@
-// ============================================================================
-// prerender_buffers.cpp — Glass Module: Instance Buffer Builder
+﻿// ============================================================================
+// prerender_buffers.cpp  -  Glass Module: Instance Buffer Builder
 // ============================================================================
 
 #include "prerender_buffers.hpp"

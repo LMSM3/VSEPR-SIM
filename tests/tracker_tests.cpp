@@ -1,17 +1,17 @@
-/**
+﻿/**
  * tracker_tests.cpp
  * =================
  * Verification tests for the Element Index Tracker and Random Element Picker.
  *
  * Tests:
- *   1. Stable creation     — 1000 particles, all IDs unique, all indices valid
- *   2. Reorder stability   — random shuffle, identity preserved
- *   3. Deletion/compaction — 10% removed, survivors preserve identity
- *   4. Seed reproducibility — same seed → same sequence
- *   5. Parent-child lineage — transmutation/decay records
- *   6. Verification pass   — internal consistency check
- *   7. CSV export          — readable output
- *   8. Event log           — all transitions logged
+ *   1. Stable creation      -  1000 particles, all IDs unique, all indices valid
+ *   2. Reorder stability    -  random shuffle, identity preserved
+ *   3. Deletion/compaction  -  10% removed, survivors preserve identity
+ *   4. Seed reproducibility  -  same seed -> same sequence
+ *   5. Parent-child lineage  -  transmutation/decay records
+ *   6. Verification pass    -  internal consistency check
+ *   7. CSV export           -  readable output
+ *   8. Event log            -  all transitions logged
  *
  * Build:
  *   g++ -std=c++20 -I include -I src -o tracker_tests \
@@ -400,7 +400,7 @@ void test_weighted_distribution() {
 }
 
 // ============================================================================
-// Test 10: Case study Day #46 — 12-particle scenario
+// Test 10: Case study Day #46  -  12-particle scenario
 // ============================================================================
 
 void test_case_study_day46() {
@@ -628,7 +628,7 @@ void test_metrics_summary() {
 
 int main() {
     std::cout << "====================================\n";
-    std::cout << " Element Index Tracker — Test Suite\n";
+    std::cout << " Element Index Tracker  -  Test Suite\n";
     std::cout << "====================================\n\n";
 
     auto t0 = std::chrono::steady_clock::now();

@@ -1,0 +1,94 @@
+% =============================================================================
+%  VSEPR-SIM  |  Example Script Reports
+%  Theory-to-implementation mapping across IKK / MIR / WIC / EVM / Bridge
+%  Compile: pdflatex vsim_script_reports.tex  (twice for TOC)
+%  Requires: vsim_common.sty  (same directory)
+% =============================================================================
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage{vsim_common}
+
+% Override header for this document
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyhead[L]{\small\sffamily\textcolor{gray}{VSEPR-SIM \textperiodcentered\ Script Reports \textperiodcentered\ v5.1.13.5}}
+\fancyhead[R]{\small\sffamily\textcolor{gray}{\leftmark}}
+
+% Extra packages for this report
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\captionsetup{font=small,labelfont=bf}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+% Convenience macros
+\newcommand{\vsimver}{\texttt{v5.1.13.5}}
+\newcommand{\theoryref}[1]{\textcolor{lavtext}{\sffamily\small #1}}
+\newcommand{\scriptfile}[1]{\texttt{\small examples/#1}}
+\newcommand{\sectionscript}[2]{\subsection{#1 \hfill \normalfont\small\texttt{#2}}}
+\newcommand{\keyeq}[1]{%
+  \begin{eqbox}
+  #1
+  \end{eqbox}}
+\newcommand{\verifytable}[1]{%
+  \begin{tabular}{@{}L{5.5cm}L{4.5cm}L{2.5cm}@{}}
+  \toprule
+  \rowcolor{skybg}
+  \small\sffamily\bfseries Check & \small\sffamily\bfseries Expected value & \small\sffamily\bfseries Status \\
+  \midrule
+  #1
+  \bottomrule
+  \end{tabular}}
+
+% =============================================================================
+\begin{document}
+
+% Title page
+\begin{titlepage}
+\vspace*{3cm}
+{\sffamily
+\noindent{\LARGE\bfseries VSEPR-SIM}\\[0.4em]
+{\large\bfseries Example Script Reports}\\[0.2em]
+{\large Theory-to-Implementation Mapping}\\[2em]
+\noindent\textcolor{black!40}{\rule{\linewidth}{1pt}}\\[1em]
+\begin{tabular}{@{}ll}
+\textbf{Version}  & \vsimver \\[0.3em]
+\textbf{Series covered} & IKK I--V \textperiodcentered\ MIR II--III \textperiodcentered\ WIC I--III \textperiodcentered\ EVM III--IV \textperiodcentered\ Bridge \\[0.3em]
+\textbf{Scripts}  & 16 \texttt{.vsim} / \texttt{.vsim-pre} files \\[0.3em]
+\textbf{Style}    & \texttt{vsim\_common.sty} \\[0.3em]
+\textbf{Theory base} & \textit{Master\_Document\_Stack.md}, \textit{VSEPR\_SIM\_FOUNDATIONS.md} \\
+\end{tabular}
+\\[2em]
+\textcolor{black!40}{\rule{\linewidth}{0.5pt}}\\[1em]
+\begin{infobox}
+\small Each section documents one script: the theory section it implements,
+the key equations that motivate the VSIM configuration, the critical
+\texttt{.vsim} sections with commentary, expected outputs, and
+verification criteria. Scripts in the \texttt{examples/} directory are
+the authoritative implementation; this report is the human-readable
+explanation of why they are written as they are.
+\end{infobox}
+}
+\vfill
+{\small\sffamily\textcolor{gray!70}
+{VSEPR-SIM Internal Documentation \textperiodcentered\ Not for external distribution}}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =============================================================================
+\section{IKK Series — Scale-Projection Theory}
+\label{sec:ikk}
+\input{reports/series_ikk}
+
+% =============================================================================
+\section{MIR Series — Representation and Recovery}
+\label{sec:mir}
+\input{reports/series_mir_wic_evm}
+
+% =============================================================================
+\section{Bridge, Scale Ladder, and Day 75}
+\label{sec:bridge}
+\input{reports/series_bridge}
+
+\end{document}

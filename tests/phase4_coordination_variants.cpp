@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase4_coordination_variants.cpp
  * =================================
  * Phase 4 Testing: Coordination Geometry Variants + Chelation
@@ -14,7 +14,7 @@
  * - For chelates: 2+ distinct initial placements
  * 
  * PASS criteria:
- * - Fe(CN)₆: CN=6, angle histogram shows 90/180, stable Fe–C distances
+ * - Fe(CN)₆: CN=6, angle histogram shows 90/180, stable Fe-C distances
  * - Ni(CN)₄: CN=4, ligands remain planar, 90/180 angles
  * - ZnCl₄: CN=4, angles cluster near 109.5° (tetrahedral), not planar
  * - Chelate: bidentate binding persists, rings remain closed
@@ -38,13 +38,13 @@ using namespace vsepr;
 //=============================================================================
 
 void print_header(const std::string& title) {
-    std::cout << "\n╔══════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║ " << std::left << std::setw(60) << title << " ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "\n+==============================================================+\n";
+    std::cout << "| " << std::left << std::setw(60) << title << " |\n";
+    std::cout << "+==============================================================+\n\n";
 }
 
 void print_section(const std::string& title) {
-    std::cout << "\n─── " << title << " ───\n";
+    std::cout << "\n--- " << title << " ---\n";
 }
 
 struct CoordinationMetrics {
@@ -299,7 +299,7 @@ void test_ferrocyanide() {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": CN=" << metrics.coordination_number
                       << ", ~90°: " << near_90 << ", ~180°: " << near_180
-                      << " → " << (octahedral_pattern ? "octahedral ✓" : "irregular ✗")
+                      << " -> " << (octahedral_pattern ? "octahedral ✓" : "irregular ✗")
                       << "\n";
         }
     }
@@ -380,7 +380,7 @@ void test_nickel_cyanide() {
             std::cout << "  Seed " << std::setw(2) << seed 
                       << ": CN=" << metrics.coordination_number
                       << ", planarity=" << std::fixed << std::setprecision(3) << metrics.planarity_deviation << " Å"
-                      << " → " << (is_planar ? "planar ✓" : "non-planar ✗")
+                      << " -> " << (is_planar ? "planar ✓" : "non-planar ✗")
                       << "\n";
         }
     }
@@ -450,7 +450,7 @@ void test_zinc_chloride() {
                       << ": CN=" << metrics.coordination_number
                       << ", ~109.5°: " << near_109 << "/6"
                       << ", planarity=" << std::fixed << std::setprecision(2) << metrics.planarity_deviation << " Å"
-                      << " → " << (tetrahedral_pattern ? "tetrahedral ✓" : "irregular ✗")
+                      << " -> " << (tetrahedral_pattern ? "tetrahedral ✓" : "irregular ✗")
                       << "\n";
         }
     }
@@ -480,10 +480,10 @@ int main() {
         test_zinc_chloride();
         
         std::cout << "\n";
-        std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  PHASE 4 Testing Complete                                 ║\n";
-        std::cout << "║  Review individual test results above                     ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+        std::cout << "+============================================================+\n";
+        std::cout << "|  PHASE 4 Testing Complete                                 |\n";
+        std::cout << "|  Review individual test results above                     |\n";
+        std::cout << "+============================================================+\n\n";
         
         return 0;
     } catch (const std::exception& e) {

@@ -1,10 +1,10 @@
 ﻿#pragma once
 // =============================================================================
-// vsim_registry.hpp  —  WO-VSIM-03C  Registry Resolution Engine
+// vsim_registry.hpp   -   WO-VSIM-03C  Registry Resolution Engine
 // =============================================================================
 //
-// RegistryBundle  — crystallographic expansion of a resolved prototype key.
-// RegistryResolver — maps prototype keys to RegistryBundles + logs [REGISTRY].
+// RegistryBundle   -  crystallographic expansion of a resolved prototype key.
+// RegistryResolver  -  maps prototype keys to RegistryBundles + logs [REGISTRY].
 //
 // Include this header AFTER or ALONGSIDE vsim_document.hpp.
 // vsim_runtime.hpp includes it explicitly.
@@ -44,7 +44,7 @@ struct RegistryBundle {
 
 struct RegistryResolver {
 
-    // resolve — expand MaterialSection resolved prototype into a RegistryBundle.
+    // resolve  -  expand MaterialSection resolved prototype into a RegistryBundle.
     // Logs each resolved field to log with the [REGISTRY] prefix.
     static RegistryBundle resolve(const MaterialSection& mat, std::ostream& log) {
         const std::string proto = mat.resolved_prototype();
@@ -52,7 +52,7 @@ struct RegistryResolver {
         return resolve_proto(proto, alias, log);
     }
 
-    // Convenience overload — logs to std::cout.
+    // Convenience overload  -  logs to std::cout.
     static RegistryBundle resolve(const MaterialSection& mat) {
         return resolve(mat, std::cout);
     }
@@ -74,7 +74,7 @@ struct RegistryResolver {
             emit(field, std::to_string(val));
         };
 
-        // ── ionic / salts ────────────────────────────────────────────────────
+        // -- ionic / salts ----------------------------------------------------
         if (proto == "B1_NaCl" || proto == "B1_MgO") {
             b.space_group = (proto == "B1_MgO") ? "Fm-3m" : "Fm-3m";
             b.basis       = (proto == "B1_MgO") ? "Mg:0,0,0; O:0.5,0.5,0.5"
@@ -120,12 +120,12 @@ struct RegistryResolver {
             b.basis = "A:0,0,0; B:0.625,0.625,0.625; O:0.375,0.375,0.375";
             b.generator = "ionic_spinel"; b.coordination = 4;
             b.default_charge_model = "formal"; b.is_periodic = true;
-        // ── oxides / ceramics ─────────────────────────────────────────────────
+        // -- oxides / ceramics -------------------------------------------------
         } else if (proto == "D5_Al2O3_corundum") {
             b.space_group = "R-3c"; b.basis = "Al:0,0,0.352; O:0.306,0,0.25";
             b.generator = "ionic_corundum"; b.coordination = 6;
             b.default_charge_model = "formal"; b.is_periodic = true;
-        // ── elemental metals / simple crystals ────────────────────────────────
+        // -- elemental metals / simple crystals --------------------------------
         } else if (proto == "A_cP1") {
             b.space_group = "Pm-3m"; b.basis = "X:0,0,0";
             b.generator = "simple_cubic"; b.coordination = 6;
@@ -156,7 +156,7 @@ struct RegistryResolver {
             b.space_group = "P6/mmm"; b.basis = "C:0,0,0; C:0.333,0.667,0";
             b.generator = "graphene_2d"; b.coordination = 3;
             b.default_charge_model = "neutral"; b.is_periodic = false;
-        // ── molecular geometry ────────────────────────────────────────────────
+        // -- molecular geometry ------------------------------------------------
         } else if (proto == "geom_linear") {
             b.basis = "A:0,0,0; B:0,0,1"; b.generator = "geom_linear";
             b.coordination = 2; b.default_charge_model = "neutral"; b.is_periodic = false;
@@ -191,7 +191,7 @@ struct RegistryResolver {
             b.basis = "A:0,0,0; B:1,0,0; B:-1,0,0; B:0,1,0";
             b.generator = "geom_t_shaped"; b.coordination = 3;
             b.default_charge_model = "neutral"; b.is_periodic = false;
-        // ── polymers / organics ───────────────────────────────────────────────
+        // -- polymers / organics -----------------------------------------------
         } else if (proto == "polymer_linear_chain") {
             b.generator = "polymer_linear_chain"; b.coordination = 2;
             b.default_charge_model = "neutral"; b.is_periodic = false;
@@ -207,7 +207,7 @@ struct RegistryResolver {
         } else if (proto == "organic_cycloalkane") {
             b.generator = "organic_cycloalkane"; b.coordination = 2;
             b.default_charge_model = "neutral"; b.is_periodic = false;
-        // ── porous / framework ────────────────────────────────────────────────
+        // -- porous / framework ------------------------------------------------
         } else if (proto == "framework_zeolite") {
             b.generator = "framework_zeolite"; b.coordination = 4;
             b.default_charge_model = "formal"; b.is_periodic = true;
@@ -221,7 +221,7 @@ struct RegistryResolver {
             b.space_group = "Fm-3m"; b.basis = "Fe:0,0,0; C:0.25,0,0; N:0.35,0,0";
             b.generator = "framework_prussian_blue"; b.coordination = 6;
             b.default_charge_model = "formal"; b.is_periodic = true;
-        // ── bead / premacro ───────────────────────────────────────────────────
+        // -- bead / premacro ---------------------------------------------------
         } else if (proto == "bead_linear_chain") {
             b.generator = "bead_linear_chain"; b.coordination = 2;
             b.default_charge_model = "neutral"; b.is_periodic = false;

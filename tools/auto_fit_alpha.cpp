@@ -1,4 +1,4 @@
-/**
+﻿/**
  * auto_fit_alpha.cpp
  * ==================
  * Fully automated, self-improving polarizability model trainer.
@@ -14,17 +14,17 @@
  *        - config/alpha_best.hpp                  (ready-to-paste C++ struct)
  *        - config/training_log.csv                (full generation log)
  *
- * The program NEVER stops on its own — kill it when satisfied.
+ * The program NEVER stops on its own  -  kill it when satisfied.
  * Progress is printed to stdout; all state is flushed to disk so you
  * can kill/restart without losing the best checkpoint.
  *
  * Strategies (cycle every 6 generations):
- *   Gen N%6 == 0: "Explore"   — large perturbation, wide scan ranges
- *   Gen N%6 == 1: "Refine"    — tight perturbation around best
- *   Gen N%6 == 2: "Block"     — freeze period/block, re-fit gates
- *   Gen N%6 == 3: "Shell"     — freeze base model, re-fit shell+rel
- *   Gen N%6 == 4: "Weighted"  — crank up chemistry weights, refit all
- *   Gen N%6 == 5: "Fresh"     — start from scratch (random init)
+ *   Gen N%6 == 0: "Explore"    -  large perturbation, wide scan ranges
+ *   Gen N%6 == 1: "Refine"     -  tight perturbation around best
+ *   Gen N%6 == 2: "Block"      -  freeze period/block, re-fit gates
+ *   Gen N%6 == 3: "Shell"      -  freeze base model, re-fit shell+rel
+ *   Gen N%6 == 4: "Weighted"   -  crank up chemistry weights, refit all
+ *   Gen N%6 == 5: "Fresh"      -  start from scratch (random init)
  *
  * Build:
  *   cmake --build . --target auto_fit_alpha
@@ -269,7 +269,7 @@ static double cd_sweep(std::vector<RefEntry>& data,
     for (int b = 0; b < 4; ++b)
         best_loss = scan(best.c_block[b], 0.05, 10.0);
 
-    // Binding stiffness + relativistic + f-shielding — interleaved re-tuning (4 rounds)
+    // Binding stiffness + relativistic + f-shielding  -  interleaved re-tuning (4 rounds)
     for (int r = 0; r < 4; ++r) {
         best_loss = scan(best.b_bind,  0.0,   1.0);
         best_loss = scan(best.c_rel,  -1e-4,  1e-4);
@@ -473,7 +473,7 @@ static void append_log(const char* path, int gen, const char* strategy,
 }
 
 // ============================================================================
-// Main — infinite training loop
+// Main  -  infinite training loop
 // ============================================================================
 
 int main(int argc, char** argv) {
@@ -483,11 +483,11 @@ int main(int argc, char** argv) {
     // Ensure output directory exists
     std::system("mkdir -p config 2>/dev/null || mkdir config 2>NUL");
 
-    std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-    std::printf("║  AUTO-FIT ALPHA — Self-Improving Polarizability Trainer     ║\n");
-    std::printf("║  Generations: %s                                       ║\n",
+    std::printf("+==============================================================+\n");
+    std::printf("|  AUTO-FIT ALPHA  -  Self-Improving Polarizability Trainer     |\n");
+    std::printf("|  Generations: %s                                       |\n",
                 max_gen > 0 ? std::to_string(max_gen).c_str() : "∞ (Ctrl-C to stop)");
-    std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+    std::printf("+==============================================================+\n\n");
 
     auto data_master = load_csv("data/polarizability_ref.csv");
     std::printf("Loaded %zu reference entries.\n", data_master.size());
@@ -500,7 +500,7 @@ int main(int argc, char** argv) {
         std::chrono::steady_clock::now().time_since_epoch().count());
     std::mt19937 rng(seed);
 
-    // Global best — start from current baked defaults
+    // Global best  -  start from current baked defaults
     AlphaModelParams global_best;
     {
         auto data_tmp = data_master;
@@ -533,16 +533,16 @@ int main(int argc, char** argv) {
         int grid_pts = 80;
 
         switch (strat_idx) {
-        case 0: // Explore — large perturbation
+        case 0: // Explore  -  large perturbation
             init = perturb(global_best, rng, 0.15);
             outer_iters = 20;
             break;
-        case 1: // Refine — tight perturbation
+        case 1: // Refine  -  tight perturbation
             init = perturb(global_best, rng, 0.02);
             grid_pts = 120;
             outer_iters = 25;
             break;
-        case 2: // Block — perturb only block/period params
+        case 2: // Block  -  perturb only block/period params
             init = global_best;
             for (int i = 0; i < 7; ++i)
                 init.k_period[i] *= (0.9 + 0.2 * std::uniform_real_distribution<>()(rng));
@@ -550,7 +550,7 @@ int main(int argc, char** argv) {
                 init.c_block[i] *= (0.9 + 0.2 * std::uniform_real_distribution<>()(rng));
             outer_iters = 15;
             break;
-        case 3: // Shell — perturb only relativistic/f-shielding params
+        case 3: // Shell  -  perturb only relativistic/f-shielding params
             init = global_best;
             init.beta_f *= (0.5 + 1.0 * std::uniform_real_distribution<>()(rng));
             init.c_rel  *= (0.5 + 1.0 * std::uniform_real_distribution<>()(rng));
@@ -560,14 +560,14 @@ int main(int argc, char** argv) {
             init.c_rel   = std::max(-1e-4, std::min(init.c_rel, 1e-4));
             outer_iters  = 20;
             break;
-        case 4: // Weighted — crank up noble gas + Hg weights
+        case 4: // Weighted  -  crank up noble gas + Hg weights
             init = perturb(global_best, rng, 0.05);
             cfg.w_noble_gas = 6.0;
             cfg.w_hg = 4.0;
             cfg.w_halogen = 3.5;
             outer_iters = 20;
             break;
-        case 5: // Fresh — completely random start
+        case 5: // Fresh  -  completely random start
             init = random_init(rng);
             outer_iters = 30;
             break;
@@ -611,16 +611,16 @@ int main(int argc, char** argv) {
 
         // Every 10 generations, print the best summary
         if (gen % 10 == 0) {
-            std::printf("\n  ──── Best after %d generations: RMS=%.2f%% ────\n\n",
+            std::printf("\n  ---- Best after %d generations: RMS=%.2f%% ----\n\n",
                         gen, global_best_rms);
         }
     }
 
     // Final summary
-    std::printf("\n════════════════════════════════════════════════════\n");
+    std::printf("\n====================================================\n");
     std::printf("  Training complete.  Best RMS = %.4f%%\n", global_best_rms);
     std::printf("  Params written to config/alpha_best.hpp\n");
-    std::printf("════════════════════════════════════════════════════\n");
+    std::printf("====================================================\n");
 
     // Print the final best params
     auto& p = global_best;

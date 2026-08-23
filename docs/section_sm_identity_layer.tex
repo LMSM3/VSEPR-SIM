@@ -1,0 +1,896 @@
+% ============================================================================
+%  section_sm_identity_layer.tex
+%  VSEPR-SIM --- SM-Channel Identity Layer
+%  Theory, mathematics, and code reference for the WO-SM-IDENTITY overhaul.
+%
+%  Compile:  pdflatex section_sm_identity_layer.tex  (run twice for TOC)
+%  v5.2.0  |  WO-SM-IDENTITY  |  v5.0.0-main
+% ============================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage[protrusion=true,expansion=false]{microtype}
+\usepackage{parskip}
+\usepackage{mathtools}
+\usepackage{array}
+
+% ---------------------------------------------------------------------------
+%  Colour palette
+% ---------------------------------------------------------------------------
+\definecolor{codebg}{RGB}{245,246,248}
+\definecolor{kw}{RGB}{0,80,160}
+\definecolor{cm}{RGB}{60,128,60}
+\definecolor{st}{RGB}{160,40,40}
+\definecolor{nu}{RGB}{140,60,180}
+\definecolor{pp}{RGB}{100,50,0}
+\definecolor{rulecol}{RGB}{180,190,200}
+\definecolor{boxbg}{RGB}{240,248,255}
+
+% ---------------------------------------------------------------------------
+%  C++23 listing style
+% ---------------------------------------------------------------------------
+\lstdefinestyle{cpp23}{
+  language=C++,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{kw}\bfseries,
+  commentstyle=\color{cm}\itshape,
+  stringstyle=\color{st},
+  numberstyle=\color{nu}\tiny,
+  emphstyle=\color{pp}\bfseries,
+  emph={ParticleIdentity,InteractionCandidate,InteractionChannelRow,
+		ConservationGates,ChannelPolicy,KappaScores,Matrix2x2,Matrix3x3,
+		SpinProxy,ColorCharge,QuarkFlavor,evaluate_pair,compute_kappa,
+		kappa_total,score_channels,evaluate_conservation,
+		qcd_accumulate_forces_sm,double,int64_t,uint64_t,int32_t,int8_t,bool},
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{rulecol},
+  framesep=4pt,
+  numbers=left,
+  numbersep=8pt,
+  tabsize=4,
+  showstringspaces=false,
+  xleftmargin=14pt,
+  captionpos=b
+}
+\lstset{style=cpp23}
+
+% ---------------------------------------------------------------------------
+%  Section formatting
+% ---------------------------------------------------------------------------
+\titleformat{\section}{\large\bfseries}{}{0em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{}
+
+% ---------------------------------------------------------------------------
+%  Theorem-like environments
+% ---------------------------------------------------------------------------
+\newtheoremstyle{defbox}
+  {6pt}{6pt}{\normalfont}{0pt}{\bfseries}{.}{0.5em}{}
+\theoremstyle{defbox}
+\newtheorem{definition}{Definition}
+\newtheorem{principle}{Principle}
+
+% ---------------------------------------------------------------------------
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries SM-Channel Identity Layer}\\[4pt]
+  {\large VSEPR-SIM --- Theory, Mathematics, and Code Reference}\\[2pt]
+  {\small\texttt{include/IDENTITY/} \quad \texttt{include/PARTICLES/}
+		 \quad \texttt{include/COLLISION/}}\\[6pt]
+  {\small v5.2.0 \quad WO-SM-IDENTITY \quad v5.0.0-main}
+\end{center}
+
+\vspace{4pt}
+\hrule
+\vspace{10pt}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Motivation and Design Philosophy}
+\label{sec:motivation}
+% ============================================================================
+
+Classical particle simulations traditionally compute interactions as a single
+universal force rule evaluated over every pair.  A scalar force magnitude is
+produced, integrated, and repeated.  This correctly models billiard-ball
+mechanics and is inadequate for anything more interesting.
+
+The Standard Model does not work this way.  It treats particle interactions as
+\emph{allowed transitions between field states}, constrained by conservation
+laws, quantum number compatibility, and the discrete set of force carriers
+available for a given pair.  A photon is exchanged, or a $W$ boson is, or a
+gluon is.  Which carrier mediates the interaction determines everything:
+whether identity is preserved, mutated, branched, confined, or annihilated.
+
+The SM-channel identity layer introduces this logic into VSEPR-SIM.  It does
+not replace the Cornell QCD force kernel.  It wraps around it as a gate layer,
+selecting which physics fires per pair and recording what identity information
+is gained or lost in the process.
+
+\begin{principle}[Channel Selection]
+Particle-particle interactions are modeled as gated transitions between
+recoverable identity-information states.  Standard Model-inspired channels
+determine whether identity is preserved, transformed, branched, confined,
+or annihilated.
+	\end{principle}
+
+\noindent\textbf{IKK theoretical grounding.}
+The Inverse Kaluza-Klein (IKK) framework (\texttt{IKK\_Doc\_I}, \texttt{IKK\_Doc\_II})
+formalises the same intuition at a more fundamental level: the observed
+wavefunction $\Psi(\mathbf{r},t)$ is a \emph{scale-projected shadow} of a fuller
+identity structure $\mathcal{I}$ defined over a scale ladder
+$\{S_0, S_1, \ldots, S_D\}$.  Failures of the standard equation at high
+energy, many-body, and cosmological scales are \emph{projection losses} ---
+physics present in $\mathcal{I}$ but not captured by the $S_3/S_4$ projection.
+The SM-channel layer is the VSIM operationalisation of this idea:
+each particle carries a \texttt{scale\_mask} bitmask naming which scale levels
+are active, and hidden-intensity fields ($H_\text{charge}$, $H_\text{color}$,
+$H_\text{spin}$) track structure invisible to the net-zero observable channel.
+See \texttt{section\_ikk\_kernel\_bridge} for the full theoretical-to-code mapping.
+
+% ============================================================================
+\section{Notation and Definitions}
+\label{sec:notation}
+% ============================================================================
+
+\subsection{Particles, Channels, and Output}
+
+Let $C_i$ denote the \emph{complete state} of particle $i$: its position,
+velocity, and full identity bundle.  Let $I_i$ denote the
+\emph{recoverable identity-information} scalar for particle $i$.  An
+interaction between particles $i$ and $j$ mediated by channel $A_{ij}$ is:
+
+\begin{equation}
+  C_i + C_j \xrightarrow{\,A_{ij}\,} I_{\mathrm{out}}
+  \qquad \text{(scattering / identity-preserving)}
+\end{equation}
+
+\begin{equation}
+  I_i + I_j \xrightarrow{\,A_{ij}\,} C_{\mathrm{products}}
+  \qquad \text{(annihilation)}
+\end{equation}
+
+\subsection{Interaction Channel Row}
+
+For a pair $(i,j)$, the full channel row $M_{ij}$ is:
+
+\begin{equation}
+  M_{ij} = \bigl[\,
+	m_\gamma,\;
+	m_g,\;
+	m_W,\;
+	m_Z,\;
+	m_H,\;
+	m_{\mathrm{ann}},\;
+	m_{\mathrm{pair}},\;
+	m_{\mathrm{decay}},\;
+	m_{\mathrm{conf}}
+  \,\bigr]_{ij}
+\end{equation}
+
+The aggregate interaction amplitude is:
+
+\begin{equation}
+  A_{ij} = \sum_k M_{ij}^{(k)}\,K_k\!\left(C_i, C_j, I_i, I_j, Z_i, Z_j\right)
+\end{equation}
+
+Table~\ref{tab:channels} defines each channel.
+
+\begin{table}[ht]
+\centering
+\caption{SM-inspired interaction channels in $M_{ij}$.}
+\label{tab:channels}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{llll}
+\toprule
+\textbf{Symbol} & \textbf{SM analogy} & \textbf{Status} & \textbf{What is logged} \\
+\midrule
+$m_\gamma$              & EM / photon-mediated       & \textbf{active}  & charge, scattering, radiation \\
+$m_g$                   & Strong / gluon-mediated    & \textbf{active}  & color flow, Cornell gate \\
+$m_W$                   & Weak charged current       & gated/zero       & flavor/charge-changing transition \\
+$m_Z$                   & Weak neutral current       & gated/zero       & weak scattering, no charge exchange \\
+$m_H$                   & Higgs / scalar coupling    & gated/zero       & mass-coupling interaction \\
+$m_{\mathrm{ann}}$      & Annihilation               & \textbf{active}  & particle-antiparticle collapse score \\
+$m_{\mathrm{pair}}$     & Pair production            & gated/zero       & energy-to-particle creation \\
+$m_{\mathrm{decay}}$    & Unstable decay             & gated/zero       & lifetime, branching ratio \\
+$m_{\mathrm{conf}}$     & Confinement/hadronization  & gated/zero       & no free color states \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{The $Z$-Matrix}
+
+Each particle carries two identity matrices:
+
+\begin{definition}[$Z$-matrix]
+$Z_i^{(2)} \in \mathbb{R}^{2\times 2}$ is the \emph{runtime state matrix} of
+particle $i$.  It encodes the particle's current field configuration and is
+updated by the integrator after each interaction step.
+
+$Z_i^{(3)} \in \mathbb{R}^{3\times 3}$ is the \emph{fundamental identity
+matrix} in the three-generation space.  It changes only during weak-mediated
+identity mutation events.
+\end{definition}
+
+Both matrices are plain-aggregate types storing \texttt{double[n][n]} in
+row-major order.  The key operation is \emph{matrix opposition}:
+
+\begin{equation}
+  \kappa_Z(Z_i, Z_j)
+  = 1 - \frac{\langle Z_i,\, Z_j \rangle_F}{\|Z_i\|_F\,\|Z_j\|_F + \varepsilon}
+\end{equation}
+
+where $\langle A, B\rangle_F = \sum_{r,c} A_{rc}B_{rc}$ is the Frobenius inner
+product.  The range is $[0, 1]$: zero means the matrices are identical
+(same state), one means they are fully opposed (antiparticle pairing).
+
+An alternative form via the trace product is:
+
+\begin{equation}
+  \kappa_Z = 1 - \frac{\operatorname{tr}(Z_i Z_j)}
+					  {\|Z_i\|_F\,\|Z_j\|_F + \varepsilon}
+\end{equation}
+
+\noindent\textbf{IKK connection: hidden-active condition.}
+IKK Doc I~(\S{}3.3) and Doc II~(\S{}D) establish that a net-zero observable
+channel ($I_j = \alpha^\top \mathbf{c}_j = 0$)
+absence of internal structure.  The hidden intensity
+$H_j = \mathbf{c}_j^\top \mathbf{W}\, \mathbf{c}_j > 0$ can coexist with
+$I_j = 0$.  Canonical example: a neutral baryon (up+down+down quarks) has
+$I_\text{charge} = +\tfrac{2}{3} - \tfrac{1}{3} - \tfrac{1}{3} = 0$
+but $H_\text{charge} = \tfrac{2}{3} \neq 0$.
+The \texttt{ParticleIdentity} fields \texttt{H\_charge}, \texttt{H\_color},
+\texttt{H\_spin} and the \texttt{hidden\_active\_charge()} member implement
+this detection.  The \texttt{Z3} $3\times 3$ matrix is the direct analog of
+the quark component matrix $\mathbf{C}_q$ from IKK Doc II~(\S{}C).
+
+% ============================================================================
+\section{Conservation Gates}
+\label{sec:gates}
+% ============================================================================
+
+Every interaction is conditional on a conservation ledger.  The gate product
+is:
+
+\begin{equation}
+  \mathcal{G}_{\mathrm{cons}}
+  = G_E \cdot G_p \cdot G_q \cdot G_\ell \cdot G_b \cdot G_c \cdot G_s
+\end{equation}
+
+Table~\ref{tab:gates} defines each gate.
+
+\begin{table}[ht]
+\centering
+\caption{Conservation gates and their checks.}
+\label{tab:gates}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{lll}
+\toprule
+\textbf{Gate} & \textbf{Quantity} & \textbf{Condition checked} \\
+\midrule
+$G_E$      & Energy conservation   & $E_{\mathrm{rel}} \geq 0$, kinematically allowed \\
+$G_p$      & Momentum balance      & $\Delta p / p_{\mathrm{total}} < \epsilon_p$ \\
+$G_q$      & Electric charge       & $\sum q$ is finite and consistent \\
+$G_\ell$   & Lepton family         & families match or at least one is zero \\
+$G_b$      & Baryon number         & additive, tracked per interaction \\
+$G_c$      & Color neutrality      & colored pairs satisfy $c_j = \overline{c_i}$ \\
+$G_s$      & Spin compatibility    & spin types are pairwise compatible \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The annihilation condition requires all gates plus spatial/kinematic gates:
+
+\begin{equation}
+  \boxed{
+	A_{ij} =
+	  G_{\mathrm{cons}} \cdot G_{\mathrm{kin}} \cdot G_{\mathrm{overlap}}
+	  \cdot G_\kappa \cdot G_L
+  }
+\end{equation}
+
+where:
+
+\begin{align}
+  G_{\mathrm{overlap}} &: r_{ij} < r_c \\
+  G_{\mathrm{kin}}     &: E_{\mathrm{rel}} > E_c \\
+  G_\kappa             &: \kappa_{ij}^{\mathrm{total}} > \kappa_c \\
+  G_L                  &: L_{ij} > L_{\mathrm{ann}}
+\end{align}
+
+% ============================================================================
+\section{Kappa: Compatibility and Opposition Scores}
+\label{sec:kappa}
+% ============================================================================
+
+\subsection{Sub-scores}
+
+Five orthogonal compatibility scores are computed per pair:
+
+\begin{align}
+  \kappa_Z &= 1 - \frac{\langle Z_i, Z_j\rangle_F}{\|Z_i\|_F\|Z_j\|_F+\varepsilon}
+  \tag{matrix opposition} \\[4pt]
+  \kappa_q &= 1 - \frac{|q_i + q_j|}{|q_i|+|q_j|+\varepsilon}
+  \tag{charge complementarity} \\[4pt]
+  \kappa_s &=
+	\begin{cases} 1 & s_i = s_j \\ 0.5 & \text{otherwise} \end{cases}
+  \tag{spin compatibility} \\[4pt]
+  \kappa_c &=
+	\begin{cases}
+	  1 & c_j = \overline{c_i},\; \text{both colored} \\
+	  0 & \text{otherwise}
+	\end{cases}
+  \tag{color/anticolor match} \\[4pt]
+  \kappa_E &= 1
+  \tag{energy availability (placeholder)}
+\end{align}
+
+\subsection{Weighted Total}
+
+\begin{equation}
+  \boxed{
+	\kappa_{ij}^{\mathrm{total}}
+	= w_Z\,\kappa_Z
+	+ w_q\,\kappa_q
+	+ w_s\,\kappa_s
+	+ w_c\,\kappa_c
+	+ w_E\,\kappa_E
+  }
+\end{equation}
+
+Default weights in \texttt{ChannelPolicy}:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+Weight & $w_Z$ & $w_q$ & $w_s$ & $w_c$ & $w_E$ \\
+\midrule
+Value  & 0.40  & 0.30  & 0.10  & 0.10  & 0.10  \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Identity Information and State Loss}
+\label{sec:identity}
+% ============================================================================
+
+\subsection{Recoverable Identity Information}
+
+Each particle carries a scalar $I_i \in [0, 1]$ representing how much of its
+original identity information remains recoverable.  A freshly created particle
+has $I_i = 1$.  After interactions:
+
+\begin{definition}[State Loss Principle]
+\begin{equation}
+  \Delta I_{ij} = I_i^+ - I_i^-
+  \qquad \text{(change over one interaction)}
+\end{equation}
+\begin{equation}
+  L_{ij} = -\Delta I_{ij}
+  \qquad \text{(state loss, } \geq 0 \text{ for ordinary loss)}
+\end{equation}
+\end{definition}
+
+The three regimes:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{lll}
+\toprule
+\textbf{Condition} & \textbf{Name} & \textbf{Meaning} \\
+\midrule
+$\Delta I_{ij} < 0$ & Ordinary loss       & Identity information is dissipated \\
+$\Delta I_{ij} = 0$ & Identity-preserving & Elastic or neutral-current scattering \\
+$\Delta I_{ij} > 0$ & Positive event      & Short-lived structured state forming \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The Annihilation Threshold}
+
+\begin{equation}
+  G_L =
+  \begin{cases}
+	1 & L_{ij} > L_{\mathrm{ann}} \\
+	0 & L_{ij} \leq L_{\mathrm{ann}}
+  \end{cases}
+  \qquad\text{where}\quad L_{ij} = -\Delta I_{ij}
+\end{equation}
+
+\subsection{Positive Information Events}
+
+When $\Delta I_{ij} > 0$, a \emph{positive information event} is flagged.
+This means:
+
+\begin{equation}
+  \boxed{
+	\text{Recoverable identity temporarily becomes more structured before dissipating.}
+  }
+\end{equation}
+
+Physical interpretations:
+
+\begin{center}
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{ll}
+\toprule
+\textbf{Event} & \textbf{Meaning} \\
+\midrule
+Temporary pairing       & Short-lived structured two-particle state \\
+Resonance               & Intermediate state before decay \\
+Matrix alignment        & $(Z_i, Z_j)$ become unusually compatible \\
+Pre-annihilation order  & Final collapse is likely \\
+Confinement ordering    & Colored components forming neutral products \\
+Shower coherence        & Branching with organized angular/color structure \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{$\Delta I$ Heuristic Kernel}
+\label{sec:delta_i}
+% ============================================================================
+
+The current $\Delta I$ computation is a heuristic pending a full
+branching-ratio kernel.  It decomposes into four contributions:
+
+\begin{align}
+  \Delta I^{\mathrm{EM}}    &= -0.05\; m_\gamma
+	\tag{small EM loss} \\[2pt]
+  \Delta I^{\mathrm{ann}}   &= -0.90\; m_{\mathrm{ann}}
+	\tag{near-total annihilation loss} \\[2pt]
+  \Delta I^{\mathrm{color}} &= -0.20\; m_g\,\kappa_c
+	\tag{color exchange loss} \\[2pt]
+  \Delta I^{\mathrm{res}}   &= +0.10\,(1 - \kappa_Z)\;
+							   \cdot\mathbf{1}[\,(1-\kappa_Z) > 0.80\,]
+	\tag{resonance / alignment gain}
+\end{align}
+
+Total, clamped to $[-I_i,\; +0.15\,I_i]$:
+
+\begin{equation}
+  \Delta I_{ij}
+  = \mathrm{clamp}\!\left(
+	  \Delta I^{\mathrm{EM}}
+	+ \Delta I^{\mathrm{ann}}
+	+ \Delta I^{\mathrm{color}}
+	+ \Delta I^{\mathrm{res}},\;
+	-I_i,\;
+	0.15\,I_i
+	\right)
+\end{equation}
+
+% ============================================================================
+\section{Full Annihilation Gate Stack}
+\label{sec:annihilation}
+% ============================================================================
+
+\subsection{Electron-Positron Prototype}
+
+The canonical annihilation prototype in VSEPR-SIM:
+
+\begin{equation}
+  e^- + e^+ \xrightarrow{A} \gamma_1 + \gamma_2
+  \quad\Longleftrightarrow\quad
+  I_{e^-} + I_{e^+} \xrightarrow{A} C_{\gamma_1} + C_{\gamma_2}
+\end{equation}
+
+Required conditions:
+
+\begin{equation}
+  q_i + q_j = 0
+  \qquad
+  p_i + p_j = p_{\mathrm{out}}
+  \qquad
+  E_i + E_j = E_{\mathrm{out}}
+  \qquad
+  \kappa_{ij}^{\mathrm{total}} > \kappa_c
+\end{equation}
+
+\subsection{Gate Stack Summary}
+
+\begin{equation}
+  \text{\texttt{annihilation\_candidate}} =
+  \underbrace{r < r_c}_{G_{\mathrm{overlap}}}
+  \;\land\;
+  \underbrace{E_{\mathrm{rel}} > E_c}_{G_{\mathrm{kin}}}
+  \;\land\;
+  \underbrace{\kappa^{\mathrm{total}} > \kappa_c}_{G_\kappa}
+  \;\land\;
+  \underbrace{L_{ij} > L_{\mathrm{ann}}}_{G_L}
+  \;\land\;
+  \underbrace{\mathcal{G}_{\mathrm{cons}}}_{G_{\mathrm{cons}}}
+\end{equation}
+
+\begin{equation}
+  \text{\texttt{annihilation\_confirmed}} =
+  \text{\texttt{candidate}} \;\land\; |q_i + q_j| < 10^{-6}
+\end{equation}
+
+Default threshold values in \texttt{ChannelPolicy}:
+
+\begin{center}
+\begin{tabular}{llll}
+\toprule
+\textbf{Parameter} & \textbf{Field} & \textbf{Default} & \textbf{Meaning} \\
+\midrule
+$r_c$              & \texttt{r\_c}     & 0.20 & max separation (\AA\ analog) \\
+$E_c$              & \texttt{E\_c}     & 0.50 & min relative energy \\
+$\kappa_c$         & \texttt{kappa\_c} & 0.70 & min $\kappa^{\mathrm{total}}$ \\
+$L_{\mathrm{ann}}$ & \texttt{L\_ann}   & 0.50 & min state loss \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Strong Interaction and the Color Channel Gate}
+\label{sec:qcd_gate}
+% ============================================================================
+
+The Cornell QCD kernel fires only when the color channel $m_g$ exceeds
+the activation threshold $\delta_g$:
+
+\begin{equation}
+  \texttt{fire\_cornell} =
+  \begin{cases}
+	1 & m_g > \delta_g \;\;\text{(both particles color-charged)} \\
+	0 & \text{otherwise}
+  \end{cases}
+  \qquad \delta_g = 0.05
+\end{equation}
+
+\subsection{Scale-Dependent Treatment}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ll}
+\toprule
+\textbf{Scale} & \textbf{Treatment} \\
+\midrule
+Very near       & Direct color/matrix interaction via $\kappa_c$ \\
+Intermediate    & Cornell string/flux-tube proxy \\
+Far             & Color-neutral aggregate only \\
+Post-collision  & Shower + hadronization event model \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Octree Color Neutrality Requirement}
+
+\begin{equation}
+  \boxed{
+	\text{QCD octree aggregation must track color neutrality,
+		  not just charge and mass.}
+  }
+\end{equation}
+
+The planned \texttt{OctreeIdentityNode} adds to the existing Barnes--Hut
+tree:
+\begin{itemize}
+  \item \texttt{color\_neutrality\_score} --- fraction of color-neutral aggregate
+  \item \texttt{confinement\_risk} --- probability of forced confinement in
+		one $T_B$ step
+  \item \texttt{shower\_probability} --- probability of parton-shower initiation
+\end{itemize}
+
+% ============================================================================
+\section{Weak Interaction and Identity Mutation}
+\label{sec:weak}
+% ============================================================================
+
+Weak charged-current interactions can change particle type.  This is the
+clean justification for an event where:
+
+\begin{equation}
+  I_i^- \neq I_i^+
+  \qquad \text{(identity mutation, not just identity loss)}
+\end{equation}
+
+The beta-decay prototype in VSEPR-SIM notation:
+
+\begin{equation}
+  C_d \xrightarrow{A_W} C_u + C_{W^-}
+  \qquad
+  C_{W^-} \rightarrow C_{e^-} + C_{\bar\nu_e}
+\end{equation}
+
+The \texttt{weak\_identity\_transition} flag in \texttt{InteractionCandidate}
+is set when $m_W > 0$.  The $W$ kernel is gated at zero in v5.2.0; the flag
+exists for forward-compatibility with the live event logger.
+
+% ============================================================================
+\section{Code Reference: Data Structures}
+\label{sec:code}
+% ============================================================================
+
+\subsection{Matrix Types (\texttt{IDENTITY/identity\_matrix.hpp})}
+
+\begin{lstlisting}[caption={Matrix2x2 and Matrix3x3 plain aggregates.}]
+struct Matrix2x2 {
+	double m[2][2]{};
+	double& operator()(int r, int c);
+	static Matrix2x2 zero();
+};
+
+struct Matrix3x3 {
+	double m[3][3]{};
+	double& operator()(int r, int c);
+	static Matrix3x3 zero();
+};
+
+// Free functions (same family for Matrix3x3):
+Matrix2x2  identity_2x2();
+double     trace(const Matrix2x2&);
+double     frobenius_norm(const Matrix2x2&);
+double     frobenius_dot(const Matrix2x2&, const Matrix2x2&);
+double     opposition(const Matrix2x2&, const Matrix2x2&,
+					  double eps = 1e-15);
+double     matrix_compatibility(const Matrix2x2&, const Matrix2x2&,
+								double eps = 1e-15);
+Matrix2x2  mat_mul(const Matrix2x2&, const Matrix2x2&);
+\end{lstlisting}
+
+\subsection{ParticleIdentity (\texttt{IDENTITY/particle\_identity.hpp})}
+
+\begin{lstlisting}[caption={ParticleIdentity struct.}]
+struct ParticleIdentity {
+	int64_t  id          {0};
+	int32_t  type_code   {0};
+
+	double    charge      {0.0};
+	double    mass        {0.0};
+	SpinProxy spin_proxy  {SpinProxy::Half};
+
+	particles::ColorCharge  color      {ColorCharge::Neutral};
+	particles::ColorCharge  anti_color {ColorCharge::Neutral};
+
+	int8_t   lepton_family  {0};  // 0=none, 1=e, 2=mu, 3=tau
+	int8_t   baryon_number  {0};
+	int8_t   isospin_proxy  {0};
+
+	Matrix2x2  Z2;   // runtime 2x2 state matrix
+	Matrix3x3  Z3;   // 3x3 generation/flavor identity matrix
+
+	double   I_recoverable  {1.0};
+	uint64_t identity_hash  {0};
+
+	void refresh_hash() noexcept;  // FNV-1a 64-bit over quantum-number fields
+};
+
+// Convenience constructors:
+ParticleIdentity make_electron_like (int64_t id, double mass = 0.000511);
+ParticleIdentity make_positron_like (int64_t id, double mass = 0.000511);
+ParticleIdentity make_quark_like    (int64_t id, QuarkFlavor, ColorCharge);
+\end{lstlisting}
+
+\subsection{InteractionChannelRow (\texttt{IDENTITY/interaction\_channel.hpp})}
+
+\begin{lstlisting}[caption={Nine-channel row and associated types.}]
+struct InteractionChannelRow {
+	double m_gamma {0.0};   // EM          (active)
+	double m_g     {0.0};   // strong      (Cornell gate)
+	double m_W     {0.0};   // weak charged  (gated/zero)
+	double m_Z     {0.0};   // weak neutral  (gated/zero)
+	double m_H     {0.0};   // Higgs         (gated/zero)
+	double m_ann   {0.0};   // annihilation  (active)
+	double m_pair  {0.0};   // pair prod.    (gated/zero)
+	double m_decay {0.0};   // decay         (gated/zero)
+	double m_conf  {0.0};   // confinement   (gated/zero)
+
+	bool color_channel_active(double threshold = 0.05) const;
+};
+
+struct KappaScores {
+	double kappa_Z, kappa_q, kappa_s, kappa_c, kappa_E;
+};
+
+struct ConservationGates {
+	bool G_E, G_p, G_q, G_l, G_b, G_c, G_s;
+	bool conservation_pass() const;  // AND of all gates
+};
+
+struct ChannelPolicy {
+	double w_Z{0.40}, w_q{0.30}, w_s{0.10}, w_c{0.10}, w_E{0.10};
+	double r_c{0.20}, E_c{0.50}, kappa_c{0.70}, L_ann{0.50};
+	double m_g_threshold{0.05};
+};
+\end{lstlisting}
+
+\subsection{InteractionCandidate (\texttt{IDENTITY/interaction\_candidate.hpp})}
+
+\begin{lstlisting}[caption={Full pair evaluation record and evaluator.}]
+struct InteractionCandidate {
+	int64_t  i, j;               // particle indices
+	double   r;                  // separation
+	double   E_rel;              // relative kinetic energy
+	double   p_balance_error;    // |delta_p| / |p_total|
+
+	KappaScores           kappa;
+	double                kappa_total_val;
+	InteractionChannelRow channels;
+	ConservationGates     gates;
+	bool                  conservation_pass;
+
+	double   delta_I;            // I_out - I_in
+	double   state_loss;         // L_ij = -delta_I  (>= 0)
+
+	double   annihilation_score;
+	double   shower_score;
+	double   weak_transition_score;
+	double   resonance_score;
+
+	bool     annihilation_candidate;
+	bool     annihilation_confirmed;
+	bool     positive_information_event;
+	bool     weak_identity_transition;
+	bool     color_exchange_active;
+	bool     temporary_resonance;
+};
+
+// Main evaluator -- stateless, allocation-free.
+InteractionCandidate evaluate_pair(
+	const ParticleIdentity& a,
+	const ParticleIdentity& b,
+	const ChannelPolicy&    policy,
+	double r, double E_rel,
+	double p_balance_error = 0.0);
+\end{lstlisting}
+
+\subsection{Cornell Color-Channel Gate (\texttt{COLLISION/qcd\_force.hpp})}
+
+\begin{lstlisting}[caption={\texttt{qcd\_accumulate\_forces\_sm()} -- SM-gated force pass.}]
+// SM-gated overload.  Cornell fires only when m_g > policy.m_g_threshold.
+// Original qcd_accumulate_forces() is untouched.
+void qcd_accumulate_forces_sm(
+	particles::QuarkGluonPlasma&                plasma,
+	std::vector<identity::ParticleIdentity>&    identity_layer,
+	const identity::ChannelPolicy&              policy,
+	std::vector<identity::InteractionCandidate>* candidates_out);
+\end{lstlisting}
+
+% ============================================================================
+\section{Planned Event Types for Live Logger}
+\label{sec:events}
+% ============================================================================
+
+The live event logger (next pipeline stage) maps directly onto the
+\texttt{InteractionCandidate} flag fields.
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ll}
+\toprule
+\textbf{Event type string} & \textbf{Triggering condition} \\
+\midrule
+\texttt{elastic\_scattering}          & $\Delta I \approx 0$, no channel triggered \\
+\texttt{inelastic\_scattering}        & $\Delta I < 0$, EM active \\
+\texttt{radiative\_emission}          & $m_\gamma > 0$, significant loss \\
+\texttt{pair\_production}             & $m_{\mathrm{pair}} > 0$ (future) \\
+\texttt{annihilation\_candidate}      & \texttt{annihilation\_candidate == true} \\
+\texttt{annihilation\_confirmed}      & \texttt{annihilation\_confirmed == true} \\
+\texttt{weak\_identity\_transition}   & $m_W > 0$ (future) \\
+\texttt{neutral\_current\_scattering} & $m_Z > 0$ (future) \\
+\texttt{color\_exchange}              & \texttt{color\_exchange\_active == true} \\
+\texttt{parton\_branch}               & shower initiated (future) \\
+\texttt{hadronization\_candidate}     & $r > r_{\mathrm{conf}}$ (Cornell gate) \\
+\texttt{temporary\_resonance}         & \texttt{temporary\_resonance == true} \\
+\texttt{positive\_information\_event} & $\Delta I > 0$ \\
+\texttt{identity\_loss\_spike}        & $L_{ij} \gg L_{\mathrm{ann}}$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Example \texttt{.ee} Event Records}
+
+\begin{verbatim}
+frame 2091
+event annihilation_candidate
+particles 4001 4002
+channel e_minus_e_plus_to_gamma_gamma
+kappa_total 0.941
+delta_I -0.882
+state_loss 0.882
+conservation_pass true
+annihilation_score 0.918
+end
+
+frame 884
+event temporary_resonance
+particles 102 103
+kappa_Z 0.031
+delta_I +0.087
+state_loss 0.000
+positive_information_event true
+end
+\end{verbatim}
+
+% ============================================================================
+\section{Summary}
+\label{sec:summary}
+% ============================================================================
+
+\begin{center}
+\setlength{\fboxsep}{10pt}
+\colorbox{boxbg}{%
+\begin{minipage}{0.88\textwidth}
+\centering
+\textit{Particle-particle interactions are modeled as gated transitions between
+recoverable identity-information states, where Standard Model-inspired channels
+determine whether identity is preserved, transformed, branched, confined, or
+annihilated.}
+\end{minipage}}
+\end{center}
+
+\bigskip
+
+The three state-loss identities:
+
+\begin{align}
+  \Delta I_{ij} \leq 0 \quad&\Rightarrow\quad \text{ordinary interaction loss} \\
+  L_{ij} = -\Delta I_{ij} \quad&\Rightarrow\quad \text{measured state loss} \\
+  \Delta I_{ij} > 0 \quad&\Rightarrow\quad \text{short-lived positive information event}
+\end{align}
+
+% ============================================================================
+\section{File and Library Reference}
+\label{sec:files}
+% ============================================================================
+
+\begin{center}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{ll}
+\toprule
+\textbf{File} & \textbf{Contents} \\
+\midrule
+\texttt{IDENTITY/identity\_matrix.hpp}       & Matrix2x2, Matrix3x3, free helpers \\
+\texttt{IDENTITY/particle\_identity.hpp}     & ParticleIdentity, SpinProxy, constructors \\
+\texttt{IDENTITY/interaction\_channel.hpp}   & Channel row, gates, kappa scoring \\
+\texttt{IDENTITY/interaction\_candidate.hpp} & InteractionCandidate, evaluate\_pair() \\
+\texttt{IDENTITY/identity.hpp}               & Umbrella include \\
+\texttt{PARTICLES/particles.hpp}             & Extended: includes IDENTITY/identity.hpp \\
+\texttt{COLLISION/qcd\_force.hpp}            & Extended: qcd\_accumulate\_forces\_sm() \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{8pt}
+\noindent\textbf{Dependency chain (header-only, single direction):}
+
+\begin{center}
+\texttt{identity\_matrix}
+$\;\longrightarrow\;$ \texttt{particle\_identity}
+$\;\longrightarrow\;$ \texttt{interaction\_channel}
+$\;\longrightarrow\;$ \texttt{interaction\_candidate}
+\end{center}
+
+\vspace{8pt}
+\noindent\textbf{IKK theory documents (companion reading):}
+\begin{itemize}
+  \item \texttt{IKK\_Doc\_I\_Schrodinger\_Alternative} ---
+    scale-ladder definition, identity bundle, hidden-active condition,
+    projection failure, entanglement relation-particle.
+  \item \texttt{IKK\_Doc\_II\_Initial\_Draft} ---
+    scale axioms, matrix packing chain, entropy and complexity,
+    dark matter kernel equations, Python and C++ prototypes,
+    open variable register.
+  \item \texttt{IKK\_Doc\_III\_Kernel\_V4\_Projection} ---
+    bilinear projection form for radial density.
+  \item \texttt{section\_ikk\_kernel\_bridge} ---
+    formal mapping of IKK theory to VSIM \texttt{IDENTITY/} kernel:
+    \texttt{ScaleLevel}, \texttt{scale\_mask}, \texttt{fuzz\_ratio()},
+    \texttt{H\_charge/color/spin}, hidden-active flags, open variable register.
+\end{itemize}
+
+\end{document}

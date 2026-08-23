@@ -1,0 +1,369 @@
+# =============================================================================
+# VSEPR-SIM Development Day #75 — WO-75B
+# Modular IKK-I Formation Prework
+#
+# STATUS: DESIGN ONLY — NOT SUPPORTED BY CURRENT VSIM PARSER
+#
+# This file uses proposed future VSIM precompiler syntax (.vsim-pre).
+# It cannot be passed to the current VSIM runtime directly.
+#
+# Compile to flat .vsim first:
+#   vsim-precompile day75_modular_ikk1_formation.vsim-pre
+#   vsim run day75_modular_ikk1_formation_compiled.vsim
+#
+# See: VSIM_PRECOMPILER_DESIGN.md
+# See: Day75_Development_Plan.md
+# =============================================================================
+
+
+# -----------------------------------------------------------------------------
+# 0. Language feature declaration
+# This block must appear first.
+# The precompiler rejects files without it.
+# The VSIM runtime silently captures it in raw_sections (safe fail).
+# -----------------------------------------------------------------------------
+
+[language]
+syntax_version               = "vsim-pre-0.1"
+feature_status               = "design_only"
+supported_by_current_parser  = false
+requires_parser_upgrade      = false
+
+[language.unsupported_features]
+asking_loop              = true
+inline_question_blocks   = true
+runtime_variable_setting = true
+formation_parent_binding = true
+reaction_pathway_helper  = true
+external_helper_calls    = true
+conditional_modules      = true
+enabled_if_expressions   = true
+
+
+# -----------------------------------------------------------------------------
+# 1. Project
+# -----------------------------------------------------------------------------
+
+[module.project]
+name        = "day75_modular_ikk1_formation"
+version     = "v5.1.13.5-day75-wo75b"
+seed_base   = 101
+determinism = true
+
+description = """
+Modular prework script for IKK-I formation pathway test.
+Uses vsim-pre syntax. Compile before running.
+Ground truth: day75_ch4_flat_supported.vsim (WO-75A).
+"""
+
+
+# -----------------------------------------------------------------------------
+# 2. Variable definitions
+#
+# All variables declared here.
+# Asking loop in [module.ask] can override them at compile time.
+# Substituted into all sections before the flat .vsim is emitted.
+# -----------------------------------------------------------------------------
+
+[module.variables]
+
+# --- Primary variable ---
+# The molecule being formed (relaxation mode) or the target product
+# (reaction mode). This is the chemical anchor for the entire run.
+#
+# Default: CH4 (methane, IKK-I canonical case)
+# Other supported examples: NH3, H2O, CO2, C2H6
+
+formation_parent_molecule = "CH4"
+
+# --- Mode gate ---
+# false = simple relaxation of formation_parent_molecule
+# true  = call formation pathway helper, rank routes, attempt stepwise formation
+
+reaction_mode = false
+
+# --- Reaction ingredients (used only if reaction_mode = true) ---
+formation_reactants = ["C", "H", "H", "H", "H"]
+
+# --- Simulation settings ---
+formation_preset = "molecular"
+temperature_K    = 0.0
+periodic         = false
+medium           = "vacuum"
+
+# --- Verification values for default CH4 case ---
+# These update automatically if the asking loop changes formation_parent_molecule
+# to a preset-supported molecule. For unsupported molecules they remain as CH4
+# defaults — the user must override them manually.
+
+expected_geometry            = "tetrahedral"
+expected_coordination        = 4
+expected_nearest_neighbor_A  = 1.09
+nearest_neighbor_tolerance_A = 0.06
+expected_bond_angle_deg      = 109.47
+bond_angle_tolerance_deg     = 5.0
+
+
+# -----------------------------------------------------------------------------
+# 3. Asking loop
+#
+# The precompiler reads this section and prompts the user before compilation.
+# Each ? block names a variable from [module.variables].
+# User input updates the variable table before substitution.
+#
+# enabled = false → skip all questions, use defaults (same as --non-interactive)
+# loop_until_confirmed = true → show summary, ask for confirmation, loop if declined
+# -----------------------------------------------------------------------------
+
+[module.ask]
+enabled              = true
+interactive          = true
+loop_until_confirmed = true
+
+? formation_parent_molecule
+prompt   = "Parent molecule / target product?"
+default  = formation_parent_molecule
+examples = ["CH4", "NH3", "H2O", "CO2", "C2H6", "Pu_complex_proxy"]
+
+? reaction_mode
+prompt  = "Enable reaction pathway mode?"
+default = false
+choices = [true, false]
+
+? formation_reactants
+prompt     = "Reactants or formation ingredients? (comma-separated species)"
+default    = formation_reactants
+enabled_if = "reaction_mode == true"
+
+? formation_preset
+prompt  = "Formation preset?"
+default = "molecular"
+choices = ["molecular", "gas_cloud", "surface", "crystal", "framework", "reaction"]
+
+? temperature_K
+prompt = "Temperature in Kelvin?"
+default = 0.0
+
+? confirm_run
+prompt  = "Confirm and compile?"
+default = true
+choices = [true, false]
+
+
+# -----------------------------------------------------------------------------
+# 4. Material module
+# -----------------------------------------------------------------------------
+
+[module.material]
+formula        = formation_parent_molecule
+structure      = "molecular"
+phase          = "gas"
+material_class = "small_covalent_molecule"
+
+
+# -----------------------------------------------------------------------------
+# 5. Formation module
+#
+# Controls how the molecule is initialized before relaxation.
+# In relaxation mode: formation_parent_molecule is placed randomly and relaxed.
+# In reaction mode: formation_parent_molecule is the target; reactants are placed.
+# -----------------------------------------------------------------------------
+
+[module.formation]
+enabled         = true
+parent_molecule = formation_parent_molecule
+preset          = formation_preset
+parent_role     = "target_identity"
+initialization  = "seeded_random"
+count           = 1
+
+# Notes:
+#   parent_role = "target_identity" means the molecule is an identity carrier
+#   being assembled, not a pre-existing structure being perturbed.
+#   IKK-I §3: point-like identity is treated as fundamental. The formation
+#   event assembles point carriers into a stable configuration.
+
+
+# -----------------------------------------------------------------------------
+# 6. Reaction pathway module (design_only — conditional on reaction_mode)
+#
+# Invokes vsim_formation_pathway_helper before compilation.
+# The helper checks whether formation_parent_molecule can plausibly
+# form from formation_reactants and ranks possible routes.
+#
+# If the helper is not installed: warn and continue as simple relaxation.
+# The simulation never hard-fails because the helper is absent.
+# -----------------------------------------------------------------------------
+
+[module.reaction]
+enabled        = reaction_mode
+target_product = formation_parent_molecule
+reactants      = formation_reactants
+pathway_policy = "rank_possible_routes"
+max_routes     = 5
+
+[module.reaction.helper_call]
+enabled_if       = "reaction_mode == true"
+program          = "vsim_formation_pathway_helper"
+
+args = [
+    "--target",    formation_parent_molecule,
+    "--reactants", formation_reactants,
+    "--preset",    formation_preset,
+    "--out",       "out/day75/formation_pathways.json"
+]
+
+required_output    = "out/day75/formation_pathways.json"
+on_missing_helper  = "warn_and_continue_as_relaxation"
+
+# Proposed helper CLI (V1):
+#   vsim_formation_pathway_helper \
+#     --target CH4 \
+#     --reactants C,H,H,H,H \
+#     --preset molecular \
+#     --out out/day75/formation_pathways.json
+#
+# Expected JSON fields:
+#   pathways_found, recommended_route, candidate_routes, warnings
+#
+# See: Day75_Development_Plan.md §WO-75E
+
+
+# -----------------------------------------------------------------------------
+# 7. Simulation module
+# -----------------------------------------------------------------------------
+
+[module.simulation]
+mode = "relax"
+
+fire_max_steps = 800
+fire_dt_fs     = 0.5
+box_size_ang   = 0.0
+periodic       = periodic
+use_ewald      = false
+step_delay_ms  = 0
+
+[[module.simulation.molecule]]
+formula       = formation_parent_molecule
+count         = 1
+temperature_K = temperature_K
+initialization = "seeded_random"
+
+
+# -----------------------------------------------------------------------------
+# 8. Observables
+#
+# IKK-I rule enforced here:
+#   spectral_response is listed in post_convergence_only.
+#   It must not influence formation. It is a projected output.
+# -----------------------------------------------------------------------------
+
+[module.observe]
+metrics = [
+    "energy_map",
+    "coordination",
+    "bond_lengths",
+    "bond_angles",
+    "formation_trace",
+    "spectral_response"
+]
+
+output_format       = "json"
+every_n_steps       = 50
+post_convergence_only = ["spectral_response"]
+
+
+# -----------------------------------------------------------------------------
+# 9. Verification
+# -----------------------------------------------------------------------------
+
+[module.verify]
+enabled = true
+profile = "day75_ikk1_modular_formation_test"
+
+[module.verify.determinism]
+enabled                = true
+same_seed_repeat       = 3
+require_identical_hash = true
+
+[module.verify.structure]
+enabled                      = true
+expected_prototype           = formation_parent_molecule
+expected_geometry            = expected_geometry
+expected_coordination        = expected_coordination
+expected_nearest_neighbor_A  = expected_nearest_neighbor_A
+nearest_neighbor_tolerance_A = nearest_neighbor_tolerance_A
+expected_bond_angle_deg      = expected_bond_angle_deg
+bond_angle_tolerance_deg     = bond_angle_tolerance_deg
+
+[module.verify.projection]
+enabled                                   = true
+require_wave_observables_post_convergence = true
+forbid_wave_observables_as_inputs         = true
+
+[module.verify.reaction]
+enabled_if             = "reaction_mode == true"
+require_pathway_report = true
+allow_helper_warning   = true
+
+[module.verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+
+# -----------------------------------------------------------------------------
+# 10. Export
+# -----------------------------------------------------------------------------
+
+[module.export]
+output_dir = "out/day75/modular_ikk1"
+
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_events_json         = true
+write_symbolic_trace_json = true
+write_manifest_json       = true
+write_verify_tsv          = true
+write_verify_report       = true
+write_pathway_json        = reaction_mode   # conditional on reaction_mode
+
+
+# -----------------------------------------------------------------------------
+# 11. Report
+# -----------------------------------------------------------------------------
+
+[module.report]
+title = "Day #75 Modular IKK-I Formation Test"
+
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+include_verification    = true
+include_falsification   = true
+include_pathway_report  = reaction_mode
+
+[module.report.notes]
+unsupported_warning = """
+This file uses proposed future VSIM precompiler syntax (.vsim-pre).
+It requires vsim-precompile to produce a runnable flat .vsim.
+See VSIM_PRECOMPILER_DESIGN.md for the precompiler spec.
+"""
+
+interpretation = """
+This run tests whether a target molecular identity can form through
+deterministic point-carrier relaxation (IKK-I). Wave-like observables
+(spectral_response) are generated only after convergence as projected
+output data, not as inputs to the formation event.
+
+If reaction_mode = true, the formation pathway helper is consulted
+to rank plausible routes from the declared reactants to the target product.
+"""
+
+[module.report.provenance]
+# Populated automatically by vsim-precompile at compile time.
+# Fields: source_file, compiled_file, compiler_version, compiled_at,
+#         formation_parent, reaction_mode_used, pathway_helper_used,
+#         asking_loop_used, variables_set_by_user, variables_used_default

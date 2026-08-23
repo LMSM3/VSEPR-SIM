@@ -1,4 +1,4 @@
-/**
+﻿/**
  * phase8_9_10_environment.cpp
  * Phase 8:  Cleanly Defer Missing Physics
  * Phase 9:  Formalize Layered System Architecture
@@ -14,7 +14,7 @@
  *  10.2  Factory constructors produce correct medium type and dielectric
  *  10.3  coulomb_scale() is 1/eps_r
  *  10.4  debye_length() is correct at known ionic strength
- *  10.5  Identical physics, different env → different energy (when Coulomb live)
+ *  10.5  Identical physics, different env -> different energy (when Coulomb live)
  *  10.6  Near-vacuum eval is deterministic
  *  10.7  ModelParams carries env field
  */
@@ -60,7 +60,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 8/9/10 — Environment & Architecture Audit\n");
+    std::printf("  Phase 8/9/10  -  Environment & Architecture Audit\n");
     std::printf("=============================================================\n\n");
 
     // ------------------------------------------------------------------
@@ -181,7 +181,7 @@ int main()
         std::printf("    I=0.1 mol/L, T=298K: lambda_D = %.3f A (expect ~9.6)\n", lambda);
         check(lambda > 8.0 && lambda < 12.0, "Debye length ~9.6 A at I=0.1 mol/L");
 
-        // Zero ionic strength → infinite Debye length
+        // Zero ionic strength -> infinite Debye length
         auto sol0 = EnvironmentContext::solution(78.4, 298.15, 0.0);
         check(sol0.debye_length() > 1e29, "I=0: Debye length = infinity");
     }

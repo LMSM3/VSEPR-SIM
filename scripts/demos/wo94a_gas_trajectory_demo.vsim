@@ -1,0 +1,67 @@
+# WO-94A — gas-injection trajectory demo
+# Four species injected from corners, mixing toward box centre.
+# Declares corner regions so the gas-injection fast-path is active,
+# which restores the .xyzf trajectory writer.
+
+[project]
+name        = "wo94a_gas_trajectory_demo"
+version     = "v5.16.0"
+determinism = true
+seed_base   = 1094
+
+[simulation]
+box_size_ang     = 80.0
+periodic         = true
+fire_max_steps   = 100
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "N2"
+count         = 16
+region        = "corner_xnyp"
+temperature_K = 300.0
+velocity_drift = 0.015
+
+[[simulation.molecule]]
+formula       = "O2"
+count         = 16
+region        = "corner_xpyp"
+temperature_K = 300.0
+velocity_drift = 0.015
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 16
+region        = "corner_xnyn"
+temperature_K = 300.0
+velocity_drift = 0.012
+
+[[simulation.molecule]]
+formula       = "Ar"
+count         = 16
+region        = "corner_xpyn"
+temperature_K = 300.0
+velocity_drift = 0.018
+
+[run]
+mode            = "gas"
+num_steps       = 400
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 20
+render_interval = 20
+
+[visual]
+output_type          = "terminal_chart"
+show_convergence_trace = false
+show_status_loop     = true
+status_loop_hz       = 30.0
+hardware_monitor_hz  = 2.0
+
+[export]
+output_dir                = "out/wo94a_gas_trajectory_demo"
+write_xyz                 = true
+write_xyzf                = true
+write_report_md           = true
+write_manifest_json       = true

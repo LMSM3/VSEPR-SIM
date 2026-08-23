@@ -1,0 +1,1091 @@
+% ============================================================================
+%  Inverse Kaluza-Klein Scale Symmetry
+%  Document IV: Five-Dimensional Interval and Scale-Projection Mechanics
+%
+%  Content: 5D logarithmic scale coordinate; scale-dependent geometry;
+%           complex fiber bundle; identity bundles at scale; projection
+%           operator formalism; scale-dependent wavefunction; property
+%           activation functions; cross-scale property map.
+%
+%  Cross-references: Doc II (Axioms A--J), Doc III (Kernel V4)
+%  Compile: pdflatex (twice for ToC and refs)
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% --- Geometry ----------------------------------------------------------------
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+            headheight=14pt]{geometry}
+
+% --- Fonts / encoding --------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Math --------------------------------------------------------------------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+% \usepackage{physics}  % not available on this build
+
+% --- Tables ------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+
+% --- Code listings -----------------------------------------------------------
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  stringstyle=\color{orange},
+  numberstyle=\tiny\color{codegray},
+  numbers=left, numbersep=8pt,
+  breaklines=true, frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b, showstringspaces=false,
+  tabsize=2
+}
+
+% --- Lists -------------------------------------------------------------------
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% --- Headers / footers -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{IKK Scale Symmetry}}
+\fancyhead[R]{\small\textit{Doc IV --- 5D Interval \& Projection Mechanics}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section formatting ------------------------------------------------------
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% --- Hyperlinks --------------------------------------------------------------
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+            urlcolor=blue]{hyperref}
+
+% --- Theorem-like environments -----------------------------------------------
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+% --- Custom operators and macros ---------------------------------------------
+%  Scale projection
+\newcommand{\Proj}[2]{\Pi_{#1 \leftarrow #2}}
+\newcommand{\ProjL}{\Pi_{\ell}}
+%  Identity bundle
+\newcommand{\Pn}{P_n}
+\newcommand{\Pm}{P_m}
+%  Scale level
+\newcommand{\Sn}{S_n}
+%  Distinguishability
+\newcommand{\Dn}{D_n}
+\newcommand{\Dm}{D_m}
+%  Length scale
+\newcommand{\Ln}{L_n}
+%  Fiber
+\newcommand{\Cp}{\mathbb{C}_p}
+%  Activation function
+\newcommand{\AQ}{A_Q(\ell)}
+%  Observed / hidden states
+\newcommand{\Psitrue}{|\Psi_{\mathrm{true}}\rangle}
+\newcommand{\Psiobs}{|\Psi^{\mathrm{obs}}_m\rangle}
+\newcommand{\Psihid}{|\Psi^{\mathrm{hid}}_{n \setminus m}\rangle}
+%  5D interval
+\newcommand{\dsfive}{ds_5^2}
+%  Proper time
+\newcommand{\dtaueff}{d\tau_{\mathrm{eff}}}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\large\scshape VSEPR-SIM Theoretical Division\par}
+  \vspace{0.3cm}
+  {\small Internal Development Document --- Continuation of Doc II\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries Inverse Kaluza-Klein Scale Symmetry\par}
+  \vspace{0.5cm}
+  {\LARGE Document IV\par}
+  \vspace{0.4cm}
+  {\Large Five-Dimensional Interval\\[0.25em]
+   and Scale-Projection Mechanics\par}
+  \vspace{1.2cm}
+  {\normalsize
+    5D logarithmic scale coordinate\,|\,
+    Scale-dependent geometry\,|\,\\[0.3em]
+    Complex fiber bundle\,|\,
+    Identity bundles at scale\,|\,\\[0.3em]
+    Projection operator formalism\,|\,
+    Scale-dependent wavefunction\,|\,\\[0.3em]
+    Property activation functions\,|\,
+    Cross-scale property map\par
+  }
+  \vspace{1.5cm}
+  {\normalsize
+    Prerequisites: Doc II (Axioms A--J), Doc III (Kernel V4)\\[0.4em]
+    This document formalises the projection operator
+    left open in Doc II Axiom~B.4 and
+    the dark-scale term $\chi_w$ in Doc II Eq.~(F.5).
+  \par}
+  \vspace{1.5cm}
+  {\large VSEPR-SIM Theoretical Division\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Motivation and Starting Point}
+\label{sec:motivation}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block K} \hfill
+  \textit{depends on Doc II Axioms B.2, B.3, B.4, F.5}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{What ordinary spacetime misses}
+
+In special relativity an event is the four-vector
+\begin{equation}
+  x^\mu = (ct,\, x,\, y,\, z),
+  \label{eq:4vec}
+\end{equation}
+and the spacetime interval is
+\begin{equation}
+  ds_4^2 = -c^2\,dT^2 + dx^2 + dy^2 + dz^2.
+  \label{eq:SR_interval}
+\end{equation}
+Proper time accumulated along a worldline is
+\begin{equation}
+  d\tau^2 = dT^2 - \frac{1}{c^2}(dx^2 + dy^2 + dz^2).
+  \label{eq:proper_time_SR}
+\end{equation}
+Standard result: a moving clock ages more slowly because spatial motion
+consumes what would otherwise be pure temporal evolution.
+
+\medskip
+\noindent\textbf{Extension hypothesis.}
+Two objects may follow identical trajectories in the four visible
+coordinates yet accumulate different proper times if their internal
+\emph{scale-state} evolves differently.
+This demands a fifth coordinate that encodes motion through
+resolution, internal phase structure, or scale-dependent access to
+degrees of freedom.
+It is not another place to stand; it is a record of which physical
+description level the system is occupying.
+
+\subsection{Why this addresses open variables from Doc II}
+
+Doc II left three items undefined (see Doc II Open Variable Register,
+Import Block J):
+\begin{itemize}
+  \item $\chi_w(w)$: the dark-scale metric correction in Eq.~(F.5).
+  \item $\Pi_n$: the packing operator at each scale (Axiom B.3).
+  \item $K_G(w) - K_\mathrm{EM}(w)$: the kernel difference in Eqs.~(E.3)--(E.5).
+\end{itemize}
+This document provides explicit geometric machinery for all three by
+constructing a fifth coordinate from the physical scale variable $\ell$
+and formalising the projection operator
+$\Proj{m}{n}$ introduced abstractly in Doc II Axiom~B.4.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{The Five-Dimensional Interval}
+\label{sec:5D_interval}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block L} \hfill \textit{standalone; extends Eq.~(F.1) of Doc~II}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Naive 5D extension}
+
+A minimal five-dimensional interval appends one extra coordinate $u$:
+\begin{equation}
+  \dsfive = -c^2\,dT^2 + dr^2 + \eta_u\,du^2,
+  \label{eq:5D_naive}
+\end{equation}
+where $dr^2 = dx^2 + dy^2 + dz^2$ and $\eta_u$ is a signature
+coefficient to be determined.
+This form is insufficient as stated: without specifying what $u$
+measures, it says nothing.
+
+\subsection{The scale coordinate}
+\label{sec:scale_coord}
+
+The fifth coordinate is identified with physical resolution scale:
+\begin{equation}
+  u = u(\ell),
+  \qquad \ell \in [\ell_\mathrm{Planck},\, \ell_\mathrm{cosmo}].
+  \label{eq:u_def}
+\end{equation}
+The natural map is logarithmic, motivated by the fact that scale
+transitions span many orders of magnitude and the relevant structure
+at each level is set by ratios, not absolute differences:
+
+\begin{equation}
+  \boxed{u(\ell) = \ln\!\left(\frac{\ell}{\ell_0}\right)}
+  \label{eq:log_coord}
+\end{equation}
+where $\ell_0$ is a fixed reference length.
+Consequently,
+\begin{equation}
+  du = \frac{d\ell}{\ell}.
+  \label{eq:du}
+\end{equation}
+
+\noindent
+Reference scales appearing in the theory:
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Level & Symbol & Approximate value \\
+  \midrule
+  Planck    & $\ell_\mathrm{Planck}$ & $\sim 10^{-35}$ m \\
+  Nuclear   & $\ell_\mathrm{nuc}$    & $\sim 10^{-15}$ m \\
+  Atomic    & $\ell_\mathrm{atom}$   & $\sim 10^{-10}$ m \\
+  Molecular & $\ell_\mathrm{mol}$    & $\sim 10^{-9}$ to $10^{-7}$ m \\
+  Macroscopic & $\ell_\mathrm{mac}$  & $\gtrsim 10^{-6}$ m \\
+  Cosmological & $\ell_\mathrm{cosmo}$ & $\gtrsim 10^{20}$ m \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{The physical 5D interval}
+
+Substituting \eqref{eq:log_coord} into \eqref{eq:5D_naive}:
+
+\begin{equation}
+  \boxed{
+    \dsfive = -c^2\,dT^2 + dr^2 + \eta_u \left(\frac{d\ell}{\ell}\right)^2
+  }
+  \label{eq:5D_interval}
+\end{equation}
+
+\noindent
+The fifth term now explicitly measures the fractional change in resolution
+scale.
+A system that moves in scale (e.g.\ a particle undergoing a phase
+transition between energy regimes) contributes to $ds_5^2$ through
+$(d\ell/\ell)^2$, independently of its 3D spatial displacement.
+
+\begin{remark}
+  Equation~\eqref{eq:5D_interval} reduces to the standard
+  4D interval~\eqref{eq:SR_interval} when $d\ell = 0$, i.e.\ when
+  the description scale does not change.
+  This is the correct classical limit.
+\end{remark}
+
+\subsection{Connection to the Doc II proper-time extension}
+
+Doc II Eq.~(F.5) introduced an effective proper time
+\begin{equation}
+  \dtaueff = dt\,\sqrt{1 - \frac{v^2}{c^2} + \frac{2\Phi_G}{c^2} + \chi_w(w)}.
+  \tag{F.5}
+\end{equation}
+The dark-scale correction $\chi_w(w)$ is now identified.
+From~\eqref{eq:5D_interval}, the proper-time element along a 5D worldline is
+\begin{equation}
+  d\tau_5^2 = dT^2 - \frac{1}{c^2}\,dr^2
+              - \frac{\eta_u}{c^2}\left(\frac{d\ell}{\ell}\right)^2.
+  \label{eq:proper_time_5D}
+\end{equation}
+Comparing with (F.5):
+\begin{equation}
+  \chi_w \;\longleftrightarrow\; -\frac{\eta_u}{c^2}\left(\frac{d\ell}{\ell\,dT}\right)^2.
+  \label{eq:chi_w_identification}
+\end{equation}
+
+The sign of $\chi_w$ is determined by $\eta_u$.
+For a spacelike scale-axis ($\eta_u > 0$), motion in scale
+\emph{reduces} proper time, analogously to spatial velocity.
+The metric coefficient $\eta_u$ is a free parameter of the theory
+until constrained by experiment; it encodes the coupling between
+scale-motion and physical aging.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Scale-Dependent Geometry}
+\label{sec:scale_geometry}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block M} \hfill \textit{standalone; prerequisite for \S\ref{sec:fibre}}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Effective dimension}
+
+Standard geometry fixes spacetime dimension at $D = 4$ for all scales.
+The IKK framework replaces this with a scale-dependent effective dimension:
+\begin{equation}
+  D_\mathrm{eff} = D_\mathrm{eff}(\ell).
+  \label{eq:Deff}
+\end{equation}
+The interpretation is operational: $D_\mathrm{eff}(\ell)$ counts the
+number of physically accessible and dynamically active degrees of
+freedom at resolution scale $\ell$.
+
+At sub-nuclear scales, internal degrees of freedom (charge, colour,
+helicity) dominate spatial ones.
+At macroscopic scales, the three spatial dimensions fully activate and
+internal structure averages out.
+$D_\mathrm{eff}(\ell)$ interpolates this behaviour continuously.
+
+\subsection{Scale-modulated metric}
+
+The most general scale-dependent interval consistent with the above
+writes scale-modulated coefficients on each axis:
+\begin{equation}
+  ds^2 = -c^2\,dT^2
+         + a_1(\ell)\,dx^2
+         + a_2(\ell)\,dy^2
+         + a_3(\ell)\,dz^2
+         + a_u(\ell)\,du^2.
+  \label{eq:scale_metric}
+\end{equation}
+The coefficient $a_i(\ell) \in [0,1]$ measures how fully active spatial
+axis $i$ is at scale $\ell$.
+
+\begin{definition}[Effective dimension from metric coefficients]
+  \begin{equation}
+    D_\mathrm{eff}(\ell) = \sum_{i=1}^{3} a_i(\ell) + a_u(\ell).
+    \label{eq:Deff_metric}
+  \end{equation}
+\end{definition}
+
+\noindent\textbf{Limiting behaviours:}
+\begin{itemize}
+  \item Sub-nuclear ($\ell \lesssim 10^{-15}$ m): $a_1 \approx a_2 \gg a_3$
+    may describe a system where two internal-plane directions dominate
+    over the stabilised third spatial axis.
+  \item Chemical / material ($\ell \sim 10^{-10}$ to $10^{-7}$ m):
+    $a_1 \approx a_2 \approx a_3 \approx 1$ and ordinary 3D geometry is
+    fully recovered.
+  \item Cosmological ($\ell \gtrsim 10^{20}$ m): $a_u(\ell) \gg 0$,
+    meaning the scale-axis becomes dynamically relevant again through
+    large-scale structure formation.
+\end{itemize}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Complex Fiber Bundle}
+\label{sec:fibre}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block N} \hfill
+  \textit{standalone; required for \S\ref{sec:identity_bundle}}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Attaching a complex plane to every spacetime point}
+
+A physical point is usually specified as
+$p = (x, y, z, t)$.
+The extended structure attaches a local complex plane at each point:
+\begin{equation}
+  p \;\mapsto\; (p,\, \Cp),
+  \label{eq:fibre_attach}
+\end{equation}
+where $\Cp$ is the complex fibre above $p$.
+
+This gives the structure of a fibre bundle
+\begin{equation}
+  \pi : E \to M,
+  \label{eq:fibre_bundle}
+\end{equation}
+where $M$ is the base scale-spacetime manifold defined by the interval
+\eqref{eq:5D_interval}, $E$ is the total state space, and $\pi^{-1}(p) = \Cp$.
+
+\subsection{Local complex state}
+
+The local state in the fibre above $p$ is written in polar form:
+\begin{equation}
+  \psi(p) = A(p)\,e^{i\theta(p)},
+  \label{eq:local_state}
+\end{equation}
+where $A(p)$ is the amplitude and $\theta(p)$ is the local phase.
+
+\begin{definition}[Wave behaviour as fibre projection]
+  Wave behaviour is the observed projection of a deeper, scale-dependent
+  particle identity through the complex fibres.
+  The wave is not the ontologically primary object.
+  It is the projection signature of an identity-bearing particle state
+  onto the accessible measurement basis.
+\end{definition}
+
+\noindent
+This statement is the point at which the IKK framework diverges from
+``all is waves'' interpretations.
+The priority is: \emph{localised identity first, wave appearance second}.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Identity Bundles at Scale}
+\label{sec:identity_bundle}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block O} \hfill
+  \textit{extends Doc II Axiom B.2 and Import Block C (packing chain)}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Scale levels (Doc II recap)}
+
+From Doc II Axiom~B.2, a scale level is the triple
+\begin{equation}
+  \Sn = (D_n,\, M_n,\, L_n),
+  \label{eq:scale_level}
+\end{equation}
+where $D_n$ is the degree of freedom gained at scale $n$,
+$M_n$ is the measurement basis, and $L_n$ is the characteristic
+length scale.
+
+\subsection{Identity object at scale}
+
+A physical \emph{identity object} at scale $S_n$ is not merely a point.
+It is the structured quintuple
+
+\begin{equation}
+  \boxed{P_n = \bigl(x^\mu,\; \Cp,\; D_n,\; M_n,\; L_n\bigr)}
+  \label{eq:identity_bundle}
+\end{equation}
+
+The components are:
+\begin{itemize}
+  \item $x^\mu$: spacetime coordinates in the base manifold $M$.
+  \item $\Cp$: attached complex fibre encoding local phase and amplitude.
+  \item $D_n$: distinguishability content — how much identity information
+    is recoverable at scale $n$.
+  \item $M_n$: the measurement basis available at scale $n$.
+  \item $L_n$: the length scale.
+\end{itemize}
+
+\begin{remark}
+  Equation~\eqref{eq:identity_bundle} extends the Doc II Python/C++ objects
+  \texttt{ScaleEntry} and \texttt{IdentityBundle} by adding the complex-fibre
+  slot $\Cp$.
+  The packing operator $\Pi_n$ from Doc II Axiom~B.3 maps
+  $P_n \to P_{n+1}$ with compression of $D_n$.
+\end{remark}
+
+\subsection{Identity persistence across scales}
+
+Identities at lower scales do not vanish when a higher-scale identity
+assembles from them.
+They remain present; the measurement system can only access their
+projected contribution.
+
+\begin{proposition}[Scale coexistence]
+  For $m > n$ (coarser $>$ finer):
+  \begin{equation}
+    P_n \text{ exists} \;\Longrightarrow\;
+    P_m = \Proj{m}{n}(P_n) \text{ coexists with } P_n.
+    \label{eq:scale_coexist}
+  \end{equation}
+  Projection determines \emph{visibility}, not \emph{existence}.
+\end{proposition}
+
+\noindent
+This avoids the emergence-as-deletion error: a molecule's formation does
+not erase its constituent electrons; it hides their individual projections
+behind the molecular-scale observable.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Projection Operator Formalism}
+\label{sec:projection}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block P} \hfill
+  \textit{formalises Doc II Axiom B.4; connects to Axiom B.5 residual}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Definition}
+
+\begin{definition}[Scale projection operator]
+  The projection operator from scale $S_n$ to scale $S_m$ (with $m \geq n$,
+  i.e.\ coarser $\geq$ finer) is
+  \begin{equation}
+    \Proj{m}{n} : P_n \;\longrightarrow\; P_m^{\mathrm{obs}},
+    \label{eq:proj_def}
+  \end{equation}
+  or, in state-vector notation,
+  \begin{equation}
+    |\Psi_m\rangle = \Proj{m}{n}\,|\Psi_n\rangle.
+    \label{eq:proj_state}
+  \end{equation}
+\end{definition}
+
+\subsection{Distinguishability loss}
+
+Projection is not copying.
+It loses, compresses, averages, or re-expresses information.
+Define the \emph{distinguishability} $D_n$ as the amount of
+identity-resolving information at scale $S_n$.
+Projection to a coarser scale satisfies
+\begin{equation}
+  D_m \leq D_n, \qquad m \geq n.
+  \label{eq:D_loss}
+\end{equation}
+
+The lost content is
+\begin{equation}
+  \Delta D_{n \to m} = D_n - D_m \geq 0.
+  \label{eq:D_gap}
+\end{equation}
+
+\noindent
+$\Delta D_{n \to m}$ is the formal account of what appears at scale $S_m$ as:
+uncertainty, phase spread, probability amplitude, quantum fuzziness,
+decoherence, or unresolved wave-like behaviour.
+
+\subsection{Decomposition identity}
+
+The full state at scale $S_n$ decomposes exactly as:
+\begin{equation}
+  \boxed{
+    |\Psi_n\rangle
+    = \underbrace{\Proj{m}{n}|\Psi_n\rangle}_{\Psiobs}
+    + \underbrace{\bigl(\mathbf{I} - \Proj{m}{n}\bigr)|\Psi_n\rangle}_{\Psihid}
+  }
+  \label{eq:decomp}
+\end{equation}
+where:
+\begin{itemize}
+  \item $\Psiobs = \Proj{m}{n}|\Psi_n\rangle$
+    is the component visible at scale $S_m$.
+  \item $\Psihid = (\mathbf{I} - \Proj{m}{n})|\Psi_n\rangle$
+    is the component hidden from scale $S_m$ measurement.
+\end{itemize}
+
+\begin{remark}[Bridge between matrix and wave mechanics]
+  Matrix mechanics describes the full transition structure
+  $|\Psi(t)\rangle = e^{-iHt/\hbar}|\Psi(0)\rangle$.
+  Wave mechanics describes the coordinate representation
+  $\psi(x,t) = \langle x|\Psi(t)\rangle$.
+  In the IKK framework~\eqref{eq:decomp} unifies these:
+  \begin{align}
+    \text{Matrix state:} &\quad
+      |\Psi_n\rangle = \text{full transition structure at scale } S_n. \\
+    \text{Wavefunction:} &\quad
+      \psi(x,t) = \text{projected coordinate-scale representation.}
+  \end{align}
+  The wavefunction is not primary.
+  It is the observed projection of unresolved identity content onto the
+  position basis at a given scale.
+\end{remark}
+
+\subsection{Length-dependent projection}
+
+Making the projection explicitly scale-dependent:
+\begin{equation}
+  \Proj{m}{n} = \Pi(L_m,\, L_n)
+  \label{eq:proj_length}
+\end{equation}
+so that the observed state at resolution $L_m$ given a true state at $L_n$ is
+\begin{equation}
+  |\Psi(L_m)\rangle = \Pi(L_m, L_n)\,|\Psi(L_n)\rangle.
+  \label{eq:proj_length2}
+\end{equation}
+
+For a fundamental identity, the residual hidden from all macroscopic
+measurement is
+\begin{equation}
+  |\Psi^\perp(L)\rangle = (\mathbf{I} - \ProjL)\,\Psitrue,
+  \label{eq:perp}
+\end{equation}
+where $\ProjL$ is the projector associated with measurement at
+length scale $L$.
+
+\subsection{Connection to the Doc II residual axiom}
+
+Doc II Axiom~B.5 defined the residual
+\begin{equation}
+  \mathcal{R}_S = \mathcal{U}_S(\mathcal{I}) - \mathcal{E}_S(\mathcal{O}_S).
+  \tag{B.5}
+\end{equation}
+This is now the projection residual of \eqref{eq:perp}:
+\begin{equation}
+  \mathcal{R}_S \;\equiv\; |\Psi^\perp(L_S)\rangle
+               = (\mathbf{I} - \Pi_{L_S})\,\Psitrue.
+  \label{eq:residual_ident}
+\end{equation}
+The residual is zero only when projection is injective at scale $S$,
+consistent with Axiom~B.5.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Scale-Dependent Wavefunction}
+\label{sec:wavefunction}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block Q} \hfill \textit{depends on \S\ref{sec:fibre}, \S\ref{sec:projection}}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Standard form and its reinterpretation}
+
+The standard wavefunction $\psi(x,t) = \langle x|\Psi(t)\rangle$
+is the projection of a state vector onto the position basis.
+In the IKK framework this is promoted to a \emph{scale-dependent} projection:
+
+\begin{equation}
+  \boxed{
+    \psi(x,t;\,L) = \langle x, L\,|\,\Psi_{\mathrm{true}}\rangle
+    = \Pi_{x,L}\,\Psitrue
+  }
+  \label{eq:wf_scale}
+\end{equation}
+
+The wavefunction is now the position projection at a specific length scale $L$.
+Two observers using different resolution scales $L_1 \neq L_2$ will obtain
+different wavefunctions for the same underlying identity state.
+
+\subsection{Born rule reinterpretation}
+
+The probability density becomes:
+\begin{equation}
+  |\psi(x,t;\,L)|^2
+  = \text{density of projected identity-access at } (x,t)
+    \text{ with resolution } L.
+  \label{eq:Born}
+\end{equation}
+
+This is \emph{not} a statement that the particle ``is somewhere because
+the universe enjoys gambling.''
+It is a statement about how much of the deeper identity structure
+is accessible through a measurement basis of resolution $L$.
+
+\subsection{Wave-particle duality as scale-projection mismatch}
+
+\begin{proposition}[Resolution of wave-particle duality]
+  Wave-particle duality is not a fundamental ontological duality.
+  It is a \emph{scale-projection mismatch}: the observer's resolution
+  length $L_\mathrm{obs}$ does not fully resolve the identity length
+  $L_n$ of the object being measured.
+  Specifically:
+  \begin{equation}
+    L_\mathrm{obs} \gg L_n
+    \;\Longrightarrow\;
+    \Delta D_{n \to \mathrm{obs}} \gg 0
+    \;\Longrightarrow\;
+    \text{wave-like appearance.}
+    \label{eq:duality}
+  \end{equation}
+  Point-like (particle) behaviour is recovered when
+  $L_\mathrm{obs} \lesssim L_n$ and the projection is nearly injective.
+\end{proposition}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{The Scale Ladder}
+\label{sec:scale_ladder}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block R} \hfill
+  \textit{extends Doc II Scale Ladder (Import Block B)}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Logarithmic scale spacing}
+
+The scale ladder from Doc II is
+\begin{equation}
+  \cdots \to S_{-2} \to S_{-1} \to S_0 \to S_1 \to S_2 \to S_3 \to \cdots
+  \label{eq:scale_ladder}
+\end{equation}
+with logarithmically spaced length scales:
+\begin{equation}
+  L_n = L_0\,\lambda^n,
+  \label{eq:Ln}
+\end{equation}
+where $\lambda$ is the scale multiplier.
+For decade spacing $\lambda = 10$:
+\begin{equation}
+  L_n = L_0 \cdot 10^n.
+  \label{eq:Ln_decade}
+\end{equation}
+
+The scale coordinate of rung $n$ is
+\begin{equation}
+  u_n = \ln\!\left(\frac{L_n}{L_0}\right) = n\ln\lambda.
+  \label{eq:un}
+\end{equation}
+
+\subsection{Projection between rungs}
+
+The projection from rung $n$ to rung $m$ (with $m > n$, i.e.\ upward
+toward coarser description) is
+\begin{equation}
+  |\Psi_m\rangle = \Pi(L_m, L_n)\,|\Psi_n\rangle
+  = \Pi(L_0\lambda^m,\, L_0\lambda^n)\,|\Psi_n\rangle.
+  \label{eq:proj_rungs}
+\end{equation}
+
+The distinguishability loss across $k = m - n$ rungs is
+\begin{equation}
+  \Delta D_{n \to n+k} = D_n - D_{n+k}.
+  \label{eq:D_rungs}
+\end{equation}
+In a uniform ladder model one may write $D_n - D_{n+1} = \delta D$ (constant
+per rung), giving $\Delta D_{n \to n+k} = k\,\delta D$.
+The actual rung-to-rung information loss is a free parameter to be fitted
+from data at each scale transition.
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Property Activation Functions}
+\label{sec:activation}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block S} \hfill \textit{depends on \S\ref{sec:scale_ladder}}
+\noindent\rule{\linewidth}{0.4pt}
+
+\subsection{Activation function definition}
+
+A physical property $Q$ is not equally accessible at all scales.
+Define the \emph{activation function}
+\begin{equation}
+  A_Q(\ell) \in [0,1],
+  \label{eq:AQ_range}
+\end{equation}
+where $A_Q(\ell) = 0$ means the property is inaccessible or undefined
+at scale $\ell$, and $A_Q(\ell) = 1$ means it is fully expressed.
+
+A smooth sigmoid form consistent with the logarithmic scale coordinate is:
+\begin{equation}
+  \boxed{
+    A_Q(\ell)
+    = \frac{1}{1 + \exp\bigl[-k_Q\,(\ln\ell - \ln L_Q)\bigr]}
+  }
+  \label{eq:AQ}
+\end{equation}
+Parameters:
+\begin{itemize}
+  \item $L_Q$: the characteristic length at which the property activates
+    (inflection point of the sigmoid in log-scale).
+  \item $k_Q > 0$: sharpness of the transition.
+    Large $k_Q$ approximates a step function; small $k_Q$ gives a
+    smooth crossover spanning many decades.
+\end{itemize}
+
+\subsection{Observed property}
+
+The observed value of property $Q$ at scale $\ell$ is
+\begin{equation}
+  Q_\mathrm{obs}(\ell) = A_Q(\ell)\;\Pi_\ell(Q_\mathrm{true}),
+  \label{eq:Q_obs}
+\end{equation}
+where $\Pi_\ell$ is the projection operator at scale $\ell$
+(see \eqref{eq:wf_scale}).
+
+\subsection{Physical examples of activation}
+
+\begin{itemize}
+  \item \textbf{Spin.}
+    Spin belongs to internal/gauge-scale identity.
+    It always exists in the identity structure but activates
+    magnetically only when projected to electromagnetic scales:
+    \begin{equation}
+      \mu_\mathrm{mag} = \Pi_{\mathrm{macro} \leftarrow \mathrm{spin}}(s),
+      \quad
+      A_\mathrm{spin}(\ell_\mathrm{macro}) \approx 1
+      \text{ (via spin--orbit coupling)}.
+      \label{eq:spin_proj}
+    \end{equation}
+
+  \item \textbf{Temperature.}
+    Temperature is undefined for a single particle.
+    It activates across the statistical ensemble transition:
+    \begin{equation}
+      k_B T \sim \frac{2}{f(\ell)}\,\langle E_\mathrm{kin}\rangle,
+      \label{eq:temp_proj}
+    \end{equation}
+    where $f(\ell) = D_\mathrm{eff}(\ell)$ is the number of
+    active degrees of freedom at scale $\ell$.
+    This directly connects the activation function to
+    thermodynamic behaviour: $f(\ell)$ varies from 3 (monatomic)
+    to higher values as internal modes activate at larger scales.
+
+  \item \textbf{Chemical bond geometry.}
+    Bond angles are undefined at sub-nuclear scales.
+    The activation length is $L_Q \sim 10^{-10}$ to $10^{-9}$ m:
+    \begin{equation}
+      \theta_{ijk} = \Pi_\mathrm{geometry}(\psi_i, \psi_j, \psi_k),
+      \quad
+      A_\mathrm{bond}(\ell) \approx 0 \;\text{ for }\;
+      \ell \ll 10^{-10}\,\text{m}.
+      \label{eq:bond_proj}
+    \end{equation}
+
+  \item \textbf{Inertial mass.}
+    Mass is the projected resistance of identity to change of motion state:
+    \begin{equation}
+      m_\mathrm{obs} = \Pi_\mathrm{inertial}(P_\mathrm{true}),
+      \label{eq:mass_proj}
+    \end{equation}
+    and for a composite body
+    \begin{equation}
+      M_\mathrm{obs}\,c^2
+      = \sum_i m_i\,c^2 + E_\mathrm{binding} + E_\mathrm{field}.
+      \label{eq:mass_composite}
+    \end{equation}
+    Mass is a projected property of the full identity system, not
+    a simple sum of component tags.
+
+  \item \textbf{Dark-matter-like gravitational residuals.}
+    From the Doc II kernel (Eq.~E.3), the gravitational observable at
+    galactic scale is
+    \begin{equation}
+      G_\mathrm{obs} = \Pi_\mathrm{galactic}(P_\mathrm{matter}) + \Delta G_\mathrm{scale},
+      \label{eq:dark_residual}
+    \end{equation}
+    where $\Delta G_\mathrm{scale}$ is the residual from hidden
+    scale-coordinate structure.
+    The galactic-scale projection operator may expose gravitational
+    behaviour that is absent at smaller scales.
+    This reproduces the Doc II dark-matter kernel structure: the
+    integrand $[K_G(w) - K_\mathrm{EM}(w)]$ in Eq.~(E.3) is now
+    interpretable as the difference between the scale-integrated
+    activation of the gravitational projection and the
+    EM projection.
+    \begin{equation}
+      K_G(w) - K_\mathrm{EM}(w)
+      \;\equiv\;
+      A_G(e^w \ell_0) - A_\mathrm{EM}(e^w \ell_0).
+      \label{eq:kernel_activation}
+    \end{equation}
+    This is a hypothesis, not a derivation.
+    Numerical confirmation requires fitting $k_G$, $k_\mathrm{EM}$,
+    $L_G$, $L_\mathrm{EM}$ to rotation curve data.
+\end{itemize}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Cross-Scale Property Map}
+\label{sec:property_map}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block T} \hfill
+  \textit{summary table; depends on \S\ref{sec:activation}}
+\noindent\rule{\linewidth}{0.4pt}
+
+A property $Q$ is assigned the quadruple
+\begin{equation}
+  Q \;\mapsto\; (D_Q,\, L_Q,\, M_Q,\, \Pi_Q)
+  \label{eq:prop_map}
+\end{equation}
+where $D_Q$ is the effective dimension required, $L_Q$ the activation
+length, $M_Q$ the measurement basis, and $\Pi_Q$ the projection operator
+that makes the property accessible.
+
+\bigskip
+
+\begin{longtable}{p{2.6cm} p{2.4cm} p{2.6cm} p{2.6cm} p{3.2cm}}
+  \toprule
+  \textbf{Scale regime} &
+  \textbf{Length} &
+  \textbf{Dominant identity} &
+  \textbf{Effective $D$} &
+  \textbf{Projection behaviour} \\
+  \midrule
+  \endhead
+  Primitive / Planck &
+  $10^{-35}$ m &
+  Pre-geometric identity &
+  Unknown / hidden &
+  Fully hidden; only existence gate active \\[4pt]
+
+  Gauge / sub-particle &
+  $10^{-18}$--$10^{-15}$ m &
+  Quark, lepton, gauge &
+  Internal + low spatial &
+  Appears as quantum number state; $|\psi\rangle$ dominated by internal channels \\[4pt]
+
+  Nuclear &
+  $10^{-15}$--$10^{-14}$ m &
+  Nucleon / nucleus &
+  3D onset + internal binding &
+  Particle identity partially stabilised; binding energy dominant \\[4pt]
+
+  Atomic &
+  $10^{-10}$ m &
+  Atom &
+  3D + phase shell &
+  Wavefunction dominates observable; orbital structure projects \\[4pt]
+
+  Molecular &
+  $10^{-9}$--$10^{-7}$ m &
+  Molecule &
+  3D structure &
+  Internal phase projects into bond geometry; chirality activates \\[4pt]
+
+  Meso\-scopic / material &
+  $10^{-6}$--$10^{-3}$ m &
+  Grain, domain, defect field &
+  3D continuum onset &
+  Many identities average into continuum fields; stress, diffusion activate \\[4pt]
+
+  Macro\-scopic &
+  $10^{-3}$--$10^{3}$ m &
+  Body / object &
+  Classical 3D &
+  Quantum identity mostly hidden; force, torque, heat accessible \\[4pt]
+
+  Planetary &
+  $10^{6}$--$10^{8}$ m &
+  Planet / system &
+  3D + gravitational field &
+  Internal matter projected as mass; orbital mechanics dominant \\[4pt]
+
+  Stellar / galactic &
+  $10^{9}$--$10^{21}$ m &
+  Star / galaxy &
+  3D + scale-gravity &
+  Scale-axis residuals may reappear; rotation-curve anomalies possible \\[4pt]
+
+  Cosmological &
+  $\gtrsim 10^{21}$ m &
+  Universe-scale identity &
+  4D / 5D effective &
+  Scale-axis dominant; expansion and large-scale structure driven by $a_u(\ell)$ \\
+  \bottomrule
+  \caption{Cross-scale property map: identity, dimension, and projection
+    behaviour across fourteen orders of magnitude.}
+  \label{tab:prop_map}
+\end{longtable}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Updated Open Variable Register}
+\label{sec:open_vars}
+% ============================================================================
+
+\noindent\rule{\linewidth}{0.8pt}
+\textbf{Import block U} \hfill
+  \textit{updates Doc II Import Block J}
+\noindent\rule{\linewidth}{0.4pt}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{l l X}
+  \toprule
+  Variable & Status after Doc IV & Remaining requirement \\
+  \midrule
+  $\chi_w(w)$ &
+  Identified via \eqref{eq:chi_w_identification} &
+  Value of $\eta_u$ needs experimental or theoretical constraint. \\[4pt]
+
+  $K_G(w)$, $K_\mathrm{EM}(w)$ &
+  Identified as activation functions \eqref{eq:kernel_activation} &
+  Parameters $k_G$, $k_\mathrm{EM}$, $L_G$, $L_\mathrm{EM}$ need fitting. \\[4pt]
+
+  $\Pi_n$ &
+  Formalised as $\Proj{m}{n}$ in \eqref{eq:proj_def}--\eqref{eq:decomp} &
+  Explicit matrix form for each scale transition still needed. \\[4pt]
+
+  $D_\mathrm{eff}(\ell)$ &
+  Defined via metric coefficients \eqref{eq:Deff_metric} &
+  Functional form of $a_i(\ell)$ curves needs derivation or data fit. \\[4pt]
+
+  $\hat{H}_w$ &
+  Not addressed in this document &
+  Dark-scale Hamiltonian remains undefined. Required for QM predictions. \\[4pt]
+
+  $\mathbf{T}_{AB}$ &
+  Unchanged from Doc II &
+  Relation-particle dynamics still undefined. \\[4pt]
+
+  $\mathbf{W}$ &
+  Unchanged from Doc II &
+  Hidden-intensity weight matrix needs specific form per channel. \\[4pt]
+
+  $k_Q$, $L_Q$ &
+  New (this document) &
+  Sigmoid parameters for each property require calibration against
+  experimental activation energies and length-scale data. \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\noindent\rule{\linewidth}{0.4pt}
+
+% ============================================================================
+\section{Non-Technical Summary}
+\label{sec:summary}
+% ============================================================================
+
+In ordinary relativity a moving clock runs slowly because spatial motion
+diverts what would otherwise be pure temporal evolution.
+This document extends that idea by proposing that physical systems
+may also move through \emph{scale}: the same object described at
+different resolutions occupies different rungs of a logarithmic
+scale ladder, and this motion contributes to the proper time integral
+through the fifth term $\eta_u(d\ell/\ell)^2$ in the interval
+\eqref{eq:5D_interval}.
+
+Every physical point carries an attached complex plane, making phase
+and amplitude geometric features present at all scales.
+What changes from one scale to the next is not whether quantum structure
+exists, but how much of it can be projected into the observer's
+measurement basis at that resolution.
+The projection operator $\Proj{m}{n}$ maps the full identity-bearing
+state at a fine scale into the observable state at a coarser one.
+The complement --- the hidden component $\Psihid$ in \eqref{eq:decomp}
+--- appears at the coarser scale as probability spread, phase uncertainty,
+or wave-like behaviour.
+
+In this view, wave-particle duality is not a fundamental fact about matter.
+It is a scale-projection mismatch: when the resolution of the measurement
+does not reach the characteristic length of the identity object, the
+missing distinguishability content projects as a wave envelope.
+
+Property activation functions~\eqref{eq:AQ} formalise the experimental
+observation that certain properties --- temperature, bond geometry, stress,
+dark-matter-like gravitational residuals --- are meaningless below their
+characteristic activation scale but fully real above it.
+The five-dimensional interval~\eqref{eq:5D_interval} provides the
+geometric spine on which all of this sits.
+
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{IKK Doc IV --- VSEPR-SIM Theoretical Division.
+  The fifth dimension was here all along; it just needed a better address.}
+\end{center}
+
+\end{document}

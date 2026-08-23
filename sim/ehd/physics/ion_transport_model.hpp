@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * ion_transport_model.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * Nernst-Planck ion transport model:
  *

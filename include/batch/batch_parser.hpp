@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_parser.hpp
  * ================================
- * WO-VSIM-62C — Batch Layer Parser
+ * WO-VSIM-62C  -  Batch Layer Parser
  *
  * Parses a .vsim study file (one that contains a [study] block) into a
  * BatchDocument.  Reuses the same tokenisation conventions as VsimParser:

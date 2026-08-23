@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * hourglass_model.hpp — Hourglass Convergence Model
+ * hourglass_model.hpp  -  Hourglass Convergence Model
  *
  * The Hourglass Model formalises the structural convergence funnel that
  * governs how a population of candidate bead configurations collapses
@@ -9,26 +9,26 @@
  *
  * Geometry analogy:
  *
- *   ████████████████   Wide mouth  — input layer: N_cand candidate states
- *        ██████        Neck        — bottleneck: constraint filter (Λ + ΔE)
- *   ████████████████   Wide base   — output layer: ranked stable configs
+ *   ################   Wide mouth   -  input layer: N_cand candidate states
+ *        ######        Neck         -  bottleneck: constraint filter (Λ + ΔE)
+ *   ################   Wide base    -  output layer: ranked stable configs
  *
  * Three layers:
  *
- *   [H1] Mouth  — candidate generation
+ *   [H1] Mouth   -  candidate generation
  *        Produces N_cand bead configurations by perturbing the current
  *        system within ±δ_max around each bead's position.  Perturbations
  *        are drawn from a uniform ball (not Gaussian) so that the mouth
  *        samples a well-defined volume in configuration space.
  *
- *   [H2] Neck   — constraint bottleneck
+ *   [H2] Neck    -  constraint bottleneck
  *        Each candidate passes through three gates in sequence:
- *          Gate 1  Stability filter  — Λ_i < Λ_min rejected immediately
- *          Gate 2  Energy filter     — ΔE > E_tol above basin minimum
- *          Gate 3  Role filter       — Σ_pair weight sum < w_min
+ *          Gate 1  Stability filter   -  Λ_i < Λ_min rejected immediately
+ *          Gate 2  Energy filter      -  ΔE > E_tol above basin minimum
+ *          Gate 3  Role filter        -  Σ_pair weight sum < w_min
  *        Only candidates passing all three gates survive the neck.
  *
- *   [H3] Base   — ranked output ensemble
+ *   [H3] Base    -  ranked output ensemble
  *        Surviving candidates are scored by:
  *          score = w_E · (E_ref − E) / |E_ref|
  *                + w_Λ · Λ_mean
@@ -36,7 +36,7 @@
  *        Top-k candidates (k ≤ N_out) are returned in descending score.
  *
  * Anti-black-box: every layer produces a fully inspectable record.
- * Deterministic: identical system + params → identical ranked output.
+ * Deterministic: identical system + params -> identical ranked output.
  *
  * Reference: docs/section_32bit_hourglass_lookglass.tex §2
  */
@@ -57,20 +57,20 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * HourglassParams — all tunable constants for one hourglass pass.
+ * HourglassParams  -  all tunable constants for one hourglass pass.
  */
 struct HourglassParams {
-    // ── Mouth (H1) ────────────────────────────────────────────────────────────
+    // -- Mouth (H1) ------------------------------------------------------------
     uint32_t N_cand{64};        // Candidate configurations to generate
     double   delta_max{0.5};    // Maximum perturbation radius (Å)
     uint64_t rng_seed{42};      // RNG seed for reproducibility
 
-    // ── Neck (H2) ─────────────────────────────────────────────────────────────
+    // -- Neck (H2) -------------------------------------------------------------
     StabilityClass Lambda_min{StabilityClass::Metastable}; // Gate 1: min stability
     double   E_tol{5.0};        // Gate 2: ΔE ceiling above basin (kcal/mol)
     double   w_role_min{0.5};   // Gate 3: minimum summed role-weight score
 
-    // ── Base (H3) ─────────────────────────────────────────────────────────────
+    // -- Base (H3) -------------------------------------------------------------
     uint32_t N_out{8};          // Maximum survivors to return
     double   w_E{1.0};          // Score weight for energy term
     double   w_Lambda{0.5};     // Score weight for stability term
@@ -82,7 +82,7 @@ struct HourglassParams {
 // ============================================================================
 
 /**
- * CandidateRecord — full diagnostic for one candidate configuration.
+ * CandidateRecord  -  full diagnostic for one candidate configuration.
  */
 struct CandidateRecord {
     uint32_t candidate_id{};
@@ -135,7 +135,7 @@ struct HourglassBaseRecord {
 };
 
 /**
- * HourglassResult — complete output of one hourglass pass.
+ * HourglassResult  -  complete output of one hourglass pass.
  */
 struct HourglassResult {
     HourglassMouthRecord mouth{};
@@ -234,7 +234,7 @@ inline double role_weight_sum(const BeadSystem& sys) {
 // ============================================================================
 
 /**
- * run_hourglass — execute one full hourglass pass on a BeadSystem.
+ * run_hourglass  -  execute one full hourglass pass on a BeadSystem.
  *
  * The input system is NOT modified.  All candidate configurations are
  * generated as independent copies, evaluated, filtered, and ranked.
@@ -250,7 +250,7 @@ inline HourglassResult run_hourglass(
     HourglassResult result;
     detail::LCG rng{params.rng_seed};
 
-    // ── H1: Mouth — generate candidates ──────────────────────────────────────
+    // -- H1: Mouth  -  generate candidates --------------------------------------
     result.mouth.N_generated  = params.N_cand;
     result.mouth.delta_used   = params.delta_max;
     result.mouth.rng_seed_used = params.rng_seed;
@@ -286,7 +286,7 @@ inline HourglassResult run_hourglass(
         result.candidates.push_back(std::move(rec));
     }
 
-    // ── H2: Neck — apply three gates ─────────────────────────────────────────
+    // -- H2: Neck  -  apply three gates -----------------------------------------
     result.neck.N_in     = params.N_cand;
     result.neck.E_basin  = E_basin;
 
@@ -325,7 +325,7 @@ inline HourglassResult run_hourglass(
         - result.neck.N_rejected_gate2
         - result.neck.N_rejected_gate3;
 
-    // ── H3: Base — score and rank survivors ───────────────────────────────────
+    // -- H3: Base  -  score and rank survivors -----------------------------------
     double E_ref = E_basin;
 
     for (auto& rec : result.candidates) {
@@ -367,7 +367,7 @@ inline HourglassResult run_hourglass(
 // ============================================================================
 
 /**
- * hourglass_best — return a pointer to the top-ranked candidate, or
+ * hourglass_best  -  return a pointer to the top-ranked candidate, or
  * nullptr if no candidates survived the neck.
  */
 inline const CandidateRecord* hourglass_best(const HourglassResult& r) {

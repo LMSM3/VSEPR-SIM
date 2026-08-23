@@ -1,5 +1,5 @@
-/**
- * example_bead_fire_reporting.cpp — Demonstration of BeadFIRE Outcome Reporting
+﻿/**
+ * example_bead_fire_reporting.cpp  -  Demonstration of BeadFIRE Outcome Reporting
  *
  * This example shows how to:
  *   1. Set up a simple bead system

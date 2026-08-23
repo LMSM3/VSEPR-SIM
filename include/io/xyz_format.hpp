@@ -1,4 +1,4 @@
-/**
+﻿/**
  * XYZ File Format Library
  * 
  * Comprehensive I/O for molecular coordinate files:
@@ -158,7 +158,7 @@ struct XYZMolecule {
     // Translate all atoms
     void translate(double dx, double dy, double dz);
 
-    // Rotate all atoms (axis-angle, radians) — Rodrigues, no GLM needed
+    // Rotate all atoms (axis-angle, radians)  -  Rodrigues, no GLM needed
     void rotate(const std::array<double, 3>& axis, double angle);
 
     // Scale coordinates
@@ -339,7 +339,7 @@ private:
 // ============================================================================
 
 /**
- * Wind particle — an atomistic site with a directed momentum flux vector
+ * Wind particle  -  an atomistic site with a directed momentum flux vector
  * and a scalar influence weight omega in [0, 1].
  */
 struct XYZWAtom {
@@ -391,7 +391,7 @@ struct XYZWField {
 };
 
 /**
- * XYZW reader — parses .xyzw files into XYZWField
+ * XYZW reader  -  parses .xyzw files into XYZWField
  */
 class XYZWReader {
 public:
@@ -408,7 +408,7 @@ private:
 };
 
 /**
- * XYZW writer — serialises XYZWField to .xyzw text format
+ * XYZW writer  -  serialises XYZWField to .xyzw text format
  */
 class XYZWWriter {
 public:
@@ -442,7 +442,7 @@ enum class XYZFormat {
     STANDARD_XYZ,   // .xyz
     EXTENDED_XYZA,  // .xyzA
     THERMAL_XYZC,   // .xyzC (binary)
-    WIND_XYZW,      // .xyzW  — wind particle field (position + wind vector + omega)
+    WIND_XYZW,      // .xyzW   -  wind particle field (position + wind vector + omega)
     UNKNOWN
 };
 

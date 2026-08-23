@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * test_viz.hpp — Test Visualization Infrastructure
+ * test_viz.hpp  -  Test Visualization Infrastructure
  *
  * Provides opt-in visual checkpoints for the test harness.
  * Any test can call VIZ_CHECKPOINT() to open a GLFW/ImGui window
@@ -55,10 +55,10 @@
  *   VIZ_SCENE("Dense shell (12 beads, 5 A)", scene);
  *
  * Architecture:
- *   tests → test_viz.hpp → CGVizViewer::run() → GLFW/ImGui window
+ *   tests -> test_viz.hpp -> CGVizViewer::run() -> GLFW/ImGui window
  *
  * Anti-black-box: the viewer shows every bead position, orientation,
- * environment overlay, and neighbour shell — nothing hidden.
+ * environment overlay, and neighbour shell  -  nothing hidden.
  */
 
 #include "cli/system_state.hpp"
@@ -67,7 +67,7 @@
 #include <string>
 #include <vector>
 
-// scene_factory.hpp forward — only needed for VIZ_SCENE
+// scene_factory.hpp forward  -  only needed for VIZ_SCENE
 #ifdef __has_include
 #  if __has_include("tests/scene_factory.hpp")
 #    include "tests/scene_factory.hpp"
@@ -96,7 +96,7 @@ inline bool enabled() {
         cached = (env && std::string(env) == "1") ? 1 : 0;
         if (cached) {
             std::printf("[VIZ] Visual test mode ENABLED (VSEPR_TEST_VIZ=1)\n");
-            std::printf("[VIZ] Each checkpoint opens a window — close to continue.\n\n");
+            std::printf("[VIZ] Each checkpoint opens a window  -  close to continue.\n\n");
         }
     }
     return cached == 1;
@@ -135,28 +135,28 @@ inline void show(const std::string& title,
                  const vsepr::cli::CGSystemState& state,
                  int overlay_mode = overlay::none) {
     if (!enabled()) {
-        std::printf("  [VIZ] %s (skipped — set VSEPR_TEST_VIZ=1)\n",
+        std::printf("  [VIZ] %s (skipped  -  set VSEPR_TEST_VIZ=1)\n",
                     title.c_str());
         return;
     }
 
 #ifdef BUILD_VISUALIZATION
-    std::printf("  [VIZ] %s — opening viewer... (close window to continue)\n",
+    std::printf("  [VIZ] %s  -  opening viewer... (close window to continue)\n",
                 title.c_str());
     coarse_grain::vis::VizConfig config;
     config.overlay = static_cast<coarse_grain::vis::OverlayMode>(overlay_mode);
     config.show_axes = true;
     coarse_grain::vis::CGVizViewer::run(state, config);
-    std::printf("  [VIZ] %s — viewer closed.\n", title.c_str());
+    std::printf("  [VIZ] %s  -  viewer closed.\n", title.c_str());
 #else
     (void)state; (void)overlay_mode;
-    std::printf("  [VIZ] %s (BUILD_VIS=OFF — rebuild with -Vis)\n",
+    std::printf("  [VIZ] %s (BUILD_VIS=OFF  -  rebuild with -Vis)\n",
                 title.c_str());
 #endif
 }
 
 // ============================================================================
-// Convert SceneBead vector → CGSystemState → show
+// Convert SceneBead vector -> CGSystemState -> show
 // ============================================================================
 
 #ifdef TESTVIZ_HAS_SCENE_FACTORY
@@ -193,7 +193,7 @@ inline void show_scene(
 #endif // TESTVIZ_HAS_SCENE_FACTORY
 
 // ============================================================================
-// VizSequence — Fluent builder for scripted viewer sessions
+// VizSequence  -  Fluent builder for scripted viewer sessions
 // ============================================================================
 
 #ifdef BUILD_VISUALIZATION
@@ -288,7 +288,7 @@ public:
 
 #else // !BUILD_VISUALIZATION
 
-// Stub when visualization is not compiled — preserves API surface
+// Stub when visualization is not compiled  -  preserves API surface
 class VizSequence {
 public:
     VizSequence& overlay(int)           { return *this; }
@@ -324,23 +324,23 @@ inline void show_timed(const std::string& title,
                        double seconds,
                        int overlay_mode = overlay::none) {
     if (!enabled()) {
-        std::printf("  [VIZ] %s (skipped — set VSEPR_TEST_VIZ=1)\n",
+        std::printf("  [VIZ] %s (skipped  -  set VSEPR_TEST_VIZ=1)\n",
                     title.c_str());
         return;
     }
 
 #ifdef BUILD_VISUALIZATION
-    std::printf("  [VIZ] %s — timed %.1fs — opening viewer...\n",
+    std::printf("  [VIZ] %s  -  timed %.1fs  -  opening viewer...\n",
                 title.c_str(), seconds);
     coarse_grain::vis::VizConfig config;
     config.overlay = static_cast<coarse_grain::vis::OverlayMode>(overlay_mode);
     config.show_axes = true;
     config.timeout_seconds = seconds;
     coarse_grain::vis::CGVizViewer::run(state, config);
-    std::printf("  [VIZ] %s — viewer closed.\n", title.c_str());
+    std::printf("  [VIZ] %s  -  viewer closed.\n", title.c_str());
 #else
     (void)state; (void)seconds; (void)overlay_mode;
-    std::printf("  [VIZ] %s (BUILD_VIS=OFF — rebuild with -Vis)\n",
+    std::printf("  [VIZ] %s (BUILD_VIS=OFF  -  rebuild with -Vis)\n",
                 title.c_str());
 #endif
 }
@@ -361,32 +361,32 @@ inline void show_automated(const std::string& title,
                            const VizSequence& seq,
                            double timeout = 0.0) {
     if (!enabled()) {
-        std::printf("  [VIZ] %s (skipped — set VSEPR_TEST_VIZ=1)\n",
+        std::printf("  [VIZ] %s (skipped  -  set VSEPR_TEST_VIZ=1)\n",
                     title.c_str());
         return;
     }
 
 #ifdef BUILD_VISUALIZATION
-    std::printf("  [VIZ] %s — automated (%zu commands",
+    std::printf("  [VIZ] %s  -  automated (%zu commands",
                 title.c_str(), seq.size());
     if (timeout > 0) std::printf(", timeout %.1fs", timeout);
-    std::printf(") — opening viewer...\n");
+    std::printf(")  -  opening viewer...\n");
 
     coarse_grain::vis::VizConfig config;
     config.show_axes = true;
     config.timeout_seconds = timeout;
     config.commands = seq.commands();
     coarse_grain::vis::CGVizViewer::run(state, config);
-    std::printf("  [VIZ] %s — viewer closed.\n", title.c_str());
+    std::printf("  [VIZ] %s  -  viewer closed.\n", title.c_str());
 #else
     (void)state; (void)seq; (void)timeout;
-    std::printf("  [VIZ] %s (BUILD_VIS=OFF — rebuild with -Vis)\n",
+    std::printf("  [VIZ] %s (BUILD_VIS=OFF  -  rebuild with -Vis)\n",
                 title.c_str());
 #endif
 }
 
 // ============================================================================
-// Scene → automated show (with SceneBead conversion)
+// Scene -> automated show (with SceneBead conversion)
 // ============================================================================
 
 #ifdef TESTVIZ_HAS_SCENE_FACTORY

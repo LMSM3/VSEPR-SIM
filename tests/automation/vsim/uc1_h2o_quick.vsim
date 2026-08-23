@@ -1,0 +1,50 @@
+# UC-1 fixture — Desktop Script-to-Results
+# uc1_h2o_quick.vsim
+# Purpose: Minimal H2O run that exercises the full export pipeline.
+# Used by: tests/automation/uc1_run.sh
+# UC doc:  docs/uc/UC-1-desktop-script-to-results.md
+# WO-MF:   MF-A04 (PDB), MF-B03 (render_targets), MF-E01 (IKK GL overlay)
+
+[project]
+name        = "uc1_h2o_quick"
+version     = "v5.0.14"
+description = "UC-1 automation fixture: H2O, full export, headless"
+
+[material]
+formula     = "H2O"
+prototype   = "water_molecule"
+phase       = "gas"
+
+[[simulation.molecule]]
+formula     = "H2O"
+count       = 1
+temperature = 300.0
+lattice     = "none"
+
+[run]
+mode        = "minimize"
+max_steps   = 100
+dt_fs       = 0.5
+converge    = true
+tol_force   = 1.0e-4
+script_type = "newleaf_type1_discovery"
+
+[analysis]
+compute_rmsd     = true
+compute_energy   = true
+compute_dipole   = true
+
+[export]
+write_xyz            = true
+write_xyza           = false
+write_analysis_json  = true
+write_metrics_tsv    = true
+write_events_json    = true
+write_report_md      = true
+write_manifest_json  = true
+write_pdb            = false         # MF-A04: parser wired, writer pending
+output_dir           = "out/uc1_h2o"
+
+# [visual] is intentionally absent for headless UC automation.
+# The desktop integration path is tested by uc1_run.sh launching
+# vsepr-desktop.exe via QProcess (not covered by this fixture directly).

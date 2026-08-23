@@ -1,5 +1,5 @@
-/*
- * test_chart_data.cpp — Compile-and-run validation for chart_data.hpp
+﻿/*
+ * test_chart_data.cpp  -  Compile-and-run validation for chart_data.hpp
  *
  * Verifies that all containers (Series, DataTable, ChartSpec, FigureManifest,
  * TimeseriesRecord, PropertyCard, ExportConfig) compile, construct, populate,
@@ -32,7 +32,7 @@ static int fail_count = 0;
     } \
 } while(0)
 
-// ── Series ──────────────────────────────────────────────────────────────
+// -- Series --------------------------------------------------------------
 
 void test_series() {
     Series s("temperature", "K");
@@ -48,7 +48,7 @@ void test_series() {
     TEST("series_csv", s.to_csv_column().find("temperature") != std::string::npos);
 }
 
-// ── DataTable ───────────────────────────────────────────────────────────
+// -- DataTable -----------------------------------------------------------
 
 void test_datatable() {
     DataTable dt("stress_strain");
@@ -92,7 +92,7 @@ void test_datatable() {
     TEST("dt_map_insert", dt.num_rows() == 4);
 }
 
-// ── ChartSpec ───────────────────────────────────────────────────────────
+// -- ChartSpec -----------------------------------------------------------
 
 void test_chartspec() {
     ChartSpec cs;
@@ -113,7 +113,7 @@ void test_chartspec() {
     TEST("cs_json_cols", json.find("\"y_cols\": [1]") != std::string::npos);
 }
 
-// ── FigureManifest ──────────────────────────────────────────────────────
+// -- FigureManifest ------------------------------------------------------
 
 void test_manifest() {
     FigureManifest fm("demo_report", ".");
@@ -134,7 +134,7 @@ void test_manifest() {
     TEST("fm_data", fm.data.num_rows() == 2);
 }
 
-// ── TimeseriesRecord ────────────────────────────────────────────────────
+// -- TimeseriesRecord ----------------------------------------------------
 
 void test_timeseries() {
     TimeseriesRecord ts("energy", "formation_engine",
@@ -154,7 +154,7 @@ void test_timeseries() {
     TEST("ts_json_x", json.find("-512.3") != std::string::npos);
 }
 
-// ── PropertyCard ────────────────────────────────────────────────────────
+// -- PropertyCard --------------------------------------------------------
 
 void test_propertycard() {
     PropertyCard pc("Fe_properties");
@@ -175,7 +175,7 @@ void test_propertycard() {
     TEST("pc_latex", tex.find("\\begin{description}") != std::string::npos);
 }
 
-// ── ExportConfig ────────────────────────────────────────────────────────
+// -- ExportConfig --------------------------------------------------------
 
 void test_exportconfig() {
     ExportConfig ec;
@@ -187,7 +187,7 @@ void test_exportconfig() {
     TEST("ec_json_dpi", json.find("300") != std::string::npos);
 }
 
-// ── LaTeX generators ────────────────────────────────────────────────────
+// -- LaTeX generators ----------------------------------------------------
 
 void test_latex_generators() {
     std::string fig = latex_figure("demo.png", "A demo", "fig:demo");
@@ -203,7 +203,7 @@ void test_latex_generators() {
     TEST("lgrid_count", grid.find("\\begin{subfigure}") != std::string::npos);
 }
 
-// ── Enumerations ────────────────────────────────────────────────────────
+// -- Enumerations --------------------------------------------------------
 
 void test_enums() {
     TEST("coltype_int",   std::string(column_type_name(ColumnType::Int)) == "int");
@@ -217,7 +217,7 @@ void test_enums() {
     TEST("chart_radar",   std::string(chart_type_name(ChartType::Radar)) == "radar");
 }
 
-// ════════════════════════════════════════════════════════════════════════
+// ========================================================================
 
 int main() {
     std::cout << "=== chart_data.hpp test suite ===\n\n";

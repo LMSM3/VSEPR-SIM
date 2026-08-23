@@ -1,0 +1,320 @@
+# @category Pillars
+# @title    Quicksilver Path — Ni-centered alkene hydrogenation cycle
+#
+# Three Metallic Pillars / Pillar 2
+# Reactive organization: environment <-> coordination shell <-> metal center
+
+[project]
+name        = "pillar_quicksilver_ni_hydrogenation"
+version     = "v0.1.0"
+seed_base   = 42001
+determinism = true
+description = "Ni-centered ethylene hydrogenation catalytic-cycle proxy"
+author      = "VSIM Three Metallic Pillars"
+
+[pillar]
+id                 = "quicksilver"
+name               = "Quicksilver Path"
+model              = "coordination_reaction"
+spatial_authority  = "metal_center_coordination_shell"
+event_authority    = "state_machine_kinetic"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 42.0
+ly    = 42.0
+lz    = 42.0
+units = "angstrom"
+
+[boundary]
+x = "open"
+y = "open"
+z = "open"
+
+[material]
+formula   = "Ni"
+structure = "single_center"
+phase     = "molecular"
+
+[[simulation.molecule]]
+formula     = "Ni"
+count       = 1
+temperature = 425.0
+lattice     = "centered"
+region      = "catalyst_center"
+
+[[simulation.molecule]]
+formula     = "C2H4"
+count       = 64
+temperature = 425.0
+lattice     = "gas_random"
+region      = "substrate_reservoir"
+
+[[simulation.molecule]]
+formula     = "H2"
+count       = 96
+temperature = 425.0
+lattice     = "gas_random"
+region      = "hydrogen_reservoir"
+
+[environment]
+temperature = 425.0
+pressure    = 0.0015
+medium      = "inert_carrier_gas"
+gravity     = false
+
+[metal_center]
+element                  = "Ni"
+formal_charge_initial    = 0
+oxidation_state_initial  = 0
+electron_count_initial   = 10
+coordination_limit       = 4
+reference_geometry       = "square_planar"
+active_geometry_set      = ["linear", "trigonal_planar", "square_planar", "tetrahedral"]
+state_equivalence        = "descriptor_class"
+track_ligand_field       = true
+track_steric_load        = true
+track_donation_proxy     = true
+track_backbonding_proxy  = true
+
+[species.registry]
+species = [
+	"Ni:free",
+	"Ni:C2H4",
+	"Ni:H2",
+	"Ni:C2H4:H2",
+	"Ni:ethyl_hydride",
+	"Ni:ethyl_dihydride",
+	"Ni:C2H6",
+	"C2H4:free",
+	"H2:free",
+	"C2H6:free"
+]
+
+[descriptor.electronic]
+model                    = "coordination_proxy_v1"
+calibration              = "uncalibrated"
+formal_charge            = true
+oxidation_state          = true
+electron_count_proxy     = true
+ligand_field_proxy_eV    = true
+donation_proxy           = true
+backbonding_proxy        = true
+bond_order_proxy         = true
+publish_as_wavefunction  = false
+
+[reaction.network]
+id                 = "quicksilver_ni_c2h4_h2_v1"
+selection          = "eligible_state_then_kinetic"
+rate_law           = "arrhenius"
+energy_model       = "coordination_descriptor_proxy"
+spatial_index      = "center_shell"
+reject_on_overlap  = true
+reject_on_deficit  = true
+
+[[reaction.channel]]
+id               = "alkene_coordination"
+from_state       = "Ni:free"
+to_state         = "Ni:C2H4"
+reactants        = ["Ni:free", "C2H4:free"]
+products         = ["Ni:C2H4"]
+pre_exponential  = 2.0e12
+barrier_eV       = 0.18
+energy_delta_eV  = -0.62
+coordination_delta = 1
+electron_delta_proxy = 2
+binding_mode     = "eta2"
+
+[[reaction.channel]]
+id               = "hydrogen_coordination"
+from_state       = "Ni:C2H4"
+to_state         = "Ni:C2H4:H2"
+reactants        = ["Ni:C2H4", "H2:free"]
+products         = ["Ni:C2H4:H2"]
+pre_exponential  = 1.4e12
+barrier_eV       = 0.26
+energy_delta_eV  = -0.28
+coordination_delta = 1
+electron_delta_proxy = 2
+binding_mode     = "sigma_H2"
+
+[[reaction.channel]]
+id               = "hydrogen_activation"
+from_state       = "Ni:C2H4:H2"
+to_state         = "Ni:ethyl_hydride"
+reactants        = ["Ni:C2H4:H2"]
+products         = ["Ni:ethyl_hydride"]
+pre_exponential  = 8.0e11
+barrier_eV       = 0.54
+energy_delta_eV  = 0.10
+oxidation_state_delta = 2
+electron_delta_proxy = 0
+geometry_from    = "square_planar"
+geometry_to      = "tetrahedral"
+
+[[reaction.channel]]
+id               = "first_hydrogen_transfer"
+from_state       = "Ni:ethyl_hydride"
+to_state         = "Ni:ethyl_dihydride"
+reactants        = ["Ni:ethyl_hydride"]
+products         = ["Ni:ethyl_dihydride"]
+pre_exponential  = 9.5e11
+barrier_eV       = 0.47
+energy_delta_eV  = -0.14
+oxidation_state_delta = 0
+electron_delta_proxy = 0
+
+[[reaction.channel]]
+id               = "reductive_elimination"
+from_state       = "Ni:ethyl_dihydride"
+to_state         = "Ni:C2H6"
+reactants        = ["Ni:ethyl_dihydride"]
+products         = ["Ni:C2H6"]
+pre_exponential  = 7.0e11
+barrier_eV       = 0.60
+energy_delta_eV  = -0.36
+oxidation_state_delta = -2
+electron_delta_proxy = 0
+geometry_from    = "tetrahedral"
+geometry_to      = "square_planar"
+
+[[reaction.channel]]
+id               = "product_release"
+from_state       = "Ni:C2H6"
+to_state         = "Ni:free"
+reactants        = ["Ni:C2H6"]
+products         = ["Ni:free", "C2H6:free"]
+pre_exponential  = 3.5e12
+barrier_eV       = 0.22
+energy_delta_eV  = 0.44
+coordination_delta = -1
+electron_delta_proxy = -2
+increments_turnover = true
+
+[[reaction.channel]]
+id               = "alkene_dissociation"
+from_state       = "Ni:C2H4"
+to_state         = "Ni:free"
+reactants        = ["Ni:C2H4"]
+products         = ["Ni:free", "C2H4:free"]
+pre_exponential  = 2.2e12
+barrier_eV       = 0.49
+energy_delta_eV  = 0.62
+coordination_delta = -1
+electron_delta_proxy = -2
+
+[catalysis]
+active_center_count       = 1
+turnover_event            = "product_release"
+product_species           = "C2H6:free"
+recovered_state           = "Ni:free"
+state_equivalence_fields  = [
+	"formal_charge",
+	"oxidation_state",
+	"coordination_number",
+	"geometry_class"
+]
+exact_coordinate_return   = false
+stall_window_steps        = 500
+
+[simulation]
+fire_max_steps      = 250
+fire_dt_fs          = 0.25
+formation_preset    = "organometallic_cluster"
+smooth_resim        = true
+neighbor_skin_ang   = 2.5
+rebuild_neighbors_n = 4
+
+[chemistry]
+chemistry           = "coordination_reaction_network"
+reaction_events     = true
+track_species_state = true
+event_registry      = true
+
+[run]
+mode          = "reactive_md"
+max_steps     = 6000
+dt_fs         = 0.25
+temperature_K = 425.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics = [
+	"energy.total",
+	"energy.chemical",
+	"temperature",
+	"species.population",
+	"reaction.acceptance",
+	"center.coordination_number",
+	"center.formal_charge",
+	"center.oxidation_state",
+	"center.electron_count_proxy",
+	"center.geometry_class",
+	"center.ligand_field_proxy_eV",
+	"center.steric_load",
+	"center.catalytic_readiness",
+	"catalysis.turnover_count",
+	"catalysis.turnover_frequency_proxy",
+	"catalysis.recovery_fraction",
+	"audit.element_residual"
+]
+every_n_steps = 2
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["Ni", "C", "H"]
+charge                = true
+energy                = "tracked_proxy"
+strict                = true
+check_every_n_steps   = 5
+relative_tolerance    = 1.0e-10
+absolute_tolerance    = 1.0e-12
+reject_invalid_event  = true
+
+[audit.state_rules]
+coordination_min            = 0
+coordination_max            = 4
+allowed_oxidation_states    = [0, 2]
+allowed_formal_charges      = [0]
+allowed_geometry_classes    = ["linear", "trigonal_planar", "square_planar", "tetrahedral"]
+reject_impossible_transition = true
+
+[audit.acceptance]
+requirements = [
+	"turnover_count_final >= 1",
+	"C2H6_product_count_final == turnover_count_final",
+	"center_coordination_number_max <= 4",
+	"catalyst_recovery_fraction_final > 0",
+	"max_abs_element_residual < 1.0e-10",
+	"all_state_transitions_declared == true"
+]
+
+[export]
+output_dir          = "out/pillars/quicksilver"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 25
+event_interval      = 1
+metrics_interval    = 2
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_rdf_svg          = false
+visual_output_dir      = "figures/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = false
+show_bond_events         = true

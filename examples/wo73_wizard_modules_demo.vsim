@@ -1,0 +1,195 @@
+# =============================================================================
+# wo73_wizard_modules_demo.vsim
+#
+# WO-73  --  Wizard Full-Module Expansion Demonstration  (v5.13.3)
+#
+# This script exercises every field added across wizard modules 6, 7, and 8
+# during the Day 73 / PR #5 expansion:
+#
+#   Module 6  [analysis.*]  -- +7 fields
+#     neighbor_cutoff_A, contact_cutoff_A,
+#     compute_rdf, compute_msd, rdf_cutoff_A, msd_max_lag_frames,
+#     variance_probe (N_evolution, energy)
+#
+#   Module 7  [export] + [export.visual]  -- +10 fields + 8 visual sub-fields
+#     write_xyzfull, write_summary_csv, write_metrics_tsv,
+#     write_report_md, write_events_json, write_symbolic_trace_json,
+#     write_verify_report, output_dir, compression, split_by_species
+#     export.visual: write_svg_figures, write_png_snapshots, write_rdf_svg,
+#       write_energy_trace_svg, write_packing_heatmap_svg,
+#       write_trajectory_gif, write_html_dashboard, visual_output_dir
+#
+#   Module 8  [visual]  -- +18 fields
+#     output_type (all 7 choices exercised via comments),
+#     animation_mode, render_interval, show_convergence_trace,
+#     show_bar_chart, show_event_timeline, show_symbolic_trace,
+#     show_steady_state_marker, gl_auto_orbit, gl_spin, gl_spin_axis,
+#     gl_spin_deg_per_s, gl_show_axes, gl_window_width, gl_window_height,
+#     web_port, pacing_ms, overlay_cycle_interval
+#
+# All field values are sourced directly from vsim_document.hpp defaults
+# and documented here for cross-reference.
+#
+# Run:
+#   vsper run examples/wo73_wizard_modules_demo.vsim
+#
+# v5.13.3  |  WO-73  |  PR #5  feature/wizard-full-module-expansion
+# =============================================================================
+
+[project]
+name        = "wo73_wizard_modules_demo"
+version     = "v5.13.3"
+seed_base   = 7300
+determinism = true
+description = "WO-73: wizard modules 6-8 full field coverage demonstration"
+
+# -- Simulation ---------------------------------------------------------------
+
+[simulation]
+box_size_ang     = 30.0
+periodic         = false
+fire_max_steps   = 300
+fire_dt_fs       = 1.0
+formation_preset = "gas"
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula       = "CH4"
+count         = 16
+temperature_K = 300.0
+lattice       = "none"
+
+# -- Run ----------------------------------------------------------------------
+
+[run]
+mode         = "md_nvt"
+max_steps    = 600
+dt_fs        = 0.5
+temperature  = 300.0
+converge     = true
+output_level = "standard"
+
+# =============================================================================
+# MODULE 6  --  Analysis fields  (wizard step 6 expansion)
+# =============================================================================
+
+# -- Structure analysis: neighbor / contact cutoffs (new in module 6) ---------
+[analysis.structure]
+enabled              = true
+compute_coordination = true
+compute_packing      = true
+compute_displacement = true
+compute_anisotropy   = false
+neighbor_cutoff_A    = 3.5      # +field WO-73 module 6
+contact_cutoff_A     = 2.2      # +field WO-73 module 6
+
+# -- Sampling: RDF/MSD cutoffs and lag (new in module 6) ----------------------
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true    # +field WO-73 module 6
+compute_msd           = true    # +field WO-73 module 6
+min_frames_for_motion = 2
+min_frames_for_msd    = 5
+unwrap_pbc            = false
+rdf_cutoff_A          = 8.0     # +field WO-73 module 6
+msd_max_lag_frames    = 50      # +field WO-73 module 6
+
+# -- Variance probes: N_evolution + energy (new in module 6) ------------------
+[variance]
+print_results    = true
+energy_var       = "energy.total  last 100  0.12"      # +field WO-73 module 6
+N_evolution_var  = "N_evolution  species.CH4  0.05"    # +field WO-73 module 6
+
+# -- Inference ----------------------------------------------------------------
+[analysis.inference]
+enabled                    = true
+mode                       = "rule_based_61d"
+infer_packing_regime       = true
+infer_mobility_regime      = true
+infer_structural_stability = true
+infer_macro_readiness      = false
+
+# =============================================================================
+# MODULE 7  --  Export fields  (wizard step 7 expansion)
+# =============================================================================
+
+[export]
+write_xyz                = true
+write_xyzfull            = true         # +field WO-73 module 7
+write_xyzf               = false
+write_analysis_json      = true
+write_summary_csv        = true         # +field WO-73 module 7
+write_metrics_tsv        = true         # +field WO-73 module 7
+write_report_md          = true         # +field WO-73 module 7
+write_events_json        = true         # +field WO-73 module 7
+write_symbolic_trace_json = false       # +field WO-73 module 7 (IKK-I post-conv)
+write_verify_report      = true         # +field WO-73 module 7
+compression              = "none"       # +field WO-73 module 7 (none|gz|zst)
+split_by_species         = false        # +field WO-73 module 7
+output_dir               = "out/wo73_wizard_modules_demo"
+
+# -- Export visual sub-module (8 new fields, module 7) ------------------------
+[export.visual]
+write_svg_figures         = false       # +field WO-73 module 7 export.visual
+write_png_snapshots       = false       # +field WO-73 module 7 export.visual
+write_rdf_svg             = true        # +field WO-73 module 7 export.visual
+write_energy_trace_svg    = true        # +field WO-73 module 7 export.visual
+write_packing_heatmap_svg = false       # +field WO-73 module 7 export.visual
+write_trajectory_gif      = false       # +field WO-73 module 7 export.visual
+write_html_dashboard      = false       # +field WO-73 module 7 export.visual
+visual_output_dir         = "figures"   # +field WO-73 module 7 export.visual
+
+# =============================================================================
+# MODULE 8  --  Visual fields  (wizard step 8 expansion)
+# =============================================================================
+# output_type choices (all 7 added in module 8):
+#   "none"                   -- headless batch
+#   "terminal_chart"         -- live convergence trace (default interactive)
+#   "terminal_snapshot"      -- post-run bar chart
+#   "terminal_overlay_cycle" -- 6-panel kernel_viz_demo layout
+#   "terminal_rdf"           -- ASCII RDF plot
+#   "terminal_energy_heatmap"-- ASCII 2-D energy landscape
+#   "terminal_defect_map"    -- ASCII defect site grid
+# GL choices (also added in module 8):
+#   "gl_interactive"         -- 3D interactive + ImGui controls
+#   "gl_live_60fps"          -- smooth 60 fps spinning demo
+#   "gl_crystal_grid"        -- periodic crystal unit cell
+#   "gl_overlay_cycle"       -- cycling density/coordination/energy panels
+
+[visual]
+output_type              = "terminal_chart"    # +7 choices WO-73 module 8
+animation_mode           = "static"            # +field WO-73 module 8 (fix)
+render_interval          = 30                  # existing; exposed in module 8
+show_convergence_trace   = true                # +field WO-73 module 8
+show_bar_chart           = true                # +field WO-73 module 8
+show_event_timeline      = false               # +field WO-73 module 8
+show_symbolic_trace      = false               # +field WO-73 module 8
+show_steady_state_marker = false               # +field WO-73 module 8
+gl_auto_orbit            = false               # +field WO-73 module 8
+gl_spin                  = false               # +field WO-73 module 8
+gl_spin_axis             = "y"                 # +field WO-73 module 8
+gl_spin_deg_per_s        = 30.0               # +field WO-73 module 8
+gl_show_axes             = true                # +field WO-73 module 8
+gl_window_width          = 1280                # +field WO-73 module 8
+gl_window_height         = 800                 # +field WO-73 module 8
+web_port                 = 8080                # +field WO-73 module 8
+pacing_ms                = 0                   # +field WO-73 module 8
+overlay_cycle_interval   = 200                 # +field WO-73 module 8
+
+# -- Verify -------------------------------------------------------------------
+
+[verify]
+enabled = true
+
+[verify.structure]
+enabled                 = true
+check_coordination      = true
+expected_coordination   = 4
+coordination_tolerance  = 1
+check_bond_length       = true
+expected_bond_length_A  = 1.09
+bond_length_tolerance_A = 0.08
+
+[verify.mass]
+enabled   = true
+max_drift = 1e-10

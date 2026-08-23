@@ -1,0 +1,105 @@
+# scripts/demo_19_pipe_bridge_resolved.vsim
+# VSEPR-SIM v5.1.4  |  Demo 19 -- Interactive Preprocessor Feature (resolved)
+# This script demonstrates the pipe_sph_dem_fea_bridge interactive wizard
+# feature implemented in cmd_run_vsim.cpp today.
+# It is a pre-resolved version (script_type = standard) with all wizard
+# outputs already substituted, representing UCl3+NaCl+KCl molten salt
+# flowing through a zircaloy-4 pipe at nuclear-relevant conditions.
+# Material mode: radioactive_salt_mixture
+# Geometry: generated .xbit pipe (no STEP file required)
+# Run: vsper run scripts/demo_19_pipe_bridge_resolved.vsim
+
+[meta]
+name        = "demo_19_pipe_bridge_resolved"
+version     = "v5.1.4"
+purpose     = "Pre-resolved interactive pipe bridge demo -- UCl3+NaCl+KCl through Zircaloy-4, nuclear conditions"
+author      = "SM / VSEPR-SIM"
+script_type = "standard"
+
+[input]
+molecular_formula   = "UCl3+NaCl+KCl"
+material_mode       = "radioactive_salt_mixture"
+geometry_source     = "xbit_generated"
+step_file           = ""
+xbit_file           = "demo_19_pipe.xbit"
+
+pipe.length         = "2.0"
+pipe.inner_diameter = "0.04"
+pipe.outer_diameter = "0.05"
+pipe.wall_thickness = "0.005"
+
+flow.species        = "UCl3+NaCl+KCl"
+flow.inlet_rate     = "5000"
+flow.inlet_velocity = "[0.8, 0.0, 0.0]"
+sph.count           = "200000"
+
+[objects]
+system.geometry.pipe = PipeGeometry(radius = 0.02, length = 2.0, material = zircaloy4, xbit = auto)
+system.surface.wall  = WallSurface(geometry = system.geometry.pipe, roughness = 0.0010, slip = 0.03, track_pressure = true, track_shear = true, track_temperature = true, track_cavitation = true, track_impacts = true, track_residence = true, xbit = auto)
+system.source.inlet  = InletSource(species = UCl3, rate = 5000, velocity_x = 0.8, velocity_y = 0.0, velocity_z = 0.0, seed = 19101)
+system.sink.outlet   = OutletSink(mode = absorb, conserve_log = true)
+system.env.salt      = AmbientEnv(species = NaCl, count = 200000, temperature_K = 973.0, pressure_Pa = 150000.0, seed = 19201)
+
+[bridge]
+dem.pipe = DEMBridge(surface = system.surface.wall, geometry = system.geometry.pipe, inlet = system.source.inlet, outlet = system.sink.outlet, packing_model = hard_sphere, contact_model = hertz_mindlin, friction = 0.30, restitution = 0.18, output_contact_events = true, output_wall_collision_map = true, output_residence_histogram = true, output_erosion_proxy = true)
+fea.pipe = FEABridge(surface = system.surface.wall, geometry = system.geometry.pipe, material = zircaloy4, criterion = von_mises, fatigue = true, thermal_expansion = true, map = surface_to_mesh, export_json = true, export_tsv = true, export_vtk_proxy = true)
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+[run]
+mode          = "relax"
+max_steps     = 1000
+dt_fs         = 0.2
+temperature_K = 973.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "pressure", "shear", "temperature", "decay_heat", "dose_proxy", "cavitation", "wall_stress", "dem_contacts", "fea_von_mises", "corrosion_proxy"]
+output_format = "json"
+every_n_steps = 50
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.tables]
+pressure_profile_tsv      = "reports/demo_19/pressure_profile.tsv"
+shear_profile_tsv         = "reports/demo_19/shear_profile.tsv"
+wall_stress_tsv           = "reports/demo_19/wall_stress.tsv"
+fea_von_mises_tsv         = "reports/demo_19/fea_von_mises.tsv"
+dem_contacts_tsv          = "reports/demo_19/dem_contacts.tsv"
+cavitation_events_tsv     = "reports/demo_19/cavitation_events.tsv"
+residence_histogram_tsv   = "reports/demo_19/wall_residence_histogram.tsv"
+erosion_proxy_tsv         = "reports/demo_19/erosion_proxy.tsv"
+decay_heat_tsv            = "reports/demo_19/decay_heat_proxy.tsv"
+dose_proxy_tsv            = "reports/demo_19/dose_proxy.tsv"
+corrosion_proxy_tsv       = "reports/demo_19/corrosion_activation_proxy.tsv"
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_19/
+
+[visual]
+output_type              = "gl_interactive"
+animation_mode           = "none"
+show_convergence_trace   = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1440
+gl_window_height         = 900
+render_interval          = 10
+
+[open]
+enabled = false

@@ -1,0 +1,615 @@
+% ============================================================================
+%  section_ikk_kernel_bridge.tex
+%
+%  IKK Theory to VSIM Kernel Bridge
+%  Mapping the Inverse Kaluza-Klein Scale-Symmetry Framework
+%  onto the VSEPR-SIM IDENTITY layer
+%
+%  Theory basis:  IKK_Doc_I_Schrodinger_Alternative.tex  (Doc I)
+%                 IKK_Doc_II_Initial_Draft.tex            (Doc II)
+%                 IKK_Doc_III_Kernel_V4_Projection.tex    (Doc III)
+%
+%  Code targets:  include/IDENTITY/identity_matrix.hpp
+%                 include/IDENTITY/particle_identity.hpp
+%                 include/IDENTITY/interaction_channel.hpp
+%                 include/IDENTITY/interaction_candidate.hpp
+%
+%  Compile:  pdflatex section_ikk_kernel_bridge.tex  (run twice for TOC)
+%
+%  v5.2.0  |  WO-SM-IDENTITY  |  v5.0.0-main
+% ============================================================================
+
+\documentclass[11pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+			headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+\usepackage{physics}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black,
+			urlcolor=blue]{hyperref}
+
+% --- Code style --------------------------------------------------------------
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  numberstyle=\tiny\color{codegray},
+  numbers=left, numbersep=6pt,
+  breaklines=true, frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b, showstringspaces=false,
+  tabsize=2,
+  language=C++
+}
+
+% --- Math operators ----------------------------------------------------------
+\newcommand{\Id}{\mathcal{I}}
+\newcommand{\Anch}{\mathcal{A}}
+\newcommand{\Proj}{P}
+\newcommand{\Res}{\mathcal{R}}
+\newcommand{\Pack}{\Pi}
+\newcommand{\Scale}{S}
+
+% --- Page style --------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{IKK $\to$ VSIM Kernel Bridge}}
+\fancyhead[R]{\small\textit{VSEPR-SIM v5.2.0 / IDENTITY layer}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\Huge\bfseries IKK Theory $\to$ VSIM Kernel Bridge\par}
+  \vspace{0.8cm}
+  {\Large Mapping Inverse Kaluza-Klein Scale Symmetry\\[0.3em]
+  onto the VSEPR-SIM Identity Layer\par}
+  \vspace{1.5cm}
+  {\normalsize
+	This document is the formal bridge between the Inverse Kaluza-Klein (IKK)
+	theoretical framework (Documents I--III) and the \texttt{IDENTITY/} header
+	library in VSEPR-SIM v5.2.0.  Each theoretical construct is mapped to its
+	direct C++ counterpart, with design rationale and the specific open variables
+	that remain formally undetermined.
+  \par}
+  \vspace{1.5cm}
+  {\large VSEPR-SIM Theoretical Division\par}
+  \vspace{0.3cm}
+  {\large v5.2.0 --- WO-SM-IDENTITY\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\section{Overview and Purpose}
+% ============================================================================
+
+The Inverse Kaluza-Klein (IKK) framework (Doc I) proposes that the standard
+quantum wavefunction $\Psi(\mathbf{r}, t)$ is a \emph{scale-projected shadow}
+of a fuller identity structure $\Id$ defined over a scale ladder
+$\{S_0, S_1, \ldots, S_D\}$.  The observed 3D spatial behaviour is the
+$S_3$-level projection; corrections at higher scales produce residuals that
+connect to dark-sector and quantum-gravity phenomenology.
+
+VSEPR-SIM does not implement a wavefunction.  It is a deterministic atomistic
+simulation engine.  The IKK framework provides three tools directly applicable
+to the VSIM kernel at the subatomic annotation layer:
+
+\begin{enumerate}
+  \item \textbf{Scale ladder} --- a principled way to label which interactions
+	are active for each particle type (IKK Doc I \S2, Doc II \S B).
+  \item \textbf{Hidden-active condition} --- detection of particles whose
+	net-zero observable channel conceals nonzero internal structure
+	(IKK Doc I \S3.3, Doc II \S D).
+  \item \textbf{Identity anchor and fuzz} --- the weighted center of an
+	identity bundle and its spatial spread (IKK Doc I \S2.2--2.3).
+\end{enumerate}
+
+The SM-channel identity layer (\texttt{include/IDENTITY/}) is the correct
+integration point for all three.  The Bridge65 gate remains in force:
+subatomic energy-regime activation requires its own work order.  The IKK
+additions are \emph{annotation enrichments} only --- they do not modify
+classical MD positions or forces.
+
+% ============================================================================
+\section{Scale Ladder Mapping}
+% ============================================================================
+
+\subsection{IKK Scale Ladder (Doc I \S2.1, Doc II \S B)}
+
+\begin{table}[h]
+  \centering
+  \begin{tabularx}{\linewidth}{c l l l l}
+	\toprule
+	$S_n$ & IKK DOF & Mediator & Obs.\ limit & VSIM interpretation \\
+	\midrule
+	$S_0$ & Binary existence $E\in\{0,1\}$ & --- & Planck & Particle exists in plasma \\
+	$S_1$ & Linear vector & --- & Sub-nuclear & Reserved (not yet used) \\
+	$S_2$ & Relational / angular & Gluon & Nuclear ($\sim$1 fm) & Color charge, Cornell force \\
+	$S_3$ & Spatial / binding & Photon & Atomic ($\sim$1 \AA) & EM channel, Coulomb \\
+	$S_4$ & Time-ordered & $W, Z$ bosons & $\sim10^{-18}$ m & Weak channel (reserved) \\
+	$S_5$ & Mass-energy curvature & Graviton & Cosmological & Not modeled \\
+	$S_D$ & Dark-scale & $X_D$ (unknown) & $> L_\text{EM}$ & Not modeled \\
+	\bottomrule
+  \end{tabularx}
+  \caption{IKK scale ladder mapped to VSIM particle annotations.}
+  \label{tab:scale-ladder}
+\end{table}
+
+\subsection{C++ Implementation: \texttt{ScaleLevel} and \texttt{scale\_mask}}
+
+\begin{lstlisting}[caption={ScaleLevel enum and helpers in identity\_matrix.hpp}]
+enum class ScaleLevel : uint8_t {
+	S0 = 0,  // existence
+	S1 = 1,  // vector (reserved)
+	S2 = 2,  // color/gluon
+	S3 = 3,  // EM/spatial
+	S4 = 4,  // weak/time-ordered
+	S5 = 5,  // curvature (not modeled)
+	SD = 6,  // dark (not modeled)
+};
+
+inline constexpr uint8_t scale_bit(ScaleLevel s) noexcept { ... }
+inline bool scale_active(uint8_t mask, ScaleLevel s) noexcept { ... }
+\end{lstlisting}
+
+Each \texttt{ParticleIdentity} carries a \texttt{scale\_mask} bitmask.  The
+convenience constructors set defaults reflecting physics:
+
+\begin{center}
+  \begin{tabular}{l l}
+	\toprule
+	Particle archetype & \texttt{scale\_mask} bits \\
+	\midrule
+	Electron / positron & $S_0 + S_3 + S_4$ (EM + weak) \\
+	Quark               & $S_0 + S_2 + S_3$ (color + EM) \\
+	\bottomrule
+  \end{tabular}
+\end{center}
+
+% ============================================================================
+\section{Identity Bundle and Anchor}
+% ============================================================================
+
+\subsection{IKK Theory (Doc I \S2.2)}
+
+A particle is an identity bundle:
+\begin{equation}
+  \Id_i(t) = \{c_{i1}, c_{i2}, \ldots, c_{im}\}
+\end{equation}
+with identity anchor:
+\begin{equation}
+  \Anch_i(t)
+  = \frac{\sum_k \alpha_{ik}\, c_{ik}(t)}{\sum_k \alpha_{ik}}
+  \label{eq:anchor}
+\end{equation}
+and fuzz radius:
+\begin{equation}
+  r_f^2
+  = \frac{\sum_k \alpha_k \left\|P_{3D}(c_k) - \vec{r}^{\,\text{obs}}\right\|^2}
+		 {\sum_k \alpha_k}
+  \label{eq:fuzz}
+\end{equation}
+
+The fuzz ratio:
+\begin{equation}
+  \Phi_S = \frac{r_f}{\ell_S}
+  \qquad
+  \Phi_S \ll 1 \implies \text{point-like at scale } S
+\end{equation}
+
+\subsection{VSIM Mapping}
+
+VSIM particles are point-like at $S_3$ (classical MD positions are exact).
+The \texttt{r\_fuzz} field on \texttt{ParticleIdentity} stores a caller-updated
+dimensionless spread proxy that can be populated when the particle is
+participating in a QGP substep or a pair interaction with significant kinematic
+spread.  The \texttt{fuzz\_ratio()} helper in \texttt{identity\_matrix.hpp}
+converts this to the IKK $\Phi_S$ value.
+
+\begin{lstlisting}[caption={fuzz\_ratio() in identity\_matrix.hpp}]
+// Phi_S = r_fuzz / ell_S
+inline double fuzz_ratio(double r_fuzz, ScaleLevel s,
+						 double ell_S3_ang = 1.0,
+						 double ell_S2_fm  = 1.0e-5);
+\end{lstlisting}
+
+\begin{remark}
+  The IKK identity anchor~(\ref{eq:anchor}) is a weighted mean of multi-channel
+  component values, not a simple 3D position.  In VSIM the 3D position is held
+  by the classical MD layer (\texttt{QCDParticle::pos}); the identity anchor is
+  the abstract center of the \emph{annotation} layer and is not directly
+  observable.  The two are related by $\vec{r}^{\,\text{obs}} = P_{3D}(\Anch_i)$.
+\end{remark}
+
+% ============================================================================
+\section{Hidden-Active Condition}
+% ============================================================================
+
+\subsection{Theory (Doc I \S3.3, Doc II \S D)}
+
+For a component vector $\mathbf{c}_j \in \mathbb{R}^m$ with projection
+weight $\bm{\alpha}$ and weight matrix $\mathbf{W} \succeq 0$:
+\begin{align}
+  I_j &= \bm{\alpha}^\top \mathbf{c}_j \label{eq:observable} \\
+  H_j &= \mathbf{c}_j^\top \mathbf{W}\, \mathbf{c}_j \label{eq:hidden}
+\end{align}
+
+The \textbf{hidden-active condition}:
+\begin{equation}
+  \boxed{I_j = 0, \quad H_j > 0}
+  \label{eq:hidden-active}
+\end{equation}
+
+\textbf{Canonical example: neutron-like charge balance.}\\
+A neutral baryon composed of (up, down, down) quarks has:
+\begin{align}
+  I_\text{charge}
+	&= +\tfrac{2}{3} - \tfrac{1}{3} - \tfrac{1}{3} = 0 \label{eq:neutron-Ij} \\
+  H_\text{charge}
+	&= \left(\tfrac{2}{3}\right)^2
+	 + \left(\tfrac{1}{3}\right)^2
+	 + \left(\tfrac{1}{3}\right)^2
+	 = \tfrac{2}{3} \neq 0 \label{eq:neutron-Hj}
+\end{align}
+
+The particle is charge-neutral at the $K_\text{EM}$ projection level but
+carries nonzero internal charge intensity visible to higher-scale projections.
+This is not an approximation; it is a structural consequence of packing.
+
+\subsection{VSIM Implementation}
+
+Three hidden-intensity channels are tracked per \texttt{ParticleIdentity}:
+
+\begin{lstlisting}[caption={Hidden intensity fields in particle\_identity.hpp}]
+double H_charge {0.0};   // hidden charge intensity  H = sum q_k^2
+double H_color  {0.0};   // hidden color intensity
+double H_spin   {0.0};   // hidden spin intensity
+\end{lstlisting}
+
+The method \texttt{compute\_hidden\_intensity()} populates all three using the
+single-particle or quark-triplet proxy:
+
+\begin{lstlisting}[caption={compute\_hidden\_intensity() key logic}]
+// H_charge for elementary particle: H = q^2
+// H_charge for baryon proxy (isospin bookkeeping):
+//   n_up * (2/3)^2 + n_down * (1/3)^2
+void compute_hidden_intensity() noexcept;
+
+// Query: net-zero charge but H_charge > 0?
+bool hidden_active_charge(double tol = 1e-9) const noexcept;
+\end{lstlisting}
+
+\texttt{evaluate\_pair()} in \texttt{interaction\_candidate.hpp} populates the
+hidden-active flags for each member of the pair:
+
+\begin{center}
+  \begin{tabular}{l l}
+	\toprule
+	Flag & Meaning \\
+	\midrule
+	\texttt{a\_hidden\_active\_charge} & particle $a$: $I_\text{charge}=0$, $H_\text{charge}>0$ \\
+	\texttt{b\_hidden\_active\_charge} & particle $b$ \\
+	\texttt{a\_hidden\_active\_color}  & particle $a$: color-neutral but $H_\text{color}>0$ \\
+	\texttt{b\_hidden\_active\_color}  & particle $b$ \\
+	\texttt{pair\_has\_hidden\_charge\_activity} & logical OR of the charge flags \\
+	\bottomrule
+  \end{tabular}
+\end{center}
+
+These flags are available to the live event logger and to any future kernel
+that needs to distinguish a ``truly neutral'' particle from a
+``net-zero-but-internally-structured'' one.
+
+% ============================================================================
+\section{Matrix Packing Chain}
+% ============================================================================
+
+\subsection{IKK Theory (Doc II \S C)}
+
+The quark component matrix:
+\begin{equation}
+  \mathbf{C}_q =
+  \begin{bmatrix}
+	q_1 & c_1 & \eta_1 \\
+	q_2 & c_2 & \eta_2 \\
+	q_3 & c_3 & \eta_3
+  \end{bmatrix}
+  \in \mathbb{R}^{3\times 3}
+  \qquad \text{(charge, color, helicity columns)}
+\end{equation}
+
+packed to particle identity row-vector:
+\begin{equation}
+  \mathbf{I}_p = \Pack_q(\mathbf{C}_q) \in \mathbb{R}^{1\times 3}
+  \qquad [Q_p,\; M_p,\; S_p]
+\end{equation}
+
+The recursive packing ladder (Doc II eq.\ C.4):
+\begin{equation}
+  \underbrace{\text{quarks}}_{S_2}
+  \xrightarrow{\Pack_2}
+  \underbrace{\text{particles}}_{S_3}
+  \xrightarrow{\Pack_3}
+  \underbrace{\text{atoms}}_{S_3}
+  \xrightarrow{\Pack_3}
+  \underbrace{\text{molecules}}_{S_3}
+  \xrightarrow{\Pack_4}
+  \underbrace{\text{materials}}_{S_4}
+\end{equation}
+
+\subsection{VSIM Mapping}
+
+The $3\times 3$ component matrix $\mathbf{C}_q$ corresponds to the
+\texttt{Z3} field of \texttt{ParticleIdentity}.  For quarks, the three rows
+hold one quark each; for mesons or baryons, the whole structure represents
+the internal composition.  At present \texttt{Z3} is initialised to the
+identity matrix; the packing operator $\Pack_q$ is a future kernel.
+
+The entropy and complexity measures (Doc II \S C.3--C.4):
+\begin{align}
+  \mathcal{S}_n &= k_B \ln \Omega(\mathbf{I}^{(n)}) \\
+  \mathcal{C}_n &= f(\mathbf{I}^{(n+1)},\, \Res_n)
+\end{align}
+are not yet computed; they appear as open variables in the kernel
+development roadmap.
+
+% ============================================================================
+\section{Hidden Intensity: $Z_2$ and $Z_3$ as Inner-Structure Proxies}
+% ============================================================================
+
+The two $Z$-matrices in \texttt{ParticleIdentity} encode the particle's
+field configuration at two resolutions:
+
+\begin{center}
+  \begin{tabular}{l l l}
+	\toprule
+	Matrix & IKK analog & Current role \\
+	\midrule
+	\texttt{Z2} ($2\times 2$) & Runtime identity state & kappa\_Z (2x2 opposition) \\
+	\texttt{Z3} ($3\times 3$) & Component packing matrix $\mathbf{C}_q$ & Future packing kernel \\
+	\bottomrule
+  \end{tabular}
+\end{center}
+
+The \texttt{opposition()} function on \texttt{Z2} matrices produces
+\texttt{kappa\_Z}, the leading term in the weighted kappa\_total:
+\begin{equation}
+  \kappa_Z = 1 - \frac{\langle Z_2^{(a)}, Z_2^{(b)}\rangle_F}
+					  {\|Z_2^{(a)}\|_F \|Z_2^{(b)}\|_F + \varepsilon}
+\end{equation}
+This is the most direct numerical realisation of the IKK hidden-structure
+opposition concept at the 2D identity level.
+
+The weight $w_Z = 0.40$ (40\% of kappa\_total) reflects the design choice
+that internal-structure opposition is the dominant interaction discriminator.
+
+% ============================================================================
+\section{Dark-Scale Residual and Open Variables}
+% ============================================================================
+
+The IKK dark-sector equations (Doc I \S6, Doc II \S E) define:
+\begin{equation}
+  \rho_\text{dark}(x,y,z;\,t)
+  = \int \rho(x,y,z,w;\,t)
+	\bigl[K_G(w) - K_\text{EM}(w)\bigr]\, dw
+\end{equation}
+
+\textbf{VSIM status:} The dark coordinate $w$ and both projection kernels
+$K_G$, $K_\text{EM}$ are open variables (Doc II open-variable register
+\S J).  The \texttt{scale\_mask} field with bit $S_D = 6$ is the forward
+compatibility hook; no dark-scale force or density computation is active.
+
+A reference C++ implementation of \texttt{dark\_density\_residual()} using
+trapezoidal integration over a $w$-grid appears in Doc II \S I (C++ code
+section) and in the \texttt{ikk::} namespace sketch distributed alongside
+that document.
+
+% ============================================================================
+\section{Projection Failure and State Loss}
+% ============================================================================
+
+IKK Doc I \S4 establishes that when projection $P_S$ is non-injective,
+exact reconstruction is impossible.  The VSIM \texttt{I\_recoverable} field
+tracks the recoverable fraction of the identity state after each interaction:
+
+\begin{align}
+  \Delta I   &= I_\text{out} - I_\text{in}   \quad\text{(signed change)} \\
+  L_{ij}     &= -\Delta I                    \quad\text{(state loss, } \geq 0\text{)}
+\end{align}
+
+State loss $L_{ij} > 0$ corresponds to IKK \emph{destructive inverse packing}:
+information available at the higher scale ($\Id$) is not recovered at the
+lower projection ($\mathcal{O}_{S_3}$).  The annihilation gate requires
+$L_{ij} > L_\text{ann}$ (default 0.50) to confirm a full annihilation event.
+
+\begin{remark}
+  The IKK framework connects this to the quantum no-cloning theorem and
+  to the irreversibility of measurement.  In VSIM this is operationalised
+  as an interaction-record bookkeeping quantity, not a wavefunction collapse.
+\end{remark}
+
+% ============================================================================
+\section{Relation-Particle and Entanglement}
+% ============================================================================
+
+IKK Doc I \S5 / Doc II \S G defines the relation-particle object:
+\begin{equation}
+  \mathcal{R}_{AB}
+  = \bigl[0,\; 0,\; 0,\; 0 \mid \mathbf{T}_{AB}\bigr]
+  \qquad
+  \mathbf{T}_{AB} \in \{-1,\, 0,\, +1\}^m
+\end{equation}
+
+$\mathcal{R}_{AB}$ is a real, deterministic, non-spatiotemporal structure.
+Measurement at $A$ and at $B$ both read the same relation; no signal travels.
+
+\textbf{VSIM status:} The trinary vector $\mathbf{T}_{AB}$ and its dynamics
+are open variables.  The \texttt{InteractionCandidate} struct is the natural
+carrier for a relation-particle record when this is implemented; the
+\texttt{pair\_has\_hidden\_charge\_activity} flag is the first step toward
+identifying pairs that would carry a non-trivial $\mathbf{T}_{AB}$.
+
+% ============================================================================
+\section{Effective Proper Time}
+% ============================================================================
+
+The IKK extended proper-time element (Doc I \S7, Doc II \S F):
+\begin{equation}
+  d\tau_\text{eff}
+  = dt\sqrt{1 - \frac{v^2}{c^2} + \frac{2\Phi_G}{c^2} + \chi_w(w)}
+\end{equation}
+
+reduces to standard SR proper time when $\chi_w = 0$.
+
+\textbf{VSIM status:} VSIM is a classical MD engine.  No relativistic proper
+time is computed.  The $T_A|B$ dual-timescale architecture (WO-63A) provides
+an operational time-dilation analog for QCD substeps ($\tau_\text{scale}$),
+but this is a scale-bridging approximation, not the IKK dark-scale correction.
+The \texttt{scale\_mask} bit $S_4$ (weak / time-ordered) is the forward
+hook for proper-time corrections if the engine is ever extended to
+relativistic integration.
+
+% ============================================================================
+\section{Code Reference: Files and Namespaces}
+% ============================================================================
+
+\begin{center}
+  \begin{tabularx}{\linewidth}{l X}
+	\toprule
+	File & IKK concept implemented \\
+	\midrule
+	\texttt{include/IDENTITY/identity\_matrix.hpp}
+	  & \texttt{ScaleLevel}, \texttt{scale\_bit/active}, \texttt{fuzz\_ratio()},
+		\texttt{hidden\_intensity\_diagonal()}, \texttt{quark\_charge\_hidden\_intensity()} \\
+	\texttt{include/IDENTITY/particle\_identity.hpp}
+	  & \texttt{ParticleIdentity}: \texttt{scale\_mask}, \texttt{r\_fuzz},
+		\texttt{H\_charge/color/spin}, \texttt{compute\_hidden\_intensity()},
+		\texttt{hidden\_active\_charge()} \\
+	\texttt{include/IDENTITY/interaction\_channel.hpp}
+	  & Conservation gates $G_E \cdots G_s$, kappa scoring,
+		nine-channel row \\
+	\texttt{include/IDENTITY/interaction\_candidate.hpp}
+	  & \texttt{evaluate\_pair()}: hidden-active flags
+		\texttt{a/b\_hidden\_active\_charge/color},
+		\texttt{pair\_has\_hidden\_charge\_activity} \\
+	\texttt{include/IDENTITY/identity.hpp}
+	  & Umbrella header \\
+	\texttt{include/COLLISION/qcd\_force.hpp}
+	  & \texttt{qcd\_accumulate\_forces\_sm()}: SM-gated Cornell wrapper \\
+	\texttt{include/IKK/kernel\_v4.hpp}
+	  & \texttt{ikk::KernelV4}: two-channel bilinear projection (Doc III);
+		\texttt{ikk::KernelV4Multi<N\_CHAN,N\_STATE>}: generalised engine;
+		\texttt{ikk::mixing\_matrix\_2ch()}: standard $\mathbf{M}_2$ \\
+	\bottomrule
+  \end{tabularx}
+\end{center}
+
+All \texttt{IDENTITY/} code is in the \texttt{vsepr::identity} namespace.
+The bilinear projection kernel lives in the \texttt{ikk::} namespace
+(\texttt{include/IKK/kernel\_v4.hpp}), separate from the identity layer,
+to keep the radial-density engine independent of particle bookkeeping.
+
+% ============================================================================
+\section{Open Variables Register (VSIM perspective)}
+% ============================================================================
+
+\begin{table}[h]
+  \centering
+  \begin{tabularx}{\linewidth}{l l X}
+	\toprule
+	Variable & IKK source & VSIM status \\
+	\midrule
+	$\chi_w(w)$ & Doc I \S7 / Doc II F.5
+	  & Dark-scale metric correction. Not modeled. \texttt{scale\_mask} $S_D$ is the hook. \\
+	$K_G(w),\, K_\text{EM}(w)$ & Doc I \S6 / Doc II E.3
+	  & Projection kernels. C++ skeleton in Doc II \S I. Not active. \\
+	$\Pack_n$ & Doc II B.3
+	  & Packing operator. \texttt{Z3} is the target matrix. Axiom only. \\
+	$\mathbf{T}_{AB}$ & Doc II G.2
+	  & Trinary relation vector. \texttt{InteractionCandidate} is the carrier. Not computed. \\
+	$\mathbf{W}$ & Doc II D.3
+	  & Hidden-intensity weight matrix. Diagonal $\mathbf{W}=\mathbf{I}$ assumed currently. \\
+	$\hat{H}_w$ & Doc I \S3.2
+	  & Dark-scale Hamiltonian. No quantitative predictions without this. \\
+	$\mathcal{S}_n,\, \mathcal{C}_n$ & Doc II C.3--C.4
+	  & Packing entropy and complexity. Roadmap item. \\
+	\bottomrule
+  \end{tabularx}
+  \caption{Open variables from IKK theory and their VSIM status.}
+  \label{tab:open-vars}
+\end{table}
+
+% ============================================================================
+\section{Summary}
+% ============================================================================
+
+The IKK scale-symmetry framework provides the VSEPR-SIM IDENTITY layer with:
+
+\begin{enumerate}
+  \item A principled scale-ladder labeling system (\texttt{ScaleLevel} enum,
+	\texttt{scale\_mask} bitmask) that connects VSIM particle types to their
+	active force channels.
+  \item The hidden-active condition ($I_j=0$, $H_j>0$) implemented as
+	\texttt{H\_charge/color/spin} fields, \texttt{compute\_hidden\_intensity()},
+	and hidden-active flags on \texttt{InteractionCandidate}.
+  \item The fuzz proxy (\texttt{r\_fuzz}) and \texttt{fuzz\_ratio()} helper
+	that operationalise $\Phi_S = r_f / \ell_S$ for future spatial-spread tracking.
+  \item The quark-component-matrix slot (\texttt{Z3}) as the target for the
+	future packing operator $\Pack_2$.
+  \item A documented open-variable register linking every undefined IKK quantity
+	to the VSIM code location where it will eventually be implemented.
+\end{enumerate}
+
+The bridge does not modify the classical MD layer.  All additions are
+annotation-only and live entirely within the \texttt{vsepr::identity}
+namespace, respecting the Bridge65 separation doctrine.
+
+% ============================================================================
+\section*{Reading Path}
+% ============================================================================
+
+\begin{enumerate}
+  \item \textbf{IKK Doc I} --- theoretical foundation and Schr\"{o}dinger alternative
+  \item \textbf{IKK Doc II} --- scale axioms, matrix packing chain, hidden intensity,
+		dark matter kernel equations, Python and C++ prototypes
+  \item \textbf{IKK Doc III} --- Kernel V4 bilinear projection form
+  \item \textbf{section\_sm\_identity\_layer} --- full SM-channel IDENTITY layer
+		documentation (conservation gates, $\kappa_\text{total}$, $\Delta I$,
+		live event types)
+  \item \textbf{This document} --- IKK $\to$ VSIM kernel mapping
+\end{enumerate}
+
+\end{document}

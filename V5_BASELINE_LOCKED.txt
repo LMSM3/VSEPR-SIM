@@ -1,0 +1,4 @@
+﻿VSEPR-SIM v5.16.0 immutable baseline.
+Do not modify.
+Source branch: day84t-chemplus-declarative-vsepr
+Created for V6 Alpha migration and regression comparison.

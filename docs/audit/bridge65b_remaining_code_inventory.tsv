@@ -1,0 +1,21 @@
+Module/File	Purpose	Current Status	Formation Link	Defect Link	Output Link	Verdict	Action
+include/kernel/kernel_event.hpp (FormationEvent)	Defines FormationEvent struct with FIRE fields	Active	DIRECT - struct definition	NONE - no DefectEvent child link	Via KernelEventLog	KEEP	No change needed
+include/kernel/kernel_event.hpp (DefectEvent)	Defines DefectEvent with DefectType enum	Active (header only)	NONE - not linked to FormationEvent	DIRECT - struct definition	NONE - never emitted	WIRE	Wire emission from sim_lattice and MD analysis path
+include/kernel/kernel_event_log.hpp	Append-only event registry for all KernelEvent types	Active	YES - push(FormationEvent)	PARTIAL - push() exists but never called with DefectEvent	Via export path	KEEP	Add defect push path
+include/mission/sim_lattice.hpp	Lattice defect model - Defect, LatticeSite, LatticeState structs	Active	NONE - no FormationEvent link	PARTIAL - Defect struct rich, not wired to log	NONE - no JSONL/TSV output	WIRE	Connect to KernelEventLog DefectEvent emission
+include/physics/particle_id.hpp	ParticleID reserved ladder with vacancy/interstitial codes	Active	NONE	YES - defines defect type tokens	NONE	KEEP	No change needed
+src/sim/optimizer.cpp	FIRE relaxation - emits FormationEvent on exit	Active	DIRECT - emits FormationEvent	NONE	Via KernelEventLog	KEEP	Could add defect count field to FormationEvent
+src/cli/cmd_run_vsim.cpp	CLI runner - wires source_formula into FormationEvent	Active	YES - wires formation	NONE	YES - routes to log	KEEP	No change needed
+src/vsim/node_accessor.cpp	Reads KernelEventLog for export	Active	YES - reads FormationEvent	NONE - no DefectEvent read path	YES - formation exported	PATCH	Add DefectEvent read and JSONL/TSV export path
+src/core/report_engine.cpp	Core report engine	Active	PARTIAL - formation section	NONE - no defect section	YES - report output	PATCH	Add defect section to report template
+src/ufx_auto2/material_generator.cpp	Offline material property generator	Fetcher only	NONE	NONE	NONE - fetcher output only	ARCHIVE	Not connected to runtime; archive pending review
+src/ufx_auto2/materials_project_fetcher.cpp	Materials Project API fetcher	Fetcher only	NONE	NONE	NONE	ARCHIVE	Not connected to runtime; archive pending review
+tests/test_formation_event_wiring.cpp	5 acceptance tests for FIRE→FormationEvent path	Active - compiled	YES - full coverage	NONE	NONE	KEEP	No change needed
+tests/test_formation_regimes_suite4.cpp	Suite 4 formation regime regression	Active - compiled	YES - regime coverage	NONE	NONE	KEEP	No change needed
+tests/test_formation_report.cpp	Formation report integration test	Active - compiled	YES	NONE	PARTIAL	KEEP	Extend with defect section when P3 complete
+include/core/report_engine.hpp	Report engine interface	Active	PARTIAL	NONE - no defect section defined	YES	PATCH	Add defect_events section to report schema
+include/core/reported_quantity.hpp	Typed reported quantity container	Active	YES	NONE	YES	KEEP	No change needed
+data/elements.empirical.json	Frozen empirical atomic data (v5.1.13)	Active - frozen	NONE	NONE	YES	KEEP	No change needed - frozen
+data/bridge65.force_matrix.json	Bridge65 force matrix seed (WO-BRIDGE-65)	Active	NONE	NONE	YES	KEEP	New artifact - correct
+data/bridge65.validation_cases.json	Bridge65 validation cases (WO-BRIDGE-65)	Active	NONE	NONE	YES	KEEP	New artifact - correct
+data/bridge65.material_seed_cases.json	Bridge65 material seeds (WO-BRIDGE-65)	Active	NONE	NONE	YES	KEEP	New artifact - correct

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas_module.cpp
  * --------------
  * Implementation of gas-phase simulation and analysis module.
@@ -30,7 +30,7 @@ GasProperties compute_properties(const std::string& formula,
     // Molar mass lookup
     auto it_mm = gas_molar_mass().find(formula);
     if (it_mm != gas_molar_mass().end()) {
-        gp.molar_mass_kg = it_mm->second / 1000.0;  // g/mol → kg/mol
+        gp.molar_mass_kg = it_mm->second / 1000.0;  // g/mol -> kg/mol
     } else {
         // Fallback: assume 28 g/mol (N2-like)
         gp.molar_mass_kg = 0.028;
@@ -125,7 +125,7 @@ std::string format_speed_histogram(const std::vector<VelocitySample>& samples,
 
         ss << "  " << std::setw(6) << static_cast<int>(lo) << "-"
            << std::setw(6) << static_cast<int>(hi) << " |";
-        for (int j = 0; j < bar_len; ++j) ss << "█";
+        for (int j = 0; j < bar_len; ++j) ss << "#";
         ss << " " << counts[i] << "\n";
     }
 
@@ -149,8 +149,8 @@ std::string format_speed_histogram(const std::vector<VelocitySample>& samples,
 
 static void show_gas_help() {
     std::cout << R"(
-GAS MODULE — Gas-Phase Simulation and Analysis
-═══════════════════════════════════════════════
+GAS MODULE  -  Gas-Phase Simulation and Analysis
+===============================================
 
 USAGE:
     vsepr gas <command> [options]
@@ -263,9 +263,9 @@ int gas_dispatch(int argc, char** argv) {
         auto samples = sample_maxwell_boltzmann(T, M, count, seed);
 
         std::cout << "\033[1;35m"
-                  << "╔════════════════════════════════════════════════════════════════╗\n"
-                  << "║  Maxwell-Boltzmann Velocity Sampling                          ║\n"
-                  << "╚════════════════════════════════════════════════════════════════╝\n"
+                  << "+================================================================+\n"
+                  << "|  Maxwell-Boltzmann Velocity Sampling                          |\n"
+                  << "+================================================================+\n"
                   << "\033[0m\n";
         std::cout << "  Formula:     " << formula << "\n";
         std::cout << "  Temperature: " << T << " K\n";

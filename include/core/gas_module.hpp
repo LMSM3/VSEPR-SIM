@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas_module.hpp
  * --------------
  * Dedicated Gas-Phase Simulation and Analysis Module.
@@ -44,7 +44,7 @@ constexpr double amu_to_kg   = 1.66053906660e-27; // kg/amu
 
 // ============================================================================
 // Van der Waals parameters (a in Pa·m^6/mol^2, b in m^3/mol)
-// Common gases — from NIST
+// Common gases  -  from NIST
 // ============================================================================
 
 struct VdWParams {
@@ -123,26 +123,26 @@ struct GasProperties {
     std::string format_report() const {
         std::ostringstream ss;
         ss << std::fixed << std::setprecision(4);
-        ss << "╔════════════════════════════════════════════════════════════════╗\n";
-        ss << "║  Gas Properties: " << std::setw(45) << std::left << formula << "║\n";
-        ss << "╠════════════════════════════════════════════════════════════════╣\n";
-        ss << "║  Temperature:          " << std::setw(12) << temperature_K << " K" << std::string(25, ' ') << "║\n";
-        ss << "║  Pressure:             " << std::setw(12) << (pressure_Pa / atm_to_Pa) << " atm" << std::string(23, ' ') << "║\n";
-        ss << "║  Moles:                " << std::setw(12) << moles << " mol" << std::string(23, ' ') << "║\n";
-        ss << "║  Molar mass:           " << std::setw(12) << (molar_mass_kg * 1000.0) << " g/mol" << std::string(21, ' ') << "║\n";
-        ss << "╠════════════════════════════════════════════════════════════════╣\n";
-        ss << "║  Ideal Volume:         " << std::setw(12) << (ideal_volume_m3 * 1000.0) << " L" << std::string(25, ' ') << "║\n";
+        ss << "+================================================================+\n";
+        ss << "|  Gas Properties: " << std::setw(45) << std::left << formula << "|\n";
+        ss << "╠================================================================╣\n";
+        ss << "|  Temperature:          " << std::setw(12) << temperature_K << " K" << std::string(25, ' ') << "|\n";
+        ss << "|  Pressure:             " << std::setw(12) << (pressure_Pa / atm_to_Pa) << " atm" << std::string(23, ' ') << "|\n";
+        ss << "|  Moles:                " << std::setw(12) << moles << " mol" << std::string(23, ' ') << "|\n";
+        ss << "|  Molar mass:           " << std::setw(12) << (molar_mass_kg * 1000.0) << " g/mol" << std::string(21, ' ') << "|\n";
+        ss << "╠================================================================╣\n";
+        ss << "|  Ideal Volume:         " << std::setw(12) << (ideal_volume_m3 * 1000.0) << " L" << std::string(25, ' ') << "|\n";
         if (has_vdw) {
-            ss << "║  VdW Volume:           " << std::setw(12) << (vdw_volume_m3 * 1000.0) << " L" << std::string(25, ' ') << "║\n";
-            ss << "║  Compressibility Z:    " << std::setw(12) << compressibility_Z << std::string(27, ' ') << "║\n";
+            ss << "|  VdW Volume:           " << std::setw(12) << (vdw_volume_m3 * 1000.0) << " L" << std::string(25, ' ') << "|\n";
+            ss << "|  Compressibility Z:    " << std::setw(12) << compressibility_Z << std::string(27, ' ') << "|\n";
         }
-        ss << "╠════════════════════════════════════════════════════════════════╣\n";
-        ss << "║  RMS speed:            " << std::setw(12) << rms_speed_ms << " m/s" << std::string(23, ' ') << "║\n";
-        ss << "║  Mean speed:           " << std::setw(12) << mean_speed_ms << " m/s" << std::string(23, ' ') << "║\n";
-        ss << "║  Most probable speed:  " << std::setw(12) << most_probable_speed_ms << " m/s" << std::string(23, ' ') << "║\n";
-        ss << "║  Avg KE per molecule:  " << std::setw(12) << std::setprecision(6) << (avg_kinetic_energy_J / 1.602176634e-19) << " eV" << std::string(24, ' ') << "║\n";
-        ss << "║  Mean free path:       " << std::setw(12) << std::setprecision(4) << (mean_free_path_m * 1e9) << " nm" << std::string(24, ' ') << "║\n";
-        ss << "╚════════════════════════════════════════════════════════════════╝\n";
+        ss << "╠================================================================╣\n";
+        ss << "|  RMS speed:            " << std::setw(12) << rms_speed_ms << " m/s" << std::string(23, ' ') << "|\n";
+        ss << "|  Mean speed:           " << std::setw(12) << mean_speed_ms << " m/s" << std::string(23, ' ') << "|\n";
+        ss << "|  Most probable speed:  " << std::setw(12) << most_probable_speed_ms << " m/s" << std::string(23, ' ') << "|\n";
+        ss << "|  Avg KE per molecule:  " << std::setw(12) << std::setprecision(6) << (avg_kinetic_energy_J / 1.602176634e-19) << " eV" << std::string(24, ' ') << "|\n";
+        ss << "|  Mean free path:       " << std::setw(12) << std::setprecision(4) << (mean_free_path_m * 1e9) << " nm" << std::string(24, ' ') << "|\n";
+        ss << "+================================================================+\n";
         return ss.str();
     }
 };

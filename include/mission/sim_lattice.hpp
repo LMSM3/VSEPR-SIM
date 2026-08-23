@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * sim_lattice.hpp
  * ===============
- * V3 — Lattice
+ * V3  -  Lattice
  * Scale Mission: Particles, Clouds, Lattice, and Pipe Gas 3
  *
  * Periodic and quasi-periodic solid framework simulation.
@@ -33,10 +33,10 @@
  *   - thermal response map
  *
  * Integrates with:
- *   include/mission/mission_profile.hpp  — shared profile + entity layer
- *   include/data/Crystal.hpp            — Crystal, LatticeVectors, Atom
- *   include/physics/particle_id.hpp     — vacancy / interstitial codes
- *   include/identity/provenance_record.hpp — 3-tier hash audit
+ *   include/mission/mission_profile.hpp   -  shared profile + entity layer
+ *   include/data/Crystal.hpp             -  Crystal, LatticeVectors, Atom
+ *   include/physics/particle_id.hpp      -  vacancy / interstitial codes
+ *   include/identity/provenance_record.hpp  -  3-tier hash audit
  */
 
 #include "mission/mission_profile.hpp"
@@ -125,7 +125,7 @@ inline RuntimeProfile profile_for(MissionScale s) {
 }
 
 // ============================================================================
-// Defect record — typed using ParticleID reserved ladder
+// Defect record  -  typed using ParticleID reserved ladder
 // ============================================================================
 
 struct Defect {
@@ -155,7 +155,7 @@ struct Defect {
 struct LatticeSite {
     std::size_t           index;
     std::string           element;
-    std::array<double,3>  r_ideal;      // ideal position (Å, fractional → Cartesian)
+    std::array<double,3>  r_ideal;      // ideal position (Å, fractional -> Cartesian)
     std::array<double,3>  r_displaced;  // current displaced position (Å)
     double                u_rms;        // thermal root-mean-square displacement (Å)
     double                stress;       // local stress marker (GPa equivalent)
@@ -197,10 +197,10 @@ struct LatticeState {
 };
 
 // ============================================================================
-// Unit cell library — common reference structures
+// Unit cell library  -  common reference structures
 //
 // Returns the primitive unit cell for the named crystal.
-// Only lattice parameters and basis positions — no simulation logic.
+// Only lattice parameters and basis positions  -  no simulation logic.
 // ============================================================================
 
 struct UnitCellSpec {
@@ -274,7 +274,7 @@ inline LatticeState build_lattice(const UnitCellSpec& spec, std::size_t n = 1) {
     ls.cohesive_energy_eV = spec.cohesive_eV;
     ls.supercell_n = n;
 
-    // Cell vectors (orthogonal approximation — full triclinic trivially extensible)
+    // Cell vectors (orthogonal approximation  -  full triclinic trivially extensible)
     ls.cell.a = {static_cast<float>(spec.abc[0] * n), 0.0f, 0.0f};
     ls.cell.b = {0.0f, static_cast<float>(spec.abc[1] * n), 0.0f};
     ls.cell.c = {0.0f, 0.0f, static_cast<float>(spec.abc[2] * n)};
@@ -306,7 +306,7 @@ inline LatticeState build_lattice(const UnitCellSpec& spec, std::size_t n = 1) {
 }
 
 // ============================================================================
-// Thermal displacement channel — Debye model
+// Thermal displacement channel  -  Debye model
 //
 // u_rms = sqrt( (3 ħ²) / (m k_B θ_D) * D(θ_D/T) )
 // Here we use the high-T classical limit: u_rms = sqrt(3 k_B T / (m ω_D²))
@@ -340,7 +340,7 @@ inline void apply_thermal_displacement(LatticeState& ls) {
 // Contract:
 //   Required state: sites (must be non-empty)
 //   Writes:         sites[idx].occupied, defects list
-//   Topology-mutating: yes — rebuild neighbor graph after calling
+//   Topology-mutating: yes  -  rebuild neighbor graph after calling
 // ============================================================================
 
 inline void insert_vacancy(LatticeState& ls, std::size_t site_idx) {
@@ -352,7 +352,7 @@ inline void insert_vacancy(LatticeState& ls, std::size_t site_idx) {
     d.site_index  = site_idx;
     d.type        = physics::ParticleID::vacancy;
     d.element     = ls.sites[site_idx].element;
-    d.formation_energy_eV = 1.0; // placeholder — proper calculation is material-specific
+    d.formation_energy_eV = 1.0; // placeholder  -  proper calculation is material-specific
     ls.defects.push_back(d);
 }
 
@@ -384,7 +384,7 @@ inline void insert_interstitial(LatticeState& ls,
 }
 
 // ============================================================================
-// Stress accumulation channel — simple pairwise distance model
+// Stress accumulation channel  -  simple pairwise distance model
 //
 // For each site, sums signed deviation of neighbour distances from ideal.
 // Writes local stress marker to stress_field[i].
@@ -443,7 +443,7 @@ struct LatticeSystem {
 };
 
 // ============================================================================
-// Main run — deterministic lattice scheduler
+// Main run  -  deterministic lattice scheduler
 // ============================================================================
 
 inline MissionDeliverable run(LatticeSystem& sys) {
@@ -504,7 +504,7 @@ inline MissionDeliverable run(LatticeSystem& sys) {
 inline std::string report(const LatticeSystem& sys, const MissionDeliverable& d) {
     const auto& ls = sys.state;
     std::ostringstream o;
-    o << "\n  V3 Lattice — " << mission_scale_name(sys.profile.scale) << "\n";
+    o << "\n  V3 Lattice  -  " << mission_scale_name(sys.profile.scale) << "\n";
     o << "  " << std::string(60, '-') << "\n";
     o << "  Formula   : " << ls.formula << "  " << ls.spacegroup << "\n";
     o << "  Supercell : " << ls.supercell_n << "×" << ls.supercell_n

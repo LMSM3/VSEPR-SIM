@@ -1,5 +1,5 @@
-/**
- * test_unified_descriptor.cpp — Tests for Unified Descriptor Strategy
+﻿/**
+ * test_unified_descriptor.cpp  -  Tests for Unified Descriptor Strategy
  *
  * Validates the unified adaptive descriptor formalism:
  *   1. Single-channel initialization (low resolution)
@@ -7,13 +7,13 @@
  *   3. Resolution level classification
  *   4. Channel promotion (ℓ_max increase, coefficient preservation)
  *   5. Channel truncation (ℓ_max decrease)
- *   6. Channel activation (inactive → active)
+ *   6. Channel activation (inactive -> active)
  *   7. Reconstruction residual computation
  *   8. Residual-driven promotion recommendation
- *   9. Unified potential — isotropic (no channels)
- *  10. Unified potential — single channel (low resolution)
- *  11. Unified potential — multi-channel (high resolution)
- *  12. Consistency: same coefficients → same energy regardless of resolution path
+ *   9. Unified potential  -  isotropic (no channels)
+ *  10. Unified potential  -  single channel (low resolution)
+ *  11. Unified potential  -  multi-channel (high resolution)
+ *  12. Consistency: same coefficients -> same energy regardless of resolution path
  *  13. Conversion from legacy MultiChannelDescriptor
  *  14. Conversion from legacy SurfaceDescriptor
  *  15. Promotion preserves existing coefficients
@@ -94,17 +94,17 @@ static void test_resolution_classification() {
 
     using RL = coarse_grain::ResolutionLevel;
 
-    check(coarse_grain::classify_resolution(0) == RL::ISOTROPIC, "l_max=0 → ISOTROPIC");
-    check(coarse_grain::classify_resolution(1) == RL::AXIAL, "l_max=1 → AXIAL");
-    check(coarse_grain::classify_resolution(2) == RL::AXIAL, "l_max=2 → AXIAL");
-    check(coarse_grain::classify_resolution(3) == RL::MODERATE, "l_max=3 → MODERATE");
-    check(coarse_grain::classify_resolution(4) == RL::MODERATE, "l_max=4 → MODERATE");
-    check(coarse_grain::classify_resolution(6) == RL::ENRICHED, "l_max=6 → ENRICHED");
-    check(coarse_grain::classify_resolution(8) == RL::ENRICHED, "l_max=8 → ENRICHED");
+    check(coarse_grain::classify_resolution(0) == RL::ISOTROPIC, "l_max=0 -> ISOTROPIC");
+    check(coarse_grain::classify_resolution(1) == RL::AXIAL, "l_max=1 -> AXIAL");
+    check(coarse_grain::classify_resolution(2) == RL::AXIAL, "l_max=2 -> AXIAL");
+    check(coarse_grain::classify_resolution(3) == RL::MODERATE, "l_max=3 -> MODERATE");
+    check(coarse_grain::classify_resolution(4) == RL::MODERATE, "l_max=4 -> MODERATE");
+    check(coarse_grain::classify_resolution(6) == RL::ENRICHED, "l_max=6 -> ENRICHED");
+    check(coarse_grain::classify_resolution(8) == RL::ENRICHED, "l_max=8 -> ENRICHED");
 
     coarse_grain::UnifiedDescriptor ud;
     ud.init(4);
-    check(ud.resolution_level() == RL::MODERATE, "l_max=4 descriptor → MODERATE");
+    check(ud.resolution_level() == RL::MODERATE, "l_max=4 descriptor -> MODERATE");
 }
 
 // ============================================================================
@@ -242,10 +242,10 @@ static void test_residual_promotion() {
 }
 
 // ============================================================================
-// 9. Unified potential — isotropic (no active channels)
+// 9. Unified potential  -  isotropic (no active channels)
 // ============================================================================
 static void test_potential_isotropic() {
-    std::printf("\n--- 9. Unified potential — isotropic ---\n");
+    std::printf("\n--- 9. Unified potential  -  isotropic ---\n");
 
     coarse_grain::UnifiedDescriptor desc_A, desc_B;
     // Both descriptors left uninitialized (no active channels)
@@ -272,10 +272,10 @@ static void test_potential_isotropic() {
 }
 
 // ============================================================================
-// 10. Unified potential — single channel
+// 10. Unified potential  -  single channel
 // ============================================================================
 static void test_potential_single_channel() {
-    std::printf("\n--- 10. Unified potential — single channel ---\n");
+    std::printf("\n--- 10. Unified potential  -  single channel ---\n");
 
     coarse_grain::UnifiedDescriptor desc_A, desc_B;
     desc_A.init_single_channel(coarse_grain::DescriptorChannel::STERIC, 2);
@@ -302,10 +302,10 @@ static void test_potential_single_channel() {
 }
 
 // ============================================================================
-// 11. Unified potential — multi-channel
+// 11. Unified potential  -  multi-channel
 // ============================================================================
 static void test_potential_multi_channel() {
-    std::printf("\n--- 11. Unified potential — multi-channel ---\n");
+    std::printf("\n--- 11. Unified potential  -  multi-channel ---\n");
 
     coarse_grain::UnifiedDescriptor desc_A, desc_B;
     desc_A.init(4);
@@ -339,10 +339,10 @@ static void test_potential_multi_channel() {
 }
 
 // ============================================================================
-// 12. Consistency: same coefficients → same energy
+// 12. Consistency: same coefficients -> same energy
 // ============================================================================
 static void test_consistency_across_resolution_paths() {
-    std::printf("\n--- 12. Consistency: same coefficients → same energy ---\n");
+    std::printf("\n--- 12. Consistency: same coefficients -> same energy ---\n");
 
     // Path A: init at l_max=2, then promote to l_max=4
     coarse_grain::UnifiedDescriptor desc_A;
@@ -475,7 +475,7 @@ static void test_benzene_canonical() {
     check(ud.num_active_channels() == 1, "benzene: 1 active channel");
     check(ud.steric.anisotropy_ratio() < 0.5, "benzene: moderate anisotropy");
 
-    // Low residual — no promotion needed
+    // Low residual  -  no promotion needed
     ud.steric.residual = 0.02;
     check(ud.max_residual() < 0.05, "benzene: residual below tolerance");
 }

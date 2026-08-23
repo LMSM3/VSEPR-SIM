@@ -1,26 +1,26 @@
-/*
- * metallic_cp.h — C clone of pykernel/metallic_cp.py
+﻿/*
+ * metallic_cp.h  -  C clone of pykernel/metallic_cp.py
  * ====================================================
  *
  * Bit-for-bit functional clone of the Debye + Sommerfeld + Nernst-Lindemann
  * heat-capacity engine.  Pure C99, header-only, no dynamic allocation.
  *
  * Mirrors:
- *   MetalRecord        → metal_rec_t
- *   CpResult           → cp_result_t
- *   debye_cv()         → debye_cv_C()
- *   electronic_cv()    → electronic_cv_C()
- *   dulong_petit()     → dulong_petit_C()
- *   compute_cp()       → compute_cp_C()
- *   compute_cp_curve() → compute_cp_curve_C()
- *   METAL_DB           → METAL_DB_C[] (same 30 entries)
+ *   MetalRecord        -> metal_rec_t
+ *   CpResult           -> cp_result_t
+ *   debye_cv()         -> debye_cv_C()
+ *   electronic_cv()    -> electronic_cv_C()
+ *   dulong_petit()     -> dulong_petit_C()
+ *   compute_cp()       -> compute_cp_C()
+ *   compute_cp_curve() -> compute_cp_curve_C()
+ *   METAL_DB           -> METAL_DB_C[] (same 30 entries)
  *
  * Alloy extension:
- *   alloy_rom_t        → rule-of-mixtures alloy descriptor
- *   alloy_cp_C()       → weighted Debye Cp for alloy
- *   hastelloy_n_cp()   → Hastelloy-N (INOR-8) Cp with Mo/W doping
+ *   alloy_rom_t        -> rule-of-mixtures alloy descriptor
+ *   alloy_cp_C()       -> weighted Debye Cp for alloy
+ *   hastelloy_n_cp()   -> Hastelloy-N (INOR-8) Cp with Mo/W doping
  *
- * VSEPR-SIM 3.0.0 — report subsystem
+ * VSEPR-SIM 3.0.0  -  report subsystem
  */
 
 #pragma once
@@ -61,7 +61,7 @@ typedef struct {
 } metal_rec_t;
 
 /* =========================================================================
- * METAL_DB_C — same 30 entries as Python METAL_DB
+ * METAL_DB_C  -  same 30 entries as Python METAL_DB
  * Source: CRC Handbook + Kittel + ASM data
  * ====================================================================== */
 static const metal_rec_t METAL_DB_C[] = {
@@ -118,7 +118,7 @@ static inline double _debye_integrand_C(double x) {
 }
 
 /* =========================================================================
- * debye_cv_C  — mirrors debye_cv() with n_atoms=1, n_points=200
+ * debye_cv_C   -  mirrors debye_cv() with n_atoms=1, n_points=200
  * Returns C_v in J/(mol·K)
  * ====================================================================== */
 static inline double debye_cv_C(double T, double theta_D) {
@@ -136,12 +136,12 @@ static inline double debye_cv_C(double T, double theta_D) {
     return 9.0 * MC_R * (T / theta_D) * (T / theta_D) * (T / theta_D) * integral;
 }
 
-/* electronic_cv — mirrors electronic_cv() */
+/* electronic_cv  -  mirrors electronic_cv() */
 static inline double electronic_cv_C(double T, double gamma_mJ) {
     return gamma_mJ * 1e-3 * T;
 }
 
-/* dulong_petit — 3R limit */
+/* dulong_petit  -  3R limit */
 static inline double dulong_petit_C(void) {
     return 3.0 * MC_R;
 }
@@ -160,7 +160,7 @@ typedef struct {
     double fraction_dp;
 } cp_result_t;
 
-/* compute_cp_C  — mirrors compute_cp() exactly */
+/* compute_cp_C   -  mirrors compute_cp() exactly */
 static inline cp_result_t compute_cp_C(const metal_rec_t *m, double T) {
     double cv_lat = debye_cv_C(T, m->theta_D);
     double cv_el  = electronic_cv_C(T, m->gamma);
@@ -245,9 +245,9 @@ static inline cp_result_t alloy_cp_C(const alloy_rom_t *a, double T) {
  * For Debye ROM we use the primary metallic constituents (by wt fraction).
  * Mo and W dopant variants are parameterised.
  *
- * hastelloy_n_base()     → nominal INOR-8
- * hastelloy_n_Mo_doped() → increased Mo (Mo-rich variant)
- * hastelloy_n_W_doped()  → W substitution for Mo (W-rich variant)
+ * hastelloy_n_base()     -> nominal INOR-8
+ * hastelloy_n_Mo_doped() -> increased Mo (Mo-rich variant)
+ * hastelloy_n_W_doped()  -> W substitution for Mo (W-rich variant)
  *
  * Reference: ORNL-2452, Inouye & Kiser (1964), Guyette (1973)
  * ====================================================================== */
@@ -258,7 +258,7 @@ static inline alloy_rom_t hastelloy_n_base(void) {
     strcpy(a.components[1].symbol, "Mo"); a.components[1].weight_fraction = 0.16;
     strcpy(a.components[2].symbol, "Cr"); a.components[2].weight_fraction = 0.07;
     strcpy(a.components[3].symbol, "Fe"); a.components[3].weight_fraction = 0.05;
-    /* Si + Mn minor — omitted from Debye ROM (< 2 wt% combined) */
+    /* Si + Mn minor  -  omitted from Debye ROM (< 2 wt% combined) */
     strncpy(a.name, "Hastelloy-N (INOR-8) nominal", 127);
     return a;
 }

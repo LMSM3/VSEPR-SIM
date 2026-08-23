@@ -1,10 +1,10 @@
-/**
+﻿/**
  * example_32bit_hourglass_lookglass.cpp
  *
  * Headless demonstration and smoke-test for:
- *   1. Identity32  — pack / unpack / round-trip
- *   2. HourglassModel — candidate generation, gate filtering, ranking
- *   3. LookglassModel — backward-pass reflection on a 2-bead system
+ *   1. Identity32   -  pack / unpack / round-trip
+ *   2. HourglassModel  -  candidate generation, gate filtering, ranking
+ *   3. LookglassModel  -  backward-pass reflection on a 2-bead system
  *
  * Exits 0 on success, non-zero on any assertion failure.
  */
@@ -21,10 +21,10 @@
 
 using namespace coarse_grain;
 
-// ── utilities ─────────────────────────────────────────────────────────────────
+// -- utilities -----------------------------------------------------------------
 
 static void section(const char* title) {
-    std::printf("\n── %s ──────────────────────────────────────\n", title);
+    std::printf("\n-- %s --------------------------------------\n", title);
 }
 
 static void check(bool cond, const char* msg) {
@@ -35,13 +35,13 @@ static void check(bool cond, const char* msg) {
     std::printf("[PASS] %s\n", msg);
 }
 
-// ── helpers to build a minimal BeadSystem ────────────────────────────────────
+// -- helpers to build a minimal BeadSystem ------------------------------------
 
 static BeadSystem make_two_bead_system() {
     BeadSystem sys;
     sys.beads.resize(2);
 
-    // Bead 0 — carbon-like covalent bead
+    // Bead 0  -  carbon-like covalent bead
     sys.beads[0].position    = {0.0, 0.0, 0.0};
     sys.beads[0].velocity    = {0.0, 0.0, 0.0};
     sys.beads[0].mass        = 12.011;
@@ -49,7 +49,7 @@ static BeadSystem make_two_bead_system() {
     sys.beads[0].structural_role  = StructuralRole::DirectionalCovalent;
     sys.beads[0].stability_class  = StabilityClass::AmbientStable;
 
-    // Bead 1 — sodium-like ionic bead, offset 4 Å
+    // Bead 1  -  sodium-like ionic bead, offset 4 Å
     sys.beads[1].position    = {4.0, 0.0, 0.0};
     sys.beads[1].velocity    = {0.0, 0.0, 0.0};
     sys.beads[1].mass        = 22.990;
@@ -60,12 +60,12 @@ static BeadSystem make_two_bead_system() {
     return sys;
 }
 
-// ── Test 1: 32-Bit Identity Word ─────────────────────────────────────────────
+// -- Test 1: 32-Bit Identity Word ---------------------------------------------
 
 static void test_bit32() {
     section("32-Bit Identity Word");
 
-    // ── basic pack / unpack ────────────────────────────────────────────────
+    // -- basic pack / unpack ------------------------------------------------
     Identity32 id = pack_identity(
         /*Z=*/6, /*A=*/0, /*Q=*/-0.25,
         StructuralRole::DirectionalCovalent,
@@ -82,7 +82,7 @@ static void test_bit32() {
 
     std::printf("  %s\n", id.to_string().c_str());
 
-    // ── charge encoding boundary ───────────────────────────────────────────
+    // -- charge encoding boundary -------------------------------------------
     Identity32 id_max = pack_identity(0, 0, 31.75,
         StructuralRole::Mixed, StabilityClass::BulkLattice,
         ProvenanceTag::CrystalSeed);
@@ -93,14 +93,14 @@ static void test_bit32() {
         ProvenanceTag::Virgin);
     check(std::abs(id_min.Q() - (-32.0)) < 1e-9, "Q min -32.0 encodes exactly");
 
-    // ── pack_from_bead ─────────────────────────────────────────────────────
+    // -- pack_from_bead -----------------------------------------------------
     BeadSystem sys = make_two_bead_system();
     Identity32 id_b = pack_from_bead(sys.beads[0], /*Z=*/6);
     check(id_b.Z()    == 6,                                    "pack_from_bead Z");
     check(id_b.sigma() == StructuralRole::DirectionalCovalent, "pack_from_bead Sigma");
     check(identity32_roundtrip_ok(id_b),                       "pack_from_bead round-trip");
 
-    // ── all 8 provenance tags ──────────────────────────────────────────────
+    // -- all 8 provenance tags ----------------------------------------------
     for (uint8_t t = 0; t <= 7; ++t) {
         Identity32 pt = pack_identity(1, 0, 0.0,
             StructuralRole::Mixed, StabilityClass::Transient,
@@ -109,7 +109,7 @@ static void test_bit32() {
     }
 }
 
-// ── Test 2: Hourglass Model ───────────────────────────────────────────────────
+// -- Test 2: Hourglass Model ---------------------------------------------------
 
 static void test_hourglass() {
     section("Hourglass Convergence Model");
@@ -119,9 +119,9 @@ static void test_hourglass() {
     HourglassParams params;
     params.N_cand    = 64;
     params.delta_max = 0.5;
-    params.Lambda_min = StabilityClass::Transient;   // permissive — all pass gate 1
-    params.E_tol     = 1e9;                          // permissive — all pass gate 2
-    params.w_role_min = 0.0;                         // permissive — all pass gate 3
+    params.Lambda_min = StabilityClass::Transient;   // permissive  -  all pass gate 1
+    params.E_tol     = 1e9;                          // permissive  -  all pass gate 2
+    params.w_role_min = 0.0;                         // permissive  -  all pass gate 3
     params.N_out     = 8;
     params.rng_seed  = 12345;
 
@@ -141,17 +141,17 @@ static void test_hourglass() {
     std::printf("  E_basin=%.3f kcal/mol  best_score=%.4f\n",
                 result.neck.E_basin, result.base.best_score);
 
-    // ── strict gates: should reduce survivors ─────────────────────────────
+    // -- strict gates: should reduce survivors -----------------------------
     HourglassParams strict = params;
     strict.E_tol      = 1e-6;   // only the single lowest-energy candidate passes
     strict.Lambda_min = StabilityClass::BulkLattice; // will block AmbientStable beads
     HourglassResult r2 = run_hourglass(sys, strict);
 
-    // All should be rejected by gate 1 or gate 2 — just verify it runs cleanly
+    // All should be rejected by gate 1 or gate 2  -  just verify it runs cleanly
     std::printf("  Strict run: %u survived (expected 0 for bulk-lattice gate)\n",
                 r2.neck.N_survived);
 
-    // ── determinism: same seed → same result ──────────────────────────────
+    // -- determinism: same seed -> same result ------------------------------
     HourglassResult r3 = run_hourglass(sys, params);
     check(result.ranked_ids[0] == r3.ranked_ids[0], "Determinism: same top-ranked id");
     check(std::abs(result.candidates[result.ranked_ids[0]].score -
@@ -159,7 +159,7 @@ static void test_hourglass() {
           "Determinism: same top score");
 }
 
-// ── Test 3: Lookglass Model ───────────────────────────────────────────────────
+// -- Test 3: Lookglass Model ---------------------------------------------------
 
 static void test_lookglass() {
     section("Lookglass Bidirectional Feedback Model");
@@ -224,7 +224,7 @@ static void test_lookglass() {
                 bwd.dt_guarded, expected_dt);
     std::printf("  lambda_mean = %.2f\n", bwd.lambda_mean);
 
-    // ── LookglassRunRecord accumulation ───────────────────────────────────
+    // -- LookglassRunRecord accumulation -----------------------------------
     LookglassRunRecord run;
     run.record_history = true;
     run.ingest(bwd);
@@ -233,11 +233,11 @@ static void test_lookglass() {
     check(run.history.size() == 1,           "RunRecord: history has 1 entry");
     check(run.peak_pos_correction > 0.0,     "RunRecord: peak correction tracked");
 
-    // ── multi-step: verify eta convergence triggers L5 ────────────────────
+    // -- multi-step: verify eta convergence triggers L5 --------------------
     // Synthesise a steady-state record: tiny correction + stable eta
     SeedBeadStepRecord fwd_ss = fwd;
     fwd_ss.avg_eta = 0.3 + 1e-5;   // barely changed
-    // Position offsets tiny — will produce near-zero feedback
+    // Position offsets tiny  -  will produce near-zero feedback
     fwd_ss.bead_positions[0] = {0.0 + 1e-5, 0.0, 0.0};
     fwd_ss.bead_positions[1] = {4.0 + 1e-5, 0.0, 0.0};
 
@@ -252,10 +252,10 @@ static void test_lookglass() {
     std::printf("  L5 steady-state correctly detected\n");
 }
 
-// ── main ──────────────────────────────────────────────────────────────────────
+// -- main ----------------------------------------------------------------------
 
 int main() {
-    std::printf("VSEPR-SIM — 32-Bit / Hourglass / Lookglass Smoke-Test\n");
+    std::printf("VSEPR-SIM  -  32-Bit / Hourglass / Lookglass Smoke-Test\n");
     std::printf("=======================================================\n");
 
     test_bit32();

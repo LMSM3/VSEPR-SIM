@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Problem 1: Two-Body Neutral Binding (LJ Sanity Check)
  * 
  * Tests the most fundamental molecular dynamics: Two Ar atoms with LJ interaction.
@@ -68,9 +68,9 @@ double numerical_force(double r, double eps, double sig, double dr = 1e-6) {
 }
 
 int main() {
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PROBLEM 1: Two-Body Neutral Binding (LJ Sanity Check)    ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  PROBLEM 1: Two-Body Neutral Binding (LJ Sanity Check)    |\n";
+    std::cout << "+============================================================+\n\n";
     
     std::cout << std::fixed << std::setprecision(6);
     
@@ -79,7 +79,7 @@ int main() {
     // ========================================================================
     
     std::cout << "TASK 1: Equilibrium Separation\n";
-    std::cout << "─────────────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------------\n";
     
     double r0_computed = std::pow(2.0, 1.0/6.0) * SIGMA;
     
@@ -110,7 +110,7 @@ int main() {
     // ========================================================================
     
     std::cout << "TASK 2: Binding Energy at r₀\n";
-    std::cout << "─────────────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------------\n";
     
     double U_r0 = compute_lj_energy(r0_computed, EPSILON, SIGMA);
     
@@ -136,7 +136,7 @@ int main() {
     // ========================================================================
     
     std::cout << "TASK 3: Force at r₀ (Should be Zero)\n";
-    std::cout << "─────────────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------------\n";
     
     // Analytical force
     double F_analytical = compute_lj_force_mag(r0_computed, EPSILON, SIGMA);
@@ -165,7 +165,7 @@ int main() {
     // ========================================================================
     
     std::cout << "TASK 4: Scan Potential Curve\n";
-    std::cout << "─────────────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------------\n";
     
     std::ofstream out("out/lj_potential_curve.csv");
     out << "r,U_lj,F_mag,F_numerical\n";
@@ -190,7 +190,7 @@ int main() {
     // ========================================================================
     
     std::cout << "TASK 5: Validate with Actual MD Code\n";
-    std::cout << "─────────────────────────────────────────────────────\n";
+    std::cout << "-----------------------------------------------------\n";
     
     // Create state with 2 Ar atoms at r₀
     State state;
@@ -270,33 +270,33 @@ int main() {
     // Explanation
     // ========================================================================
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  WHY THIS TEST IS FOUNDATIONAL                             ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  WHY THIS TEST IS FOUNDATIONAL                             |\n";
+    std::cout << "+============================================================+\n\n";
     
     std::cout << "1. FORCE CALCULATION\n";
     std::cout << "   If F ≠ 0 at r₀, the derivative ∂U/∂r is wrong.\n";
-    std::cout << "   → All MD trajectories will be incorrect.\n\n";
+    std::cout << "   -> All MD trajectories will be incorrect.\n\n";
     
     std::cout << "2. ENERGY EVALUATION\n";
     std::cout << "   If U(r₀) ≠ -ε, the potential is miscoded.\n";
-    std::cout << "   → Binding energies, thermodynamics are wrong.\n\n";
+    std::cout << "   -> Binding energies, thermodynamics are wrong.\n\n";
     
     std::cout << "3. NUMERICAL INTEGRATION\n";
     std::cout << "   If analytical and numerical forces disagree, there's a bug.\n";
-    std::cout << "   → Verlet integration will accumulate errors.\n\n";
+    std::cout << "   -> Verlet integration will accumulate errors.\n\n";
     
     std::cout << "4. BEFORE MULTI-ATOM SYSTEMS\n";
     std::cout << "   If 2 atoms fail, N atoms will catastrophically fail.\n";
-    std::cout << "   → Formation, crystallization, all higher-level features broken.\n\n";
+    std::cout << "   -> Formation, crystallization, all higher-level features broken.\n\n";
     
     std::cout << "5. NEUTRAL-FIRST PRINCIPLE\n";
     std::cout << "   LJ (neutral) is simpler than LJ+Coulomb (ionic).\n";
-    std::cout << "   → Must work for neutral before attempting charged.\n\n";
+    std::cout << "   -> Must work for neutral before attempting charged.\n\n";
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VERDICT                                                   ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  VERDICT                                                   |\n";
+    std::cout << "+============================================================+\n\n";
     
     std::cout << "✅ ALL TESTS PASSED!\n\n";
     std::cout << "Two-body LJ binding is correct:\n";

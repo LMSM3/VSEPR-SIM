@@ -1,22 +1,22 @@
-/**
+﻿/**
  * test_polarization_phases.cpp
  * ============================
- * Phases 2–4 validation for the SCF polarization solver.
+ * Phases 2-4 validation for the SCF polarization solver.
  *
- * Phase 2 — Thole Damping Validation
- *   C1  Compression stability: two generic sites, r = 5.0 → 0.5 Å.
- *       Without damping → divergence.  With Thole → bounded induced dipoles.
+ * Phase 2  -  Thole Damping Validation
+ *   C1  Compression stability: two generic sites, r = 5.0 -> 0.5 Å.
+ *       Without damping -> divergence.  With Thole -> bounded induced dipoles.
  *   C2  Na+ / polarizable water: strong local field + close contact.
  *       Induced dipoles stay finite, U_pol < 0, SCF converges.
- *   C3  Thole damping function shape: f(u=0) = 0, f(u→∞) → 1, monotone.
+ *   C3  Thole damping function shape: f(u=0) = 0, f(u->∞) -> 1, monotone.
  *
- * Phase 3 — Energy & Forces
+ * Phase 3  -  Energy & Forces
  *   D1  CO molecule rotation: energy invariant under rotation (no ext field).
- *   D2  Translation invariance: rigid shift → same U_pol.
- *   D3  Finite-difference gradient check (water dimer, O–O axis).
+ *   D2  Translation invariance: rigid shift -> same U_pol.
+ *   D3  Finite-difference gradient check (water dimer, O-O axis).
  *   D4  Energy minimum at correct qualitative water-dimer orientation.
  *
- * Phase 4 — Validation Campaign
+ * Phase 4  -  Validation Campaign
  *   E1  Neon dimer: smooth energy curve, no SCF instability.
  *   E2  Multi-molecule cluster stability: 5 water molecules, random rotations,
  *       SCF converges every time with bounded dipoles.
@@ -135,12 +135,12 @@ static State na_water(double d_NaO) {
     add_water(s, 1, {d_NaO, 0.0, 0.0}, M_PI);
     s.M[1] = 16.0; s.M[2] = 1.008; s.M[3] = 1.008;
     init_polarizabilities(s);
-    // Na+ is polarizable but small alpha — keep as-is from alpha_model
+    // Na+ is polarizable but small alpha  -  keep as-is from alpha_model
     return s;
 }
 
 // ============================================================================
-// Phase 2 — Thole Damping Validation
+// Phase 2  -  Thole Damping Validation
 // ============================================================================
 
 static void test_C1_compression_stability() {
@@ -262,7 +262,7 @@ static void test_C3_thole_function_shape() {
 }
 
 // ============================================================================
-// Phase 3 — Energy & Forces
+// Phase 3  -  Energy & Forces
 // ============================================================================
 
 static void test_D1_rotation_invariance() {
@@ -366,7 +366,7 @@ static void test_D4_water_dimer_orientation() {
 }
 
 // ============================================================================
-// Phase 4 — Validation Campaign
+// Phase 4  -  Validation Campaign
 // ============================================================================
 
 static void test_E1_neon_dimer_curve() {

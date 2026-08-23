@@ -1,0 +1,67 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/vsim_skeletons/wo83m_family_guardrails.vsim
+# Tier A — native replacement for demo_wo83m_family_guardrails.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# Verifies family-source tags ([inferred] or [default]) and lipid_like_score
+# appear in the classify output for small/medium/lipid-like organics.
+#
+# Python equivalent:
+#   assert "[inferred]" in out or "[default]" in out
+#   assert "lipid_like_score:" in out
+
+[project]
+name    = wo83m_family_guardrails_ch4
+version = v5.0.0
+
+[material]
+formula = CH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.expect]
+# any_contains     = ["[inferred]", "[default]"]
+# contains         = "lipid_like_score:"
+# result           = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83m_family_guardrails_c6h12
+version = v5.0.0
+
+[material]
+formula = C6H12
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+# [classify.expect]
+# any_contains = ["[inferred]", "[default]"]
+# contains     = "lipid_like_score:"
+# result       = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83m_family_guardrails_c16h32o2
+version = v5.0.0
+
+[material]
+formula = C16H32O2
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+# [classify.expect]
+# any_contains = ["[inferred]", "[default]"]
+# contains     = "lipid_like_score:"
+# result       = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+

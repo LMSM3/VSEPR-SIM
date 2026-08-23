@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * cpp_standard_corpus.hpp — C++23/26 Standards Corpus Metadata
+ * cpp_standard_corpus.hpp  -  C++23/26 Standards Corpus Metadata
  * =============================================================
  *
  * Compile-time metadata tying the C++23 and C++26 standards corpus
@@ -12,9 +12,9 @@
  *   4. Compiler feature detection macros
  *
  * References:
- *   N4950  — C++23 Working Draft (WG21)
- *   N5014  — C++26 Working Draft (WG21)
- *   P2869R3, P2875R4, P3099R1 — selected C++26 papers
+ *   N4950   -  C++23 Working Draft (WG21)
+ *   N5014   -  C++26 Working Draft (WG21)
+ *   P2869R3, P2875R4, P3099R1  -  selected C++26 papers
  *
  * GCC 15.2.0 (UCRT64) is the baseline compiler.
  */
@@ -77,20 +77,20 @@ struct CompilerBaseline {
     bool        has_to_underlying;
 };
 
-// GCC 15.2.0 feature matrix — verified against cppreference compiler support
+// GCC 15.2.0 feature matrix  -  verified against cppreference compiler support
 inline constexpr CompilerBaseline GCC_15_2 = {
     "GCC", "15.2.0", "x86_64-w64-mingw32 (UCRT64)",
     CppStandard::Cpp23,
-    true,   // std::expected       — GCC 12+
-    true,   // std::print          — GCC 14+
-    true,   // std::flat_map       — GCC 15+
-    true,   // std::generator      — GCC 14+ (partial)
-    true,   // std::unreachable    — GCC 12+
-    true,   // monadic optional    — GCC 12+
-    true,   // deducing this       — GCC 14+
-    true,   // multidim subscript  — GCC 12+
-    true,   // consteval           — GCC 12+ (C++20, improved C++23)
-    true,   // std::to_underlying  — GCC 12+
+    true,   // std::expected        -  GCC 12+
+    true,   // std::print           -  GCC 14+
+    true,   // std::flat_map        -  GCC 15+
+    true,   // std::generator       -  GCC 14+ (partial)
+    true,   // std::unreachable     -  GCC 12+
+    true,   // monadic optional     -  GCC 12+
+    true,   // deducing this        -  GCC 14+
+    true,   // multidim subscript   -  GCC 12+
+    true,   // consteval            -  GCC 12+ (C++20, improved C++23)
+    true,   // std::to_underlying   -  GCC 12+
 };
 
 inline constexpr CompilerBaseline ACTIVE_COMPILER = GCC_15_2;
@@ -168,7 +168,7 @@ inline constexpr WG21Paper TRACKED_PAPERS[] = {
     {"P2875R4",
      "Undeprecate polymorphic_allocator::destroy for C++26",
      CppStandard::Cpp26,
-     "pmr allocator usage confirmed stable — destroy() no longer deprecated"},
+     "pmr allocator usage confirmed stable  -  destroy() no longer deprecated"},
 
     {"P3099R1",
      "Contracts for C++: User-defined diagnostic messages",
@@ -198,7 +198,7 @@ struct FeatureAdoption {
 };
 
 inline constexpr FeatureAdoption FEATURE_PLAN[] = {
-    // C++23 — Active
+    // C++23  -  Active
     {"std::expected<T,E>",        CppStandard::Cpp23, AdoptionStatus::Active,
      "nuclear_core_runner: fallible material lookups, property resolution"},
     {"std::optional monadic ops", CppStandard::Cpp23, AdoptionStatus::Active,
@@ -210,7 +210,7 @@ inline constexpr FeatureAdoption FEATURE_PLAN[] = {
     {"consteval",                 CppStandard::Cpp23, AdoptionStatus::Active,
      "cpp_standard_corpus: compile-time corpus validation"},
 
-    // C++23 — Planned
+    // C++23  -  Planned
     {"std::flat_map",             CppStandard::Cpp23, AdoptionStatus::Planned,
      "report_engine: hot-path element property lookups"},
     {"std::print/println",        CppStandard::Cpp23, AdoptionStatus::Planned,
@@ -220,7 +220,7 @@ inline constexpr FeatureAdoption FEATURE_PLAN[] = {
     {"std::generator",            CppStandard::Cpp23, AdoptionStatus::Planned,
      "report_engine: lazy case generation pipeline"},
 
-    // C++26 — Tracking
+    // C++26  -  Tracking
     {"Contracts",                 CppStandard::Cpp26, AdoptionStatus::Tracking,
      "kernel APIs: preconditions on Z range, scale transitions, hash inputs"},
     {"std::execution",            CppStandard::Cpp26, AdoptionStatus::Tracking,
@@ -260,7 +260,7 @@ consteval bool validate_corpus() {
 }
 
 static_assert(validate_corpus(),
-    "C++23/26 standards corpus validation failed — "
+    "C++23/26 standards corpus validation failed  -  "
     "check StandardEdition entries and FeatureAdoption plan");
 
 } // namespace standards

@@ -1,0 +1,609 @@
+
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage[top=0.85in,bottom=0.85in,left=0.95in,right=0.95in,headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{booktabs,array,tabularx,longtable}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true,linkcolor=black,urlcolor=blue,citecolor=black]{hyperref}
+
+%% ---- List and heading formatting ----
+\setlist{leftmargin=1.4em,itemsep=0.25em,topsep=0.25em}
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{0.8em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{0.8em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{0.8em}{}
+
+%% ---- Theorem environments ----
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{remark}{Remark}[section]
+
+%% ================================================================
+%%  MACRO SET --- IKK IV v1.0  (harmonised with IKK III v2.0)
+%% ================================================================
+
+%% Identity objects
+\newcommand{\Ia}{I_a}                               % source identity
+\newcommand{\Ib}{I_b}                               % target identity
+\newcommand{\Itrue}{\mathfrak{I}_{\mathrm{true}}}   % primitive identity (fraktur)
+
+%% Typed spaces
+\newcommand{\Ha}{\mathfrak{H}_a}               % source identity space (fraktur)
+\newcommand{\Hb}{\mathcal{H}_b}               % target Hilbert space (calligraphic)
+\newcommand{\Kab}{\mathfrak{K}_{ab}}           % cross-scale coupled space
+\newcommand{\Osp}{\mathcal{O}_b}              % observable space
+\newcommand{\OspS}[1]{\mathcal{O}_{S_{#1}}}  % observable space at regime n
+
+%% Scale structure (physical)
+% \ell is already defined by amssymb as the curly-ell symbol
+\newcommand{\ellz}{\ell_0}                    % reference length
+\newcommand{\Ln}{L_n}                          % characteristic length at regime n
+\newcommand{\Sn}{S_n}                          % scale regime n
+\newcommand{\Sa}{S_a}                          % source scale regime
+\newcommand{\Sb}{S_b}                          % target scale regime
+\newcommand{\DSab}{\Delta S_{a,b}}             % scale interval a→b
+
+%% Fifth coordinate (hidden/projective access — NOT physical length)
+\newcommand{\wcoord}{w}
+
+%% Logarithmic scale chart (a coordinate chart, not w itself)
+\newcommand{\uscale}{u(\ell)}                  % log-scale chart u(ℓ) = ln(ℓ/ℓ₀)
+
+%% Projection operators
+\newcommand{\Pab}{\mathcal{P}_{a\to b}}        % typed projection Ha → Ob
+\newcommand{\Pibn}{\Pi_{b\leftarrow a}}         % cross-regime projection
+\newcommand{\PiS}[2]{\Pi_{S_{#2}\leftarrow S_{#1}}}  % projection S_a → S_b
+
+%% Wave-state recovery (from IKK III)
+\newcommand{\Wab}{\mathcal{W}_{a\to b}}        % wave-state recovery map
+\newcommand{\Cab}{\mathcal{C}_{ab}}            % coupling map Ha → Kab
+\newcommand{\Rab}{\mathcal{R}_b}               % restriction map Kab → Hb
+
+%% Efficiency and distinguishability
+\newcommand{\etaab}{\eta_{ab}}                 % projection efficiency functional
+\newcommand{\etarec}{\eta_{\mathrm{rec}}}      % cross-scale recovery efficiency
+\newcommand{\D}{\mathfrak{D}}                  % distinguishability
+
+%% Scale-dependent wavefunction
+\newcommand{\psiL}{\psi_L}                     % wavefunction at length L
+\newcommand{\psiell}{\psi_\ell}                % wavefunction at ℓ
+
+%% Property activation (parallel to compatibility gate χ_{ab})
+\newcommand{\AQ}{A_Q(\ell)}                    % property activation function
+
+%% Compatibility / access gate
+\newcommand{\chiw}{\chi_w}                     % fifth-coordinate access weight
+\newcommand{\chiab}{\chi_{ab}}                 % compatibility soft gate (IKK III)
+
+%% Observable and loss
+\newcommand{\Oh}{\mathcal{O}}
+\newcommand{\Loss}{\mathcal{L}_\Pi}
+\newcommand{\Rec}{\mathrm{Rec}_\Pi}
+
+%% ================================================================
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Inverse Kaluza-Klein Framework --- IKK Paper Set}}
+\fancyhead[R]{\small\textit{IKK IV v1.0}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setlength{\parskip}{0.55em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+%% ---- Title page ----
+\begin{titlepage}
+\centering
+\vspace*{1.1cm}
+{\large\scshape VSEPR-SIM Theoretical Division / IKK Paper Set\par}
+\vspace{1.1cm}
+{\Huge\bfseries IKK IV\par}
+\vspace{0.35cm}
+{\Large\bfseries Scale Intervals, Resolution Access, and Dimensional Structure\par}
+\vspace{1.1cm}
+{\normalsize
+This document formalizes the scale-interval and dimensional-access structure required
+by the IKK projection framework. It distinguishes physical length scale $\ell$,
+scale regimes $S_n$, and scale intervals $\Delta S_{a,b}$ from the fifth coordinate
+$w$, which is treated as a hidden/projective identity-access coordinate rather than
+a physical scale axis. Projection across scale intervals is described by
+$\Pi_{S_b \leftarrow S_a}$, with hidden residuals, distinguishability loss,
+scale-dependent wavefunctions, and property activation functions used to describe
+how identity content becomes readable at different regimes.
+\par}
+\vfill
+{\large Version 1.0 \quad --- \quad IKK Paper Set\par}
+{\large Companion: IKK II (projection foundation), IKK III (matrix/wave bridge)\par}
+\end{titlepage}
+
+\tableofcontents
+\clearpage
+
+%% ================================================================
+\section{Scope and Coordinate Correction}
+%% ================================================================
+
+IKK IV formalizes the environment in which the projection operator of IKK~II acts. IKK~II defined what projection is. IKK~IV defines where and under what scale structure projection is meaningful: length regimes, resolution access, dimensional permissions, hidden-coordinate effects, and cross-scale recoverability.
+
+The document contains one critical correction that must be enforced throughout:
+
+\[
+\boxed{w \neq \text{physical length scale.}}
+\]
+
+Physical length scale is carried by $\ell$, $L_n$, and the scale regime tuple $S_n$. The fifth coordinate $\wcoord$ is a hidden/projective identity-access coordinate. It modulates access to identity content at a given regime. It does not replace, index, or substitute for physical length. Every equation and every prose sentence in this document must respect this distinction.
+
+The logarithmic scale chart $\uscale = \ln(\ell/\ellz)$ is a coordinate chart over physical length regimes. It is not $\wcoord$. The relationship between $\wcoord$ and $\uscale$ may exist but is not a simple identity.
+
+\textbf{Keep from prior draft:} $\Pi_{m\leftarrow n}$, $|\Psi^{\mathrm{hid}}\rangle$, $\psi(x,t;L)$, scale regimes $S_n$, scale intervals $\DSab$, complex fiber, identity bundles, property activation, cross-scale property map.
+
+\textbf{Revised:} all framing of $w/u$ as physical scale; efficiency functional harmonized with IKK~III notation; scale-dependent wavefunction upgraded to use $\Wab$; property activation noted as formal parallel to $\chiab$ soft gate.
+
+%% ================================================================
+\section{Central Question of IKK IV}
+%% ================================================================
+
+\[
+\boxed{\text{What scale and dimensional structure makes projection meaningful?}}
+\]
+
+IKK~II defined the projection operator $\Pab : \Ha \to \Osp$ and the typed spaces. IKK~IV defines the environment: what scale structure exists, how identity becomes readable at a given regime, and what is lost or hidden when projecting across scale intervals.
+
+The document does not reopen the matrix/wave bridge. IKK~III handles that. IKK~IV provides the architecture that allows $\PiS{a}{b}$ to carry physical meaning rather than remain decorative.
+
+%% ================================================================
+\section{The Coordinate Correction: $w$, $u$, $\ell$, and $S_n$}
+%% ================================================================
+
+The corrected notation, enforced from this point forward:
+
+\begin{definition}[Physical scale variables]
+\[
+\ell = \text{physical length scale},\qquad
+L_n = \text{characteristic length at regime }n,
+\]
+\[
+S_n = \text{scale regime (five-tuple; see Definition~\ref{def:regime})},\qquad
+\DSab = \text{scale interval (see Definition~\ref{def:interval}).}
+\]
+These are physical scale descriptors. They describe the actual length regime and its accessible structure.
+\end{definition}
+
+\begin{definition}[Logarithmic scale chart]
+\[
+\uscale = \ln\!\left(\frac{\ell}{\ellz}\right).
+\]
+$u(\ell)$ is a coordinate chart over physical length regimes. It indexes resolution access and scale separation. It is a real-valued parameterization of $\ell$, not an independent physical axis.
+\end{definition}
+
+\begin{definition}[Fifth coordinate]
+\[
+\boxed{\wcoord = \text{hidden/projective identity-access coordinate.}}
+\]
+$\wcoord$ modulates the degree to which identity content at a given regime is accessible to projection. It is not a physical length scale. Writing $\wcoord = \ell$, $\wcoord = S_n$, or $\wcoord = \uscale$ is a category error.
+\end{definition}
+
+The relationship between $\wcoord$ and the physical scale variables may be written:
+\[
+\wcoord = W\!\big(\uscale,\, \Ia,\, \mathcal{B},\, \Gamma\big),
+\]
+meaning $\wcoord$ may depend on the scale chart, the identity content, the observational basis, and the interaction channel. This is a general form, not a final claim; calibration is required.
+
+%% ================================================================
+\section{Scale Coordinate as Chart, Not Ontology}
+%% ================================================================
+
+The log-scale chart $\uscale$ is useful precisely because it turns multiplicative scale separations into additive distances. This is standard in renormalization group methods. The IKK usage inherits that convenience.
+
+What $\uscale$ does not do:
+\begin{enumerate}
+\item It does not define the fifth dimension.
+\item It does not replace the access-weight $\chiw$ in the five-dimensional interval.
+\item It does not determine projection loss by itself.
+\end{enumerate}
+
+Projection loss across a scale interval depends on physical length, basis, channel, and hidden access. Writing $\uscale$ as the sole determinant of projection conflates coordinate convenience with physical mechanism.
+
+%% ================================================================
+\section{Revised Five-Dimensional Interval}
+%% ================================================================
+
+Standard spacetime interval:
+\[
+ds_4^2 = -c^2 dT^2 + dx^2 + dy^2 + dz^2.
+\]
+
+Projective extension:
+\[
+\boxed{ds_5^2 = ds_4^2 + \chiw\, d\wcoord^2.}
+\]
+
+\begin{definition}[Fifth-coordinate access weight]
+\label{def:chiw}
+$\chiw$ is the hidden/projective access weight. It is not a physical length coefficient. It controls how displacement along $\wcoord$ contributes to the projective separation between identity states. In the limit $\chiw \to 0$, projection is blind to $\wcoord$ displacement; in the limit $\chiw \to \infty$, identity states at different $\wcoord$ values become projectively inaccessible to each other.
+\end{definition}
+
+\begin{remark}
+$\chiw$ is formally analogous to, but distinct from, the compatibility soft gate $\chiab$ of IKK~III. $\chiab$ is a scalar in $[0,1]$ that gates projection between two specific identity objects. $\chiw$ is a metric coefficient in the interval formula. Both use the same letter to signal the shared conceptual role: access gating.
+\end{remark}
+
+Optional expansion of $d\wcoord$:
+\[
+d\wcoord = \alpha_u\, du + \alpha_I\, d\Ia + \alpha_B\, d\mathcal{B}.
+\]
+This is a future expansion, not a final claim. It shows that access-coordinate displacement may couple to scale, identity content, and basis changes.
+
+%% ================================================================
+\section{Proper-Time Extension Without Overclaim}
+%% ================================================================
+
+The effective proper time in the extended framework:
+\[
+d\tau_{\mathrm{eff}}^2 = dT^2 - \frac{1}{c^2}\!\left(dx^2 + dy^2 + dz^2\right) - \frac{\chiw}{c^2}\, d\wcoord^2.
+\]
+
+Claim: two systems with identical visible trajectories in $(x,y,z,T)$ may differ in recovered identity history if their hidden/projective access coordinate $\wcoord$ evolves differently. This is a formal placeholder. It requires:
+\begin{enumerate}
+\item a calibrated form of $\chiw$,
+\item a defined evolution law for $\wcoord$,
+\item and an observable consequence distinguishing it from ordinary proper-time differences.
+\end{enumerate}
+
+Until those are provided, this section records the form without asserting the physics.
+
+%% ================================================================
+\section{Scale Regime Definition}
+\label{def:regime}
+%% ================================================================
+
+\begin{definition}[Scale regime]
+A scale regime is the five-tuple
+\[
+S_n = (D_n,\, M_n,\, L_n,\, \mathcal{O}_n,\, \mathcal{P}_n),
+\]
+where:
+\begin{itemize}
+\item $D_n$ is the accessible degree of freedom at regime $n$;
+\item $M_n$ is the mediator or interaction channel;
+\item $L_n$ is the characteristic physical length;
+\item $\mathcal{O}_n$ is the readable observable set;
+\item $\mathcal{P}_n$ is the projection behavior available at that regime.
+\end{itemize}
+\end{definition}
+
+This upgrades the prior three-tuple $(D_n, M_n, L_n)$ by adding the observable set and projection behavior explicitly. The addition of $\mathcal{O}_n$ and $\mathcal{P}_n$ makes the regime definition directly compatible with the typed projection chain of IKK~II and IKK~III.
+
+%% ================================================================
+\section{Scale Interval Definition}
+\label{def:interval}
+%% ================================================================
+
+\begin{definition}[Scale interval]
+A scale interval is the structured separation between two readable regimes:
+\[
+\DSab = (S_a,\, S_b,\, \Lambda_{a,b}),
+\]
+where $\Lambda_{a,b}$ encodes the mapping constraints, loss conditions, recoverability limits, and allowed interaction channels between regimes $S_a$ and $S_b$.
+\end{definition}
+
+Scale intervals are not distances. They are representation-and-access gaps. The gap $\Lambda_{a,b}$ may include:
+\begin{enumerate}
+\item the projection loss functional $\Loss$ evaluated across the interval;
+\item distinguishability loss $\D(\Ia) - \D(\Pab(\Ia))$;
+\item basis transformation cost between $\mathcal{O}_a$ and $\mathcal{O}_b$;
+\item hidden-access modulation through $\wcoord$.
+\end{enumerate}
+
+%% ================================================================
+\section{Projection Across Scale Intervals}
+%% ================================================================
+
+The core projection equation from IKK~III, extended to scale intervals:
+\[
+|\Psi_b\rangle = \Pi_{b\leftarrow a}|\Psi_a\rangle.
+\]
+
+In typed notation:
+\[
+\PiS{a}{b} : \Ha \longrightarrow \OspS{b}.
+\]
+
+The projection across a scale interval depends on physical length, basis, channel, and hidden access:
+\[
+\PiS{a}{b} = \Pi\!\big(\DSab,\, \ell_a,\, \ell_b,\, \mathcal{B},\, \Gamma,\, \wcoord\big).
+\]
+
+This is the central mathematical bridge from IKK~II into IKK~IV. The projection is not determined by $\wcoord$ alone, nor by $\ell$ alone. Both contribute: physical scale determines which degrees of freedom are available, and the access coordinate determines how much of the identity content at that scale is reachable under projection.
+
+The full wave-state recovery chain from IKK~III applies here:
+\[
+\Wab = \Rab \circ \Cab : \Ha \longrightarrow \Hb,
+\]
+with the scale-interval version understanding that $a$ and $b$ now index scale regimes rather than arbitrary identity layers.
+
+%% ================================================================
+\section{Hidden Residual Under Scale Projection}
+%% ================================================================
+
+The hidden residual under cross-scale projection:
+\[
+\boxed{|\Psi^{\mathrm{hid}}_{a\setminus b}\rangle = \big(\mathbf{I} - \PiS{a}{b}\big)|\Psi_a\rangle.}
+\]
+
+This content is outside the target regime's readable projection. It is not destroyed. It may be recoverable through:
+\begin{enumerate}
+\item a finer scale interval (accessing $S_c$ with $L_c < L_a$);
+\item a different observational basis $\mathcal{B}'$;
+\item a richer interaction channel $\Gamma'$;
+\item a different $\wcoord$ access value.
+\end{enumerate}
+
+The hidden residual is a function of the scale interval $\DSab$. Changing the interval changes the residual. This is the IKK~IV version of the general hidden-residual principle established in IKK~II (\S{}7).
+
+%% ================================================================
+\section{Distinguishability Loss Across Scales}
+%% ================================================================
+
+\begin{definition}[Cross-scale distinguishability loss]
+\[
+\Delta\D_{S_a \to S_b} = \D(\Ia^{S_a}) - \D(\OspS{b}),
+\]
+where $\D(\Ia^{S_a})$ is the distinguishability of identity content at regime $S_a$ and $\D(\OspS{b})$ is the distinguishability of the observable form at regime $S_b$.
+\end{definition}
+
+Three components of loss:
+\begin{enumerate}
+\item \textbf{Physical loss:} degrees of freedom present at $S_a$ that are not active at $S_b$.
+\item \textbf{Observational loss:} content present but not readable under $\mathcal{O}_b$.
+\item \textbf{Representational loss:} content readable but not captured in the chosen encoding.
+\end{enumerate}
+
+The cross-scale recovery efficiency from IKK~III, specialized to scale intervals:
+\[
+\etaab(\Ia) = \frac{\D_b\!\big(\PiS{a}{b}(\Ia)\big)}{\D_a(\Ia)},\quad \etaab \in [0,1].
+\]
+
+$\etaab = 1$ is lossless cross-scale projection. This is almost never achieved in physical measurement. The full scoring machinery appears in MIR~II and MIR~III.
+
+%% ================================================================
+\section{Complex Fiber Bundle}
+%% ================================================================
+
+A complex fiber $\mathbb{C}_p$ is attached to each readable event or identity point $p$:
+\[
+\zeta(p) = a(p) + ib(p) = r(p)\, e^{i\phi(p)}.
+\]
+
+The complex fiber is a representation layer for phase and projected wave behavior at a regime. It is not proof that every physical object literally contains an exposed complex plane. The fiber provides the mathematical structure in which interference, phase evolution, and probability amplitude live at the representation level.
+
+The complex fiber is consistent with the $\Hb$ structure of IKK~III: the Hilbert space $\Hb$ is a complex Hilbert space, and the fiber captures the local phase structure that projection into $\Hb$ preserves.
+
+%% ================================================================
+\section{Identity Bundles at Scale}
+%% ================================================================
+
+\begin{definition}[Projected identity bundle]
+A projected identity bundle at regime $S_n$ is:
+\[
+\mathcal{B}_{S_n}(I) = \{I_{\mathrm{core}},\, \mathcal{O}_n,\, R_n,\, \Lambda_n\},
+\]
+where $I_{\mathrm{core}}$ is the identity core surviving projection to $S_n$, $\mathcal{O}_n$ is the readable observable set, $R_n$ is the residual at that regime, and $\Lambda_n$ is the access constraint.
+\end{definition}
+
+The projected identity bundle is distinct from true identity $\Itrue$. Never conflate $\mathcal{B}_{S_n}(I)$ with $\Itrue$. The bundle is a scale-regime reading; $\Itrue$ is the primitive object that makes all such readings possible.
+
+%% ================================================================
+\section{Identity Persistence Across Scales}
+%% ================================================================
+
+Identity does not merely form at a higher scale and vanish below. Lower-scale, mid-scale, and higher-scale descriptions may persist simultaneously:
+\[
+I \sim \{I_{S_0},\, I_{S_1},\, \ldots,\, I_{S_n}\}
+\]
+with different readable components at each regime. The projection operation $\PiS{a}{b}$ selects a readable component. It does not necessarily create or destroy the underlying identity stack.
+
+This simultaneous-scale persistence is the formal claim that the framework is not a reduction theory. Lower-scale identity is not abolished by higher-scale packing. It remains present, readable through different projection bases.
+
+%% ================================================================
+\section{Scale-Dependent Wavefunction}
+%% ================================================================
+
+The scale-dependent wavefunction from the prior draft:
+\[
+\psi(x,t;\, L) = \langle x, L\,|\, \Psi_{\mathrm{true}}\rangle.
+\]
+
+$L$ is the physical resolution/length regime. It is not $\wcoord$. Revised in typed notation using the wave-state recovery map from IKK~III:
+\[
+\boxed{\psi_L = \Pi_{x,L}(\Itrue) = \big(\Wab\big|_{L}\big)(\Itrue) \in \Hb.}
+\]
+
+Here $\Wab|_L$ denotes the wave-state recovery map evaluated at length scale $L$: the coupling $\Cab$ and restriction $\Rab$ are both parameterized by the regime $S(L)$. The wavefunction at $L$ is a position-basis projection of true identity into a readable length-regime basis.
+
+The $L$-dependence of $\psi$ is physical (which degrees of freedom are active at that scale), while the $\wcoord$-dependence (if any) is projective (how much of that scale's content is accessible). The two must not be conflated.
+
+%% ================================================================
+\section{Born Rule Reinterpretation}
+%% ================================================================
+
+\[
+P(x \mid L) = |\psi(x,t;\, L)|^2.
+\]
+
+In the IKK interpretation, the Born probability expresses projected recoverability at length scale $L$: it is the accessible amplitude density in the position basis under that resolution. This is not wave-ontology primitive; it is a regime-specific projection of identity content.
+
+This document does not derive the Born rule. It inherits the spectral position measure from IKK~III (\S{}7):
+\[
+\mu_{X,b}^{(a)}(\Omega) = \langle \Wab(\Ia),\, E_X(\Omega)\, \Wab(\Ia)\rangle_{\Hb},
+\]
+where $E_X(\Omega)$ is the spectral measure of the position operator. At scale $L$, $\Wab|_L$ provides the regime-specific version of this measure.
+
+%% ================================================================
+\section{Wave-Particle Duality as Projection Mismatch}
+%% ================================================================
+
+Wave-particle duality is treated as a mismatch between primitive identity and observable projection basis:
+
+\begin{quote}
+Particle-like identity remains primitive; wave-like behavior appears when identity is projected through a basis that exposes distributed amplitude, phase, or recovery likelihood.
+\end{quote}
+
+\[
+\Itrue \xrightarrow{\;\PiS{a}{b}\;} \psi_L.
+\]
+
+This is consistent with the IKK~III treatment (\S{}14): duality is not a property of the object but of the projection basis. At a fine-resolution basis, the particle structure of $\Itrue$ is more directly readable. At a coarse-resolution basis parameterized by large $L$, the wave-like spread of amplitude in $\psi_L$ dominates.
+
+The fifth coordinate $\wcoord$ modulates how much of the identity content at any $L$ is accessible. A change in $\wcoord$ at fixed $L$ changes the effective projection without changing the physical scale.
+
+%% ================================================================
+\section{Property Activation Functions and the Soft-Gate Parallel}
+%% ================================================================
+
+Property activation from the prior draft:
+\[
+\AQ = \frac{1}{1 + \exp\!\big[-k_Q(\ln\ell - \ln\ell_Q)\big]}.
+\]
+
+$A_Q(\ell)$ describes the readability of property $Q$ as a function of physical length scale $\ell$. In full:
+\[
+Q_{\mathrm{obs}}(\ell) = \AQ \cdot Q_{\mathrm{true}}.
+\]
+
+A property becomes readable at a regime. It does not start existing there.
+
+\begin{remark}[Parallel to IKK~III compatibility gate]
+The property activation $\AQ$ is formally parallel to the compatibility soft gate $\chiab(\Ia)$ of IKK~III (\S{}13):
+\[
+\chiab(\Ia) = \sigma\!\big(\alpha(\etaab(\Ia) - \eta_{\min})\big),\quad
+\sigma(x) = \frac{1}{1+e^{-x}}.
+\]
+Both are sigmoid functions in $[0,1]$. $\AQ$ gates property readability as a function of physical scale $\ell$. $\chiab$ gates projection admissibility as a function of identity-space efficiency $\etaab$. The structural parallel is not coincidental: both express the condition under which a system crosses the threshold from hidden to accessible. The IKK~IV version parameterizes the threshold by scale; the IKK~III version parameterizes it by projection efficiency.
+\end{remark}
+
+%% ================================================================
+\section{Cross-Scale Property Map}
+%% ================================================================
+
+\begin{center}
+\begin{tabularx}{\linewidth}{>{\bfseries}p{0.18\linewidth}p{0.22\linewidth}X}
+\toprule
+Regime & Readable content & Hidden or compressed content \\
+\midrule
+Subatomic   & charge, spin, interaction channel & bound identity, chemical role \\
+Atomic      & element identity, orbitals        & nuclear residual, phase detail \\
+Molecular   & bonds, geometry                   & electronic fine detail \\
+Material    & bulk fields, conductivity          & atomistic history \\
+Galactic    & large-scale dynamics               & source of residual gravitational behavior \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Each row corresponds to a regime $S_n$ with characteristic $L_n$. The ``hidden or compressed'' column corresponds to the residual $|\Psi^{\mathrm{hid}}_{a\setminus b}\rangle$ for that projection step. The property activation function $A_Q(\ell)$ predicts when properties cross from the hidden column to the readable column as $\ell$ decreases.
+
+%% ================================================================
+\section{Cross-Scale Recovery Efficiency}
+%% ================================================================
+
+The cross-scale recovery efficiency, harmonized with IKK~III notation:
+\[
+\boxed{
+\etaab(\Ia) = \frac{\D_b\!\big(\PiS{a}{b}(\Ia)\big)}{\D_a(\Ia)},\quad
+\etaab \in [0,1].
+}
+\]
+
+This is the IKK~III projection efficiency functional (\S{}11) evaluated at cross-scale intervals. The distinguishability measure $\D_a$ is computed in the source regime $S_a$; $\D_b$ is computed in the target regime $S_b$.
+
+A prior draft formulation expanded the denominator into explicit cost terms:
+\[
+\eta_{\mathrm{rec}}(S_a \to S_b) =
+\frac{\mathcal{A}_{S_b}(\hat{\mathcal{O}}_{S_b},\, \mathcal{O}_{S_b})}
+     {C_{\mathrm{rep}} + \lambda\,\mathcal{K}(\mathcal{R}) + \mu\,\delta_{S_a \to S_b}}
+\]
+where $C_{\mathrm{rep}}$ is the total representation cost and $\mathcal{K}(\mathcal{R})$, $\delta_{S_a\to S_b}$ are compression and cross-scale transfer costs. This expansion belongs in MIR~II and MIR~III, where the cost terms are defined. IKK~IV uses the general form $\etaab$ and defers the cost breakdown.
+
+%% ================================================================
+\section{Validation Hooks and Observable Consequences}
+%% ================================================================
+
+Possible empirical hooks:
+\begin{enumerate}
+\item Recovery loss under coarse-graining: $\etaab$ should decrease predictably as $\DSab$ increases.
+\item Property activation thresholds: $\AQ$ should match measured onset scales for known properties.
+\item Dark-matter residual fitting at galactic scales: $|\Psi^{\mathrm{hid}}_{a\setminus b}\rangle$ may model missing dynamical content at large $L$.
+\item Simulation storage/recovery tests from frozen physical states.
+\item Matrix/wave recovery consistency across scale intervals.
+\end{enumerate}
+
+Not all ontology is falsifiable. The representational consequences must carry the empirical load. This document identifies the hooks; the EVM paper set provides the fitting machinery.
+
+%% ================================================================
+\section{Dark Matter and Large-Scale Residuals}
+%% ================================================================
+
+At galactic regimes, missing dynamical behavior may be modeled as a residual tied to scale access or projection loss:
+\[
+R_{\mathrm{gal}} = \mathcal{D}_{\mathrm{obs}} - \mathcal{D}_{\mathrm{visible}}.
+\]
+
+This is curve-fittable in some solution schools. It is not validated as a universal explanation. The projection-residual framework developed in IKK~II and IKK~IV is necessary but not sufficient; a full fit requires: (a) a calibrated $\chiw$ at galactic scales, (b) a defined $\wcoord$ evolution law, and (c) independent empirical constraints.
+
+\textbf{Forward reference:} IKK~V, EVM~I, EVM~II.
+
+%% ================================================================
+\section{Failure Modes and Overclaim Guardrails}
+%% ================================================================
+
+\begin{enumerate}
+\item If $\wcoord$ is treated as physical length scale, the document collapses into a confused coordinate model that proves nothing except that notation is cheap. The correction $\wcoord \neq \ell$ is enforced throughout.
+\item If hidden residual is used to explain every dynamical mismatch, the theory becomes an unfalsifiable container for ignorance. Every residual claim requires a defined recovery pathway.
+\item If property activation $\AQ$ is confused with property creation, scale ontology becomes magical. Properties pre-exist in $\Itrue$; $\AQ$ describes readability, not genesis.
+\item If cross-scale efficiency $\etaab$ is used as proof rather than evidence of representation quality, the argument overclaims. Efficiency is a diagnostic; it does not establish ontology.
+\item If $\chiw$ is left undefined in numerical claims, the five-dimensional interval is decorative. Definition~\ref{def:chiw} is a placeholder; calibration is required.
+\end{enumerate}
+
+%% ================================================================
+\section{Abstract and Thesis}
+%% ================================================================
+
+\textbf{Abstract.}
+This document formalizes the scale-interval and dimensional-access structure required by the IKK projection framework. It distinguishes physical length scale $\ell$, scale regimes $S_n = (D_n, M_n, L_n, \mathcal{O}_n, \mathcal{P}_n)$, and scale intervals $\DSab$ from the fifth coordinate $\wcoord$, which is treated as a hidden/projective identity-access coordinate rather than a physical scale axis. Projection across scale intervals is described by $\PiS{a}{b} : \Ha \to \OspS{b}$, parameterized by $(\DSab, \ell_a, \ell_b, \mathcal{B}, \Gamma, \wcoord)$. Hidden residuals, distinguishability loss, scale-dependent wavefunctions, and property activation functions describe how identity content becomes readable at different regimes. The property activation sigmoid $\AQ$ is noted as the scale-parameterized parallel to the IKK~III compatibility gate $\chiab(\Ia)$. Cross-scale recovery efficiency $\etaab(\Ia)$ is harmonized with IKK~III notation.
+
+\[
+\boxed{
+\wcoord \neq \ell,\qquad
+\PiS{a}{b} = \Pi\!\big(\DSab,\, \ell_a,\, \ell_b,\, \mathcal{B},\, \Gamma,\, \wcoord\big),\qquad
+|\Psi^{\mathrm{hid}}\rangle = \big(\mathbf{I} - \PiS{a}{b}\big)|\Psi_a\rangle.
+}
+\]
+
+%% ================================================================
+\section{Document Structure Map}
+%% ================================================================
+
+\begin{longtable}{p{0.11\linewidth}p{0.31\linewidth}p{0.49\linewidth}}
+\toprule
+Pages & Section & Function \\
+\midrule
+1--3   & Scope; coordinate correction & Enforce $\wcoord \neq \ell$; establish all scale variables. \\
+3--6   & Coordinate chart; 5D interval & $u(\ell)$ as chart; $\chiw$ definition; proper-time form. \\
+6--9   & Scale regime; scale interval  & Five-tuple $S_n$; $\DSab$ with $\Lambda_{a,b}$. \\
+9--12  & Cross-scale projection; residual & $\PiS{a}{b}$; $|\Psi^{\mathrm{hid}}\rangle$; $\Delta\D$ and $\etaab$. \\
+12--15 & Complex fiber; bundles; persistence & Phase structure; projected bundles; simultaneous scale. \\
+15--18 & Scale-dependent wavefunction; Born & $\psi_L = \Wab|_L(\Itrue)$; Born as projected measure. \\
+18--20 & Duality; property activation & Mismatch framing; $\AQ \leftrightarrow \chiab$ parallel. \\
+20--23 & Cross-scale table; $\etaab$; validation & Property map; harmonized efficiency; observable hooks. \\
+23--25 & Dark matter; guardrails; abstract & Residual preview; five overclaim limits; thesis. \\
+\bottomrule
+\end{longtable}
+
+\end{document}

@@ -1,4 +1,4 @@
-#include "maxwell_boltzmann.hpp"
+﻿#include "maxwell_boltzmann.hpp"
 #include <cmath>
 
 namespace atomistic {
@@ -10,10 +10,10 @@ namespace atomistic {
 // Boltzmann constant (kcal/(mol·K))
 static constexpr double k_B = 0.0019872041;
 
-// Kinetic energy conversion: amu·Å²/fs² → kcal/mol
+// Kinetic energy conversion: amu·Å²/fs² -> kcal/mol
 static constexpr double KE_CONV = 2390.057361;
 
-// Velocity conversion: sqrt(kcal/(mol·amu)) → Å/fs
+// Velocity conversion: sqrt(kcal/(mol·amu)) -> Å/fs
 // CORRECT VALUE VALIDATED: 0.0205 gives correct Maxwell-Boltzmann distribution
 // Reference: BAOAB_IMPLEMENTATION_COMPLETE.md, LANGEVIN_ROOT_CAUSE_IDENTIFIED.md
 static constexpr double VEL_CONV = 0.0205;

@@ -1,18 +1,18 @@
-#pragma once
+﻿#pragma once
 /**
- * compound_record.hpp — Compound Database Record C_j
+ * compound_record.hpp  -  Compound Database Record C_j
  *
  * Implements the formal definition:
  *
  *   C_j = (S_j, G_j, B_j, P_j, R_j, H_j)
  *
  * where:
- *   S_j  — stoichiometry
- *   G_j  — geometry / graph / arrangement hints
- *   B_j  — bond or interaction classification
- *   P_j  — phase / process metadata
- *   R_j  — resolution projections
- *   H_j  — compound hash block
+ *   S_j   -  stoichiometry
+ *   G_j   -  geometry / graph / arrangement hints
+ *   B_j   -  bond or interaction classification
+ *   P_j   -  phase / process metadata
+ *   R_j   -  resolution projections
+ *   H_j   -  compound hash block
  *
  * Compounds are distinct database objects with stoichiometric, structural,
  * and resolution-aware metadata.
@@ -120,7 +120,7 @@ inline const char* projection_mode_name(ProjectionMode m) {
 // ============================================================================
 
 struct StoichiometryBlock {
-    std::map<std::string, uint32_t> elements;  ///< symbol → count
+    std::map<std::string, uint32_t> elements;  ///< symbol -> count
     std::string formula;                        ///< Canonical formula string
 
     std::string summary() const {

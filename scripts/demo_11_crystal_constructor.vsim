@@ -1,0 +1,70 @@
+# scripts/demo_11_crystal_constructor.vsim
+# VSEPR-SIM v5.1.4  |  Demo 11 -- Crystal Constructor (WO-66P)
+# FCC Nickel 4x4x4 supercell using the CrystalModule(...) functional constructor.
+# Viewer 1: gl_crystal_grid  (live during relaxation)
+# Viewer 2: vsepr-light-view (post-run trajectory browser)
+# Run: vsper run scripts/demo_11_crystal_constructor.vsim
+
+[project]
+name        = "demo_11_crystal_constructor"
+version     = "v5.1.4"
+seed_base   = 11001
+determinism = true
+description = "FCC Nickel 4x4x4 supercell -- functional CrystalModule constructor demo"
+
+[objects]
+system.crystal = CrystalModule(lattice = fcc, a = 3.52, species = [Ni], supercell = [4, 4, 4], relax = true, relax_max_steps = 600, relax_fmax_eV_A = 0.01, relax_method = conjugate_gradient, pbc_x = true, pbc_y = true, pbc_z = true, translate_to_xyz = true, translate_to_cell_comment = true, translate_to_cif_summary = true, translate_to_json = true)
+
+[run]
+mode          = "relax"
+max_steps     = 600
+dt_fs         = 0.5
+temperature_K = 300.0
+converge      = true
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "coordination", "rdf", "formation", "defect"]
+output_format = "json"
+every_n_steps = 25
+
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.visual]
+write_energy_trace_svg    = true
+write_rdf_svg             = true
+write_svg_figures         = true
+write_html_dashboard      = true
+visual_output_dir         = figures/demo_11/
+
+[visual]
+output_type              = "gl_crystal_grid"
+animation_mode           = "none"
+show_convergence_trace   = true
+show_steady_state_marker = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = true
+gl_window_width          = 1280
+gl_window_height         = 800
+render_interval          = 10
+
+[open]
+enabled = true
+mode    = "advanced"
+file    = "auto"
+
+[open.advanced]
+trajectory_controls = true
+data_inspector      = true
+bond_overlay        = true
+start_paused        = false
+default_frame       = 0

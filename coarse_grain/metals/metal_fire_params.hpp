@@ -1,23 +1,23 @@
-#pragma once
+﻿#pragma once
 /**
- * metal_fire_params.hpp — Metal-Class FIRE 6+9 Parameter Sets
+ * metal_fire_params.hpp  -  Metal-Class FIRE 6+9 Parameter Sets
  *
  * Provides tuned SeedBeadParams for each metal crystal class.
  * Parameters reflect EAM-informed τ and γ channel settings:
  *
- *   FCC noble metals    — soft, long-range dispersion-dominant
- *   FCC transition      — intermediate: steric + dispersion balanced
- *   BCC refractory      — stiff, short-range, high τ
- *   HCP proxy           — similar to FCC transition, slightly anisotropic bias
- *   Alloy (mixed)       — interpolated from A and B class parameters
+ *   FCC noble metals     -  soft, long-range dispersion-dominant
+ *   FCC transition       -  intermediate: steric + dispersion balanced
+ *   BCC refractory       -  stiff, short-range, high τ
+ *   HCP proxy            -  similar to FCC transition, slightly anisotropic bias
+ *   Alloy (mixed)        -  interpolated from A and B class parameters
  *
- * All values are deterministic constants — no runtime tuning or fitting.
+ * All values are deterministic constants  -  no runtime tuning or fitting.
  * They are physics-motivated approximations, not EAM fits.
  *
  * Reference:
- *   - Daw & Baskes, Phys. Rev. B 29, 6443 (1984) — EAM basis
- *   - Finnis & Sinclair, Phil. Mag. A 50, 45 (1984) — FS potential
- *   - coarse_grain/models/seed_bead_stepper.hpp — parameter struct
+ *   - Daw & Baskes, Phys. Rev. B 29, 6443 (1984)  -  EAM basis
+ *   - Finnis & Sinclair, Phil. Mag. A 50, 45 (1984)  -  FS potential
+ *   - coarse_grain/models/seed_bead_stepper.hpp  -  parameter struct
  */
 
 #include "coarse_grain/metals/metal_registry.hpp"
@@ -42,7 +42,7 @@ struct MetalFireParams {
 
 /// FCC noble metals: Au, Ag, Pt
 /// Dispersion-dominant. Long τ for slow η relaxation.
-/// Low steric coupling — delocalized d-band.
+/// Low steric coupling  -  delocalized d-band.
 inline MetalFireParams fcc_noble_params() {
     MetalFireParams p;
     p.class_label = "FCC-Noble";
@@ -61,7 +61,7 @@ inline MetalFireParams fcc_noble_params() {
     s.env_params.tau          = 120.0;  // slow environment relaxation
     s.env_params.alpha        = 0.55;   // density-weighted
     s.env_params.beta         = 0.45;   // orientation secondary
-    s.env_params.gamma_steric = 0.12;   // low — FCC noble is soft
+    s.env_params.gamma_steric = 0.12;   // low  -  FCC noble is soft
     s.env_params.gamma_elec   = -0.08;  // weak electrostatic modulation
     s.env_params.gamma_disp   = 0.65;   // dispersion dominant
     return p;
@@ -94,8 +94,8 @@ inline MetalFireParams fcc_transition_params() {
 }
 
 /// BCC refractory metals: W, Mo, Cr, Fe
-/// High τ — slow structural reorganisation. Stiff steric channel.
-/// Fe is magnetic — use magnetic_bias_factor to modulate γ_steric.
+/// High τ  -  slow structural reorganisation. Stiff steric channel.
+/// Fe is magnetic  -  use magnetic_bias_factor to modulate γ_steric.
 inline MetalFireParams bcc_refractory_params() {
     MetalFireParams p;
     p.class_label = "BCC-Refractory";
@@ -111,10 +111,10 @@ inline MetalFireParams bcc_refractory_params() {
     s.record_positions       = true;
     s.fire_alpha_start        = 0.1;
 
-    s.env_params.tau          = 220.0;  // very slow — BCC is stiffer
+    s.env_params.tau          = 220.0;  // very slow  -  BCC is stiffer
     s.env_params.alpha        = 0.70;   // density drives structure
     s.env_params.beta         = 0.30;
-    s.env_params.gamma_steric = 0.40;   // strong steric — tight packing BCC
+    s.env_params.gamma_steric = 0.40;   // strong steric  -  tight packing BCC
     s.env_params.gamma_elec   = -0.12;
     s.env_params.gamma_disp   = 0.45;
     return p;
@@ -140,7 +140,7 @@ inline MetalFireParams hcp_proxy_params() {
 
     s.env_params.tau          = 100.0;
     s.env_params.alpha        = 0.50;
-    s.env_params.beta         = 0.50;   // elevated — HCP orientation matters
+    s.env_params.beta         = 0.50;   // elevated  -  HCP orientation matters
     s.env_params.gamma_steric = 0.25;
     s.env_params.gamma_elec   = -0.10;
     s.env_params.gamma_disp   = 0.50;
@@ -162,7 +162,7 @@ inline MetalFireParams params_for_metal(const MetalRecord& m) {
 }
 
 /// Alloy pair: linearly interpolate env_params from two pure-metal param sets
-/// (Lorentz–Berthelot spirit — arithmetic mean for additive params)
+/// (Lorentz-Berthelot spirit  -  arithmetic mean for additive params)
 inline MetalFireParams alloy_params(const MetalRecord& A,
                                     const MetalRecord& B,
                                     double x_B = 0.5)

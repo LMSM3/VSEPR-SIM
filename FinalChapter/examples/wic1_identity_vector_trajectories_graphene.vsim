@@ -1,0 +1,263 @@
+# =============================================================================
+# WIC I — Identity Vector Trajectories
+# VSIM implementation: graphene sheet MD
+#
+# Theory claim (WIC I):
+#   A particle is not a string. A particle casts a line because identity
+#   persists. The worldline is a multidimensional identity-vector trajectory
+#   Γ_i = { V_i(t) | t ∈ [t_exist, t_end] }, not a vibrating extended object.
+#   V_i(t) = [X_i(t), w_i(t), D_i(t), χ_i, H_i(t), C_i(t), S_i(t)]
+#   The ordinary worldline is the lower-dimensional shadow of this.
+#
+# Computational test:
+#   Run graphene MD and track full particle trajectories. The [post_step]
+#   block probes pairwise distances at each step — this is the instantaneous
+#   snapshot of X_i(t). The kernel event log records H_i(t) (interaction
+#   history). The MSD curve is the observable shadow of the full trajectory
+#   projected onto displacement magnitude: the worldline shadow.
+#
+#   WIC I §4: local point / historical line.
+#     At each timestep, each C atom is point-like (position = X_i(t)).
+#     Across timesteps, the trajectory IS the worldline Γ_i.
+#     The MSD curve is the 1-D projection of that trajectory.
+#
+#   WIC I §5: projection of worldline.
+#     rdf = radial projection of all pairwise distances = observable shadow
+#     of the full N-body trajectory structure.
+#
+#   WIC I §6: difference from string theory.
+#     The trajectory line is not substance. The C atoms are point carriers.
+#     The line exists because identity persists across time, not because
+#     an extended object vibrates. graphene in-plane phonons produce a
+#     continuous trajectory line for each atom — that line is history,
+#     not substrate.
+#
+#   WIC I §7: relation to w.
+#     At macro scale, w-axis content is inaccessible. But the scale_sampling
+#     windows test whether identity structure at sub-nm scale (close to w)
+#     differs from identity structure at supercell scale (projected away from w).
+#     A scale_drift that increases with window size is the w-projection signal.
+#
+# Traditional system: graphene (C, single layer, hexagonal)
+#   Clean 2-D covalent lattice. sp2 bonding. In-plane phonons produce
+#   well-defined C trajectories. Ripple modes give out-of-plane displacement
+#   — this is the closest analogue to w-axis excursion in a classical system.
+#
+# [post_step] probe: pairwise C-C distance for atoms 1–2 and 1–3
+#   These are nearest and next-nearest neighbours.
+#   If the identity is persistent and point-like, the distance should
+#   oscillate around the equilibrium bond length (1.42 Å).
+#   If it drifts, the identity state is changing — structural event.
+# =============================================================================
+
+[project]
+name        = "wic1_identity_vector_trajectories_graphene"
+version     = "v5.0.0-beta.9"
+seed_base   = 3001
+determinism = true
+
+[material]
+formula    = "C"
+structure  = "graphene"
+cell       = "8x8x1"
+phase      = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 4000
+dt_fs        = 0.25      # short timestep: capture fast in-plane phonons
+temperature  = 300
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = true       # 2-D periodic: x and y periodic, z open
+temperature = 300
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[simulation]
+fire_max_steps   = 500
+fire_dt_fs       = 0.25
+periodic         = true
+formation_preset = "molecular"   # sp2 covalent
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 128       # 8×8 unit cells, 2 atoms per cell
+lattice     = "hexagonal"
+layer_mode  = "AA"
+n_layers    = 1
+temperature = 300.0
+
+# ---------------------------------------------------------------------------
+# Boundary — periodic in plane, open in z
+# WIC I §4: point-like at instant. The z-boundary being open allows
+# the out-of-plane ripple mode (closest analogue to w-axis displacement).
+# ---------------------------------------------------------------------------
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+# ---------------------------------------------------------------------------
+# Post-step probe — WIC I §4 instantaneous point identity
+# pbc.distance(particle.position(1), particle.position(2)):
+#   nearest-neighbour C-C bond. Should oscillate ~1.42 Å.
+#   Persistent bond = persistent identity. Bond breaking = identity event.
+# pbc.distance(particle.position(1), particle.position(3)):
+#   next-nearest. Should oscillate ~2.46 Å.
+# These are sampled at every step — the full trajectory shadow.
+# ---------------------------------------------------------------------------
+[post_step]
+enabled = true
+script_block = """
+d_12 = pbc.distance(particle.position(1), particle.position(2))
+d_13 = pbc.distance(particle.position(1), particle.position(3))
+"""
+
+# ---------------------------------------------------------------------------
+# Observables — projected trajectory structure
+# WIC I §5: rdf = projection of pairwise trajectories onto r
+# interference: wave-like structure of the projected trajectory field
+# energy_map: instantaneous snapshot of V_i potential surface
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 10     # dense sampling for trajectory reconstruction
+
+# ---------------------------------------------------------------------------
+# Kernel — interaction history H_i(t)
+# WIC I §2 and WIC II §2: H_i(t) is the interaction history.
+# formation_events log bond-formation/breaking: changes in H_i.
+# transport_events log atom displacements: entries in Γ_i.
+# dynamic_energy logs E_i(t): the energy component of V_i(t).
+# ---------------------------------------------------------------------------
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true   # WIC I: displacement history IS the worldline
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Scale sampling — w-projection test (WIC I §7)
+# graphene a = 2.46 Å. Windows: 1×a through 8×a.
+# If scale_drift increases monotonically with window size, identity
+# content is being lost in the projection — consistent with w inaccessibility
+# at the macro scale.
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                            = true
+compute_field_projection           = true
+compute_rve_sampling               = true
+compute_emergence_metrics          = true
+field_grid                         = [10, 10, 4]   # thin in z (monolayer)
+rve_window_lengths_A               = [2.46, 4.92, 9.84, 19.68]
+rve_windows_per_level              = 8
+rve_window_placement               = "grid"
+min_particles_for_scale_sampling   = 32
+spatial_cv_threshold               = 0.35
+temporal_drift_threshold           = 0.20
+scale_drift_threshold              = 0.30
+temporal_drift_metric              = "block_difference"
+scale_drift_metric                 = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 3.5
+contact_cutoff_A  = 1.8
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 40
+unwrap_pbc            = true    # unwrap for trajectory continuity
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Verification — WIC I §5 projected worldline shadow
+# graphene sp2 C-C bond: 1.42 Å. Coordination: 3.
+# RDF peaks: 1.42 Å (1st), 2.46 Å (2nd), 2.84 Å (3rd).
+# MSD must stay bounded: graphene is a solid, atoms oscillate.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "wic1_graphene_trajectory_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "graphene_AA"
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.42
+nearest_neighbor_tolerance_A = 0.08
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.42, 2.46, 2.84]
+peak_tolerance_A   = 0.12
+require_peak_order = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.5
+max_slope_late       = 0.002
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_dashboard_svg        = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/wic1_graphene"
+
+[report]
+title                   = "wic1_identity_vector_trajectories_graphene"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 20
+show_proxy_table         = true
+show_convergence_trace   = false
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,coordination,rdf,interference

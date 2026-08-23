@@ -158,6 +158,7 @@ resources/*_preview.png
 resources/*_256.png
 
 # Build directories (WSL / local variants)
+build_*/
 build-wsl/
 build_wsl/
 build_wsl_vis/
@@ -194,4 +195,43 @@ verification/downloaded_refs.json
 
 # Runtime output artefacts
 out/
+reports/
+
+# Transient tool caches and session state
+.pytest_cache/
+.vsepr-session/
+--help/
+
+# ============================================================================
+# Root cleanup — patterns added during Day-72 root refresh
+# ============================================================================
+
+# Stray simulation / test output files that may land at root
+live_log.jsonl
+*_out.txt
+ctest_out*.txt
+build_out*.txt
+out.xyz
+out.preview.json
+
+# Simulation run trees (large, regenerable)
+runs/
+atomistic_output/
+demo_out/
+demo_xyz/
+demo_validation_output/
+fire_smooth_trace/
+events/
+_test_daemons/
+
+# Stale secondary build trees
+build_vis/
+build_vview/
+
+# Archive folder (legacy prototypes — local reference only, not pushed)
+archive/
+
+# Generated figure/data outputs
+data/figures/
+
 

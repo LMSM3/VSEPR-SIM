@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Phase 3: Continuous Generation Test Suite
  * vsepr-sim v2.3.1
  * 
@@ -51,10 +51,10 @@ static fs::path continuous_output_base() {
 
 void print_header() {
     std::cout << "\n";
-    std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   VSEPR-Sim Phase 3: Continuous Generation Tests        ║\n";
-    std::cout << "║   Version 2.3.1 - Real Physics, No Hardcoded Elements   ║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+==========================================================+\n";
+    std::cout << "|   VSEPR-Sim Phase 3: Continuous Generation Tests        |\n";
+    std::cout << "|   Version 2.3.1 - Real Physics, No Hardcoded Elements   |\n";
+    std::cout << "+==========================================================+\n";
     std::cout << "\n";
 }
 
@@ -433,9 +433,9 @@ int main() {
         
         // Summary
         std::cout << "\n";
-        std::cout << "╔══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║                   ALL TESTS PASSED!                      ║\n";
-        std::cout << "╚══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+==========================================================+\n";
+        std::cout << "|                   ALL TESTS PASSED!                      |\n";
+        std::cout << "+==========================================================+\n";
         std::cout << "\n";
         
         std::cout << "Next steps:\n";

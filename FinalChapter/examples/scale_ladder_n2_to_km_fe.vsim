@@ -1,0 +1,455 @@
+# =============================================================================
+# VSIM Scale Ladder Demonstration
+# From 8 atoms in a box of N2 → km-scale metallic structure
+#
+# Theory: IKK IV §2 — Length Scale Ladder
+#   Field, particle, and macro structure are not separate ontological
+#   categories. They are different representational limits of identity-bearing
+#   structure. This batch walks that ladder in six stops.
+#
+# Scale stops:
+#   Job 1 — Molecular (sub-nm):
+#             4 × N2 molecules in a vacuum box. ~8 atoms.
+#             Baseline: point-identity carriers, no periodicity.
+#
+#   Job 2 — Molecular crystal (nm):
+#             N2 solid, Pa-3 structure, small supercell.
+#             Periodicity enters. Identity becomes collective.
+#
+#   Job 3 — Nanoparticle (nm → tens of nm):
+#             Fe nanoparticle cluster, ~1000 atoms, no PBC.
+#             Surface effects dominate. Bulk identity not yet established.
+#
+#   Job 4 — Bulk crystal (µm, represented by periodic supercell):
+#             Fe BCC large supercell with Ewald/EAM.
+#             Bulk identity: periodic, translationally invariant.
+#
+#   Job 5 — Mesoscale proxy (mm, coarse-grained bead model):
+#             Fe bead model, each bead = ~10^6 atoms.
+#             Identity content is compressed. Bead-spring forcefield.
+#             This is where scale_drift starts to dominate the signal.
+#
+#   Job 6 — Engineering scale proxy (km, projection limit):
+#             Single-bead descriptor for a km-scale Fe object.
+#             RVE windows approach system size.
+#             mass_conserved and field projection are the only
+#             meaningful observables — everything else has projected out.
+#             This is the IKK IV §6 field limit: identity structure
+#             at this scale is indistinguishable from a field.
+#
+# Key measurement across all jobs:
+#   scale_sampling rve_window_lengths_A at appropriate intervals.
+#   Cross-job: does spatial_cv increase monotonically with scale?
+#   Cross-job: does emergence_candidate flip at a specific scale window?
+#   If yes: that window marks the projection boundary where the
+#   observable class changes — the IKK IV scale interval.
+#
+# Traditional system: N (molecular) → Fe (metallic)
+#   N2 is the simplest real diatomic. Fe BCC is the canonical metallic.
+#   The progression is physically motivated, not arbitrary.
+# =============================================================================
+
+[project]
+name        = "scale_ladder_n2_to_km_fe"
+version     = "v5.1.13.5"
+seed_base   = 7700
+determinism = true
+
+# ---------------------------------------------------------------------------
+# Batch declaration
+# ---------------------------------------------------------------------------
+[batch]
+print_plan = true
+
+
+# ============================================================
+# JOB 1 — Molecular: ~8 atoms, N2 gas, no periodicity
+# Scale: sub-nm. IKK IV §2: particle scale.
+# Observable: bond length, coordination = 1 (each N bonded to one N)
+# ============================================================
+[[batch.job]]
+name            = "j01_molecular_n2_gas"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "N2"
+structure = "molecular"
+phase     = "gas"
+
+[batch.job.run]
+mode        = "relax"
+max_steps   = 500
+temperature = 0.0
+
+[batch.job.environment]
+periodic    = false
+temperature = 0.0
+medium      = "vacuum"
+
+[batch.job.simulation]
+fire_max_steps   = 500
+fire_dt_fs       = 0.5
+box_size_ang     = 15.0   # 15 Å box for 4 × N2 = 8 atoms
+periodic         = false
+formation_preset = "molecular"
+use_ewald        = false
+
+[[batch.job.simulation.molecule]]
+formula     = "N2"
+count       = 4
+temperature = 0.0
+
+[batch.job.scale_sampling]
+# N-N bond: 1.10 Å. Windows: bond scale → molecule scale → box scale
+rve_window_lengths_A = [1.10, 2.20, 5.0, 10.0]
+field_grid           = [4, 4, 4]
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_coordination        = 1
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.10
+nearest_neighbor_tolerance_A = 0.05
+
+
+# ============================================================
+# JOB 2 — Molecular crystal: N2 solid, Pa-3 structure
+# Scale: nm. IKK IV §2: atomic/molecular crystal scale.
+# Periodicity enters. Identity becomes translationally ordered.
+# Observable: RDF peaks, coordination still 1 intra-molecule
+# ============================================================
+[[batch.job]]
+name            = "j02_molecular_crystal_n2_solid"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "N2"
+structure = "molecular_crystal"
+phase     = "solid"
+cell      = "3x3x3"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1500
+dt_fs       = 0.5
+temperature = 20.0   # N2 freezes at ~63 K; 20 K well into solid
+
+[batch.job.environment]
+periodic    = true
+temperature = 20.0
+medium      = "vacuum"
+
+[batch.job.simulation]
+fire_max_steps = 500
+periodic       = true
+use_ewald      = false   # neutral molecular crystal
+
+[batch.job.scale_sampling]
+# N2 solid a ≈ 5.66 Å. Windows: bond → unit cell → supercell
+rve_window_lengths_A = [1.10, 2.83, 5.66, 16.98]
+field_grid           = [6, 6, 6]
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_coordination        = 1
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.10
+nearest_neighbor_tolerance_A = 0.06
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 0.5
+max_slope_late       = 0.001
+
+
+# ============================================================
+# JOB 3 — Nanoparticle: Fe cluster ~1000 atoms, no PBC
+# Scale: nm → tens of nm. IKK IV §2: nanoparticle / surface scale.
+# Surface-to-volume ratio is high. Bulk identity not established.
+# Observable: coordination < 8 (BCC bulk), surface atoms undercoordinated
+# ============================================================
+[[batch.job]]
+name            = "j03_nanoparticle_fe_cluster"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "5x5x5"   # 250 unit cells = ~1000 atoms, carved as sphere
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300.0
+
+[batch.job.environment]
+periodic    = false    # nanoparticle: no PBC, free surfaces
+temperature = 300.0
+medium      = "vacuum"
+
+[batch.job.simulation]
+fire_max_steps   = 500
+periodic         = false
+formation_preset = "metallic"
+use_ewald        = false
+
+[batch.job.scale_sampling]
+# Fe a = 2.87 Å. Windows: bond → unit cell → particle → outer edge
+rve_window_lengths_A = [2.48, 4.96, 9.92, 28.7]
+field_grid           = [8, 8, 8]
+min_particles_for_scale_sampling = 32
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_coordination        = 6    # surface average < 8; ~6-7 typical for nanoparticle
+coordination_tolerance       = 2    # wide: surface atoms vary significantly
+expected_nearest_neighbor_A  = 2.48
+nearest_neighbor_tolerance_A = 0.12
+
+
+# ============================================================
+# JOB 4 — Bulk crystal: Fe BCC large supercell, periodic
+# Scale: µm (represented by periodic BC). IKK IV §2: bulk crystal scale.
+# Translational symmetry. Bulk identity: coordination = 8.
+# Observable: RDF peaks, MSD bounded, coordination exactly 8 in interior
+# ============================================================
+[[batch.job]]
+name            = "j04_bulk_fe_bcc_periodic"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "8x8x8"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 2000
+dt_fs       = 1.0
+temperature = 300.0
+
+[batch.job.environment]
+periodic    = true
+temperature = 300.0
+medium      = "vacuum"
+
+[batch.job.simulation]
+fire_max_steps   = 500
+periodic         = true
+formation_preset = "metallic"
+use_ewald        = false   # EAM handles Fe, not Ewald
+
+[batch.job.scale_sampling]
+# Fe BCC a = 2.87 Å. Windows: bond → unit cell → supercell → bulk probe
+rve_window_lengths_A = [2.48, 4.96, 9.92, 22.96]
+field_grid           = [8, 8, 8]
+
+[batch.job.verify.structure]
+enabled                      = true
+expected_prototype           = "A2_Fe"
+expected_coordination        = 8
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.48
+nearest_neighbor_tolerance_A = 0.10
+
+[batch.job.verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.0
+max_slope_late       = 0.001
+expect_regime        = "solid_bounded"
+
+
+# ============================================================
+# JOB 5 — Mesoscale proxy: Fe bead model
+# Scale: mm (each bead ~ 10^6 atoms). IKK IV §6 pointer.
+# Observable: bead-spring dynamics, field projection begins to dominate.
+# Coordination is undefined at this scale — it's a bead network.
+# scale_drift should rise relative to Job 4: identity compressed.
+# ============================================================
+[[batch.job]]
+name            = "j05_mesoscale_fe_bead"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+structure = "bead"
+phase     = "solid"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1000
+dt_fs       = 10.0    # coarse time step appropriate for bead dynamics
+temperature = 300.0
+
+[batch.job.environment]
+periodic    = true
+temperature = 300.0
+medium      = "vacuum"
+
+[batch.job.simulation]
+fire_max_steps   = 200
+periodic         = true
+formation_preset = "bead_spring"
+use_ewald        = false
+
+[batch.job.scale_sampling]
+# Bead model: each bead = ~10 nm diameter proxy.
+# Windows span from bead diameter to inter-bead spacing to system scale.
+# At this scale, field_projection and mass_conserved are the real signal.
+rve_window_lengths_A = [100.0, 500.0, 2000.0, 10000.0]
+field_grid           = [4, 4, 4]
+min_particles_for_scale_sampling = 4
+
+# Loose thresholds: bead model has high spatial_cv by design
+spatial_cv_threshold  = 0.70
+scale_drift_threshold = 0.60
+
+
+# ============================================================
+# JOB 6 — Engineering scale proxy: km-scale Fe object
+# Scale: km. IKK IV §6 field limit.
+# This job does not simulate atoms. It simulates a single-bead
+# descriptor for an object whose characteristic length is 1 km = 10^13 Å.
+# The RVE windows approach system size. At this point:
+#   - emergence_candidate is defined by whether the field projection
+#     is mass-conserved and spatially uniform
+#   - coordination is meaningless
+#   - The observable is indistinguishable from a field
+#   - This is the IKK IV §6 field limit: F = lim_{r_P → ∞} P(r_P)
+# ============================================================
+[[batch.job]]
+name            = "j06_engineering_scale_km_fe_field_limit"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+structure = "bead"
+phase     = "solid"
+
+[batch.job.run]
+mode        = "single_point"   # no dynamics — this is a descriptor, not a simulation
+max_steps   = 1
+temperature = 300.0
+output_level = "verbose"
+
+[batch.job.environment]
+periodic    = true
+temperature = 300.0
+medium      = "vacuum"
+
+[batch.job.simulation]
+fire_max_steps   = 1
+periodic         = true
+formation_preset = "bead_spring"
+use_ewald        = false
+
+[batch.job.scale_sampling]
+# 1 km = 1e13 Å. We represent this in reduced units.
+# Windows: 1e9 Å (1 m proxy) → 1e10 → 1e11 → 1e12 (approaching km)
+# The rve_window at 1e12 is effectively the whole system.
+# field_projection at this scale is the only meaningful observable.
+# spatial_cv approaching 0 = field-like identity (IKK IV §6 / IKK V §2)
+# spatial_cv large = the identity structure is not field-like at this window.
+rve_window_lengths_A = [1.0e9, 1.0e10, 1.0e11, 1.0e12]
+field_grid           = [2, 2, 2]    # minimal: single-point descriptor
+min_particles_for_scale_sampling = 1
+
+spatial_cv_threshold  = 0.90   # almost anything passes: field limit
+scale_drift_threshold = 0.90
+
+# Note: if field_projection.mass_conserved = true and
+# emergence_candidate = true at the 1e12 window, the identity
+# content at this scale is consistent with field-like behavior.
+# That is the expected result. It does not prove IKK V; it is
+# consistent with the field-limit claim.
+
+
+# ---------------------------------------------------------------------------
+# Shared analysis configuration across all jobs
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+rve_windows_per_level            = 4
+rve_window_placement             = "grid"
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+temporal_drift_threshold         = 0.20
+# Note: spatial_cv_threshold and scale_drift_threshold are overridden
+# per-job above for jobs 5 and 6 where coarse-graining raises baseline variance
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 3.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 100
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+dynamic_energy   = true
+
+[verify]
+enabled             = true
+profile             = "scale_ladder_n2_to_km_fe"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export — cross-job comparison summary is the key output
+# ---------------------------------------------------------------------------
+[export]
+write_xyz             = true
+write_analysis_json   = true
+write_metrics_tsv     = true
+write_report_md       = true
+write_manifest_json   = true
+output_dir            = "out/scale_ladder"
+
+[report]
+title                   = "Scale Ladder: N2 Molecular → km-scale Fe Field Limit"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type     = "terminal_overlay_cycle"
+render_interval = 100
+show_bar_chart  = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination

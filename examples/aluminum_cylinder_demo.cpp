@@ -1,4 +1,4 @@
-/**
+﻿/**
  * aluminum_cylinder_demo.cpp
  * Create and analyze an aluminum cylinder using FEA
  * Compile: g++ -std=c++17 -I. -Iphysical_scale examples/aluminum_cylinder_demo.cpp -o aluminum_cylinder.exe
@@ -245,10 +245,10 @@ public:
 
 int main(int argc, char* argv[]) {
     std::cout << "\n";
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║        Aluminum Cylinder FEA Visualization Demo            ║\n";
-    std::cout << "║              VSEPR-Sim Physical Scale Module               ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|        Aluminum Cylinder FEA Visualization Demo            |\n";
+    std::cout << "|              VSEPR-Sim Physical Scale Module               |\n";
+    std::cout << "+============================================================+\n";
     std::cout << "\n";
     
     // Create cylinder

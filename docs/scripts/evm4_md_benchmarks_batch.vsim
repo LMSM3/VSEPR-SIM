@@ -1,0 +1,211 @@
+# EVM IV — MD Benchmarks: Cross-Scale Consistency
+# NaCl/Si/Al × 300K/900K. η uniformity test; failure conditions explicitly labelled.
+# Theory: EVM IV §2,4,6,7 — deformed Born rule probe; scale-dependent statistics.
+
+[project]
+name        = "evm4_md_benchmarks_batch"
+version     = "v5.1.13.5"
+seed_base   = 4040
+determinism = true
+
+[batch]
+print_plan = true
+
+[[batch.job]]
+name            = "nacl_300k_ionic_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula = "NaCl"
+prototype = "B1_NaCl"
+cell = "4x4x4"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic = true
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.82, 5.64, 11.28, 22.56]
+
+[[batch.job]]
+name            = "nacl_900k_ionic_high_temp"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula = "NaCl"
+prototype = "B1_NaCl"
+cell = "4x4x4"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 1.0
+temperature = 900
+
+[batch.job.environment]
+periodic = true
+temperature = 900
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.82, 5.64, 11.28, 22.56]
+
+[[batch.job]]
+name            = "si_300k_covalent_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula = "Si"
+prototype = "A4_Si"
+cell = "5x5x5"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 0.5
+temperature = 300
+
+[batch.job.environment]
+periodic = true
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+
+[[batch.job]]
+name            = "al_300k_metallic_fcc_baseline"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula = "Al"
+prototype = "A1_Al"
+cell = "5x5x5"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic = true
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.86, 4.05, 8.10, 20.25]
+
+[[batch.job]]
+name            = "al_900k_metallic_near_melt"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula = "Al"
+prototype = "A1_Al"
+cell = "5x5x5"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 1.0
+temperature = 900
+
+[batch.job.environment]
+periodic = true
+temperature = 900
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.86, 4.05, 8.10, 20.25]
+spatial_cv_threshold = 0.70
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+spatial_cv_threshold             = 0.30
+temporal_drift_threshold         = 0.20
+scale_drift_threshold            = 0.30
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 3.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 40
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+defect_events  = true
+dynamic_energy = true
+
+[verify]
+enabled             = true
+profile             = "evm4_md_benchmarks"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 3.0
+max_slope_late       = 0.002
+# Note: al_900k job may fail this check — that is a valid Tier IV result.
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = true
+write_scale_sampling_json = true
+write_verify_report       = true
+write_manifest_json       = true
+output_dir                = "out/evm4_benchmarks"
+
+[report]
+title = "EVM IV — MD Benchmarks: NaCl/Si/Al × 300K/900K"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 50
+show_bar_chart   = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination

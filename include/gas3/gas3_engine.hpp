@@ -1,7 +1,7 @@
-/**
+﻿/**
  * gas3_engine.hpp
  * ---------------
- * Gas3 Module — Top-Level API and CLI Dispatch.
+ * Gas3 Module  -  Top-Level API and CLI Dispatch.
  *
  * Gas3 is the higher-order analysis and reporting layer:
  *   - Random and adaptive sampling

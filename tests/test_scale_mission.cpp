@@ -1,20 +1,20 @@
-/**
+﻿/**
  * test_scale_mission.cpp
  * ======================
  * Scale Mission: Particles, Clouds, Lattice, and Pipe Gas 3
- * Formation Engine v0.5.1 — Test Suite
+ * Formation Engine v0.5.1  -  Test Suite
  *
  * Validates all four simulation modes across all four runtime tiers.
  *
  * Tests:
- *   [1] V1 Particles N — Instant, Short, Medium
- *   [2] V2 Gas Clouds  — Instant, Short, Medium
- *   [3] V3 Lattice     — Instant (FCC metals, UO2), Short (supercell),
+ *   [1] V1 Particles N  -  Instant, Short, Medium
+ *   [2] V2 Gas Clouds   -  Instant, Short, Medium
+ *   [3] V3 Lattice      -  Instant (FCC metals, UO2), Short (supercell),
  *                        Medium (vacancy campaign)
- *   [4] V4 Pipe Gas 3  — Instant (single segment), Short, Medium (sweep)
- *   [5] MissionProfile — RuntimeProfile factory correctness
- *   [6] ExternalLayer  — force accumulator, history ring buffer
- *   [7] Cross-version  — shared Capability flags, MissionDeliverable fields
+ *   [4] V4 Pipe Gas 3   -  Instant (single segment), Short, Medium (sweep)
+ *   [5] MissionProfile  -  RuntimeProfile factory correctness
+ *   [6] ExternalLayer   -  force accumulator, history ring buffer
+ *   [7] Cross-version   -  shared Capability flags, MissionDeliverable fields
  *
  * Build & run:
  *   cmake --build build --target test_scale_mission
@@ -50,7 +50,7 @@ static int tests_failed = 0;
 #define CHECK_NEAR(a, b, tol, msg) CHECK(std::abs((a)-(b)) <= (tol), msg)
 
 // ============================================================================
-// Test 1 — MissionProfile: RuntimeProfile factory
+// Test 1  -  MissionProfile: RuntimeProfile factory
 // ============================================================================
 
 static void test_mission_profile() {
@@ -86,7 +86,7 @@ static void test_mission_profile() {
 }
 
 // ============================================================================
-// Test 2 — ExternalLayer: force + history ring buffer
+// Test 2  -  ExternalLayer: force + history ring buffer
 // ============================================================================
 
 static void test_external_layer() {
@@ -118,7 +118,7 @@ static void test_external_layer() {
 }
 
 // ============================================================================
-// Test 3 — V1 Particles N
+// Test 3  -  V1 Particles N
 // ============================================================================
 
 static void test_v1_particles() {
@@ -186,7 +186,7 @@ static void test_v1_particles() {
 }
 
 // ============================================================================
-// Test 4 — V2 Gas Clouds
+// Test 4  -  V2 Gas Clouds
 // ============================================================================
 
 static void test_v2_clouds() {
@@ -260,7 +260,7 @@ static void test_v2_clouds() {
 }
 
 // ============================================================================
-// Test 5 — V3 Lattice
+// Test 5  -  V3 Lattice
 // ============================================================================
 
 static void test_v3_lattice() {
@@ -285,7 +285,7 @@ static void test_v3_lattice() {
         lattice::apply_thermal_displacement(ls);
         CHECK(ls.u_rms_mean >= 0.0, "Al-FCC Instant: u_rms >= 0");
 
-        // At 300K, Al-FCC T_Debye=428K → u_rms ~0.08*sqrt(300/428) ≈ 0.067 Å
+        // At 300K, Al-FCC T_Debye=428K -> u_rms ~0.08*sqrt(300/428) ≈ 0.067 Å
         CHECK(ls.u_rms_mean < 0.5, "Al-FCC Instant: u_rms physically small");
 
         lattice::apply_stress_accumulation(ls);
@@ -370,7 +370,7 @@ static void test_v3_lattice() {
 }
 
 // ============================================================================
-// Test 6 — V4 Pipe Gas 3
+// Test 6  -  V4 Pipe Gas 3
 // ============================================================================
 
 static void test_v4_pipe() {
@@ -464,11 +464,11 @@ static void test_v4_pipe() {
 
     // --- Churchill friction factor validation --------------------------------
     {
-        // Laminar: Re = 1000 → f = 64/Re = 0.064
+        // Laminar: Re = 1000 -> f = 64/Re = 0.064
         double f_lam = pipe_gas3::friction_factor_churchill(1000.0, 0.0);
         CHECK_NEAR(f_lam, 0.064, 0.001, "Churchill: laminar f = 64/Re");
 
-        // Turbulent: Re = 1e5, smooth → Moody ~0.018
+        // Turbulent: Re = 1e5, smooth -> Moody ~0.018
         double f_turb = pipe_gas3::friction_factor_churchill(1e5, 0.0001);
         CHECK(f_turb > 0.008 && f_turb < 0.04,
               "Churchill: turbulent f in [0.008, 0.04]");
@@ -480,7 +480,7 @@ static void test_v4_pipe() {
 }
 
 // ============================================================================
-// Test 7 — Cross-version: MissionDeliverable field contract
+// Test 7  -  Cross-version: MissionDeliverable field contract
 // ============================================================================
 
 static void test_deliverable_contract() {
@@ -515,10 +515,10 @@ static void test_deliverable_contract() {
 // ============================================================================
 
 int main() {
-    std::puts("╔══════════════════════════════════════════════════════════════╗");
-    std::puts("║  Scale Mission Test Suite — V1 Particles / V2 Clouds /      ║");
-    std::puts("║  V3 Lattice / V4 Pipe Gas 3       VSEPR-SIM 4.0-LB          ║");
-    std::puts("╚══════════════════════════════════════════════════════════════╝");
+    std::puts("+==============================================================+");
+    std::puts("|  Scale Mission Test Suite  -  V1 Particles / V2 Clouds /      |");
+    std::puts("|  V3 Lattice / V4 Pipe Gas 3       VSEPR-SIM 4.0-LB          |");
+    std::puts("+==============================================================+");
 
     test_mission_profile();
     test_external_layer();
@@ -528,12 +528,12 @@ int main() {
     test_v4_pipe();
     test_deliverable_contract();
 
-    std::puts("\n──────────────────────────────────────────────────────────────");
+    std::puts("\n--------------------------------------------------------------");
     std::printf("  %d / %d tests passed", tests_passed, tests_run);
     if (tests_failed > 0)
         std::printf("  (%d FAILED)", tests_failed);
     std::puts("");
-    std::puts("──────────────────────────────────────────────────────────────");
+    std::puts("--------------------------------------------------------------");
 
     return (tests_failed == 0) ? 0 : 1;
 }

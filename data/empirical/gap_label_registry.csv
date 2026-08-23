@@ -1,0 +1,15 @@
+﻿gap_label,epsilon_lambda_sign,epsilon_lambda_mag,epsilon_energy_sign,epsilon_energy_mag,description,severity,action
+good_match,any,small,any,small,Both Lambda and energy within tolerance of reference,0,none
+lambda_high,positive,moderate,any,any,Sim Lambda above empirical — above-ideal; soft penalty,1,flag_review
+lambda_low,negative,moderate,any,any,Sim Lambda below empirical — under-resolved; hard penalty,2,rerun_finer
+lambda_large_high,positive,large,any,any,Sim Lambda strongly above empirical — overextended,3,rerun_constrain
+lambda_large_low,negative,large,any,any,Sim Lambda strongly below empirical — severely under-resolved,3,rerun_finer
+energy_high,any,any,positive,moderate,Energy too high relative to reference,1,flag_review
+energy_low,any,any,negative,moderate,Energy too low relative to reference,2,flag_review
+energy_large_high,any,any,positive,large,Strongly overestimated energy,3,rerun_energy_cap
+energy_large_low,any,any,negative,large,Strongly underestimated energy,3,rerun_energy_relax
+both_high,positive,moderate,positive,moderate,Both Lambda and energy overestimated,2,flag_review
+both_low,negative,moderate,negative,moderate,Both Lambda and energy underestimated,3,rerun_finer
+lambda_ok_energy_gap,any,small,any,moderate,Lambda good but energy has gap,1,flag_review
+insufficient_data,any,any,any,any,Fewer than 3 reference points available for this object,0,expand_db
+needs_rerun,any,any,any,any,Record flagged for mandatory rerun by previous iteration,1,schedule_rerun

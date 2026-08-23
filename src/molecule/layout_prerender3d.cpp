@@ -1,5 +1,5 @@
-// ============================================================================
-// layout_prerender3d.cpp — Glass Module: Fast Topology-Driven 3D Layout
+﻿// ============================================================================
+// layout_prerender3d.cpp  -  Glass Module: Fast Topology-Driven 3D Layout
 // ============================================================================
 
 #include "layout_prerender3d.hpp"
@@ -41,7 +41,7 @@ Vec3f normalize3f(const Vec3f& v) {
 }
 
 // -----------------------------------------------------------------------
-// xorshift32 — cheap deterministic RNG, returns [-1, 1]
+// xorshift32  -  cheap deterministic RNG, returns [-1, 1]
 // -----------------------------------------------------------------------
 float TopologyPrerender3D::rand_unit(uint32_t& state) {
     state ^= state << 13;
@@ -233,7 +233,7 @@ void TopologyPrerender3D::apply_chain_arcs(
 }
 
 // -----------------------------------------------------------------------
-// build_layout — main entry point
+// build_layout  -  main entry point
 // -----------------------------------------------------------------------
 LayoutResult TopologyPrerender3D::build_layout(const GlassMolecule& mol) {
     LayoutResult out;

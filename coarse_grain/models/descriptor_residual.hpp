@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * descriptor_residual.hpp — Residual-Driven Resolution Promotion
+ * descriptor_residual.hpp  -  Residual-Driven Resolution Promotion
  *
  * Provides the mechanism for continuous, residual-driven promotion
  * of descriptor resolution. Instead of hard if-statement thresholds
@@ -38,7 +38,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * ResidualConfig — thresholds for residual-driven promotion.
+ * ResidualConfig  -  thresholds for residual-driven promotion.
  *
  * All parameters are explicit and inspectable.
  */
@@ -64,7 +64,7 @@ struct ResidualConfig {
 // ============================================================================
 
 /**
- * ResidualResult — outcome of a residual evaluation.
+ * ResidualResult  -  outcome of a residual evaluation.
  *
  * Records the residual value, whether promotion is recommended,
  * and what the recommended new resolution would be.
@@ -127,7 +127,7 @@ inline double compute_channel_residual(
         sum_ref2 += ref * ref;
     }
 
-    if (sum_ref2 < 1e-20) return 0.0;  // Zero reference → trivially exact
+    if (sum_ref2 < 1e-20) return 0.0;  // Zero reference -> trivially exact
     return sum_error2 / sum_ref2;
 }
 
@@ -175,7 +175,7 @@ inline ResidualResult evaluate_channel_residual(
 // ============================================================================
 
 /**
- * DescriptorResidualResult — residual analysis for the entire unified descriptor.
+ * DescriptorResidualResult  -  residual analysis for the entire unified descriptor.
  */
 struct DescriptorResidualResult {
     ResidualResult steric_result;

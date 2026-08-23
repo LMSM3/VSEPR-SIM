@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_expander.hpp
  * ==================================
- * WO-VSIM-62C — Static Axis Run Expansion
+ * WO-VSIM-62C  -  Static Axis Run Expansion
  *
- * BatchRunSpec  — one resolved spec per run
- * BatchExpander — factorial expansion of static axes
+ * BatchRunSpec   -  one resolved spec per run
+ * BatchExpander  -  factorial expansion of static axes
  *                 (stochastic and formation axes deferred to v5.1.0 / v5.2.0)
  *
  * expand() also writes batch_plan.tsv to the output_root directory.

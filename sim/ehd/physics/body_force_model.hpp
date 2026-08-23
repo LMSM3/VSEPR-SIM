@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * body_force_model.hpp
  *
- * Electrohydrodynamic Simulation — Stage 3: Physics
+ * Electrohydrodynamic Simulation  -  Stage 3: Physics
  *
  * EHD body force models for the three primary pumping mechanisms:
  *
@@ -49,7 +49,7 @@ namespace physics {
 // ============================================================================
 
 struct ForceCell {
-    Vec3   force;         // f (N/m³) — volumetric body force
+    Vec3   force;         // f (N/m³)  -  volumetric body force
     double magnitude = 0.0;
 };
 

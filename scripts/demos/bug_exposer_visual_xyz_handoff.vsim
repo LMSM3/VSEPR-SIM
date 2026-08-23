@@ -1,0 +1,52 @@
+# BUG_EXPOSER: VIS-001 visual window and XYZ handoff
+# Run: vsepr run scripts/demos/bug_exposer_visual_xyz_handoff.vsim
+# Expected: emits out/v516_integrated_runtime_cut/visual_xyz_handoff/
+# bug_exposer_visual_xyz_handoff.xyz, then exercises the configured visual handoff.
+
+print_console "VIS-001 BUG_EXPOSER: verify XYZ export-to-viewer handoff"
+
+[project]
+name        = "bug_exposer_visual_xyz_handoff"
+version     = "v5.16.0"
+seed_base   = 85001
+determinism = true
+description = "Regression script for generated XYZ visual handoff"
+
+[simulation]
+fire_max_steps   = 1
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = "organic"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 1
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode            = "md"
+num_steps       = 1
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 1
+render_interval = 1
+
+[export]
+output_dir      = "out/v516_integrated_runtime_cut/visual_xyz_handoff"
+write_xyz       = true
+write_report_md = true
+
+[visual]
+output_type      = "gl_interactive"
+gl_show_axes     = true
+gl_window_width  = 960
+gl_window_height = 720
+
+# Parallel post-run publication output. This does not replace or capture the
+# Qt/VTK window; Matplotlib reads the exported XYZ artifact independently.
+[export.visual]
+write_png_snapshots = true
+visual_output_dir   = "out/v516_integrated_runtime_cut/visual_xyz_handoff/figures"

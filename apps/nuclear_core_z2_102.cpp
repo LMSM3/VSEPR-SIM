@@ -1,7 +1,7 @@
-/**
+﻿/**
  * nuclear_core_z2_102.cpp
  * -----------------------
- * VSEPR-SIM 4.0-Legacy-Beta — Nuclear Core Runner: Central Atom Z=2..102
+ * VSEPR-SIM 4.0-Legacy-Beta  -  Nuclear Core Runner: Central Atom Z=2..102
  * C++23 Edition (N4950)
  *
  * Sweeps every element from He (Z=2) to Nobelium (Z=102) as the central
@@ -13,10 +13,10 @@
  *   5. Produces a SpreadsheetML XML for Excel.
  *
  * Outputs (default: reports/nuclear_core_z2_102/):
- *   master_report.tex      — compilable LaTeX (booktabs, siunitx, longtable)
- *   data.xml               — SpreadsheetML (Excel XML)
- *   summary.csv            — flat CSV log
- *   elements/Z-NNN-SYM.md — individual Markdown per element
+ *   master_report.tex       -  compilable LaTeX (booktabs, siunitx, longtable)
+ *   data.xml                -  SpreadsheetML (Excel XML)
+ *   summary.csv             -  flat CSV log
+ *   elements/Z-NNN-SYM.md  -  individual Markdown per element
  *
  * Build:
  *   cmake --build build --target nuclear-core-z2-102
@@ -130,7 +130,7 @@ static std::string escape_xml(const std::string& s) {
 }
 
 // ============================================================================
-// Derived analytics struct — all computed from NuclearSpecies + Gas2Analysis
+// Derived analytics struct  -  all computed from NuclearSpecies + Gas2Analysis
 // ============================================================================
 
 struct ElementAnalytics {
@@ -147,7 +147,7 @@ struct ElementAnalytics {
 
     // Quantum gas indicator
     double Lambda_m;        // de Broglie thermal wavelength (m)
-    double nLambda3;        // occupation parameter n·Λ³ (dimensionless); >1 → quantum onset
+    double nLambda3;        // occupation parameter n·Λ³ (dimensionless); >1 -> quantum onset
 
     // Phase state indicators at analysis T
     bool   above_melt;      // T > Tm
@@ -163,8 +163,8 @@ struct ElementAnalytics {
     double alpha_recoil_MeV;// nuclear recoil energy from α decay (MeV)
 
     // Speed ratios (useful cross-checks)
-    double vrms_over_vsound; // v_rms / c_sound — always sqrt(3/γ)=sqrt(9/5) for monat.
-    double vmean_over_vrms;  // v_mean / v_rms — always sqrt(8/(3π))
+    double vrms_over_vsound; // v_rms / c_sound  -  always sqrt(3/γ)=sqrt(9/5) for monat.
+    double vmean_over_vrms;  // v_mean / v_rms  -  always sqrt(8/(3π))
 
     // Momentum transfer on elastic collision with H (nuclear recoil, eV)
     // E_r = 4·m·M_H / (m+M_H)² × KE_trans (maximum head-on)
@@ -266,7 +266,7 @@ static std::string element_markdown(const ElementResult& er) {
     const auto& ga = er.gas;
     const auto& an = er.analytics;
 
-    md << "# Element Z=" << er.Z << " — " << ns.symbol << " (" << ns.name << ")\n\n";
+    md << "# Element Z=" << er.Z << "  -  " << ns.symbol << " (" << ns.name << ")\n\n";
     md << "**Isotope:** " << ns.isotope_label << "  \n";
     md << "**Molar Mass:** " << fmt_d(ns.molar_mass_g, 4) << " g/mol  \n";
     md << "**Category:** " << nuclear_phase_category_name(ns.category) << "  \n";
@@ -280,16 +280,16 @@ static std::string element_markdown(const ElementResult& er) {
     md << "## Atomic Identity\n\n";
     md << "| Property | Value | Unit |\n";
     md << "|----------|-------|------|\n";
-    md << "| Atomic number Z | " << er.Z << " | — |\n";
-    md << "| Mass number A (primary) | " << ns.A << " | — |\n";
+    md << "| Atomic number Z | " << er.Z << " |  -  |\n";
+    md << "| Mass number A (primary) | " << ns.A << " |  -  |\n";
     md << "| Molar mass | " << fmt_d(ns.molar_mass_g, 6) << " | g/mol |\n";
     md << "| Atomic radius | " << fmt_d(ns.atomic_radius_pm, 0) << " | pm |\n";
     md << "| Wigner-Seitz radius (est.) | " << fmt_d(an.wigner_seitz_pm, 1) << " | pm |\n";
     md << "| Kinetic diameter | " << fmt_d(ns.d_kinetic_pm, 0) << " | pm |\n";
     md << "| Pauling electronegativity | "
-       << (ns.electronegativity > 0.0 ? fmt_d(ns.electronegativity, 2) : "—") << " | — |\n";
+       << (ns.electronegativity > 0.0 ? fmt_d(ns.electronegativity, 2) : " - ") << " |  -  |\n";
     md << "| Electron affinity | "
-       << (ns.electron_affinity_eV > 0.0 ? fmt_d(ns.electron_affinity_eV, 3) : "—")
+       << (ns.electron_affinity_eV > 0.0 ? fmt_d(ns.electron_affinity_eV, 3) : " - ")
        << " | eV |\n";
     md << "| First ionisation energy | " << fmt_d(ns.ionisation_eV, 3) << " | eV |\n";
     md << "| Reduced mass with H | " << fmt_d(an.reduced_mass_H, 4) << " | amu |\n\n";
@@ -298,17 +298,17 @@ static std::string element_markdown(const ElementResult& er) {
     md << "| Property | Value | Unit |\n";
     md << "|----------|-------|------|\n";
     md << "| Binding energy/nucleon | " << fmt_d(ns.binding_energy_MeV, 4) << " | MeV |\n";
-    md << "| Fissility Z²/A | " << fmt_d(ns.fissility, 3) << " | — |\n";
+    md << "| Fissility Z²/A | " << fmt_d(ns.fissility, 3) << " |  -  |\n";
     md << "| Displacement energy Ed | " << fmt_d(ns.Ed_eV, 1) << " | eV |\n";
     md << "| Frenkel pair energy | " << fmt_d(an.frenkel_eV, 1) << " | eV |\n";
-    md << "| Fissile | " << (ns.fissile ? "Yes" : "No") << " | — |\n";
-    md << "| Fertile | " << (ns.fertile ? "Yes" : "No") << " | — |\n";
+    md << "| Fissile | " << (ns.fissile ? "Yes" : "No") << " |  -  |\n";
+    md << "| Fertile | " << (ns.fertile ? "Yes" : "No") << " |  -  |\n";
     md << "| Thermal neutron cross-section σ | "
-       << (ns.sigma_thermal_b > 0.0 ? fmt_d(ns.sigma_thermal_b, 3) : "—")
+       << (ns.sigma_thermal_b > 0.0 ? fmt_d(ns.sigma_thermal_b, 3) : " - ")
        << " | barn |\n";
     md << "| Atomic mass excess Δ | " << fmt_d(ns.mass_excess_keV, 1) << " | keV |\n";
     md << "| Neutron separation energy Sn | "
-       << (ns.Sn_keV > 0.0 ? fmt_d(ns.Sn_keV, 1) : "—") << " | keV |\n";
+       << (ns.Sn_keV > 0.0 ? fmt_d(ns.Sn_keV, 1) : " - ") << " | keV |\n";
     if (ns.decay_mode == DecayMode::Alpha)
         md << "| Alpha recoil energy | " << fmt_d(an.alpha_recoil_MeV, 3) << " | MeV |\n";
     md << "\n";
@@ -321,23 +321,23 @@ static std::string element_markdown(const ElementResult& er) {
     md << "| Thermal conductivity k | " << fmt_d(ns.k_thermal_W_mK, 3) << " | W/(m·K) |\n";
     md << "| Specific heat (solid) | " << fmt_d(ns.Cp_solid_J_kgK, 1) << " | J/(kg·K) |\n";
     md << "| Debye temperature | "
-       << (ns.T_debye_K > 0.0 ? fmt_d(ns.T_debye_K, 0) : "—") << " | K |\n";
+       << (ns.T_debye_K > 0.0 ? fmt_d(ns.T_debye_K, 0) : " - ") << " | K |\n";
     md << "| Electrical resistivity | "
        << (ns.resistivity_nOhm_m > 0.0 && ns.resistivity_nOhm_m < 1e7
-               ? fmt_d(ns.resistivity_nOhm_m, 1) : "—")
+               ? fmt_d(ns.resistivity_nOhm_m, 1) : " - ")
        << " | nΩ·m |\n";
     md << "| Thermal diffusivity | "
-       << (an.alpha_th_m2s > 0.0 ? fmt_sci(an.alpha_th_m2s) : "—") << " | m²/s |\n";
+       << (an.alpha_th_m2s > 0.0 ? fmt_sci(an.alpha_th_m2s) : " - ") << " | m²/s |\n";
     md << "| Lindemann ratio × 10³ | "
-       << (an.lindemann > 0.0 ? fmt_d(an.lindemann, 3) : "—") << " | — |\n\n";
+       << (an.lindemann > 0.0 ? fmt_d(an.lindemann, 3) : " - ") << " |  -  |\n\n";
 
     md << "## Gas-Phase Analysis (T = " << fmt_d(ga.T_K, 0) << " K, P = "
        << fmt_d(ga.P_Pa / atm_to_Pa, 2) << " atm)\n\n";
     md << "**Phase state at analysis T:** ";
     if (an.is_gas_at_STP)         md << "Gas at STP  \n";
-    else if (an.above_boil)       md << "Above boiling point → vapour  \n";
-    else if (an.above_melt)       md << "Above melting point → liquid  \n";
-    else                          md << "Below melting point → solid  \n";
+    else if (an.above_boil)       md << "Above boiling point -> vapour  \n";
+    else if (an.above_melt)       md << "Above melting point -> liquid  \n";
+    else                          md << "Below melting point -> solid  \n";
     md << "\n";
 
     md << "### Equation of State\n\n";
@@ -348,8 +348,8 @@ static std::string element_markdown(const ElementResult& er) {
        << " | " << fmt_d(ga.eos_rk.V_L(), 4) << " | L/mol |\n";
     md << "| Z (compressibility) | " << fmt_d(ga.eos_ideal.Z, 5)
        << " | " << fmt_d(ga.eos_vdw.Z, 5)
-       << " | " << fmt_d(ga.eos_rk.Z, 5) << " | — |\n";
-    md << "| VdW deviation ΔV | — | " << fmt_d(ga.eos_vdw.V_L() - ga.eos_ideal.V_L(), 5)
+       << " | " << fmt_d(ga.eos_rk.Z, 5) << " |  -  |\n";
+    md << "| VdW deviation ΔV |  -  | " << fmt_d(ga.eos_vdw.V_L() - ga.eos_ideal.V_L(), 5)
        << " | " << fmt_d(ga.eos_rk.V_L() - ga.eos_ideal.V_L(), 5) << " | L/mol |\n\n";
 
     md << "### Kinetic Theory (Maxwell-Boltzmann)\n\n";
@@ -357,12 +357,12 @@ static std::string element_markdown(const ElementResult& er) {
     md << "|----------|-------|------|\n";
     md << "| Cv (monatomic) | " << fmt_d(ga.Cv_calc, 4) << " | J/(mol·K) |\n";
     md << "| Cp (monatomic) | " << fmt_d(ga.Cp_calc, 4) << " | J/(mol·K) |\n";
-    md << "| γ = Cp/Cv | " << fmt_d(ga.gamma_calc, 5) << " | — |\n";
+    md << "| γ = Cp/Cv | " << fmt_d(ga.gamma_calc, 5) << " |  -  |\n";
     md << "| v_rms | " << fmt_d(ga.v_rms, 2) << " | m/s |\n";
     md << "| v_mean | " << fmt_d(ga.v_mean, 2) << " | m/s |\n";
     md << "| v_mp (most probable) | " << fmt_d(ga.v_mp, 2) << " | m/s |\n";
-    md << "| v_rms / c_sound | " << fmt_d(an.vrms_over_vsound, 4) << " | — |\n";
-    md << "| v_mean / v_rms | " << fmt_d(an.vmean_over_vrms, 5) << " | — |\n";
+    md << "| v_rms / c_sound | " << fmt_d(an.vrms_over_vsound, 4) << " |  -  |\n";
+    md << "| v_mean / v_rms | " << fmt_d(an.vmean_over_vrms, 5) << " |  -  |\n";
     md << "| Sound speed c_s | " << fmt_d(ga.c_sound, 2) << " | m/s |\n";
     md << "| Mean free path λ | " << fmt_sci(ga.mean_free_path_m) << " | m |\n";
     md << "| KE translational | " << fmt_sci(ga.ke_translational) << " | J/molecule |\n";
@@ -390,7 +390,7 @@ static std::string element_markdown(const ElementResult& er) {
     if (ns.category == NuclearPhaseCategory::Actinide) {
         md << "## Scale Bridge Note (Actinide Domain)\n\n";
         md << "Displacement energy Ed = " << fmt_d(ns.Ed_eV, 1) << " eV ";
-        md << "propagates Scale 1 (atomistic) → Scale 2 (CG) → Scale 3 (grain).\n";
+        md << "propagates Scale 1 (atomistic) -> Scale 2 (CG) -> Scale 3 (grain).\n";
         md << "Frenkel pair production rate scales with neutron flux × σ_displacement.\n";
         if (ns.sigma_thermal_b > 0.0)
             md << "Thermal neutron cross-section σ = " << fmt_d(ns.sigma_thermal_b, 2)
@@ -853,15 +853,15 @@ static int run(const Config& cfg) {
 
     // Banner
     std::cout << ansi::BOLD;
-    std::cout << "╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  VSEPR-SIM Nuclear Core Runner — Z=2 (He) through Z=102 (No)   ║\n";
-    std::cout << "║  gas2 three-EOS + kinetic + nuclear encoding                   ║\n";
-    std::cout << "╠══════════════════════════════════════════════════════════════════╣\n";
-    std::cout << "║  T = " << std::setw(8) << std::left << cfg.T_K
+    std::cout << "+==================================================================+\n";
+    std::cout << "|  VSEPR-SIM Nuclear Core Runner  -  Z=2 (He) through Z=102 (No)   |\n";
+    std::cout << "|  gas2 three-EOS + kinetic + nuclear encoding                   |\n";
+    std::cout << "╠==================================================================╣\n";
+    std::cout << "|  T = " << std::setw(8) << std::left << cfg.T_K
               << " K    P = " << std::setw(6) << cfg.P_atm << " atm"
-              << "                           ║\n";
-    std::cout << "║  Output: " << std::setw(55) << std::left << cfg.output_dir << "║\n";
-    std::cout << "╚══════════════════════════════════════════════════════════════════╝\n";
+              << "                           |\n";
+    std::cout << "|  Output: " << std::setw(55) << std::left << cfg.output_dir << "|\n";
+    std::cout << "+==================================================================+\n";
     std::cout << ansi::RESET << "\n";
 
     auto t_start = std::chrono::steady_clock::now();
@@ -1123,7 +1123,7 @@ static int run(const Config& cfg) {
         std::string rank_path = cfg.output_dir + "/cross_element_rankings.md";
         std::ofstream rank(rank_path);
         if (rank) {
-            rank << "# Cross-Element Rankings — Nuclear Core Z=2..102\n\n";
+            rank << "# Cross-Element Rankings  -  Nuclear Core Z=2..102\n\n";
             rank << "Generated: " << ts << "  \n";
             rank << "Analysis T = " << fmt_d(cfg.T_K, 0) << " K, P = " << fmt_d(cfg.P_atm, 2) << " atm\n\n";
 
@@ -1198,7 +1198,7 @@ static int run(const Config& cfg) {
     }
 
     // =========================================================================
-    // Multi-temperature sweep (extra_temps) — summary CSV only
+    // Multi-temperature sweep (extra_temps)  -  summary CSV only
     // =========================================================================
     if (!cfg.extra_temps.empty()) {
         std::string mt_path = cfg.output_dir + "/multitemp_sweep.csv";
@@ -1261,10 +1261,10 @@ static int run(const Config& cfg) {
     }
 
     std::cout << "\n" << ansi::BOLD;
-    std::cout << "  ══════════════════════════════════════════════════════════════════════\n";
-    std::cout << "   Nuclear Core Z=2..102 — Run Complete\n";
-    std::cout << "   Elements swept     :  " << results.size() << " (Z=2 He → Z=102 No)\n";
-    std::cout << "  ──────────────────────────────────────────────────────────────────────\n";
+    std::cout << "  ======================================================================\n";
+    std::cout << "   Nuclear Core Z=2..102  -  Run Complete\n";
+    std::cout << "   Elements swept     :  " << results.size() << " (Z=2 He -> Z=102 No)\n";
+    std::cout << "  ----------------------------------------------------------------------\n";
     std::cout << "   Actinides          :  " << n_actinide << "\n";
     std::cout << "   Lanthanides        :  " << n_lanthanide << "\n";
     std::cout << "   Noble gases        :  " << n_noble << "\n";
@@ -1276,13 +1276,13 @@ static int run(const Config& cfg) {
     for (const auto& er : results)
         if (er.nuclear->fertile) std::cout << er.nuclear->symbol << " ";
     std::cout << ")\n";
-    std::cout << "  ──────────────────────────────────────────────────────────────────────\n";
+    std::cout << "  ----------------------------------------------------------------------\n";
     std::cout << "   Phase at T=" << fmt_d(cfg.T_K, 0) << " K:\n";
     std::cout << "     Above boiling point (vapour) : " << n_above_boil << " elements\n";
     std::cout << "     Above melting (liquid)        : " << n_above_melt << " elements\n";
     std::cout << "     Quantum indicator (nΛ³>1e-3)  : " << n_qm << " elements\n";
-    std::cout << "  ──────────────────────────────────────────────────────────────────────\n";
-    std::cout << "   v_rms range        :  " << fmt_d(min_vrms, 0) << " – "
+    std::cout << "  ----------------------------------------------------------------------\n";
+    std::cout << "   v_rms range        :  " << fmt_d(min_vrms, 0) << " - "
               << fmt_d(max_vrms, 0) << " m/s\n";
     if (er_max_vrms) std::cout << "     Fastest  : " << er_max_vrms->nuclear->symbol
                                << " (Z=" << er_max_vrms->Z << ")  M="
@@ -1290,7 +1290,7 @@ static int run(const Config& cfg) {
     if (er_min_vrms) std::cout << "     Slowest  : " << er_min_vrms->nuclear->symbol
                                << " (Z=" << er_min_vrms->Z << ")  M="
                                << fmt_d(er_min_vrms->nuclear->molar_mass_g,3) << " g/mol\n";
-    std::cout << "   BE/A range         :  " << fmt_d(min_BE, 4) << " – "
+    std::cout << "   BE/A range         :  " << fmt_d(min_BE, 4) << " - "
               << fmt_d(max_BE, 4) << " MeV";
     if (er_max_BE) std::cout << "  (peak: " << er_max_BE->nuclear->symbol << " Z=" << er_max_BE->Z << ")";
     std::cout << "\n";
@@ -1301,20 +1301,20 @@ static int run(const Config& cfg) {
               << " J/(mol·K)\n";
     std::cout << "   Mean G             :  " << fmt_sci(sum_G / results.size())
               << " J/mol\n";
-    std::cout << "  ──────────────────────────────────────────────────────────────────────\n";
+    std::cout << "  ----------------------------------------------------------------------\n";
     std::cout << "   Wall-clock         :  " << fmt_d(elapsed_s, 3) << " s\n";
     std::cout << "   Rate               :  "
               << fmt_d(static_cast<double>(results.size()) / elapsed_s, 0) << " elements/s\n";
     std::cout << "   Output             :  " << cfg.output_dir << "/\n";
-    std::cout << "     master_report.tex          — compilable LaTeX (extended)\n";
-    std::cout << "     data.xml                   — SpreadsheetML (Excel, 57 columns)\n";
-    std::cout << "     data.json                  — JSON array (all fields)\n";
-    std::cout << "     summary.csv                — flat CSV (extended)\n";
-    std::cout << "     cross_element_rankings.md  — 20 ranking tables\n";
-    std::cout << "     multitemp_sweep.csv         — " << (cfg.extra_temps.size())
+    std::cout << "     master_report.tex           -  compilable LaTeX (extended)\n";
+    std::cout << "     data.xml                    -  SpreadsheetML (Excel, 57 columns)\n";
+    std::cout << "     data.json                   -  JSON array (all fields)\n";
+    std::cout << "     summary.csv                 -  flat CSV (extended)\n";
+    std::cout << "     cross_element_rankings.md   -  20 ranking tables\n";
+    std::cout << "     multitemp_sweep.csv          -  " << (cfg.extra_temps.size())
               << " extra temperature points\n";
-    std::cout << "     elements/Z-NNN-SYM.md      — per-element Markdown (enhanced)\n";
-    std::cout << "  ══════════════════════════════════════════════════════════════════════\n";
+    std::cout << "     elements/Z-NNN-SYM.md       -  per-element Markdown (enhanced)\n";
+    std::cout << "  ======================================================================\n";
     std::cout << ansi::RESET << "\n";
 
     return 0;
@@ -1330,7 +1330,7 @@ int main(int argc, char** argv) {
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "--help") {
-            std::cout << "nuclear-core-z2-102 — VSEPR-SIM nuclear species sweep Z=2..102\n\n";
+            std::cout << "nuclear-core-z2-102  -  VSEPR-SIM nuclear species sweep Z=2..102\n\n";
             std::cout << "Options:\n";
             std::cout << "  --T N          Primary analysis temperature K (default: 1000)\n";
             std::cout << "  --P N          Pressure atm (default: 1.0)\n";
@@ -1340,13 +1340,13 @@ int main(int argc, char** argv) {
             std::cout << "  --quiet        Suppress per-element progress\n";
             std::cout << "  --help         This help\n\n";
             std::cout << "Outputs:\n";
-            std::cout << "  master_report.tex          — compilable LaTeX (extended tables)\n";
-            std::cout << "  data.xml                   — SpreadsheetML (Excel, 57+ columns)\n";
-            std::cout << "  data.json                  — JSON array (all fields per element)\n";
-            std::cout << "  summary.csv                — flat CSV (extended)\n";
-            std::cout << "  cross_element_rankings.md  — 20 cross-element ranking tables\n";
-            std::cout << "  multitemp_sweep.csv        — multi-temperature kinetic sweep\n";
-            std::cout << "  elements/Z-NNN-SYM.md      — per-element Markdown (enhanced)\n";
+            std::cout << "  master_report.tex           -  compilable LaTeX (extended tables)\n";
+            std::cout << "  data.xml                    -  SpreadsheetML (Excel, 57+ columns)\n";
+            std::cout << "  data.json                   -  JSON array (all fields per element)\n";
+            std::cout << "  summary.csv                 -  flat CSV (extended)\n";
+            std::cout << "  cross_element_rankings.md   -  20 cross-element ranking tables\n";
+            std::cout << "  multitemp_sweep.csv         -  multi-temperature kinetic sweep\n";
+            std::cout << "  elements/Z-NNN-SYM.md       -  per-element Markdown (enhanced)\n";
             return 0;
         }
         else if (arg == "--T" && i + 1 < argc) {

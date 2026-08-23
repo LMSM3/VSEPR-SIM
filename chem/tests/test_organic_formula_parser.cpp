@@ -1,5 +1,5 @@
-/**
- * test_organic_formula_parser.cpp — Day 48B
+﻿/**
+ * test_organic_formula_parser.cpp  -  Day 48B
  *
  * Tests for the three-strategy organic formula parser:
  *   1. Amino acid sequence expansion
@@ -91,7 +91,7 @@ static void test_sequence_gly_ala() {
 }
 
 // ============================================================================
-// Test 4: Trivial name lookup — small molecules
+// Test 4: Trivial name lookup  -  small molecules
 // ============================================================================
 
 static void test_trivial_names() {
@@ -141,17 +141,17 @@ static void test_condensed_formula() {
 	TEST("Condensed formula normalisation");
 	using namespace vsepr::chem::organic;
 
-	// CH3COOH → C2H4O2
+	// CH3COOH -> C2H4O2
 	auto acetic = normalise_condensed_formula("CH3COOH");
 	CHECK(acetic.has_value(), "CH3COOH normalises");
 	CHECK(acetic->formula == "C2H4O2", ("CH3COOH: got " + acetic->formula).c_str());
 
-	// C2H5OH → C2H6O
+	// C2H5OH -> C2H6O
 	auto ethanol = normalise_condensed_formula("C2H5OH");
 	CHECK(ethanol.has_value(), "C2H5OH normalises");
 	CHECK(ethanol->formula == "C2H6O", ("C2H5OH: got " + ethanol->formula).c_str());
 
-	// NaCl → ClNa (Hill: no C, so alphabetical)
+	// NaCl -> ClNa (Hill: no C, so alphabetical)
 	auto nacl = normalise_condensed_formula("NaCl");
 	CHECK(nacl.has_value(), "NaCl normalises");
 	CHECK(nacl->formula == "ClNa", ("NaCl Hill: got " + nacl->formula).c_str());

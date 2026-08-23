@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 // ============================================================================
-// layout_prerender3d.hpp — Glass Module: Fast Topology-Driven 3D Layout
+// layout_prerender3d.hpp  -  Glass Module: Fast Topology-Driven 3D Layout
 // ============================================================================
 // Produces approximate 3D atom positions from topology alone.
 //
@@ -21,7 +21,7 @@ namespace vsepr {
 namespace glass {
 
 // -----------------------------------------------------------------------
-// Vec3f — lightweight float-precision 3D vector for layout positions.
+// Vec3f  -  lightweight float-precision 3D vector for layout positions.
 // Exists separately from the double-precision vsepr::Vec3 in math_vec3.hpp
 // because the prerender path is entirely float and we avoid coupling.
 // -----------------------------------------------------------------------
@@ -44,7 +44,7 @@ float  norm3f(const Vec3f& v);
 Vec3f  normalize3f(const Vec3f& v);
 
 // -----------------------------------------------------------------------
-// LayoutSettings — external knobs, kept lightweight.
+// LayoutSettings  -  external knobs, kept lightweight.
 // -----------------------------------------------------------------------
 struct LayoutSettings {
     float    default_bond_length   = 1.45f;
@@ -59,14 +59,14 @@ struct LayoutSettings {
 };
 
 // -----------------------------------------------------------------------
-// LayoutResult — output of the layout engine.
+// LayoutResult  -  output of the layout engine.
 // -----------------------------------------------------------------------
 struct LayoutResult {
     std::vector<Vec3f> atom_positions;
 };
 
 // -----------------------------------------------------------------------
-// TopologyPrerender3D — the fast prerender layout engine.
+// TopologyPrerender3D  -  the fast prerender layout engine.
 //
 // Usage:
 //   TopologyPrerender3D engine(settings);

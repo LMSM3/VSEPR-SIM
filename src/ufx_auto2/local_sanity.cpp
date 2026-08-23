@@ -1,4 +1,4 @@
-// src/ufx_auto2/local_sanity.cpp
+﻿// src/ufx_auto2/local_sanity.cpp
 // UFX_AUTO_2 Phases 2-9 -- Local Sanity Checker Implementation
 // VSEPR-SIM v5 beta9
 
@@ -35,7 +35,7 @@ const std::vector<std::string>& LocalSanityChecker::known_geometries() noexcept 
 		"trigonal_bipyramidal",
 		"octahedral",
 		"pentagonal_bipyramidal",
-		// Accept empty / unknown without rejecting — generator may produce these
+		// Accept empty / unknown without rejecting  -  generator may produce these
 		// for deferred axes.  The check below treats unknown as a warning, not
 		// a hard rejection.
 	};
@@ -64,7 +64,7 @@ LocalCheckResult LocalSanityChecker::check_identity_(const IdentityBlock& id) {
 			"coordination_number out of range [0,12]: "
 			+ std::to_string(id.coordination_number));
 
-	// Geometry: warn (not reject) if not in known list — deferred axes allowed.
+	// Geometry: warn (not reject) if not in known list  -  deferred axes allowed.
 	// Hard reject only on empty geometry_tag.
 	if (id.geometry_tag.empty())
 		return LocalCheckResult::fail("missing geometry_tag");

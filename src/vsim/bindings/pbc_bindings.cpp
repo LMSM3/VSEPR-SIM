@@ -1,4 +1,4 @@
-/**
+﻿/**
  * src/vsim/bindings/pbc_bindings.cpp
  * =====================================
  * Registration stub for the pbc.* VSIM scripting namespace.
@@ -13,9 +13,9 @@
  * declaration target that satisfies forward references and link-time checks.
  *
  * Gate status:
- *   57B — inline binding helpers:  PASS
- *   57C — registration stub:       PASS
- *   57D — interpreter dispatch:    PENDING
+ *   57B  -  inline binding helpers:  PASS
+ *   57C  -  registration stub:       PASS
+ *   57D  -  interpreter dispatch:    PENDING
  *
  * WO-VSEPR-SIM-57C  |  beta-8
  */
@@ -43,7 +43,7 @@ namespace vsim {
  *   interp.register_builtin("pbc.unwrap",           pbc_bindings::pbc_unwrap_binding);
  *
  * Particle IDs are 1-indexed in VSIM scripts.  All ID-accepting bindings
- * apply the 1→0 offset internally via require_particle_id().
+ * apply the 1->0 offset internally via require_particle_id().
  */
 void register_pbc_builtins(/* VsimInterpreter& interp */) {
     // Body intentionally empty until VsimInterpreter is available (WO-57D).

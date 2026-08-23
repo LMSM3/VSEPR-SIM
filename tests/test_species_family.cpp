@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_species_family.cpp
  * -----------------------
  * Verification suite for the SpeciesFamily taxonomy and classification engine.
@@ -42,7 +42,7 @@ int main() {
 
     std::cout << "\n=== Species Family Classification Tests ===\n\n";
 
-    // ── GAS family ──────────────────────────────────────────────────────────
+    // -- GAS family ----------------------------------------------------------
     TEST("T01 Noble: Ar -> GAS_NOBLE",
          classify_formula("Ar") == SpeciesSubfamily::GAS_NOBLE);
     TEST("T02 Noble: Xe -> GAS_NOBLE",
@@ -60,7 +60,7 @@ int main() {
     TEST("T06c Fuel: C2H6 -> GAS_FUEL",
          classify_formula("C2H6") == SpeciesSubfamily::GAS_FUEL);
 
-    // ── CRYSTAL family ──────────────────────────────────────────────────────
+    // -- CRYSTAL family ------------------------------------------------------
     TEST("T07 Metal: Au -> CRY_METAL",
          classify_formula("Au") == SpeciesSubfamily::CRY_METAL);
     TEST("T08 Metal: Fe -> CRY_METAL",
@@ -72,7 +72,7 @@ int main() {
     TEST("T10b Covalent: Si -> CRY_COVALENT",
          classify_formula("Si") == SpeciesSubfamily::CRY_COVALENT);
 
-    // ── CERAMIC family ──────────────────────────────────────────────────────
+    // -- CERAMIC family ------------------------------------------------------
     TEST("T11 Oxide: Al2O3 -> CM_OXIDE",
          classify_formula("Al2O3") == SpeciesSubfamily::CM_OXIDE);
     TEST("T12 Carbide: SiC -> CM_CARBIDE",
@@ -85,7 +85,7 @@ int main() {
          classify_formula("HfC") == SpeciesSubfamily::CM_CARBIDE  // HfC is in carbide list first
          || classify_formula("HfC") == SpeciesSubfamily::CM_REFRACTORY);
 
-    // ── ORGANOMETALLIC family ───────────────────────────────────────────────
+    // -- ORGANOMETALLIC family -----------------------------------------------
     TEST("T15 Carbonyl: Ni(CO)4 -> OM_CARBONYL",
          classify_formula("Ni(CO)4") == SpeciesSubfamily::OM_CARBONYL);
     TEST("T16 Cp/arene: Cp2Fe -> OM_CP_ARENE",
@@ -93,7 +93,7 @@ int main() {
     TEST("T17 TM complex: Pd(PPh3)4 -> OM_TRANSITION_METAL",
          classify_formula("Pd(PPh3)4") == SpeciesSubfamily::OM_TRANSITION_METAL);
 
-    // ── Scale classification ────────────────────────────────────────────────
+    // -- Scale classification ------------------------------------------------
     TEST("T18 Scale: 1 atom -> SMALL",
          classify_scale(1) == ScaleClass::SMALL);
     TEST("T19 Scale: 50 atoms -> MEDIUM",
@@ -103,7 +103,7 @@ int main() {
     TEST("T20b Scale: 50000 atoms -> BULK",
          classify_scale(50000) == ScaleClass::BULK);
 
-    // ── Physics emphasis ────────────────────────────────────────────────────
+    // -- Physics emphasis ----------------------------------------------------
     TEST("T21 GAS emphasis: transport + EOS",
          default_emphasis(SpeciesFamily::GAS).transport
          && default_emphasis(SpeciesFamily::GAS).eos);
@@ -116,7 +116,7 @@ int main() {
          default_emphasis(SpeciesFamily::CERAMIC).lattice
          && default_emphasis(SpeciesFamily::CERAMIC).fracture);
 
-    // ── Full SpeciesEntity ──────────────────────────────────────────────────
+    // -- Full SpeciesEntity --------------------------------------------------
     auto ent_ar = classify::classify("Ar", 1);
     TEST("T25 Entity Ar: family=GAS",
          ent_ar.family == SpeciesFamily::GAS);
@@ -131,7 +131,7 @@ int main() {
     TEST("T27c Entity NaCl: scale=LARGE (1000 atoms)",
          ent_nacl.scale == ScaleClass::LARGE);
 
-    // ── Subfamily parent consistency ────────────────────────────────────────
+    // -- Subfamily parent consistency ----------------------------------------
     bool parents_ok = true;
     for (int i = 0; i <= static_cast<int>(SpeciesSubfamily::UNKNOWN); ++i) {
         auto sf = static_cast<SpeciesSubfamily>(i);
@@ -142,19 +142,19 @@ int main() {
     TEST("T28 All subfamily_parent() calls succeed",
          parents_ok);
 
-    // ── Descriptor tables ───────────────────────────────────────────────────
+    // -- Descriptor tables ---------------------------------------------------
     TEST("T29 Family descriptor table has 4 entries",
          family_descriptors().size() == 4);
     TEST("T29b Subfamily descriptor table has entries",
          subfamily_descriptors().size() > 20);
 
-    // ── Unknown fallback ────────────────────────────────────────────────────
+    // -- Unknown fallback ----------------------------------------------------
     TEST("T30 Unknown formula 'XYZ123' -> UNKNOWN",
          classify_formula("XYZ123") == SpeciesSubfamily::UNKNOWN);
     TEST("T30b Unknown family -> GAS (default)",
          classify_family("XYZ123") == SpeciesFamily::GAS);
 
-    // ── Family name round-trips ─────────────────────────────────────────────
+    // -- Family name round-trips ---------------------------------------------
     TEST("T31 family_name(GAS)='GAS'",
          std::string(family_name(SpeciesFamily::GAS)) == "GAS");
     TEST("T32 family_name(CRYSTAL)='CRY'",
@@ -164,7 +164,7 @@ int main() {
     TEST("T34 family_name(CERAMIC)='CM'",
          std::string(family_name(SpeciesFamily::CERAMIC)) == "CM");
 
-    // ── External layer ──────────────────────────────────────────────────────
+    // -- External layer ------------------------------------------------------
     ExternalLayer ext;
     TEST("T35 ExternalLayer default is empty",
          ext.empty());
@@ -172,7 +172,7 @@ int main() {
     TEST("T36 ExternalLayer resize: charges.size()=5",
          ext.charges.size() == 5 && ext.velocities.size() == 5);
 
-    // ── Scale score ─────────────────────────────────────────────────────────
+    // -- Scale score ---------------------------------------------------------
     auto ent_big = classify::classify("Al2O3", 50000);
     TEST("T37 scale_score for 50000 atoms > 0.9",
          ent_big.scale_score > 0.9);
@@ -180,7 +180,7 @@ int main() {
     TEST("T38 scale_score for 1 atom = 0.0",
          ent_tiny.scale_score == 0.0);
 
-    // ── update_scale ────────────────────────────────────────────────────────
+    // -- update_scale --------------------------------------------------------
     SpeciesEntity manual;
     manual.core.atoms.resize(500);
     manual.update_scale();
@@ -189,7 +189,7 @@ int main() {
     TEST("T40 update_scale: scale_score > 0.5",
          manual.scale_score > 0.5);
 
-    // ── Results ─────────────────────────────────────────────────────────────
+    // -- Results -------------------------------------------------------------
     std::cout << "\n--- Results: " << pass_count << " passed, "
               << fail_count << " failed out of " << (pass_count + fail_count) << " ---\n\n";
 

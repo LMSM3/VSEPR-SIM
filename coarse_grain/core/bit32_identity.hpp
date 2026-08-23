@@ -1,30 +1,30 @@
-#pragma once
+﻿#pragma once
 /**
- * bit32_identity.hpp — 32-Bit Packed Particle Identity Word
+ * bit32_identity.hpp  -  32-Bit Packed Particle Identity Word
  *
- * Encodes the full §0 Identity–State Decomposition vector
+ * Encodes the full §0 Identity-State Decomposition vector
  *
  *   I_i = [ Z_i, A_i, Q_i, Σ_i, Λ_i, Θ_i ]^T
  *
  * into a single 32-bit unsigned integer:
  *
- *   Bit layout (MSB → LSB):
- *   ┌─────────────────────────────────────────────────────────────────┐
- *   │ 31 ─────── 24 │ 23 ────── 16 │ 15 ──────── 8 │ 7 6 5 │ 4 3 │ 2 1 0 │
- *   │   Z_i [8]     │   A_i [8]    │   Q_i [8]     │ Σ[3]  │ Λ[2]│ Θ[3]  │
- *   └─────────────────────────────────────────────────────────────────┘
+ *   Bit layout (MSB -> LSB):
+ *   +-----------------------------------------------------------------+
+ *   | 31 ------- 24 | 23 ------ 16 | 15 -------- 8 | 7 6 5 | 4 3 | 2 1 0 |
+ *   |   Z_i [8]     |   A_i [8]    |   Q_i [8]     | Σ[3]  | Λ[2]| Θ[3]  |
+ *   +-----------------------------------------------------------------+
  *
  *   Field      Bits   Range / encoding
- *   ────────── ────── ──────────────────────────────────────────────────
- *   Z_i         8     Atomic number  0–118  (0 = unassigned)
- *   A_i         8     Mass bucket    0–255  (0 = natural abundance avg)
+ *   ---------- ------ --------------------------------------------------
+ *   Z_i         8     Atomic number  0-118  (0 = unassigned)
+ *   A_i         8     Mass bucket    0-255  (0 = natural abundance avg)
  *   Q_i         8     Charge word    signed 8-bit fixed-point × 0.25 e
- *                     range –32.0 e … +31.75 e  (sufficient for ions)
- *   Σ_i         3     StructuralRole 0–4    (5 values; 3 bits ≥ ceiling)
- *   Λ_i         2     StabilityClass 0–3    (4 values; 2 bits exact)
- *   Θ_i         3     Provenance tag 0–7    (8 provenance buckets)
- *   ────────── ────── ──────────────────────────────────────────────────
- *   Total      32 bits  ← one uint32_t, cache-line friendly
+ *                     range -32.0 e ... +31.75 e  (sufficient for ions)
+ *   Σ_i         3     StructuralRole 0-4    (5 values; 3 bits ≥ ceiling)
+ *   Λ_i         2     StabilityClass 0-3    (4 values; 2 bits exact)
+ *   Θ_i         3     Provenance tag 0-7    (8 provenance buckets)
+ *   ---------- ------ --------------------------------------------------
+ *   Total      32 bits  <- one uint32_t, cache-line friendly
  *
  * Design notes:
  *   - The word is immutable at CG time: pack once, read many times.
@@ -105,11 +105,11 @@ namespace detail {
 } // namespace detail
 
 // ============================================================================
-// Identity32 — the packed word + typed accessors
+// Identity32  -  the packed word + typed accessors
 // ============================================================================
 
 /**
- * Identity32 — 32-bit packed particle identity word.
+ * Identity32  -  32-bit packed particle identity word.
  *
  * Immutable after construction. All six §0 identity fields are
  * recoverable via named accessors without any external state.
@@ -117,27 +117,27 @@ namespace detail {
 struct Identity32 {
     uint32_t word{0u};
 
-    // ── default ──────────────────────────────────────────────────────────────
+    // -- default --------------------------------------------------------------
     Identity32() = default;
     explicit Identity32(uint32_t raw) : word(raw) {}
 
-    // ── field accessors ───────────────────────────────────────────────────────
+    // -- field accessors -------------------------------------------------------
 
-    /// Z_i — atomic number (0–118).
+    /// Z_i  -  atomic number (0-118).
     uint8_t Z() const {
         return static_cast<uint8_t>((word & detail::MASK_Z) >> detail::SHIFT_Z);
     }
 
-    /// A_i — mass bucket (0 = natural average; 1–255 = specific mass).
+    /// A_i  -  mass bucket (0 = natural average; 1-255 = specific mass).
     uint8_t A() const {
         return static_cast<uint8_t>((word & detail::MASK_A) >> detail::SHIFT_A);
     }
 
     /**
-     * Q_i — charge participation as s8.2 fixed-point.
+     * Q_i  -  charge participation as s8.2 fixed-point.
      *
      * Returns the decoded floating-point charge in units of e.
-     * Resolution: 0.25 e per LSB.  Range: –32.0 … +31.75 e.
+     * Resolution: 0.25 e per LSB.  Range: -32.0 ... +31.75 e.
      */
     double Q() const {
         auto raw = static_cast<int8_t>(
@@ -151,29 +151,29 @@ struct Identity32 {
             static_cast<uint8_t>((word & detail::MASK_Q) >> detail::SHIFT_Q));
     }
 
-    /// Σ_i — structural role (3-bit, values 0–4).
+    /// Σ_i  -  structural role (3-bit, values 0-4).
     StructuralRole sigma() const {
         auto v = static_cast<uint8_t>((word & detail::MASK_SIG) >> detail::SHIFT_SIG);
         return static_cast<StructuralRole>(v <= 4u ? v : 4u);
     }
 
-    /// Λ_i — stability class (2-bit, values 0–3).
+    /// Λ_i  -  stability class (2-bit, values 0-3).
     StabilityClass lambda() const {
         auto v = static_cast<uint8_t>((word & detail::MASK_LAM) >> detail::SHIFT_LAM);
         return static_cast<StabilityClass>(v);
     }
 
-    /// Θ_i — provenance tag (3-bit, values 0–7).
+    /// Θ_i  -  provenance tag (3-bit, values 0-7).
     ProvenanceTag theta() const {
         auto v = static_cast<uint8_t>((word & detail::MASK_TH) >> detail::SHIFT_TH);
         return static_cast<ProvenanceTag>(v);
     }
 
-    // ── comparison / equality ─────────────────────────────────────────────────
+    // -- comparison / equality -------------------------------------------------
     bool operator==(const Identity32& o) const { return word == o.word; }
     bool operator!=(const Identity32& o) const { return word != o.word; }
 
-    // ── human-readable dump ───────────────────────────────────────────────────
+    // -- human-readable dump ---------------------------------------------------
     std::string to_string() const {
         return std::string("Identity32{"
             " Z=")  + std::to_string(Z())
@@ -191,15 +191,15 @@ struct Identity32 {
 // ============================================================================
 
 /**
- * pack_identity — encode all six §0 fields into a 32-bit word.
+ * pack_identity  -  encode all six §0 fields into a 32-bit word.
  *
- * @param Z      Atomic number (0–118).  Clamped to 8 bits.
- * @param A      Mass bucket (0–255).    Clamped to 8 bits.
+ * @param Z      Atomic number (0-118).  Clamped to 8 bits.
+ * @param A      Mass bucket (0-255).    Clamped to 8 bits.
  * @param Q_fp   Charge in units of e.  Encoded as s8.2 fixed-point.
- *               Out-of-range values are clamped to [–32.0, +31.75].
- * @param sigma  StructuralRole Σ_i (0–4).
- * @param lambda StabilityClass Λ_i (0–3).
- * @param theta  ProvenanceTag  Θ_i (0–7).
+ *               Out-of-range values are clamped to [-32.0, +31.75].
+ * @param sigma  StructuralRole Σ_i (0-4).
+ * @param lambda StabilityClass Λ_i (0-3).
+ * @param theta  ProvenanceTag  Θ_i (0-7).
  */
 inline Identity32 pack_identity(
     uint8_t        Z,
@@ -229,7 +229,7 @@ inline Identity32 pack_identity(
 }
 
 /**
- * pack_from_bead — convenience overload that reads fields directly from
+ * pack_from_bead  -  convenience overload that reads fields directly from
  * a Bead and its Z-value.
  *
  * @param bead  The Bead to pack (carries Σ_i, Λ_i, charge).
@@ -254,10 +254,10 @@ inline Identity32 pack_from_bead(
 // ============================================================================
 
 /**
- * identity32_roundtrip_ok — verify that pack(unpack(w)) == w.
+ * identity32_roundtrip_ok  -  verify that pack(unpack(w)) == w.
  *
  * Returns true if the word is self-consistent.  Only the 3 reserved
- * values of Σ (5–7) will fail — all valid inputs pass.
+ * values of Σ (5-7) will fail  -  all valid inputs pass.
  */
 inline bool identity32_roundtrip_ok(const Identity32& id) {
     Identity32 repacked = pack_identity(

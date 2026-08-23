@@ -1,0 +1,70 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e14_surface_time_averaged_flux.vsim
+# =============================================================================
+# E14  --  Time-Averaged Flux Statistics (Temporal Sampling)
+#
+# Purpose: Demonstrate how to compute rolling time-averaged flux metrics
+#          over a sliding window.  Post-process the .surface.json sidecar
+#          to extract temporal statistics: mean, variance, autocorrelation.
+#
+# Key concepts:
+#   compute_flux = true  generates per-step net flux in sidecar.
+#   Time averaging requires post-analysis of the sidecar JSON array.
+#   Useful for identifying quasi-steady-state vs fluctuating flow regimes.
+# =============================================================================
+
+[project]
+name        = "e14_surface_time_averaged"
+version     = "v5.0.14"
+seed_base   = 1400
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 1024
+temperature = 400.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 12000
+dt_fs     = 2.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e14"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e14/surfaces"
+
+[[object.surface]]
+name          = "flux_temporal_probe"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 0.0
+normal_y      = 1.0
+normal_z      = 0.0
+width         = 25.0
+height        = 25.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_temporal"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 600
+

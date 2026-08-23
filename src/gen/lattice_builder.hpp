@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * lattice_builder.hpp -- Supercell builder for metal/alloy generators
  * ====================================================================
@@ -30,7 +30,7 @@ namespace vsepr {
 namespace gen {
 
 // ---------------------------------------------------------------------------
-// build_fcc_primitive  →  4-atom conventional cell fractional positions
+// build_fcc_primitive  ->  4-atom conventional cell fractional positions
 // ---------------------------------------------------------------------------
 inline std::vector<std::array<double,3>> fcc_motif() {
 	return {
@@ -42,7 +42,7 @@ inline std::vector<std::array<double,3>> fcc_motif() {
 }
 
 // ---------------------------------------------------------------------------
-// build_bcc_primitive  →  2-atom conventional cell
+// build_bcc_primitive  ->  2-atom conventional cell
 // ---------------------------------------------------------------------------
 inline std::vector<std::array<double,3>> bcc_motif() {
 	return {
@@ -52,7 +52,7 @@ inline std::vector<std::array<double,3>> bcc_motif() {
 }
 
 // ---------------------------------------------------------------------------
-// build_b2_primitive  →  2-site ordered BCC (CsCl)
+// build_b2_primitive  ->  2-site ordered BCC (CsCl)
 //   site 0 at corner, site 1 at body centre
 // ---------------------------------------------------------------------------
 inline std::vector<std::array<double,3>> b2_motif() {
@@ -63,7 +63,7 @@ inline std::vector<std::array<double,3>> b2_motif() {
 }
 
 // ---------------------------------------------------------------------------
-// build_hcp_primitive  →  2-atom hexagonal cell
+// build_hcp_primitive  ->  2-atom hexagonal cell
 //   a-axis along x; b-axis at 120° (= -60° from x); c-axis along z
 // ---------------------------------------------------------------------------
 //   Cartesian from fractional (hx, hy, hz):
@@ -78,7 +78,7 @@ inline std::vector<std::array<double,3>> hcp_motif() {
 }
 
 // ---------------------------------------------------------------------------
-// Fractional → Cartesian (handles orthorhombic + HCP)
+// Fractional -> Cartesian (handles orthorhombic + HCP)
 // ---------------------------------------------------------------------------
 struct CellVectors {
 	double a, c;
@@ -98,8 +98,8 @@ struct CellVectors {
 
 // ---------------------------------------------------------------------------
 // Build supercell XYZFrame from a MaterialPreset
-//   nx, ny, nz  — repetitions along a/b/c
-//   apply_cycle — replace element symbols with alloy occupancy cycle
+//   nx, ny, nz   -  repetitions along a/b/c
+//   apply_cycle  -  replace element symbols with alloy occupancy cycle
 // ---------------------------------------------------------------------------
 inline io::XYZFrame build_supercell(const MaterialPreset& mat,
 									int nx, int ny, int nz,
@@ -117,7 +117,7 @@ inline io::XYZFrame build_supercell(const MaterialPreset& mat,
 		case LatticeType::HCP: motif = hcp_motif(); break;
 	}
 
-	// Alloy substitution cycle (empty → use basis symbols directly)
+	// Alloy substitution cycle (empty -> use basis symbols directly)
 	std::vector<OccupancyCycle> cycle;
 	if (apply_cycle) cycle = occupancy_cycle(mat.tag);
 

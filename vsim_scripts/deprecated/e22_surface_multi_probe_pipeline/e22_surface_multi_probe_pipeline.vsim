@@ -1,0 +1,106 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e22_surface_multi_probe_pipeline.vsim
+# =============================================================================
+# E22  --  Multi-Surface Pipeline with Mass, Energy and Momentum Probes
+#
+# Purpose: Full-pipeline example combining three surface probes on a
+#          heated Ar slab to simultaneously capture:
+#            Phi  --  particle number flux           (compute_flux)
+#            Q    --  kinetic energy flux            (compute_energy_flux)
+#            P    --  momentum flux / pressure proxy (compute_momentum_flux)
+#          All metrics land in a single .surface.json keyed by output_tag.
+#
+# Key concepts:
+#   Multiple [[object.surface]] blocks can coexist in one script.
+#   Probes are executed in declaration order; output_tag provides the key.
+#   Combined with write_analysis_json, all metrics export to a single run dir.
+# =============================================================================
+
+[project]
+name        = "e22_surface_multi_probe_pipeline"
+version     = "v5.0.14"
+seed_base   = 2200
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 2048
+temperature = 600.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 10000
+dt_fs     = 2.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = "out/e22"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e22/surfaces"
+
+# Probe 1: particle number flux at Z = -10
+[[object.surface]]
+name          = "phi_probe_bottom"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = -10.0
+normal_x      = 0.0
+normal_y      = 0.0
+normal_z      = 1.0
+width         = 40.0
+height        = 40.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_z_neg10"
+
+# Probe 2: energy flux disk at Z = 0
+[[object.surface]]
+name                = "Q_probe_mid"
+geometry            = "disk"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+normal_x            = 0.0
+normal_y            = 0.0
+normal_z            = 1.0
+radius              = 15.0
+log_crossings       = true
+compute_energy_flux = true
+output_tag          = "Q_disk_z0"
+
+# Probe 3: momentum flux at Z = +10
+[[object.surface]]
+name                  = "P_probe_top"
+geometry              = "rectangle"
+center_x              = 0.0
+center_y              = 0.0
+center_z              = 10.0
+normal_x              = 0.0
+normal_y              = 0.0
+normal_z              = 1.0
+width                 = 40.0
+height                = 40.0
+log_crossings         = true
+compute_momentum_flux = true
+output_tag            = "P_z_pos10"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 500
+

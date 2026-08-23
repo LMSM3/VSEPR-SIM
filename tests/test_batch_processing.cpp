@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // test_batch_processing.cpp
 // Part of VSEPR-Sim: Molecular Geometry Simulation System
 // 
@@ -96,7 +96,7 @@ void test_batch_worker() {
     // Set up progress callback
     worker.set_progress_callback([](size_t completed, size_t total, const gui::BatchResult& result) {
         std::cout << "[" << completed << "/" << total << "] ";
-        std::cout << result.formula << " → ";
+        std::cout << result.formula << " -> ";
         
         if (result.success) {
             std::cout << "✓ (" << result.num_atoms << " atoms, ";
@@ -178,9 +178,9 @@ void test_continuous_generator() {
 }
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║   VSEPR-Sim Batch Processing & Generation Test Suite   ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|   VSEPR-Sim Batch Processing & Generation Test Suite   |\n";
+    std::cout << "+===========================================================+\n";
     
     try {
         // Test 1: Real molecule generator
@@ -192,9 +192,9 @@ int main() {
         // Test 3: Continuous generator
         test_continuous_generator();
         
-        std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║                  ALL TESTS PASSED ✓                      ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+===========================================================+\n";
+        std::cout << "|                  ALL TESTS PASSED ✓                      |\n";
+        std::cout << "+===========================================================+\n";
         
         return 0;
         

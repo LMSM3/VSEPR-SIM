@@ -1,0 +1,54 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\setlength{\emergencystretch}{3em}
+\title{Day 89 A/B: Baseline and Deterministic Stress Fixture}
+\author{VSEPR-SIM Work Order Consolidation Authority}
+\date{Day 89}
+\begin{document}
+\maketitle
+
+\section*{Consolidated scope}
+This record combines Day 89-A, the measured baseline, and Day 89-B, the deterministic large-particle fixture. The original A and B authorities remain retained as detailed source records; this document is the concise completion boundary for both work items.
+
+The shared producer is \texttt{build/dual-backend-3d-data.exe}. Its default fixture remains the four-scene baseline. The optional \texttt{--stress-particles N} argument appends a deterministic lattice scene without changing the default package or transferring scientific ownership to a renderer.
+
+\section*{Measured acceptance}
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+Measure & Accepted evidence \\
+\midrule
+Baseline scenes / rows & 4 / 111 \\
+Stress scenes / rows & 5 / 1,442 \\
+Stress-scene rows & 1,331 \\
+Stress steps / time step & 1 / 10 fs \\
+Fresh generation time & 44.0298 ms \\
+Stress validator & PASS \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The accepted stress command is:
+\begin{verbatim}
+build/dual-backend-3d-data.exe --headless --output out/day89_recheck
+  --stress-particles 1331
+\end{verbatim}
+The generated manifest reports schema \texttt{vsepr.dual\_backend\_3d.v1}, five scenes, 1,442 particles, and positive generation time. R, PDF, and XLSX sidecars were also produced and validated for this run.
+
+\newpage
+\section*{Repeatability evidence}
+Two fresh producer runs produced identical CSV content. The SHA-256 values are:
+
+\begin{itemize}
+\item \texttt{scenes.csv}: \texttt{23EF29B8F1904EA5901CBD8D079EFB10C5A537B9D957873B935AE3A4BA083728}
+\item \texttt{particles.csv}: \texttt{78D2B1549756987378113D4E7E2EB777043A3DF21B7BEA234C7E0CA0E78BBE6C}
+\end{itemize}
+
+The manifest timing field is intentionally run-specific, so manifest hashes may differ even when the scientific CSV rows are identical. The artifact validator accepted both packages, including the greater-than-1,000-particle stress requirement.
+
+\section*{Completion decision}
+Day 89-A/B is \textbf{COMPLETE} as one baseline-and-fixture gate. Day 89-C remains a separate completed artifact-contract gate and retains its own authority. Renderer consumption, parity, bead packets, exchange accounting, and browser/report readiness remain later Day 89 work and are not promoted by this consolidation.
+
+\end{document}

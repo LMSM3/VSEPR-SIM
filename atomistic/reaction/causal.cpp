@@ -1,4 +1,4 @@
-#include "causal.hpp"
+﻿#include "causal.hpp"
 #include <algorithm>
 #include <cmath>
 #include <random>
@@ -394,7 +394,7 @@ std::vector<CausalFactor> CausalDiscoveryEngine::infer_causal_factors(
             double kill_rate = static_cast<double>(perturbation_kills[perturb_key]) /
                               perturbation_total[perturb_key];
             
-            // High kill rate → factor is necessary (robustness is inverse)
+            // High kill rate -> factor is necessary (robustness is inverse)
             factor.robustness = 1.0 - kill_rate;
             
             // If perturbing this factor kills reactions, it's likely causal
@@ -493,7 +493,7 @@ InformationGain CausalDiscoveryEngine::compute_information_gain(
         min_factor_value = std::min(min_factor_value, value);
     }
     
-    // Near boundary (value ~ 0.5) → high causal clarity
+    // Near boundary (value ~ 0.5) -> high causal clarity
     gain.causal_clarity = 1.0 - 2.0 * std::abs(min_factor_value - 0.5);
     
     return gain;

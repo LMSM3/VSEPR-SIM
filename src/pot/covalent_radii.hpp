@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 covalent_radii.hpp
 ------------------
@@ -9,7 +9,7 @@ Values in Ångströms (Å)
 
 Reference:
 Pyykkö, P.; Atsumi, M. (2009). "Molecular Single-Bond Covalent Radii 
-for Elements 1–118". Chemistry: A European Journal. 15 (1): 186–197.
+for Elements 1-118". Chemistry: A European Journal. 15 (1): 186-197.
 */
 
 #include <cstdint>

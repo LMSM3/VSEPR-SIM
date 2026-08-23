@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 /**
- * fire_smooth_runner.hpp — Core Runner: 
+ * fire_smooth_runner.hpp  -  Core Runner: 
 
 
- → Relax → L3 Handoff
+ -> Relax -> L3 Handoff
  *
  * Executes one smooth-sampling simulation:
  *   1. Build BeadSystem from drawn arrangement parameters

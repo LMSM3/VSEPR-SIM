@@ -1,18 +1,18 @@
-#pragma once
+﻿#pragma once
 /**
  * crystal_metrics.hpp
  * -------------------
  * Crystal verification scorecard: deterministic metrics computed every time
- * a crystal is generated or loaded. No presets, no hardcoded outcomes —
+ * a crystal is generated or loaded. No presets, no hardcoded outcomes  - 
  * all checks are computed from the raw lattice + basis data.
  *
  * Six metric categories:
- *   1. Identity      — stoichiometry, charge, volume, density
- *   2. Symmetry      — space group recovery, Wyckoff multiplicities
- *   3. Local geometry — CN, bond lengths, angles, polyhedra signatures
- *   4. Topology      — neighbor graph connectivity, ring statistics
- *   5. Reciprocal    — d-spacings, predicted XRD peak positions
- *   6. Relaxation    — phase preservation, lattice drift, stress
+ *   1. Identity       -  stoichiometry, charge, volume, density
+ *   2. Symmetry       -  space group recovery, Wyckoff multiplicities
+ *   3. Local geometry  -  CN, bond lengths, angles, polyhedra signatures
+ *   4. Topology       -  neighbor graph connectivity, ring statistics
+ *   5. Reciprocal     -  d-spacings, predicted XRD peak positions
+ *   6. Relaxation     -  phase preservation, lattice drift, stress
  *
  * Plus a verification scorecard for empirical comparison.
  */
@@ -34,7 +34,7 @@ namespace crystal {
 // ============================================================================
 
 constexpr double AVOGADRO = 6.02214076e23;  // mol⁻¹
-constexpr double ANG3_TO_CM3 = 1.0e-24;    // Å³ → cm³
+constexpr double ANG3_TO_CM3 = 1.0e-24;    // Å³ -> cm³
 
 // ============================================================================
 // 1. Identity Metrics
@@ -42,7 +42,7 @@ constexpr double ANG3_TO_CM3 = 1.0e-24;    // Å³ → cm³
 
 struct IdentityMetrics {
     // Stoichiometry
-    std::map<uint32_t, int> element_counts;   // Z → count in cell
+    std::map<uint32_t, int> element_counts;   // Z -> count in cell
     std::string reduced_formula;              // e.g., "NaCl"
     int formula_units_Z;                      // Z = formula units per cell
     
@@ -110,8 +110,8 @@ struct LocalGeometryMetrics {
     std::vector<SiteGeometry> site_geometries;
     
     // CN distribution
-    std::map<uint32_t, double> mean_CN_by_type;    // Z → mean CN
-    std::map<uint32_t, int>    expected_CN_by_type; // Z → expected CN (if known)
+    std::map<uint32_t, double> mean_CN_by_type;    // Z -> mean CN
+    std::map<uint32_t, int>    expected_CN_by_type; // Z -> expected CN (if known)
     
     // Bond statistics per pair
     std::vector<BondStats> bond_statistics;
@@ -131,14 +131,14 @@ LocalGeometryMetrics compute_local_geometry(const State& s, const Lattice& lat, 
 struct TopologyMetrics {
     // Neighbor graph
     int total_bonds;                              // Edge count in neighbor graph
-    std::map<uint32_t, int> bonds_per_type;       // Z → total bonds for atoms of this type
+    std::map<uint32_t, int> bonds_per_type;       // Z -> total bonds for atoms of this type
     
     // Connectivity
     int num_connected_components;                  // Should be 1 for a crystal
     bool fully_connected;                          // All atoms reachable
     
     // Sublattice connectivity (per element type)
-    std::map<uint32_t, bool> sublattice_connected; // Z → is sublattice connected?
+    std::map<uint32_t, bool> sublattice_connected; // Z -> is sublattice connected?
     
     // Network fingerprint
     uint64_t topology_hash;                        // Weisfeiler-Lehman hash
@@ -199,10 +199,10 @@ struct ReferenceData {
     int Z;                              // Formula units per cell
     double density_gcc;                 // Expected density (g/cm³)
     
-    // Per-site CN expectations (Z → expected CN)
+    // Per-site CN expectations (Z -> expected CN)
     std::map<uint32_t, int> expected_CN;
     
-    // Expected bond lengths per pair (Z_i, Z_j) → (min, max) in Å
+    // Expected bond lengths per pair (Z_i, Z_j) -> (min, max) in Å
     std::map<std::pair<uint32_t,uint32_t>, std::pair<double,double>> expected_bonds;
     
     // Expected XRD peak positions (2θ, Cu Kα)

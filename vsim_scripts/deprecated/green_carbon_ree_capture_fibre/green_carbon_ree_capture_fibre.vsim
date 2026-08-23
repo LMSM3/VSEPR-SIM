@@ -1,0 +1,499 @@
+# DEPRECATED: promoted script failed validation during automated batch test.
+# Class: deprecated (parse/validation failure)
+# Reason: [0;31mparse error:[0m vsim parse error at line 50: [boundary] unknown mode 'flow'; expected: periodic | open
+# Original path: vsim_scripts/promoted/green_carbon_ree_capture_fibre
+#
+# @category Green Energy Applications
+# @title    Green Loom Path — Carbon/REE fibre for cyclic post-combustion CO2 capture
+#
+# Green Energy Pillar 1
+# Reactive organization: flue gas <-> porous carbon fibre <-> dispersed REE oxide sites
+#
+# Scientific intent:
+#   1. Expose a porous carbon-fibre bundle containing CeO2/La2O3 capture sites
+#      to a humid post-combustion gas stream.
+#   2. Resolve pore access, competitive H2O adsorption, reversible carbon
+#      physisorption, and carbonate-like binding on rare-earth oxide sites.
+#   3. Regenerate by moderate heating plus pressure reduction, without molten salts.
+#   4. Optimize capture capacity, CO2/N2 selectivity, pressure drop, heat duty,
+#      rare-earth loading, and cyclic retention.
+#
+# Canonical entry point:
+#   vsper run scripts/green_energy/green_carbon_ree_capture_fibre.vsim
+#
+# NOTE:
+#   Carbonate and vacancy states are descriptor-level surface states. This file
+#   is an acceptance and optimization model, not a substitute for calibrated
+#   adsorption isotherms or ab-initio surface energetics.
+
+[project]
+name        = "green_carbon_ree_capture_fibre"
+version     = "v0.1.0"
+seed_base   = 51001
+determinism = true
+description = "Cyclic CO2 capture on a porous carbon fibre with Ce/La oxide sites"
+author      = "VSIM Green Energy Applications"
+
+[pillar]
+id                 = "green_loom"
+name               = "Green Loom Path"
+model              = "porous_fibre_capture"
+spatial_authority  = "gas_pore_surface_fibre"
+event_authority    = "transport_plus_stochastic_adsorption"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 96.0
+ly    = 96.0
+lz    = 160.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "flow"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[material]
+formula       = "C_CeO2_La2O3"
+structure     = "porous_fibre_bundle"
+phase         = "solid_gas_interface"
+architecture  = "aligned_hollow_carbon_fibres"
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 4096
+temperature = 338.0
+lattice     = "graphitic_fibre_bundle"
+region      = "capture_fibre"
+
+[[simulation.molecule]]
+formula     = "CeO2"
+count       = 96
+temperature = 338.0
+lattice     = "surface_nanocluster"
+region      = "ree_active_sites"
+
+[[simulation.molecule]]
+formula     = "La2O3"
+count       = 64
+temperature = 338.0
+lattice     = "surface_nanocluster"
+region      = "ree_active_sites"
+
+[[simulation.molecule]]
+formula     = "CO2"
+count       = 420
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[[simulation.molecule]]
+formula     = "N2"
+count       = 1540
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[[simulation.molecule]]
+formula     = "O2"
+count       = 120
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[[simulation.molecule]]
+formula     = "H2O"
+count       = 140
+temperature = 338.0
+lattice     = "inlet_random"
+region      = "flue_gas_inlet"
+
+[environment]
+temperature = 338.0
+pressure    = 0.000101
+medium      = "humid_post_combustion_gas"
+gravity     = false
+flow_axis   = "z"
+flow_speed  = 0.025
+
+[fibre]
+carbon_hybridization       = "sp2"
+mean_outer_diameter_ang    = 18.0
+mean_inner_diameter_ang    = 8.0
+bundle_porosity            = 0.62
+fibre_alignment            = 0.91
+micropore_fraction         = 0.34
+mesopore_fraction          = 0.28
+mean_pore_width_ang        = 7.5
+track_accessible_area      = true
+track_pore_blocking        = true
+track_axial_pressure_drop  = true
+
+[ree_sites]
+site_phases                = ["CeO2", "La2O3"]
+ce_fraction                = 0.60
+la_fraction                = 0.40
+loading_mass_fraction      = 0.085
+mean_cluster_diameter_ang  = 9.0
+oxygen_vacancy_fraction    = 0.045
+site_dispersion            = 0.82
+track_carbonate_fraction   = true
+track_vacancy_occupancy    = true
+track_cluster_sintering    = true
+
+[species.registry]
+species = [
+    "CO2:gas",
+    "N2:gas",
+    "O2:gas",
+    "H2O:gas",
+    "site:C_pore_vacant",
+    "site:Ce_vacant",
+    "site:Ce_vacancy",
+    "site:La_vacant",
+    "CO2:C_physisorbed",
+    "H2O:C_physisorbed",
+    "CO2:Ce_carbonate_proxy",
+    "CO2:La_carbonate_proxy",
+    "H2O:REE_bound",
+    "CO2:desorbed"
+]
+
+[transport]
+model                    = "advection_diffusion_pore_network"
+diffusion_model          = "species_knudsen_plus_molecular"
+flow_solver              = "reduced_lattice_flux"
+pore_access_model        = "radius_energy_gate"
+pressure_drop_model      = "darcy_forchheimer_proxy"
+update_pore_access_every = 10
+reject_blocked_entry     = true
+
+[reaction.network]
+id                 = "green_loom_co2_capture_v1"
+selection          = "transport_encounter_then_kinetic"
+rate_law           = "arrhenius"
+energy_model       = "tabulated_adsorption_proxy"
+spatial_index      = "pore_surface_graph"
+reject_on_overlap  = true
+reject_on_deficit  = true
+
+[[reaction.channel]]
+id                  = "carbon_pore_capture"
+stages              = ["capture"]
+reactants            = ["CO2:gas", "site:C_pore_vacant"]
+products             = ["CO2:C_physisorbed"]
+pre_exponential      = 2.8e11
+barrier_eV           = 0.055
+energy_delta_eV      = -0.24
+pore_width_min_ang   = 5.0
+pore_width_max_ang   = 11.0
+
+[[reaction.channel]]
+id                  = "carbon_water_competition"
+stages              = ["capture"]
+reactants            = ["H2O:gas", "site:C_pore_vacant"]
+products             = ["H2O:C_physisorbed"]
+pre_exponential      = 2.0e11
+barrier_eV           = 0.042
+energy_delta_eV      = -0.20
+humidity_penalty     = true
+
+[[reaction.channel]]
+id                  = "ceria_vacancy_capture"
+stages              = ["capture"]
+reactants            = ["CO2:gas", "site:Ce_vacancy"]
+products             = ["CO2:Ce_carbonate_proxy"]
+pre_exponential      = 7.0e10
+barrier_eV           = 0.21
+energy_delta_eV      = -0.74
+vacancy_required     = true
+
+[[reaction.channel]]
+id                  = "lanthana_carbonate_capture"
+stages              = ["capture"]
+reactants            = ["CO2:gas", "site:La_vacant"]
+products             = ["CO2:La_carbonate_proxy"]
+pre_exponential      = 9.0e10
+barrier_eV           = 0.16
+energy_delta_eV      = -0.92
+
+[[reaction.channel]]
+id                  = "ree_water_competition"
+stages              = ["capture"]
+reactants            = ["H2O:gas", "site:Ce_vacant"]
+products             = ["H2O:REE_bound"]
+pre_exponential      = 4.5e10
+barrier_eV           = 0.11
+energy_delta_eV      = -0.48
+
+[[reaction.channel]]
+id                  = "carbon_pore_regeneration"
+stages              = ["regenerate"]
+reactants            = ["CO2:C_physisorbed"]
+products             = ["CO2:desorbed", "site:C_pore_vacant"]
+pre_exponential      = 4.0e12
+barrier_eV           = 0.31
+energy_delta_eV      = 0.24
+
+[[reaction.channel]]
+id                  = "ceria_regeneration"
+stages              = ["regenerate"]
+reactants            = ["CO2:Ce_carbonate_proxy"]
+products             = ["CO2:desorbed", "site:Ce_vacancy"]
+pre_exponential      = 1.1e12
+barrier_eV           = 0.68
+energy_delta_eV      = 0.74
+
+[[reaction.channel]]
+id                  = "lanthana_regeneration"
+stages              = ["regenerate"]
+reactants            = ["CO2:La_carbonate_proxy"]
+products             = ["CO2:desorbed", "site:La_vacant"]
+pre_exponential      = 8.0e11
+barrier_eV           = 0.79
+energy_delta_eV      = 0.92
+
+[[reaction.channel]]
+id                  = "water_release"
+stages              = ["purge", "regenerate"]
+reactants            = ["H2O:C_physisorbed"]
+products             = ["H2O:gas", "site:C_pore_vacant"]
+pre_exponential      = 3.2e12
+barrier_eV           = 0.25
+energy_delta_eV      = 0.20
+
+[[reaction.stage]]
+id                  = "capture"
+start_step          = 0
+end_step            = 5000
+active_reservoirs   = ["flue_gas_inlet"]
+environment_T_K     = 338.0
+pressure_proxy_GPa  = 0.000101
+flow_speed          = 0.025
+
+[[reaction.stage]]
+id                  = "purge"
+start_step          = 5001
+end_step            = 5600
+active_reservoirs   = []
+environment_T_K     = 350.0
+pressure_proxy_GPa  = 0.000035
+flow_speed          = 0.010
+remove_unbound      = ["CO2:gas", "N2:gas", "O2:gas", "H2O:gas"]
+
+[[reaction.stage]]
+id                  = "regenerate"
+start_step          = 5601
+end_step            = 7600
+active_reservoirs   = []
+environment_T_K     = 415.0
+pressure_proxy_GPa  = 0.000012
+flow_speed          = 0.004
+
+[[reaction.stage]]
+id                  = "cool"
+start_step          = 7601
+end_step            = 8200
+active_reservoirs   = []
+environment_T_K     = 338.0
+pressure_proxy_GPa  = 0.000101
+flow_speed          = 0.0
+
+[cycle]
+count                         = 3
+reuse_final_structure         = true
+restore_feed_each_cycle       = true
+track_capacity_retention      = true
+track_regeneration_efficiency = true
+track_sintering_accumulation  = true
+
+[optimization]
+mode                  = "bounded_multiobjective_sweep"
+baseline_id           = "carbon_ree_reference"
+replicates_per_point  = 3
+selection_rule        = "pareto_then_weighted_score"
+retain_top_n          = 12
+
+[[optimization.axis]]
+key    = "fibre.mean_pore_width_ang"
+values = [5.5, 6.5, 7.5, 9.0, 11.0]
+
+[[optimization.axis]]
+key    = "fibre.bundle_porosity"
+values = [0.48, 0.56, 0.62, 0.68]
+
+[[optimization.axis]]
+key    = "ree_sites.ce_fraction"
+values = [0.25, 0.40, 0.60, 0.75]
+
+[[optimization.axis]]
+key    = "ree_sites.loading_mass_fraction"
+values = [0.03, 0.055, 0.085, 0.12]
+
+[[optimization.axis]]
+key    = "reaction.stage.regenerate.environment_T_K"
+values = [375.0, 395.0, 415.0, 435.0]
+
+[[optimization.objective]]
+metric    = "capture.CO2_capacity_mmol_g"
+direction = "maximize"
+weight    = 0.27
+
+[[optimization.objective]]
+metric    = "capture.CO2_N2_selectivity"
+direction = "maximize"
+weight    = 0.18
+
+[[optimization.objective]]
+metric    = "cycle.capacity_retention"
+direction = "maximize"
+weight    = 0.18
+
+[[optimization.objective]]
+metric    = "regeneration.heat_duty_kJ_mol_CO2"
+direction = "minimize"
+weight    = 0.17
+
+[[optimization.objective]]
+metric    = "transport.pressure_drop_proxy"
+direction = "minimize"
+weight    = 0.12
+
+[[optimization.objective]]
+metric    = "material.REE_mass_fraction"
+direction = "minimize"
+weight    = 0.08
+
+[simulation]
+fire_max_steps      = 250
+fire_dt_fs          = 0.5
+formation_preset    = "porous_fibre_capture"
+smooth_resim        = false
+neighbor_skin_ang   = 2.5
+rebuild_neighbors_n = 5
+
+[chemistry]
+chemistry           = "surface_capture_network"
+reaction_events     = true
+track_species_state = true
+event_registry      = true
+
+[run]
+mode          = "reactive_transport"
+max_steps     = 8200
+dt_fs         = 0.5
+temperature_K = 338.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics = [
+    "capture.CO2_capacity_mmol_g",
+    "capture.CO2_N2_selectivity",
+    "capture.breakthrough_fraction",
+    "capture.site_utilization",
+    "capture.carbonate_fraction",
+    "capture.water_competition_fraction",
+    "transport.pressure_drop_proxy",
+    "transport.pore_accessible_fraction",
+    "regeneration.CO2_release_fraction",
+    "regeneration.heat_duty_kJ_mol_CO2",
+    "cycle.capacity_retention",
+    "cycle.regeneration_efficiency",
+    "material.REE_mass_fraction",
+    "audit.element_residual",
+    "audit.energy_residual"
+]
+every_n_steps = 10
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["C", "O", "N", "Ce", "La", "H"]
+charge                = false
+energy                = "tracked_proxy"
+strict                = true
+check_every_n_steps   = 20
+relative_tolerance    = 1.0e-9
+absolute_tolerance    = 1.0e-11
+reject_invalid_event  = true
+
+[audit.acceptance]
+requirements = [
+    "CO2_capacity_peak > 0",
+    "CO2_N2_selectivity_peak > 1.0",
+    "regeneration_CO2_release_fraction > 0.70",
+    "capacity_retention_cycle_3 > 0.80",
+    "pressure_drop_proxy < configured_limit",
+    "REE_mass_fraction <= 0.12",
+    "max_abs_element_residual < 1.0e-9"
+]
+
+[export]
+output_dir          = "out/green_energy/green_loom"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 50
+event_interval      = 1
+metrics_interval    = 10
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_rdf_svg          = false
+visual_output_dir      = "figures/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_bond_events         = true
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+live           = true
+
+show "scene.porous_fibre" target = "pillar.green_loom" options = {
+    "color_by": "capture_state",
+    "show_gas_flow": true,
+    "show_pore_access": true,
+    "show_ree_clusters": true,
+    "show_breakthrough_front": true
+}
+
+show "data.history.timeseries" target = "run.history" options = {
+    "series": ["capture.CO2_capacity_mmol_g", "capture.breakthrough_fraction", "regeneration.CO2_release_fraction"],
+    "log_y": false
+}
+
+show "data.optimization.pareto" target = "optimization.results"
+show "data.events.timeline" target = "kernel.events"
+show "data.scalar.panel" target = "run.summary"
+
+[suite]
+groups   = ["green_energy", "green_loom", "carbon_capture", "optimization"]
+ordering = "deterministic"
+
+[suite.limits]
+timeout_s           = 300
+fail_fast           = true
+continue_on_warning = false
+
+[suite.smoke]
+groups = ["green_loom"]

@@ -1,10 +1,10 @@
-/**
+﻿/**
  * demo_version_lineage.cpp
  * ------------------------
- * VSEPR-SIM 4.0 Legacy-Beta — Version Lineage & Multi-Scale Registry Demo
+ * VSEPR-SIM 4.0 Legacy-Beta  -  Version Lineage & Multi-Scale Registry Demo
  *
  * Displays:
- *   1. Full kernel lineage (v0.1 → 4.0-LB) with commit hashes
+ *   1. Full kernel lineage (v0.1 -> 4.0-LB) with commit hashes
  *   2. Scale registry (1-5) with units, status, and bridge methods
  *   3. Multi-scale fidelity chain (cumulative information preservation)
  *   4. Property search domain map (what can be computed at each scale)
@@ -46,7 +46,7 @@ std::string progress_bar(double fraction, int width = 20) {
     int filled = static_cast<int>(fraction * width);
     std::string bar;
     for (int i = 0; i < width; ++i) {
-        if (i < filled) bar += "█";
+        if (i < filled) bar += "#";
         else            bar += "░";
     }
     return bar;
@@ -96,25 +96,25 @@ int main() {
 
     std::cout << "\n";
     std::cout << ansi::BOLD;
-    std::cout << "  ╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "  ║       VSEPR-SIM 4.0 Legacy-Beta — Version Lineage Demo         ║\n";
-    std::cout << "  ║       Multi-Scale Property Search Registry                     ║\n";
-    std::cout << "  ╠══════════════════════════════════════════════════════════════════╣\n";
-    std::cout << "  ║  Branch:  4.0-legacy-beta                                      ║\n";
-    std::cout << "  ║  Kernel:  v0.1 → v0.3 → 2.7 → 2.9 → 3.0 → 4.0-LB            ║\n";
-    std::cout << "  ║  Scales:  Atomistic → CG → Grain → Component → Macro          ║\n";
-    std::cout << "  ╚══════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "  +==================================================================+\n";
+    std::cout << "  |       VSEPR-SIM 4.0 Legacy-Beta  -  Version Lineage Demo         |\n";
+    std::cout << "  |       Multi-Scale Property Search Registry                     |\n";
+    std::cout << "  ╠==================================================================╣\n";
+    std::cout << "  |  Branch:  4.0-legacy-beta                                      |\n";
+    std::cout << "  |  Kernel:  v0.1 -> v0.3 -> 2.7 -> 2.9 -> 3.0 -> 4.0-LB            |\n";
+    std::cout << "  |  Scales:  Atomistic -> CG -> Grain -> Component -> Macro          |\n";
+    std::cout << "  +==================================================================+\n";
     std::cout << ansi::RESET << "\n";
 
     // ========================================================================
     // Phase 1: Kernel Lineage
     // ========================================================================
 
-    std::cout << ansi::BOLD << "  ═══ Phase 1: Kernel Lineage (v0.1 → 4.0-LB) ═══\n" << ansi::RESET << "\n";
+    std::cout << ansi::BOLD << "  === Phase 1: Kernel Lineage (v0.1 -> 4.0-LB) ===\n" << ansi::RESET << "\n";
 
-    std::cout << "  ┌──────────┬──────────────┬─────────┬───────┬─────────────────────────────────────────┐\n";
-    std::cout << "  │ Tag      │ Era          │ Commit  │ Tests │ Description                             │\n";
-    std::cout << "  ├──────────┼──────────────┼─────────┼───────┼─────────────────────────────────────────┤\n";
+    std::cout << "  +----------┬--------------┬---------┬-------┬-----------------------------------------+\n";
+    std::cout << "  | Tag      | Era          | Commit  | Tests | Description                             |\n";
+    std::cout << "  +----------┼--------------┼---------┼-------┼-----------------------------------------┤\n";
 
     for (size_t i = 0; i < LINEAGE_COUNT; ++i) {
         const auto& cp = KERNEL_LINEAGE[i];
@@ -125,15 +125,15 @@ int main() {
         std::string desc = cp.description;
         if (desc.size() > 39) desc = desc.substr(0, 36) + "...";
 
-        std::cout << "  │ " << era_color(cp.era) << std::setw(8) << std::left << tag_str << ansi::RESET
-                  << " │ " << era_color(cp.era) << std::setw(12) << std::left << era_name(cp.era) << ansi::RESET
-                  << " │ " << ansi::DIM << std::setw(7) << commit_str << ansi::RESET
-                  << " │ " << std::setw(5) << std::right << cp.test_count
-                  << " │ " << std::setw(39) << std::left << desc
-                  << " │\n";
+        std::cout << "  | " << era_color(cp.era) << std::setw(8) << std::left << tag_str << ansi::RESET
+                  << " | " << era_color(cp.era) << std::setw(12) << std::left << era_name(cp.era) << ansi::RESET
+                  << " | " << ansi::DIM << std::setw(7) << commit_str << ansi::RESET
+                  << " | " << std::setw(5) << std::right << cp.test_count
+                  << " | " << std::setw(39) << std::left << desc
+                  << " |\n";
     }
 
-    std::cout << "  └──────────┴──────────────┴─────────┴───────┴─────────────────────────────────────────┘\n\n";
+    std::cout << "  +----------┴--------------┴---------┴-------┴-----------------------------------------+\n\n";
 
     // Test count growth visualization
     std::cout << "  Test count growth:\n";
@@ -155,11 +155,11 @@ int main() {
     // Phase 2: Scale Registry
     // ========================================================================
 
-    std::cout << "\n" << ansi::BOLD << "  ═══ Phase 2: Simulation Scale Registry (1-5) ═══\n" << ansi::RESET << "\n";
+    std::cout << "\n" << ansi::BOLD << "  === Phase 2: Simulation Scale Registry (1-5) ===\n" << ansi::RESET << "\n";
 
-    std::cout << "  ┌───┬───────────────────────┬──────┬──────┬──────────────┬─────────┐\n";
-    std::cout << "  │ # │ Scale                 │ Len  │ Time │ Energy       │ Status  │\n";
-    std::cout << "  ├───┼───────────────────────┼──────┼──────┼──────────────┼─────────┤\n";
+    std::cout << "  +---┬-----------------------┬------┬------┬--------------┬---------+\n";
+    std::cout << "  | # | Scale                 | Len  | Time | Energy       | Status  |\n";
+    std::cout << "  +---┼-----------------------┼------┼------┼--------------┼---------┤\n";
 
     for (size_t i = 0; i < SCALE_COUNT; ++i) {
         const auto& s = SCALE_REGISTRY[i];
@@ -168,16 +168,16 @@ int main() {
         if (std::string(s.status) == "partial") status_color = ansi::YELLOW;
         if (std::string(s.status) == "planned") status_color = ansi::RED;
 
-        std::cout << "  │ " << static_cast<int>(s.scale) << " │ "
-                  << std::setw(21) << std::left << s.name << " │ "
-                  << std::setw(4) << s.length_unit << " │ "
-                  << std::setw(4) << s.time_unit << " │ "
-                  << std::setw(12) << s.energy_unit << " │ "
+        std::cout << "  | " << static_cast<int>(s.scale) << " | "
+                  << std::setw(21) << std::left << s.name << " | "
+                  << std::setw(4) << s.length_unit << " | "
+                  << std::setw(4) << s.time_unit << " | "
+                  << std::setw(12) << s.energy_unit << " | "
                   << status_color << std::setw(7) << s.status << ansi::RESET
-                  << " │\n";
+                  << " |\n";
     }
 
-    std::cout << "  └───┴───────────────────────┴──────┴──────┴──────────────┴─────────┘\n\n";
+    std::cout << "  +---┴-----------------------┴------┴------┴--------------┴---------+\n\n";
 
     // Scale bridge diagram
     std::cout << "  Scale transitions:\n\n";
@@ -191,12 +191,12 @@ int main() {
                   << s.name << ansi::RESET;
 
         if (i < SCALE_COUNT - 1) {
-            std::cout << "\n      │\n"
-                      << "      ├── ↑ " << ansi::DIM << SCALE_REGISTRY[i].bridge_up << ansi::RESET << "\n"
-                      << "      │\n"
+            std::cout << "\n      |\n"
+                      << "      +-- ↑ " << ansi::DIM << SCALE_REGISTRY[i].bridge_up << ansi::RESET << "\n"
+                      << "      |\n"
                       << "      ▼\n";
         } else {
-            std::cout << "  ◄── " << ansi::BOLD << "DIGITAL TWIN OUTPUT" << ansi::RESET << "\n";
+            std::cout << "  ◄-- " << ansi::BOLD << "DIGITAL TWIN OUTPUT" << ansi::RESET << "\n";
         }
     }
 
@@ -204,7 +204,7 @@ int main() {
     // Phase 3: Multi-Scale Fidelity Chain
     // ========================================================================
 
-    std::cout << "\n" << ansi::BOLD << "  ═══ Phase 3: Cumulative Fidelity Chain ═══\n" << ansi::RESET << "\n";
+    std::cout << "\n" << ansi::BOLD << "  === Phase 3: Cumulative Fidelity Chain ===\n" << ansi::RESET << "\n";
 
     PropertySearchEngine engine;
     engine.register_default_transitions();
@@ -233,7 +233,7 @@ int main() {
     std::cout << "\n  Transition details:\n";
     for (const auto& t : engine.transitions()) {
         std::cout << "    " << PropertySearchEngine::scale_name(t.from)
-                  << " → " << PropertySearchEngine::scale_name(t.to)
+                  << " -> " << PropertySearchEngine::scale_name(t.to)
                   << ": " << ansi::DIM << t.method << ansi::RESET
                   << " (" << std::fixed << std::setprecision(0) << (t.fidelity * 100) << "% fidelity)\n";
     }
@@ -242,7 +242,7 @@ int main() {
     // Phase 4: Property Search Domain Map
     // ========================================================================
 
-    std::cout << "\n" << ansi::BOLD << "  ═══ Phase 4: Property Search Targets (" << SEARCH_TARGET_COUNT << " properties) ═══\n" << ansi::RESET << "\n";
+    std::cout << "\n" << ansi::BOLD << "  === Phase 4: Property Search Targets (" << SEARCH_TARGET_COUNT << " properties) ===\n" << ansi::RESET << "\n";
 
     PropertyDomain domains[] = {
         PropertyDomain::Structural,
@@ -276,13 +276,13 @@ int main() {
     }
 
     // ========================================================================
-    // Phase 5: Nuclear Targets — Why This Branch Exists
+    // Phase 5: Nuclear Targets  -  Why This Branch Exists
     // ========================================================================
 
-    std::cout << ansi::BOLD << "  ═══ Phase 5: Nuclear Simulation Targets ═══\n" << ansi::RESET << "\n";
+    std::cout << ansi::BOLD << "  === Phase 5: Nuclear Simulation Targets ===\n" << ansi::RESET << "\n";
 
     std::cout << "  The 4.0-legacy-beta branch exists because the mature kernel\n";
-    std::cout << "  (v0.1→2.9, 1013 tests, deterministic provenance) now provides\n";
+    std::cout << "  (v0.1->2.9, 1013 tests, deterministic provenance) now provides\n";
     std::cout << "  a trustworthy foundation for multi-scale property extraction.\n\n";
 
     std::cout << "  Nuclear-relevant property search targets:\n\n";
@@ -314,13 +314,13 @@ int main() {
     std::cout << "    candidates that conventional screening misses.\n\n";
 
     // ========================================================================
-    // Phase 6: Nuclear Core Registry — Z=94 active
+    // Phase 6: Nuclear Core Registry  -  Z=94 active
     // ========================================================================
 
     using vsepr::multiscale::NUCLEAR_CORES;
     using vsepr::multiscale::NUCLEAR_CORE_COUNT;
 
-    std::cout << ansi::BOLD << "  ═══ Phase 6: Nuclear Core Registry ═══\n" << ansi::RESET << "\n";
+    std::cout << ansi::BOLD << "  === Phase 6: Nuclear Core Registry ===\n" << ansi::RESET << "\n";
 
     for (size_t i = 0; i < NUCLEAR_CORE_COUNT; ++i) {
         const auto& c = NUCLEAR_CORES[i];
@@ -340,7 +340,7 @@ int main() {
     if (active) {
         std::cout << "  " << ansi::BOLD << ansi::GREEN
                   << "core = " << static_cast<int>(active->Z)
-                  << " (" << active->isotope << ") — NUCLEAR DOMAIN ACTIVE THROUGH ALL SCALES"
+                  << " (" << active->isotope << ")  -  NUCLEAR DOMAIN ACTIVE THROUGH ALL SCALES"
                   << ansi::RESET << "\n\n";
     }
 
@@ -349,10 +349,10 @@ int main() {
     // ========================================================================
 
     std::cout << ansi::BOLD;
-    std::cout << "  ════════════════════════════════════════════════════════════════\n";
-    std::cout << "   4.0-legacy-beta — Branch Created\n";
-    std::cout << "   Kernel lineage:   " << LINEAGE_COUNT << " checkpoints (v0.1 → 4.0-LB)\n";
-    std::cout << "   Scale registry:   " << SCALE_COUNT << " scales (Å → m)\n";
+    std::cout << "  ================================================================\n";
+    std::cout << "   4.0-legacy-beta  -  Branch Created\n";
+    std::cout << "   Kernel lineage:   " << LINEAGE_COUNT << " checkpoints (v0.1 -> 4.0-LB)\n";
+    std::cout << "   Scale registry:   " << SCALE_COUNT << " scales (Å -> m)\n";
     std::cout << "   Search targets:   " << SEARCH_TARGET_COUNT << " properties across "
               << sizeof(domains) / sizeof(domains[0]) << " domains\n";
     std::cout << "   Nuclear targets:  displacement energy, Frenkel pairs,\n";
@@ -362,7 +362,7 @@ int main() {
                   << " (" << active->isotope << ", " << active->crystal_phase
                   << ", Ed=" << active->Ed_eV << " eV)\n";
     }
-    std::cout << "  ════════════════════════════════════════════════════════════════\n";
+    std::cout << "  ================================================================\n";
     std::cout << ansi::RESET << "\n";
 
     return 0;

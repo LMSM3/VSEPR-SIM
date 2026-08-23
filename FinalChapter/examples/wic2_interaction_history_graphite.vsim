@@ -1,0 +1,239 @@
+# =============================================================================
+# WIC II — Interaction History and Worldline Unity
+# VSIM implementation: graphite AB Bernal stacking, MD
+#
+# Theory claim (WIC II):
+#   A particle is locally distinguishable, but not historically isolated.
+#   Particles exist by interaction history and form one connected structure
+#   without losing individuality.
+#
+#   W(t) = ( {P_i(t)}, {H_i(t)}, E(t) )
+#
+#   P_i ∈ W  but  P_i ≠ W  (unity without collapse)
+#   P_i ⊄ W^⊥ (not independent)
+#
+#   H_i(t): interaction history of particle i
+#   E(t):   edge structure — set of active pairwise interactions e_{ij}(t)
+#
+# Computational test:
+#   Graphite in AB Bernal stacking (5-layer slab) has two kinds of
+#   interaction history:
+#     - intra-layer: strong sp2 C-C covalent bonds (e_{ij} strong, persistent)
+#     - inter-layer: weak van der Waals / π-π stacking (e_{ij} weak, dynamic)
+#
+#   The inter-layer interaction is H_i(t): it defines whether a carbon
+#   belongs to a local Bernal-stacked pair or is in an AA slip configuration.
+#   This is the edge structure E(t) evolving over time.
+#
+#   WIC II §3: E(t), e_{ij}(t).
+#     transport_events in kernel.trace log inter-layer slipping events.
+#     Each slip event = a change in e_{ij}(t) for an inter-layer pair.
+#     The particle P_i is the same after the slip (identity preserved),
+#     but its interaction history H_i has gained a new entry.
+#
+#   WIC II §5: unity without collapse.
+#     The intra-layer C-C bonds are the W-level structure.
+#     The inter-layer dynamics are e_{ij}(t) changing within W.
+#     No individual carbon is isolated (P_i ⊄ W^⊥) — every atom is
+#     connected to its layer and through π-stacking to adjacent layers.
+#
+#   WIC II §7: applications — inter-layer bonding is this document's
+#     direct experimental analogue. The layer identity is preserved;
+#     the inter-layer connectivity history is what changes.
+#
+# post_step probe:
+#   pbc.distance(atom in layer 1, nearest atom in layer 2)
+#   Tracks the inter-layer d spacing as a function of time.
+#   If d oscillates without breaking: e_{ij} is dynamic but not destroyed.
+#   If d suddenly jumps: a slip event — e_{ij} changed topology.
+#
+# Traditional system: graphite (C, 5-layer AB Bernal)
+#   Known inter-layer spacing: 3.35 Å. In-plane: 1.42 Å.
+#   Bernal stacking: alternating A-B layers. Slip mode: AB→AA→AB.
+# =============================================================================
+
+[project]
+name        = "wic2_interaction_history_graphite"
+version     = "v5.1.13.5"
+seed_base   = 2200
+determinism = true
+
+[material]
+formula    = "C"
+structure  = "graphite"
+cell       = "6x6x5"    # 6×6 in-plane, 5 AB layers
+phase      = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 5000     # long enough to observe inter-layer dynamics
+dt_fs        = 0.25     # short: capture fast in-plane phonons
+temperature  = 600.0    # elevated: enough thermal energy to probe inter-layer dynamics
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 600.0
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"     # open in z: free top and bottom surfaces on the slab
+
+[simulation]
+fire_max_steps   = 800
+fire_dt_fs       = 0.25
+periodic         = true
+formation_preset = "molecular"
+use_ewald        = false
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 360      # 6×6 unit cell × 2 atoms × 5 layers
+lattice     = "hexagonal"
+layer_mode  = "AB"     # Bernal stacking
+n_layers    = 5
+temperature = 600.0
+
+# ---------------------------------------------------------------------------
+# post_step: inter-layer distance probe
+# WIC II §3: e_{ij}(t) — tracks the edge structure between layers
+# atom 1 is in layer 1, atom 73 is the nearest atom in layer 2
+# (layer 2 starts at atom 72+1 = 73 for a 72-atom layer)
+# d_interlayer should oscillate around 3.35 Å
+# A sudden jump > 0.5 Å from equilibrium = slip event in E(t)
+# ---------------------------------------------------------------------------
+[post_step]
+enabled = true
+script_block = """
+d_interlayer = pbc.distance(particle.position(1), particle.position(73))
+d_inplane_12 = pbc.distance(particle.position(1), particle.position(2))
+"""
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 10
+
+# ---------------------------------------------------------------------------
+# Kernel: interaction history H_i(t) and edge structure E(t)
+# WIC II §2: H_i(t) accumulated via formation_events (bond changes)
+# WIC II §3: E(t) captured via transport_events (layer slipping)
+# dynamic_energy captures the inter-layer van der Waals energy contribution
+# ---------------------------------------------------------------------------
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = false
+
+[kernel.trace]
+formation_events = true    # intra-layer bond changes
+defect_events    = true    # vacancy / defect formation in layer
+transport_events = true    # WIC II §3: inter-layer slip events = e_{ij}(t) changes
+dynamic_energy   = true    # inter-layer energy surface
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 4]   # thin in z (slab geometry)
+rve_window_lengths_A             = [1.42, 2.84, 7.10, 14.20]
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 36
+spatial_cv_threshold             = 0.40    # slab geometry increases baseline variance
+temporal_drift_threshold         = 0.25
+scale_drift_threshold            = 0.30
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 4.0
+contact_cutoff_A  = 2.0
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_msd    = 50
+unwrap_pbc            = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Verification
+# WIC II §5: unity without collapse
+# In-plane: coord = 3 (sp2), bond = 1.42 Å
+# Inter-layer: NOT in coordination count (van der Waals, not covalent)
+# MSD: bounded — graphite is solid at 600 K
+# RDF: two peaks: 1.42 Å (in-plane bond), 3.35 Å (inter-layer spacing)
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "wic2_graphite_interaction_history"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "graphite_AB"
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.42
+nearest_neighbor_tolerance_A = 0.10
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.42, 2.46, 3.35]
+peak_tolerance_A   = 0.18
+require_peak_order = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 4.0    # wider: 600 K + slab geometry
+max_slope_late       = 0.003
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_pipeline_audit_jsonl = true
+write_manifest_json        = true
+output_dir                 = "out/wic2_graphite"
+
+[report]
+title                   = "WIC II — Interaction History: Graphite AB Bernal 5-Layer"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 20
+show_event_timeline      = true
+show_symbolic_trace      = true
+show_audit_table         = true
+overlay_sequence         = energy_map,coordination,rdf,interference

@@ -1,16 +1,16 @@
-/**
+﻿/**
  * metal_gen.cpp -- Metal/alloy supercell generator (beta.7 attempt)
  * ==================================================================
  * VSEPR-SIM  |  branch: v5.0.0-beta.7-step-attempt
  *
  * Drives the full artifact pipeline for each material preset:
  *
- *   <tag>.xyz    — static geometry     (write_xyz)
- *   <tag>.xyza   — + charge/vel/e cols (write_xyza)
- *   <tag>.xyzc   — checkpoint frame    (write_xyzc)
- *   <tag>.xyzf   — 3-frame trajectory  (write_xyzf)
- *   <tag>.step   — AP203 geometry truth (write_step_ap203)
- *   geometry_map.json — provenance manifest
+ *   <tag>.xyz     -  static geometry     (write_xyz)
+ *   <tag>.xyza    -  + charge/vel/e cols (write_xyza)
+ *   <tag>.xyzc    -  checkpoint frame    (write_xyzc)
+ *   <tag>.xyzf    -  3-frame trajectory  (write_xyzf)
+ *   <tag>.step    -  AP203 geometry truth (write_step_ap203)
+ *   geometry_map.json  -  provenance manifest
  *
  * Build as a standalone executable (no CMake integration needed for the
  * attempt branch):
@@ -55,7 +55,7 @@ using namespace vsepr::io;
 static constexpr int NX = 3, NY = 3, NZ = 3;
 
 // ---------------------------------------------------------------------------
-// JSON manifest helper — builds a geometry_map.json entry for one material
+// JSON manifest helper  -  builds a geometry_map.json entry for one material
 // ---------------------------------------------------------------------------
 static std::string json_entry(const MaterialPreset& mat,
 							   int n_atoms,
@@ -102,11 +102,11 @@ int main(int argc, char* argv[])
 	fs::create_directories(out_dir, ec);
 	if (ec) {
 		std::cerr << "[metal_gen] Cannot create output directory: "
-				  << out_dir << " — " << ec.message() << '\n';
+				  << out_dir << "  -  " << ec.message() << '\n';
 		return 1;
 	}
 
-	std::cout << "[metal_gen] Output → " << fs::absolute(out_dir).string() << '\n';
+	std::cout << "[metal_gen] Output -> " << fs::absolute(out_dir).string() << '\n';
 
 	auto presets = default_presets();
 
@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
 		};
 
 		// ----------------------------------------------------------------
-		// 2. .xyz — coordinates only
+		// 2. .xyz  -  coordinates only
 		// ----------------------------------------------------------------
 		if (write_xyz(p(".xyz"), frame, cfg))
 			std::cout << "  wrote " << mat.tag << ".xyz\n";
@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
 			std::cerr << "  ERROR writing .xyz\n";
 
 		// ----------------------------------------------------------------
-		// 3. .xyza — + charge, velocity, energy columns
+		// 3. .xyza  -  + charge, velocity, energy columns
 		// ----------------------------------------------------------------
 		if (write_xyza(p(".xyza"), frame, cfg))
 			std::cout << "  wrote " << mat.tag << ".xyza\n";
@@ -191,7 +191,7 @@ int main(int argc, char* argv[])
 			std::cerr << "  ERROR writing .xyza\n";
 
 		// ----------------------------------------------------------------
-		// 4. .xyzc — checkpoint header + xyza frame
+		// 4. .xyzc  -  checkpoint header + xyza frame
 		// ----------------------------------------------------------------
 		{
 			XYZData data;
@@ -213,7 +213,7 @@ int main(int argc, char* argv[])
 		}
 
 		// ----------------------------------------------------------------
-		// 5. .xyzf — 3-frame thermal trajectory
+		// 5. .xyzf  -  3-frame thermal trajectory
 		// ----------------------------------------------------------------
 		{
 			auto traj = build_thermal_trajectory(mat, NX, NY, NZ,
@@ -226,7 +226,7 @@ int main(int argc, char* argv[])
 		}
 
 		// ----------------------------------------------------------------
-		// 6. .step — STEP AP203 geometry artifact
+		// 6. .step  -  STEP AP203 geometry artifact
 		// ----------------------------------------------------------------
 		{
 			std::string step_name = mat.name + " " + mat.tag
@@ -248,7 +248,7 @@ int main(int argc, char* argv[])
 	}
 
 	// ----------------------------------------------------------------
-	// 7. geometry_map.json — provenance manifest
+	// 7. geometry_map.json  -  provenance manifest
 	// ----------------------------------------------------------------
 	{
 		auto map_path = (fs::path(out_dir) / "geometry_map.json").string();

@@ -1,0 +1,18 @@
+﻿canonical_name,banned_aliases,notes
+Lambda_nm,scaleLength|lengthscale|lscale|lambda|lambda_nm|ideal_len,Recovery length scale in nanometres
+E_value,,Interaction energy value
+UFF,,Universal Force Field energy component
+CFF,,Corrective Force Field component
+eta_scale,,Scale efficiency/environment factor
+primary_scale,,Primary scale tier label (S1-S6)
+z_scale_1,,Scale tier 1
+z_scale_2,,Scale tier 2
+z_scale_3,,Scale tier 3
+z_scale_4,,Scale tier 4
+z_scale_5,,Scale tier 5
+z_scale_6,,Scale tier 6
+state,,Substance primary state of matter
+family,,Interaction family identifier
+casting,,Interaction casting type (field_field / force_force / mixed)
+source_type,,Origin of record (simulation / empirical / hybrid)
+run_id,,Unique run identifier

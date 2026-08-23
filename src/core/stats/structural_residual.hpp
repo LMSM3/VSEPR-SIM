@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/core/stats/structural_residual.hpp
 // =============================================================================
@@ -27,7 +27,7 @@
 // grain boundaries, and radiation damage are detected from state deviation
 // rather than hardcoded defect types.
 //
-// No Eigen required — pure Vec3 math.
+// No Eigen required  -  pure Vec3 math.
 // Anti-black-box: all fields public.
 // =============================================================================
 
@@ -50,7 +50,7 @@ struct StructuralResidual {
 	double   max_site_deviation  = 0.0;  // worst single-site displacement        [Å]
 	uint64_t frame               = 0;
 
-	// Per-site displacement vector — kept public for spatial analysis.
+	// Per-site displacement vector  -  kept public for spatial analysis.
 	std::vector<double> site_displacements;
 
 	OnlineStats residual_stats;          // running stats on structural_residual
@@ -60,7 +60,7 @@ struct StructuralResidual {
 	// -------------------------------------------------------------------------
 
 	/// A site is flagged as "deviant" (contributing to defect_fraction)
-	/// when its displacement exceeds this radius.  Default: 0.5 Å —
+	/// when its displacement exceeds this radius.  Default: 0.5 Å  - 
 	/// reasonable for crystal-site defect classification.
 	double defect_radius_threshold = 0.5;
 

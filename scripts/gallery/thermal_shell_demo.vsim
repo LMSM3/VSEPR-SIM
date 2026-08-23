@@ -1,0 +1,265 @@
+# @category Thermal
+# @title    Molten-salt annular channel -- shell reporting demo
+#
+# Demonstrates a complete thermal simulation pipeline:
+#   - 1-D radial FD solver for a NaCl/MgCl2/UCl3 salt channel
+#   - Thermal spike excitation on the axial hot face
+#   - Per-step energy and temperature observation
+#   - Full CSV + Markdown + SVG report artefacts written to out/
+#   - Terminal overlay layout (no GL dependency)
+#
+# Kernel path:  [material] -> [environment] -> [excite.thermal_spike]
+#               -> [run] (relax/md) -> [observe] -> [export]
+#
+# Entry-point:  vsper run scripts/gallery/thermal_shell_demo.vsim
+# Write perms:  runner creates out/ automatically; no sudo required on
+#               a user-owned workspace.  On a shared install use:
+#               sudo vsper run ... --output-root /var/vsim/out
+#
+# AUDIT NOTES (see docs/AUDIT_thermal_shell_demo.md for full analysis):
+#   - thermal_loss_explorer.cpp uses explicit FD with adaptive sub-stepping
+#     but the stability guard (dt <= dr^2 / 2alpha) is per-trial, not
+#     per-material, so MATERIAL_DB index 0 (FLiNaK, high alpha) can
+#     numerically diverge if dt is large.  This script uses dt_fs = 0.5
+#     to stay well inside the limit for NaCl_MgCl2_UCl3.
+#   - Q_loss accumulation multiplies Q_loss_W * dt (not dt_sub), which
+#     under-counts energy removed during sub-steps when sub_steps > 1.
+#   - The Th_decays path divides by area_outer * dr (a surface-volume
+#     mismatch: should be vol = pi*(r_outer^2 - r_inner^2)*length).
+#   - rms_final convergence threshold is hard-coded to 1e4 T/m^2 --
+#     this is unscaled and unit-inconsistent; residual meaning varies
+#     by material and grid.
+#   - [observe] metrics listed here are advisory; the kernel logs them
+#     if a matching provider is registered.  Unknown metrics are silently
+#     dropped to raw_sections -- they do NOT produce an error.
+
+[project]
+name        = "thermal_shell_demo"
+version     = "v5.1.0"
+seed_base   = 7741
+determinism = true
+description = "Annular molten-salt channel thermal loss analysis -- shell + reporting demo"
+author      = "VSIM gallery"
+
+# ---------------------------------------------------------------------------
+# Periodic box: 28 x 28 x 28 Angstrom cell (matches uranium_fluorination
+# convention for reactive-salt studies)
+# ---------------------------------------------------------------------------
+
+[cell]
+type  = "orthorhombic"
+lx    = 28.0
+ly    = 28.0
+lz    = 28.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = false
+unwrap_for_diffusion = false
+
+# ---------------------------------------------------------------------------
+# Material: NaCl/MgCl2/UCl3 molten-salt mix
+#   k   = 0.50 W/(m K)
+#   rho = 2100 kg/m^3
+#   Cp  = 1100 J/(kg K)
+#   Derived alpha = k / (rho * Cp) ~ 2.16e-7 m^2/s
+# ---------------------------------------------------------------------------
+
+[material]
+formula   = "NaCl_MgCl2_UCl3"
+structure = "amorphous"
+phase     = "liquid"
+
+# ---------------------------------------------------------------------------
+# Environment: high-temperature salt loop operating window
+# ---------------------------------------------------------------------------
+
+[environment]
+periodic    = true
+temperature = 1073.0      # K  (800 C -- mid-loop operating temperature)
+pressure    = 0.1         # GPa (near atmospheric)
+medium      = "molten_salt"
+
+# ---------------------------------------------------------------------------
+# Thermal spike on hot face (z-axis, hot wall at r_outer)
+# Gaussian pulse mimics reactor power-ramp transient
+# ---------------------------------------------------------------------------
+
+[excite.thermal_spike]
+type           = "thermal_spike"
+axis           = "z"
+intensity      = 2.5          # dimensionless scale factor on base T
+pulse_width_fs = 200.0        # fs  -- broad ramp, not ultrafast
+profile        = "gaussian"
+
+# ---------------------------------------------------------------------------
+# Simulation: short NVT-style relaxation after spike injection
+# dt_fs chosen conservatively: for NaCl_MgCl2_UCl3 with N_radial=12,
+#   dr ~ 0.83e-3 m (geometry in thermal_loss_explorer), alpha ~ 2.16e-7
+#   dt_stable ~ dr^2 / (2*alpha) >> 0.5 fs  => well inside limit
+# ---------------------------------------------------------------------------
+
+[simulation]
+fire_max_steps    = 400
+fire_dt_fs        = 0.5
+formation_preset  = "high_temperature"
+smooth_resim      = false
+
+[[simulation.molecule]]
+formula     = "NaCl"
+count       = 128
+temperature = 1073.0
+lattice     = "fcc_ionic"
+
+[[simulation.molecule]]
+formula     = "MgCl2"
+count       = 32
+temperature = 1073.0
+lattice     = "hexagonal"
+
+# ---------------------------------------------------------------------------
+# Run: relax first (settle after spike), then short MD
+# ---------------------------------------------------------------------------
+
+[run]
+mode         = "relax"
+max_steps    = 400
+dt_fs        = 0.5
+temperature_K = 1073.0
+converge     = true
+output_level = "verbose"
+
+# ---------------------------------------------------------------------------
+# Observe: metrics the kernel should emit at every step
+# NOTE: unknown metrics fall to raw_sections silently -- not an error.
+# heat_flux and wall_temperature are VSIM-internal providers; verify
+# against vsim_document.hpp ObserveSection if the runner version predates
+# WO-57D.
+# ---------------------------------------------------------------------------
+
+[observe]
+metrics       = ["energy.total", "rms_force", "temperature.center", "temperature.wall", "heat_flux.radial", "Q_loss.cumulative", "regime_transition"]
+output_format = "csv"
+every_n_steps = 1
+
+# ---------------------------------------------------------------------------
+# [while] convergence gate: continue stepping until energy variance settles
+# ---------------------------------------------------------------------------
+
+[while]
+name          = "thermal_settle"
+condition     = "variance(energy.total, last 40) < 0.08"
+body_steps    = 100
+max_iters     = 4
+measure       = ["energy.total", "temperature.center"]
+iter_delay_ms = 100
+
+# ---------------------------------------------------------------------------
+# Export: full artefact set for shell/reporting demo
+# ---------------------------------------------------------------------------
+
+[export]
+output_dir          = "out/thermal_shell_demo"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 10
+event_interval      = 1
+metrics_interval    = 5
+
+[export.visual]
+write_svg_figures      = true
+write_rdf_svg          = true
+write_energy_trace_svg = true
+visual_output_dir      = "figures/"
+
+# ---------------------------------------------------------------------------
+# Terminal display (no GL required)
+# output_type "terminal_chart" = live per-step convergence trace + proxy table
+# render_interval = 5 means emit every 5th step to stdout
+# ---------------------------------------------------------------------------
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 5
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_rdf_plot            = false
+show_bond_events         = false
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = false
+live           = false
+
+show "data.scalar.panel" target = "room.solver" options = {
+	"metrics": ["energy.total", "temperature.center", "Q_loss.cumulative"],
+	"colormap": "blue_white_red"
+}
+
+show "data.events.timeline" target = "kernel.events"
+
+# ---------------------------------------------------------------------------
+# Chemistry: track species state, no reactive events needed for thermal demo
+# ---------------------------------------------------------------------------
+
+[chemistry]
+chemistry           = "none"
+reaction_events     = false
+track_species_state = true
+event_registry      = false
+
+# ---------------------------------------------------------------------------
+# Suite: single named test for CI smoke pass
+# ---------------------------------------------------------------------------
+
+[suite]
+groups   = ["thermal"]
+ordering = "deterministic"
+
+[suite.limits]
+timeout_s      = 120
+fail_fast      = false
+continue_on_warning = true
+
+[suite.smoke]
+groups  = ["thermal"]
+purpose = "verify thermal spike relaxation converges within 400 steps"
+
+[test.thermal_channel_relax]
+formula   = "NaCl_MgCl2_UCl3"
+geometry  = "amorphous"
+group     = "thermal"
+
+[test.thermal_channel_relax.run]
+mode         = "relax"
+max_steps    = 400
+temperature_K = 1073.0
+converge     = true
+
+[test.thermal_channel_relax.analysis]
+check_energy_monotone = false   # spike injection means energy is NOT monotone
+check_rms_force       = true
+
+# ---------------------------------------------------------------------------
+# Report content flags
+# ---------------------------------------------------------------------------
+
+[report]
+include_manifest  = true
+include_hashes    = true
+include_mismatches = false

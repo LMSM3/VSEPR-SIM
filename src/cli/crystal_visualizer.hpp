@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 /**
  * crystal_visualizer.hpp
  * ----------------------
  * Bridge between CLI crystal emission and native OpenGL renderer.
  * 
- * Converts CLI atom format (Cartesian) → render::CrystalStructure (fractional)
+ * Converts CLI atom format (Cartesian) -> render::CrystalStructure (fractional)
  * Launches CrystalGridRenderer with proper lattice and supercell parameters.
  */
 

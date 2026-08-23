@@ -1,0 +1,13 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name = wo84u_preset999
+
+[formula]
+formula = CO2
+
+[chem_plus]
+preset = 999
+vsepr_link = true
+

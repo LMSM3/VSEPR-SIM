@@ -1,15 +1,15 @@
-// peptide_formation.hpp — Organic / Peptide Formation Engine
+﻿// peptide_formation.hpp  -  Organic / Peptide Formation Engine
 // Day 48A: C++23, data-driven, deterministic, anti-black-box
 //
 // Architecture:
-//   MolecularGraph         — core data container (atoms, residues, bonds)
-//   OrganicRuleEngine      — valence validation, hybridization assignment
-//   PeptideBondEngine      — peptide bond formation with geometry
-//   BackboneGeometryEngine — backbone initialization, amide planarity
-//   HydrogenBondEngine     — H-bond detection and scoring
-//   EnergyModel            — full energy decomposition
-//   ScoringEngine          — quality scoring
-//   PeptideFormationPipeline — top-level orchestrator
+//   MolecularGraph          -  core data container (atoms, residues, bonds)
+//   OrganicRuleEngine       -  valence validation, hybridization assignment
+//   PeptideBondEngine       -  peptide bond formation with geometry
+//   BackboneGeometryEngine  -  backbone initialization, amide planarity
+//   HydrogenBondEngine      -  H-bond detection and scoring
+//   EnergyModel             -  full energy decomposition
+//   ScoringEngine           -  quality scoring
+//   PeptideFormationPipeline  -  top-level orchestrator
 //
 // All engines are stateless. All intermediate results are exposed.
 // No hidden state. Deterministic: same inputs -> identical outputs.
@@ -36,7 +36,7 @@
 namespace vsepr::chem {
 
 // ============================================================================
-// Error handling — std::expected pipeline
+// Error handling  -  std::expected pipeline
 // ============================================================================
 
 enum class ErrorCode : std::uint32_t {
@@ -61,7 +61,7 @@ template <typename T>
 using Result = std::expected<T, Error>;
 
 // ============================================================================
-// Geometric primitive — Day #56: alias to vsepr::Vec3, no local struct.
+// Geometric primitive  -  Day #56: alias to vsepr::Vec3, no local struct.
 // ============================================================================
 
 using Vec3 = vsepr::Vec3;
@@ -147,7 +147,7 @@ struct Bond {
 };
 
 // ============================================================================
-// Energy breakdown — every term exposed, inspectable
+// Energy breakdown  -  every term exposed, inspectable
 // ============================================================================
 
 struct EnergyBreakdown {
@@ -170,7 +170,7 @@ struct EnergyBreakdown {
 };
 
 // ============================================================================
-// Score card — quality metrics
+// Score card  -  quality metrics
 // ============================================================================
 
 struct ScoreCard {
@@ -183,7 +183,7 @@ struct ScoreCard {
 };
 
 // ============================================================================
-// Formation summary — the output of the full pipeline
+// Formation summary  -  the output of the full pipeline
 // ============================================================================
 
 struct FormationSummary {
@@ -202,7 +202,7 @@ struct FormationSummary {
 };
 
 // ============================================================================
-// MolecularGraph — central data container
+// MolecularGraph  -  central data container
 // ============================================================================
 
 class MolecularGraph {
@@ -245,7 +245,7 @@ private:
 };
 
 // ============================================================================
-// OrganicRuleEngine — valence + hybridization
+// OrganicRuleEngine  -  valence + hybridization
 // ============================================================================
 
 class OrganicRuleEngine {
@@ -331,7 +331,7 @@ public:
 };
 
 // ============================================================================
-// PeptideFormationPipeline — top-level orchestrator
+// PeptideFormationPipeline  -  top-level orchestrator
 // ============================================================================
 
 class PeptideFormationPipeline {

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/resolved_writer.hpp
  * ====================================
- * WO-VSIM-62C — run.vsim.resolved Writer
+ * WO-VSIM-62C  -  run.vsim.resolved Writer
  *
  * Writes a self-contained, human-readable VSIM script to
  * cases/<run_id>/run.vsim.resolved.

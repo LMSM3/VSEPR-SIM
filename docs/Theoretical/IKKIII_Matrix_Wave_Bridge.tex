@@ -1,0 +1,1191 @@
+% ============================================================
+%  IKK III — Matrix Mechanics / Wave Function Bridge
+%  Projected Wave Form, Matrix-State Representation,
+%  and Recoverable Identity
+%  VSIM Framework  —  Version 2.0
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathrsfs}
+\usepackage{mathtools}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage{bm}
+
+\geometry{top=2.8cm, bottom=2.8cm, left=3.2cm, right=3.2cm}
+
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black}
+
+% ------------------------------------------------------------------
+%  Theorem environments
+% ------------------------------------------------------------------
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}[section]
+
+\theoremstyle{plain}
+\newtheorem{prop}{Proposition}[section]
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{construction}{Construction}[section]
+\newtheorem{claim}{Claim}[section]
+
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{note}{Note}[section]
+\newtheorem{warning}{Warning}[section]
+
+\newenvironment{epistemic}
+  {\medskip\noindent\textit{Epistemic status.}\enspace}{\medskip}
+
+\newenvironment{evidenceitem}[1]
+  {\medskip\noindent\textbf{#1.}\enspace}{\medskip}
+
+% ------------------------------------------------------------------
+%  Notation macros
+% ------------------------------------------------------------------
+
+%%  Identity objects
+\newcommand{\Itrue}{\mathfrak{I}_{\mathrm{true}}}
+\newcommand{\Itop}{\mathfrak{I}_{\mathrm{top}}}
+\newcommand{\Ia}{\mathfrak{I}_a}
+\newcommand{\Ihat}{\widehat{\mathfrak{I}}_a}
+\newcommand{\II}{\mathfrak{I}}
+
+%%  Spaces
+\newcommand{\Ha}{\mathfrak{H}_a}        % source identity space
+\newcommand{\Hb}{\mathcal{H}_b}         % target Hilbert space
+\newcommand{\Hahat}{\widehat{\mathfrak{H}}_a}  % reconstruction codomain
+\newcommand{\Kab}{\mathfrak{K}_{ab}}    % coupled cross-scale space
+\newcommand{\Osp}{\mathcal{O}_b}        % target observable space
+\newcommand{\ProbR}{\mathcal{P}(\mathbb{R}^3)} % probability measures over R^3
+
+%%  Scale labels
+\newcommand{\Sa}{S_a}
+\newcommand{\Sb}{S_b}
+
+%%  Projection and related operators
+\newcommand{\Pab}{\mathcal{P}_{a\to b}}
+\newcommand{\Wab}{\mathcal{W}_{a\to b}}   % wave-state recovery map
+\newcommand{\Qba}{\mathcal{Q}_{b\to a}}   % reconstruction operator
+\newcommand{\Cab}{\mathcal{C}_{ab}}        % cross-scale coupling
+\newcommand{\Rb}{\mathcal{R}_b}            % resolution map
+\newcommand{\Mb}{\mathcal{M}_b}            % general measurement map
+\newcommand{\MXb}{\mathcal{M}_{X,b}}      % position measurement map
+\newcommand{\Oba}{O_b^{(a)}}
+
+%%  Hilbert space and wave objects
+\newcommand{\psiab}{|\psi_b^{(a)}\rangle}
+\newcommand{\psibra}{\langle\psi_b^{(a)}|}
+\newcommand{\psix}{\psi_b^{(a)}(x)}
+\newcommand{\psirec}{\psi_{b,\mathrm{rec}}^{(a)}}
+\newcommand{\psiQM}{\psi_{\mathrm{QM}}}
+\newcommand{\Aab}{A_b^{(a)}}
+\newcommand{\phiab}{\phi_b^{(a)}}
+
+%%  Position and spectral measure
+\newcommand{\Xhat}{\hat{\mathbf{X}}}
+\newcommand{\EX}{E_X}
+\newcommand{\muX}{\mu_{X,b}^{(a)}}
+\newcommand{\Xexp}{\langle\mathbf{X}\rangle_b^{(a)}}
+
+%%  Density
+\newcommand{\rhoab}{\rho_b^{(a)}}
+\newcommand{\rhoQM}{\rho_{\mathrm{QM}}}
+\newcommand{\rhorec}{\rho_{b,\mathrm{rec}}^{(a)}}
+
+%%  Identity state vector and evolution
+\newcommand{\sa}{\mathbf{s}_a}
+\newcommand{\Ua}{\hat{U}_a}
+\newcommand{\Hhat}{\hat{H}}
+\newcommand{\Uhat}{\hat{U}}
+
+%%  Distinguishability functionals
+\newcommand{\Dista}{\mathfrak{D}_a}
+\newcommand{\Distb}{\mathfrak{D}_b}
+\newcommand{\Drec}{\mathfrak{D}_{\mathrm{rec},b}^{(a)}}
+
+%%  Projection loss quantities
+\newcommand{\chiab}{\chi_{ab}}
+\newcommand{\etaab}{\eta_{ab}}
+\newcommand{\etamin}{\eta_{\min}}
+\newcommand{\epsI}{\varepsilon_{\mathfrak{I},ab}}
+\newcommand{\dHa}{d_{\Ha}}
+\newcommand{\Lpsi}{\mathcal{L}_\psi}
+\newcommand{\Lrho}{\mathcal{L}_\rho}
+
+%%  Bilinear kernel objects
+\newcommand{\Rbvec}{R_b(r)}
+\newcommand{\eavec}{e_a(t)}
+\newcommand{\Mab}{M_{ab}}
+\newcommand{\Bbase}{B(r)}
+\newcommand{\Dmod}{D(r)}
+
+%%  Scale coordinate
+\newcommand{\uscl}{u}
+\newcommand{\Duab}{\Delta u_{ab}}
+
+% ------------------------------------------------------------------
+\begin{document}
+% ------------------------------------------------------------------
+
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Large\scshape VSIM Framework\par}
+  \vspace{0.4cm}
+  {\large IKK Series\,—\,Inverse Kaluza-Klein / Scale-Projection\par}
+  \vspace{1.2cm}
+  {\Huge\bfseries IKK III\par}
+  \vspace{0.5cm}
+  {\LARGE Matrix Mechanics / Wave Function Bridge\par}
+  \vspace{0.4cm}
+  {\large\itshape Projected Wave Form, Matrix-State Representation,\\
+  and Recoverable Identity\par}
+  \vspace{1.8cm}
+  {\large Version 2.0\par}
+  \vfill
+  {\small
+    \textit{Prerequisite documents: Document~0, IKK~I, IKK~II.}\par
+    \vspace{0.4cm}
+    \textit{Version 2.0 introduces typed identity and Hilbert spaces,
+    the wave-state recovery map $\Wab$, spectral position measures,
+    a reconstruction operator, and rigorous efficiency functionals.
+    The core interpretation is unchanged; the mathematical infrastructure
+    is upgraded throughout.}\par
+    \vspace{0.4cm}
+    \textit{Epistemic status: proposed reinterpretation.
+    The standard quantum mechanical formalism is accepted as a
+    correct predictive framework at every scale where it has been tested.}
+  }
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ==================================================================
+\section*{Central Claim}
+\addcontentsline{toc}{section}{Central Claim}
+% ==================================================================
+
+In IKK~III, the wavefunction is not postulated as the primitive identity
+object.
+It is modelled as the target-scale Hilbert-space recovery of source
+identity content:
+
+\begin{center}
+\fbox{\parbox{0.82\textwidth}{\centering\vspace{0.3cm}
+  \[
+    |\psi_b^{(a)}\rangle
+    = (\Rb\circ\Cab)(\Ia)
+    = \Wab(\Ia)
+  \]
+  \vspace{0.1cm}
+  \textit{The wavefunction is what identity looks like after it has
+  been carried through a typed cross-scale coupling and a typed
+  resolution map into a target Hilbert space.}
+\vspace{0.3cm}}}
+\end{center}
+
+\medskip
+The primitive order is:
+\[
+  \Ia \in \Ha
+  \;\xrightarrow{\;\Cab\;}\;
+  \Kab
+  \;\xrightarrow{\;\Rb\;}\;
+  \Hb
+  \;\ni\; \psiab
+\]
+Each arrow is a typed map between named spaces.
+$\Ha$ is the source identity space.
+$\Hb$ is the target Hilbert space.
+They are not identified until the map $\Wab = \Rb\circ\Cab$ has
+been applied.
+
+\medskip
+Position becomes a spectral measure:
+\[
+  \muX(\Omega)
+  = \langle \Wab(\Ia),\,\EX(\Omega)\,\Wab(\Ia)\rangle_{\Hb}
+\]
+Reconstruction carries an error:
+\[
+  \epsI = \dHa(\Ia,\,\Qba\Pab(\Ia))
+\]
+Both are definitions, not claims. Evaluating them is the work of the EVM series.
+
+
+% ==================================================================
+\section{Purpose}
+\label{sec:purpose}
+% ==================================================================
+
+This document explains how matrix mechanics and wave mechanics can be
+treated as two different representational layers of the same underlying
+identity structure, and how that structure is made precise through
+typed maps between named spaces.
+
+The standard state evolution:
+\[
+  i\hbar\frac{\partial}{\partial t}\psi(x,t) = \Hhat\,\psi(x,t),
+  \qquad
+  |\psi(t)\rangle = \Uhat(t)|\psi(0)\rangle
+\]
+is accepted as correct within its domain.
+The dispute is interpretive.
+
+\begin{align*}
+  \text{matrix mechanics} &= \text{structured identity-state update} \\[4pt]
+  \text{wave mechanics}   &= \text{projected observable recovery}
+\end{align*}
+
+The bridge connecting these is:
+\[
+  \Ia(t)
+  \;\longrightarrow\; \sa(t)
+  \;\longrightarrow\; \Ua\,\sa(t)
+  \;\longrightarrow\; \Wab[\Ia(t)]
+  \;\longrightarrow\; \psiab
+\]
+
+Version 2.0 upgrades the framework in ten respects.
+The projection is now a typed map between named spaces, not a
+suggestive arrow.
+The Hilbert space $\Hb$ at the target scale is explicitly separated
+from the identity space $\Ha$ at the source.
+Position is a spectral measure induced by projection, not a
+recovered coordinate.
+Reconstruction is a separate map with a quantified error.
+Efficiency $\etaab$ is a functional on $\Ha$, not a scalar in $[0,1]$.
+Compatibility $\chiab$ is a continuous gate, with the Boolean version
+as a limiting case.
+
+\begin{remark}
+The logarithmic scale coordinate $\uscl = \ln(\ell/\ell_0)$ is used
+throughout as the canonical scale variable.
+The rhetorical fifth axis $w$ introduced in Document~0 remains valid
+as an introductory device; it is not used as a formal variable here.
+\end{remark}
+
+
+% ==================================================================
+\section{The Historical Split and What It Exposes}
+\label{sec:history}
+% ==================================================================
+
+Matrix mechanics gives transition structure and operator algebras:
+\[
+  |\psi(t+\Delta t)\rangle = \Uhat(\Delta t)\,|\psi(t)\rangle.
+\]
+Wave mechanics gives the spatially resolved amplitude form:
+\[
+  i\hbar\,\partial_t\psi = \Hhat\,\psi.
+\]
+Their predictive equivalence is established.
+IKK~III asks the prior question:
+
+\begin{center}
+\textit{What are these equivalent descriptions descriptions of?}
+\end{center}
+
+\begin{prop}[Representational fracture]
+\label{prop:fracture}
+Predictive equivalence does not imply ontological identity:
+\[
+  \text{equivalent predictions} \;\neq\; \text{identical ontology.}
+\]
+Matrix mechanics behaves like a transition algebra over identity
+state vectors:
+\[
+  \sa(t+\Delta t) = \Ua(\Delta t)\,\sa(t).
+\]
+Wave mechanics behaves like a resolved observable field at target
+scale $\Sb$:
+\[
+  |\psi_b^{(a)}(t)\rangle = \Wab(\Ia(t)).
+\]
+The fracture between these two behaviours is meaningful.
+It reflects the distinction between internal identity-state update
+and observable recovery through projection.
+\end{prop}
+
+
+% ==================================================================
+\section{Identity Spaces and the Type Separation}
+\label{sec:spaces}
+% ==================================================================
+
+\subsection{Source identity space and target Hilbert space}
+
+\begin{defn}[Source identity space]
+\label{def:Ha}
+The \emph{source identity space} $\Ha$ is the space in which source
+identity content $\Ia$ resides.
+It is the domain of the projection operator.
+No inner product or Hilbert structure is imposed on $\Ha$ at this stage.
+\end{defn}
+
+\begin{defn}[Target Hilbert space]
+\label{def:Hb}
+The \emph{target Hilbert space} $\Hb$ is the standard quantum
+mechanical Hilbert space at target scale $\Sb$.
+It carries the inner product $\langle\cdot,\cdot\rangle_{\Hb}$,
+observables as self-adjoint operators, and the spectral calculus.
+\end{defn}
+
+\begin{warning}
+$\Ha$ and $\Hb$ must not be identified until the map $\Wab$ has been
+applied.
+Identifying them collapses the framework back into standard quantum
+mechanics while pretending it has added structure.
+The separation is the point.
+\end{warning}
+
+\subsection{The three-level identity separation}
+
+Three objects are distinct and must not be conflated:
+
+\begin{defn}[Three-level identity separation]
+\label{def:threelevel}
+\begin{enumerate}[label=(\roman*)]
+  \item $\Itrue \in \Ha$ — the full primitive identity content.
+  \item $\Itop$ — the highest packed or top-layer identity.
+  \item $\Oba \in \Osp$ — the observable at target scale $\Sb$
+    recovered from source $\Sa$.
+\end{enumerate}
+\[
+  \Itrue \;\neq\; \Itop \;\neq\; \Oba
+\]
+\end{defn}
+
+Classical quantum mechanics treats $|\psi\rangle$ as the complete state.
+IKK~III requires:
+\[
+  |\psi\rangle \not\equiv \Itrue.
+\]
+The correct identification is:
+\[
+  |\psi_b^{(a)}\rangle \;\sim\; \Oba,
+  \qquad
+  \Oba = \Pab(\Ia).
+\]
+
+\subsection{Typed projection operator}
+
+\begin{defn}[Typed projection operator]
+\label{def:typedproj}
+The \emph{projection operator} is a typed map:
+\[
+  \boxed{\Pab : \Ha \to \Osp}
+\]
+with:
+\[
+  \Ia \in \Ha,
+  \qquad
+  \Oba \in \Osp,
+  \qquad
+  \Oba = \Pab(\Ia).
+\]
+\end{defn}
+
+\begin{remark}
+Projection is no longer a decorative arrow.
+It is a map between two named spaces with declared domain and codomain.
+This makes the statement $\Oba = \Pab(\Ia)$ a typed functional equation,
+not a notational convenience.
+\end{remark}
+
+
+% ==================================================================
+\section{The Wave-State Recovery Map}
+\label{sec:wavemap}
+% ==================================================================
+
+\subsection{Definition}
+
+\begin{defn}[Wave-state recovery map]
+\label{def:Wab}
+The \emph{wave-state recovery map} is:
+\[
+  \boxed{\Wab : \Ha \to \Hb}
+\]
+It carries source identity $\Ia \in \Ha$ into a quantum state
+$\psiab \in \Hb$ at target scale $\Sb$:
+\[
+  \boxed{|\psi_b^{(a)}\rangle = \Wab(\Ia)}
+\]
+\end{defn}
+
+\begin{defn}[Position-basis wavefunction]
+\label{def:psix}
+Given $|\psi_b^{(a)}\rangle = \Wab(\Ia) \in \Hb$, the
+position-basis wavefunction is the standard inner product:
+\[
+  \boxed{\psix = \langle x\,|\,\psi_b^{(a)}\rangle}
+\]
+The IKK composition is therefore:
+\[
+  \boxed{\psix = \langle x\,|\,\Wab(\Ia(t))\rangle}
+\]
+\end{defn}
+
+\begin{remark}
+This separates two operations that should not be merged.
+$\Wab$ carries identity content from $\Ha$ into $\Hb$.
+The inner product $\langle x\,|\cdot\rangle$ then evaluates the
+resulting state at a position.
+These are distinct steps.
+Writing $\psi \sim \mathcal{P}[\mathfrak{I}]$ merged them silently.
+\end{remark}
+
+\subsection{Relation to the projection operator}
+
+The wave-state recovery map is the composition of the typed
+cross-scale chain (formalised in Section~\ref{sec:typedchain}):
+\[
+  \boxed{\Wab = \Rb \circ \Cab : \Ha \to \Hb}
+\]
+so that:
+\[
+  |\psi_b^{(a)}\rangle
+  = (\Rb \circ \Cab)(\Ia)
+\]
+and the position wavefunction is:
+\[
+  \psix = \langle x\,|\,(\Rb \circ \Cab)(\Ia)\rangle.
+\]
+
+
+% ==================================================================
+\section{Typed Projection Chain}
+\label{sec:typedchain}
+% ==================================================================
+
+\subsection{Three typed maps}
+
+\begin{defn}[Cross-scale coupling]
+\label{def:Cab}
+\[
+  \boxed{\Cab : \Ha \to \Kab}
+\]
+$\Kab$ is the \emph{coupled cross-scale information space}.
+$\Cab$ determines which identity content from $\Ha$ is physically
+accessible in the cross-scale interaction with $\Sb$.
+This is the access condition, not yet an observable.
+\end{defn}
+
+\begin{defn}[Resolution map]
+\label{def:Rb}
+\[
+  \boxed{\Rb : \Kab \to \Hb}
+\]
+$\Rb$ maps accessible identity content into the target Hilbert space.
+It encodes what the target scale can represent, independently of any
+measurement apparatus.
+\end{defn}
+
+\begin{defn}[Position measurement map]
+\label{def:MXb}
+\[
+  \boxed{\MXb : \Hb \to \ProbR}
+\]
+where $\ProbR$ denotes the space of probability measures over
+position space $\mathbb{R}^3$.
+$\MXb$ extracts position probability information from a state
+in $\Hb$ via the spectral measure of the position operator.
+\end{defn}
+
+\begin{warning}
+$\Rb \neq \MXb$.
+Resolution is the representational capacity of the target domain.
+Measurement is what an apparatus, basis, or spectral decomposition
+extracts from that capacity.
+These are distinct operations.
+\end{warning}
+
+\subsection{Composition and typing}
+
+The full position projection is the typed composition:
+\[
+  \boxed{\MXb \circ \Rb \circ \Cab : \Ha \to \ProbR}
+\]
+with staged information loss at each step.
+Let $\mathfrak{D}$ denote recoverable distinguishability content.
+Then:
+\[
+  \Dista(\Ia)
+  \;\geq\; \mathfrak{D}_{\Kab}(\Cab(\Ia))
+  \;\geq\; \mathfrak{D}_{\Hb}(\Rb(\Cab(\Ia)))
+  \;\geq\; \mathfrak{D}_{\ProbR}(\MXb(\cdots))
+\]
+Each inequality may be strict.
+
+\subsection{Uncertainty as accumulated projection loss}
+
+The Heisenberg uncertainty relation:
+\[
+  \Delta x\,\Delta p \;\geq\; \frac{\hbar}{2}
+\]
+is reframed as a bound on jointly recoverable projected observables
+at $\Sb$:
+\[
+  \Delta x_b^{(a)}\,\Delta p_b^{(a)} \;\geq\; \frac{\hbar}{2}.
+\]
+This locates uncertainty at the recovered observable layer.
+It does not assert that $\Itrue$ is classically deterministic.
+
+\begin{remark}
+This framing prevents the standard failure mode: asserting
+hidden-variable determinism at the identity level without providing
+a mechanism that is experimentally distinguishable from standard
+quantum mechanics.
+Uncertainty belongs to the projection layer unless the primitive
+layer is independently and specifically constrained.
+\end{remark}
+
+
+% ==================================================================
+\section{Position as a Spectral Measure}
+\label{sec:position}
+% ==================================================================
+
+\subsection{Position operator and spectral measure}
+
+In standard quantum mechanics, position is a self-adjoint operator
+$\Xhat$ on $\Hb$ with spectral measure $\EX$.
+For a Borel set $\Omega \subseteq \mathbb{R}^3$, $\EX(\Omega)$ is
+the projection onto states localised in $\Omega$.
+The probability of finding the particle in $\Omega$ given state
+$|\phi\rangle \in \Hb$ is:
+\[
+  \Pr(\Omega) = \langle \phi \,|\, \EX(\Omega) \,|\, \phi\rangle.
+\]
+
+\subsection{Projected position measure}
+
+\begin{prop}[Projected position distribution]
+\label{prop:positionmeasure}
+Let $\Ia \in \Ha$ be a source identity state and let
+$\Wab : \Ha \to \Hb$ be the wave-state recovery map of
+Definition~\ref{def:Wab}.
+Let $\EX$ be the spectral measure of the position operator
+$\Xhat$ on $\Hb$.
+
+The \emph{target-scale position distribution} of $\Ia$ is the
+probability measure $\muX$ on $\mathbb{R}^3$ defined by:
+\[
+  \boxed{
+    \muX(\Omega)
+    = \bigl\langle \Wab(\Ia),\;
+      \EX(\Omega)\,\Wab(\Ia)
+      \bigr\rangle_{\Hb}
+  }
+\]
+for every Borel set $\Omega \subseteq \mathbb{R}^3$.
+
+If $\Wab(\Ia) = \psiab$ and $\psix = \langle x\,|\psi_b^{(a)}\rangle$,
+this reduces to the Born rule:
+\[
+  \boxed{
+    \muX(\Omega) = \int_{\Omega} |\psix|^2\,d^3x.
+  }
+\]
+\end{prop}
+
+\begin{remark}
+Position is not a recovered coordinate $x_b^{(a)}$ assigned to
+identity $\Ia$.
+It is the probability measure $\muX$ induced on $\mathbb{R}^3$
+by projecting $\Ia$ into $\Hb$ and applying the spectral measure
+of $\Xhat$.
+The Born rule emerges as the special case where $\Hb$ is a standard
+$L^2$ Hilbert space and $\Wab(\Ia)$ is a normalised vector.
+\end{remark}
+
+\subsection{Explicit composition form}
+
+Substituting $\Wab = \Rb \circ \Cab$:
+\[
+  \boxed{
+    \muX(\Omega)
+    = \Bigl\langle
+        (\Rb\circ\Cab)(\Ia)
+        \;\Big|\;
+        \EX(\Omega)
+        \;\Big|\;
+        (\Rb\circ\Cab)(\Ia)
+      \Bigr\rangle_{\Hb}
+  }
+\]
+This is the formal bridge.
+The position observable at $\Sb$ is entirely determined by the
+typed composition of coupling, resolution, and spectral measure.
+
+
+% ==================================================================
+\section{Expected Position}
+\label{sec:exppos}
+% ==================================================================
+
+Once the position measure $\muX$ is defined, the expected position
+is the standard Lebesgue integral:
+\[
+  \boxed{
+    \Xexp = \int_{\mathbb{R}^3} \mathbf{x}\;d\muX(\mathbf{x})
+  }
+\]
+In Hilbert-space form:
+\[
+  \boxed{
+    \Xexp = \langle\psi_b^{(a)}\,|\,\Xhat\,|\,\psi_b^{(a)}\rangle
+  }
+\]
+IKK substitution:
+\[
+  \boxed{
+    \Xexp
+    = \Bigl\langle \Wab(\Ia) \;\Big|\; \Xhat \;\Big|\; \Wab(\Ia) \Bigr\rangle
+  }
+\]
+
+\begin{remark}
+Position is not the primitive coordinate of identity.
+Position is the expectation structure of the target-scale position
+observable induced by the projection of identity into $\Hb$.
+The distinction is not terminological.
+Treating position as a primitive coordinate of $\Ia$ would require
+$\Ia$ to already live in $\mathbb{R}^3$, collapsing the framework
+back into classical mechanics before the projection has done
+any work.
+\end{remark}
+
+
+% ==================================================================
+\section{Wavefunction Shape: Amplitude and Phase}
+\label{sec:waveshape}
+% ==================================================================
+
+The wavefunction has wave-like form because the observer accesses
+$\Wab(\Ia) \in \Hb$, not $\Ia \in \Ha$ directly.
+
+\begin{defn}[Projected amplitude and phase]
+\label{def:ampphase}
+In the amplitude-phase decomposition
+$|\psi_b^{(a)}(x,t)| = \Aab(x,t)\,e^{i\phiab(x,t)}$:
+\begin{itemize}
+  \item $\Aab(x,t)$ is the recovered amplitude of projected identity
+    content at $\Sb$.
+  \item $\phiab(x,t)$ is the phase relation induced by cross-scale
+    coupling $\Cab$, resolution geometry $\Rb$, and the observation
+    basis.
+\end{itemize}
+\[
+  \Aab,\;\phiab \;\in\; \Hb
+  \qquad\text{but}\qquad
+  \Aab,\;\phiab \;\notin\; \Ha.
+\]
+\end{defn}
+
+\begin{claim}[Wave is the shape of projection]
+\label{claim:waveshape}
+Wave-like behavior appears in the observable layer because
+$\Wab$ maps structured identity content in $\Ha$ into
+a spatially resolved amplitude-phase form in $\Hb$.
+It does not follow that the primitive identity $\Ia$ is wave-substance.
+The wave is the shape of the projection, not the shape of the identity.
+\end{claim}
+
+The probability density at $\Sb$:
+\[
+  \rhoab(x,t) = |\psix|^2
+  = |\langle x\,|\,\Wab(\Ia(t))\rangle|^2
+\]
+recovers the Born rule as a consequence of the spectral measure
+of Definition~\ref{prop:positionmeasure}, not as a postulate.
+
+
+% ==================================================================
+\section{Bilinear Kernel: Worked Projection Example}
+\label{sec:kernel}
+% ==================================================================
+
+\subsection{Motivation}
+
+Sections~\ref{sec:spaces}--\ref{sec:waveshape} establish typed maps
+and spectral measures.
+This section provides a tractable computational model for how
+$\Wab$ acts in practice.
+
+\subsection{Density recovery formula}
+
+\begin{defn}[Target-scale basis vector]
+\label{def:Rbvec}
+$\Rbvec = [R_{b,1}^2(r),\ldots,R_{b,n}^2(r)]^T \in \mathbb{R}^n$
+is the vector of squared radial basis functions at scale $\Sb$.
+\end{defn}
+
+\begin{defn}[Source identity channel vector]
+\label{def:eavec}
+$\eavec = [1, e_{a,1}(t),\ldots,e_{a,m}(t)]^T \in \mathbb{R}^{m+1}$
+is the accessible state-channel vector of $\Ia$.
+The leading entry $1$ anchors the static background component.
+\end{defn}
+
+\begin{defn}[Channel mixing matrix]
+\label{def:Mab}
+$\Mab \in \mathbb{R}^{n\times(m+1)}$ encodes the projection weight
+from each source channel to each target basis component.
+It is the matrix representation of $\Wab$ in the chosen bases.
+\end{defn}
+
+The density recovery formula is:
+\[
+  \boxed{\rhoab(r,t) = \Rbvec^T\,\Mab\,\eavec}
+\]
+This is the density form of $\Oba = \Pab(\Ia)$ under the bilinear
+approximation, consistent with the Born rule:
+\[
+  |\langle x\,|\,\Wab(\Ia)\rangle|^2 \;\approx\; \Rbvec^T\,\Mab\,\eavec.
+\]
+
+\begin{remark}
+$\Mab$ is determined by the identity structure and the choice of
+basis, not fitted to observed data after the fact.
+Fitting $\Mab$ post hoc to minimise recovery error produces a
+curve-fitting exercise, not a projection model.
+\end{remark}
+
+\subsection{Cacheable separability}
+
+For the two-basis case ($n = 2$):
+\[
+  \Bbase = \tfrac{1}{2}(R_1^2(r)+R_2^2(r)),
+  \qquad
+  \Dmod  = \tfrac{1}{2}(R_1^2(r)-R_2^2(r)).
+\]
+With a single dynamical channel $e_z(t)$:
+\[
+  \rho(r,t) = \Bbase + e_z(t)\,\Dmod,
+  \qquad
+  \nabla\rho(r,t) = \nabla\Bbase + e_z(t)\,\nabla\Dmod.
+\]
+
+\begin{prop}[Cacheable spatial structure]
+\label{prop:cache}
+$\Bbase$ and $\Dmod$ are time-independent and may be precomputed.
+State evolution propagates only the scalar channel $e_z(t)$.
+The full density and its gradient are recovered at each time step
+without recomputing the basis structure.
+\end{prop}
+
+This is where the projection bridge becomes computationally operational.
+Internal identity update propagates a small vector;
+spatial structure is precomputed once.
+
+
+% ==================================================================
+\section{Projection Loss and Efficiency}
+\label{sec:loss}
+% ==================================================================
+
+\subsection{Distinguishability as a functional}
+
+\begin{defn}[Distinguishability functionals]
+\label{def:dist}
+Let:
+\[
+  \boxed{\Dista : \Ha \to \mathbb{R}_{\geq 0}}
+\]
+be the \emph{source distinguishability functional}, measuring the
+identity information content of $\Ia \in \Ha$.
+Let:
+\[
+  \boxed{\Distb : \Osp \to \mathbb{R}_{\geq 0}}
+\]
+be the \emph{observable distinguishability functional} at $\Sb$.
+\end{defn}
+
+\subsection{Projection efficiency}
+
+\begin{defn}[Projection efficiency functional]
+\label{def:eta}
+The \emph{projection efficiency} of $\Ia$ under $\Pab$ is:
+\[
+  \boxed{
+    \etaab(\Ia)
+    = \frac{\Distb(\Pab(\Ia))}{\Dista(\Ia)}
+  }
+\]
+with $0 \leq \etaab(\Ia) \leq 1$ when $\Distb$ is normalised
+consistently with $\Dista$.
+\end{defn}
+
+\begin{remark}
+$\etaab$ is now a functional on $\Ha$, not a scalar in $[0,1]$.
+It depends on the specific identity state $\Ia$, not only on the
+pair of scales.
+Two identity states at the same source scale may project with
+different efficiency depending on their structure relative to $\Cab$.
+\end{remark}
+
+\subsection{Scale dependence}
+
+Using the logarithmic scale coordinate $\uscl = \ln(\ell/\ell_0)$,
+the scale separation is $\Duab = |\ln(\ell_b/\ell_a)|$.
+The framework should predict:
+\[
+  \etaab(\Ia) = f(\Duab,\,\Ia)
+\]
+for some function $f$ determined by the projection structure,
+not fitted freely per case.
+
+\subsection{Recovery loss functionals}
+
+\begin{defn}[Recovery loss]
+\label{def:loss}
+\[
+  \Lpsi = \int \bigl|\psiQM(x,t) - \psirec(x,t)\bigr|^2\,dx,
+  \qquad
+  \Lrho = \int \bigl|\rhoQM(x,t) - \Rbvec^T\Mab\eavec\bigr|^2\,dx
+\]
+\end{defn}
+
+Projection loss is structural, not incidental.
+The chain:
+\[
+  \Dista(\Ia)
+  \;\geq\; \mathfrak{D}_C
+  \;\geq\; \mathfrak{D}_R
+  \;\geq\; \mathfrak{D}_M
+\]
+means that $\Lpsi > 0$ and $\Lrho > 0$ in general.
+A model claiming $\Lpsi = 0$ exactly is either using all degrees of
+freedom in $\Mab$ as free parameters, or it is wrong.
+
+
+% ==================================================================
+\section{Reconstruction Operator and Error}
+\label{sec:recon}
+% ==================================================================
+
+\subsection{Reconstruction is not inversion}
+
+Projection $\Pab : \Ha \to \Osp$ is generically non-invertible
+because it is lossy.
+Reconstruction produces an estimate, not a recovery of $\Ia$.
+
+\begin{defn}[Reconstruction operator]
+\label{def:Qba}
+The \emph{reconstruction operator} is:
+\[
+  \boxed{\Qba : \Osp \to \Hahat}
+\]
+where $\Hahat$ is the reconstruction codomain (an approximation to
+$\Ha$, not necessarily $\Ha$ itself).
+The reconstructed identity estimate is:
+\[
+  \Ihat = \Qba(\Oba) = \Qba(\Pab(\Ia)).
+\]
+\end{defn}
+
+\begin{defn}[Reconstruction error]
+\label{def:reconerror}
+Let $\dHa$ be a metric or pseudometric on $\Ha$.
+The \emph{reconstruction error} is:
+\[
+  \boxed{
+    \epsI = \dHa\!\bigl(\Ia,\;\Ihat\bigr)
+    = \dHa\!\bigl(\Ia,\;\Qba\circ\Pab(\Ia)\bigr)
+  }
+\]
+\end{defn}
+
+Reconstruction is satisfactory when $\epsI < \delta$ for a
+context-appropriate tolerance $\delta$:
+\[
+  \dHa\!\bigl(\Ia,\;\Qba\circ\Pab(\Ia)\bigr) < \delta.
+\]
+
+\begin{remark}
+The phrase ``reconstruct the original'' is not used.
+$\Qba$ produces an estimate $\Ihat$.
+Whether $\Ihat \approx \Ia$ depends on how much of $\Ia$ was
+preserved through $\Pab$, which is exactly the question that
+$\etaab$ and $\epsI$ are defined to answer.
+\end{remark}
+
+\begin{remark}
+The metric $\dHa$ on $\Ha$ is left unspecified here.
+Specifying it requires structural assumptions about $\Ha$ that
+the framework does not yet impose.
+The definition is in place; the metric is a parameter to be
+supplied by specific applications.
+\end{remark}
+
+
+% ==================================================================
+\section{Compatibility as a Recoverability Gate}
+\label{sec:compat}
+% ==================================================================
+
+\begin{defn}[Scale compatibility]
+\label{def:compat}
+\emph{Scale compatibility} $\chiab(\Ia)$ measures whether projection
+from $\Sa$ to $\Sb$ is meaningfully recoverable for the specific
+state $\Ia$.
+
+\textit{Continuous form (recommended for IKK~III):}
+\[
+  \boxed{
+    \chiab(\Ia)
+    = \sigma\!\bigl(\alpha(\etaab(\Ia) - \etamin)\bigr),
+    \qquad
+    \sigma(z) = \frac{1}{1+e^{-z}}
+  }
+\]
+where $\alpha > 0$ is the gate sharpness and $\etamin$ is the
+minimum efficiency threshold.
+
+\textit{Boolean limit:}
+\[
+  \chiab(\Ia)
+  \;\to\; \mathbf{1}[\etaab(\Ia) > \etamin]
+  \quad\text{as}\quad
+  \alpha \to \infty.
+\]
+\end{defn}
+
+\begin{remark}
+The continuous form makes $\chiab$ differentiable in $\etaab$,
+which is useful for gradient-based analysis.
+The Boolean limit is the hard access gate: either the projection
+is meaningful or it is not.
+For IKK~III, the continuous form is preferred because it reflects
+the gradual degradation of projection quality across scale
+separation, rather than a sharp cutoff.
+\end{remark}
+
+\begin{remark}
+Note that $\chiab$ is now a functional of $\Ia$ via $\etaab(\Ia)$,
+not a scalar property of the scale pair $(\Sa,\Sb)$ alone.
+Two identity states at the same source scale may be compatible
+or incompatible with the same target scale depending on their
+structure.
+\end{remark}
+
+
+% ==================================================================
+\section{Wave-Particle Duality Reinterpreted}
+\label{sec:duality}
+% ==================================================================
+
+\begin{prop}[Wave-particle duality as projection-domain switching]
+\label{prop:duality}
+Let $\Ia \in \Ha$ be a source identity state.
+Let $\Pab^{\mathrm{particle}}$ denote projection into a domain
+resolving localised identity features, and
+$\Pab^{\mathrm{wave}}$ denote projection into a domain resolving
+distributed amplitude and phase.
+Then:
+\[
+  \Ia
+  \;\xrightarrow{\;\mathcal{P}^{\mathrm{particle}}\;}
+  O_{b,\mathrm{particle}}^{(a)},
+  \qquad
+  \Ia
+  \;\xrightarrow{\;\mathcal{P}^{\mathrm{wave}}\;}
+  O_{b,\mathrm{wave}}^{(a)}.
+\]
+Wave-particle duality is a consequence of applying different
+projection maps to the same source identity, not a primitive
+ontological property of the identity itself.
+\end{prop}
+
+\begin{center}
+\fbox{\parbox{0.72\textwidth}{\centering\vspace{0.3cm}
+  \[
+    \text{wave-particle duality}
+    \;=\;
+    \text{projection-domain switching}
+  \]
+\vspace{0.3cm}}}
+\end{center}
+
+The standard quantum mechanical predictions survive because the
+projected layer at $\Sb$ obeys the standard formalism in every
+domain where that formalism has been validated.
+IKK~III adds a proposed mechanism: $\II \to \Wab \to |\psi\rangle$.
+Whether the mechanism is experimentally distinguishable from
+standard quantum mechanics is the assignment of EVM~III.
+
+
+% ==================================================================
+\section{What IKK Must Still Earn}
+\label{sec:debt}
+% ==================================================================
+
+\begin{epistemic}
+Standard quantum mechanics remains the validated predictive layer.
+IKK~III proposes a representational mechanism beneath it.
+The framework earns legitimacy only if its typed projection mechanics
+can recover known results and predict where recovery fails.
+\end{epistemic}
+
+\begin{evidenceitem}{1. Wavefunction reconstruction}
+Does $\psirec(x,t) = \langle x\,|\,\Wab(\Ia(t))\rangle$
+converge to $\psiQM(x,t)$ for benchmark systems?
+Benchmark targets are listed in EVM~III.
+$\Mab$ must be determined from the identity structure prior to
+comparison.
+\end{evidenceitem}
+
+\begin{evidenceitem}{2. Density kernel fitting}
+Does $\rhoQM(r,t) \approx \Rbvec^T\,\Mab\,\eavec$ with
+$\Lrho \to 0$ as model resolution increases?
+\end{evidenceitem}
+
+\begin{evidenceitem}{3. Predictable error behavior}
+Does $\epsI$ behave predictably as a function of $\Duab$ and
+the structure of $\Ia$?
+Mismatch that is reduced freely by parameter adjustment is
+curve-fitting.
+Mismatch that follows a predicted dependence is evidence.
+\end{evidenceitem}
+
+\begin{evidenceitem}{4. Scale dependence of efficiency}
+Can $\etaab(\Ia) = f(\Duab, \Ia)$ be derived from the projection
+structure and confirmed against simulation?
+\end{evidenceitem}
+
+\begin{evidenceitem}{5. Identified failure cases}
+Where $\chiab(\Ia) \approx 0$ or $\etaab(\Ia) \ll 1$, the
+framework must predict $\Lpsi \gg 0$ or $\Lrho \gg 0$.
+A framework that cannot identify its own failure conditions is
+not falsifiable.
+\end{evidenceitem}
+
+\begin{note}
+Items~1--2 are addressed in EVM~I and EVM~III.
+Items~3--5 are addressed in EVM~II and EVM~IV.
+No claim of new physics is warranted until items~1 and~2 are
+demonstrated.
+\end{note}
+
+
+% ==================================================================
+\section*{Summary: Formal Projection Spine}
+\addcontentsline{toc}{section}{Summary: Formal Projection Spine}
+% ==================================================================
+
+The following is the complete formal backbone of IKK~III.
+Every symbol has a declared type and a named space.
+
+\subsection*{Spaces}
+\[
+  \Ia \in \Ha,
+  \qquad
+  \Kab = \Cab(\Ha),
+  \qquad
+  \Hb \ni \psiab
+\]
+
+\subsection*{Typed maps}
+\[
+  \Cab : \Ha \to \Kab,
+  \qquad
+  \Rb : \Kab \to \Hb,
+  \qquad
+  \MXb : \Hb \to \ProbR
+\]
+\[
+  \Wab = \Rb \circ \Cab : \Ha \to \Hb,
+  \qquad
+  \Qba : \Osp \to \Hahat
+\]
+
+\subsection*{Wave state and wavefunction}
+\[
+  |\psi_b^{(a)}\rangle = \Wab(\Ia),
+  \qquad
+  \psix = \langle x\,|\,\Wab(\Ia)\rangle
+\]
+
+\subsection*{Position measure and expectation}
+\[
+  \muX(\Omega)
+  = \langle \Wab(\Ia),\;\EX(\Omega)\,\Wab(\Ia)\rangle_{\Hb}
+  = \int_\Omega |\psix|^2\,d^3x
+\]
+\[
+  \Xexp = \int_{\mathbb{R}^3} \mathbf{x}\;d\muX(\mathbf{x})
+  = \langle\psi_b^{(a)}\,|\,\Xhat\,|\,\psi_b^{(a)}\rangle
+\]
+
+\subsection*{Density kernel}
+\[
+  \rhoab(r,t) = \Rbvec^T\,\Mab\,\eavec
+\]
+
+\subsection*{Efficiency, loss, and error}
+\[
+  \etaab(\Ia) = \frac{\Distb(\Pab(\Ia))}{\Dista(\Ia)},
+  \qquad
+  \Lpsi = \int |\psiQM - \psirec|^2\,dx,
+  \qquad
+  \Lrho = \int |\rhoQM - \Rbvec^T\Mab\eavec|^2\,dx
+\]
+\[
+  \chiab(\Ia) = \sigma\!\bigl(\alpha(\etaab(\Ia)-\etamin)\bigr),
+  \qquad
+  \epsI = \dHa\!\bigl(\Ia,\;\Qba\circ\Pab(\Ia)\bigr)
+\]
+
+\subsection*{Central interpretive statements}
+\begin{align*}
+  \text{matrix mechanics}      &= \text{structured identity-state update} \\
+  \text{wave mechanics}        &= \text{projected observable recovery} \\
+  \text{wave-particle duality} &= \text{projection-domain switching}
+\end{align*}
+
+\bigskip
+
+\begin{center}
+\renewcommand{\arraystretch}{1.45}
+\begin{tabular}{@{}lp{8.5cm}@{}}
+  \toprule
+  Symbol & Meaning \\
+  \midrule
+  $\Ha$          & Source identity space \\
+  $\Hb$          & Target Hilbert space at $\Sb$ \\
+  $\Kab$         & Coupled cross-scale information space \\
+  $\Osp$         & Target observable space \\
+  $\Itrue$       & Full primitive identity content \\
+  $\Ia$          & Source identity state \\
+  $\Ihat$        & Reconstructed identity estimate \\
+  $\Cab$         & Cross-scale coupling map $\Ha\to\Kab$ \\
+  $\Rb$          & Resolution map $\Kab\to\Hb$ \\
+  $\Wab$         & Wave-state recovery map $\Ha\to\Hb$ \\
+  $\MXb$         & Position measurement map $\Hb\to\ProbR$ \\
+  $\Qba$         & Reconstruction operator $\Osp\to\Hahat$ \\
+  $\EX$          & Spectral measure of $\Xhat$ on $\Hb$ \\
+  $\muX$         & Target-scale position distribution of $\Ia$ \\
+  $\Mab$         & Channel mixing matrix \\
+  $\etaab(\Ia)$  & Projection efficiency functional \\
+  $\chiab(\Ia)$  & Scale compatibility gate \\
+  $\epsI$        & Reconstruction error $\dHa(\Ia,\Ihat)$ \\
+  $\Lpsi$        & Wavefunction recovery loss \\
+  $\Lrho$        & Density recovery loss \\
+  $\uscl$        & Logarithmic scale coordinate $\ln(\ell/\ell_0)$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\end{document}

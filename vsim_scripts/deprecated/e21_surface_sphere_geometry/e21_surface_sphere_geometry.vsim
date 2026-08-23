@@ -1,0 +1,67 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e21_surface_sphere_geometry.vsim
+# =============================================================================
+# E21  --  Spherical Surface Geometry (Droplet Evaporation Model)
+#
+# Purpose: Demonstrate the spherical probe geometry to measure particle
+#          flux across a closed spherical shell.  Models a droplet boundary
+#          or bubble interface in a liquid–gas phase system.
+#
+# Key concepts:
+#   geometry = "sphere"  activates a closed 3D shell with radius.
+#   Useful for isotropic flux measurement and droplet/bubble diagnostics.
+#   compute_flux counts net flux outward (positive = evaporation).
+# =============================================================================
+
+[project]
+name        = "e21_surface_sphere"
+version     = "v5.0.14"
+seed_base   = 2100
+determinism = true
+
+[material]
+formula   = "H2O"
+prototype = "water_molecule"
+phase     = "liquid"
+
+[[simulation.molecule]]
+formula     = "H2O"
+count       = 512
+temperature = 350.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 8000
+dt_fs     = 0.5
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e21"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e21/surfaces"
+
+[[object.surface]]
+name                = "droplet_shell"
+geometry            = "sphere"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+radius              = 10.0
+log_crossings       = true
+compute_flux        = true
+compute_energy_flux = true
+output_tag          = "sphere_evap"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 400
+

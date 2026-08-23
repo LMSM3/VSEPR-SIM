@@ -1,0 +1,58 @@
+# argon_gas.vsim
+# =============================================================================
+# Demo 04 — Argon noble gas NVT MD
+# =============================================================================
+# 64 Ar atoms in a 30 Å cubic box at 300 K. LJ potential.
+# Simple benchmark: should run fast and produce clean RDF.
+#
+# Run:  vsepr run scripts/demos/argon_gas.vsim
+# Artifacts: out/v516_integrated_runtime_cut/argon_gas
+# =============================================================================
+
+[project]
+name        = "argon_gas_demo"
+version     = "v5.16.0"
+seed_base   = 1004
+description = "Ar64 NVT gas — LJ potential, 300 K"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = false
+track_energy_path    = true
+track_structure_changes = false
+
+[simulation]
+box_size_ang     = 30.0
+periodic         = true
+fire_max_steps   = 200
+fire_dt_fs       = 1.0
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "Ar"
+count         = 64
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode           = "gas"
+num_steps      = 2000
+dt             = 1.0
+integrator     = "velocity_verlet"
+temperature_K  = 300.0
+sample_interval   = 100
+render_interval   = 100
+
+[export]
+output_dir      = "out/v516_integrated_runtime_cut/argon_gas"
+write_xyz       = true
+write_xyzfull   = true
+write_dynx      = true
+write_report_md = true
+
+[analysis]
+rmsd            = true
+energy_trace    = true
+diffusion       = true
+stationarity    = true

@@ -1,0 +1,149 @@
+# =============================================================================
+# wo74b_output_filter_demo.vsim
+#
+# WO-74B  --  Multi-Scale Output Filter Demonstration
+#
+# Exercises all four IOutputFormatHandler strategies registered in
+# ModuleRegistry<IOutputFormatHandler> after the WO-74B hardening:
+#
+#   "csv"      --  CsvOutputHandler   gates on write_summary_csv
+#   "json"     --  JsonOutputHandler  gates on write_analysis_json
+#   "xyz"      --  XyzOutputHandler   gates on write_xyz
+#                  property-space XYZ: Lambda/E/UFF as x/y/z per atom line
+#   "xyzFull"  --  XyzFullOutputHandler  gates on write_xyzfull
+#                  extended XYZ: all NormalisedRecord fields per atom line
+#
+# WO-73A alias resolution is also exercised here: the simulation pipeline
+# may emit non-canonical field names (e.g. "scaleLength", "energy",
+# "uff_energy").  VsimOutputFilter.normalise() resolves all aliases to
+# canonical names before any handler sees the record.
+#
+# Pipeline path:
+#   [run] FIRE relaxation of H2O molecule cluster
+#     -> VsimOutputFilter.normalise()  (alias resolution, WO-73A)
+#     -> all four export handlers active via [export] flags
+#     -> scale-layer gating: all handlers return scale_layer="" (all layers)
+#
+# Run:
+#   vsper run examples/wo74b_output_filter_demo.vsim
+#
+# v5.13.3  |  WO-74B
+# =============================================================================
+
+[project]
+name        = "wo74b_output_filter_demo"
+version     = "v5.13.3"
+seed_base   = 7401
+determinism = true
+description = "WO-74B: all 4 export format handlers + WO-73A alias resolution"
+
+# -- Simulation box -----------------------------------------------------------
+
+[simulation]
+box_size_ang     = 35.0
+periodic         = false
+fire_max_steps   = 300
+fire_dt_fs       = 1.0
+formation_preset = "polymer"
+step_delay_ms    = 0
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 32
+temperature_K = 300.0
+lattice       = "none"
+
+# -- Run ----------------------------------------------------------------------
+
+[run]
+mode         = "md_nvt"
+max_steps    = 500
+dt_fs        = 0.5
+temperature  = 300.0
+converge     = true
+output_level = "standard"
+
+# -- Analysis -----------------------------------------------------------------
+
+[analysis.structure]
+enabled              = true
+compute_coordination = true
+compute_packing      = true
+compute_displacement = true
+neighbor_cutoff_A    = 3.5
+contact_cutoff_A     = 2.0
+
+[analysis.sampling]
+enabled              = true
+compute_rdf          = true
+compute_msd          = true
+min_frames_for_motion = 2
+min_frames_for_msd   = 5
+unwrap_pbc           = false
+
+[analysis.inference]
+enabled                    = true
+mode                       = "rule_based_61d"
+infer_packing_regime       = true
+infer_mobility_regime      = true
+infer_structural_stability = true
+infer_macro_readiness      = false
+
+# -- Verify -------------------------------------------------------------------
+
+[verify]
+enabled = true
+
+[verify.structure]
+enabled                 = true
+check_coordination      = true
+expected_coordination   = 2
+coordination_tolerance  = 1
+check_bond_length       = true
+expected_bond_length_A  = 0.96
+bond_length_tolerance_A = 0.12
+
+[verify.mass]
+enabled   = true
+max_drift = 1e-10
+
+[verify.rdf]
+enabled            = true
+expected_first_peak_A = 2.75
+peak_tolerance_A   = 0.30
+
+# -- Export: all four handlers active -----------------------------------------
+# CsvOutputHandler    -> writes summary_canonical.csv  (write_summary_csv)
+# JsonOutputHandler   -> writes analysis_summary.json  (write_analysis_json)
+# XyzOutputHandler    -> writes property_space.xyz     (write_xyz)
+# XyzFullOutputHandler-> writes property_space_full.xyz(write_xyzfull)
+#
+# WO-73A alias resolution note:
+#   The simulation pipeline may tag records with "scaleLength", "lengthscale",
+#   "lscale", "lambda", "lambda_nm", or "ideal_len" instead of "Lambda_nm".
+#   VsimOutputFilter.normalise() resolves all of these to "Lambda_nm" before
+#   any handler sees the record.  This script flags write_alias_audit = true
+#   so the json handler includes an alias_resolutions[] array in the output
+#   for verification purposes.
+
+[export]
+write_xyz            = true
+write_xyzfull        = true
+write_xyzf           = false
+write_analysis_json  = true
+write_summary_csv    = true
+write_metrics_tsv    = true
+write_report_md      = true
+write_events_json    = true
+write_alias_audit    = true
+output_dir           = "out/wo74b_output_filter_demo"
+
+# -- Visual -------------------------------------------------------------------
+
+[visual]
+output_type            = "terminal_chart"
+render_interval        = 25
+show_convergence_trace = true
+show_bar_chart         = false
+show_symbolic_trace    = false
+animation_mode         = "static"

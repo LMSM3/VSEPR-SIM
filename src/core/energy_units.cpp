@@ -1,5 +1,5 @@
-/**
- * energy_units.cpp  —  Energy formatting implementation
+﻿/**
+ * energy_units.cpp   -   Energy formatting implementation
  * ======================================================
  * VSEPR-SIM 3.0.1
  */

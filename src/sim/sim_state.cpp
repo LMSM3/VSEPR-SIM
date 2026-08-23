@@ -1,4 +1,4 @@
-/**
+﻿/**
  * sim_state.cpp
  * -------------
  * Implementation of unified simulation state machine.
@@ -621,7 +621,7 @@ void SimulationState::evaluate_forces() {
 
 void SimulationState::evaluate_ewald_forces() {
     if (charges_.size() != coords_.size() / 3) {
-        // No charges assigned — nothing to do
+        // No charges assigned  -  nothing to do
         return;
     }
 

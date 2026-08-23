@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * kernel_event_log.hpp — Thread-Safe Append-Only Kernel Event Log
+ * kernel_event_log.hpp  -  Thread-Safe Append-Only Kernel Event Log
  * ================================================================
  *
  * The KernelEventLog is the central registry for all KernelEvents
@@ -25,7 +25,7 @@
  *   ev.compute_delta_E();
  *   log.record(ev);
  *
- * The log does not own the policy for what to log — callers decide.
+ * The log does not own the policy for what to log  -  callers decide.
  * Every module that computes a major result is expected to record it.
  *
  * WO-56C  |  v5.0.0-beta.7
@@ -44,7 +44,7 @@
 namespace vsepr::kernel {
 
 // ============================================================================
-// EventHandle — lightweight reference returned from record()
+// EventHandle  -  lightweight reference returned from record()
 // ============================================================================
 
 struct EventHandle {
@@ -53,19 +53,19 @@ struct EventHandle {
 };
 
 // ============================================================================
-// KernelEventLog — the spine
+// KernelEventLog  -  the spine
 // ============================================================================
 
 class KernelEventLog {
 public:
-	// Singleton (one log per process — mirrors module_registry pattern)
+	// Singleton (one log per process  -  mirrors module_registry pattern)
 	static KernelEventLog& instance() {
 		static KernelEventLog log;
 		return log;
 	}
 
 	// -----------------------------------------------------------------------
-	// record — append a KernelEvent, assign event_id, return handle
+	// record  -  append a KernelEvent, assign event_id, return handle
 	// -----------------------------------------------------------------------
 
 	EventHandle record(KernelEvent ev) {
@@ -92,7 +92,7 @@ public:
 		return events_.size();
 	}
 
-	/** Copy all events (snapshot — safe to iterate without holding lock). */
+	/** Copy all events (snapshot  -  safe to iterate without holding lock). */
 	std::vector<KernelEvent> snapshot() const {
 		std::lock_guard<std::mutex> lk(mutex_);
 		return events_;
@@ -134,7 +134,7 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// Export — JSON Lines
+	// Export  -  JSON Lines
 	// -----------------------------------------------------------------------
 
 	/**
@@ -163,7 +163,7 @@ public:
 	}
 
 	// -----------------------------------------------------------------------
-	// Export — Markdown table
+	// Export  -  Markdown table
 	// -----------------------------------------------------------------------
 
 	std::string to_markdown() const {
@@ -179,14 +179,14 @@ public:
 			   << " | " << e.result_value
 			   << " | " << e.result_unit
 			   << " | " << (e.is_valid ? "✓" : "✗");
-			if (!e.warning.empty()) ss << " ⚠";
+			if (!e.warning.empty()) ss << " ⚠p";
 			ss << " |\n";
 		}
 		return ss.str();
 	}
 
 	// -----------------------------------------------------------------------
-	// Clear (for test isolation — not for production runs)
+	// Clear (for test isolation  -  not for production runs)
 	// -----------------------------------------------------------------------
 
 	void clear() {
@@ -216,7 +216,7 @@ private:
 };
 
 // ============================================================================
-// Convenience free function — record to global log
+// Convenience free function  -  record to global log
 // ============================================================================
 
 template<typename EventT>

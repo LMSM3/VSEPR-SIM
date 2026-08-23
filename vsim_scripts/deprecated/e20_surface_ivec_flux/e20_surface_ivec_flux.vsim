@@ -1,0 +1,71 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e20_surface_ivec_flux.vsim
+# =============================================================================
+# E20  --  Identity-Vector (IVec) Flux Through a Disk Probe
+#
+# Purpose: Measures the IKK identity-vector component that crosses a
+#          disk surface, coupling the surface layer to the IVec analysis
+#          module introduced in WO-75B.  Useful for tracing structural
+#          order propagation across a crystal boundary plane.
+#
+# Key concepts:
+#   compute_ivec_flux = true  ->  IVec crossing signature in sidecar.
+#   geometry = "disk" with radius = 8.0 targets only the crystal core.
+#   Pair this with [analysis.ivec] to correlate surface crossing count
+#   with the bulk IVec convergence curve.
+# =============================================================================
+
+[project]
+name        = "e20_surface_ivec_flux"
+version     = "v5.0.14"
+seed_base   = 2000
+determinism = true
+
+[material]
+formula   = "Si"
+prototype = "diamond_cubic"
+cell      = "4x4x4"
+phase     = "solid"
+
+[run]
+mode      = "md"
+max_steps = 3000
+dt_fs     = 0.5
+converge  = false
+
+[analysis.ivec]
+enabled         = true
+write_json      = true
+convergence_eps = 1.0e-4
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e20"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e20/surfaces"
+
+[[object.surface]]
+name               = "ivec_boundary_disk"
+geometry           = "disk"
+center_x           = 0.0
+center_y           = 0.0
+center_z           = 0.0
+normal_x           = 0.0
+normal_y           = 0.0
+normal_z           = 1.0
+radius             = 8.0
+log_crossings      = true
+compute_ivec_flux  = true
+output_tag         = "ivec_surf_z"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 150
+

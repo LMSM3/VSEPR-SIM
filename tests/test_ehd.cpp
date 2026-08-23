@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_ehd.cpp
  *
  * Compilation and correctness tests for the EHD multiphysics module.
@@ -428,7 +428,7 @@ static void test_run_card() {
 }
 
 // ============================================================================
-// Pump Configurations — Config (a): Planar Channel
+// Pump Configurations  -  Config (a): Planar Channel
 // ============================================================================
 
 static void test_planar_channel() {
@@ -486,7 +486,7 @@ static void test_planar_channel() {
 }
 
 // ============================================================================
-// Pump Configurations — Config (b): Needle-Ring
+// Pump Configurations  -  Config (b): Needle-Ring
 // ============================================================================
 
 static void test_needle_ring() {
@@ -502,7 +502,7 @@ static void test_needle_ring() {
     auto nr = from_ehd_needle_ring(p);
     assert(approx(nr.tip_radius, 50.0e-6));
 
-    // Needle profile — should start behind tip and end at tip
+    // Needle profile  -  should start behind tip and end at tip
     auto profile = generate_needle_profile(nr);
     assert(!profile.empty());
     assert(profile.back().z >= -1e-10);  // tip at z ≈ 0
@@ -543,7 +543,7 @@ static void test_needle_ring() {
 }
 
 // ============================================================================
-// Pump Configurations — Config (c): Disk Stack
+// Pump Configurations  -  Config (c): Disk Stack
 // ============================================================================
 
 static void test_disk_stack() {
@@ -620,7 +620,7 @@ static void test_disk_stack() {
 }
 
 // ============================================================================
-// Pump Configurations — Config (d): Prism Slit
+// Pump Configurations  -  Config (d): Prism Slit
 // ============================================================================
 
 static void test_prism_slit() {
@@ -736,7 +736,7 @@ static void test_layout_factory() {
 }
 
 // ============================================================================
-// Body Force Models — Three Pumping Mechanisms
+// Body Force Models  -  Three Pumping Mechanisms
 // ============================================================================
 
 static void test_coulomb_force() {
@@ -872,7 +872,7 @@ static void test_combined_body_force() {
                                          rho_e, E, grad_Esq, K_CM);
     assert(f_dep.x != 0.0);  // should be non-zero from grad_Esq
 
-    // EOF — volumetric force is zero (it's a slip BC)
+    // EOF  -  volumetric force is zero (it's a slip BC)
     Vec3 f_eof = compute_ehd_body_force(PumpMechanism::ELECTROOSMOTIC,
                                          rho_e, E, grad_Esq, K_CM);
     assert(approx(f_eof.x, 0.0));
@@ -1081,12 +1081,12 @@ static void test_radiative_emission() {
     double T_p = 3000.0;  // K
     double T_inf = 300.0;
 
-    // Al: high emissivity → bright
+    // Al: high emissivity -> bright
     FuelData al = get_fuel_data(FuelType::ALUMINUM);
     double P_al = radiative_power(d, al.emissivity, T_p, T_inf);
     assert(P_al > 0.0);
 
-    // CH₄: low emissivity → dim
+    // CH₄: low emissivity -> dim
     FuelData ch4 = get_fuel_data(FuelType::METHANE);
     double P_ch4 = radiative_power(d, ch4.emissivity, T_p, T_inf);
     assert(P_ch4 > 0.0);
@@ -1115,13 +1115,13 @@ static void test_burning_rate_corrections() {
     FuelData al = get_fuel_data(FuelType::ALUMINUM);
     double K0 = al.burning_rate_K;
 
-    // Temperature correction: higher T → faster burning
+    // Temperature correction: higher T -> faster burning
     double K_hot = burning_rate_corrected(K0, al.activation_energy, 1500.0);
     double K_cold = burning_rate_corrected(K0, al.activation_energy, 300.0);
-    assert(K_hot > K_cold);  // Arrhenius: higher T → larger K
+    assert(K_hot > K_cold);  // Arrhenius: higher T -> larger K
     (void)K_hot; (void)K_cold;
 
-    // O₂ correction: more O₂ → faster
+    // O₂ correction: more O₂ -> faster
     double K_rich = burning_rate_O2_corrected(K0, 0.40);   // O₂-enriched
     double K_lean = burning_rate_O2_corrected(K0, 0.15);   // O₂-lean
     assert(K_rich > K_lean);
@@ -1193,7 +1193,7 @@ static void test_ehd_combustion_coupling() {
 
     FuelData al = get_fuel_data(FuelType::ALUMINUM);
 
-    // EHD enhancement: stronger field → faster burn
+    // EHD enhancement: stronger field -> faster burn
     double K0 = al.burning_rate_K;
     double K_enhanced = burning_rate_ehd_enhanced(K0, 2.0e4);  // 20 kV/m
     assert(K_enhanced > K0);
@@ -1304,7 +1304,7 @@ static void test_dimensionless_numbers() {
     using namespace vsepr::ehd;
     using namespace vsepr::ehd::physics;
 
-    // Nusselt (Ranz-Marshall): Re_p=0 → Nu=2
+    // Nusselt (Ranz-Marshall): Re_p=0 -> Nu=2
     assert(approx(nusselt_ranz_marshall(0.0, 0.7), 2.0, 1e-4));
 
     // Nu should increase with Re_p

@@ -1,8 +1,8 @@
-// =============================================================================
-// tests/pbc_phase2_physics.cpp — Group 25: PBC Core
+﻿// =============================================================================
+// tests/pbc_phase2_physics.cpp  -  Group 25: PBC Core
 // =============================================================================
 //
-// Phase 2 — Pairwise Physics Parity:
+// Phase 2  -  Pairwise Physics Parity:
 //   Newton's 3rd law with MIC, system translation invariance,
 //   edge stress cloud (boundary particle handling).
 //
@@ -421,7 +421,7 @@ void test_edge_stress_cloud(int& passed, int& failed) {
         // Allow up to ~10 kcal/mol change (reasonable for LJ with these parameters)
         if (dE > 10.0) {
             std::cout << "  ✗ Energy spike detected: " << energies[i-1] 
-                      << " → " << energies[i] << " (ΔE = " << dE << ")\n";
+                      << " -> " << energies[i] << " (ΔE = " << dE << ")\n";
             no_spikes = false;
         }
     }
@@ -445,9 +445,9 @@ void test_edge_stress_cloud(int& passed, int& failed) {
 int main() {
     std::cout << std::fixed << std::setprecision(10);
     
-    std::cout << "╔════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PBC Phase 2 — Pairwise Physics Parity Tests             ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+    std::cout << "+============================================================+\n";
+    std::cout << "|  PBC Phase 2  -  Pairwise Physics Parity Tests             |\n";
+    std::cout << "+============================================================+\n";
     std::cout << "\nLennard-Jones Parameters:\n";
     std::cout << "  σ = 3.0 Å (collision diameter)\n";
     std::cout << "  ε = 0.1 kcal/mol (well depth)\n";
@@ -475,16 +475,16 @@ int main() {
     std::cout << "Tests Failed: " << failed << "\n";
     
     if (failed == 0) {
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✓✓✓ PHASE 2 COMPLETE — PHYSICS PARITY VERIFIED      ✓✓✓ ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ✓✓✓ PHASE 2 COMPLETE  -  PHYSICS PARITY VERIFIED      ✓✓✓ |\n";
+        std::cout << "+============================================================+\n";
         std::cout << "\nPBC is used consistently in physics calculations.\n";
         std::cout << "Ready for production MD simulations.\n\n";
         return 0;
     } else {
-        std::cout << "\n╔════════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✗✗✗ PHASE 2 FAILED — PHYSICS INCONSISTENCY          ✗✗✗ ║\n";
-        std::cout << "╚════════════════════════════════════════════════════════════╝\n";
+        std::cout << "\n+============================================================+\n";
+        std::cout << "|  ✗✗✗ PHASE 2 FAILED  -  PHYSICS INCONSISTENCY          ✗✗✗ |\n";
+        std::cout << "+============================================================+\n";
         std::cout << "\nFix physics integration before using PBC in production.\n\n";
         return 1;
     }

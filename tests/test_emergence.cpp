@@ -1,7 +1,7 @@
+﻿// =============================================================================
+// tests/test_emergence.cpp  -  Group 22: Emergence Microtests
 // =============================================================================
-// tests/test_emergence.cpp — Group 22: Emergence Microtests
-// =============================================================================
-// Tests Tasks 4–8 of the emergence test specification.
+// Tests Tasks 4-8 of the emergence test specification.
 //
 // Interaction law : pure LJ via create_lj_coulomb_model()
 //                   Ar-like atoms: Z=18 (σ=3.4 Å, ε=0.238 kcal/mol)
@@ -11,11 +11,11 @@
 // State rule      : NO label stored in State.  All emergence labels are
 //                   computed in the analysis layer and printed to stdout.
 //
-// Task 4  — Three-atom emergence microtest          (test_three_atom_cluster)
-// Task 5  — Four-atom cluster shape classification  (test_four_atom_shapes)
-// Task 6  — Small cluster relaxation sweep          (test_cluster_sweep)
-// Task 7  — First reference-free emergence report   (test_emergence_report)
-// Task 8  — Five-to-ten atom micro-nucleation test  (test_micro_nucleation)
+// Task 4   -  Three-atom emergence microtest          (test_three_atom_cluster)
+// Task 5   -  Four-atom cluster shape classification  (test_four_atom_shapes)
+// Task 6   -  Small cluster relaxation sweep          (test_cluster_sweep)
+// Task 7   -  First reference-free emergence report   (test_emergence_report)
+// Task 8   -  Five-to-ten atom micro-nucleation test  (test_micro_nucleation)
 // =============================================================================
 
 #include <cassert>
@@ -31,7 +31,7 @@
 #include "atomistic/integrators/velocity_verlet.hpp"
 #include "atomistic/models/model.hpp"
 
-// Analysis layer — no labels in state
+// Analysis layer  -  no labels in state
 #include "analysis/cluster_analysis.hpp"
 #include "core/stats/sim_metrics.hpp"
 
@@ -156,10 +156,10 @@ static std::vector<vsepr::cluster::ClusterMetricsRow> run_and_analyze(
 }
 
 // =============================================================================
-// Task 4 — Three-atom emergence microtest
+// Task 4  -  Three-atom emergence microtest
 // =============================================================================
 // Three identical Ar atoms, random initial positions (fixed seed), small
-// velocities.  State contains only X, V, M, type, Q — no cluster labels.
+// velocities.  State contains only X, V, M, type, Q  -  no cluster labels.
 // Analysis computes: d12 d13 d23 mean_pair_distance pair_distance_stddev
 //                    radius_of_gyration kinetic_energy energy_drift
 //                    cluster_class stationary_flag
@@ -196,7 +196,7 @@ static void test_three_atom_cluster() {
 	analyzer.r_bond    = AR_RBOND;
 	analyzer.r_overlap = 2.0;
 
-	// xyzFull audit — state only; no labels
+	// xyzFull audit  -  state only; no labels
 	vsepr::cluster::XyzFullFrame xyz_audit;
 	xyz_audit.frame = 0;
 	std::printf("%s\n", vsepr::cluster::XyzFullRow::tsv_header().c_str());
@@ -221,7 +221,7 @@ static void test_three_atom_cluster() {
 	assert(log.back().mean_pair_distance > 0.0 && "T4: zero mean pair distance");
 
 	// Verify: xyzFull contains no cluster/bond/molecule labels
-	// (compile-time guarantee: XyzFullRow has no such fields — audit passes)
+	// (compile-time guarantee: XyzFullRow has no such fields  -  audit passes)
 
 	// Classify final state
 	const bool emerged = (log.back().n_components == 1);
@@ -233,10 +233,10 @@ static void test_three_atom_cluster() {
 }
 
 // =============================================================================
-// Task 5 — Four-atom cluster shape classification
+// Task 5  -  Four-atom cluster shape classification
 // =============================================================================
 // Four cases: near-line, near-square, random compact, dispersed.
-// Same interaction law; different initial geometry → different final shape.
+// Same interaction law; different initial geometry -> different final shape.
 
 struct FourAtomCase {
 	std::string name;
@@ -314,7 +314,7 @@ static void test_four_atom_shapes() {
 }
 
 // =============================================================================
-// Task 6 — Small cluster relaxation sweep (3×3 = 9 cases)
+// Task 6  -  Small cluster relaxation sweep (3×3 = 9 cases)
 // =============================================================================
 // N=4 Ar atoms.  Sweep: initial_spacing ∈ {low, med, high}
 //                        velocity_scale  ∈ {low, med, high}
@@ -400,10 +400,10 @@ static void test_cluster_sweep() {
 }
 
 // =============================================================================
-// Task 7 — First reference-free emergence report
+// Task 7  -  First reference-free emergence report
 // =============================================================================
 // Three-atom run with a longer trajectory.  Produces structured report.
-// Does NOT use a lattice reference — all metrics are trajectory-derived.
+// Does NOT use a lattice reference  -  all metrics are trajectory-derived.
 
 static void test_emergence_report() {
 	std::printf("\n--- Task 7: Reference-Free Emergence Report ---\n");
@@ -438,7 +438,7 @@ static void test_emergence_report() {
 	const double DT = 2e-4;
 	auto log = run_and_analyze(state, *model, mp, N_STEPS, DT, SAMPLE, analyzer);
 
-	// ── Report sections ──────────────────────────────────────────────────────
+	// -- Report sections ------------------------------------------------------
 	std::puts("\n=== Section 1: Initial Truth-State Summary ===");
 	std::puts("  N=3 Ar atoms  |  Z=18  |  σ=3.4Å  |  ε=0.238 kcal/mol");
 	std::printf("  seed: 2024  |  T=60K  |  dt=%.0e fs  |  steps=%d\n",
@@ -453,11 +453,11 @@ static void test_emergence_report() {
 	std::puts("  XyzFullRow fields: frame time id type x y z vx vy vz");
 	std::puts("  NO cluster_detected, bond_count, molecule_type, stability_class.");
 
-	std::puts("\n=== Section 4–7: Trajectory Metrics ===");
+	std::puts("\n=== Section 4-7: Trajectory Metrics ===");
 	std::printf("\n%s\n", vsepr::cluster::ClusterMetricsRow::tsv_header().c_str());
 	for (const auto& row : log) std::printf("%s\n", row.to_tsv().c_str());
 
-	// ── Section 8: Emergent classification ───────────────────────────────────
+	// -- Section 8: Emergent classification -----------------------------------
 	const auto& last = log.back();
 	const bool cluster_emerged = (last.n_components == 1);
 
@@ -481,7 +481,7 @@ static void test_emergence_report() {
 }
 
 // =============================================================================
-// Task 8 — Five-to-ten atom micro-nucleation test
+// Task 8  -  Five-to-ten atom micro-nucleation test
 // =============================================================================
 // Four seeds × two sizes (5 and 8 atoms).
 // Emergence labels (connected components, largest cluster, cluster_class)

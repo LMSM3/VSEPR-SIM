@@ -338,6 +338,59 @@ def escape_latex(text):
     return text
 
 
+# ===========================================================================
+# IKK Identity Metrics Discovery  (WO-75A Deliverable 9)
+# ===========================================================================
+
+def discover_ikk_summaries(root):
+    """
+    Walk <root>/out/ for *.identity.json sidecar files written by
+    write_identity_json() (src/vsim/analysis/ikk_identity_vector.cpp).
+
+    Returns a list of dicts:
+        { 'run_id': str, 'D_rec': float, 'eta_ab': float,
+          'run_mean_mag': float, 'frame_count': int }
+
+    D_rec   = run_mean.x  (existence axis, Phase 1 proxy: 1 - dataloss)
+    eta_ab  = run_mean.t  (temporal axis, Phase 1 proxy: 1 - projection_loss)
+
+    Doctrine: reads sidecar-only JSON; never opens .xyz/.xyzFull files.
+    """
+    import json
+    summaries = []
+    out_dir = os.path.join(root, 'out')
+    if not os.path.isdir(out_dir):
+        return summaries
+
+    for dirpath, _, files in os.walk(out_dir):
+        for fname in sorted(files):
+            if not fname.endswith('.identity.json'):
+                continue
+            fpath = os.path.join(dirpath, fname)
+            try:
+                with open(fpath, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except Exception:
+                continue
+
+            run_id      = data.get('run_id', fname.replace('.identity.json', ''))
+            frame_count = data.get('frame_count', 0)
+            run_mean    = data.get('run_mean', {})
+            # Existence axis (x) = D_rec proxy; temporal axis (t) = eta_ab proxy
+            D_rec       = float(run_mean.get('x',   0.0))
+            eta_ab      = float(run_mean.get('t',   0.0))
+            mag         = float(run_mean.get('mag', 0.0))
+
+            summaries.append({
+                'run_id':       run_id,
+                'D_rec':        D_rec,
+                'eta_ab':       eta_ab,
+                'run_mean_mag': mag,
+                'frame_count':  frame_count,
+            })
+    return summaries
+
+
 def write_data_file(out_path, stats, manifest, boundary_checks,
                     gates, cmake_libs, report_modules, root):
     """Write the layering_data.tex file consumed by the main document."""
@@ -477,6 +530,30 @@ def write_data_file(out_path, stats, manifest, boundary_checks,
         f.write('% --- Gate Functions ---\n')
         gate_list = ', '.join(f'\\texttt{{{escape_latex(g)}}}' for g in gates)
         f.write(f'\\newcommand{{\\GateFunctions}}{{{gate_list if gate_list else "None detected"}}}\n\n')
+
+        # ── IKK Identity Metrics per run (WO-75A Deliverable 9) ──────────────
+        ikk_summaries = discover_ikk_summaries(root)
+        f.write('% --- IKK Identity Metrics (D_rec / eta_ab per run, WO-75A) ---\n')
+        f.write('\\newcommand{\\IKKSummaryTable}{\n')
+        if ikk_summaries:
+            f.write('\\begin{tabular}{lrrrr}\n')
+            f.write('\\toprule\n')
+            f.write('\\textbf{Run ID} & \\textbf{D\\textsubscript{rec}} '
+                    '& \\textbf{$\\eta_{ab}$} & \\textbf{$|\\bar{I}|$} '
+                    '& \\textbf{Frames} \\\\\n')
+            f.write('\\midrule\n')
+            for ikk in ikk_summaries:
+                f.write(f'\\texttt{{{escape_latex(ikk["run_id"])}}} '
+                        f'& {ikk["D_rec"]:.4f} '
+                        f'& {ikk["eta_ab"]:.4f} '
+                        f'& {ikk["run_mean_mag"]:.4f} '
+                        f'& {ikk["frame_count"]} \\\\\n')
+            f.write('\\bottomrule\n')
+            f.write('\\end{tabular}\n')
+        else:
+            f.write('\\textit{No \\texttt{.identity.json} sidecar files found'
+                    ' in \\texttt{out/}.}\n')
+        f.write('}\n\n')
 
     print(f'[OK] Wrote {out_path}')
 

@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 /**
- * mapping_rule.hpp — Declarative Atom-to-Bead Mapping Rules
+ * mapping_rule.hpp  -  Declarative Atom-to-Bead Mapping Rules
  *
  * A MappingRule specifies HOW a group of atoms should collapse into a single bead.
- * Rules are data, not code — they can be serialized, inspected, and reported.
+ * Rules are data, not code  -  they can be serialized, inspected, and reported.
  *
  * This is the anti-black-box layer: every mapping decision is recorded as
  * a named, numbered rule with explicit atom-index lists.
@@ -16,12 +16,12 @@
 namespace coarse_grain {
 
 /**
- * AtomSelector — which atoms from the source State belong to this bead.
+ * AtomSelector  -  which atoms from the source State belong to this bead.
  *
  * Three modes:
- *   BY_INDICES  — explicit list of atom indices (most common)
- *   BY_TYPE     — all atoms of a given type id
- *   BY_RANGE    — contiguous index range [first, first+count)
+ *   BY_INDICES   -  explicit list of atom indices (most common)
+ *   BY_TYPE      -  all atoms of a given type id
+ *   BY_RANGE     -  contiguous index range [first, first+count)
  */
 enum class SelectorMode {
     BY_INDICES,
@@ -44,13 +44,13 @@ struct AtomSelector {
 };
 
 /**
- * MappingRule — one rule that produces one bead.
+ * MappingRule  -  one rule that produces one bead.
  *
  * Fields:
- *   rule_id      — unique rule identifier (for traceability)
- *   label        — human-readable label (e.g. "backbone", "sidechain_1")
- *   bead_type_id — index into the BeadType table
- *   selector     — which atoms this rule consumes
+ *   rule_id       -  unique rule identifier (for traceability)
+ *   label         -  human-readable label (e.g. "backbone", "sidechain_1")
+ *   bead_type_id  -  index into the BeadType table
+ *   selector      -  which atoms this rule consumes
  */
 struct MappingRule {
     uint32_t     rule_id{};
@@ -60,7 +60,7 @@ struct MappingRule {
 };
 
 /**
- * MappingScheme — a complete set of rules for one molecule/system.
+ * MappingScheme  -  a complete set of rules for one molecule/system.
  *
  * Invariant: the union of all selectors must cover every atom exactly once.
  * This is enforced by AtomToBeadMapper::validate_scheme().

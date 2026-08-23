@@ -1,0 +1,27 @@
+field_name,type,required,description,example
+compare_run_id,string,yes,Unique identifier for this comparison record,COMPARE_RUN_0001
+object_id,string,yes,Interaction object being compared,pi_7
+family,string,yes,Interaction family,pi_N
+state,string,yes,Physical state of the substance,biological_pocket
+Lambda_sim_nm,float,yes,Length scale from simulation (nm),1.18
+Lambda_data_nm,float,no,Length scale from empirical data (nm; null if unavailable),1.05
+dLambda_nm,float,no,"Lambda_sim - Lambda_data (nm); null if Lambda_data is unavailable",0.13
+relative_error_Lambda,float,no,"(Lambda_sim - Lambda_data) / (Lambda_data + epsilon); epsilon = 1e-9 to prevent div/0",0.124
+E_sim,float,no,Interaction energy from simulation,-12.4
+E_data,float,no,Interaction energy from empirical data,-11.8
+dE,float,no,E_sim - E_data,-0.6
+confidence_score,float,no,"Q_X = r_X * exp(-MAE_X / tau_X) * C_coverage; range [0, 1]",0.62
+gap_label,string,no,"Classification: good_match / scale_shift / energy_shift / overextended_field / underresolved_scale / missing_vdw_many_body / missing_sign_halo / bad_state_prior / bad_screening / force_mismatch / orientation_failure / topology_sensitive / resolution_failure / insufficient_data",insufficient_data
+next_action,string,no,Next recommended run family or action,import_data_sweep
+solved_Lambda_nm,float,no,Uncertainty-weighted solved Lambda after update (nm); null if data unavailable,pending
+solved_E,float,no,Uncertainty-weighted solved energy after update; null if data unavailable,pending
+sim_source_id,string,no,Source run ID for simulation record,SIM_RUN_0073
+data_source_id,string,no,Source record ID for empirical data,null
+sigma_Lambda_sim,float,no,Simulation uncertainty on Lambda (nm),0.22
+sigma_Lambda_data,float,no,Empirical uncertainty on Lambda (nm),null
+sigma_E_sim,float,no,Simulation uncertainty on energy,null
+sigma_E_data,float,no,Empirical uncertainty on energy,null
+generation_index,integer,no,Which continual refinement generation produced this comparison,1
+timestamp,string,no,Timestamp of comparison,pending
+validation_status,string,no,"Status: unvalidated_sim_prediction / pending_data / validated / promoted_to_backmatter",unvalidated_sim_prediction
+notes,string,no,Free-text notes,

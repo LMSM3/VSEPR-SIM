@@ -1,5 +1,5 @@
-/**
- * organic_formula_parser.cpp — implementation
+﻿/**
+ * organic_formula_parser.cpp  -  implementation
  *
  * Residue formulas are the *condensed* (peptide-linked) form: the
  * free amino acid minus one water molecule (H2O = H:2, O:1).
@@ -22,9 +22,9 @@
 namespace vsepr::chem::organic {
 
 // ============================================================================
-// Residue table — all 20 standard amino acids
+// Residue table  -  all 20 standard amino acids
 // Residue formula = free amino acid - H2O
-//   Ala free: C3H7NO2  →  residue: C3H5NO  (H:-2, O:-1)
+//   Ala free: C3H7NO2  ->  residue: C3H5NO  (H:-2, O:-1)
 // ============================================================================
 
 static constexpr ResidueFormula k_residues[] = {
@@ -64,7 +64,7 @@ const ResidueFormula* residue_formula(char c) {
 }
 
 // ============================================================================
-// Trivial name → formula table
+// Trivial name -> formula table
 // ============================================================================
 
 struct TrivialEntry {
@@ -101,7 +101,7 @@ static constexpr TrivialEntry k_trivial[] = {
 	{ "acetaldehyde",        "C2H4O",    "small_molecule" },
 	{ "dimethyl sulfoxide",  "C2H6OS",   "small_molecule" },
 	{ "dmso",                "C2H6OS",   "small_molecule" },
-	// Free amino acids (trivial name → free acid formula)
+	// Free amino acids (trivial name -> free acid formula)
 	{ "glycine",             "C2H5NO2",  "small_molecule" },
 	{ "alanine",             "C3H7NO2",  "small_molecule" },
 	{ "valine",              "C5H11NO2", "small_molecule" },

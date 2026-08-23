@@ -1,0 +1,434 @@
+﻿# scripts/suite_metal_steam_properties.vsim
+# =============================================================================
+#  GENERIC METAL + STEAM DUAL-PHASE PROPERTIES SUITE
+#  Run: VSEPR scripts/suite_metal_steam_properties.vsim
+# =============================================================================
+#
+#  Phase A  —  Fe BCC metal solid  (8x8x8 supercell, 1024 atoms)
+#              FIRE relaxation + MD equilibration + full structural analysis
+#
+#  Phase B  —  H2O steam / gas phase  (400 molecules, 1200 atoms)
+#              High-temperature open-boundary MD + diffusion / spectral sampling
+#
+#  Data philosophy:
+#    Every observable that the kernel can emit is requested here.
+#    This script is the "maximum sampling" reference — trim flags for
+#    production runs. It is intentionally over-instrumented so that the
+#    output system is stress-tested across both condensed and gas phases.
+#
+#  Output tree:
+#    out/metal_steam_suite/
+#      *.xyz, *.xyzf, *.xyzfull
+#      analysis.json, metrics.tsv, events.jsonl, symbolic_trace.json
+#      report.md, dashboard.svg, manifest.json
+#      pipeline/  (structure, sampling, scale_sampling, inference JSONs)
+#      verify/    (verify_report.json, verify_matrix.tsv)
+#      figures/   (rdf, energy_trace, packing_heatmap, defect_map, cluster_map,
+#                  overlay_cycle GIF, html_dashboard, report_html)
+# =============================================================================
+
+[project]
+name        = "metal_steam_suite"
+version     = "v5.0.2"
+seed_base   = 7300
+description = "Generic Fe BCC metal solid + H2O steam dual-phase properties suite. Maximum-sampling reference script."
+
+[seed]
+foundation = 7300
+defect     = 7303
+formation  = 7306
+thermal    = 7308
+placement  = 7311
+
+# =============================================================================
+#  PHASE A  —  Fe metal solid
+#  BCC iron, 8x8x8 supercell = 1024 atoms
+#  Reference lattice parameter: a = 2.87 Å -> box ~22.96 Å
+# =============================================================================
+
+[material]
+formula     = "Fe"
+structure   = "bcc"
+prototype   = "A2_W"
+cell        = "8x8x8"
+phase       = "solid"
+
+[run]
+mode          = "md"
+max_steps     = 4000
+dt_fs         = 1.0
+temperature   = 1100
+converge      = true
+output_level  = "verbose"
+
+[environment]
+periodic    = true
+temperature = 1100
+pressure    = 0.0
+medium      = "vacuum"
+
+[cell]
+lx = 22.96
+ly = 22.96
+lz = 22.96
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+fire_max_steps    = 2000
+fire_dt_fs        = 0.5
+box_size_ang      = 22.96
+periodic          = true
+formation_preset  = "metallic"
+use_ewald         = false
+step_delay_ms     = 0
+
+[[simulation.molecule]]
+formula     = "Fe"
+count       = 1024
+temperature = 1100.0
+lattice     = "bcc"
+
+# -- Phase B ------------------------------------------------------------------
+# H2O steam: 400 molecules = 1200 atoms, open box, high temperature
+# Placed in the positive-X / positive-Y region so the two phases
+# can be tracked independently via region labels.
+# Atoms: O x400, H x800 -> velocity_drift drives inward jet
+
+[[simulation.molecule]]
+formula        = "H2O"
+count          = 400
+temperature    = 650.0
+region         = "corner_xpyp"
+velocity_drift = 0.15
+
+# =============================================================================
+#  KERNEL & TRACING
+# =============================================================================
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true
+layer_events     = false
+dynamic_energy   = true
+
+# =============================================================================
+#  OBSERVE — full observable suite across both phases
+# =============================================================================
+
+[observe]
+metrics = [
+  "energy_map",
+  "coordination",
+  "rdf",
+  "msd",
+  "displacement",
+  "packing_fraction",
+  "virial_stress",
+  "diffusion_proxy",
+  "spectral_response",
+  "order_param",
+  "phase_label",
+  "pair_distribution",
+  "cluster_count",
+  "defect_map",
+  "velocity_autocorr",
+  "angular_distribution",
+  "bond_angle",
+  "cn_distribution",
+  "thermal_conductivity_proxy",
+  "radial_velocity"
+]
+output_format = "json"
+every_n_steps = 25
+
+# =============================================================================
+#  VARIANCE PROBES
+# =============================================================================
+
+[variance]
+print_results = true
+
+# Metal phase — energy and structural order
+energy_var       = "energy.total"   "last 100"  0.010
+displacement_var = "displacement"   "last 100"  0.050
+order_var        = "eta"            "last 100"  0.020
+coord_var        = "coordination"   "last  50"  0.100
+
+# Steam phase — wide variance expected
+steam_disp_var   = "displacement"   "last  50"  0.200
+steam_energy_var = "energy.total"   "last  50"  0.050
+
+# =============================================================================
+#  N_EVOLUTION PROBES
+# =============================================================================
+
+[N_evolution]
+print_results = true
+
+cluster_growth  = "cluster_count"   "last 80"   0.05
+defect_growth   = "defect_count"    "last 80"   0.05
+vapor_fraction  = "vapor"           "last 80"   0.02
+solid_fraction  = "solid"           "last 80"   0.02
+event_rate      = "event_count"     "last 50"   0.0
+
+# =============================================================================
+#  WHILE LOOP — drive metal toward equilibrium
+# =============================================================================
+
+[while]
+name          = "metal_equilibrate"
+condition     = "variance energy_var > 0.008"
+max_iters     = 15
+body_steps    = 400
+measure       = [energy_var, displacement_var, order_var]
+iter_delay_ms = 0
+
+# =============================================================================
+#  UNTIL LOOP — hold until steam diffuses
+# =============================================================================
+
+[until]
+name          = "steam_diffuse"
+condition     = "N_evolution vapor_fraction < 0.015"
+max_iters     = 20
+body_steps    = 300
+measure       = [steam_disp_var, vapor_fraction, event_rate]
+iter_delay_ms = 0
+export_each   = false
+
+# =============================================================================
+#  SMART LOOP — temperature ramp across both phases
+# =============================================================================
+
+[loop]
+name           = "phase_temperature_ramp"
+iterations     = 16
+body_steps     = 350
+stop_condition = "variance energy_var < 0.003"
+record_each    = true
+export_each    = true
+rand_seed      = 7301
+perturb_mode   = "combo"
+
+# Metal ramp: 800 K -> 1400 K with small lattice-parameter jitter
+var = "temperature      start=800   stop=1400  delta=37.5  mode=linear"
+var = "lattice_strain   start=0.0   stop=0.02  delta=0.0   mode=random  noise=0.005"
+
+# Steam ramp: 400 K -> 900 K
+var = "steam_temperature  start=400  stop=900  delta=31.25  mode=combo   noise=8.0"
+
+# Defect injection rate (semi-random exploration)
+var = "defect_rate  start=0.00  stop=0.10  delta=0.005  mode=combo  noise=0.002"
+
+# =============================================================================
+#  ANALYSIS PIPELINE — sampling, scale sampling, inference
+# =============================================================================
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 10
+unwrap_pbc            = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [12, 12, 12]
+min_particles_for_scale_sampling = 64
+rve_windows_per_level            = 24
+rve_window_placement             = "stratified"
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+spatial_cv_threshold             = 0.15
+temporal_drift_threshold         = 0.08
+scale_drift_threshold            = 0.12
+
+[analysis.structure]
+enabled                  = true
+
+[analysis.inference]
+enabled                         = true
+mode                            = "rule_based_61d"
+infer_packing_regime            = true
+infer_mobility_regime           = true
+infer_anisotropy_regime         = true
+infer_structural_stability      = true
+infer_macro_readiness           = true
+min_particles_macro_candidate   = 128
+min_frames_macro_candidate      = 20
+minimum_available_metrics_for_macro_ready = 4
+
+# =============================================================================
+#  VERIFICATION — structural, RDF, MSD, mass conservation
+# =============================================================================
+
+[verify.structure]
+enabled                        = true
+expected_prototype             = "A2_W"
+expected_coordination          = 8
+coordination_tolerance         = 1
+expected_nearest_neighbor_A    = 2.48
+nearest_neighbor_tolerance_A   = 0.20
+expected_density_relation      = "bcc_Fe_room_temp"
+
+[verify.rdf]
+enabled                      = true
+expected_first_peak_A        = 2.48
+first_peak_tolerance_A       = 0.20
+expected_second_peak_A       = 2.87
+second_peak_tolerance_A      = 0.20
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 6.0
+max_slope_late       = 0.015
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled              = true
+relative_tolerance   = 1e-9
+
+# =============================================================================
+#  EXPORT — all data outputs enabled
+# =============================================================================
+
+[export]
+# Atomistic state
+write_xyz                    = true
+write_xyzf                   = true
+write_xyzfull                = true
+write_pdb                    = true
+
+# Analysis layer
+write_analysis_json          = true
+write_metrics_tsv            = true
+write_cluster_json           = true
+write_fingerprint_json       = true
+
+# Kernel event spine
+write_events_json            = true
+write_symbolic_trace_json    = true
+
+# Reporting layer
+write_report_md              = true
+write_summary_csv            = true
+write_dashboard_json         = true
+write_manifest_json          = true
+write_dashboard_svg          = true
+write_pipeline_audit_jsonl   = true
+
+# Engineering geometry
+write_step_file              = false
+write_vtp_mesh               = true
+
+output_dir = "out/metal_steam_suite"
+
+[output]
+output_dir    = "out/metal_steam_suite/pipeline"
+output_prefix = "metal_steam"
+write_structure_json      = true
+write_sampling_json       = true
+write_scale_sampling_json = true
+write_inference_json      = true
+write_sampling_manifest   = true
+
+# =============================================================================
+#  VISUAL EXPORTS — all rendered artifacts
+# =============================================================================
+
+[export.visual]
+# Static SVG / PNG figures
+write_svg_figures          = true
+write_png_snapshots        = true
+write_rdf_svg              = true
+write_energy_trace_svg     = true
+write_packing_heatmap_svg  = true
+write_defect_map_svg       = true
+write_cluster_map_svg      = true
+
+# Animated exports
+write_trajectory_gif       = true
+write_overlay_cycle_gif    = true
+gif_frame_skip             = 20
+gif_delay_cs               = 6
+
+# Web / streaming
+write_html_dashboard       = true
+write_report_html          = true
+
+# Composite document
+write_report_pdf           = false
+
+visual_output_dir = "out/metal_steam_suite/figures"
+
+# =============================================================================
+#  INTERACTIVE DISPLAY
+# =============================================================================
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 50
+
+# Terminal panels — all on
+show_proxy_table          = true
+show_convergence_trace    = true
+show_steady_state_marker  = true
+show_snapshot_chart       = true
+show_event_timeline       = true
+show_bar_chart            = true
+show_symbolic_trace       = true
+show_animation_cues       = true
+show_audit_table          = true
+show_rdf_plot             = true
+show_energy_heatmap       = true
+show_defect_map           = true
+show_phase_field          = true
+
+# Advanced overlays
+show_bond_events          = true
+show_charge_overlay       = false
+show_velocity_vectors     = true
+
+overlay_sequence  = "density,coordination,memory,orient_order"
+gl_overlay_hold_s = 2.5
+gl_auto_orbit     = true
+gl_window_width   = 1440
+gl_window_height  = 900
+
+[visual.external]
+enabled          = true
+render_interval  = 100
+export_format    = "svg"
+show_progress    = true
+
+# =============================================================================
+#  REPORT
+# =============================================================================
+
+[report]
+title                  = "metal_steam_suite"
+include_material_cards = true
+include_metric_tables  = true

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 optimizer.hpp
 -------------
@@ -76,9 +76,9 @@ struct OptimizerSettings {
     // Verbosity
     int print_every = 0;            // Print status every N steps (0 = silent)
 
-    // Kernel audit trail — passed through to FormationEvent on exit
-    std::string source_formula;     // e.g. "C6H12", "Fe" — recorded in KernelEventLog
-    std::string formation_preset;   // e.g. "metal", "ceramic" — recorded in KernelEventLog
+    // Kernel audit trail  -  passed through to FormationEvent on exit
+    std::string source_formula;     // e.g. "C6H12", "Fe"  -  recorded in KernelEventLog
+    std::string formation_preset;   // e.g. "metal", "ceramic"  -  recorded in KernelEventLog
 };
 
 // ============================================================================
@@ -285,10 +285,10 @@ inline OptimizeResult FIREOptimizer::minimize(
         result.termination_reason = "Maximum iterations reached";
     }
 
-    // ── Kernel audit trail ────────────────────────────────────────────────────
+    // -- Kernel audit trail ----------------------------------------------------
     // Record a FormationEvent into the global KernelEventLog so every real
     // FIRE run produces an auditable trace entry.  Test harnesses must NOT
-    // inject this event manually — this is the only call site.
+    // inject this event manually  -  this is the only call site.
     {
         vsepr::kernel::FormationEvent fev;
         fev.source_formula    = settings_.source_formula;
@@ -303,7 +303,7 @@ inline OptimizeResult FIREOptimizer::minimize(
         fev.compute();               // builds equation trace, sets is_valid, warning
         vsepr::kernel::KernelEventLog::instance().record(fev);
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // -------------------------------------------------------------------------
 
     return result;
 }

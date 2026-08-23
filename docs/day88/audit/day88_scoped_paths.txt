@@ -1,0 +1,11 @@
+﻿CMakeLists.txt
+apps/cg_anim_demo.cpp
+apps/bgfx_random_values_demo.cpp
+apps/native_particle_demo.cpp
+docs/demo/DUAL_BACKEND_3D_CONTRACT.md
+docs/demo/DUAL_BACKEND_3D_DEMO.md
+scripts/demos/dual_backend_postprocess.R
+scripts/demos/run_dual_backend_3d.ps1
+tests/test_dual_backend_3d_artifacts.py
+docs/day88/DAY88_WORKTREE_FINALIZATION.tex
+docs/day88/audit

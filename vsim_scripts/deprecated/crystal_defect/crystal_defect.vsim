@@ -1,0 +1,58 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# crystal_defect.vsim
+# =============================================================================
+# Demo 05 — FCC aluminium crystal with a vacancy defect
+# =============================================================================
+# 4x4x4 FCC Al supercell. One atom removed to create a mono-vacancy.
+# FIRE relax, then NVT to observe thermal jitter around the defect site.
+#
+# Run:  vsepr run scripts/demos/crystal_defect.vsim
+# =============================================================================
+
+[project]
+name        = "crystal_defect_demo"
+version     = "v5.1.4"
+seed_base   = 1005
+description = "FCC Al 4x4x4 mono-vacancy — FIRE relax + defect analysis"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = true
+track_energy_path    = true
+track_structure_changes = true
+
+[crystal]
+formula      = "Al"
+structure    = "fcc"
+supercell_a  = 4
+supercell_b  = 4
+supercell_c  = 4
+defect_type  = "vacancy"
+defect_count = 1
+
+[run]
+mode           = "crystal"
+num_steps      = 1500
+dt             = 1.0
+integrator     = "velocity_verlet"
+temperature_K  = 500.0
+sample_interval   = 100
+render_interval   = 100
+
+[export]
+xyz      = true
+xyzFull  = true
+dynx     = true
+events   = true
+report   = true
+
+[analysis]
+rmsd              = true
+energy_trace      = true
+defect_fraction   = true
+coordination      = true
+stationarity      = true
+

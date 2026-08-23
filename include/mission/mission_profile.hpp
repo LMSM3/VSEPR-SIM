@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * mission_profile.hpp
  * ===================
@@ -9,25 +9,25 @@
  *
  * Architecture:
  *   This header defines the common foundation that all four sim versions share:
- *     1. MissionScale   — runtime budget enum (Instant / 50ms / 5s / 5min)
- *     2. RuntimeProfile — parameter pack mapped from MissionScale per version
- *     3. EntityIdentity — shared identity layer (family, subtype, state vars,
+ *     1. MissionScale    -  runtime budget enum (Instant / 50ms / 5s / 5min)
+ *     2. RuntimeProfile  -  parameter pack mapped from MissionScale per version
+ *     3. EntityIdentity  -  shared identity layer (family, subtype, state vars,
  *                         capability flags, dynamic channels declared)
- *     4. ExternalLayer  — shared mixed state (mobility, force, energy,
+ *     4. ExternalLayer   -  shared mixed state (mobility, force, energy,
  *                         response history, decay-response token)
- *     5. MissionOutput  — unified output format flags
+ *     5. MissionOutput   -  unified output format flags
  *
  * Design rules:
  *   - Entity definition is separate from dynamics.
- *   - Species definitions carry capability flags only — no simulation logic.
+ *   - Species definitions carry capability flags only  -  no simulation logic.
  *   - Every field is explicit, public, and inspectable.
  *   - MissionScale drives solver detail, entity count, and export fidelity.
  *
  * Integrates with:
- *   include/core/species_family.hpp   — SpeciesFamily / SpeciesSubfamily
- *   include/physics/particle_id.hpp   — ParticleID / species_code namespace
- *   include/identity/provenance_record.hpp — 3-tier provenance
- *   include/io/xyz_format.hpp         — .xyz / .xyza / .xyzc / .xyzf output
+ *   include/core/species_family.hpp    -  SpeciesFamily / SpeciesSubfamily
+ *   include/physics/particle_id.hpp    -  ParticleID / species_code namespace
+ *   include/identity/provenance_record.hpp  -  3-tier provenance
+ *   include/io/xyz_format.hpp          -  .xyz / .xyza / .xyzc / .xyzf output
  */
 
 #include "core/species_family.hpp"
@@ -45,10 +45,10 @@ namespace mission {
 
 // ============================================================================
 // 1. Runtime budget tiers
-//    Tier A: Instant    — constexpr / table / static init
-//    Tier B: Short_50ms — CLI inspection, quick screening, UI-refresh-safe
-//    Tier C: Medium_5s  — short sweeps, moderate N, one lattice cell
-//    Tier D: Long_5min  — broad sweeps, long trajectories, rich export
+//    Tier A: Instant     -  constexpr / table / static init
+//    Tier B: Short_50ms  -  CLI inspection, quick screening, UI-refresh-safe
+//    Tier C: Medium_5s   -  short sweeps, moderate N, one lattice cell
+//    Tier D: Long_5min   -  broad sweeps, long trajectories, rich export
 // ============================================================================
 
 enum class MissionScale : int {
@@ -148,7 +148,7 @@ inline bool has_capability(Capability flags, Capability test) {
 
 // ============================================================================
 // 4. Entity identity
-//    The "what are you?" layer. No simulation logic — only identity, state
+//    The "what are you?" layer. No simulation logic  -  only identity, state
 //    schema, material tags, dynamic channels, and defaults.
 //
 //    X_i = {id, kind, r_i, v_i, a_i, m_i, q_i, σ_i, η_i, D_i, T_i, S_i}
@@ -176,7 +176,7 @@ struct EntityState {
     // Thermal state
     double temperature {300.0};  // T_i  (K)
 
-    // Internal species mode (family-specific: conformer, phase, decay state…)
+    // Internal species mode (family-specific: conformer, phase, decay state...)
     int    internal_mode {0};    // S_i
 
     // Species code (ties to ParticleID / element Z / engine-assigned ID)
@@ -218,7 +218,7 @@ struct ExternalLayer {
     double                mobility  {1.0};              // relative mobility factor
     double                drag_coef {0.0};              // γ for Stokes drag
 
-    // Response history (last N values — compact ring buffer via index)
+    // Response history (last N values  -  compact ring buffer via index)
     static constexpr int HISTORY_LEN = 8;
     std::array<double, HISTORY_LEN> energy_history {};
     int history_head {0};

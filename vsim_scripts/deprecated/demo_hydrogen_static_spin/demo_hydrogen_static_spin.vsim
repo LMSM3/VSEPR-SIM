@@ -1,0 +1,85 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# =============================================================================
+# demo_hydrogen_static_spin.vsim
+#
+# Hydrogen atom visualizer demo.
+# Physics: single H atom, 1 MD step (effectively static -- no dynamics).
+# Display: GL viewer spins the scene at 45 deg/s around the Y axis.
+#
+# Run:
+#   vsepr run examples/demo_hydrogen_static_spin.vsim
+#
+# Requirements:
+#   BUILD_VISUALIZATION must be enabled in the CMake preset for the GL window.
+#   Terminal-only fallback: set output_type = "terminal_chart".
+# =============================================================================
+
+[project]
+name        = "demo_hydrogen_static_spin"
+version     = "v5.0.0"
+seed_base   = 1
+determinism = true
+description = "Single hydrogen atom -- static geometry, spinning GL viewer"
+
+# --- Material ----------------------------------------------------------------
+[material]
+formula   = "H"
+prototype = "noble_gas"
+phase     = "gas"
+
+# --- Single-atom system ------------------------------------------------------
+[[simulation.molecule]]
+formula     = "H"
+count       = 1
+temperature = 0.0
+lattice     = "none"
+
+# --- Environment -------------------------------------------------------------
+[environment]
+periodic    = false
+temperature = 0.0
+pressure    = 0.0
+medium      = "vacuum"
+
+# --- Run: one step only (static scene) ---------------------------------------
+[run]
+mode         = "md"
+max_steps    = 1
+dt_fs        = 1.0
+temperature  = 0.0
+converge     = false
+output_level = "normal"
+
+# --- Kernel ------------------------------------------------------------------
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+# --- Export ------------------------------------------------------------------
+[export]
+write_xyz           = true
+write_analysis_json = false
+write_metrics_tsv   = false
+write_report_md     = false
+output_dir          = "out/demo_hydrogen_static_spin"
+
+# --- Visualizer --------------------------------------------------------------
+# output_type = "gl_live_60fps" opens the smooth 60 fps GL window.
+# For headless / terminal-only environments swap to "terminal_chart".
+[visual]
+output_type       = "gl_live_60fps"
+render_interval   = 1
+
+# Camera: spin continuously around Y axis at 45 deg/s.
+# Set gl_spin = false and gl_spin_deg_per_s = 0.0 for a fully frozen view.
+gl_spin           = true
+gl_spin_axis      = "y"
+gl_spin_deg_per_s = 45.0
+
+gl_auto_orbit     = false
+gl_show_axes      = true
+gl_show_neighbours = false
+gl_window_width   = 960
+gl_window_height  = 720

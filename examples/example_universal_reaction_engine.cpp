@@ -1,26 +1,26 @@
-/**
+﻿/**
  * example_universal_reaction_engine.cpp
  *
- * Universal Automated Chemical Reaction Engine — Full Demonstration
+ * Universal Automated Chemical Reaction Engine  -  Full Demonstration
  * ==================================================================
  *
  * Runs three chemically distinct reactions through the thermal-atomistic
  * simulation pipeline, generating comprehensive reports and SolidWorks-
  * compatible material data for each.
  *
- * Reaction 1 — Organic Synthesis with Inorganic Reagent:
- *   C₆H₆ + HNO₃ →[H₂SO₄] C₆H₅NO₂ + H₂O
+ * Reaction 1  -  Organic Synthesis with Inorganic Reagent:
+ *   C₆H₆ + HNO₃ ->[H₂SO₄] C₆H₅NO₂ + H₂O
  *   Nitration of benzene via electrophilic aromatic substitution.
  *
- * Reaction 2 — Special Inorganic Precipitation:
- *   Th(NO₃)₄ + 2 H₂C₂O₄ + 6 H₂O → Th(C₂O₄)₂·6H₂O↓ + 4 HNO₃
+ * Reaction 2  -  Special Inorganic Precipitation:
+ *   Th(NO₃)₄ + 2 H₂C₂O₄ + 6 H₂O -> Th(C₂O₄)₂·6H₂Ov + 4 HNO₃
  *   Thorium oxalate sludge formation.
  *
- * Reaction 3 — Thermal Decomposition (salt → gas + powder):
- *   2 Cu(NO₃)₂ → 2 CuO(s) + 4 NO₂(g) + O₂(g)
+ * Reaction 3  -  Thermal Decomposition (salt -> gas + powder):
+ *   2 Cu(NO₃)₂ -> 2 CuO(s) + 4 NO₂(g) + O₂(g)
  *   Copper nitrate decomposition.
  *
- * Outputs per reaction (12–22 elements):
+ * Outputs per reaction (12-22 elements):
  *   - Markdown report with full analysis
  *   - CSV timeseries (energy, forces, η, etc.)
  *   - SolidWorks CFD material data CSV (22 fields per species)

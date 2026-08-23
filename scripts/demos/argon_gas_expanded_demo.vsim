@@ -1,0 +1,69 @@
+# argon_gas_expanded_demo.vsim
+# =============================================================================
+# Demo 04 expanded — Argon noble gas NVT MD
+# =============================================================================
+# 512 Ar atoms in a 60 Å cubic box at 300 K. LJ potential.
+# Tuned to emit xyz, xyzf trajectory, summary csv, analysis json, and a PNG preview.
+#
+# Run:  vsepr run scripts/demos/argon_gas_expanded_demo.vsim
+# Artifacts: out/v516_integrated_runtime_cut/argon_gas_expanded
+# =============================================================================
+
+[project]
+name        = "argon_gas_expanded_demo"
+version     = "v5.16.0"
+seed_base   = 1004
+
+determinism = true
+description = "Ar512 NVT gas — LJ potential, 300 K, expanded export set"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = false
+track_energy_path    = true
+track_structure_changes = false
+
+[simulation]
+box_size_ang     = 60.0
+periodic         = true
+fire_max_steps   = 200
+fire_dt_fs       = 1.0
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "Ar"
+count         = 512
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode           = "gas"
+num_steps      = 2000
+dt             = 1.0
+integrator     = "velocity_verlet"
+temperature_K  = 300.0
+sample_interval   = 100
+render_interval   = 100
+
+[export]
+output_dir                = "out/v516_integrated_runtime_cut/argon_gas_expanded"
+write_xyz                 = true
+write_xyzf                = true
+write_xyzfull             = true
+write_analysis_json       = true
+write_summary_csv         = true
+write_report_md           = true
+write_manifest_json       = true
+
+[export.visual]
+write_png                 = true
+png_width                 = 960
+png_height                = 720
+output_format             = "png"
+
+[analysis]
+rmsd            = true
+energy_trace    = true
+diffusion       = true
+stationarity    = true

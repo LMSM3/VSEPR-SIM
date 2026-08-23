@@ -1,0 +1,1974 @@
+\documentclass[11pt,a4paper]{article}
+
+%% ── Encoding & fonts ──────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+%% ── Core packages ────────────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsfonts,amsbsy}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{bm}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{mdframed}
+\usepackage{setspace}
+\usepackage{graphicx}
+
+%% ── Page geometry ────────────────────────────────────────────────────────────
+\geometry{left=2.8cm,right=2.8cm,top=3.2cm,bottom=3.0cm,headheight=15pt}
+
+%% ── Hyperref ─────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black,
+  pdftitle={Looking Up: A Projection-Residual Framework Without Compactified Extra Dimensions}
+}
+
+%% ── Section styling ──────────────────────────────────────────────────────────
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.6em}{}[\vspace{-2pt}\rule{\textwidth}{0.4pt}]
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\itshape}{\thesubsubsection}{0.5em}{}
+
+%% ── Header / footer ──────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\footnotesize\textit{Looking Up}\textbar{}\ Fifth-Dimensional Momentum Framework}
+\rhead{\footnotesize Rev.~1.0}
+\lfoot{\footnotesize\today}
+\rfoot{\footnotesize\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.3pt}
+
+%% ── Notation macros ──────────────────────────────────────────────────────────
+\newcommand{\pw}{p_w}                        % hidden-axis momentum scalar
+\newcommand{\pvw}{\mathbf{p}_w}              % hidden-axis momentum vector context
+\newcommand{\Lf}{\Lambda_5}                  % fifth-force coupling constant
+\newcommand{\afive}{\mathbf{a}_5}            % fifth-force acceleration (vector)
+\newcommand{\afiver}{a_5}                    % fifth-force acceleration (scalar/radial)
+\newcommand{\Phifive}{\Phi_5}                % fifth-force potential
+\newcommand{\Seff}{S_{\rm eff}}              % effective switching function
+\newcommand{\Sfive}{S_5}                     % radial propagation function
+\newcommand{\rcrit}{r_{\rm crit}}            % transition/switching radius
+\newcommand{\vobs}{v_{\rm obs}}              % observed velocity
+\newcommand{\vbar}{v_{\rm bar}}              % baryonic velocity
+\newcommand{\vmod}{v_{\rm model}}            % model velocity
+\newcommand{\aobs}{a_{\rm obs}}              % observed acceleration
+\newcommand{\abar}{a_{\rm bar}}              % baryonic acceleration
+\newcommand{\asnap}{a_5^{\rm snap}}          % snapshot fifth force
+\newcommand{\atot}{a_5^{\rm total}}          % total fifth force
+\newcommand{\rhat}{\hat{\mathbf{r}}}         % radial unit vector
+\newcommand{\Bfield}{\mathcal{B}_5}          % background field
+\newcommand{\vfive}{v_5}                     % fifth-force velocity contribution
+\newcommand{\vN}{v_N}                        % Newtonian velocity
+\newcommand{\InfoD}{\Delta\mathfrak{D}}      % old information delta
+\newcommand{\UA}{U^A}                        % 5D four-velocity
+\newcommand{\XA}{X^A}                        % 5D position
+\newcommand{\PA}{P^A}                        % 5D momentum
+\newcommand{\dS}{dS_5^2}                     % 5D interval
+\newcommand{\Kw}{K_w}                        % hidden-axis kinetic energy
+
+%% ── Key-result box environment ───────────────────────────────────────────────
+\newmdenv[
+  topline=true, bottomline=true, rightline=false, leftline=false,
+  linewidth=1.2pt, linecolor=black,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=4pt, innerrightmargin=4pt,
+  skipabove=10pt, skipbelow=10pt
+]{keybox}
+
+\captionsetup{font=small,labelfont=bf}
+
+%% ── Figure suggestion annotation ─────────────────────────────────────────────
+\newcommand{\figsuggest}[1]{%
+  \medskip
+  \noindent\hspace{0pt}\textcolor{gray}{\small\itshape
+    $\triangleright$\;Figure suggestion:\enspace #1}%
+  \medskip}
+
+%% ═════════════════════════════════════════════════════════════════════════════
+\begin{document}
+%% ═════════════════════════════════════════════════════════════════════════════
+
+%% ── TITLE PAGE ───────────────────────────────────────────────────────────────
+\thispagestyle{empty}
+\vspace*{2.2cm}
+
+\begin{center}
+  \noindent\rule{\textwidth}{1.2pt}\vspace{1.0em}
+
+  {\fontsize{24}{30}\selectfont\bfseries Looking Up}
+
+  \vspace{0.6em}
+  {\large\itshape
+    A Fifth-Dimensional Momentum Framework\\[0.2em]
+    for Galactic Rotation Without Dark Matter
+  }
+
+  \vspace{0.4em}
+  {\normalsize
+    A Projection-Residual Framework Without Compactified Extra Dimensions
+  }
+
+  \vspace{0.8em}
+  \noindent\rule{\textwidth}{0.5pt}\vspace{0.8em}
+
+  {\normalsize\textsc{Theoretical Division}}\\[0.3em]
+  {\small\textit{Particle Physics and Cosmological Modelling Research Group}}
+
+  \vspace{1.8em}
+  {\small
+  \begin{tabular}{rl}
+    \textbf{Identifier:} & LOOKINGUP-1.0 \\[0.3em]
+    \textbf{Revision:}   & 1.0 \\[0.3em]
+    \textbf{Date:}       & \today \\[0.3em]
+    \textbf{Status:}     & Theoretical framework draft \\
+  \end{tabular}
+  }
+
+  \vspace{2.0em}
+  \noindent\rule{\textwidth}{0.5pt}\vspace{0.8em}
+
+  \begin{minipage}{0.86\textwidth}
+  \small\textbf{Abstract.}\quad
+  This paper develops an Inverse Kaluza-Klein Scale Symmetry framework as a
+  projection-residual approach to galactic rotation, force behaviour, and
+  scale-dependent observation.  Unlike standard Kaluza-Klein theory, the
+  framework does not assume that an extra dimension is compactified into a
+  microscopic circular coordinate.  Instead it reverses the inference
+  direction: observed force-scale behaviour, hidden-active internal structure,
+  and unresolved projection residuals are used to infer the existence of a
+  missing scale permission.  The central claim is that ordinary spacetime
+  observation $O_S = P_S(I)$ does not recover the full physical identity $I$,
+  and that the residual $R_S = U_S(I) - E_S(O_S)$ encodes unresolved identity
+  content at each observational scale.
+
+  The $w$-coordinate introduced here is not a curled spatial dimension.
+  It is a scale-depth degree of freedom associated with projection access,
+  identity packing, and residual structure.  Within this framing,
+  hidden-axis momentum $\pw = m\,dw/d\tau$ acts as a fifth-force charge whose
+  radial projection follows a logarithmic coupling.  The resulting acceleration
+  \[
+    \afiver(r) = \Lf\ln\!\left(1+\frac{|\pw|}{p_0}\right)
+    G(r)\frac{1}{r+r_c}
+  \]
+  naturally produces a nearly flat contribution to $v^2(r)$ at large galactic
+  radii.  A sigmoid activation gate $G(r)$ suppresses the fifth force at all
+  sub-galactic scales, protecting solar-system tests and molecular dynamics
+  without patching.  Three interpretive schools, a complete numerical
+  parameterisation protocol for the SPARC database, and precise falsification
+  criteria are developed.  Dark-sector signatures are reinterpreted as
+  gravitationally visible but electromagnetically unresolved identity content
+  --- a projection gap rather than invisible matter.
+  \end{minipage}
+
+  \vspace{0.8em}
+  \noindent\rule{\textwidth}{1.2pt}
+\end{center}
+
+%% ── Derivation summary ───────────────────────────────────────────────────────
+\vspace{1.2em}
+\begin{center}
+\begin{minipage}{0.88\textwidth}
+\small
+\textbf{Step-by-step derivation of $\boldsymbol{\mathbf{a}_5}$.}\quad
+The fifth-force acceleration follows from four sequential steps:
+
+\begin{enumerate}[leftmargin=1.8em,itemsep=4pt]
+
+\item \textbf{5D proper time.}\enspace
+  The five-dimensional spacetime interval $\dS = -c^2dT^2 + d\mathbf{r}^2 + dw^2$
+  implies a proper-time relation that includes motion along the hidden axis $w$:
+  \[
+    d\tau = dT\sqrt{1 - \frac{|\mathbf{v}|^2}{c^2} - \frac{v_w^2}{c_w^2}} .
+  \]
+
+\item \textbf{Hidden-axis momentum.}\enspace
+  The projection of the 5D momentum vector onto the $w$-direction defines the
+  fifth-force charge.  In the non-relativistic (galactic) limit:
+  \[
+    \pw = m\,\frac{dw}{d\tau} \;\approx\; m\,v_w .
+  \]
+
+\item \textbf{Logarithmic potential.}\enspace
+  A logarithmic coupling $g(\pw) = \ln(1+|\pw|/p_0)$ is chosen for its
+  saturation behaviour at large $|\pw|$ and vanishing at $|\pw|=0$.
+  The resulting fifth-force potential is:
+  \[
+    \Phi_5(r) = -\Lf \ln\!\left(1+\frac{|\pw|}{p_0}\right)
+    \ln\!\left(\frac{r_c}{r + r_c}\right) .
+  \]
+
+\item \textbf{Radial gradient + gate.}\enspace
+  Differentiating with respect to $r$ and multiplying by the sigmoid activation
+  gate $G(r) = 1/(1+e^{-k(r-r_0)})$:
+  \[
+    \boxed{\,
+      \afive(r) = -\Lf\ln\!\left(1+\frac{|\pw|}{p_0}\right)
+      \underbrace{\frac{1}{1+e^{-k(r-r_0)}}}_{G(r)}
+      \frac{1}{r+r_c}\,\rhat
+    \,}
+  \]
+  At large galactic radii, $G(r)\to 1$ and $r+r_c \approx r$, giving a
+  $1/r$ force profile that produces flat rotation curves.
+  At sub-galactic radii, $G(r)\to 0$ and the fifth force vanishes.
+
+\end{enumerate}
+\end{minipage}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+%% ── Post-TOC derivation reference ────────────────────────────────────────────
+\thispagestyle{fancy}
+\vspace*{0.6cm}
+\begin{center}
+\begin{minipage}{0.90\textwidth}
+
+\textbf{\large Derivation Reference: $\boldsymbol{\mathbf{a}_5}$ and School~I Curve Fitting}
+
+\smallskip\rule{\textwidth}{0.5pt}\smallskip
+
+\textbf{A.\ Full derivation chain for $\afive$.}
+
+\smallskip
+\noindent The fifth-force acceleration is derived in four steps from the
+5D spacetime manifold, requiring no new force postulates --- only the
+existence of a hidden spatial axis $w$ and the standard relation between
+momentum and velocity along that axis.
+
+\begin{enumerate}[leftmargin=1.8em,itemsep=6pt]
+
+\item \textbf{5D interval and proper time.}
+\[
+  dS_5^2 = -c^2dT^2 + d\mathbf{r}^2 + dw^2
+  \;\;\Rightarrow\;\;
+  d\tau = dT\sqrt{1 - \tfrac{|\mathbf{v}|^2}{c^2} - \tfrac{v_w^2}{c_w^2}} .
+\]
+
+\item \textbf{Hidden-axis momentum as fifth-force charge.}
+\[
+  \pw \;=\; m\frac{dw}{d\tau} \;\approx\; mv_w
+  \quad\text{(non-relativistic galactic limit).}
+\]
+
+\item \textbf{Logarithmic potential from coupling function $g(\pw) = \ln(1+|\pw|/p_0)$.}
+\[
+  \Phi_5(r) = -\Lf\ln\!\left(1+\tfrac{|\pw|}{p_0}\right)\ln\!\left(\tfrac{r_c}{r+r_c}\right).
+\]
+
+\item \textbf{Radial gradient and sigmoid gate $G(r) = 1/(1+e^{-k(r-r_0)})$.}
+\[
+  \boxed{
+    \afive(r) = -\Lf\ln\!\left(1+\tfrac{|\pw|}{p_0}\right)
+    \cdot G(r)
+    \cdot \tfrac{1}{r+r_c}\,\rhat
+  }
+\]
+\end{enumerate}
+
+\medskip
+\rule{\textwidth}{0.4pt}
+\smallskip
+
+\textbf{B.\ School~I (Kinematic Snapshot) curve-fitting protocol.}
+
+\smallskip
+\noindent
+The kinematic snapshot model treats $|\pw(r)|$ as a radial proxy sourced
+by the baryonic momentum distribution.  The complete curve-fitting derivation
+for a single galaxy proceeds as follows.
+
+\medskip
+\noindent\textit{Step 1 — baryonic baseline.}\enspace
+Take the baryonic contribution $\vbar^2(r) = GM_{\rm bar}(r)/r$ directly
+from stellar mass models and H{\sc i} gas maps.  This is \emph{not} fitted;
+it is an input.
+
+\medskip
+\noindent\textit{Step 2 — observed residual.}\enspace
+Compute the residual acceleration that baryons alone cannot explain:
+\[
+  \Delta a(r) = \frac{\vobs^2(r) - \vbar^2(r)}{r} .
+\]
+
+\medskip
+\noindent\textit{Step 3 — fifth-force proxy.}\enspace
+Adopt a physically motivated proxy for hidden-axis momentum.
+The three canonical choices, in order of increasing complexity, are:
+\begin{align*}
+  |\pw(r)| &\propto m_* v_{\rm circ}(r)
+  & &\text{(circular velocity proxy),} \\
+  |\pw(r)| &\propto \Sigma(r)\,v_{\rm circ}(r)
+  & &\text{(surface-density proxy),} \\
+  |\pw(r)| &\propto \rho(r)\,v(r)
+  & &\text{(momentum-flux proxy).}
+\end{align*}
+
+\medskip
+\noindent\textit{Step 4 — parameter optimisation.}\enspace
+Minimise over the universal parameter vector
+$\Theta = \{\Lf,\,p_0,\,r_c,\,r_0,\,k\}$:
+\[
+  \chi^2(\Theta) = \sum_{j=1}^{N}
+  \left[\frac{\vobs(r_j) - \vmod(r_j;\,\Theta)}{\sigma_{v,j}}\right]^2,
+  \quad
+  \vmod^2(r) = \vbar^2(r)
+  + \Lf\,r\ln\!\left(1+\tfrac{|\pw(r)|}{p_0}\right)\Sfive(r;\Theta) .
+\]
+
+\medskip
+\noindent\textit{Step 5 — population consistency gate.}\enspace
+Repeat for $N_{\rm gal} \geq 10$ galaxies.  Accept the model only if
+$\{\Lf,\,p_0,\,r_c\}$ remain within a factor of $\sim$3 across the sample.
+Per-galaxy quantities $\{r_0,\,k,\,|\pw(r)|\}$ may vary but must
+correlate with observable kinematics.
+
+\medskip
+\noindent\textit{Step 6 — falsification check.}\enspace
+If Step~5 fails --- i.e., the universal parameters show order-of-magnitude
+variation between galaxies with no kinematic predictor --- the School~I
+model is falsified and must be reclassified as a disguised halo fit.
+
+\medskip
+\rule{\textwidth}{0.5pt}
+\end{minipage}
+\end{center}
+\newpage
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Introduction: The Rotation Curve Problem}\label{sec:intro}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+In a purely Newtonian framework, stars and gas in the outer disk of a spiral
+galaxy should orbit analogously to the planets of the outer solar system: as
+enclosed mass decreases with radius, orbital velocities should fall.  They do
+not.  From the Andromeda Galaxy to low-surface-brightness dwarfs, the observed
+outer-disk velocity profile is approximately flat where theory predicts it
+should decline.  The discrepancy is systematic, persistent, and large --- at
+outer-disk radii, visible-matter predictions can fall short of observed
+velocities by factors of two or more.
+
+The dominant resolution invokes dark matter: an unseen mass component whose
+extended halo provides the missing inward acceleration.  This explanation is
+internally consistent and broadly accepted, but it depends on a particle species
+that has evaded direct detection in three decades of increasingly sensitive
+laboratory experiments.  Modified-gravity alternatives, from MOND to $f(R)$
+theories, attempt to alter the force law rather than introduce new matter,
+but face systematic difficulties with cluster-scale dynamics, the bullet-cluster
+mass offset, and the cosmic microwave background power spectrum.
+
+This paper explores a different possibility.  The missing acceleration may arise
+not from hidden mass and not from a modified force law, but from
+\emph{hidden-dimensional momentum}: a contribution to the radial force budget
+that originates in a fifth spatial coordinate $w$ and projects onto the galactic
+plane through a logarithmic coupling.  The central translation is:
+
+\begin{keybox}
+\[
+  \InfoD_i \;\longrightarrow\; \pw^{(i)} = m_i \frac{dw_i}{d\tau} .
+\]
+The hidden variable is not an inaccessible information debt accumulated over
+cosmic history.  It is the current momentum of a particle along a hidden fifth
+spatial axis.
+\end{keybox}
+
+\noindent
+This replacement makes the theory local, kinematic, and directly testable using
+existing mass-profile and spectroscopic velocity data.  The paper does not
+declare that dark matter does not exist; it constructs a geometric mechanism
+capable of producing dark-matter-like rotation signatures, and asks whether
+that mechanism can be distinguished from a halo fit using present observations.
+
+\medskip
+\noindent
+The paper is organised as follows.
+Section~\ref{sec:ikk} establishes the framework's identity as Inverse
+Kaluza-Klein Scale Symmetry: the compactification rejection, the reversed
+inference direction, the five-axiom chain, and the IKK dark-sector
+restatement.
+Section~\ref{sec:geometry} develops the five-dimensional geometric engine:
+the extended coordinate space, five-velocity, five-momentum, the 5D spacetime
+interval, and the local frame-dissection equation.
+Section~\ref{sec:framework} derives the logarithmic fifth-force potential,
+the radial acceleration, the rotation-curve equation, and the geometric lasso.
+Section~\ref{sec:fitting} provides the full numerical parameterisation protocol
+for regression against data, including the switching function, the transition
+radius, ghost-source corrections, and the escalation hierarchy.
+Section~\ref{sec:schools} presents three interpretive schools.
+Section~\ref{sec:tests} outlines observational tests.
+Section~\ref{sec:limits} discusses limitations and falsifiability.
+Section~\ref{sec:conc} concludes.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Framework Identity: Inverse Kaluza-Klein Scale Symmetry}
+\label{sec:ikk}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Naming and Inference Direction}
+
+This framework is called \textbf{Inverse Kaluza-Klein Scale Symmetry} because
+it reverses the inference direction of standard Kaluza-Klein theory while
+explicitly rejecting the compactification assumption.
+
+In standard Kaluza-Klein theory, an extra spatial dimension is introduced and
+compactified --- classically as a small circular coordinate $S^1$ --- and the
+four-dimensional force behaviour observed in ordinary spacetime is derived as a
+geometric consequence of that compact structure:
+\[
+  D_{5,\,\text{compact}} \;\xrightarrow{\;\text{KK}\;}\; F_{\text{obs}} .
+\]
+The geometry comes first; the observed force follows.
+
+The present framework begins at the other end.  It starts with observed
+force-scale behaviour, projection failure across measurement scales, and
+residual identity content that ordinary observation cannot recover.  From
+those residuals it infers what kind of missing degree of freedom must exist:
+\[
+  F_{\text{obs}},\; R_{\text{obs}}
+  \;\xrightarrow{\;\text{IKK}\;}\;
+  D_{\text{permission}} ,
+\]
+where $D_{\text{permission}}$ is \emph{not} a literal curled-up coordinate.
+It is a missing degree of freedom required to explain why projection at a
+given observational scale loses structure.
+
+\begin{keybox}
+\textbf{The key distinction.}\quad
+Standard KK: \emph{compact extra geometry $\to$ force behaviour.}\\
+Inverse KK: \emph{force-scale residuals $\to$ inferred scale permission.}
+
+The framework is adjacent to Kaluza-Klein in philosophical origin but opposite
+in method.  A tiny compact circle is not the theory.  It is the historical
+mirror the theory is walking away from.
+\end{keybox}
+
+\subsection{Rejection of Compactification}
+\label{sec:nocompact}
+
+The coordinate $w$ introduced in this framework should not be interpreted as
+\[
+  w = \theta R ,\quad \theta \in [0,\,2\pi) ,
+\]
+nor as $w \in S^1$.  The framework explicitly rejects this identification.
+Instead:
+\[
+  w \;\in\; S_{\text{depth}} ,
+\]
+where $S_{\text{depth}}$ denotes a scale-depth identity space representing
+projection access, unresolved identity content, and hidden residual structure
+at a given observational scale.
+
+The distinction is fundamental:
+
+\medskip
+\begin{center}
+\begin{tabular}{@{}p{0.44\textwidth}p{0.44\textwidth}@{}}
+\toprule
+\textbf{Compact coordinate} (KK) & \textbf{Scale-depth coordinate} (IKK) \\
+\midrule
+A spatial loop curled below detection limits &
+A bookkeeping axis for unrecovered projection content \\[6pt]
+Requires a specific geometric radius $R$ &
+Requires only that $P_S(I) \neq I$ \\[6pt]
+Fails if the loop has not been found &
+Confirmed whenever projection is demonstrably incomplete \\[6pt]
+``Something is curled up'' &
+``Something is not recovered by the current projection'' \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip\noindent
+The framework therefore does not need the unobserved structure to occupy
+microscopic circular geometry.  It only requires that projected observations
+fail to recover the full identity content.
+
+\medskip
+\begin{keybox}
+\textbf{Corrected statement.}\quad
+Inverse KK does not compactify an extra dimension.
+It infers a missing scale permission from projection residuals.
+\end{keybox}
+
+\subsection{Axiom Chain}
+\label{sec:axioms}
+
+The following five axioms replace any earlier informal motivation and
+constitute the logical skeleton of the framework.
+
+\medskip
+\noindent\textbf{Axiom 1: Projection is incomplete.}\\
+Observation at scale $S$ does not recover the full identity $I$:
+\[
+  O_S = P_S(I) , \qquad P_S(I) \neq I ,
+\]
+unless $P_S$ is perfectly injective and complete, which physical measurement
+is generally not.
+
+\medskip
+\noindent\textbf{Axiom 2: Residual identity exists.}\\
+The residual at scale $S$ is:
+\[
+  R_S = U_S(I) - E_S(O_S) ,
+\]
+where $U_S(I)$ is the unprojected identity content available at scale $S$,
+and $E_S(O_S)$ is the expected reconstruction from observation alone.
+If $R_S \neq 0$, the observed state is not the full state.
+
+\medskip
+\noindent\textbf{Axiom 3: Scale permission replaces compactification.}\\
+Standard KK uses a compactified geometric extension $D_5 \sim S^1$.
+This framework uses scale permission:
+\[
+  \mathcal{S}_n = (D_n,\; M_n,\; L_n) ,
+\]
+where $D_n$ is a degree of freedom or permission available at scale $n$,
+$M_n$ is the mediator or interaction carrier active at that scale, and
+$L_n$ is the observational limit.  The extra structure is not required to
+be spatially compact.
+
+\medskip
+\noindent\textbf{Axiom 4: Packing creates higher-scale identity.}\\
+Components at scale $n$ assemble into identities at scale $n+1$:
+\[
+  C^{(n)}_{\Pi_n} \;\longrightarrow\; I^{(n+1)} .
+\]
+This is consistent with the recursive scale ladder: quarks pack into
+hadrons, hadrons into nuclei, nuclei into atoms, atoms into molecules,
+molecules into materials, materials into gravitational systems, and at each
+level new projection residuals appear.
+
+\medskip
+\noindent\textbf{Axiom 5: Projection residuals imply hidden-active structure.}\\
+A projected channel can cancel while internal structure remains active.
+For an identity vector $\mathbf{c}_j$ with charges summing to zero:
+\[
+  I_j = \boldsymbol{\alpha}^T \mathbf{c}_j = 0 ,
+  \qquad
+  H_j = \mathbf{c}_j^T W \mathbf{c}_j > 0 .
+\]
+The hidden-active condition $I_j = 0$, $H_j > 0$ says: apparent neutrality
+does not imply internal inactivity.  The neutron is the canonical example:
+\[
+  +\tfrac{2}{3} - \tfrac{1}{3} - \tfrac{1}{3} = 0 ,
+  \quad\text{but}\quad
+  \left(\tfrac{2}{3}\right)^2 + \left(\tfrac{1}{3}\right)^2 + \left(\tfrac{1}{3}\right)^2
+  = \tfrac{2}{3} \neq 0 .
+\]
+The same logic applies to galactic dark residuals: the visible baryonic
+field appears insufficient, but the full identity space contains active
+hidden-axis momentum content that the electromagnetic projection does not
+resolve.
+
+\figsuggest{Two-column conceptual diagram: \emph{Left} --- standard KK
+inference chain (compact $S^1$ $\to$ gauge field $\to$ observed force);
+\emph{Right} --- IKK inference chain (observed residual $\to$ projection
+gap $\to$ inferred scale permission $D_{\rm permission}$) --- drawn as
+mirror-image arrows to make the inversion visually explicit.}
+
+\subsection{Dark-Sector Restatement}
+\label{sec:darksector}
+
+Within the IKK framing, the dark-sector interpretation changes.
+The coordinate $w$ is not a compact hidden circle.  It is a scale-depth
+coordinate representing identity content that couples differently to
+gravitational and electromagnetic projection kernels.
+
+The observed dark residual is:
+\[
+  \rho_{\text{dark}} = \rho_G - \rho_{\text{EM}} ,
+\]
+where $\rho_G$ is the mass inferred from gravitational lensing and kinematics,
+and $\rho_{\text{EM}}$ is the mass inferred from electromagnetic emission.
+In the IKK framework:
+\[
+  \rho_{\text{dark}}(x,y,z;\,t)
+  = \int \rho(x,y,z,w;\,t)
+    \bigl[K_G(w) - K_{\text{EM}}(w)\bigr]\,dw ,
+\]
+where $K_G(w)$ and $K_{\text{EM}}(w)$ are the gravitational and electromagnetic
+projection kernels over the scale-depth axis.  The dark regime is defined by
+the condition:
+\[
+  K_G(w) \neq K_{\text{EM}}(w)
+\]
+for some region of scale-depth $w$.
+
+\begin{keybox}
+\textbf{IKK definition of dark matter.}\\
+Dark matter is gravitationally visible but electromagnetically unresolved
+identity content: a projection gap, not invisible particles.
+\end{keybox}
+
+\noindent
+This framing is consistent with, and stronger than, the galactic rotation
+result derived in the sections that follow.  The fifth-force acceleration
+$\afive(r)$ is not an ad-hoc correction; it is the radial projection of
+hidden-axis momentum content that the standard electromagnetic projection
+$P_{\text{EM}}$ fails to recover.
+
+\figsuggest{Venn diagram: three overlapping regions labelled
+``Gravitationally visible'', ``Electromagnetically visible'', and
+``Scale-depth resolved''.  The intersection of all three is baryonic
+matter.  The region gravitationally visible but not electromagnetically
+visible is the dark matter zone --- labelled in this framework as
+``$K_G(w) \neq K_{\rm EM}(w)$ region of $w$''.}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Five-Dimensional Geometric Engine}\label{sec:geometry}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{On Dimensional Order, Scale, and the Necessity of Axes}
+\label{sec:dimorder}
+
+\textit{A note before the mathematics.}\enspace
+The three spatial axes $x$, $y$, $z$ of ordinary experience are not
+intrinsically ordered.  There is no physical reason why $x$ should be
+``first'', $y$ ``second'', and $z$ ``third.''  We label them for
+bookkeeping.  Any rotation in 3D space mixes them freely, and the laws
+of physics are symmetric under that mixing.  The axes are not a
+hierarchy; they are a \emph{basis} --- the minimum number of independent
+directions required to specify a position or transmit a force in the
+space we navigate.
+
+\medskip
+\noindent
+This raises an open question the moment additional dimensions are proposed:
+\emph{what makes a dimension relevant?}  Not its label.  Not its position
+in the list.  The question is whether a given axis participates in
+\textbf{motion and force transmission} at the scale under consideration.
+
+\medskip
+\noindent
+The pattern from known physics suggests a scale-dependent answer.  At
+molecular scales, three spatial axes plus time are sufficient to account
+for all observed forces and displacements.  At nuclear scales, the strong
+force introduces \emph{colour charge}: a new internal degree of freedom
+that has no geometric axis in ordinary 3-space but behaves like one in the
+abstract symmetry space of QCD.  At the electroweak scale, isospin adds
+another.  At cosmological scales, dark-energy-like effects suggest that
+the effective dimensionality of the force landscape may again change.
+In each case the threshold for a new ``effective axis'' is not an ontological
+declaration but a statement about \textbf{normalised degrees of freedom that
+carry distinguishable momentum or mediate distinguishable forces at that
+scale}.
+
+\medskip
+\noindent
+The present framework makes one specific proposal in this pattern.  At
+galactic scales --- where $r \sim 1$--$100\,\mathrm{kpc}$ --- a fifth
+spatial axis $w$ becomes dynamically non-negligible.  Below galactic scales
+the sigmoid gate $G(r) \approx 0$ effectively removes $w$ from the local
+force budget, just as the nuclear degrees of freedom are invisible to a
+Newton pendulum experiment.  The fifth axis is not ``more important'' than
+$x$, $y$, $z$; it simply requires a \emph{fifth normalised axis} to
+describe motion and force at a scale where three axes and one time axis
+are no longer sufficient.
+
+\medskip
+\noindent
+The philosophical analogy with $x$, $y$, $z$: just as there is no preferred
+\emph{order} among the three ordinary spatial axes (no law of physics cares
+whether you call them 1, 2, 3 or $\alpha$, $\beta$, $\gamma$), there may
+be no preferred order among extra spatial dimensions either.  The \emph{number}
+of axes active at a given scale is what matters, not their labels or their
+position in the list.  This framework requires a fifth axis active at
+galactic scales.  Whether it is ``the fifth'' or ``one of many'' is a question
+about the global topology of the manifold, not about the local physics.
+
+\figsuggest{Two-panel illustration of scale-dependent dimensional relevance:
+\emph{left panel} --- a scale ladder from $10^{-15}$\,m (nuclear) to
+$10^{23}$\,m (galactic) with the number of effective dynamical axes annotated
+at each scale (3 at human scale, 3$+$colour at nuclear scale, 3$+w$ at
+galactic scale); \emph{right panel} --- a ``dimensional activation'' sigmoid
+curve showing $G(r)$ as a function of radius, visually tying the mathematical
+gate to the conceptual idea of a dimension switching on.}
+
+\figsuggest{Conceptual 3D rendering: start with an $x$--$y$ plane (a flat
+galaxy disk); extrude a $z$-axis upward (ordinary height); then draw a
+second perpendicular arrow $w$ that is \emph{not} in the plane of the screen
+and not aligned with $z$ --- visually suggest the axis is ``into'' a
+direction the viewer cannot see, and label it: ``$w$: active only at galactic
+scales''.  Emphasise that no one axis is hierarchically superior.}
+
+\subsection{Extended Coordinate Space}\label{sec:coords}
+
+\textit{Non-technical summary.}\enspace
+Think of ordinary space as a flat surface.  Every object on it has a position
+in the east--west and north--south directions, and a height.  This framework
+adds a fourth direction that is not east, west, north, south, up, or down ---
+it is a direction you cannot currently point to, but along which particles may
+still move.  We call this direction $w$.  The proposal is simply: space has
+one more direction than the three we can measure, and that extra direction
+matters at galactic scales.
+
+The framework begins from a minimal extension of the standard spacetime
+manifold.  A fifth spatial coordinate $w$ is appended alongside the ordinary
+three spatial coordinates and physical time:
+
+\[
+  \XA = (x^1,\,x^2,\,x^3,\,w,\,T)
+       = (\mathbf{r},\,w,\,T) .
+\]
+
+The hidden dimension is treated as extended --- not compactified on a
+sub-Planck scale --- but currently inaccessible to direct electromagnetic
+or nuclear measurement at laboratory energies.  The choice of an
+\emph{extended} (rather than Kaluza--Klein compactified) dimension is
+deliberate: a large hidden dimension can affect galactic-scale dynamics
+without modifying solar-system tests, whereas a Planck-scale compactification
+contributes negligibly at all observationally accessible scales.
+A particle's full 5D position is:
+
+\[
+  \mathbf{X}_i = (\mathbf{r}_i,\,w_i,\,T_i) ,
+\]
+
+with ordinary 3D position $\mathbf{r}_i = (x_i,y_i,z_i)$, hidden coordinate
+$w_i$, and time coordinate $T_i$.
+
+\figsuggest{Schematic of the extended coordinate space: a 2D ``galaxy disk''
+plane floating inside a 3D box, with a fourth arrow labelled $w$ projecting
+perpendicular to the box --- illustrating how the hidden axis is orthogonal to
+all three ordinary spatial directions.}
+
+\subsection{Five-Dimensional Velocity and Momentum}\label{sec:momentum}
+
+\textit{Non-technical summary.}\enspace
+Every moving object carries momentum --- the combination of its mass and
+velocity that determines how hard it is to stop.  In ordinary 3D space a
+baseball has momentum in the direction it is travelling.  If space has a
+hidden fourth direction, a particle can also carry momentum \emph{along that
+direction}.  We call this hidden-axis momentum $\pw$.  A particle confined
+to ordinary space has $\pw = 0$.  A particle drifting in the hidden direction
+has $\pw \neq 0$, and the framework proposes that this hidden momentum acts
+as the source of an additional gravitational-like force.  The bigger the
+hidden momentum, the stronger the force --- but the coupling grows only
+logarithmically, so even very large $\pw$ does not produce runaway forces.
+
+The 5D velocity vector is defined with respect to the local proper-time
+parameter $\tau$:
+
+\[
+  \UA_i = \frac{d\XA_i}{d\tau}
+  = \left(\frac{d\mathbf{r}_i}{d\tau},\;\frac{dw_i}{d\tau},\;\frac{dT_i}{d\tau}\right) ,
+\]
+
+and the 5D momentum vector is:
+
+\[
+  \PA_i = m_i \UA_i .
+\]
+
+In the non-relativistic limit along ordinary spatial directions, the
+three-momentum is the standard $\mathbf{p}_i = m_i \mathbf{v}_i$.  The
+hidden-axis momentum is:
+
+\begin{keybox}
+\[
+  \pw^{(i)} \;=\; m_i \frac{dw_i}{d\tau} .
+\]
+\end{keybox}
+
+\noindent
+This is the key new degree of freedom.  It is not a conserved charge added
+by hand; it is the component of the existing 5D momentum vector along the
+hidden direction.  Any particle that moves in $w$ carries $\pw$; any particle
+confined to ordinary 3D space has $\pw = 0$.
+
+\figsuggest{Arrow diagram showing the 5D momentum vector $\PA_i$ decomposed
+into an ordinary 3D component $\mathbf{p}_i$ (in the plane of the galaxy disk)
+and a perpendicular hidden component $\pw\hat{w}$, analogous to the
+decomposition of a velocity vector into horizontal and vertical components.}
+
+\medskip
+The full 5D momentum in compact notation:
+
+\[
+  \PA_i = (\mathbf{p}_i,\;\pw^{(i)},\;E_i/c) ,
+  \quad
+  |\PA_i|^2 = |\mathbf{p}_i|^2 + (\pw^{(i)})^2 + \frac{E_i^2}{c^2} .
+\]
+
+The hidden kinetic content in the non-relativistic approximation is:
+
+\[
+  \Kw = \frac{(\pw)^2}{2m} ,
+\]
+
+or relativistically with hidden-axis propagation speed $c_w$:
+
+\[
+  E_w = \sqrt{(\pw)^2 c_w^2 + m^2 c_w^4} .
+\]
+
+For the first-order force model, the classical $\pw = m\,dw/d\tau$ is
+sufficient.
+
+\subsection{The Five-Dimensional Spacetime Interval}\label{sec:interval}
+
+\textit{Non-technical summary.}\enspace
+In Einstein's special relativity, a moving clock runs slow --- this is time
+dilation, confirmed countless times in particle accelerators and GPS satellites.
+The faster you move through ordinary space, the slower you age relative to
+someone at rest.  This framework extends that idea: if a particle is also
+moving through the hidden $w$-direction, that motion contributes an
+\emph{additional} slowing of its local clock.  Two particles with identical
+visible speeds could age at different rates if one is also drifting through
+the hidden dimension.  This differential aging --- called proper-time
+dissection --- is the geometric mechanism underlying the fifth force.
+
+The 5D line element is:
+
+\begin{keybox}
+\[
+  \dS = -c^2\,dT^2 + d\mathbf{r}^2 + \eta_w\,dw^2 ,
+\]
+\end{keybox}
+
+\noindent
+where $\eta_w$ controls the signature of the hidden dimension.  For an
+extended spatial fifth dimension, $\eta_w = +1$ and the metric is:
+
+\[
+  \dS = -c^2\,dT^2 + dx^2 + dy^2 + dz^2 + dw^2 .
+\]
+
+The local proper-time relation follows from $c^2 d\tau^2 = -\dS$:
+
+\[
+  c^2 d\tau^2 = c^2\,dT^2 - d\mathbf{r}^2 - dw^2 .
+\]
+
+Dividing through by $dT^2$ and defining the ordinary velocity
+$\mathbf{v} = d\mathbf{r}/dT$ and hidden-axis velocity
+$v_w = dw/dT$:
+
+\begin{keybox}
+\[
+  d\tau = dT\sqrt{1 - \frac{|\mathbf{v}|^2}{c^2} - \frac{v_w^2}{c_w^2}} ,
+\]
+\end{keybox}
+
+\noindent
+where $c_w$ is the effective propagation speed scale in the hidden dimension
+(not necessarily equal to $c$).  This is the fundamental proper-time relation
+for the 5D manifold.  It reduces to the standard Lorentz relation when
+$v_w = 0$.  The choice $\eta_w = +1$ (spatial, not time-like hidden axis)
+is required for the Lorentz-factor structure in the proper-time step to
+remain well-defined; a time-like extra dimension would introduce causality
+pathologies outside the scope of this framework.
+
+\figsuggest{Spacetime diagram (Minkowski-style) with an additional $w$-axis:
+show two particle worldlines with identical ordinary velocities but different
+$v_w$, illustrating that the steeper worldline in $w$ corresponds to a shorter
+proper-time accumulation per unit coordinate time $T$.}
+
+\subsection{Frame Dissection: Local Proper-Time Step}\label{sec:frame}
+
+\textit{Non-technical summary.}\enspace
+Imagine two identical watches: one handed to a star orbiting normally in a
+galaxy's disk, another handed to a star with identical orbital speed but also
+drifting slowly in the hidden direction.  After one billion years of coordinate
+time, the second watch will have ticked fewer times.  This difference in the
+rate of ticking --- called frame dissection here --- is not a metaphor; it
+follows directly from the 5D spacetime interval.  The practical consequence is
+that the second star experiences a slightly different gravitational bookkeeping
+and therefore a different effective inward acceleration.  Summed across billions
+of stars in a galaxy's outer disk, this difference produces the observed flat
+rotation curve.
+
+For a discrete integration step of coordinate time $\Delta T_0$, the local
+proper-time step experienced by particle $i$ is:
+
+\[
+  \Delta T_i
+  = \Delta T_0 \sqrt{1 - \frac{|\mathbf{v}_i|^2}{c^2} - \frac{v_{w,i}^2}{c_w^2}}
+  = \frac{\Delta T_0}{\gamma_{5,i}} ,
+\]
+
+where the five-dimensional Lorentz factor is:
+
+\[
+  \gamma_{5,i}
+  = \left(1 - \frac{|\mathbf{v}_i|^2}{c^2} - \frac{v_{w,i}^2}{c_w^2}\right)^{-1/2} .
+\]
+
+The critical consequence is:
+
+\begin{keybox}
+\centering
+Two particles with identical ordinary velocity $\mathbf{v}_A = \mathbf{v}_B$
+but different hidden-axis velocity $v_{w,A} \neq v_{w,B}$ experience
+different local frame rates: $\Delta T_A \neq \Delta T_B$.
+\end{keybox}
+
+\noindent
+This gives $\pw$ a direct geometric role without requiring it to be
+a mysterious unmeasurable quantity.  A particle with significant hidden-axis
+motion moves more slowly through coordinate time per unit proper time; its
+local causal structure is modified relative to an observer confined to
+ordinary 3D space.
+
+In low-velocity compact systems --- stellar binaries, planetary orbits,
+solar-system tests --- both $|\mathbf{v}| \ll c$ and $v_w \approx 0$, so
+$\Delta T_i \approx \Delta T_0$ and the fifth-force contribution is
+negligible.  In extended disk systems at galactic radii where orbital
+kinematics drive appreciable hidden-axis motion, the frame dissection
+diverges from the ordinary Lorentz factor and the fifth-force contribution
+becomes significant.
+
+\subsection{The Old Information Variable and Its Geometric Replacement}
+
+\textit{Non-technical summary.}\enspace
+An earlier version of this theory used a variable called the ``information
+delta'' --- essentially a tally of everything that had ever happened to a
+particle since the Big Bang.  The idea was evocative but useless in practice:
+you cannot measure the full cosmic history of a star.  The geometric
+replacement makes the theory computable.  Instead of asking ``what is this
+star's history?'', we ask ``how fast is this star currently moving in the
+hidden direction?''.  One question is unanswerable; the other can in principle
+be inferred from observable kinematics.  This replacement is not a minor
+notational change --- it converts the framework from a philosophical proposal
+into a falsifiable physical model.
+
+Earlier formulations of this framework introduced an abstract hidden variable
+$\InfoD_i$ (the ``information delta'') representing an inaccessible historical
+debt accumulated over a particle's lifetime.  This formulation was useful for
+motivation but operationally opaque: it is impossible to compute $\InfoD_i$
+for a real galaxy without reconstructing the full thermodynamic history of
+every particle since the Big Bang.
+
+The geometric replacement is:
+
+\[
+  \InfoD_i \;\equiv\; \mathcal{D}(\pw^{(i)}) ,
+\]
+
+where $\mathcal{D}$ maps fifth-axis momentum into apparent information
+displacement.  In the simplest instantiation, $\mathcal{D}$ is the
+logarithmic coupling:
+
+\[
+  \mathcal{D}(\pw) = \ln\!\left(1 + \frac{|\pw|}{p_0}\right) .
+\]
+
+The ``information delta'' is not an inaccessible memory file.  It is the
+observable shadow of current motion along the hidden fifth spatial direction.
+This translation converts a metaphysical historical object into a kinematic
+one.  The fifth force depends on what a particle is doing now, not on what
+it has done since recombination.
+
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{The Logarithmic Fifth-Force Framework}\label{sec:framework}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Hidden-Axis Momentum as Fifth-Force Charge}\label{sec:charge}
+
+The central identification of the framework is that $\pw$ acts as a fifth-force
+charge.  Rather than a new quantum number or a free scalar field, the charge is
+a kinematic quantity that any particle already possesses when it moves in the
+hidden direction.  The coupling function is chosen to be logarithmic:
+
+\[
+  g(\pw) = \ln\!\left(1 + \frac{|\pw|}{p_0}\right) ,
+\]
+
+where $p_0$ is a reference momentum scale.  Three candidate forms are
+compared:
+
+\begin{table}[H]
+\centering
+\caption{Candidate fifth-force coupling functions and their properties.}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Form & $g(\pw)$ & Behaviour at large $|\pw|$ & Behaviour at $|\pw|=0$ \\
+\midrule
+Linear    & $|\pw|$ & Diverges & $0$ \\
+Quadratic & $\pw^2$ & Diverges faster & $0$ \\
+Logarithmic & $\ln(1+|\pw|/p_0)$ & Grows slowly & $0$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The logarithmic form is chosen for three reasons.  First, it saturates at
+large $|\pw|$, preventing high-momentum systems from producing unbounded
+fifth-force contributions.  Second, it vanishes continuously at $|\pw|=0$:
+particles with no hidden-axis motion contribute no fifth force.  Third, the
+form $\ln(1+|\pw|/p_0)$ allows small fifth-axis motions to contribute
+meaningfully (the argument exceeds unity only when $|\pw| > p_0$, providing
+a natural onset scale) while preventing mathematical divergence for fast-moving
+compact objects such as neutron-star binaries.
+
+\subsection{The Logarithmic Potential}\label{sec:potential}
+
+The fifth-dimensional potential is:
+
+\[
+  \Phifive(r) = -\Lf \ln\!\left(1+\frac{|\pw|}{p_0}\right)
+  \ln\!\left(\frac{r_c}{r+r_c}\right) ,
+\]
+
+where $\Lf$ is the fifth-force coupling constant (dimensions of acceleration)
+and $r_c$ is a core-softening radius preventing divergence at the origin.
+The radial acceleration follows from $\afiver(r) = -d\Phifive/dr$:
+
+\[
+  \afiver(r) = \Lf \ln\!\left(1+\frac{|\pw|}{p_0}\right) \frac{1}{r+r_c} .
+\]
+
+At large radius ($r \gg r_c$) this behaves as $\afiver \sim 1/r$, precisely
+the scaling needed to sustain a flat outer-disk velocity curve.  At small
+radius ($r \ll r_c$) the acceleration saturates at $\Lf\ln(1+|\pw|/p_0)/r_c$.
+
+\subsection{Radial Propagation Function and Screening}\label{sec:screening}
+
+A purely global fifth-force profile active at all scales would conflict with
+precision gravity tests in the solar system.  The radial propagation function
+$\Sfive(r)$ controls the spatial extent of the fifth-force contribution.  The
+preferred gated form is:
+
+\[
+  \Sfive(r) = \frac{1}{1+e^{-k(r-r_0)}} \cdot \frac{1}{r+r_c} ,
+\]
+
+where $r_0$ is the activation radius (of order a few kiloparsecs) and $k$
+controls transition sharpness.  The limiting behaviour is:
+
+\[
+  r \ll r_0 \;\Rightarrow\; \Sfive \approx 0
+  \qquad
+  r \gg r_0 \;\Rightarrow\; \Sfive \approx \frac{1}{r+r_c} \approx \frac{1}{r} .
+\]
+
+The full fifth-force acceleration vector is then:
+
+\begin{keybox}
+\[
+  \afive(r) = -\Lf \ln\!\left(1+\frac{|\pw|}{p_0}\right)
+  \frac{1}{1+e^{-k(r-r_0)}} \frac{1}{r+r_c}\,\rhat .
+\]
+\end{keybox}
+
+\noindent
+At large disk radii the gate saturates at unity, the core softening becomes
+negligible, and $|\afive| \sim \Lf\ln(1+|\pw|/p_0)/r$, giving the $1/r$
+profile required for flat rotation curves.  The gate naturally suppresses the
+fifth force in compact systems without requiring separate screening mechanisms
+for each regime.
+
+\subsection{Gate Benchmark: Molecular Dynamics and Crystal Lattice Consistency}
+\label{sec:mdbenchmark}
+
+\begin{keybox}
+\textbf{Gate benchmark.}\quad
+Crystal-lattice dynamics and classical molecular dynamics (MD) simulations are
+completely unaffected by the fifth-force correction---a direct and exact
+consequence of $G(r)$ evaluated at atomic and sub-atomic scales.
+\end{keybox}
+
+\noindent
+The switching function at inter-atomic separations ($r_{\rm atom} \sim
+1\,\text{\AA}$--$10\,\text{\AA}$) satisfies
+\[
+  G(r_{\rm atom})
+  = \frac{1}{1+e^{-k(r_{\rm atom}-r_0)}}
+  \approx 0 ,
+\]
+because $k r_0 \gg 1$ and $r_{\rm atom} \ll r_0$.
+Consequently the fifth-force acceleration at atomic separations is
+\[
+  \afiver(r_{\rm atom})
+  = -\Lf\ln\!\left(1+\frac{|\pw|}{p_0}\right)
+    \underbrace{G(r_{\rm atom})}_{\approx\,0}
+    \frac{1}{r_{\rm atom}+r_c}
+  \approx 0 .
+\]
+The same suppression applies at nuclear scales ($r \sim 1\,\text{fm}$),
+chemical-bond scales ($r \sim 0.5$--$3\,\text{\AA}$), and planetary scales
+($r \lesssim R_\odot$).  The transition radius $r_0$ sits firmly in the
+kiloparsec regime; no fifth force leaks into regimes already well-described by
+classical or quantum mechanics.
+
+This is an important initial consistency gate for the framework.  Existing
+force-field parametrisations (AMBER, CHARMM, OPLS, \emph{ab initio} MD) require
+no patching, and QM/MM boundary conditions are unmodified.  Every successful
+MD reproduction of crystal phonon spectra, protein folding, and materials
+elasticity carries over without modification.  The fifth force is
+\emph{galactic in origin, galactic in scope}.
+
+\subsection{The Geometric Lasso}\label{sec:lasso}
+
+The five-dimensional momentum, frame dissection, and fifth-force are linked
+in a closed kinematic chain:
+
+\begin{keybox}
+\[
+  \mathbf{v} \;\longrightarrow\; \pw
+  \;\longrightarrow\; \Delta T
+  \;\longrightarrow\; \afive
+  \;\longrightarrow\; \text{orbital confinement.}
+\]
+\end{keybox}
+
+\noindent
+Explicitly:
+
+\begin{align}
+  \pw &= m\,v_w , \\[4pt]
+  \gamma_5 &= \left(1 - \frac{v^2}{c^2} - \frac{v_w^2}{c_w^2}\right)^{-1/2} , \\[4pt]
+  \Delta T &= \frac{\Delta T_0}{\gamma_5} , \\[4pt]
+  \afive &= -\Lf\ln\!\left(1+\frac{|\pw|}{p_0}\right)\frac{1}{r+r_c}\,\rhat .
+\end{align}
+
+The circular orbital balance condition $v^2/r = a_N(r) + \afiver(r)$ then
+gives the rotation-curve equation.
+
+This chain should not be read as a circular argument --- ``the star stays in
+orbit because its orbit generates the force that keeps it in orbit.''
+The correct reading is: baryonic orbital motion sources a hidden-axis momentum
+footprint; that footprint couples logarithmically to a radial acceleration
+field; the radial field adds an inward acceleration term that supplements
+the Newtonian term.  The hidden-axis momentum is set by the current kinematic
+state, not by a self-referential constraint.
+
+\figsuggest{Flow diagram of the geometric lasso: four nodes ($\mathbf{v}$,
+$\pw$, $\Delta T$, $\mathbf{a}_5$) connected by directed arrows, with a
+return arrow from $\mathbf{a}_5$ to ``orbital confinement'' labelled
+``changes $\mathbf{v}$ next step'' --- making explicit that the chain is
+a forward Euler step, not a simultaneous constraint.}
+
+\subsection{Rotation Curve Equation}\label{sec:rotcurve}
+
+For circular motion at radius $r$:
+
+\[
+  \frac{v^2(r)}{r} = \frac{GM(r)}{r^2} + \afiver(r) .
+\]
+
+Multiplying through by $r$:
+
+\begin{keybox}
+\[
+  v^2(r) = \underbrace{\frac{GM(r)}{r}}_{\vN^2(r)}
+  + \underbrace{\Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+    \frac{1}{1+e^{-k(r-r_0)}}\frac{r}{r+r_c}}_{\vfive^2(r)} .
+\]
+\end{keybox}
+
+\subsection{Galaxy Rotation Curve Result}\label{sec:galresult}
+
+Decomposing explicitly:
+
+\[
+  v^2(r) = \vN^2(r) + \vfive^2(r) ,
+\]
+
+where the Newtonian component is:
+
+\[
+  \vN^2(r) = \frac{GM(r)}{r} ,
+\]
+
+and the fifth-force velocity contribution is:
+
+\[
+  \vfive^2(r) = \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+  \frac{1}{1+e^{-k(r-r_0)}} \frac{r}{r+r_c} .
+\]
+
+In the outer disk, where $r \gg r_c$ and $r \gg r_0$, the gate saturates,
+the softening becomes negligible ($r/(r+r_c) \to 1$), and:
+
+\[
+  \vfive^2(r) \;\approx\; \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+  \;=\; \text{approximately constant}
+\]
+
+provided $|\pw(r)|$ varies slowly across the outer disk.
+
+\begin{keybox}
+\textbf{Outer-disk limiting form:}
+\[
+  v^2(r) \;\approx\; \frac{GM(r)}{r} + \Lf\ln\!\left(1+\frac{|\pw|}{p_0}\right) .
+\]
+The fifth-force term contributes a nearly flat plateau to the rotation curve.
+No dark matter particles are required.
+\end{keybox}
+
+\noindent
+The fifth-force term $\vfive^2$ behaves as a geometric halo parameter.
+It varies from galaxy to galaxy through $|\pw(r)|$, which is set by the
+current baryonic kinematic state.  Galaxies with higher hidden-axis momentum
+(proxied by their baryonic mass and velocity distribution) will exhibit a
+larger fifth-force contribution.  This provides a natural mechanism for
+galaxy-to-galaxy diversity without requiring individual dark matter halo fits.
+
+\medskip
+Four key behaviours are produced simultaneously by this single equation:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item Near-centre suppression from the sigmoid gate.
+  \item Smooth turn-on around $r_0$.
+  \item Outer-disk flattening from the $\sim 1/r$ radial profile.
+  \item Logarithmic momentum scaling preventing high-$\pw$ runaway.
+\end{enumerate}
+
+\figsuggest{Rotation curve plot showing three curves on the same axes: (1)
+Newtonian prediction $\vN(r)$ falling after the bulge, (2) the fifth-force
+contribution $\vfive(r)$ rising from zero at small $r$ and levelling off at
+large $r$, and (3) the combined prediction $v(r) = \sqrt{\vN^2 + \vfive^2}$
+approximately flat in the outer disk --- compared to a representative SPARC
+data set.}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Numerical Parameterisation and Phenomenological Curve-Fitting}%
+\label{sec:fitting}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\noindent
+The fifth-force correction is not intended to function as a relabelled dark
+matter halo.  In a conventional halo model, the missing acceleration is
+attributed to an unseen mass density profile $\rho_{\rm DM}(r)$ whose shape
+may be adjusted to match any observed rotation curve.  In the present
+framework, the residual acceleration is instead sourced by the hidden-axis
+momentum proxy $\pw(r)$, coupled through a logarithmic force law and
+constrained radial switching function.  The model must therefore reproduce
+galactic residuals from baryonic kinematics and a small set of stable coupling
+parameters.  If successful fits require arbitrary galaxy-specific tuning of
+ostensibly universal parameters, the framework loses predictive value and
+becomes merely a reparameterised halo model.
+
+\subsection{Optimisation Protocol and Parameter Constraints}\label{sec:optim}
+
+The natural benchmark dataset is the SPARC database, which provides baryonic
+mass models and high-resolution rotation curves for a diverse sample of nearby
+disk galaxies.  We write the total observed radial acceleration as:
+
+\[
+  \aobs(r) = \abar(r) + \afiver(r) ,
+\]
+
+where $\abar(r) = \vbar^2(r)/r$ is the classical baryonic acceleration and
+$\afiver(r)$ is the proposed fifth-force residual.  The empirical residual
+target is:
+
+\[
+  \Delta a(r) = \aobs(r) - \abar(r)
+  = \frac{\vobs^2(r) - \vbar^2(r)}{r} .
+\]
+
+The model is fitted by requiring $\afiver(r;\,\Theta) \approx \Delta a(r)$,
+where the parameter vector is:
+
+\[
+  \Theta = \{\Lf,\,p_0,\,r_c,\,r_0,\,k,\,\alpha_S,\,\beta_S\} .
+\]
+
+Here $\Lf$ is the fifth-force coupling constant, $p_0$ is the reference
+hidden-momentum scale, $r_c$ is the core-softening radius, $r_0$ is the
+transition radius, $k$ controls transition sharpness, and $\alpha_S,\beta_S$
+parameterise the extended switching function (Section~\ref{sec:switching}).
+
+The optimisation objective is:
+
+\[
+  \chi^2(\Theta) = \sum_{j=1}^{N}
+  \left[\frac{\vobs(r_j) - \vmod(r_j;\,\Theta)}{\sigma_{v,j}}\right]^2 ,
+\]
+
+with the model velocity:
+
+\[
+  \vmod^2(r;\,\Theta)
+  = \vbar^2(r) + r\,\afiver(r;\,\Theta)
+  = \vbar^2(r) + \Lf\,r\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+    \Sfive(r;\,\Theta) .
+\]
+
+The decoupling target is:
+
+\begin{keybox}
+\[
+  \vobs^2(r) - \vbar^2(r) \;=\; r\,\afiver(r) ,
+  \qquad \text{i.e.,} \qquad
+  \Delta a(r) = \afiver(r) .
+\]
+This is the clean regression identity.  Every parameter in $\Theta$ is
+constrained by the observed minus baryonic velocity squared, not by a
+free-form halo profile.
+\end{keybox}
+
+\subsection{Non-Monotonic Scaling and the Switching Function}\label{sec:switching}
+
+A monotonic fifth-force profile risks the failure mode common to many
+modified-gravity proposals: a correction that works on galactic scales but
+leaks into solar-system or cluster regimes where it should be suppressed.
+The switching function $S(r)$ modulates the fifth-force field, allowing it
+to be attractive, suppressed, or sign-reversed depending on radius.
+
+The full gated acceleration is:
+
+\[
+  \afiver(r) = \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right) \Seff(r)
+  \frac{1}{r+r_c} ,
+\]
+
+where the sign convention of $\Seff$ determines the regime:
+
+\[
+  \Seff(r) > 0 \;\Rightarrow\; \text{attractive / binding regime,} \qquad
+  \Seff(r) = 0 \;\Rightarrow\; \text{transition boundary,} \qquad
+  \Seff(r) < 0 \;\Rightarrow\; \text{repulsive / expansion-like regime.}
+\]
+
+The smooth third-order switching form is:
+
+\[
+  S(u) = \tanh\!\left(\alpha_S u + \beta_S u^3\right),
+  \qquad
+  u = \frac{r - \rcrit}{R_S} ,
+\]
+
+producing a continuous transition from $S \to -1$ on one side of $\rcrit$
+to $S \to +1$ on the other.  Combined with the sigmoid activation gate:
+
+\begin{keybox}
+\[
+  \Seff(r) = G(r)\,\tanh\!\left[\alpha_S\!\left(\frac{r-\rcrit}{R_S}\right)
+  + \beta_S\!\left(\frac{r-\rcrit}{R_S}\right)^{\!3}\right] ,
+  \qquad
+  G(r) = \frac{1}{1+e^{-k(r-r_0)}} .
+\]
+\end{keybox}
+
+\noindent
+For galactic-disk binding, the sign convention is $\Seff(r) > 0$ inside the
+disk, and the full fifth-force acceleration is:
+
+\[
+  \afiver(r) = \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+  \Seff(r) \frac{1}{r+r_c} .
+\]
+
+\subsection{Physical Interpretation of the Transition Radius}\label{sec:transition}
+
+The transition radius $\rcrit$ is introduced as a phenomenological placeholder
+for a physical phase boundary in the fifth-dimensional slice.  It marks the
+radial point where the fifth-force topology changes sign, saturates, or
+switches coupling regime.  The preferred terminology throughout the paper is
+\emph{transition radius} or \emph{switching radius}; in the vicinity of the
+fifth-dimensional phase boundary the coupling changes topology.
+
+Two physical interpretations are supported by the model.
+
+\subsubsection{The Self-Binding Lasso}
+
+Within the galactic disk boundary ($r < \rcrit$), the switching function is
+chosen so that $\Seff(r) > 0$.  The fifth force contributes an inward radial
+acceleration $\afiver(r) > 0$, and the circular velocity relation becomes:
+
+\[
+  \vobs^2(r) = \vbar^2(r) + r\,\afiver(r) .
+\]
+
+When $\afiver \sim 1/r$, the term $r\,\afiver$ is approximately constant,
+naturally producing a flat outer rotation curve.  In this interpretation,
+baryonic motion sources a hidden-axis momentum correction whose radial
+projection adds an inward acceleration term.  This is the claim; it is not
+the circular argument that ``the star binds itself by its own orbit.''
+The hidden-axis momentum is a consequence of the star's current kinematic
+state; the force is a consequence of the hidden-axis momentum; the orbit is
+a consequence of the combined forces.  The chain is directed, not circular.
+
+\subsubsection{The Inversion Boundary}
+
+At $r = \rcrit$, the switching function crosses zero: $\Seff(\rcrit) = 0$.
+Beyond the transition radius, $\Seff(r) < 0$, and the fifth-force contribution
+reverses sign:
+
+\[
+  \afiver(r) \;\to\; -\afiver(r) .
+\]
+
+This creates a transition from inward binding to outward expansion-like
+behaviour.  Such a sign flip could be used to model large-scale structure
+effects, void boundaries, or cluster-scale residuals.  For the first paper,
+the inversion boundary is included as a possible phenomenological feature and
+is not declared to be the key to all of cosmology.  The universe has survived
+worse marketing.
+
+\subsection{Regression Targets and Falsifiability}\label{sec:falsifiability}
+
+The fitting protocol must test whether the fifth-force parameters are
+physically meaningful across galaxy populations, not merely whether residuals
+can be minimised for individual galaxies.  Three levels of constraint are
+applied.
+
+\textbf{Level A --- Local rotation-curve fit.}
+For each galaxy $g$:
+\[
+  \chi^2_g = \sum_{j=1}^{N_g}
+  \left[\frac{\vobs(r_j) - \vmod(r_j)}{\sigma_{v,j}}\right]^2 .
+\]
+
+\textbf{Level B --- Population consistency.}
+The universal parameters $\{\Lf,\,p_0,\,r_c\}$ must remain approximately
+stable across the galaxy sample.  Galaxy-specific quantities
+$\{|\pw(r)|,\,r_0,\,\rcrit\}$ may vary, but within bounds constrained by
+the observed mass distribution, velocity dispersion, and morphology.  If
+$\Lf$ drifts by orders of magnitude between galaxies, the model is
+functioning as a disguised halo fit.
+
+\textbf{Level C --- Residual acceleration relation.}
+SPARC-based radial-acceleration studies demonstrate a tight empirical relation
+between $\aobs$ and $\abar$, with systematic structure below an acceleration
+scale of approximately $10^{-10}\,\mathrm{m\,s^{-2}}$.  The fifth-force
+model must reproduce this population-level structure, not merely individual
+curves.
+
+The model is falsified or materially weakened if $|\pw(r)|$ must be
+independently tuned for each galaxy with no relation to observable kinematics,
+or if $\Seff(r)$ requires unconstrained galaxy-specific adjustments.  In the
+latter case, the framework ceases to be predictive and reduces to a
+reparameterised halo model.
+
+\subsection{Resolving Theoretical Leakage: The Ghost-Source Correction}\label{sec:ghost}
+
+The holistic-ledger and temporal-inversion interpretations
+(Section~\ref{sec:schools}) are not directly fittable under present observational
+constraints.  To preserve predictive utility, their macroscopic effects are
+absorbed into a constrained correction term $\Gamma_5(r)$:
+
+\[
+  \atot(r) = \asnap(r) + \Gamma_5(r) ,
+\]
+
+where $\asnap(r) = \Lf\ln(1+|\pw(r)|/p_0)\,\Seff(r)/(r+r_c)$ is the
+kinematic snapshot term.  The correction $\Gamma_5(r)$ is not allowed to
+become a free dark-matter halo; it is restricted to one of two paradigms.
+
+\subsubsection{Paradigm A: Co-Local, Co-Sourced Emission}
+
+In the co-local paradigm, the correction term is anchored to the same
+baryonic source and hidden-momentum footprint that drives the primary fifth
+force:
+
+\[
+  \Gamma_5^A(r) = \epsilon_A
+  \left[\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)\right]^{n_A}
+  \frac{1}{(r+r_A)^{m_A}} ,
+\]
+
+where $\epsilon_A$ is a small leakage amplitude, $n_A$ controls non-linear
+momentum response, $r_A$ is a softening scale, and $m_A$ controls radial
+decay.  This version assumes that any ghost-like residual remains local,
+co-sourced, and tied to visible moving matter.  Its advantage is computational
+cleanliness; its weakness is difficulty with systems where the gravitational
+residual is spatially offset from the baryonic mass.
+
+\subsubsection{Paradigm B: Non-Local Background Decoupling}
+
+In the decoupled paradigm, the correction term represents an ambient
+fifth-dimensional background configuration:
+
+\[
+  \Gamma_5^B(r) = \epsilon_B\,\Bfield(r,T)\,\frac{1}{r+r_B} ,
+\]
+
+where $\Bfield(r,T)$ is a background metric-intensity field parameterised as:
+
+\[
+  \Bfield(r,T) = B_0 + B_1\ln\!\left(1+\frac{r}{R_B}\right) + B_T T(t) .
+\]
+
+This allows the fifth-force residual to decouple from local mass distributions.
+Its advantage is flexibility for asymmetric or displaced residual structures
+such as cluster-scale offsets.  Its disadvantage is a dramatically expanded
+parameter space.  Paradigm B is therefore activated only after Paradigm A
+fails under well-defined residual tests.
+
+\subsection{Recommended Numerical Hierarchy}\label{sec:hierarchy}
+
+To keep the theory testable, a strict escalation ladder governs which model
+complexity is deployed.  Higher levels are not activated until lower levels
+have been fitted and found insufficient:
+
+\begin{table}[H]
+\centering
+\caption{Model escalation hierarchy.}
+\label{tab:hierarchy}
+\begin{tabular}{@{}cll@{}}
+\toprule
+Level & Model & Fifth-force term \\
+\midrule
+1 & Baseline snapshot & $\Lf\ln(1+|\pw|/p_0)/(r+r_c)$ \\
+2 & Screened snapshot & $\times\,G(r)$ \\
+3 & Switching snapshot & $\times\,\Seff(r)$ \\
+4 & Co-local ghost correction & $+\,\Gamma_5^A(r)$ \\
+5 & Non-local background correction & $+\,\Gamma_5^B(r)$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+The fitting hierarchy is designed to prevent the fifth-force model from
+becoming an unconstrained residual engine.  The kinematic snapshot model
+is tested first, using only the logarithmic hidden-momentum force and its
+constrained radial switching behaviour.  Historical and geometric leakage
+terms are activated only if coherent residual structures remain after the
+baseline model has been fitted.  In this way the framework remains falsifiable:
+it must either reproduce observed galactic acceleration profiles with stable
+parameters, or fail --- without retreating into arbitrary correction fields.
+
+\figsuggest{Radial profile plot of $\Seff(r)$ vs.\ $r$ for a representative
+galaxy, showing the sigmoid activation gate $G(r)$ rising from 0 to 1 around
+$r_0$, the tanh switching function crossing zero at $r_{\rm crit}$, and the
+combined $\Seff(r)$ profile --- illustrating how three distinct radial regimes
+(suppressed / binding / reversing) emerge from two smooth functions.}
+
+\figsuggest{SPARC residual scatter plot: observed minus baryonic acceleration
+$\Delta a(r)$ vs.\ baryonic acceleration $a_{\rm bar}$ for a sample of SPARC
+galaxies, overlaid with the Level-2 screened-snapshot fifth-force prediction
+$\afiver(r)$ --- a direct analogue of the McGaugh et al.\ (2016)
+radial-acceleration-relation plot.}
+
+\medskip
+\noindent\textbf{A note on dimension stacking and temporal independence.
+If the hidden axis $w$ is stacked over the time axis $T$ --- that is, if
+$w$ and $T$ are treated as parallel dimensions in a higher-dimensional
+block rather than as a sequence --- then the $w$-coordinate and its
+associated scalar force coupling $g(\pw)$ are likely to be completely
+independent of $T(t)$.  A force or momentum contribution that is genuinely
+orthogonal to the time dimension carries no natural parametric dependence
+on the current value of $T$.  As a direct consequence, $|\pw(r)|$ evaluated
+across a galaxy sample will likely not curve-fit correctly to any known
+temporal or evolutionary function: it will appear, to observers embedded in
+the $T$-dimension and sampling the universe at a single temporal slice, as
+genuinely random variation.  The scatter in fifth-force proxy values between
+galaxies at the same mass and morphological class may therefore not be noise
+to be removed, but signal to be respected --- a direct observational signature
+of a force coordinate that does not know what time it is.}
+
+\medskip
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Three Schools of Interpretation}\label{sec:schools}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+The hidden variable $\pw$ admits three distinct physical interpretations.
+These are presented as competing schools, not simultaneous claims.  The
+paper adopts School~I as the working framework; Schools~II and~III are
+retained as theoretical alternatives that make contact with deeper geometric
+or thermodynamic structures.
+
+\subsection{School I: The Kinematic Snapshot}\label{sec:school1}
+
+\textbf{Core axiom.} The fifth force depends strictly on the particle's
+\emph{current} fifth-axis momentum, measured within a finite local frame
+dissection.  The force carries no historical memory:
+
+\[
+  \afive(t_n) = \afive\!\left(\pw(t_n),\,\mathbf{r}(t_n)\right) ,
+  \quad \text{not} \quad
+  \afive\!\left(\int_0^{t_n} \pw(t)\,dt\right) .
+\]
+
+\textbf{Field mechanic.} At each discrete frame step $\Delta T_n$, the
+particle emits a fifth-force field determined by its instantaneous hidden-axis
+momentum:
+
+\[
+  q_5(t_n) = \ln\!\left(1+\frac{|\pw(t_n)|}{p_0}\right) ,
+\]
+
+\[
+  \mathbf{a}_5^{(n)} = -\Lf\,q_5(t_n)\,G(r^{(n)})\,\frac{1}{r^{(n)}+r_c}\,\rhat^{(n)} .
+\]
+
+\textbf{Practical advantage.} This school is local, deterministic, and
+computationally tractable.  The hidden-axis momentum $\pw(r)$ is treated as
+a proxy derived from baryonic kinematics:
+
+\[
+  v^2(r) = \frac{GM(r)}{r} + \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+  \frac{1}{1+e^{-k(r-r_0)}} \frac{r}{r+r_c} .
+\]
+
+Astronomers can fit the model using current observational data: $M(r)$ from
+luminosity and gas mapping, $v(r)$ from Doppler spectrometry, and a fitted
+fifth-momentum proxy $|\pw(r)|$ constrained to correlate with baryonic
+momentum structure.
+
+\textbf{Observational prediction.} The fifth-force contribution should
+correlate with current kinematic measurements --- $v(r)$, $M(r)$,
+$\sigma_v(r)$ --- rather than formation history, metallicity, or AGN activity.
+If a star is perturbed by a passing body, the fifth-force contribution changes
+in the next frame step because $\pw(t_n) \to \pw(t_{n+1})$.  The model is
+therefore highly responsive to current dynamics.
+
+\textit{This is the strongest working school.}  It is adopted as the primary
+framework throughout this paper.
+
+\subsection{School II: The Holistic Ledger}\label{sec:school2}
+
+\textbf{Core axiom.} The fifth force depends on a particle's cumulative
+lifetime energy, entropy, and information delta:
+
+\[
+  Q_{5,i} = \int_{\Gamma_i} dD_i
+  = \int_0^T \!\!\left(\alpha_E\,dE_i + \alpha_S\,dS_i + \alpha_I\,d\InfoD_i\right) ,
+\]
+
+where $Q_{5,i}$ is the lifetime fifth-dimensional charge.
+
+\textbf{Field mechanic.} Every collision, emission, absorption, decay,
+binding transition, and annihilation modifies the particle's historical
+ledger:
+\[
+  \afive = -\Lf\,f(Q_5)\,\Sfive(r)\,\rhat ,
+  \quad
+  f(Q_5) = \ln\!\left(1+\frac{|Q_5|}{Q_0}\right) .
+\]
+
+\textbf{Observational prediction.} Two galaxies with identical visible mass
+and current velocity distributions may exhibit different rotation profiles
+if their thermodynamic histories differ.  A galaxy with a violent merger or
+starburst history ($Q_{5,A} \gg Q_{5,B}$) could show a stronger fifth-force
+contribution than a quiescent galaxy, even if their present-day baryonic
+distributions are similar.  This school predicts correlations with star
+formation history, metallicity, AGN activity, and stellar age dispersion.
+
+\textbf{Strength.} Explains galaxy-to-galaxy rotation diversity through
+formation history rather than requiring galaxy-specific halo tuning.
+
+\textbf{Weakness.} Computing $Q_{5,i}$ directly requires reconstructing the
+full thermodynamic history of every relevant particle since recombination.
+Scientifically interesting; operationally very difficult to constrain.
+
+\subsection{School III: The Temporal Inversion}\label{sec:school3}
+
+\textbf{Core axiom.} The fifth dimension $w$ is more fundamental than time $T$.
+Time is not a primary driver; it is a lower-dimensional projection of a fixed
+higher-dimensional geometry:
+
+\[
+  T = \Pi_T(w,\,x,\,y,\,z) ,
+\]
+
+where $\Pi_T$ is a projection from the 5D architecture into experienced 4D
+spacetime.  The hierarchy is:
+
+\[
+  \text{5D geometry} \;\longrightarrow\; \text{4D spacetime projection}
+  \;\longrightarrow\; \text{observed temporal evolution.}
+\]
+
+\textbf{Field mechanic.} Particles do not evolve through time in the ordinary
+sense.  Their apparent time evolution is caused by the 4D universe slicing
+through a fixed 5D structure.  The fifth force is a geometric track, not a
+dynamical emission:
+
+\[
+  \afive = -\nabla_r \Phifive(w,\,r) ,
+  \quad
+  \Phifive(w,r) = -\Lf(w)\ln\!\left(\frac{r_c}{r+r_c}\right) .
+\]
+
+The observed fifth force $\afiver = \Lf(w)/(r+r_c)$ is a consequence of the
+fixed 5D geometry, not of any dynamical emission process.
+
+\textbf{Observational prediction.} Rotation-curve flattening, cosmic
+expansion anomalies, and large-scale structure residuals all become
+cross-section effects: observed dynamics are projections of a static 5D
+geometry.  Galaxies rotate along pre-existing fifth-dimensional tracks.
+
+\textbf{Strength.} Most philosophically powerful and geometrically radical.
+Connects the dark-energy problem, the rotation-curve problem, and the
+large-scale structure problem through a single 5D geometric origin.
+
+\textbf{Weakness.} Least accessible experimentally.  Requires a clear mapping
+$w(r) \to v(r)$ or $\Phifive(w,r) \to$ observable residuals to be falsifiable.
+Without such a mapping it becomes cathedral architecture with equations.
+
+\subsection{Comparative Summary}\label{sec:synthesis}
+
+\begin{table}[H]
+\centering
+\caption{Comparison of the three interpretive schools.}
+\label{tab:schools}
+\begin{tabularx}{\textwidth}{@{}lXXX@{}}
+\toprule
+Metric & School I: Kinematic Snapshot & School II: Holistic Ledger & School III: Temporal Inversion \\
+\midrule
+Primary variable & Current $\pw(t_n)$ & Lifetime integral $Q_{5,i}$ & Fixed 5D coordinate $w$ \\[4pt]
+Force source & Instantaneous momentum footprint & Accumulated history & Static 5D geometry \\[4pt]
+Time role & Discrete frame parameter $\Delta T$ & Chronological aggregator & Projection beneath $w$ \\[4pt]
+Rotation-curve fit & Direct and tractable & Difficult to constrain & Requires 5D map inversion \\[4pt]
+Galaxy diversity mechanism & $|\pw(r)|$ varies with kinematics & Formation-history variation & Geometric track variation \\[4pt]
+Main strength & Testable with current data & Explains scatter in DM-analogue & Deepest geometric interpretation \\[4pt]
+Main weakness & Needs $\pw$ proxy from data & History intractable to reconstruct & Risks unfalsifiability \\[4pt]
+Recommended role & Primary framework & Speculative extension & Theoretical boundary case \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent
+The present work adopts the kinematic snapshot interpretation because it is
+local, calculable, and directly testable using current galactic velocity data.
+Schools~II and~III are retained as theoretical alternatives but are not
+required for the first-order rotation curve model.
+
+\figsuggest{Radar / spider chart comparing the three schools across six axes:
+(1) testability with current data, (2) parameter efficiency, (3) ability to
+explain galaxy-to-galaxy scatter, (4) connection to deeper geometry,
+(5) computational tractability, (6) falsifiability score --- visually
+summarising the trade-offs in Table~\ref{tab:schools}.}
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Observational Tests}\label{sec:tests}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{Rotation Curve Fitting Against SPARC}\label{sec:sparc}
+
+The primary observational test is direct regression of the model velocity:
+
+\[
+  \vmod^2(r) = \vbar^2(r) + \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+  \frac{1}{1+e^{-k(r-r_0)}} \frac{r}{r+r_c}
+\]
+
+against the SPARC rotation-curve database.  The baryonic contribution
+$\vbar^2(r)$ is taken from the provided stellar mass models and gas
+distributions, leaving $\Theta = \{\Lf,\,p_0,\,r_c,\,r_0,\,k\}$ plus a
+proxy for $|\pw(r)|$ as the fitting parameters.
+
+The hidden-axis momentum proxy is the key modelling choice.  Three
+physically motivated proxy forms are:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Circular velocity proxy:} $|\pw(r)| \propto m_* v_{\rm circ}(r)$,
+    where $m_*$ is a reference stellar mass.  Simple; ties $\pw$ to the
+    observed velocity field directly.
+  \item \textbf{Surface density proxy:} $|\pw(r)| \propto \Sigma(r) v_{\rm circ}(r)$,
+    where $\Sigma(r)$ is the baryonic surface density.  Weights by the local
+    mass concentration.
+  \item \textbf{Momentum flux proxy:} $|\pw(r)| \propto \rho(r) v(r)$,
+    the local three-momentum density.  Connects to the fluid-momentum
+    interpretation of hidden-axis sourcing.
+\end{enumerate}
+
+Consistency of $\{\Lf,\,p_0,\,r_c\}$ across the sample is the primary
+population test.  These parameters should not drift by more than a factor
+of a few between galaxies spanning an order of magnitude in mass.
+
+\figsuggest{Scatter plot of fitted $\Lf$ values vs.\ galaxy stellar mass
+$M_*$ across a sample of 50 SPARC galaxies, with error bars from bootstrap
+fitting --- testing whether $\Lf$ is consistent with a single universal value
+or shows systematic mass dependence.}
+
+\subsection{Radial Acceleration Relation}\label{sec:rar}
+
+The empirical radial acceleration relation (McGaugh et al.\ 2016; Lelli et
+al.\ 2017) establishes a tight correlation between $\aobs$ and $\abar$
+across the SPARC sample.  The fifth-force model predicts:
+
+\[
+  \aobs = \abar + \afiver(\abar,\,r) ,
+\]
+
+where $\afiver$ is sourced by $|\pw(r)|$, itself a function of the baryonic
+momentum distribution.  The model should therefore reproduce the tight
+$\aobs$--$\abar$ relation without explicit tuning, provided $|\pw(r)|$
+correlates sufficiently tightly with $\abar$.  If the predicted scatter in
+the relation exceeds the observed scatter, the proxy model for $|\pw(r)|$
+requires refinement.
+
+\subsection{Screening Tests in Compact Systems}\label{sec:screentest}
+
+The sigmoid gate $G(r)$ suppresses the fifth force for $r < r_0$.  Precision
+solar-system tests (lunar laser ranging, planetary ephemerides) constrain any
+fifth-force contribution at AU scales to below $10^{-13}\,\mathrm{m\,s^{-2}}$.
+This requires $G(r_{\rm AU}) \lesssim 10^{-3}$, which is satisfied provided
+$r_0 \gg 1\,\mathrm{AU}$ and $k$ is large enough.
+
+Binary-pulsar timing sets complementary constraints at $\sim 1\,\mathrm{AU}$
+scale.  The fifth-force contribution to the orbital decay must be negligible
+compared to the gravitational-wave prediction from general relativity.
+
+Dwarf spheroidal galaxies provide a middle-scale test: they span radii of
+$\sim 1$--$10\,\mathrm{kpc}$ and have very low surface brightnesses.  If
+the fifth-force contribution scales with baryonic momentum density, dwarfs
+should show less pronounced rotation-curve flattening than high-surface-
+brightness spirals.  This is consistent with observations and serves as
+a non-trivial prediction of the framework.
+
+\subsection{Population Tests and Morphological Correlations}\label{sec:poptest}
+
+School~I predicts that the fifth-force contribution correlates with
+\emph{current} kinematic properties: surface brightness, velocity dispersion,
+and baryonic momentum flux.  School~II predicts that it correlates with
+\emph{historical} properties: metallicity, star formation rate history, and
+merger history.  These predictions are distinct and can in principle be
+distinguished using multi-wavelength photometry and resolved stellar population
+data.
+
+A practical test: in a sample of galaxies matched in total mass and present-day
+velocity dispersion, Schools~I and~II predict the same fifth-force contribution
+(since current kinematics are matched) unless merger history is significantly
+different.  If residuals from the rotation-curve fit correlate with merger
+indicators (asymmetry, colour gradients, disturbed morphology), School~II
+gains evidence.  If they do not, School~I is preferred.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Limitations and Falsifiability}\label{sec:limits}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+\subsection{The Hidden-Momentum Proxy Problem}
+
+The $\pw(r)$ proxy is the central modelling uncertainty.  The framework
+specifies that $\pw$ is the particle's current hidden-axis momentum, but it
+does not derive $\pw$ from first principles.  In practice, $|\pw(r)|$ is
+treated as a free radial function constrained by the fitting protocol.  If
+a successful fit requires a $|\pw(r)|$ profile with no systematic relation to
+any observable --- mass, velocity, surface density --- then the model is using
+$\pw$ as a hidden halo in all but name.
+
+Falsification criterion: \emph{the model is disqualified if fits to a sample
+of $N_{\rm gal} \geq 20$ galaxies require per-galaxy $|\pw(r)|$ profiles with
+no mutual correlation across the sample, after controlling for total mass and
+morphology.}
+
+\subsection{Parameter Stability Under Sample Variation}
+
+The universal parameters $\{\Lf,\,p_0,\,r_c\}$ must remain stable.  If
+they drift significantly between galaxy morphological types (spirals vs.\
+dwarfs vs.\ ellipticals), the universality claim fails and the framework
+reduces to a flexible fitting function rather than a physical model.
+
+Falsification criterion: \emph{the model is weakened if $\Lf$ varies by
+more than a factor of 10 across a morphologically diverse sample without
+a physical explanation tied to a fifth-dimension coupling mechanism.}
+
+\subsection{Cluster-Scale Consistency}
+
+Galaxy clusters provide an additional constraint.  The bullet cluster
+demonstrates a spatial offset between the baryonic mass (X-ray gas) and the
+gravitational lensing mass.  Any geometric fifth-force framework must explain
+why the lensing signal follows the collisionless galaxies, not the gas, even
+though the gas carries more baryonic mass and --- under most proxy models ---
+more hidden-axis momentum.
+
+The framework can accommodate this if $|\pw(r)|$ is sourced primarily by
+stellar (collisionless) matter rather than gas, but this requires a specific
+physical mechanism --- yet to be derived --- distinguishing the two baryonic
+components in their coupling to the fifth axis.
+
+\subsection{Comparison with Halo Models}
+
+The framework is weakened but not falsified if it cannot outperform an NFW
+dark matter halo in reduced-$\chi^2$ fits with comparable parameter counts.
+It is falsified if it cannot match halo-model fits even with more parameters.
+The goal of the first paper is not to defeat dark matter; it is to demonstrate
+that the logarithmic fifth-force framework is not immediately excluded by
+existing rotation-curve data.
+
+%%═══════════════════════════════════════════════════════════════════════════════
+\section{Conclusion}\label{sec:conc}
+%%═══════════════════════════════════════════════════════════════════════════════
+
+This paper has developed a fifth-dimensional momentum framework for galactic
+rotation curves.  The central replacement is:
+
+\begin{keybox}
+\[
+  \InfoD_i \;\longrightarrow\; \pw^{(i)} = m_i\frac{dw_i}{d\tau} .
+\]
+The fifth force is not driven by historical information.  It is driven by
+current hidden-axis momentum.
+\end{keybox}
+
+\noindent
+The key results of the framework are as follows.
+
+The five-dimensional spacetime interval $dS_5^2 = -c^2\,dT^2 + d\mathbf{r}^2 + dw^2$
+implies a proper-time dissection $d\tau = dT\sqrt{1 - v^2/c^2 - v_w^2/c_w^2}$
+that gives $\pw$ a direct geometric role.  Particles with identical visible
+kinematics but different hidden-axis motion experience different local frame
+rates.
+
+The fifth-force acceleration follows a logarithmic coupling law:
+\[
+  \afive(r) = -\Lf\ln\!\left(1+\frac{|\pw|}{p_0}\right)
+  \frac{1}{1+e^{-k(r-r_0)}} \frac{1}{r+r_c}\,\rhat ,
+\]
+which produces a $1/r$ radial profile at galactic scales, $1/r$ being
+precisely the scaling needed to sustain flat rotation curves.
+
+The full rotation curve equation is:
+\[
+  v^2(r) = \frac{GM(r)}{r}
+  + \Lf\ln\!\left(1+\frac{|\pw(r)|}{p_0}\right)
+    \frac{1}{1+e^{-k(r-r_0)}} \frac{r}{r+r_c} ,
+\]
+which naturally suppresses the fifth force in compact low-velocity systems
+and produces an approximately flat contribution to $v^2(r)$ at outer disk
+radii.
+
+A numerical parameterisation protocol has been developed for regression against
+the SPARC rotation-curve database, with an escalation hierarchy from baseline
+snapshot through co-local and non-local ghost-source corrections.  Population
+consistency tests --- requiring that universal parameters $\{\Lf,\,p_0,\,r_c\}$
+remain stable across galaxy samples --- provide a clear falsifiability criterion
+that distinguishes the framework from a disguised halo fit.
+
+Three interpretive schools have been identified.  The kinematic snapshot school
+is adopted as the primary working model because it is local, calculable, and
+directly testable using current mass-profile and spectroscopic velocity data.
+The holistic ledger and temporal inversion schools are retained as theoretical
+extensions for future development.
+
+The framework does not claim to have solved the dark matter problem.  It
+proposes a competing geometric mechanism capable of producing dark-matter-like
+rotation signatures from hidden-dimensional momentum, written in a form
+amenable to direct observational test.
+
+\bigskip
+
+The open question of dimensional order and the independence of the $w$-axis
+from the time coordinate $T$ remain theoretical frontiers.  If the $w$-axis
+is genuinely orthogonal to $T$ in a block-universe topology, then the scatter
+of fifth-force proxy values across galaxy populations may not be noise but
+signal: a direct observational signature of a force coordinate that does not
+experience time.  Some residuals of the fit may therefore be fundamentally
+irreducible --- not a failure of the model but a statement about the geometry
+of the universe.
+
+Within the Inverse Kaluza-Klein framing, the framework's position is now
+unambiguous: it is not a compactification theory.  It is a projection-residual
+inference.  The $w$-coordinate is not a small circle hiding below experimental
+reach; it is the bookkeeping axis for identity content that ordinary
+four-dimensional projection fails to recover.  The rotation-curve residual is
+one instance of that failure.  It will not be the last.
+
+\medskip\noindent
+The rotation curve does not lie.  Something is missing from the standard
+accounting.  This framework offers one geometric answer.
+
+\end{document}

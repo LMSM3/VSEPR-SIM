@@ -1,4 +1,4 @@
-/**
+﻿/**
  * RDF Accumulator Test
  * 
  * Validates RDF accumulation with known systems.
@@ -15,9 +15,9 @@ using namespace vsepr::cli;
 using namespace atomistic;
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  RDF Accumulator Test                                     ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  RDF Accumulator Test                                     |\n";
+    std::cout << "+===========================================================+\n\n";
     
     // Test 1: Simple cubic lattice (FCC-like)
     std::cout << "Test 1: FCC lattice (4 atoms)\n";
@@ -59,7 +59,7 @@ int main() {
     
     std::cout << "  First few bins:\n";
     std::cout << "  r (Å)    g(r)\n";
-    std::cout << "  ──────────────\n";
+    std::cout << "  --------------\n";
     for (size_t i = 0; i < std::min(size_t(10), r_bins.size()); ++i) {
         std::cout << "  " << std::fixed << std::setprecision(2) << std::setw(6) << r_bins[i]
                   << "  " << std::setprecision(3) << g_r[i] << "\n";
@@ -100,7 +100,7 @@ int main() {
     
     std::cout << "  Sample g(r) values:\n";
     std::cout << "  r (Å)    g(r)    Deviation\n";
-    std::cout << "  ────────────────────────────\n";
+    std::cout << "  ----------------------------\n";
     
     double mean_deviation = 0.0;
     int count = 0;
@@ -126,14 +126,14 @@ int main() {
     std::cout << "\n";
     
     if (pass) {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ✅ TEST PASSED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ✅ TEST PASSED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 0;
     } else {
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ❌ TEST FAILED                                           ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ❌ TEST FAILED                                           |\n";
+        std::cout << "+===========================================================+\n";
         return 1;
     }
 }

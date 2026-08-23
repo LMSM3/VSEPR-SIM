@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * channel_kernels.hpp — Per-ℓ Channel Radial Kernels
+ * channel_kernels.hpp  -  Per-ℓ Channel Radial Kernels
  *
  * Implements the physically motivated, per-angular-momentum radial
  * kernels for each interaction channel as specified in the Anisotropic
@@ -19,7 +19,7 @@
  * Anti-black-box: all parameters (α_s, C₆) are stored in a single
  * inspectable struct. No hidden constants.
  *
- * Reference: "Anisotropic Bead Model — Implementation Specification"
+ * Reference: "Anisotropic Bead Model  -  Implementation Specification"
  *            section of section_anisotropic_beads.tex
  */
 
@@ -33,7 +33,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * Channel — physical interaction channel index.
+ * Channel  -  physical interaction channel index.
  *
  * Fixed at three entries for this revision.  Expansion prior to
  * validating all three is explicitly out of scope.
@@ -59,7 +59,7 @@ inline const char* channel_name(Channel ch) {
 // ============================================================================
 
 /**
- * ChannelKernelParams — inspectable parameters for the per-ℓ kernels.
+ * ChannelKernelParams  -  inspectable parameters for the per-ℓ kernels.
  *
  * All values are explicit; no hidden state.
  */

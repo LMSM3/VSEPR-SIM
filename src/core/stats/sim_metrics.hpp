@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/core/stats/sim_metrics.hpp
 // =============================================================================
 // Aggregator for the five core simulation health metrics.
 //
 //   1. Energy drift        (EnergyDriftTracker)
-//   2. RMSD to reference   (RMSDTracker — mode A)
-//   3. RMSD frame-to-frame (RMSDTracker — mode B)
+//   2. RMSD to reference   (RMSDTracker  -  mode A)
+//   3. RMSD frame-to-frame (RMSDTracker  -  mode B)
 //   4. Mean displacement   (DisplacementTracker)
 //   5. Structural residual (StructuralResidual)
 //
@@ -48,19 +48,19 @@
 namespace vsepr {
 
 // ---------------------------------------------------------------------------
-// SimMetricsRow  — one row of the output table
+// SimMetricsRow   -  one row of the output table
 // ---------------------------------------------------------------------------
 
 struct SimMetricsRow {
 	uint64_t frame              = 0;
-	double   time               = 0.0;    // simulation time (ps or fs — caller's units)
+	double   time               = 0.0;    // simulation time (ps or fs  -  caller's units)
 	double   E_total            = 0.0;
 	double   E_drift            = 0.0;    // absolute: E_total - E_0
 	double   E_rel_drift        = 0.0;    // relative: delta_E / |E_0|
-	double   RMSD_ref           = 0.0;    // Å — Kabsch RMSD vs reference frame
-	double   RMSD_step          = 0.0;    // Å — Kabsch RMSD vs previous frame
-	double   mean_displacement  = 0.0;    // Å — average site travel from reference
-	double   structural_residual= 0.0;    // Å — RMS lattice-site deviation
+	double   RMSD_ref           = 0.0;    // Å  -  Kabsch RMSD vs reference frame
+	double   RMSD_step          = 0.0;    // Å  -  Kabsch RMSD vs previous frame
+	double   mean_displacement  = 0.0;    // Å  -  average site travel from reference
+	double   structural_residual= 0.0;    // Å  -  RMS lattice-site deviation
 	double   defect_fraction    = 0.0;    // [0,1] fraction of sites beyond threshold
 	bool     stationary_flag    = false;  // true when all gates agree system settled
 	std::string motion_class;             // metric-behavior classification label
@@ -94,23 +94,23 @@ struct SimMetricsRow {
 };
 
 // ---------------------------------------------------------------------------
-// classify_motion()  — metric-behavior classifier
+// classify_motion()   -  metric-behavior classifier
 // ---------------------------------------------------------------------------
 // Maps a single row's metric values to a human-readable motion label.
 // This is a metric behavior classifier, not a materials classifier.
 //
 // Labels:
-//   none                    — no movement, no drift
-//   rigid_motion            — shape unchanged (RMSD≈0), but position changed
-//   nonrigid_deformation    — shape changed (RMSD>0), still evolving
-//   settled                 — all stationarity gates agree system stopped changing
-//   unstable_or_bad_timestep— energy is drifting significantly
+//   none                     -  no movement, no drift
+//   rigid_motion             -  shape unchanged (RMSD≈0), but position changed
+//   nonrigid_deformation     -  shape changed (RMSD>0), still evolving
+//   settled                  -  all stationarity gates agree system stopped changing
+//   unstable_or_bad_timestep -  energy is drifting significantly
 // ---------------------------------------------------------------------------
 
 inline std::string classify_motion(const SimMetricsRow& r) {
 	constexpr double rmsd_eps = 1e-6;
 	constexpr double disp_eps = 1e-6;
-	constexpr double drift_threshold = 0.05;  // 5% energy drift → suspect
+	constexpr double drift_threshold = 0.05;  // 5% energy drift -> suspect
 
 	if (r.stationary_flag)
 		return "settled";
@@ -126,19 +126,19 @@ inline std::string classify_motion(const SimMetricsRow& r) {
 }
 
 // ---------------------------------------------------------------------------
-// SimMetricsLog  — ordered collection of rows for a full run
+// SimMetricsLog   -  ordered collection of rows for a full run
 // ---------------------------------------------------------------------------
 
 using SimMetricsLog = std::vector<SimMetricsRow>;
 
 // ---------------------------------------------------------------------------
-// SimMetrics  — aggregator
+// SimMetrics   -  aggregator
 // ---------------------------------------------------------------------------
 
 struct SimMetrics {
 
 	// -------------------------------------------------------------------------
-	// Sub-trackers (all public — individually inspectable)
+	// Sub-trackers (all public  -  individually inspectable)
 	// -------------------------------------------------------------------------
 
 	EnergyDriftTracker   energy;
@@ -146,7 +146,7 @@ struct SimMetrics {
 	DisplacementTracker  displacement;
 	StructuralResidual   structure;
 
-	// Stationarity gates — one per position-based metric.
+	// Stationarity gates  -  one per position-based metric.
 	// Defaults: 1e-3 relative tolerance, 100-sample minimum.
 	// Tune per-metric if needed (e.g. lower for RMSD_step in fast relaxers).
 	StationarityGate gate_rmsd_ref;

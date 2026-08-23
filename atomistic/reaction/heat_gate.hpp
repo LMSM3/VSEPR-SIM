@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * heat_gate.hpp
  * -------------
@@ -48,9 +48,9 @@ struct HeatConfig {
 
 /**
  * Piecewise-linear ramp: g(x) ∈ [0, 1].
- *   x <= x0  → 0
- *   x >= x1  → 1
- *   else     → (x - x0) / (x1 - x0)
+ *   x <= x0  -> 0
+ *   x >= x1  -> 1
+ *   else     -> (x - x0) / (x1 - x0)
  */
 inline double gate(double x, double x0, double x1) {
     if (x <= x0) return 0.0;
@@ -132,7 +132,7 @@ inline std::vector<BioTemplateGateParams> default_bio_gate_params() {
 }
 
 // ============================================================================
-// Temperature → Heat Parameter Conversion
+// Temperature -> Heat Parameter Conversion
 // ============================================================================
 
 /**
@@ -158,7 +158,7 @@ inline uint16_t temperature_to_heat(double T_kelvin, double slope = 1.5) {
 }
 
 /**
- * Inverse mapping: heat parameter → approximate temperature.
+ * Inverse mapping: heat parameter -> approximate temperature.
  * Used for reporting/logging, not for physical calculations.
  */
 inline double heat_to_temperature(uint16_t h, double slope = 1.5) {
@@ -267,7 +267,7 @@ enum class MotifType : uint8_t {
 struct MotifHit {
     MotifType type;
     uint32_t  anchor_atom;   // Central atom of the motif
-    double    confidence;    // 0.0–1.0
+    double    confidence;    // 0.0-1.0
 };
 
 struct AminoAcidDetection {

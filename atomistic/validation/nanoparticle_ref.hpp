@@ -1,16 +1,16 @@
-#pragma once
+﻿#pragma once
 /**
  * nanoparticle_ref.hpp
  * --------------------
  * Experimental reference data for common nanoparticle systems in the
- * near-atomistic regime (4–6 nm diameter).
+ * near-atomistic regime (4-6 nm diameter).
  *
  * Sources:
  *   - CRC Handbook of Chemistry and Physics (105th ed.)
- *   - Tyson & Miller, Surf. Sci. 62, 267 (1977) — surface energies
- *   - Buffat & Borel, Phys. Rev. A 13, 2287 (1976) — Au melting depression
- *   - Cleveland et al., Phys. Rev. Lett. 79, 1873 (1997) — Au cluster energies
- *   - Baletto & Ferrando, Rev. Mod. Phys. 77, 371 (2005) — nanoparticle motifs
+ *   - Tyson & Miller, Surf. Sci. 62, 267 (1977)  -  surface energies
+ *   - Buffat & Borel, Phys. Rev. A 13, 2287 (1976)  -  Au melting depression
+ *   - Cleveland et al., Phys. Rev. Lett. 79, 1873 (1997)  -  Au cluster energies
+ *   - Baletto & Ferrando, Rev. Mod. Phys. 77, 371 (2005)  -  nanoparticle motifs
  *
  * Every entry carries its bibliographic tag in `source` for traceability.
  * Energies converted to internal units (kcal/mol, Å) at definition site.
@@ -23,7 +23,7 @@ namespace validation {
 namespace reference {
 
 // ============================================================================
-// Noble Metals (4–6 nm regime)
+// Noble Metals (4-6 nm regime)
 // ============================================================================
 
 inline ExperimentalRecord gold_5nm_fcc() {
@@ -34,9 +34,9 @@ inline ExperimentalRecord gold_5nm_fcc() {
     r.diameter_ang = 50.0;  // 5.0 nm
     r.approx_N    = 3871;   // ~3871 atoms for 5nm Au FCC sphere
 
-    // Cohesive energy: bulk Au = 3.81 eV/atom → convert to kcal/mol
+    // Cohesive energy: bulk Au = 3.81 eV/atom -> convert to kcal/mol
     r.cohesive_energy     = -3.81 * KCAL_PER_EV;  // −87.86 kcal/mol
-    // Surface energy: Au(111) ≈ 1.50 J/m² → kcal/mol/Å²
+    // Surface energy: Au(111) ≈ 1.50 J/m² -> kcal/mol/Å²
     r.surface_energy_per_area = 1.50 * J_PER_M2_TO_KCAL_PER_ANG2;
     r.edge_energy_correction  = 0.8 * KCAL_PER_EV;  // ~0.8 eV excess per edge atom
 
@@ -101,7 +101,7 @@ inline ExperimentalRecord copper_4nm_fcc() {
 }
 
 // ============================================================================
-// Noble Gases (liquid / soft nanoparticle clusters at 4–6 nm)
+// Noble Gases (liquid / soft nanoparticle clusters at 4-6 nm)
 // ============================================================================
 
 inline ExperimentalRecord argon_5nm_cluster() {
@@ -132,7 +132,7 @@ inline ExperimentalRecord argon_5nm_cluster() {
 }
 
 // ============================================================================
-// Transition Metals (4–6 nm regime)
+// Transition Metals (4-6 nm regime)
 // ============================================================================
 
 inline ExperimentalRecord platinum_5nm_fcc() {

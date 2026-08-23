@@ -1,0 +1,120 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# BUG_EXPOSER: DBG-DISS-001 dissolution bridge path
+# Validate: build/vsepr.exe validate scripts/debugging/bug_exposer_dissolution_bridge.vsim
+# Run:      build/vsepr.exe run scripts/debugging/bug_exposer_dissolution_bridge.vsim
+# Expected debug question: does [dissolution] only parse, or does it configure
+# and execute a bridge pass that emits events or reportable metrics?
+
+print_console "DBG-DISS-001: dissolution bridge probe"
+print_console "Expected: parse [dissolution], execute pass, emit deterministic report data"
+
+[project]
+name        = "bug_exposer_dissolution_bridge"
+version     = "v5.14.1-debug"
+seed_base   = 91002
+determinism = true
+description = "Small Fe2O3 acid-water dissolution probe for parser/runtime wiring"
+
+[material]
+formula   = "Fe2O3"
+structure = "corundum"
+cell      = "1x1x1"
+phase     = "solid"
+
+[simulation]
+box_size_ang     = 28.0
+periodic         = false
+fire_max_steps   = 6
+fire_dt_fs       = 0.5
+formation_preset = "ceramic"
+
+[[simulation.molecule]]
+formula       = "Fe2O3"
+count         = 1
+temperature_K = 298.15
+lattice       = "corundum"
+
+[[simulation.molecule]]
+formula       = "H2O"
+count         = 8
+temperature_K = 298.15
+lattice       = "none"
+
+[[simulation.molecule]]
+formula       = "HCl"
+count         = 2
+temperature_K = 298.15
+lattice       = "none"
+
+[environment]
+temperature = 298.15
+pressure    = 0.000101325
+medium      = "water"
+periodic    = false
+
+[run]
+mode         = "md"
+max_steps    = 6
+dt_fs        = 0.5
+temperature  = 298.15
+converge     = false
+output_level = "verbose"
+
+[chemistry]
+chemistry              = "acid_water_surface"
+reaction_events        = true
+track_species_state    = true
+event_registry         = true
+min_score_threshold    = 0.20
+max_reactions_per_step = 4
+
+[dissolution]
+enabled                  = true
+engine                   = "protonation_ladder"
+dG_first_protonation     = -12.0
+dG_second_protonation    = -8.0
+Ea_bridging_cleavage     = 25.0
+Ea_terminal_release      = 15.0
+dG_hydration_Fe3         = -105.0
+dG_hydration_Fe2         = -85.0
+dG_hydration_Al3         = -115.0
+dG_hydration_generic     = -80.0
+dG_sulfate_mono          = -3.5
+dG_sulfate_bi            = -6.0
+dG_sulfate_bridge        = -8.5
+pH_reference             = 1.0
+pH_slope                 = -0.5
+T_reference              = 298.15
+Ea_apparent              = 40.0
+site_density_per_nm2     = 5.0
+
+[observe]
+metrics       = ["formation", "reaction_events", "chemical_state"]
+output_format = "json"
+every_n_steps = 1
+
+[verify]
+enabled = true
+profile = "debug_dissolution_bridge"
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_events_json   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/debugging/dissolution_bridge"
+
+[report]
+title                   = "DBG-DISS-001 Dissolution Bridge Probe"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type     = "none"
+render_interval = 1
+

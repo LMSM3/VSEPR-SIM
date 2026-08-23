@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * step_writer.hpp -- Minimal STEP AP203 engineering-geometry writer
  * =================================================================
@@ -11,9 +11,9 @@
  * This is NOT a full CAD kernel.  It is the engineering-geometry truth
  * artifact described in the beta.8 workflow contract:
  *
- *   .xyz*  →  simulation truth   (forces, velocities, charges)
- *   .step  →  engineering truth  (geometry, provenance, identity)
- *   .json  →  manifest           (binds both artefacts)
+ *   .xyz*  ->  simulation truth   (forces, velocities, charges)
+ *   .step  ->  engineering truth  (geometry, provenance, identity)
+ *   .json  ->  manifest           (binds both artefacts)
  *
  * Output conforms to AP203 configuration-controlled design (ISO 10303-214
  * subset) sufficient for CAD round-trip: header section, product
@@ -142,7 +142,7 @@ inline void write_step_ap203(std::ostream& out,
 		<< ",#" << id_dir_z << ",#" << id_dir_x << ");\n";
 
 	// -----------------------------------------------------------------------
-	// CARTESIAN_POINTs — one per atom
+	// CARTESIAN_POINTs  -  one per atom
 	// -----------------------------------------------------------------------
 	std::vector<int> pt_ids;
 	pt_ids.reserve(frame.atoms.size());

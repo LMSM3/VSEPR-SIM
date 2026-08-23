@@ -1,23 +1,23 @@
-#pragma once
+﻿#pragma once
 /**
  * nuclear_stability.hpp
  * =====================
- * Ab-initio nuclear stability predictor — determines stability class,
+ * Ab-initio nuclear stability predictor  -  determines stability class,
  * dominant decay mode, and order-of-magnitude half-life from Z alone.
  *
  * ZERO external data files.  All predictions derive from:
- *   1. Semi-empirical mass formula (Bethe–Weizsäcker, 5 parameters)
+ *   1. Semi-empirical mass formula (Bethe-Weizsäcker, 5 parameters)
  *   2. Nuclear shell model (magic numbers: 2, 8, 20, 28, 50, 82, 126)
  *   3. Valley of β-stability (N/Z ratio model)
- *   4. Geiger–Nuttall law (α-decay half-life from Q-value)
+ *   4. Geiger-Nuttall law (α-decay half-life from Q-value)
  *   5. Fissility parameter (Z²/A threshold for spontaneous fission)
  *
  * Stability classification:
- *   Stable          — has at least one stable isotope (Z ≤ 82 with exceptions)
- *   PrimordialLong  — t₁/₂ > age of Earth (4.5 Gy), naturally occurring
- *   Radioactive     — t₁/₂ > 1 second, measurable in lab
- *   VeryShortLived  — t₁/₂ < 1 second but > 1 μs
- *   Superheavy      — t₁/₂ < 1 ms or synthesis-only (Z ≥ 104)
+ *   Stable           -  has at least one stable isotope (Z ≤ 82 with exceptions)
+ *   PrimordialLong   -  t₁/₂ > age of Earth (4.5 Gy), naturally occurring
+ *   Radioactive      -  t₁/₂ > 1 second, measurable in lab
+ *   VeryShortLived   -  t₁/₂ < 1 second but > 1 μs
+ *   Superheavy       -  t₁/₂ < 1 ms or synthesis-only (Z ≥ 104)
  *
  * Usage:
  *   #include "nuclear_stability.hpp"
@@ -61,8 +61,8 @@ enum class StabilityClass : uint8_t {
 enum class DecayType : uint8_t {
     None,              ///< Stable
     Alpha,             ///< α emission (He-4)
-    BetaMinus,         ///< β⁻ (neutron → proton + e⁻ + ν̄)
-    BetaPlus,          ///< β⁺ / EC (proton → neutron + e⁺ + ν)
+    BetaMinus,         ///< β⁻ (neutron -> proton + e⁻ + ν̄)
+    BetaPlus,          ///< β⁺ / EC (proton -> neutron + e⁺ + ν)
     SpontaneousFission,///< SF (Z²/A threshold)
     ProtonEmission     ///< Beyond proton drip line
 };
@@ -103,7 +103,7 @@ struct StabilityInfo {
     bool           has_stable_isotope;
     bool           is_magic_Z;       ///< Z is a proton magic number
     double         binding_energy_per_nucleon; ///< B/A in MeV for most stable A
-    double         fissility;        ///< Z²/A (>47 → SF dominant)
+    double         fissility;        ///< Z²/A (>47 -> SF dominant)
     double         alpha_confidence; ///< [0,1] confidence in polarizability prediction
 };
 
@@ -131,7 +131,7 @@ inline uint32_t magic_distance(uint32_t n) noexcept {
 }
 
 // ============================================================================
-// Semi-empirical mass formula (Bethe–Weizsäcker)
+// Semi-empirical mass formula (Bethe-Weizsäcker)
 //
 // B(Z,A) = aV·A − aS·A^(2/3) − aC·Z(Z−1)/A^(1/3)
 //        − aA·(A−2Z)²/A + δ(Z,A)
@@ -143,11 +143,11 @@ inline uint32_t magic_distance(uint32_t n) noexcept {
 
 namespace semf {
 
-constexpr double aV = 15.56;    // MeV — volume term
-constexpr double aS = 17.23;    // MeV — surface term
-constexpr double aC =  0.7;     // MeV — Coulomb term
-constexpr double aA = 23.285;   // MeV — asymmetry term
-constexpr double aP = 12.0;     // MeV — pairing coefficient
+constexpr double aV = 15.56;    // MeV  -  volume term
+constexpr double aS = 17.23;    // MeV  -  surface term
+constexpr double aC =  0.7;     // MeV  -  Coulomb term
+constexpr double aA = 23.285;   // MeV  -  asymmetry term
+constexpr double aP = 12.0;     // MeV  -  pairing coefficient
 
 inline double pairing_delta(uint32_t Z, uint32_t A) noexcept {
     uint32_t N = A - Z;
@@ -287,20 +287,20 @@ inline double fissility(uint32_t Z, uint32_t A) noexcept {
 }
 
 // ============================================================================
-// Geiger–Nuttall half-life estimate for α-decay
+// Geiger-Nuttall half-life estimate for α-decay
 //
 // log₁₀(t½/s) = a/√Q_α + b,  where a,b are empirical constants.
-// Standard Viola–Seaborg parameterisation (1966):
+// Standard Viola-Seaborg parameterisation (1966):
 //   log₁₀(t½) = (aZ + b) / √Q + (cZ + d)
 //   a = 1.66175, b = −8.5166, c = −0.20228, d = −33.9069
 // Simplified here for Z-only estimation.
 // ============================================================================
 
 inline double log10_alpha_halflife(uint32_t Z, double Q_alpha_MeV) noexcept {
-    if (Q_alpha_MeV <= 0.0) return 30.0;  // energetically forbidden → very long
+    if (Q_alpha_MeV <= 0.0) return 30.0;  // energetically forbidden -> very long
 
     const double z = static_cast<double>(Z);
-    // Viola–Seaborg coefficients
+    // Viola-Seaborg coefficients
     const double a = 1.66175, b = -8.5166;
     const double c = -0.20228, d = -33.9069;
     double sqQ = std::sqrt(Q_alpha_MeV);
@@ -310,7 +310,7 @@ inline double log10_alpha_halflife(uint32_t Z, double Q_alpha_MeV) noexcept {
 // ============================================================================
 // Elements with truly stable isotopes (Z ≤ 82, minus Tc=43 and Pm=61)
 //
-// Bi (Z=83) has a half-life of 1.9×10¹⁹ y — effectively stable but
+// Bi (Z=83) has a half-life of 1.9×10¹⁹ y  -  effectively stable but
 // technically radioactive.  We classify it as PrimordialLong.
 //
 // Derived purely from nuclear structure: Z ≤ 82 AND Z ∉ {43, 61}.
@@ -365,7 +365,7 @@ inline StabilityInfo stability_of(uint32_t Z) noexcept {
     info.binding_energy_per_nucleon = semf::binding_per_nucleon(Z, A);
     info.fissility = fissility(Z, A);
 
-    // ── Stability classification ─────────────────────────────────────────
+    // -- Stability classification -----------------------------------------
 
     if (has_truly_stable_isotope(Z)) {
         info.cls = StabilityClass::Stable;
@@ -391,19 +391,19 @@ inline StabilityInfo stability_of(uint32_t Z) noexcept {
         return info;
     }
 
-    // ── Z=43 (Tc) and Z=61 (Pm): no stable isotopes, but Z < 83 ────────
+    // -- Z=43 (Tc) and Z=61 (Pm): no stable isotopes, but Z < 83 --------
 
     if (Z == 43 || Z == 61) {
         info.cls = StabilityClass::Radioactive;
         info.dominant_decay = (Z == 43) ? DecayType::BetaMinus : DecayType::BetaMinus;
-        // Tc-97: t½ ≈ 4.2×10⁶ y = 1.3×10¹⁴ s → log₁₀ ≈ 14.1
-        // Pm-145: t½ ≈ 17.7 y = 5.6×10⁸ s → log₁₀ ≈ 8.7
+        // Tc-97: t½ ≈ 4.2×10⁶ y = 1.3×10¹⁴ s -> log₁₀ ≈ 14.1
+        // Pm-145: t½ ≈ 17.7 y = 5.6×10⁸ s -> log₁₀ ≈ 8.7
         info.log10_halflife_s = (Z == 43) ? 14.1 : 8.7;
         info.alpha_confidence = 0.90;  // well-characterised despite radioactive
         return info;
     }
 
-    // ── Z = 83–103: Transbismuth elements, mostly α-decay ───────────────
+    // -- Z = 83-103: Transbismuth elements, mostly α-decay ---------------
 
     if (Z >= 83 && Z <= 103) {
         double Q = q_alpha(Z, A);
@@ -438,7 +438,7 @@ inline StabilityInfo stability_of(uint32_t Z) noexcept {
         return info;
     }
 
-    // ── Z = 104–118: Superheavy transactinides ──────────────────────────
+    // -- Z = 104-118: Superheavy transactinides --------------------------
 
     if (Z >= 104 && Z <= 118) {
         info.cls = StabilityClass::Superheavy;
@@ -462,7 +462,7 @@ inline StabilityInfo stability_of(uint32_t Z) noexcept {
         return info;
     }
 
-    // ── Z = 119–120: Beyond current synthesis ────────────────────────────
+    // -- Z = 119-120: Beyond current synthesis ----------------------------
 
     info.cls = StabilityClass::Superheavy;
     info.dominant_decay = DecayType::SpontaneousFission;

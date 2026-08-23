@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * include/analysis/vsim_complexity.hpp
  * =======================================
@@ -7,27 +7,27 @@
  * Profiles named kernel functions or simulation phases against varying
  * particle / event counts. Displays a live ASCII scaling chart showing:
  *
- *   ─── O(N) scaling display ───
+ *   --- O(N) scaling display ---
  *   phase          N=10   N=50   N=100  N=500  N=1000   fit
- *   ─────────────────────────────────────────────────────────
+ *   ---------------------------------------------------------
  *   event_emit     ···    ·      ·      ·      ·        O(N)
  *   filter_kind    ···    ··     ·      ·      ·        O(N)
  *   log_snapshot   ·      ·      ··     ···    ···      O(N)
  *   variance_eval  ·      ·      ·      ·      ·        O(N)
- *   batch_sweep    ·      ··     ····   ██     ████     O(N·K)
+ *   batch_sweep    ·      ··     ····   ##     ####     O(N·K)
  *
  * Complexity classes detected:
- *   O(1)       — constant (flat line)
- *   O(log N)   — sub-linear growth
- *   O(N)       — linear
- *   O(N log N) — quasi-linear
- *   O(N²)      — quadratic
- *   O(N·K)     — linear with parameter factor K (batch/sweep)
+ *   O(1)        -  constant (flat line)
+ *   O(log N)    -  sub-linear growth
+ *   O(N)        -  linear
+ *   O(N log N)  -  quasi-linear
+ *   O(N²)       -  quadratic
+ *   O(N·K)      -  linear with parameter factor K (batch/sweep)
  *
  * .cu profile stubs:
  *   VSIM_CUDA_PROFILE_BEGIN(name) / VSIM_CUDA_PROFILE_END(name)
  *   These expand to CUDA nvtx range markers when VSIM_CUDA is defined,
- *   and to C++ chrono timers otherwise — so they compile clean in both modes.
+ *   and to C++ chrono timers otherwise  -  so they compile clean in both modes.
  *
  * WO-56C  |  v5.0.0-beta.7.1  |  beta-10 milestone
  */
@@ -41,7 +41,7 @@
 #include <vector>
 
 // ============================================================================
-// .cu profile stubs — compile as C++ chrono when VSIM_CUDA is not defined
+// .cu profile stubs  -  compile as C++ chrono when VSIM_CUDA is not defined
 // ============================================================================
 
 #ifdef VSIM_CUDA
@@ -51,7 +51,7 @@
   #define VSIM_CUDA_PROFILE_BEGIN(name) vsim_cuda_profile_begin(name)
   #define VSIM_CUDA_PROFILE_END(name)   vsim_cuda_profile_end(name)
 #else
-  // Pure C++ chrono fallback — zero overhead when VSIM_CUDA not defined
+  // Pure C++ chrono fallback  -  zero overhead when VSIM_CUDA not defined
   #define VSIM_CUDA_PROFILE_BEGIN(name) \
 	  auto _vsim_t0_##name = std::chrono::steady_clock::now()
   #define VSIM_CUDA_PROFILE_END(name) \
@@ -61,17 +61,17 @@
 namespace vsim {
 
 // ============================================================================
-// TimingPoint — one (N, time_ns) measurement
+// TimingPoint  -  one (N, time_ns) measurement
 // ============================================================================
 
 struct TimingPoint {
-	size_t   N;        // Problem size (particle count, event count, …)
+	size_t   N;        // Problem size (particle count, event count, ...)
 	double   time_ns;  // Elapsed time in nanoseconds
 	std::string label; // Optional label
 };
 
 // ============================================================================
-// ComplexityClass — detected scaling class
+// ComplexityClass  -  detected scaling class
 // ============================================================================
 
 enum class ComplexityClass {
@@ -80,7 +80,7 @@ enum class ComplexityClass {
 	ON,       // O(N)
 	ONlogN,   // O(N log N)
 	ON2,      // O(N²)
-	ONK,      // O(N·K)  — batch/sweep
+	ONK,      // O(N·K)   -  batch/sweep
 	Unknown
 };
 
@@ -97,7 +97,7 @@ inline const char* complexity_name(ComplexityClass c) {
 }
 
 // ============================================================================
-// PhaseProfile — profile of one named phase
+// PhaseProfile  -  profile of one named phase
 // ============================================================================
 
 struct PhaseProfile {
@@ -129,7 +129,7 @@ struct PhaseProfile {
 	ComplexityClass detect_complexity() const {
 		if (points.size() < 2) return ComplexityClass::Unknown;
 
-		// Compute log-log slope: slope ~1 → O(N), ~2 → O(N²), ~0 → O(1)
+		// Compute log-log slope: slope ~1 -> O(N), ~2 -> O(N²), ~0 -> O(1)
 		double sum_lx = 0, sum_ly = 0, sum_lx2 = 0, sum_lxy = 0;
 		int n = 0;
 		for (const auto& p : points) {
@@ -154,14 +154,14 @@ struct PhaseProfile {
 };
 
 // ============================================================================
-// VsimComplexity — display engine
+// VsimComplexity  -  display engine
 // ============================================================================
 
 class VsimComplexity {
 public:
 
 	// -----------------------------------------------------------------------
-	// display — print the full O(N) scaling table for a set of profiles
+	// display  -  print the full O(N) scaling table for a set of profiles
 	// -----------------------------------------------------------------------
 	static void display(const std::vector<PhaseProfile>& profiles,
 						const std::vector<size_t>& N_values,
@@ -175,7 +175,7 @@ public:
 
 		constexpr int BAR_MAX = 12;  // max bar width in the chart
 
-		std::printf("\n%s%s─── O(N) Scaling Display ───%s\n",
+		std::printf("\n%s%s--- O(N) Scaling Display ---%s\n",
 			c("\033[1m"), c("\033[37m"), c("\033[0m"));
 
 		// Header
@@ -193,7 +193,7 @@ public:
 			double t_max = 1.0;
 			for (const auto& p : prof.points) t_max = std::max(t_max, p.time_ns);
 
-			// Classify → colour
+			// Classify -> colour
 			const char* fit_col = "\033[32m"; // green = O(1)/O(N)
 			if (prof.fit == ComplexityClass::ON2 || prof.fit == ComplexityClass::ONK)
 				fit_col = "\033[33m"; // yellow
@@ -229,15 +229,15 @@ public:
 				t_us_max);
 		}
 
-		std::printf("\n  %sBar key: %s█ fast (O(1)/O(N))  "
-					"%s█ moderate  %s█ heavy  %s█ O(N²)/O(N·K)%s\n\n",
+		std::printf("\n  %sBar key: %s# fast (O(1)/O(N))  "
+					"%s# moderate  %s# heavy  %s# O(N²)/O(N·K)%s\n\n",
 			c("\033[2m"),
 			c("\033[34m"), c("\033[32m"), c("\033[33m"), c("\033[31m"),
 			c("\033[0m"));
 	}
 
 	// -----------------------------------------------------------------------
-	// benchmark_kernel_phases — profile the standard VSIM kernel phases
+	// benchmark_kernel_phases  -  profile the standard VSIM kernel phases
 	// against varying event/particle count N
 	// -----------------------------------------------------------------------
 	static std::vector<PhaseProfile> benchmark_kernel_phases(
@@ -246,7 +246,7 @@ public:
 	{
 		std::vector<PhaseProfile> profiles;
 
-		// Phase 1: event_emit — O(N) linear push
+		// Phase 1: event_emit  -  O(N) linear push
 		{
 			PhaseProfile p; p.name = "event_emit";
 			p.benchmark(N_values, [](size_t N) {
@@ -258,7 +258,7 @@ public:
 			profiles.push_back(std::move(p));
 		}
 
-		// Phase 2: filter_by_kind — O(N) scan
+		// Phase 2: filter_by_kind  -  O(N) scan
 		{
 			PhaseProfile p; p.name = "filter_kind";
 			p.benchmark(N_values, [](size_t N) {
@@ -270,7 +270,7 @@ public:
 			profiles.push_back(std::move(p));
 		}
 
-		// Phase 3: variance_eval — O(N) two-pass
+		// Phase 3: variance_eval  -  O(N) two-pass
 		{
 			PhaseProfile p; p.name = "variance_eval";
 			p.benchmark(N_values, [](size_t N) {
@@ -285,7 +285,7 @@ public:
 			profiles.push_back(std::move(p));
 		}
 
-		// Phase 4: N_evolution dN/dt — O(N) finite difference
+		// Phase 4: N_evolution dN/dt  -  O(N) finite difference
 		{
 			PhaseProfile p; p.name = "N_evolution_dNdt";
 			p.benchmark(N_values, [](size_t N) {
@@ -302,7 +302,7 @@ public:
 			profiles.push_back(std::move(p));
 		}
 
-		// Phase 5: while_guard_eval — O(N) per iteration body
+		// Phase 5: while_guard_eval  -  O(N) per iteration body
 		{
 			PhaseProfile p; p.name = "while_guard_eval";
 			p.benchmark(N_values, [](size_t N) {
@@ -314,7 +314,7 @@ public:
 			profiles.push_back(std::move(p));
 		}
 
-		// Phase 6: batch_sweep — O(N·K) where K = sweep combinations
+		// Phase 6: batch_sweep  -  O(N·K) where K = sweep combinations
 		{
 			PhaseProfile p; p.name = "batch_sweep";
 			p.benchmark(N_values, [](size_t N) {
@@ -328,7 +328,7 @@ public:
 			profiles.push_back(std::move(p));
 		}
 
-		// Phase 7: render_svg — O(N) element write
+		// Phase 7: render_svg  -  O(N) element write
 		{
 			PhaseProfile p; p.name = "render_svg";
 			p.benchmark(N_values, [](size_t N) {

@@ -1,0 +1,175 @@
+# =============================================================================
+# wo74a_gap_classifier_demo.vsim
+#
+# WO-74A  --  Gap Classifier Unified API Demonstration
+#
+# Exercises both gap classifier strategies registered in
+# ModuleRegistry<IGapClassifier> after the WO-74A consolidation:
+#
+#   "threshold"  --  3-label: good_match / overextended_field /
+#                             underresolved_scale
+#                    classify_gap() free function, backward-compat API.
+#
+#   "adaptive"   --  14-label: lambda+energy joint classification,
+#                    reference_count guard, asymmetry rule (WO-73D):
+#                      lambda_high (L_sim > L_emp)  severity 1  soft
+#                      lambda_low  (L_sim < L_emp)  severity 2  hard
+#
+# Pipeline path:
+#   [run] FIRE relaxation of NaCl ionic crystal
+#     -> [analysis.scale_sampling] RVE windows -> LengthScaleFitter
+#     -> gap_classifier (both strategies checked in [verify])
+#     -> [export] metrics_tsv + analysis_json
+#
+# Run:
+#   vsper run examples/wo74a_gap_classifier_demo.vsim
+#
+# v5.13.3  |  WO-74A
+# =============================================================================
+
+[project]
+name        = "wo74a_gap_classifier_demo"
+version     = "v5.13.3"
+seed_base   = 7400
+determinism = true
+description = "WO-74A: threshold + adaptive gap classifier strategies, NaCl ionic crystal"
+
+# -- Simulation box -----------------------------------------------------------
+
+[simulation]
+box_size_ang     = 40.0
+periodic         = true
+fire_max_steps   = 400
+fire_dt_fs       = 0.5
+formation_preset = "ionic"
+use_ewald        = true
+ewald_alpha      = 0.3
+ewald_rcut       = 10.0
+ewald_kmax       = 5
+step_delay_ms    = 0
+
+[cell]
+lx = 40.0
+ly = 40.0
+lz = 40.0
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[[simulation.molecule]]
+formula       = "NaCl"
+count         = 64
+temperature_K = 300.0
+lattice       = "fcc_ionic"
+
+# -- Run: FIRE relaxation -----------------------------------------------------
+
+[run]
+mode         = "md_nvt"
+max_steps    = 1000
+dt_fs        = 0.5
+temperature  = 300.0
+converge     = true
+output_level = "standard"
+
+# -- Scale sampling -> feeds LengthScaleFitter (WO-73D) ----------------------
+# RVE windows at 4 length scales.  The fitter recovers Lambda_nm from the
+# R_X(L) = A_X(L)/A_X(inf) curve.  That Lambda_nm is then passed to both
+# gap classifier strategies in the verify block below.
+
+[analysis.scale_sampling]
+enabled                    = true
+compute_field_projection   = true
+compute_rve_sampling       = true
+compute_emergence_metrics  = false
+field_grid                 = [8, 8, 8]
+min_particles_for_scale_sampling = 64
+rve_window_lengths_A       = [5.0, 8.0, 12.0, 18.0]
+rve_windows_per_level      = 12
+rve_window_placement       = "stratified"
+temporal_drift_metric      = "block_difference"
+scale_drift_metric         = "successive_window_difference"
+spatial_cv_threshold       = 0.20
+temporal_drift_threshold   = 0.10
+scale_drift_threshold      = 0.15
+
+# -- Analysis inference -------------------------------------------------------
+
+[analysis.inference]
+enabled                               = true
+mode                                  = "rule_based_61d"
+infer_packing_regime                  = true
+infer_mobility_regime                 = true
+infer_structural_stability            = true
+infer_macro_readiness                 = false
+min_particles_macro_candidate         = 128
+min_frames_macro_candidate            = 5
+
+# -- Verification block -------------------------------------------------------
+# [verify.structure] checks coordination and bond geometry post-relaxation.
+# [verify.mass]      confirms atom count is conserved (drift < 1e-10).
+#
+# gap_strategy = "threshold"  ->  ThresholdGapClassifier
+# gap_strategy = "adaptive"   ->  AdaptiveGapClassifier
+#
+# Both strategies are exercised by running the script twice with each value,
+# or by examining the analysis_json which records the result from both.
+# Default for demonstration: "adaptive" (14-label; more information-rich).
+
+[verify]
+enabled = true
+
+[verify.structure]
+enabled              = true
+expected_prototype   = "B1_NaCl"
+check_coordination   = true
+expected_coordination = 6
+coordination_tolerance = 1
+check_bond_length    = true
+expected_bond_length_A = 2.82
+bond_length_tolerance_A = 0.15
+
+[verify.mass]
+enabled    = true
+max_drift  = 1e-10
+
+# Gap classifier strategy.
+# Swap to "threshold" to exercise the 3-label free-function path.
+gap_strategy         = "adaptive"
+gap_tolerance_nm     = 0.05
+prior_lambda_nm      = 0.282
+prior_lambda_sigma   = 0.03
+prior_energy         = -185.0
+prior_energy_sigma   = 5.0
+reference_count      = 8
+
+# -- Variance probes ----------------------------------------------------------
+
+[variance]
+print_results    = true
+energy_var       = "energy.total  last 200  0.10"
+displacement_var = "displacement  all  0.08"
+
+# -- Export -------------------------------------------------------------------
+
+[export]
+write_xyz            = true
+write_xyzf           = false
+write_analysis_json  = true
+write_metrics_tsv    = true
+write_report_md      = true
+write_events_json    = true
+write_summary_csv    = true
+output_dir           = "out/wo74a_gap_classifier_demo"
+
+# -- Visual -------------------------------------------------------------------
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 50
+show_convergence_trace   = true
+show_bar_chart           = true
+show_symbolic_trace      = true
+animation_mode           = "static"

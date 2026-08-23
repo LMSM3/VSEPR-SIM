@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * crystal_tui.hpp  —  Terminal crystal lattice viewer
+ * crystal_tui.hpp   -   Terminal crystal lattice viewer
  * ====================================================
  * VSEPR-SIM 3.0.0
  *
@@ -86,7 +86,7 @@ inline Colour colour_for_type(uint32_t Z) {
     return {180, 180, 180};                // actinides+: grey
 }
 
-// Force magnitude heat map: blue (cold) → red (hot)
+// Force magnitude heat map: blue (cold) -> red (hot)
 inline Colour force_colour(double magnitude, double max_force) {
     if (max_force < 1e-20) return {80, 80, 80};
     double t = magnitude / max_force;
@@ -97,10 +97,10 @@ inline Colour force_colour(double magnitude, double max_force) {
 
 // ============================================================================
 // Universal colour gradients
-// All functions are deterministic: same input → same colour.
+// All functions are deterministic: same input -> same colour.
 // ============================================================================
 
-// cold_hot: scalar in [0,1] → dark-blue → cyan → yellow → red
+// cold_hot: scalar in [0,1] -> dark-blue -> cyan -> yellow -> red
 inline Colour cold_hot(double t) {
     t = (t < 0.0) ? 0.0 : (t > 1.0 ? 1.0 : t);
     if (t < 0.333) {
@@ -115,8 +115,8 @@ inline Colour cold_hot(double t) {
     }
 }
 
-// black_body_temp: T in Kelvin → approximate black-body colour
-// 0 K → black, 1000 K → deep red, 4000 K → orange, 6500 K → white, >8000 K → blue-white
+// black_body_temp: T in Kelvin -> approximate black-body colour
+// 0 K -> black, 1000 K -> deep red, 4000 K -> orange, 6500 K -> white, >8000 K -> blue-white
 inline Colour black_body_temp(double T_K) {
     if (T_K <= 0.0)    return {0, 0, 0};
     if (T_K < 1000.0)  return Colour::lerp({0, 0, 0}, {180, 20, 0}, T_K / 1000.0);
@@ -125,12 +125,12 @@ inline Colour black_body_temp(double T_K) {
     return Colour::lerp({255, 255, 255}, {160, 180, 255}, std::min((T_K - 6500.0) / 3500.0, 1.0));
 }
 
-// force_gradient: blue → cyan → yellow → red (alias with explicit Fmax normalisation)
+// force_gradient: blue -> cyan -> yellow -> red (alias with explicit Fmax normalisation)
 inline Colour force_gradient(double F, double Fmax) {
     return cold_hot((Fmax > 1e-20) ? F / Fmax : 0.0);
 }
 
-// energy_gradient: violet → green → yellow (potential energy range)
+// energy_gradient: violet -> green -> yellow (potential energy range)
 inline Colour energy_gradient(double U, double Umin, double Umax) {
     double span = Umax - Umin;
     double t = (span > 1e-20) ? (U - Umin) / span : 0.0;
@@ -139,7 +139,7 @@ inline Colour energy_gradient(double U, double Umin, double Umax) {
     return Colour::lerp({40, 200, 80}, {240, 230, 20}, (t - 0.5) * 2.0);
 }
 
-// damage_colour: health fraction [0,1] → green → yellow → red → dark-grey
+// damage_colour: health fraction [0,1] -> green -> yellow -> red -> dark-grey
 inline Colour damage_colour(double health01) {
     health01 = (health01 < 0.0) ? 0.0 : (health01 > 1.0 ? 1.0 : health01);
     double t = 1.0 - health01;
@@ -148,28 +148,28 @@ inline Colour damage_colour(double health01) {
     return Colour::lerp({220, 30, 20}, {80, 80, 80}, (t - 0.85) / 0.15);
 }
 
-// decay_colour: decay fraction [0,1] → purple → magenta → white (radiation glow)
+// decay_colour: decay fraction [0,1] -> purple -> magenta -> white (radiation glow)
 inline Colour decay_colour(double decay01) {
     decay01 = (decay01 < 0.0) ? 0.0 : (decay01 > 1.0 ? 1.0 : decay01);
     if (decay01 < 0.5) return Colour::lerp({80, 0, 160}, {220, 0, 220}, decay01 * 2.0);
     return Colour::lerp({220, 0, 220}, {255, 255, 255}, (decay01 - 0.5) * 2.0);
 }
 
-// velocity_colour: speed fraction [0,1] → dim-grey → blue → white
+// velocity_colour: speed fraction [0,1] -> dim-grey -> blue -> white
 inline Colour velocity_colour(double speed01) {
     speed01 = (speed01 < 0.0) ? 0.0 : (speed01 > 1.0 ? 1.0 : speed01);
     if (speed01 < 0.5) return Colour::lerp({60, 60, 60}, {30, 80, 220}, speed01 * 2.0);
     return Colour::lerp({30, 80, 220}, {255, 255, 255}, (speed01 - 0.5) * 2.0);
 }
 
-// pressure_colour: pressure fraction [0,1] → dark-cyan → yellow → red
+// pressure_colour: pressure fraction [0,1] -> dark-cyan -> yellow -> red
 inline Colour pressure_colour(double p01) {
     p01 = (p01 < 0.0) ? 0.0 : (p01 > 1.0 ? 1.0 : p01);
     if (p01 < 0.5) return Colour::lerp({0, 120, 140}, {240, 220, 20}, p01 * 2.0);
     return Colour::lerp({240, 220, 20}, {220, 30, 20}, (p01 - 0.5) * 2.0);
 }
 
-// health_colour: health fraction [0,1] → red → yellow → green
+// health_colour: health fraction [0,1] -> red -> yellow -> green
 inline Colour health_colour(double health01) {
     health01 = (health01 < 0.0) ? 0.0 : (health01 > 1.0 ? 1.0 : health01);
     if (health01 < 0.5) return Colour::lerp({210, 30, 20}, {240, 200, 20}, health01 * 2.0);
@@ -240,7 +240,7 @@ public:
         }
     }
 
-    // Horizontal fill bar — value01 in [0,1] maps to filled width
+    // Horizontal fill bar  -  value01 in [0,1] maps to filled width
     void draw_bar(int x, int y, int width, double value01, Colour fg,
                   char fill = '#', char empty = '.') {
         if (width <= 0) return;

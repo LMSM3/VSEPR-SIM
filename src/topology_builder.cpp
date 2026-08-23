@@ -1,7 +1,7 @@
-/**
+﻿/**
  * topology_builder.cpp
  * --------------------
- * Implementation of formula → topology converter.
+ * Implementation of formula -> topology converter.
  */
 
 #include "../include/topology_builder.hpp"
@@ -69,7 +69,7 @@ TopologyBuilder::TopologyBuilder() {
     };
     
     // Typical bond lengths (Angstroms) for common pairs
-    // Format: {Z1, Z2} → length (smaller Z first)
+    // Format: {Z1, Z2} -> length (smaller Z first)
     bond_lengths_ = {
         {{1, 1}, 0.74},   // H-H
         {{1, 6}, 1.09},   // C-H
@@ -145,7 +145,7 @@ std::optional<Molecule> TopologyBuilder::load_preset(
     }
     
     // For now, return empty molecule - full JSON parsing will be added
-    // TODO: Implement JSON → Molecule deserialization
+    // TODO: Implement JSON -> Molecule deserialization
     Molecule mol;
     last_error_ = "JSON parsing not yet implemented for presets";
     return std::nullopt;

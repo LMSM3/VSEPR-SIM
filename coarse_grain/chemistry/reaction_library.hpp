@@ -1,14 +1,14 @@
-#pragma once
+﻿#pragma once
 /**
- * reaction_library.hpp — Built-In Reaction Definitions
+ * reaction_library.hpp  -  Built-In Reaction Definitions
  *
  * Pre-built, scientifically sourced chemical reactions for the
  * universal chemical engineering simulation engine.
  *
  * Reactions:
- *   1. Benzene nitration: C₆H₆ + HNO₃ →[H₂SO₄] C₆H₅NO₂ + H₂O
- *   2. Thorium oxalate precipitation: Th(NO₃)₄ + 2H₂C₂O₄ → Th(C₂O₄)₂·xH₂O + 4HNO₃
- *   3. Copper nitrate decomposition: 2Cu(NO₃)₂ → 2CuO + 4NO₂ + O₂
+ *   1. Benzene nitration: C₆H₆ + HNO₃ ->[H₂SO₄] C₆H₅NO₂ + H₂O
+ *   2. Thorium oxalate precipitation: Th(NO₃)₄ + 2H₂C₂O₄ -> Th(C₂O₄)₂·xH₂O + 4HNO₃
+ *   3. Copper nitrate decomposition: 2Cu(NO₃)₂ -> 2CuO + 4NO₂ + O₂
  *
  * Every thermodynamic value is sourced from:
  *   - NIST Chemistry WebBook (standard formation enthalpies)
@@ -55,7 +55,7 @@ static inline AtomEntry Th(double x=0, double y=0, double z=0) {
 // ============================================================================
 // Reaction 1: Nitration of Benzene
 // ============================================================================
-// C₆H₆ + HNO₃ →[H₂SO₄] C₆H₅NO₂ + H₂O
+// C₆H₆ + HNO₃ ->[H₂SO₄] C₆H₅NO₂ + H₂O
 //
 // Electrophilic aromatic substitution.
 // Organic product from inorganic reagents.
@@ -91,23 +91,23 @@ inline ChemicalSpecies make_benzene() {
     sp.element_count = {{"C", 6}, {"H", 6}};
 
     // Planar hexagonal geometry (Å)
-    double r = 1.397; // C–C bond length in benzene
+    double r = 1.397; // C-C bond length in benzene
     for (int i = 0; i < 6; ++i) {
         double angle = i * M_PI / 3.0;
         sp.atoms.push_back(C(r * std::cos(angle), r * std::sin(angle), 0.0));
     }
     for (int i = 0; i < 6; ++i) {
         double angle = i * M_PI / 3.0;
-        double rh = r + 1.09; // C–H bond
+        double rh = r + 1.09; // C-H bond
         sp.atoms.push_back(H(rh * std::cos(angle), rh * std::sin(angle), 0.0));
     }
 
-    // Aromatic C–C bonds (order 1.5 modeled as alternating 1,2)
+    // Aromatic C-C bonds (order 1.5 modeled as alternating 1,2)
     for (int i = 0; i < 6; ++i) {
         uint8_t ord = (i % 2 == 0) ? 2 : 1;
         sp.bonds.push_back(make_bond(i, (i+1)%6, ord, BondType::COVALENT, 1.397, 118.0));
     }
-    // C–H bonds
+    // C-H bonds
     for (int i = 0; i < 6; ++i) {
         sp.bonds.push_back(make_bond(i, 6+i, 1, BondType::COVALENT, 1.09, 99.0));
     }
@@ -141,7 +141,7 @@ inline ChemicalSpecies make_nitric_acid() {
     sp.atoms.push_back(N(0, 0, 0));
     sp.atoms.push_back(O(1.21, 0.0, 0.0));   // N=O
     sp.atoms.push_back(O(-0.60, 1.04, 0.0));  // N=O
-    sp.atoms.push_back(O(-0.60, -1.04, 0.0)); // N–O(H)
+    sp.atoms.push_back(O(-0.60, -1.04, 0.0)); // N-O(H)
     sp.atoms.push_back(H(-1.40, -1.04, 0.0));
 
     sp.bonds.push_back(make_bond(0, 1, 2, BondType::COVALENT, 1.21, 145.0));
@@ -222,7 +222,7 @@ inline ChemicalSpecies make_nitrobenzene() {
         double angle = i * M_PI / 3.0;
         sp.atoms.push_back(C(r * std::cos(angle), r * std::sin(angle), 0.0));
     }
-    // H on carbons 1-4 (5 H atoms — position 0 has NO2)
+    // H on carbons 1-4 (5 H atoms  -  position 0 has NO2)
     for (int i = 1; i < 6; ++i) {
         double angle = i * M_PI / 3.0;
         double rh = r + 1.09;
@@ -238,11 +238,11 @@ inline ChemicalSpecies make_nitrobenzene() {
         uint8_t ord = (i % 2 == 0) ? 2 : 1;
         sp.bonds.push_back(make_bond(i, (i+1)%6, ord, BondType::COVALENT, 1.397, 118.0));
     }
-    // C–H bonds
+    // C-H bonds
     for (int i = 0; i < 5; ++i) {
         sp.bonds.push_back(make_bond(i+1, 6+i, 1, BondType::COVALENT, 1.09, 99.0));
     }
-    // C–N bond
+    // C-N bond
     sp.bonds.push_back(make_bond(0, 11, 1, BondType::COVALENT, 1.47, 70.0));
     // N=O bonds
     sp.bonds.push_back(make_bond(11, 12, 2, BondType::COVALENT, 1.22, 145.0));
@@ -286,7 +286,7 @@ inline ChemicalSpecies make_water() {
 /**
  * Build: Nitration of Benzene
  *
- * C₆H₆ + HNO₃ →[H₂SO₄] C₆H₅NO₂ + H₂O
+ * C₆H₆ + HNO₃ ->[H₂SO₄] C₆H₅NO₂ + H₂O
  */
 inline ChemicalReaction build_benzene_nitration() {
     ChemicalReaction rxn;
@@ -363,7 +363,7 @@ inline ChemicalReaction build_benzene_nitration() {
 // ============================================================================
 // Reaction 2: Thorium Oxalate Precipitation (Sludge Formation)
 // ============================================================================
-// Th(NO₃)₄ + 2 H₂C₂O₄ + xH₂O → Th(C₂O₄)₂·xH₂O(s) + 4 HNO₃
+// Th(NO₃)₄ + 2 H₂C₂O₄ + xH₂O -> Th(C₂O₄)₂·xH₂O(s) + 4 HNO₃
 //
 // Special inorganic precipitation. Product is a dense sludge.
 // Used in nuclear separation chemistry.
@@ -406,7 +406,7 @@ inline ChemicalSpecies make_thorium_nitrate() {
         double ca     = std::cos(angle);
         double sa     = std::sin(angle);
         double r_n    = 2.50;
-        double r_o_co = 1.22;  // N–O bond length (coordinating)
+        double r_o_co = 1.22;  // N-O bond length (coordinating)
         double r_o_t  = 1.21;  // N=O bond length (terminal)
         // N
         sp.atoms.push_back(N(r_n * ca,            r_n * sa,             0));
@@ -486,7 +486,7 @@ inline ChemicalSpecies make_thorium_oxalate_hydrate() {
     sp.atoms.push_back(Th(0, 0, 0));
 
     // 2 bidentate oxalate ligands (C2O4^2-), one each at +x and -x
-    // Each oxalate: C–C at 1.54 Å, two carboxylate O per C (chelating)
+    // Each oxalate: C-C at 1.54 Å, two carboxylate O per C (chelating)
     for (int lig = 0; lig < 2; ++lig) {
         double sign   = (lig == 0) ? 1.0 : -1.0;
         double x_c1   = sign * 2.40;
@@ -518,7 +518,7 @@ inline ChemicalSpecies make_thorium_oxalate_hydrate() {
 /**
  * Build: Thorium Oxalate Precipitation
  *
- * Th(NO₃)₄ + 2 H₂C₂O₄ + 6 H₂O → Th(C₂O₄)₂·6H₂O↓ + 4 HNO₃
+ * Th(NO₃)₄ + 2 H₂C₂O₄ + 6 H₂O -> Th(C₂O₄)₂·6H₂Ov + 4 HNO₃
  */
 inline ChemicalReaction build_thorium_oxalate_precipitation() {
     ChemicalReaction rxn;
@@ -545,20 +545,20 @@ inline ChemicalReaction build_thorium_oxalate_precipitation() {
     rxn.delta_H_rxn = rxn.compute_delta_H();
     rxn.delta_G_rxn = rxn.compute_delta_G();
     rxn.delta_S_rxn = rxn.compute_delta_S();
-    rxn.activation_energy = 5.0;   // Low barrier — precipitation is fast
+    rxn.activation_energy = 5.0;   // Low barrier  -  precipitation is fast
     rxn.equilibrium_constant = rxn.compute_K_eq();
 
     // Bond changes
     rxn.bond_changes.push_back({
-        "Th–O(nitrate) coordination bonds broken",
+        "Th-O(nitrate) coordination bonds broken",
         "Th-O", 1, 0, BondType::COORDINATION, 40.0
     });
     rxn.bond_changes.push_back({
-        "Th–O(oxalate) coordination bonds formed",
+        "Th-O(oxalate) coordination bonds formed",
         "Th-O", 0, 1, BondType::COORDINATION, -55.0
     });
     rxn.bond_changes.push_back({
-        "O–H bonds formed in HNO3 by-product",
+        "O-H bonds formed in HNO3 by-product",
         "O-H", 0, 1, BondType::COVALENT, -110.0
     });
 
@@ -586,14 +586,14 @@ inline ChemicalReaction build_thorium_oxalate_precipitation() {
 // ============================================================================
 // Reaction 3: Copper(II) Nitrate Thermal Decomposition
 // ============================================================================
-// 2 Cu(NO₃)₂ → 2 CuO + 4 NO₂↑ + O₂↑
+// 2 Cu(NO₃)₂ -> 2 CuO + 4 NO₂↑ + O₂↑
 //
-// Metal salt → solid oxide + gases
+// Metal salt -> solid oxide + gases
 // Classic thermal decomposition pattern.
 //
 // Sources:
 //   CRC Handbook: ΔHf values for all species
-//   Wendlandt, "Thermal Analysis" (1986) — decomposition onset ~170°C
+//   Wendlandt, "Thermal Analysis" (1986)  -  decomposition onset ~170°C
 // ============================================================================
 
 inline ChemicalSpecies make_copper_nitrate() {
@@ -711,7 +711,7 @@ inline ChemicalSpecies make_oxygen_gas() {
 /**
  * Build: Copper(II) Nitrate Thermal Decomposition
  *
- * 2 Cu(NO₃)₂ → 2 CuO(s) + 4 NO₂(g) + O₂(g)
+ * 2 Cu(NO₃)₂ -> 2 CuO(s) + 4 NO₂(g) + O₂(g)
  */
 inline ChemicalReaction build_copper_nitrate_decomposition() {
     ChemicalReaction rxn;
@@ -734,7 +734,7 @@ inline ChemicalReaction build_copper_nitrate_decomposition() {
     // ΔH = [2×ΔHf(CuO) + 4×ΔHf(NO2) + 1×ΔHf(O2)] − [2×ΔHf(Cu(NO3)2)]
     // ΔH = [2×(-37.10) + 4×(7.93) + 0] − [2×(-73.10)]
     // ΔH = [-74.20 + 31.72] − [-146.20] = -42.48 + 146.20 = 103.72 kcal/mol
-    // (Endothermic — requires heat input, as expected for decomposition)
+    // (Endothermic  -  requires heat input, as expected for decomposition)
     rxn.delta_H_rxn = rxn.compute_delta_H();
     rxn.delta_G_rxn = rxn.compute_delta_G();
     rxn.delta_S_rxn = rxn.compute_delta_S();

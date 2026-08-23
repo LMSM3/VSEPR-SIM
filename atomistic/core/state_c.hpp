@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * state_c.hpp — Dev Day ~42 Revised Notation: State Machine with
+ * state_c.hpp  -  Dev Day ~42 Revised Notation: State Machine with
  *               Physics-Informed Bookkeeping
  * ================================================================
  *
@@ -43,13 +43,13 @@
 namespace atomistic {
 
 // ============================================================================
-// Composition (C) — what the system is made of and at what resolution
+// Composition (C)  -  what the system is made of and at what resolution
 // ============================================================================
 
 /**
  * Composition describes the representation level of the system.
  *
- * This is NOT a physics quantity — it is a bookkeeping tag that tells
+ * This is NOT a physics quantity  -  it is a bookkeeping tag that tells
  * the engine which force evaluators, integrators, and analysis tools
  * are valid for the current state.
  */
@@ -71,7 +71,7 @@ inline const char* composition_name(Composition c) {
 }
 
 // ============================================================================
-// Environment (E) — external conditions acting on the system
+// Environment (E)  -  external conditions acting on the system
 // ============================================================================
 
 /**
@@ -110,7 +110,7 @@ struct Environment {
 };
 
 // ============================================================================
-// Constraints (K) — rules the system must obey
+// Constraints (K)  -  rules the system must obey
 // ============================================================================
 
 /**
@@ -148,7 +148,7 @@ struct Constraints {
 };
 
 // ============================================================================
-// SourceTag (Sigma) — provenance / data lineage
+// SourceTag (Sigma)  -  provenance / data lineage
 // ============================================================================
 
 /**
@@ -171,7 +171,7 @@ struct SourceTag {
 };
 
 // ============================================================================
-// ModelLevel (Lambda) — abstraction fidelity
+// ModelLevel (Lambda)  -  abstraction fidelity
 // ============================================================================
 
 /**
@@ -207,11 +207,11 @@ inline const char* model_level_name(ModelLevel lv) {
 }
 
 // ============================================================================
-// StateC (S_0) — Initial State Container
+// StateC (S_0)  -  Initial State Container
 // ============================================================================
 
 /**
- * StateC — the Dev Day ~42 initial state container.
+ * StateC  -  the Dev Day ~42 initial state container.
  *
  *   S_0 = { m_0, E_0, x_0, v_0, C, E, K, Sigma }
  *
@@ -279,7 +279,7 @@ struct StateC {
 };
 
 // ============================================================================
-// Structural State (Phi) — geometry / topology class of the outcome
+// Structural State (Phi)  -  geometry / topology class of the outcome
 // ============================================================================
 
 /**
@@ -296,7 +296,7 @@ struct StructuralState {
 };
 
 // ============================================================================
-// StabilityMetric (S in S_f) — how stable is the outcome
+// StabilityMetric (S in S_f)  -  how stable is the outcome
 // ============================================================================
 
 /**
@@ -312,7 +312,7 @@ struct StabilityMetric {
 };
 
 // ============================================================================
-// PerformanceProperties (Pi) — transport / material properties
+// PerformanceProperties (Pi)  -  transport / material properties
 // ============================================================================
 
 /**
@@ -331,7 +331,7 @@ struct PerformanceProperties {
 };
 
 // ============================================================================
-// EventLog (Omega) — what happened during transformation
+// EventLog (Omega)  -  what happened during transformation
 // ============================================================================
 
 /**
@@ -371,7 +371,7 @@ struct EventLog {
 };
 
 // ============================================================================
-// QualityFlags (Q) — confidence / quality of the result
+// QualityFlags (Q)  -  confidence / quality of the result
 // ============================================================================
 
 /**
@@ -395,11 +395,11 @@ struct QualityFlags {
 };
 
 // ============================================================================
-// OutcomeState (S_f) — the final state after transformation
+// OutcomeState (S_f)  -  the final state after transformation
 // ============================================================================
 
 /**
- * OutcomeState — Dev Day ~42 outcome container.
+ * OutcomeState  -  Dev Day ~42 outcome container.
  *
  *   S_f = { m_f, E_f, Phi, S, Pi, Omega, Q }
  *
@@ -427,7 +427,7 @@ struct OutcomeState {
 // ============================================================================
 
 /**
- * EnergyBalance — tracks the mass-energy sanity constraint.
+ * EnergyBalance  -  tracks the mass-energy sanity constraint.
  *
  * Even at C-level, enforce:
  *   E_0 + E_in - E_out ≈ E_f + E_loss
@@ -478,7 +478,7 @@ struct EnergyBalance {
 // ============================================================================
 
 /**
- * TransformConfig — parameters for the transformation operator T.
+ * TransformConfig  -  parameters for the transformation operator T.
  *
  *   S_f = T(S_0, t, Λ)
  *
@@ -508,7 +508,7 @@ struct TransformConfig {
 };
 
 /**
- * evolve — The transformation operator.
+ * evolve  -  The transformation operator.
  *
  *   OutcomeState evolve(const StateC& s0, double dt, ModelLevel level)
  *
@@ -592,7 +592,7 @@ inline OutcomeState evolve(const StateC& s0,
         balance.m_f = s0.mass;  // Static particle count for now
     }
     else {
-        // No detail state — summary-level evolution only
+        // No detail state  -  summary-level evolution only
         balance.E_f = s0.energy;
         balance.m_f = s0.mass;
     }
@@ -601,7 +601,7 @@ inline OutcomeState evolve(const StateC& s0,
     sf.mass   = balance.m_f;
     sf.energy = balance.E_f;
 
-    // Structural state (placeholder — real classification from geometry analysis)
+    // Structural state (placeholder  -  real classification from geometry analysis)
     sf.structure.geometry_class = "unclassified";
     sf.structure.topology       = "unclassified";
 
@@ -630,7 +630,7 @@ inline OutcomeState evolve(const StateC& s0,
 // ============================================================================
 
 /**
- * evolve — simplified signature matching the implementation hint.
+ * evolve  -  simplified signature matching the implementation hint.
  *
  *   StateC evolve(const StateC& s0, double dt, ModelLevel level);
  *

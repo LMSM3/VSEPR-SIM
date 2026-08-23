@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Request — VSIM Bridge Implementation · CR-2026-01</title>
+
+  <style>
+    /* ── Palette (matches bridge doc) ─────────────────── */
+    :root {
+      --ink:         #111111;
+      --ink-mid:     #444444;
+      --ink-soft:    #777777;
+      --bg:          #ffffff;
+      --rule:        #dedede;
+      --rule-strong: #aaaaaa;
+
+      --lav:         #f0eaf8;
+      --lav-border:  #bba8d8;
+      --sage:        #f0f4f0;
+      --sage-border: #9fbf9f;
+      --cream:       #f8f4e6;
+      --cream-border:#d0b86a;
+      --sky:         #eaf2fb;
+      --sky-border:  #a4c4df;
+
+      /* Status pills */
+      --p0-bg:  #fdf0f0;
+      --p0-fg:  #8b1a1a;
+      --p1-bg:  #f0f4f0;
+      --p1-fg:  #1a4a1a;
+      --p2-bg:  #f4f4f4;
+      --p2-fg:  #444444;
+
+      --open-bg:    #f0eaf8;
+      --open-fg:    #4a2a8b;
+      --done-bg:    #f0f8f0;
+      --done-fg:    #1a5a1a;
+      --review-bg:  #f8f4e6;
+      --review-fg:  #6b4a00;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      font-size: 15px;
+      line-height: 1.78;
+      color: var(--ink);
+      background: var(--bg);
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 52px 36px 88px;
+    }
+
+    p { margin-bottom: 1em; }
+    p:last-child { margin-bottom: 0; }
+
+    /* ── Document Header ───────────────────────────────── */
+    .doc-header {
+      border-bottom: 2px solid var(--ink);
+      padding-bottom: 28px;
+      margin-bottom: 48px;
+    }
+    .doc-eyebrow {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 10px;
+    }
+    .doc-header h1 {
+      font-family: system-ui, sans-serif;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 6px;
+    }
+    .doc-subtitle {
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      color: var(--ink-mid);
+      margin-bottom: 20px;
+    }
+    .meta-table {
+      display: grid;
+      grid-template-columns: 110px 1fr;
+      row-gap: 3px;
+      column-gap: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      margin-bottom: 16px;
+    }
+    .meta-label { color: var(--ink-soft); }
+    .meta-value { color: var(--ink); }
+    .ref-box {
+      background: var(--sky);
+      border-left: 3px solid var(--sky-border);
+      padding: 9px 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      color: #1a3a5a;
+    }
+    .ref-box strong { font-weight: 700; margin-right: 6px; }
+
+    /* ── Sections ──────────────────────────────────────── */
+    .section { margin-bottom: 52px; }
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 9px;
+      margin-bottom: 18px;
+    }
+    .section-num {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      white-space: nowrap;
+    }
+    .section-head h2 {
+      font-family: system-ui, sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+
+    /* ── Pills ─────────────────────────────────────────── */
+    .pill {
+      display: inline-block;
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 2px 7px;
+      border-radius: 2px;
+      white-space: nowrap;
+    }
+    .p0 { background: var(--p0-bg); color: var(--p0-fg); }
+    .p1 { background: var(--p1-bg); color: var(--p1-fg); }
+    .p2 { background: var(--p2-bg); color: var(--p2-fg); }
+    .open   { background: var(--open-bg);   color: var(--open-fg); }
+    .review { background: var(--review-bg); color: var(--review-fg); }
+    .done   { background: var(--done-bg);   color: var(--done-fg); }
+
+    /* ── Tables ────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; margin: 20px 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+    }
+    thead tr {
+      background: var(--sky);
+      border-top: 1px solid var(--sky-border);
+      border-bottom: 2px solid var(--sky-border);
+    }
+    th {
+      padding: 9px 13px;
+      text-align: left;
+      font-weight: 700;
+      font-size: 11.5px;
+      letter-spacing: 0.03em;
+      color: var(--ink);
+    }
+    td {
+      padding: 9px 13px;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+      line-height: 1.55;
+    }
+    tr:last-child td { border-bottom: none; }
+    tbody tr:nth-child(even) { background: #fafafa; }
+    td.id-col {
+      font-family: 'Courier New', monospace;
+      font-size: 11.5px;
+      white-space: nowrap;
+      font-weight: 700;
+      color: var(--ink-mid);
+    }
+    td.ref-col {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      white-space: nowrap;
+      color: var(--ink-soft);
+    }
+
+    /* ── Contract / Decision Blocks ────────────────────── */
+    .contract-block {
+      background: var(--sage);
+      border-left: 3px solid var(--sage-border);
+      padding: 14px 20px;
+      margin: 16px 0;
+    }
+    .contract-block .block-label {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+    .contract-list {
+      list-style: none;
+      padding: 0;
+    }
+    .contract-list li {
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 5px 0;
+      border-bottom: 1px solid #ddeadd;
+      display: flex;
+      gap: 10px;
+    }
+    .contract-list li:last-child { border-bottom: none; }
+    .contract-list .rule-id {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--ink-soft);
+      white-space: nowrap;
+      padding-top: 1px;
+      min-width: 54px;
+    }
+
+    /* ── Decision Blocks (lavender) ────────────────────── */
+    .decision-block {
+      background: var(--lav);
+      border-left: 3px solid var(--lav-border);
+      padding: 14px 20px;
+      margin: 16px 0;
+    }
+    .decision-block .block-label {
+      font-family: system-ui, sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-soft);
+      margin-bottom: 8px;
+    }
+    .decision-list {
+      list-style: none;
+      padding: 0;
+    }
+    .decision-list li {
+      font-family: system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      padding: 6px 0;
+      border-bottom: 1px solid #d8cef0;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .decision-list li:last-child { border-bottom: none; }
+    .decision-list .dec-id {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: var(--open-fg);
+      white-space: nowrap;
+      font-weight: 700;
+      min-width: 58px;
+      padding-top: 1px;
+    }
+    .decision-list .dec-body { flex: 1; }
+    .decision-list .dec-body .dec-q {
+      font-weight: 700;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .decision-list .dec-body .dec-note {
+      font-size: 12px;
+      color: var(--ink-mid);
+    }
+
+    /* ── Acceptance Criteria ────────────────────────────── */
+    .ac-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    @media (max-width: 640px) { .ac-grid { grid-template-columns: 1fr; } }
+    .ac-item {
+      border: 1px solid var(--rule);
+      padding: 10px 14px;
+      font-family: system-ui, sans-serif;
+      font-size: 12.5px;
+      line-height: 1.55;
+    }
+    .ac-id {
+      font-family: 'Courier New', monospace;
+      font-size: 10.5px;
+      color: var(--ink-soft);
+      display: block;
+      margin-bottom: 4px;
+    }
+    .ac-checkbox {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      border: 1.5px solid var(--rule-strong);
+      margin-right: 8px;
+      vertical-align: middle;
+      position: relative;
+      top: -1px;
+      flex-shrink: 0;
+    }
+
+    /* ── Inline code ───────────────────────────────────── */
+    code {
+      font-family: 'Courier New', monospace;
+      font-size: 12.5px;
+      background: #f4f4f4;
+      padding: 1px 5px;
+      border-radius: 2px;
+    }
+
+    /* ── Note box (cream) ──────────────────────────────── */
+    .note-box {
+      background: var(--cream);
+      border-left: 3px solid var(--cream-border);
+      padding: 10px 16px;
+      font-family: system-ui, sans-serif;
+      font-size: 12.5px;
+      line-height: 1.6;
+      color: #5a4a10;
+      margin: 16px 0;
+    }
+    .note-box strong {
+      font-weight: 700;
+      margin-right: 6px;
+    }
+
+    /* ── Progress summary bar ──────────────────────────── */
+    .progress-summary {
+      display: flex;
+      gap: 20px;
+      margin: 16px 0;
+      padding: 14px 18px;
+      border: 1px solid var(--rule);
+      font-family: system-ui, sans-serif;
+      font-size: 12.5px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .ps-item { display: flex; align-items: center; gap: 7px; }
+    .ps-count {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1;
+      font-family: system-ui, sans-serif;
+    }
+    .ps-label { color: var(--ink-mid); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .ps-sep { color: var(--rule-strong); }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .doc-footer {
+      margin-top: 64px;
+      padding-top: 16px;
+      border-top: 1px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      font-family: system-ui, sans-serif;
+      font-size: 11px;
+      color: var(--ink-soft);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     DOCUMENT HEADER
+═══════════════════════════════════════════════════════ -->
+<header class="doc-header">
+  <div class="doc-eyebrow">VSIM Internal · Code Request</div>
+  <h1>Implementation Request — Bridge Layer</h1>
+  <div class="doc-subtitle">
+    Identity Entropy Output Layer &nbsp;·&nbsp; Formation Context Wiring &nbsp;·&nbsp; Coalescence Tracking
+  </div>
+  <div class="meta-table">
+    <span class="meta-label">Doc ID</span>
+    <span class="meta-value">CR-2026-01</span>
+    <span class="meta-label">Status</span>
+    <span class="meta-value">Open — pending implementation</span>
+    <span class="meta-label">Target</span>
+    <span class="meta-value">v5.2.0-internal</span>
+    <span class="meta-label">Audience</span>
+    <span class="meta-value">VSEPR-SIM / VSIM developers</span>
+    <span class="meta-label">Raised</span>
+    <span class="meta-value">2026-05-31</span>
+  </div>
+  <div class="ref-box">
+    <strong>Ref:</strong>
+    Theoretical–Simulation Bridge Project (vsim_bridge_doc.html) — read that first.
+    This document assumes familiarity with §§1–10 of the bridge doc and does not re-derive theory.
+  </div>
+</header>
+
+
+<!-- ════════════════════════════════════════════════════
+     §1  SUMMARY
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 1</span>
+    <h2>Summary</h2>
+  </div>
+  <p>
+    The bridge doc defines what the identity entropy layer should do. This document converts
+    that into ten concrete implementation tasks with priorities, interface contracts, open
+    decisions, and acceptance criteria. Tasks are grouped into three priority tiers.
+    P0 tasks are blocking for v5.2.0. P1 tasks complete the feature. P2 tasks can defer
+    to a follow-on milestone.
+  </p>
+
+  <div class="progress-summary">
+    <div class="ps-item">
+      <span class="ps-count">10</span>
+      <span class="ps-label">Total tasks</span>
+    </div>
+    <span class="ps-sep">·</span>
+    <div class="ps-item">
+      <span class="ps-count" style="color:var(--p0-fg);">3</span>
+      <span class="ps-label">P0 — blocking</span>
+    </div>
+    <span class="ps-sep">·</span>
+    <div class="ps-item">
+      <span class="ps-count" style="color:var(--p1-fg);">5</span>
+      <span class="ps-label">P1 — required</span>
+    </div>
+    <span class="ps-sep">·</span>
+    <div class="ps-item">
+      <span class="ps-count" style="color:var(--ink-soft);">2</span>
+      <span class="ps-label">P2 — deferrable</span>
+    </div>
+    <span class="ps-sep">·</span>
+    <div class="ps-item">
+      <span class="ps-count" style="color:var(--open-fg);">5</span>
+      <span class="ps-label">Open decisions</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §2  IMPLEMENTATION TASKS
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 2</span>
+    <h2>Implementation Tasks</h2>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Task</th>
+          <th>Bridge ref</th>
+          <th>Priority</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <tr>
+          <td class="id-col">CR-01</td>
+          <td>
+            <strong>Parse <code>[formation]</code> and <code>[formation.initial_state]</code>
+            blocks into <code>FormationContext</code>.</strong><br>
+            The struct skeleton is defined in <code>vsim/identity_entropy.hpp</code>.
+            Fields: <code>method</code>, <code>history</code>, <code>formation_time</code>,
+            <code>temperature_K</code>, <code>pressure_Pa</code>, <code>phase</code>,
+            <code>defect_state</code>, <code>grain_state</code>, <code>density</code>.
+            Unknown or absent sub-fields should default to <code>"unknown"</code> / zero,
+            not error.
+          </td>
+          <td class="ref-col">§4, §10</td>
+          <td><span class="pill p0">P0</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-02</td>
+          <td>
+            <strong>Formation validation pass — mark runs with absent or incomplete
+            formation as <code>incomplete</code> in the validation layer.</strong><br>
+            Applies to simulations with material types: solid, surface, gas, pipe, powder,
+            structural. A missing <code>[formation]</code> block should produce a validation
+            warning, not a hard failure. Runs should still execute.
+          </td>
+          <td class="ref-col">§4</td>
+          <td><span class="pill p0">P0</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-03</td>
+          <td>
+            <strong>Parse <code>[outputs.identity_entropy]</code> config block and wire it
+            into the export pipeline.</strong><br>
+            Fields: <code>enabled</code>, <code>path</code>, <code>format</code>,
+            <code>precision</code>, <code>attach_to_viewer</code>, <code>write_per_frame</code>,
+            <code>write_summary</code>, <code>variables</code> (list).
+            If <code>enabled = false</code> the block is parsed but no writer is instantiated.
+            Schema decision <strong>DEC-01</strong> must be resolved before this lands.
+          </td>
+          <td class="ref-col">§5</td>
+          <td><span class="pill p0">P0</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-04</td>
+          <td>
+            <strong>Implement <code>IEWriter</code> — header, per-frame write, summary,
+            close.</strong><br>
+            Full implementation stub is in <code>vsim/identity_entropy.cpp</code> (bridge doc §10).
+            <code>write(IERecord&amp;)</code> must call <code>sync()</code> before writing.
+            Writer must not throw after <code>close()</code> is called.
+            Buffer strategy to be confirmed per <strong>DEC-04</strong>.
+          </td>
+          <td class="ref-col">§5, §10</td>
+          <td><span class="pill p0">P0</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-05</td>
+          <td>
+            <strong>Populate all 12 <code>IERecord</code> fields per simulation frame.</strong><br>
+            <code>J</code>, <code>dataloss</code>, <code>recoverability</code> have defined
+            derivation rules. <code>dataentropy</code>, <code>hidden_activity</code>, and
+            <code>projection_loss</code> require physics model input — see <strong>DEC-02</strong>.
+            <code>state_quota</code> maps to $Q_n$ (active identity count at current scale).
+            <code>entropy_flux</code> is the frame-delta of identity entropy.
+            Fields not yet computable should emit <code>0.0</code> / sentinel with flag bit set.
+          </td>
+          <td class="ref-col">§6</td>
+          <td><span class="pill p1">P1</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-06</td>
+          <td>
+            <strong>Wire <code>coalescence_gate()</code> into the bonding/clustering event
+            system.</strong><br>
+            When the gate fires, emit nonzero <code>coalescence_loss</code> and
+            <code>residual</code> into the <code>IERecord</code> for that frame.
+            Gate is <em>read-only</em> — it must not mutate particle state on fire.
+            <code>coalescence_residual()</code> provides the scalar loss value.
+            See <strong>DEC-05</strong> for projection operator definition.
+          </td>
+          <td class="ref-col">§7, §10</td>
+          <td><span class="pill p1">P1</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-07</td>
+          <td>
+            <strong>Implement <code>FormationContext::formation_memory()</code> and wire
+            its result into <code>IERecord.formation_memory</code> each frame.</strong><br>
+            The heuristic in the bridge doc §10 scores six declared descriptors.
+            A real implementation should degrade <code>formation_memory</code> over time
+            as the system thermalizes — the heuristic is the starting floor, not the
+            ceiling. Thermalization model is out of scope for P1; static heuristic is
+            sufficient to unblock.
+          </td>
+          <td class="ref-col">§8, §10</td>
+          <td><span class="pill p1">P1</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-08</td>
+          <td>
+            <strong>Add <code>"identity_entropy"</code> as a valid entry in
+            <code>[observe].track</code>.</strong><br>
+            When present, the runtime should activate identity entropy tracking.
+            If the entry is present but <code>[outputs.identity_entropy]</code> is absent
+            or <code>enabled = false</code>, emit a validation warning (not a failure).
+          </td>
+          <td class="ref-col">§9</td>
+          <td><span class="pill p1">P1</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-09</td>
+          <td>
+            <strong>Per-frame vs summary-only write modes, controlled by
+            <code>write_per_frame</code> and <code>write_summary</code> flags.</strong><br>
+            <code>write_per_frame = false</code> + <code>write_summary = true</code> should
+            produce a summary-only <code>.ie</code> file (no row data, just the
+            <code># SUMMARY</code> block). Both false is a no-op that still creates
+            the file with just the header. Both true is the default full output.
+          </td>
+          <td class="ref-col">§5</td>
+          <td><span class="pill p1">P1</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+        <tr>
+          <td class="id-col">CR-10</td>
+          <td>
+            <strong>Viewer overlay wiring when <code>attach_to_viewer = true</code>.</strong><br>
+            The <code>.ie</code> file path should be registered with the viewer's overlay
+            system so per-identity entropy values can be visualised per frame.
+            Exact overlay API is viewer-team's call — this task is just the registration
+            handoff from the export pipeline. Can ship without this; viewer overlay is
+            not required for the output layer to be useful.
+          </td>
+          <td class="ref-col">§5</td>
+          <td><span class="pill p2">P2</span></td>
+          <td><span class="pill open">Open</span></td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-box">
+    <strong>Note:</strong>
+    CR-03 and CR-04 must land before CR-05 through CR-09 can be meaningfully tested.
+    CR-01 must land before CR-07. CR-06 has a hard dependency on DEC-05 being resolved.
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §3  INTERFACE CONTRACTS
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 3</span>
+    <h2>Interface Contracts</h2>
+  </div>
+  <p>
+    These are constraints that implementation must not violate, regardless of how tasks
+    are subdivided internally. They follow directly from the bridge doc's core principle.
+  </p>
+
+  <div class="contract-block">
+    <div class="block-label">Non-negotiable constraints</div>
+    <ul class="contract-list">
+      <li>
+        <span class="rule-id">IC-01</span>
+        <span>Identity entropy variables (<code>J</code>, <code>dataloss</code>, all <code>IERecord</code> fields)
+        must never be written back into mutable simulation state. They are derived output only.</span>
+      </li>
+      <li>
+        <span class="rule-id">IC-02</span>
+        <span>The <code>coalescence_gate()</code> function is read-only. A gate fire produces
+        a sidecar record. It does not create, remove, or modify particles.</span>
+      </li>
+      <li>
+        <span class="rule-id">IC-03</span>
+        <span>Render state must not mutate truth state. The viewer overlay (CR-10)
+        reads from the <code>.ie</code> file; it does not feed back into the simulation kernel.</span>
+      </li>
+      <li>
+        <span class="rule-id">IC-04</span>
+        <span><code>FormationContext</code> is a runtime-only object. It must not be serialised
+        into <code>.dynx</code> or any ground-truth particle record.</span>
+      </li>
+      <li>
+        <span class="rule-id">IC-05</span>
+        <span><code>IEWriter::write(IERecord&amp;)</code> must call <code>sync()</code> before
+        writing. Callers must not pre-call <code>sync()</code> and assume the writer will skip it —
+        double-sync is safe; missing sync is not.</span>
+      </li>
+      <li>
+        <span class="rule-id">IC-06</span>
+        <span>A missing or disabled <code>[outputs.identity_entropy]</code> block must not
+        degrade simulation performance. The code path must be a no-op when disabled.</span>
+      </li>
+      <li>
+        <span class="rule-id">IC-07</span>
+        <span><code>J</code> must be in the range [0.0, 1.0] at all times.
+        Clamp on computation, not on write. Values outside range indicate a model error,
+        not a writer error.</span>
+      </li>
+    </ul>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §4  OPEN DECISIONS
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 4</span>
+    <h2>Open Decisions</h2>
+  </div>
+  <p>
+    These must be resolved before the tasks that depend on them can land. Each decision
+    is assigned to a responsible party. Unresolved decisions block indicated tasks.
+  </p>
+
+  <div class="decision-block">
+    <div class="block-label">Decisions required from the team</div>
+    <ul class="decision-list">
+
+      <li>
+        <span class="dec-id">DEC-01</span>
+        <div class="dec-body">
+          <span class="dec-q">Schema bracket: <code>[outputs.identity_entropy]</code>
+          or <code>[export.identity_entropy]</code>?</span>
+          <span class="dec-note">
+            The bridge doc deliberately deferred this. Pick one and stick to it.
+            Blocks CR-03. If the rest of the export system uses <code>[export.*]</code>
+            sub-tables, consistency suggests folding in. If <code>[outputs.*]</code>
+            is the new direction, keep it separate.
+          </span>
+        </div>
+      </li>
+
+      <li>
+        <span class="dec-id">DEC-02</span>
+        <div class="dec-body">
+          <span class="dec-q">How are <code>dataentropy</code>, <code>hidden_activity</code>,
+          and <code>projection_loss</code> computed?</span>
+          <span class="dec-note">
+            These require a model of the projection operator from identity-space to
+            observable state. The bridge doc defines the concept but not the formula.
+            Until resolved, CR-05 emits <code>0.0</code> with flag bit 0x1 set.
+            Blocks CR-05 (full), CR-06 (partial).
+          </span>
+        </div>
+      </li>
+
+      <li>
+        <span class="dec-id">DEC-03</span>
+        <div class="dec-body">
+          <span class="dec-q"><code>lineage_depth</code> tracking strategy: per-object chain
+          or global lineage registry?</span>
+          <span class="dec-note">
+            Each object could carry its own depth counter (simple, cheap, no global state),
+            or the runtime could maintain a lineage map keyed on identity ID (accurate for
+            re-coalesced objects, more memory). Blocks CR-05 for <code>lineage_depth</code>
+            population.
+          </span>
+        </div>
+      </li>
+
+      <li>
+        <span class="dec-id">DEC-04</span>
+        <div class="dec-body">
+          <span class="dec-q"><code>IEWriter</code> buffer strategy: stream per frame
+          or accumulate N frames then flush?</span>
+          <span class="dec-note">
+            Streaming per frame is simpler and crash-safe. Buffering N frames is faster
+            for large simulations with many identity-bearing objects. The summary pass
+            already buffers all records in memory — if memory is a concern the summary
+            could be computed as a running accumulator instead. Blocks CR-04 finalisation.
+          </span>
+        </div>
+      </li>
+
+      <li>
+        <span class="dec-id">DEC-05</span>
+        <div class="dec-body">
+          <span class="dec-q">Definition of the projection operator $\Pi_n$ for
+          coalescence residual computation.</span>
+          <span class="dec-note">
+            <code>coalescence_residual()</code> takes <code>cluster_state</code> and
+            <code>projected_identity</code> as caller-supplied vectors. Who computes the
+            projection, and how? The bridge doc defines $R_{\text{coal}}^{(n)} = C_n - A_n(I^{\star}_{(n+1)})$
+            but the reconstruction operator $A_n$ is not yet specified.
+            Blocks CR-06.
+          </span>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §5  ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 5</span>
+    <h2>Acceptance Criteria</h2>
+  </div>
+  <p>
+    A milestone is shippable when all P0 and P1 criteria below are checked off.
+    P2 criteria are tracked but not required for v5.2.0.
+  </p>
+
+  <div class="ac-grid">
+
+    <div class="ac-item">
+      <span class="ac-id">AC-01 · CR-01 + CR-03 + CR-04 · P0</span>
+      <span class="ac-checkbox"></span>
+      A surface deposition run with <code>[outputs.identity_entropy] enabled = true</code>
+      produces a valid <code>.ie</code> file at the declared path.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-02 · CR-04 · P0</span>
+      <span class="ac-checkbox"></span>
+      The <code>.ie</code> file contains a header row, at least one data row per frame,
+      and a <code># SUMMARY</code> block with <code>rows</code>, <code>mean_J</code>,
+      <code>min_J</code>, and <code>coal_events</code>.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-03 · CR-05 · P1</span>
+      <span class="ac-checkbox"></span>
+      <code>J</code> is within [0.0, 1.0] for all rows. <code>dataloss</code> equals
+      <code>1 - J</code> to within float64 tolerance. <code>recoverability</code>
+      equals <code>1 - projection_loss</code>.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-04 · CR-07 · P1</span>
+      <span class="ac-checkbox"></span>
+      A run with all six formation descriptors declared produces
+      <code>formation_memory = 1.0</code> on frame 0.
+      A run with no formation block produces <code>formation_memory = 0.0</code>.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-05 · CR-02 · P0</span>
+      <span class="ac-checkbox"></span>
+      A run without a <code>[formation]</code> block executes successfully and
+      the validation report contains a <code>formation: incomplete</code> warning.
+      No hard failure is emitted.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-06 · CR-06 · P1</span>
+      <span class="ac-checkbox"></span>
+      When a coalescence event fires, the corresponding frame row in the <code>.ie</code>
+      file has <code>coalescence_loss &gt; 0.0</code>. Frames without coalescence
+      events have <code>coalescence_loss = 0.0</code>.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-07 · CR-03 · P0</span>
+      <span class="ac-checkbox"></span>
+      <code>[outputs.identity_entropy] enabled = false</code> produces no <code>.ie</code> file
+      and no measurable performance overhead versus a run without the block at all.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-08 · CR-08 · P1</span>
+      <span class="ac-checkbox"></span>
+      A script with <code>"identity_entropy"</code> in <code>[observe].track</code>
+      but no <code>[outputs.identity_entropy]</code> block emits a validation warning
+      and runs without error.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-09 · CR-09 · P1</span>
+      <span class="ac-checkbox"></span>
+      <code>write_per_frame = false</code> + <code>write_summary = true</code> produces
+      a <code>.ie</code> file with only the header and <code># SUMMARY</code> block —
+      no data rows.
+    </div>
+
+    <div class="ac-item">
+      <span class="ac-id">AC-10 · CR-10 · P2</span>
+      <span class="ac-checkbox"></span>
+      With <code>attach_to_viewer = true</code>, the <code>.ie</code> file path is
+      registered with the viewer overlay system. The viewer can display per-identity
+      entropy values without the simulation re-running.
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ════════════════════════════════════════════════════
+     §6  FILE INVENTORY
+═══════════════════════════════════════════════════════ -->
+<section class="section">
+  <div class="section-head">
+    <span class="section-num">§ 6</span>
+    <h2>File Inventory</h2>
+  </div>
+  <p>
+    New files introduced by this request. Existing files should not require structural
+    changes beyond adding new parser branches and wiring calls.
+  </p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>File</th>
+          <th>Type</th>
+          <th>Contents</th>
+          <th>Tasks</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>vsim/identity_entropy.hpp</code></td>
+          <td>New header</td>
+          <td>
+            <code>FormationContext</code>, <code>IERecord</code>,
+            <code>CoalescenceInput</code>, <code>coalescence_gate()</code>,
+            <code>coalescence_residual()</code>, <code>IEWriter</code>.
+            Skeleton provided in bridge doc §10.
+          </td>
+          <td>CR-01, CR-04, CR-06, CR-07</td>
+        </tr>
+        <tr>
+          <td><code>vsim/identity_entropy.cpp</code></td>
+          <td>New translation unit</td>
+          <td>
+            Implementations of all non-inline functions from the header.
+            Skeleton provided in bridge doc §10.
+          </td>
+          <td>CR-04, CR-06, CR-07</td>
+        </tr>
+        <tr>
+          <td><code>vsim/parser/formation_parser.*</code></td>
+          <td>New parser module</td>
+          <td>
+            Reads <code>[formation]</code> and <code>[formation.initial_state]</code>
+            into <code>FormationContext</code>. Follows existing parser conventions.
+          </td>
+          <td>CR-01</td>
+        </tr>
+        <tr>
+          <td><code>vsim/export/ie_export.*</code></td>
+          <td>New export module</td>
+          <td>
+            Reads <code>[outputs.identity_entropy]</code> config, instantiates
+            <code>IEWriter</code>, wires frame callbacks. Integrates with existing
+            export pipeline alongside <code>.dynx</code>, analysis JSON, etc.
+          </td>
+          <td>CR-03, CR-05, CR-08, CR-09</td>
+        </tr>
+        <tr>
+          <td><code>vsim/validation/formation_check.*</code></td>
+          <td>New validation check</td>
+          <td>
+            Emits <code>formation: incomplete</code> warning for runs missing
+            <code>[formation]</code>. Runs after config parse, before runtime init.
+          </td>
+          <td>CR-02</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-box">
+    <strong>Path convention:</strong>
+    Module paths above follow the existing VSIM source tree convention and are
+    illustrative. Actual paths should follow whatever the team has established
+    for v5.x. Do not bikeshed the filenames; do bikeshed the interfaces.
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer class="doc-footer">
+  <span>CR-2026-01 &nbsp;·&nbsp; VSIM Internal &nbsp;·&nbsp; v5.2.0-internal</span>
+  <span>Ref: vsim_bridge_doc.html</span>
+</footer>
+
+</body>
+</html>

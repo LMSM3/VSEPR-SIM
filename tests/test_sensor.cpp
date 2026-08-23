@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_sensor.cpp
  * ---------------
  * Verification suite for:
@@ -17,7 +17,7 @@
  *   T29-T31: XYZL sensor serialisation
  *   T32-T34: XYZL trajectory (multi-frame)
  *   T35-T37: Sensor placement helpers (grid, axis)
- *   T38-T40: Integration: bead frame → particle snapshot → sensor readings
+ *   T38-T40: Integration: bead frame -> particle snapshot -> sensor readings
  */
 
 #include "sensor/sensor.hpp"
@@ -90,9 +90,9 @@ int main() {
              NEAR(s.distance_to_segment(Vec3{5,3,0}), 3.0, 1e-10));
 
         // T05: Capture test
-        TEST("T05 (5,1.5,0) within r=2 → captured",
+        TEST("T05 (5,1.5,0) within r=2 -> captured",
              s.captures(Vec3{5, 1.5, 0}));
-        TEST("T05b (5,3,0) outside r=2 → not captured",
+        TEST("T05b (5,3,0) outside r=2 -> not captured",
              !s.captures(Vec3{5, 3, 0}));
     }
 
@@ -177,10 +177,10 @@ int main() {
         TEST("T19b Drag direction is -Y",
              drag.y < 0.0 && NEAR(drag.x, 0.0, 1e-15));
 
-        // Velocity parallel to sensor axis → no drag
+        // Velocity parallel to sensor axis -> no drag
         Vec3 v_par{1.0, 0.0, 0.0};
         Vec3 drag_par = fs.friction_force(v_par);
-        TEST("T20 Parallel velocity → zero drag",
+        TEST("T20 Parallel velocity -> zero drag",
              drag_par.norm() < 1e-15);
     }
 
@@ -349,7 +349,7 @@ int main() {
     }
 
     // =====================================================================
-    // Integration: bead frame → snapshot → sensor
+    // Integration: bead frame -> snapshot -> sensor
     // =====================================================================
     {
         // Build a frame with beads + a wind sensor
@@ -445,7 +445,7 @@ int main() {
              drag0.norm() < 1e-15);
     }
 
-    // ── Results ──────────────────────────────────────────────────────────
+    // -- Results ----------------------------------------------------------
     std::cout << "\n--- Results: " << pass_count << " passed, "
               << fail_count << " failed out of " << (pass_count + fail_count) << " ---\n\n";
 

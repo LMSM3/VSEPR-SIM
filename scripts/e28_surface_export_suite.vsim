@@ -1,0 +1,81 @@
+# e28_surface_export_suite.vsim
+# =============================================================================
+# E28  --  Full Export Suite (All Formats + Surface)
+#
+# Purpose: Activate every export format simultaneously alongside surface
+#          analysis to verify complete output pipeline integration.
+#          Produces .xyz, .xyzFull, .analysis.json, .report.md, .surface.json.
+#
+# Key concepts:
+#   write_xyz, write_xyz_full, write_analysis_json, write_report_md.
+#   Surface sidecar coexists with all other output formats.
+#   Integration smoke-test for the complete export layer.
+# =============================================================================
+
+[project]
+name        = "e28_surface_export_suite"
+version     = "v5.0.14"
+seed_base   = 2800
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 640
+temperature = 400.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 3000
+dt_fs     = 2.0
+converge  = false
+
+[analysis.structure]
+enabled     = true
+compute_rdf = true
+rdf_rmax    = 10.0
+rdf_nbins   = 200
+
+[analysis.ivec]
+enabled         = true
+write_json      = true
+convergence_eps = 1.0e-4
+
+[export]
+write_xyz           = true
+write_xyz_full      = true
+write_analysis_json = true
+write_report_md     = true
+write_rdf           = true
+output_dir          = "out/e28"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e28/surfaces"
+
+[[object.surface]]
+name                = "export_suite_probe"
+geometry            = "disk"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+normal_x            = 0.0
+normal_y            = 0.0
+normal_z            = 1.0
+radius              = 15.0
+log_crossings       = true
+compute_flux        = true
+compute_energy_flux = true
+compute_ivec_flux   = true
+output_tag          = "export_suite"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 150

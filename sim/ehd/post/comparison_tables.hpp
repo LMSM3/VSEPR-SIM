@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * comparison_tables.hpp
  *
- * Electrohydrodynamic Simulation — Stage 5: Postprocessing
+ * Electrohydrodynamic Simulation  -  Stage 5: Postprocessing
  *
  * Generates comparison tables between two geometry cases (e.g. straight vs.
  * modulated channel).  Computes enhancement factors for each engineering metric.

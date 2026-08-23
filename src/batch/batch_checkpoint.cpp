@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/batch_checkpoint.cpp
  * ================================
- * WO-VSIM-62C — Checkpoint System Implementation
+ * WO-VSIM-62C  -  Checkpoint System Implementation
  *
  * Uses a hand-rolled minimal JSON writer/reader to avoid adding
  * a third-party JSON dependency.  The schema is simple enough
@@ -20,7 +20,7 @@
 namespace vsim {
 namespace batch {
 
-// ── helpers ───────────────────────────────────────────────────────────────────
+// -- helpers -------------------------------------------------------------------
 
 static std::string trim(const std::string& s) {
 	size_t a = s.find_first_not_of(" \t\r\n");
@@ -42,7 +42,7 @@ static void write_str_array(std::ostream& out,
 	out << indent << "  ]";
 }
 
-// ── save ──────────────────────────────────────────────────────────────────────
+// -- save ----------------------------------------------------------------------
 
 void CheckpointManager::save(const BatchCheckpoint& cp, const std::string& dir) {
 	std::string path = dir + "/" + kFilename;
@@ -59,7 +59,7 @@ void CheckpointManager::save(const BatchCheckpoint& cp, const std::string& dir) 
 	f << "}\n";
 }
 
-// ── load ──────────────────────────────────────────────────────────────────────
+// -- load ----------------------------------------------------------------------
 
 static std::vector<std::string> parse_json_str_array(const std::string& src,
 													   size_t& pos) {
@@ -130,14 +130,14 @@ BatchCheckpoint CheckpointManager::load(const std::string& dir) {
 	return cp;
 }
 
-// ── exists ────────────────────────────────────────────────────────────────────
+// -- exists --------------------------------------------------------------------
 
 bool CheckpointManager::exists(const std::string& dir) {
 	std::ifstream f(dir + "/" + kFilename);
 	return f.good();
 }
 
-// ── mark_complete / mark_failed ───────────────────────────────────────────────
+// -- mark_complete / mark_failed -----------------------------------------------
 
 void CheckpointManager::mark_complete(const std::string& dir,
 									   const std::string& run_id) {

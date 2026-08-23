@@ -1,0 +1,324 @@
+# @category Pillars
+# @title    Star-Gas Path — H2/O2 ignition and water formation
+#
+# Three Metallic Pillars / Pillar 3
+# Reactive organization: reactions distributed throughout a gas volume
+
+[project]
+name        = "pillar_star_gas_h2_o2_ignition"
+version     = "v0.1.0"
+seed_base   = 43001
+determinism = true
+description = "Reduced H2/O2 gas-phase ignition and water-formation network"
+author      = "VSIM Three Metallic Pillars"
+
+[pillar]
+id                 = "star_gas"
+name               = "Star-Gas Path"
+model              = "volumetric_reaction"
+spatial_authority  = "reactive_gas_volume"
+event_authority    = "collision_stochastic_kinetic"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 80.0
+ly    = 80.0
+lz    = 80.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimumImage        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[material]
+formula   = "H2_O2_Ar"
+structure = "gas_mixture"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "H2"
+count       = 512
+temperature = 700.0
+lattice     = "gas_random"
+region      = "reactive_volume"
+
+[[simulation.molecule]]
+formula     = "O2"
+count       = 256
+temperature = 700.0
+lattice     = "gas_random"
+region      = "reactive_volume"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 256
+temperature = 700.0
+lattice     = "gas_random"
+region      = "reactive_volume"
+
+[environment]
+temperature = 700.0
+pressure    = 0.00035
+medium      = "reactive_gas_mixture"
+gravity     = false
+
+[excite.thermal_spike]
+type           = "thermal_spike"
+axis           = "radial"
+origin         = [40.0, 40.0, 40.0]
+intensity      = 2.25
+pulse_width_fs = 80.0
+profile        = "gaussian"
+radius_ang     = 12.0
+start_step     = 150
+end_step       = 310
+
+[species.registry]
+species = [
+	"H2",
+	"O2",
+	"H",
+	"O",
+	"OH",
+	"HO2",
+	"H2O2",
+	"H2O",
+	"Ar"
+]
+
+[reaction.network]
+id                 = "star_gas_reduced_h2_o2_v1"
+selection          = "collision_then_kinetic"
+rate_law           = "modified_arrhenius"
+energy_model       = "reaction_enthalpy_proxy"
+spatial_index      = "cell_linked_list"
+collision_model    = "hard_sphere_proxy"
+three_body_support = true
+reject_on_overlap  = true
+reject_on_deficit  = true
+
+[[reaction.channel]]
+id                = "h2_dissociation"
+reactants         = ["H2"]
+products          = ["H", "H"]
+third_body        = "any"
+pre_exponential   = 4.0e13
+temperature_power = 0.0
+barrier_eV        = 4.48
+energy_delta_eV   = 4.48
+
+[[reaction.channel]]
+id                = "o2_dissociation"
+reactants         = ["O2"]
+products          = ["O", "O"]
+third_body        = "any"
+pre_exponential   = 2.0e13
+temperature_power = 0.0
+barrier_eV        = 5.12
+energy_delta_eV   = 5.12
+
+[[reaction.channel]]
+id                = "chain_branching"
+reactants         = ["H", "O2"]
+products          = ["O", "OH"]
+pre_exponential   = 3.5e13
+temperature_power = 0.0
+barrier_eV        = 0.72
+energy_delta_eV   = -0.08
+
+[[reaction.channel]]
+id                = "oxygen_hydrogen_abstraction"
+reactants         = ["O", "H2"]
+products          = ["OH", "H"]
+pre_exponential   = 5.0e12
+temperature_power = 0.5
+barrier_eV        = 0.43
+energy_delta_eV   = -0.10
+
+[[reaction.channel]]
+id                = "water_forming_abstraction"
+reactants         = ["OH", "H2"]
+products          = ["H2O", "H"]
+pre_exponential   = 2.2e13
+temperature_power = 0.0
+barrier_eV        = 0.19
+energy_delta_eV   = -0.65
+
+[[reaction.channel]]
+id                = "ho2_formation"
+reactants         = ["H", "O2"]
+products          = ["HO2"]
+third_body        = "any"
+pre_exponential   = 8.0e12
+temperature_power = -0.4
+barrier_eV        = 0.02
+energy_delta_eV   = -2.10
+
+[[reaction.channel]]
+id                = "hydrogen_peroxide_formation"
+reactants         = ["HO2", "HO2"]
+products          = ["H2O2", "O2"]
+pre_exponential   = 1.0e12
+temperature_power = 0.0
+barrier_eV        = 0.10
+energy_delta_eV   = -1.35
+
+[[reaction.channel]]
+id                = "hydrogen_peroxide_split"
+reactants         = ["H2O2"]
+products          = ["OH", "OH"]
+third_body        = "any"
+pre_exponential   = 2.5e12
+temperature_power = 0.0
+barrier_eV        = 1.65
+energy_delta_eV   = 1.65
+
+[[reaction.channel]]
+id                = "hydroxyl_recombination"
+reactants         = ["H", "OH"]
+products          = ["H2O"]
+third_body        = "any"
+pre_exponential   = 6.0e13
+temperature_power = -0.3
+barrier_eV        = 0.0
+energy_delta_eV   = -5.10
+
+[[reaction.channel]]
+id                = "hydrogen_recombination"
+reactants         = ["H", "H"]
+products          = ["H2"]
+third_body        = "any"
+pre_exponential   = 4.0e13
+temperature_power = -0.5
+barrier_eV        = 0.0
+energy_delta_eV   = -4.48
+
+[[reaction.channel]]
+id                = "oxygen_recombination"
+reactants         = ["O", "O"]
+products          = ["O2"]
+third_body        = "any"
+pre_exponential   = 3.0e13
+temperature_power = -0.5
+barrier_eV        = 0.0
+energy_delta_eV   = -5.12
+
+[thermodynamics]
+pressure_model           = "ideal_gas_proxy"
+temperature_model        = "kinetic_plus_reaction_reservoir"
+heat_capacity_model      = "species_constant_cv"
+reaction_heat_coupling   = 1.0
+radiative_loss_enabled   = false
+wall_loss_enabled        = false
+minimum_temperature_K    = 50.0
+maximum_temperature_K    = 10000.0
+
+[ignition]
+metric                   = "temperature"
+baseline_window_steps    = 100
+threshold_delta_K        = 400.0
+secondary_metric         = "OH.population"
+secondary_threshold      = 8
+record_ignition_delay    = true
+
+[simulation]
+fire_max_steps      = 300
+fire_dt_fs          = 0.10
+formation_preset    = "reactive_gas"
+smooth_resim        = false
+neighbor_skin_ang   = 3.0
+rebuild_neighbors_n = 2
+
+[chemistry]
+chemistry           = "gas_reaction_network"
+reaction_events     = true
+track_species_state = true
+event_registry      = true
+
+[run]
+mode          = "reactive_md"
+max_steps     = 12000
+dt_fs         = 0.10
+temperature_K = 700.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics = [
+	"energy.total",
+	"energy.kinetic",
+	"energy.chemical",
+	"temperature",
+	"pressure.proxy",
+	"species.population",
+	"species.mole_fraction",
+	"collision.frequency",
+	"reaction.acceptance",
+	"reaction.heat_release",
+	"reaction.density_field",
+	"excited_population",
+	"ignition.delay_proxy",
+	"quench.time_proxy",
+	"audit.element_residual",
+	"audit.energy_residual"
+]
+every_n_steps = 5
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["H", "O", "Ar"]
+charge                = false
+energy                = "tracked_proxy"
+strict                = true
+check_every_n_steps   = 10
+relative_tolerance    = 1.0e-10
+absolute_tolerance    = 1.0e-12
+reject_invalid_event  = true
+
+[audit.acceptance]
+requirements = [
+	"H2O_population_final > 0",
+	"H2O_population_final <= 512",
+	"temperature_peak > temperature_initial",
+	"ignition_delay_proxy > 0",
+	"all_reactions_stoichiometric == true",
+	"max_abs_element_residual < 1.0e-10",
+	"pressure_proxy_consistent_with_N_T_V == true"
+]
+
+[export]
+output_dir          = "out/pillars/star_gas"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 50
+event_interval      = 1
+metrics_interval    = 5
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_rdf_svg          = true
+visual_output_dir      = "figures/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_rdf_plot            = true
+show_bond_events         = true

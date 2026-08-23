@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * metal_sim_builder.hpp — BeadSystem Constructor for Metal Research
+ * metal_sim_builder.hpp  -  BeadSystem Constructor for Metal Research
  *
  * Builds a BeadSystem from a MetalRecord with realistic initial geometry.
  *
  * Three geometry modes:
- *   CLUSTER_SC     — simple cubic arrangement (legacy, fast)
- *   CLUSTER_FCC    — FCC cluster shell construction
- *   CLUSTER_BCC    — BCC cluster shell construction
+ *   CLUSTER_SC      -  simple cubic arrangement (legacy, fast)
+ *   CLUSTER_FCC     -  FCC cluster shell construction
+ *   CLUSTER_BCC     -  BCC cluster shell construction
  *
  * The appropriate mode is selected automatically from CrystalStructure.
  * HCP is mapped to FCC (proxy model, c/a ≈ √(8/3) accounted by β parameter).

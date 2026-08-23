@@ -1,8 +1,8 @@
-/**
- * test_pbc_vsim_parser.cpp — VSIM parser tests for [cell], [boundary], [pbc]
+﻿/**
+ * test_pbc_vsim_parser.cpp  -  VSIM parser tests for [cell], [boundary], [pbc]
  * =============================================================================
  *
- * WO-VSEPR-SIM-57B gate table — parser-level checks.
+ * WO-VSEPR-SIM-57B gate table  -  parser-level checks.
  *
  * Tests:
  *   P1  [cell] parses type, lengths, units correctly
@@ -41,7 +41,7 @@
 using namespace vsim;
 using namespace vsepr;
 
-// ── Test infrastructure ───────────────────────────────────────────────────────
+// -- Test infrastructure -------------------------------------------------------
 
 static int g_pass = 0;
 static int g_fail = 0;
@@ -51,7 +51,7 @@ static void PASS(const char* name) {
 	++g_pass;
 }
 static void FAIL(const char* name, const char* reason) {
-	std::fprintf(stderr, "  [FAIL] %s — %s\n", name, reason);
+	std::fprintf(stderr, "  [FAIL] %s  -  %s\n", name, reason);
 	++g_fail;
 }
 #define REQUIRE(name, cond, msg) \
@@ -61,10 +61,10 @@ static void FAIL(const char* name, const char* reason) {
 		char _b[256]; std::snprintf(_b, sizeof(_b), "%s: got %.15g expected %.15g", msg, (double)(got), (double)(expected)); \
 		FAIL(name, _b); return; } } while(0)
 
-// ── P1: [cell] parses type, lengths, units ────────────────────────────────────
+// -- P1: [cell] parses type, lengths, units ------------------------------------
 
 static void test_P1_cell_basic() {
-	const char* name = "P1 — [cell] basic parse";
+	const char* name = "P1  -  [cell] basic parse";
 	const char* src = R"(
 [project]
 name = test
@@ -86,10 +86,10 @@ units   = angstrom
 	PASS(name);
 }
 
-// ── P2: [cell] type = triclinic raises ParseError ─────────────────────────────
+// -- P2: [cell] type = triclinic raises ParseError -----------------------------
 
 static void test_P2_cell_triclinic_error() {
-	const char* name = "P2 — [cell] type=triclinic raises ParseError";
+	const char* name = "P2  -  [cell] type=triclinic raises ParseError";
 	const char* src = R"(
 [project]
 name = test
@@ -107,10 +107,10 @@ lengths = 10.0, 10.0, 10.0
 	else PASS(name);
 }
 
-// ── P3: [cell] single-value lengths sets cubic box ───────────────────────────
+// -- P3: [cell] single-value lengths sets cubic box ---------------------------
 
 static void test_P3_cell_single_length() {
-	const char* name = "P3 — [cell] single scalar lengths";
+	const char* name = "P3  -  [cell] single scalar lengths";
 	const char* src = R"(
 [project]
 name = test
@@ -130,10 +130,10 @@ units   = angstrom
 	PASS(name);
 }
 
-// ── P4: [boundary] per-axis modes ────────────────────────────────────────────
+// -- P4: [boundary] per-axis modes --------------------------------------------
 
 static void test_P4_boundary_per_axis() {
-	const char* name = "P4 — [boundary] per-axis parse";
+	const char* name = "P4  -  [boundary] per-axis parse";
 	const char* src = R"(
 [project]
 name = test
@@ -160,10 +160,10 @@ z = periodic
 	PASS(name);
 }
 
-// ── P5: [boundary] compact mode = periodic ───────────────────────────────────
+// -- P5: [boundary] compact mode = periodic -----------------------------------
 
 static void test_P5_boundary_compact() {
-	const char* name = "P5 — [boundary] compact form";
+	const char* name = "P5  -  [boundary] compact form";
 	const char* src = R"(
 [project]
 name = test
@@ -185,10 +185,10 @@ axes = x,y,z
 	PASS(name);
 }
 
-// ── P6: [pbc] all four fields ────────────────────────────────────────────────
+// -- P6: [pbc] all four fields ------------------------------------------------
 
 static void test_P6_pbc_all_fields() {
-	const char* name = "P6 — [pbc] all fields parsed";
+	const char* name = "P6  -  [pbc] all fields parsed";
 	const char* src = R"(
 [project]
 name = test
@@ -210,10 +210,10 @@ unwrap_for_diffusion = false
 	PASS(name);
 }
 
-// ── P7: [pbc] wrap_positions enum values ─────────────────────────────────────
+// -- P7: [pbc] wrap_positions enum values -------------------------------------
 
 static void test_P7_pbc_wrap_modes() {
-	const char* name = "P7 — [pbc] wrap_positions enum";
+	const char* name = "P7  -  [pbc] wrap_positions enum";
 
 	auto parse_wrap = [](const char* val) {
 		std::string src = std::string("[project]\nname=test\n[pbc]\nwrap_positions = ") + val + "\n";
@@ -228,10 +228,10 @@ static void test_P7_pbc_wrap_modes() {
 	if (ok) PASS(name);
 }
 
-// ── P8: defaults when [pbc] absent ───────────────────────────────────────────
+// -- P8: defaults when [pbc] absent -------------------------------------------
 
 static void test_P8_pbc_defaults() {
-	const char* name = "P8 — [pbc] defaults when absent";
+	const char* name = "P8  -  [pbc] defaults when absent";
 	const char* src = "[project]\nname=test\n";
 	VsimDocument doc;
 	try { doc = VsimParser::parse_string(src); }
@@ -244,10 +244,10 @@ static void test_P8_pbc_defaults() {
 	PASS(name);
 }
 
-// ── P9: [boundary] reserved mode raises ParseError ───────────────────────────
+// -- P9: [boundary] reserved mode raises ParseError ---------------------------
 
 static void test_P9_boundary_reserved_mode() {
-	const char* name = "P9 — [boundary] reflective raises ParseError";
+	const char* name = "P9  -  [boundary] reflective raises ParseError";
 	const char* src = R"(
 [project]
 name = test
@@ -264,10 +264,10 @@ x = reflective
 	else PASS(name);
 }
 
-// ── P10: make_periodic_cell builds PeriodicCell correctly ────────────────────
+// -- P10: make_periodic_cell builds PeriodicCell correctly --------------------
 
 static void test_P10_make_periodic_cell() {
-	const char* name = "P10 — make_periodic_cell from document";
+	const char* name = "P10  -  make_periodic_cell from document";
 	CellSection     cs; cs.lx = 10.0; cs.ly = 12.0; cs.lz = 8.0;
 	BoundarySection bs; bs.x = "periodic"; bs.y = "open"; bs.z = "periodic";
 
@@ -284,10 +284,10 @@ static void test_P10_make_periodic_cell() {
 	PASS(name);
 }
 
-// ── P11: require_periodic throws for open cell ───────────────────────────────
+// -- P11: require_periodic throws for open cell -------------------------------
 
 static void test_P11_require_periodic_throws() {
-	const char* name = "P11 — require_periodic throws for open cell";
+	const char* name = "P11  -  require_periodic throws for open cell";
 	PeriodicCell open_cell;  // default: enabled=false
 
 	bool threw = false;
@@ -298,10 +298,10 @@ static void test_P11_require_periodic_throws() {
 	else PASS(name);
 }
 
-// ── P12: pbc_wrap correct ────────────────────────────────────────────────────
+// -- P12: pbc_wrap correct ----------------------------------------------------
 
 static void test_P12_pbc_wrap() {
-	const char* name = "P12 — pbc_bindings::pbc_wrap";
+	const char* name = "P12  -  pbc_bindings::pbc_wrap";
 	PeriodicCell cell{{10.0, 10.0, 10.0}, true, true, true};
 
 	Vec3 r_pos{10.2, 5.0, 5.0};
@@ -314,10 +314,10 @@ static void test_P12_pbc_wrap() {
 	PASS(name);
 }
 
-// ── P13: pbc_delta minimum-image ─────────────────────────────────────────────
+// -- P13: pbc_delta minimum-image ---------------------------------------------
 
 static void test_P13_pbc_delta() {
-	const char* name = "P13 — pbc_bindings::pbc_delta";
+	const char* name = "P13  -  pbc_bindings::pbc_delta";
 	PeriodicCell cell{{10.0, 10.0, 10.0}, true, true, true};
 	Vec3 ri{9.9, 5.0, 5.0};
 	Vec3 rj{0.1, 5.0, 5.0};
@@ -328,10 +328,10 @@ static void test_P13_pbc_delta() {
 	PASS(name);
 }
 
-// ── P14: pbc_distance = norm(pbc_delta) ──────────────────────────────────────
+// -- P14: pbc_distance = norm(pbc_delta) --------------------------------------
 
 static void test_P14_pbc_distance() {
-	const char* name = "P14 — pbc_bindings::pbc_distance";
+	const char* name = "P14  -  pbc_bindings::pbc_distance";
 	PeriodicCell cell{{10.0, 10.0, 10.0}, true, true, true};
 	Vec3 ri{9.9, 5.0, 5.0};
 	Vec3 rj{0.1, 5.0, 5.0};
@@ -340,10 +340,10 @@ static void test_P14_pbc_distance() {
 	PASS(name);
 }
 
-// ── P15: pbc_image_count throws when track_images = false ────────────────────
+// -- P15: pbc_image_count throws when track_images = false --------------------
 
 static void test_P15_image_count_feature_gate() {
-	const char* name = "P15 — pbc_image_count throws for track_images=false";
+	const char* name = "P15  -  pbc_image_count throws for track_images=false";
 	PBCSection cfg;
 	cfg.track_images = false;
 	std::vector<ImageCount> imgs(5);
@@ -356,10 +356,10 @@ static void test_P15_image_count_feature_gate() {
 	else PASS(name);
 }
 
-// ── P16: pbc_unwrap returns r + img * L ──────────────────────────────────────
+// -- P16: pbc_unwrap returns r + img * L --------------------------------------
 
 static void test_P16_pbc_unwrap() {
-	const char* name = "P16 — pbc_bindings::pbc_unwrap";
+	const char* name = "P16  -  pbc_bindings::pbc_unwrap";
 	PeriodicCell cell{{10.0, 10.0, 10.0}, true, true, true};
 	PBCSection cfg; cfg.track_images = true;
 
@@ -374,10 +374,10 @@ static void test_P16_pbc_unwrap() {
 	PASS(name);
 }
 
-// ── P17: test_pbc_error_no_cell.vsim parses; binding throws on call ───────────
+// -- P17: test_pbc_error_no_cell.vsim parses; binding throws on call -----------
 
 static void test_P17_no_cell_parse_then_binding_throws() {
-	const char* name = "P17 — no-cell script parses; pbc_wrap throws at call";
+	const char* name = "P17  -  no-cell script parses; pbc_wrap throws at call";
 	const char* src = R"(
 [project]
 name = test_pbc_error_no_cell
@@ -402,10 +402,10 @@ determinism = true
 	else PASS(name);
 }
 
-// ── P18: test_pbc_error_track_images.vsim: binding throws ────────────────────
+// -- P18: test_pbc_error_track_images.vsim: binding throws --------------------
 
 static void test_P18_track_images_false_binding_throws() {
-	const char* name = "P18 — track_images=false script; image_count+unwrap throw";
+	const char* name = "P18  -  track_images=false script; image_count+unwrap throw";
 	const char* src = R"(
 [project]
 name = test_pbc_error_track_images
@@ -443,14 +443,14 @@ track_images = false
 	else PASS(name);
 }
 
-// ── Main ─────────────────────────────────────────────────────────────────────
+// -- Main ---------------------------------------------------------------------
 
 int main() {
 	std::printf("\n");
-	std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-	std::printf("║   test_pbc_vsim_parser — WO-VSEPR-SIM-57B gate             ║\n");
-	std::printf("║   [cell] / [boundary] / [pbc] parser + pbc_bindings        ║\n");
-	std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+	std::printf("+==============================================================+\n");
+	std::printf("|   test_pbc_vsim_parser  -  WO-VSEPR-SIM-57B gate             |\n");
+	std::printf("|   [cell] / [boundary] / [pbc] parser + pbc_bindings        |\n");
+	std::printf("+==============================================================+\n\n");
 
 	test_P1_cell_basic();
 	test_P2_cell_triclinic_error();
@@ -474,15 +474,15 @@ int main() {
 	std::printf("\nResults: %d passed, %d failed\n\n", g_pass, g_fail);
 
 	if (g_fail == 0) {
-		std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-		std::printf("║  ALL TESTS PASS — WO-57B parser gate: CLEAR                 ║\n");
-		std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+		std::printf("+==============================================================+\n");
+		std::printf("|  ALL TESTS PASS  -  WO-57B parser gate: CLEAR                 |\n");
+		std::printf("+==============================================================+\n\n");
 		return 0;
 	} else {
 		std::fprintf(stderr,
-			"╔══════════════════════════════════════════════════════════════╗\n"
-			"║  GATE FAILED — %d test(s) did not pass\n"
-			"╚══════════════════════════════════════════════════════════════╝\n\n",
+			"+==============================================================+\n"
+			"|  GATE FAILED  -  %d test(s) did not pass\n"
+			"+==============================================================+\n\n",
 			g_fail);
 		return 1;
 	}

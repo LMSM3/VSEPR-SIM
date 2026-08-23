@@ -1,7 +1,7 @@
-/**
+﻿/**
  * gas3_export.hpp
  * ---------------
- * Export Engine for Gas3 Module — V4.0.1 Visual Suite.
+ * Export Engine for Gas3 Module  -  V4.0.1 Visual Suite.
  *
  * Produces:
  *   - CSV files (machine-readable, archival)
@@ -10,7 +10,7 @@
  *
  * Default theme: light (inverted from prior dark). Clean, publishable.
  * Tabs: Overview | 2D Charts | 3D Surfaces | Data | Fitting | Diagnostics
- * 3D: Plotly.js CDN — PvT surface, Z(T,P) surface, quality scatter.
+ * 3D: Plotly.js CDN  -  PvT surface, Z(T,P) surface, quality scatter.
  *
  * Anti-black-box: every file is traceable to a run manifest.
  */
@@ -576,7 +576,7 @@ inline bool write_html_report(
         }
     }
 
-    // PvT surface — 3D scatter colored by species
+    // PvT surface  -  3D scatter colored by species
     f << "var pvt_trace = {x:sT,y:sP,z:sV,mode:'markers',type:'scatter3d',"
       << "marker:{size:3,color:sZ,colorscale:'Viridis',showscale:true,"
       << "colorbar:{title:'Z'}},text:sSp,hovertemplate:"
@@ -585,7 +585,7 @@ inline bool write_html_report(
       << "title:'PvT State Space (VdW, Q2+)',"
       << "scene:{xaxis:{title:'T (K)'},yaxis:{title:'P (atm)'},zaxis:{title:'V (L)'}}});\n";
 
-    // Z(T,P) surface — mesh3d or scatter colored by Z
+    // Z(T,P) surface  -  mesh3d or scatter colored by Z
     f << "var z_trace = {x:sT,y:sP,z:sZ,mode:'markers',type:'scatter3d',"
       << "marker:{size:3,color:sZ,colorscale:'RdYlGn',showscale:true,"
       << "colorbar:{title:'Z'}},text:sSp,hovertemplate:"
@@ -594,7 +594,7 @@ inline bool write_html_report(
       << "title:'Compressibility Z(T,P) Surface (VdW, Q2+)',"
       << "scene:{xaxis:{title:'T (K)'},yaxis:{title:'P (atm)'},zaxis:{title:'Z'}}});\n";
 
-    // Quality 3D — T,P,Score colored by tier
+    // Quality 3D  -  T,P,Score colored by tier
     f << "var q_trace = {x:sT,y:sP,z:sQ,mode:'markers',type:'scatter3d',"
       << "marker:{size:3,color:sQ,colorscale:'RdYlGn',cmin:0,cmax:100,"
       << "showscale:true,colorbar:{title:'Score'}},text:sSp,hovertemplate:"

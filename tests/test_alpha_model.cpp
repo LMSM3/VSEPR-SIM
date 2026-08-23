@@ -1,24 +1,24 @@
-/**
+﻿/**
  * test_alpha_model.cpp
  * ====================
  * Regression guards for the polarizability model descriptors and predictions.
  *
  * Tests:
- *   T1 — f-block active_valence invariance
+ *   T1  -  f-block active_valence invariance
  *        Ensures the Blocker-1 regression can never return:
  *        all lanthanides and actinides must report active_valence = 3.
  *
- *   T2 — Group-wise monotonicity
+ *   T2  -  Group-wise monotonicity
  *        Alkali metals (group 1) must increase down the group.
  *        Noble gases (group 18) must increase down the group.
- *        These are not "truth" — they are periodic sanity checks.
+ *        These are not "truth"  -  they are periodic sanity checks.
  *
- *   T3 — Per-element smoke test
+ *   T3  -  Per-element smoke test
  *        alpha_predict(Z) must be in a physically plausible range
  *        [0.1, 500] Ang^3 for all Z=1-118.
  *        Selected key elements checked against known-good ranges.
  *
- *   T4 — Descriptor consistency
+ *   T4  -  Descriptor consistency
  *        period(Z) and block(Z) cover all Z=1-118 without gaps.
  *        group(Z) is consistent with block classification.
  */
@@ -49,7 +49,7 @@ static int g_failed = 0;
 #define SECTION(name) std::printf("\n[%s]\n", (name))
 
 // ============================================================================
-// T1 — f-block active_valence invariance
+// T1  -  f-block active_valence invariance
 //
 // Physical basis: 4f/5f electrons are core-like and must NOT be counted as
 // softness-driving valence.  active_valence(Z) == 3 for all f-block elements.
@@ -85,7 +85,7 @@ static void test_T1_fblock_valence() {
 }
 
 // ============================================================================
-// T2 — Group-wise monotonicity
+// T2  -  Group-wise monotonicity
 //
 // These are periodic sanity constraints, not exact values.
 // The trends must hold for any physically sensible model.
@@ -103,7 +103,7 @@ static void test_T1_fblock_valence() {
 //             despite having a larger covalent radius).
 //             Fix: a noble-gas-specific softness correction.
 //
-//   Both are tracked as KNOWN_FAIL — they are model accuracy issues, not
+//   Both are tracked as KNOWN_FAIL  -  they are model accuracy issues, not
 //   descriptor bugs.  They must not silently regress further.
 // ============================================================================
 
@@ -126,7 +126,7 @@ static void test_T2_monotonicity() {
         CHECK(alkali_alpha[i] < alkali_alpha[i+1], msg);
     }
 
-    // Li < Na: known model limitation — r^3 overestimates Li relative to Na.
+    // Li < Na: known model limitation  -  r^3 overestimates Li relative to Na.
     // Guard: the inversion must stay within 10% (if it grows, the model regressed).
     {
         double li = alkali_alpha[0], na = alkali_alpha[1];
@@ -155,7 +155,7 @@ static void test_T2_monotonicity() {
         CHECK(noble_alpha[i] < noble_alpha[i+1], msg);
     }
 
-    // Xe < Rn: known model limitation — chi proxy overestimates Rn electronegativity.
+    // Xe < Rn: known model limitation  -  chi proxy overestimates Rn electronegativity.
     // Guard: inversion must stay within 30%.
     {
         double xe = noble_alpha[4], rn = noble_alpha[5];
@@ -182,7 +182,7 @@ static void test_T2_monotonicity() {
 }
 
 // ============================================================================
-// T3 — Smoke test: plausible range + selected key elements
+// T3  -  Smoke test: plausible range + selected key elements
 // ============================================================================
 
 static void test_T3_smoke() {
@@ -225,7 +225,7 @@ static void test_T3_smoke() {
 }
 
 // ============================================================================
-// T4 — Descriptor consistency
+// T4  -  Descriptor consistency
 // ============================================================================
 
 static void test_T4_descriptors() {

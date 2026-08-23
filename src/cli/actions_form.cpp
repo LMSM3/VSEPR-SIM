@@ -1,4 +1,4 @@
-#include "cli/actions.hpp"
+﻿#include "cli/actions.hpp"
 #include "cli/emit_crystal.hpp"
 #include "cli/emit_output.hpp"
 #include "cli/metrics_rdf.hpp"
@@ -29,7 +29,7 @@ namespace cli {
 // Value: R / N_A = 8.314462618 J/(mol·K) / 4184 J/kcal
 static constexpr double k_B = 0.0019872041;
 
-// Kinetic energy conversion factor: amu·Å²/fs² → kcal/mol
+// Kinetic energy conversion factor: amu·Å²/fs² -> kcal/mol
 // Derivation:
 //   E(J) = 0.5 * m(amu) * v²(Å/fs) * 1.66054e-27 kg/amu * (1e-10 m/Å)² / (1e-15 s/fs)²
 //        = 0.5 * m(amu) * v²(Å/fs) * 1.66054e-17 J
@@ -128,7 +128,7 @@ double get_charge(int Z) {
     return 0.0;  // Neutral default
 }
 
-// Convert Atom vector → atomistic::State
+// Convert Atom vector -> atomistic::State
 atomistic::State atoms_to_state(const std::vector<Atom>& atoms) {
     atomistic::State state;
     state.N = static_cast<uint32_t>(atoms.size());
@@ -154,7 +154,7 @@ atomistic::State atoms_to_state(const std::vector<Atom>& atoms) {
     return state;
 }
 
-// Convert atomistic::State → Atom vector
+// Convert atomistic::State -> Atom vector
 std::vector<Atom> state_to_atoms(const atomistic::State& state) {
     std::vector<Atom> atoms;
     atoms.reserve(state.N);
@@ -231,10 +231,10 @@ struct TemperatureSchedule {
         double progress = static_cast<double>(step) / total_steps;
         
         if (progress < 0.5) {
-            // First half: ramp up (T_start → T_peak)
+            // First half: ramp up (T_start -> T_peak)
             return T_start + (T_peak - T_start) * (progress * 2.0);
         } else {
-            // Second half: ramp down (T_peak → T_end)
+            // Second half: ramp down (T_peak -> T_end)
             return T_peak + (T_end - T_peak) * ((progress - 0.5) * 2.0);
         }
     }
@@ -488,13 +488,13 @@ int action_form(const ParsedCommand& cmd, RunContext& ctx) {
     // If diffusion_scale = 0, disable thermostat (NVE ensemble)
     if (cmd.action_params.diffusion_scale == 0.0) {
         gamma = 0.0;
-        std::cout << "NOTE: diffusion_scale=0 → NVE ensemble (no thermostat)\n";
+        std::cout << "NOTE: diffusion_scale=0 -> NVE ensemble (no thermostat)\n";
     }
 
     std::cout << "Formation parameters:\n";
     std::cout << "  Formula: " << cmd.spec.formula() << "\n";
-    std::cout << "  Temperature schedule: " << T_schedule.T_start << "K → " 
-              << T_schedule.T_peak << "K → " << T_schedule.T_end << "K\n";
+    std::cout << "  Temperature schedule: " << T_schedule.T_start << "K -> " 
+              << T_schedule.T_peak << "K -> " << T_schedule.T_end << "K\n";
     std::cout << "  Total steps: " << total_steps << "\n";
     std::cout << "  Checkpoint every: " << checkpoint_freq << " steps\n";
     std::cout << "  Timestep: " << dt << " fs\n";
@@ -509,7 +509,7 @@ int action_form(const ParsedCommand& cmd, RunContext& ctx) {
     // 4. SETUP MD SYSTEM
     // ========================================================================
 
-    // Convert Atom → State
+    // Convert Atom -> State
     atomistic::State state = atoms_to_state(atoms);
 
     // DEBUG: Check charges (to verify they're in correct units)
@@ -524,9 +524,9 @@ int action_form(const ParsedCommand& cmd, RunContext& ctx) {
     // WARN: Ionic systems not yet supported
     if (has_charges) {
         std::cout << "\n";
-        std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-        std::cout << "║  ⚠️  WARNING: CHARGED SYSTEM DETECTED                     ║\n";
-        std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+        std::cout << "+===========================================================+\n";
+        std::cout << "|  ⚠️  WARNING: CHARGED SYSTEM DETECTED                     |\n";
+        std::cout << "+===========================================================+\n";
         std::cout << "\n";
         std::cout << "  Coulomb forces are currently DISABLED due to known bug.\n";
         std::cout << "  Only LJ forces will be computed.\n";
@@ -674,7 +674,7 @@ int action_form(const ParsedCommand& cmd, RunContext& ctx) {
     std::cout << "    Avg velocity: " << avg_v << " Å/fs\n";
     std::cout << "    Expected ~0.005-0.05 Å/fs for " << T_schedule.T_start << " K\n";
 
-    // Convert State → Atom for output
+    // Convert State -> Atom for output
     atoms = state_to_atoms(state);
 
             // ========================================================

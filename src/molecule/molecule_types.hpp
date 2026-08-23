@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 // ============================================================================
-// molecule_types.hpp — Glass Module: Topology Layer
+// molecule_types.hpp  -  Glass Module: Topology Layer
 // ============================================================================
 // Internal types for the prerender molecule system. These are lightweight
 // topology-only structures optimised for fast graph walk layout. They bridge
 // to the existing vsepr::Molecule / vsepr::FrameSnapshot types but carry no
 // simulation state.
 //
-// Naming: "Glass" refers to the prerender pipeline — transparent pass-through
+// Naming: "Glass" refers to the prerender pipeline  -  transparent pass-through
 // of topology into renderable instance buffers.
 // ============================================================================
 
@@ -28,7 +28,7 @@ enum class BondOrder : uint8_t {
 };
 
 // -----------------------------------------------------------------------
-// GlassAtom — one atom in the topology graph
+// GlassAtom  -  one atom in the topology graph
 // -----------------------------------------------------------------------
 struct GlassAtom {
     uint32_t index{};
@@ -38,7 +38,7 @@ struct GlassAtom {
 };
 
 // -----------------------------------------------------------------------
-// GlassBond — one bond in the topology graph
+// GlassBond  -  one bond in the topology graph
 // -----------------------------------------------------------------------
 struct GlassBond {
     uint32_t index{};
@@ -48,7 +48,7 @@ struct GlassBond {
 };
 
 // -----------------------------------------------------------------------
-// GlassMolecule — adjacency-list topology container
+// GlassMolecule  -  adjacency-list topology container
 // -----------------------------------------------------------------------
 struct GlassMolecule {
     std::vector<GlassAtom> atoms;

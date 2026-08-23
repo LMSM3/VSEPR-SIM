@@ -100,7 +100,7 @@ The bridge from CLI → xport canonical output is not yet wired.
 | ID | Feature | Gap | Blocks | Status |
 |----|---------|-----|--------|--------|
 | MF-F01 | STAGE.md missing | Recreated at repo root with Days 1-75, Groups 1-89, release gate table | All | ✅ COMPLETE |
-| MF-F02 | GitHub Actions CI workflow | No `.github/workflows/*.yml` in repo root | All | 🟠 PENDING |
+| MF-F02 | GitHub Actions CI workflow | ~~No `.github/workflows/*.yml` in repo root~~ — **DEPRECATED**: intentionally out of scope for the v5.13 freeze arc; CI infra deferred to post-v5.13 work. Not a blocking gap for any existing UC. | All | ~~🟠 PENDING~~ **DEPRECATED** |
 | MF-F03 | v5.13.5 release gate (WO-75B) | ≥143 tests, `vsepr doctor` all OK, tag not pushed | All | 🟠 PENDING |
 
 ### G — Pipe bridge stack (UC-7)
@@ -117,6 +117,27 @@ not yet wired into the headless CLI pipeline.
 | MF-G04 | DEMBridge / SPH coupling runtime | `DEMBridge` parsed; SPH↔DEM coupling not wired | UC-7 | 🔴 PENDING |
 | MF-G05 | FEABridge von Mises / fatigue output | `FEABridge` parsed; stress record emission missing | UC-7 | 🔴 PENDING |
 
+#### G′ — Pipe bridge / resolved-object gap tags (Day 85, WO-85H)
+
+Second-generation pipe-bridge gaps discovered when formalizing the **resolved
+material payload** view of UC-7 (`scripts/uc7_resolved_sio2_pipe.vsim`) and the
+Day-85 golden dispatcher (UC-6). These use the dash-form `MF-G-0NN` IDs to stay
+textually distinct from the legacy `MF-G0N` writers above. They describe object
+*resolution* and *validation* gaps, not the SPH/DEM/FEA export writers.
+
+| ID | Feature | Gap | Blocks | Status |
+|----|---------|-----|--------|--------|
+| MF-G-001 | Pipe material payload not fully resolved | Pipe accepts material/formula ref, but not all physical properties resolve | UC-7 | 🟠 PENDING |
+| MF-G-002 | Pipe geometry profile lacks full validation | Linear profile parses, but geometric validation is shallow | UC-7 | 🟠 PENDING |
+| MF-G-003 | Pipe flow model is placeholder/static only | Flow fields parsed; not connected to hydraulic/transport solving | UC-7 | 🟠 PENDING |
+| MF-G-004 | Formula→material bridge lacks property DB | SiO₂ resolves as formula; density/phase/viscosity/transport not sourced | UC-7 | 🔴 PENDING |
+| MF-G-005 | Solid payload role in pipe is ambiguous | Wall vs transported particles vs coating vs packed-bed must be explicit | UC-7 | 🟠 PENDING |
+| MF-G-006 | Linear profile lacks segment diagnostics | Profile samples exist; no per-segment validation/reporting | UC-7 | 🟡 PENDING |
+| MF-G-007 | Inlet/outlet not linked to plant graph | Endpoints exist geometrically; not linked into a plant network | UC-7 | 🟡 PENDING |
+| MF-G-008 | Pipe bridge export lacks normalized schema | Validation output needs stable JSON/report schema for regression | UC-6, UC-7 | 🟠 PENDING |
+| MF-G-009 | No tolerance-gated regression for pipe bridge | UC-7 should establish a permanent pipe-validation test | UC-6, UC-7 | 🟠 PENDING |
+| MF-G-010 | No failure taxonomy for malformed pipes | Bad pipes should fail with classified errors, not vague parser misery | UC-7 | 🔴 PENDING |
+
 ---
 
 ## Workflow use-case cross-reference
@@ -127,11 +148,14 @@ not yet wired into the headless CLI pipeline.
 | **UC-2** | Batch Crystal Sweep | MF-A01, MF-A02, MF-A03, MF-B01, MF-B02, MF-D01, MF-D02, MF-D03, MF-E04 |
 | **UC-3** | Isomer Discovery Pipeline | MF-B04, MF-C01, MF-C02, MF-C03, MF-C04, MF-E03 |
 | **UC-6** | Crystallographic Regression Suite | MF-A07, MF-D01, MF-D02, MF-D03 |
+| **UC-6** | Golden Suite Dispatcher (Day 85) | MF-G-008, MF-G-009 |
 | **UC-7** | SiO₂ Pipe Simulation | MF-G01, MF-G02, MF-G03, MF-G04, MF-G05 |
+| **UC-7** | Resolved SiO₂ Pipe Bridge (Day 85) | MF-G-001..MF-G-010 |
 
 See `docs/uc/UC-1-desktop-script-to-results.md`, `UC-2-batch-crystal-sweep.md`,
 `UC-3-isomer-discovery-pipeline.md`, `UC-6-crystallographic-regression.md`,
-and `UC-7-sio2-pipe-simulation.md` for full designs.
+`UC-6-golden-suite-dispatcher.md`, `UC-7-sio2-pipe-simulation.md`,
+and `UC-7-resolved-sio2-pipe-bridge.md` for full designs.
 
 ---
 
@@ -172,4 +196,4 @@ helper calls.
 
 ---
 
-*Last updated: 2026-06-24 | WO-MF-01 | MF-F01 (STAGE.md) + MF-E02 (WO-75A Part C) promoted to COMPLETE; 167/167 tests passing*
+*Last updated: 2026-06-28 | WO-MF-01 | MF-F02 DEPRECATED (GitHub CI out of scope for v5.13 freeze); MF-F01 + MF-E02 COMPLETE; 167/167 tests passing*

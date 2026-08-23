@@ -1,0 +1,79 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e23_surface_batch_sweep.vsim
+# =============================================================================
+# E23  --  Batch Parameter Sweep with Surface Probes
+#
+# Purpose: Integrate surface analysis with the [batch] parameter expansion
+#          system.  Sweep temperature across {300, 400, 500, 600} K and
+#          record flux variation in per-job .surface.json sidecars.
+#
+# Key concepts:
+#   [batch] matrix creates four jobs; each gets its own surface sidecar.
+#   Aggregated flux-vs-temperature plot is a post-analysis task.
+#   Demonstrates cross-module coupling: batch + surface.
+# =============================================================================
+
+[project]
+name        = "e23_surface_batch_sweep"
+version     = "v5.0.14"
+seed_base   = 2300
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 800
+temperature = 300.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 5000
+dt_fs     = 2.0
+converge  = false
+
+[batch]
+enabled = true
+mode    = "matrix"
+
+[[batch.parameter]]
+section = "simulation.molecule"
+key     = "temperature"
+values  = [300.0, 400.0, 500.0, 600.0]
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e23"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e23/surfaces"
+
+[[object.surface]]
+name          = "batch_flux_probe"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 0.0
+normal_y      = 0.0
+normal_z      = 1.0
+width         = 30.0
+height        = 30.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_batch"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 250
+

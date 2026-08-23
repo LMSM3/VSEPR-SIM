@@ -1,4 +1,4 @@
-/**
+﻿/**
  * demo_temperature_heat_mapping.cpp
  * ----------------------------------
  * Demonstration of temperature-to-heat conversion (Item #7).
@@ -23,14 +23,14 @@
 using namespace atomistic::reaction;
 
 void print_header() {
-    std::cout << "╔════════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  Temperature → Heat Parameter Mapping (Formation Engine v0.1)     ║\n";
-    std::cout << "║  Implements: Section 8b, Item #7                                   ║\n";
-    std::cout << "╚════════════════════════════════════════════════════════════════════╝\n\n";
+    std::cout << "+====================================================================+\n";
+    std::cout << "|  Temperature -> Heat Parameter Mapping (Formation Engine v0.1)     |\n";
+    std::cout << "|  Implements: Section 8b, Item #7                                   |\n";
+    std::cout << "+====================================================================+\n\n";
 }
 
 void print_separator() {
-    std::cout << "────────────────────────────────────────────────────────────────────\n";
+    std::cout << "--------------------------------------------------------------------\n";
 }
 
 void demo_basic_mapping() {
@@ -114,7 +114,7 @@ void demo_controller_integration() {
 void demo_temperature_sweep() {
     std::cout << "🔹 Temperature Sweep: Mode Transitions\n\n";
     
-    std::cout << "Sweeping T = 0 → 700 K in 50 K steps:\n\n";
+    std::cout << "Sweeping T = 0 -> 700 K in 50 K steps:\n\n";
     std::cout << std::setw(10) << "T (K)"
               << std::setw(8) << "h"
               << std::setw(12) << "m(h)"
@@ -167,11 +167,11 @@ void demo_custom_slope() {
                   << std::setw(20) << mode << "\n";
     }
     std::cout << "\n";
-    std::cout << "📝 Note: Higher slope → earlier transition to biochemical mode\n\n";
+    std::cout << "📝 Note: Higher slope -> earlier transition to biochemical mode\n\n";
 }
 
 void demo_inverse_mapping() {
-    std::cout << "🔹 Inverse Mapping: Heat → Temperature (for reporting)\n\n";
+    std::cout << "🔹 Inverse Mapping: Heat -> Temperature (for reporting)\n\n";
     
     std::vector<uint16_t> test_heats = {0, 250, 450, 650, 999};
     

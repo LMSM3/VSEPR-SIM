@@ -1,0 +1,36 @@
+# scripts/vsim_skeletons/wo83j_ring_detection.vsim
+# Tier C — native replacement for repro_wo83j_missing_ring_detection.py
+#
+# DEFERRED WO-84C: SSSR (smallest set of smallest rings) not implemented.
+#                  ring_count is a hard zero placeholder for all formulas.
+#
+# The Python script INTENTIONALLY asserts the wrong value:
+#   assert "ring_count:      0" in out   ← correct is 1 for C6H6
+# This documents that the limitation is visible and not silently wrong.
+#
+# Native VSIM would need a [classify.expect_limitation] section —
+# a concept not yet in the VSIM language.
+# Once WO-84C is done, this file flips to:
+#   expect_ring_count = 1
+
+[project]
+name    = wo83j_ring_detection_c6h6
+version = v5.0.0
+
+[material]
+formula = C6H6
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.expect_limitation]        # CONCEPT ONLY — section not in VSIM language yet
+# known_wrong_field = ring_count      # DEFERRED WO-84C: SSSR not implemented
+# known_wrong_value = 0               # correct value is 1 for benzene-like C6H6
+# correct_value     = 1               # flip this when WO-84C is done
+# deferred_wo       = WO-84C
+#
+# [classify.expect]
+# ring_count = 0                      # INTENTIONALLY WRONG — placeholder check only
+# result     = PASS_KNOWN_LIMITATION
+# ── STUB END ───────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * display.hpp
  * -----------
@@ -32,28 +32,28 @@ public:
     // Headers and Banners
     static void Header(const std::string& text) {
         std::cout << Color::MAGENTA
-                  << "╔════════════════════════════════════════════════════════════════╗\n"
-                  << "║  " << std::setw(60) << std::left << text << "  ║\n"
-                  << "╚════════════════════════════════════════════════════════════════╝\n"
+                  << "+================================================================+\n"
+                  << "|  " << std::setw(60) << std::left << text << "  |\n"
+                  << "+================================================================+\n"
                   << Color::RESET;
     }
     
     static void Subheader(const std::string& text) {
         std::cout << Color::CYAN << Color::BOLD
-                  << "┌─ " << text << "\n"
+                  << "+- " << text << "\n"
                   << Color::RESET;
     }
     
     static void Banner(const std::string& title, const std::string& subtitle = "") {
         std::cout << Color::MAGENTA
-                  << "╔════════════════════════════════════════════════════════════════╗\n"
-                  << "║                                                                ║\n"
-                  << "║  " << std::setw(60) << std::left << title << "  ║\n";
+                  << "+================================================================+\n"
+                  << "|                                                                |\n"
+                  << "|  " << std::setw(60) << std::left << title << "  |\n";
         if (!subtitle.empty()) {
-            std::cout << "║  " << std::setw(60) << std::left << subtitle << "  ║\n";
+            std::cout << "|  " << std::setw(60) << std::left << subtitle << "  |\n";
         }
-        std::cout << "║                                                                ║\n"
-                  << "╚════════════════════════════════════════════════════════════════╝\n"
+        std::cout << "|                                                                |\n"
+                  << "+================================================================+\n"
                   << Color::RESET;
     }
     
@@ -117,7 +117,7 @@ public:
     
     // Separators
     static void Separator() {
-        std::cout << Color::CYAN << "────────────────────────────────────────────────────────────────\n"
+        std::cout << Color::CYAN << "----------------------------------------------------------------\n"
                   << Color::RESET;
     }
     

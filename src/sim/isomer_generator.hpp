@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * isomer_generator.hpp - Systematic Isomer Enumeration
  * 
@@ -116,6 +116,30 @@ inline CoordinationGeometry square_pyramidal_geometry() {
     };
 }
 
+// Square antiprismatic (CN=8): canonical geometry for Th(IV) and U(IV) complexes.
+// Two staggered square faces separated along z. Lower square at phi=0/90/180/270,
+// upper square rotated by 45 deg (phi=45/135/225/315). All positions unit-normalised.
+inline CoordinationGeometry square_antiprismatic_geometry() {
+    const double s2  = std::sqrt(2.0);
+    const double ip  = 1.0 / s2;          // in-plane magnitude (normalised)
+    const double ax  = std::sqrt(0.5);    // axial component so |pos|==1
+    return {
+        "square_antiprismatic", 8,
+        {
+            // lower square (z < 0), phi = 0, 90, 180, 270
+            Vec3( ip,  0.0, -ax),
+            Vec3( 0.0,  ip, -ax),
+            Vec3(-ip,  0.0, -ax),
+            Vec3( 0.0, -ip, -ax),
+            // upper square (z > 0), phi = 45, 135, 225, 315
+            Vec3( ip * std::cos(M_PI/4.0),  ip * std::sin(M_PI/4.0),  ax),
+            Vec3(-ip * std::cos(M_PI/4.0),  ip * std::sin(M_PI/4.0),  ax),
+            Vec3(-ip * std::cos(M_PI/4.0), -ip * std::sin(M_PI/4.0),  ax),
+            Vec3( ip * std::cos(M_PI/4.0), -ip * std::sin(M_PI/4.0),  ax)
+        }
+    };
+}
+
 //=============================================================================
 // Ligand Assignment Enumeration
 //=============================================================================
@@ -129,7 +153,7 @@ inline std::string generate_descriptor(
  * Given ligand types and counts, enumerate all symmetry-distinct assignments
  * to coordination positions.
  * 
- * Example: [MA4B2] octahedral → cis and trans isomers
+ * Example: [MA4B2] octahedral -> cis and trans isomers
  * - cis: B ligands adjacent (90° angle)
  * - trans: B ligands opposite (180° angle)
  */
@@ -318,7 +342,7 @@ inline std::string generate_descriptor(
  * 
  * Input:
  * - metal_Z: central metal atomic number
- * - ligand_Z_counts: map of ligand Z → count
+ * - ligand_Z_counts: map of ligand Z -> count
  * - coordination_number: desired CN (must match sum of counts)
  * 
  * Output:
@@ -336,7 +360,7 @@ public:
     /**
      * Generate geometric isomers for a coordination complex.
      * Example: generate_coordination_isomers(27, {{7,4},{17,2}}, 6)
-     *          → [Co(NH3)4Cl2]+ with cis and trans isomers
+     *          -> [Co(NH3)4Cl2]+ with cis and trans isomers
      */
     static std::vector<IsomerVariant> generate_coordination_isomers(
         uint32_t metal_Z,
@@ -353,8 +377,10 @@ public:
         int seed);
     
 private:
-    // Select appropriate coordination geometry template
-    static CoordinationGeometry select_geometry(uint32_t coordination_number);
+    // Select appropriate coordination geometry template.
+    // metal_Z == 0 means unknown / not provided.
+    static CoordinationGeometry select_geometry(uint32_t coordination_number,
+                                                uint32_t metal_Z = 0);
     
     // Build molecule from metal + ligand assignment
     static Molecule build_coordination_complex(
@@ -365,19 +391,34 @@ private:
 };
 
 // Implementation of select_geometry
-inline CoordinationGeometry IsomerGenerator::select_geometry(uint32_t cn) {
+inline CoordinationGeometry IsomerGenerator::select_geometry(uint32_t cn,
+                                                              uint32_t metal_Z) {
+    // Determine metal family for geometry heuristics
+    // d8 metals (Ni=28, Pd=46, Pt=78, Rh=45, Ir=77, Au=79): favour square-planar
+    auto is_d8_metal = [](uint32_t Z) -> bool {
+        return Z == 28 || Z == 46 || Z == 78 ||  // Ni, Pd, Pt
+               Z == 45 || Z == 77 || Z == 79;     // Rh, Ir, Au
+    };
+    // Actinides (Th=90, U=92, etc.) and lanthanides: higher CNs, tetrahedral at CN=4
+    auto is_f_block = [](uint32_t Z) -> bool {
+        return (Z >= 57 && Z <= 71) || (Z >= 89 && Z <= 103);
+    };
+
     switch (cn) {
         case 4:
-            // Default to square planar for d8 metals, tetrahedral otherwise
-            // For now, use square planar (more common for isomerism)
-            return square_planar_geometry();
+            // d8 metals prefer square-planar; f-block and all others use tetrahedral
+            if (metal_Z != 0 && is_d8_metal(metal_Z))
+                return square_planar_geometry();
+            return tetrahedral_geometry();
         case 5:
             return trigonal_bipyramidal_geometry();
         case 6:
             return octahedral_geometry();
+        case 8:
+            return square_antiprismatic_geometry();
         default:
-            std::cerr << "Warning: no template for CN=" << cn << ", using generic\n";
-            return octahedral_geometry(); // Fallback
+            std::cerr << "Warning: no template for CN=" << cn << ", using octahedral\n";
+            return octahedral_geometry();
     }
 }
 
@@ -397,11 +438,26 @@ inline Molecule IsomerGenerator::build_coordination_complex(
     // Estimate metal-ligand bond length (simple covalent radii sum)
     // For production: use element_data_integrated covalent radii
     auto estimate_bond_length = [](uint32_t z1, uint32_t z2) -> double {
-        // Rough estimates (Angstroms)
+        // Covalent radii (Angstroms) — Alvarez 2008 single-bond radii.
+        // Actinide / lanthanide values from Slater 1964 and Dolg reviews.
         std::map<uint32_t, double> radii = {
+            // p-block ligand atoms
             {1, 0.31}, {6, 0.76}, {7, 0.71}, {8, 0.66},
             {9, 0.57}, {15, 1.07}, {16, 1.05}, {17, 1.02},
-            {26, 1.32}, {27, 1.26}, {28, 1.24}, {29, 1.32}
+            {35, 1.20}, {53, 1.39},  // Br, I
+            // 3d transition metals
+            {26, 1.32}, {27, 1.26}, {28, 1.24}, {29, 1.32},
+            // 4d transition metals
+            {44, 1.46}, {45, 1.42}, {46, 1.39},
+            // 5d transition metals
+            {74, 1.62}, {77, 1.41}, {78, 1.36}, {79, 1.36},
+            // Lanthanides (La-Lu, Z=57-71) — representative values ~1.87 Å
+            {57, 1.87}, {58, 1.83}, {59, 1.82}, {60, 1.81}, {61, 1.80},
+            {62, 1.80}, {63, 1.98}, {64, 1.79}, {65, 1.76}, {66, 1.75},
+            {67, 1.74}, {68, 1.73}, {69, 1.72}, {70, 1.94}, {71, 1.72},
+            // Actinides (Ac-Lr, Z=89-103)
+            {89, 2.15}, {90, 2.06}, {91, 2.00}, {92, 1.96}, // Ac, Th, Pa, U
+            {93, 1.90}, {94, 1.87}, {95, 1.80}, {96, 1.69}  // Np, Pu, Am, Cm
         };
         double r1 = radii.count(z1) ? radii.at(z1) : 1.2;
         double r2 = radii.count(z2) ? radii.at(z2) : 1.2;
@@ -435,8 +491,8 @@ inline std::vector<IsomerVariant> IsomerGenerator::generate_coordination_isomers
 {
     std::vector<IsomerVariant> variants;
     
-    // Select geometry template
-    CoordinationGeometry geom = select_geometry(coordination_number);
+    // Select geometry template with metal context for correct CN=4 disambiguation
+    CoordinationGeometry geom = select_geometry(coordination_number, metal_Z);
     
     if (geom.coordination_number != coordination_number) {
         std::cerr << "Error: geometry mismatch in isomer generation\n";

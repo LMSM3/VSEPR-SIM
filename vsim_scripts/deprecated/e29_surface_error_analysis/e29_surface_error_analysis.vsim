@@ -1,0 +1,100 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# e29_surface_error_analysis.vsim
+# =============================================================================
+# E29  --  Surface Error Analysis and Diagnostic Patterns
+#
+# Purpose: Intentionally misconfigure surface probes to demonstrate error
+#          handling, validation warnings, and diagnostic output.  Used for
+#          testing parser robustness and documentation of failure modes.
+#
+# Key concepts:
+#   geometry = "disk" but width/height supplied (ignored; radius used).
+#   species_filter = ["Nonexistent"] triggers a warning, not a hard error.
+#   compute_ivec_flux = true without [analysis.ivec] is silently ignored.
+#   Empty output_tag → default fallback tag in sidecar.
+#
+# Expected warnings (non-fatal):
+#   - "species_filter includes unknown species: Nonexistent"
+#   - "compute_ivec_flux requires [analysis.ivec] enabled; ignored"
+# =============================================================================
+
+[project]
+name        = "e29_surface_error_analysis"
+version     = "v5.0.14"
+seed_base   = 2900
+determinism = true
+
+[material]
+formula   = "Ar"
+prototype = "noble_gas"
+phase     = "gas"
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 256
+temperature = 300.0
+lattice     = "random"
+
+[run]
+mode      = "md"
+max_steps = 1000
+dt_fs     = 2.0
+converge  = false
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+output_dir          = "out/e29"
+
+# ---- Surface Analysis -------------------------------------------------------
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e29/surfaces"
+
+# Probe 1: disk with ignored width/height fields
+[[object.surface]]
+name               = "disk_with_excess_fields"
+geometry           = "disk"
+center_x           = 0.0
+center_y           = 0.0
+center_z           = 0.0
+normal_x           = 0.0
+normal_y           = 0.0
+normal_z           = 1.0
+radius             = 10.0
+width              = 999.0  # Ignored for disk geometry
+height             = 999.0  # Ignored for disk geometry
+log_crossings      = true
+compute_flux       = true
+output_tag         = "disk_excess"
+
+# Probe 2: species_filter referencing nonexistent species
+[[object.surface]]
+name              = "unknown_species_filter"
+geometry          = "rectangle"
+normal_y          = 1.0
+width             = 20.0
+height            = 20.0
+log_crossings     = true
+compute_flux      = true
+species_filter    = ["Nonexistent", "Ar"]
+output_tag        = "unknown_species"
+
+# Probe 3: compute_ivec_flux without [analysis.ivec]
+[[object.surface]]
+name              = "orphan_ivec_flux"
+geometry          = "rectangle"
+normal_z          = 1.0
+width             = 15.0
+height            = 15.0
+log_crossings     = false
+compute_ivec_flux = true
+output_tag        = ""  # Empty tag → fallback to "surface_<index>"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 100
+

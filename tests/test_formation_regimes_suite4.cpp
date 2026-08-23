@@ -1,5 +1,5 @@
-/**
- * test_formation_regimes_suite4.cpp — Suite #4: Dynamic Formation Regimes,
+﻿/**
+ * test_formation_regimes_suite4.cpp  -  Suite #4: Dynamic Formation Regimes,
  * Invariance Validation, and Condition-to-Structure Mapping
  *
  * Phase 4A: Dynamic validation
@@ -71,7 +71,7 @@ static coarse_grain::EnvironmentParams default_params() {
 }
 
 // ============================================================================
-// Phase 4A — Dynamic Validation: Hysteresis & Path Dependence
+// Phase 4A  -  Dynamic Validation: Hysteresis & Path Dependence
 // ============================================================================
 
 static void phase_4a_hysteresis() {
@@ -240,7 +240,7 @@ static void phase_4a_hysteresis() {
 }
 
 // ============================================================================
-// Phase 4B — Invariance Validation
+// Phase 4B  -  Invariance Validation
 // ============================================================================
 
 static void phase_4b_invariance() {
@@ -429,7 +429,7 @@ static void phase_4b_invariance() {
 }
 
 // ============================================================================
-// Phase 4C — Formation-Regime Atlas
+// Phase 4C  -  Formation-Regime Atlas
 // ============================================================================
 
 struct RegimeSceneEntry {
@@ -612,7 +612,7 @@ static void phase_4c_regime_atlas() {
             // Uniform-distance configurations (shell) have degenerate
             // coordination: all beads at equal radius share identical C,
             // so the median-based classifier puts them all on one side.
-            // This is physically correct — a perfect shell has no
+            // This is physically correct  -  a perfect shell has no
             // geometric edge/bulk distinction. Accept either split or
             // degenerate (all bulk or all edge).
             bool is_degenerate_geometry =
@@ -632,7 +632,7 @@ static void phase_4c_regime_atlas() {
 }
 
 // ============================================================================
-// Phase 4D — Medium-to-Large-N Scaling
+// Phase 4D  -  Medium-to-Large-N Scaling
 // ============================================================================
 
 static void phase_4d_large_n_scaling() {

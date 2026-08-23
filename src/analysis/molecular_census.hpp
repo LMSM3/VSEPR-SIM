@@ -1,12 +1,12 @@
-#pragma once
+﻿#pragma once
 /**
  * molecular_census.hpp
  * ====================
- * Deep Molecular Analysis Engine — Collects 112+ data points per molecule
+ * Deep Molecular Analysis Engine  -  Collects 112+ data points per molecule
  *
  * Purpose:
  *   Given a single molecular formula, build the primary structure via the
- *   VSEPR → FIRE pipeline, collect exhaustive atomistic measurements,
+ *   VSEPR -> FIRE pipeline, collect exhaustive atomistic measurements,
  *   attempt to discover alternative FIRE minimization geometries (conformers/
  *   isomers), and automatically classify the molecule by:
  *     - Group / sub-group
@@ -14,11 +14,11 @@
  *     - Purpose type (fuel, battery, catalyst, pharmaceutical, etc.)
  *
  * Architecture:
- *   1. Primary Build — formula → VSEPR placement → FIRE optimization
- *   2. Data Collection — 112+ data points across 14 categories
- *   3. Alternative Geometry Search — torsion randomization → FIRE → dedup
- *   4. Automatic Classification — rule-based from collected data
- *   5. Report Generation — structured text output
+ *   1. Primary Build  -  formula -> VSEPR placement -> FIRE optimization
+ *   2. Data Collection  -  112+ data points across 14 categories
+ *   3. Alternative Geometry Search  -  torsion randomization -> FIRE -> dedup
+ *   4. Automatic Classification  -  rule-based from collected data
+ *   5. Report Generation  -  structured text output
  *
  * Data Point Categories (≥112 total):
  *   [A]  Composition        (15 points)
@@ -35,7 +35,7 @@
  *   [L]  Stability Metrics  ( 5 points)
  *   [M]  Thermodynamic Est. ( 5 points)
  *   [N]  Structural Desc.   ( 6 points)
- *   ─────────────────────────────────
+ *   ---------------------------------
  *   Total:  ≥119 for any molecule with ≥2 heavy atoms
  *
  * References:
@@ -234,7 +234,7 @@ struct ClassificationResult {
     MolecularSubGroup sub_group    = MolecularSubGroup::UNKNOWN;
     IonicCharacter ionic           = IonicCharacter::COVALENT;
     PurposeType purpose            = PurposeType::UNKNOWN;
-    double classification_confidence = 0.0;  // 0.0–1.0
+    double classification_confidence = 0.0;  // 0.0-1.0
     std::string reasoning;                    // Human-readable explanation
 };
 
@@ -254,7 +254,7 @@ struct AlternativeGeometry {
 };
 
 // ============================================================================
-// Census Data Point — The 112+ field master struct
+// Census Data Point  -  The 112+ field master struct
 // ============================================================================
 
 struct CensusResult {
@@ -320,7 +320,7 @@ struct CensusResult {
     double electrophilicity       = 0.0;       // 45. ω = χ²/(2η) (eV)
 
     // ========================================================================
-    // [E] REACTIVITY INDICES (≥8 data points — aggregated from per-atom)
+    // [E] REACTIVITY INDICES (≥8 data points  -  aggregated from per-atom)
     // ========================================================================
     double max_fukui_plus         = 0.0;       // 46. Max f+ (nucleophilic attack)
     double max_fukui_minus        = 0.0;       // 47. Max f- (electrophilic attack)
@@ -511,7 +511,7 @@ inline double pauling_EN(uint8_t Z) {
 
 // Typical valence electron count by group
 inline uint8_t typical_valence_electrons(uint8_t Z) {
-    // Simplified — use periodic table group
+    // Simplified  -  use periodic table group
     if (Z == 1) return 1;
     if (Z == 2) return 2;
     if (Z == 3 || Z == 11 || Z == 19 || Z == 37 || Z == 55) return 1;
@@ -591,7 +591,7 @@ public:
 
         if (settings_.verbose) {
             std::cout << "\n" << std::string(78, '=') << "\n";
-            std::cout << "  MOLECULAR CENSUS — Deep Analysis Engine\n";
+            std::cout << "  MOLECULAR CENSUS  -  Deep Analysis Engine\n";
             std::cout << "  Formula: " << formula << "\n";
             std::cout << std::string(78, '=') << "\n\n";
         }
@@ -699,7 +699,7 @@ public:
     }
 
     // ========================================================================
-    // Report generation — formatted text output
+    // Report generation  -  formatted text output
     // ========================================================================
 
     static std::string generate_report(const CensusResult& cr) {
@@ -707,9 +707,9 @@ public:
         o << std::fixed << std::setprecision(4);
 
         o << "\n";
-        o << "╔══════════════════════════════════════════════════════════════════════════════╗\n";
-        o << "║                    MOLECULAR CENSUS — FULL REPORT                           ║\n";
-        o << "╚══════════════════════════════════════════════════════════════════════════════╝\n";
+        o << "+==============================================================================+\n";
+        o << "|                    MOLECULAR CENSUS  -  FULL REPORT                           |\n";
+        o << "+==============================================================================+\n";
         o << "\n";
         o << "  Timestamp:    " << cr.timestamp << "\n";
         o << "  Input:        " << cr.input_formula << "\n";
@@ -719,7 +719,7 @@ public:
         o << "\n";
 
         // [A] Composition
-        o << "─── [A] COMPOSITION (" << 15 + cr.element_counts.size() << " points) ──────────────\n";
+        o << "--- [A] COMPOSITION (" << 15 + cr.element_counts.size() << " points) --------------\n";
         o << "  Total atoms:       " << cr.total_atoms << "\n";
         o << "  Heavy atoms:       " << cr.heavy_atoms << "\n";
         o << "  Hydrogen:          " << cr.hydrogen_count << "\n";
@@ -737,7 +737,7 @@ public:
         o << "\n\n";
 
         // [B] Topology
-        o << "─── [B] TOPOLOGY (12 points) ─────────────────────────────\n";
+        o << "--- [B] TOPOLOGY (12 points) -----------------------------\n";
         o << "  Bonds:             " << cr.num_bonds << "\n";
         o << "  Single/Double/Triple: " << cr.num_single_bonds << "/" << cr.num_double_bonds << "/" << cr.num_triple_bonds << "\n";
         o << "  Angles:            " << cr.num_angles << "\n";
@@ -749,7 +749,7 @@ public:
         o << "  Bond density:      " << std::setprecision(3) << cr.bond_density << "\n\n";
 
         // [C] Energy
-        o << "─── [C] ENERGY BREAKDOWN (8 points) ──────────────────────\n";
+        o << "--- [C] ENERGY BREAKDOWN (8 points) ----------------------\n";
         o << std::setprecision(4);
         o << "  Total:     " << cr.E_total << " kcal/mol\n";
         o << "  Bond:      " << cr.E_bond << "\n";
@@ -761,7 +761,7 @@ public:
         o << "  E/bond:    " << cr.E_per_bond << "\n\n";
 
         // [D] Electronic
-        o << "─── [D] ELECTRONIC (10 points) ─────────────────────────────\n";
+        o << "--- [D] ELECTRONIC (10 points) -----------------------------\n";
         o << "  Dipole moment:     " << cr.dipole_moment << " Debye\n";
         o << "  Dipole vector:     (" << cr.dipole_x << ", " << cr.dipole_y << ", " << cr.dipole_z << ")\n";
         o << "  Polarizability:    " << cr.polarizability << " ų\n";
@@ -772,7 +772,7 @@ public:
         o << "  ω (electrophilic): " << cr.electrophilicity << " eV\n\n";
 
         // [E] Reactivity
-        o << "─── [E] REACTIVITY (8 points) ──────────────────────────────\n";
+        o << "--- [E] REACTIVITY (8 points) ------------------------------\n";
         o << "  Max f+ (nucl):     " << cr.max_fukui_plus << "\n";
         o << "  Max f- (elec):     " << cr.max_fukui_minus << "\n";
         o << "  Max f0 (rad):      " << cr.max_fukui_zero << "\n";
@@ -782,7 +782,7 @@ public:
         o << "  Charge spread:     " << cr.charge_spread << "\n\n";
 
         // [F] Geometry
-        o << "─── [F] GEOMETRY (16 points) ──────────────────────────────\n";
+        o << "--- [F] GEOMETRY (16 points) ------------------------------\n";
         o << "  Bond length range: [" << cr.min_bond_length << ", " << cr.max_bond_length << "] Å\n";
         o << "  Avg bond length:   " << cr.avg_bond_length << " ± " << cr.std_bond_length << " Å\n";
         o << "  Angle range:       [" << std::setprecision(1) << cr.min_bond_angle << "°, " << cr.max_bond_angle << "°]\n";
@@ -795,7 +795,7 @@ public:
         o << "  Min interatomic:   " << cr.min_interatomic_dist << " Å\n\n";
 
         // [G] Identity
-        o << "─── [G] IDENTITY (5 points) ───────────────────────────────\n";
+        o << "--- [G] IDENTITY (5 points) -------------------------------\n";
         o << "  Canonical formula: " << cr.canonical_formula << "\n";
         o << "  Graph hash:        0x" << std::hex << cr.graph_hash << std::dec << "\n";
         o << "  Geometry hash:     0x" << std::hex << cr.geometry_hash << std::dec << "\n";
@@ -803,7 +803,7 @@ public:
         o << "  VSEPR class:       " << cr.vsepr_class << "\n\n";
 
         // [H] Validation
-        o << "─── [H] VALIDATION (" << cr.val_gates_passed << "/" << cr.val_gates_total << " gates) ─────\n";
+        o << "--- [H] VALIDATION (" << cr.val_gates_passed << "/" << cr.val_gates_total << " gates) -----\n";
         o << "  Non-empty:    " << (cr.val_nonempty ? "PASS" : "FAIL") << "\n";
         o << "  NaN-free:     " << (cr.val_no_nan ? "PASS" : "FAIL") << "\n";
         o << "  No overlap:   " << (cr.val_no_overlap ? "PASS" : "FAIL") << "\n";
@@ -813,7 +813,7 @@ public:
         o << "  Connected:    " << (cr.val_connected ? "PASS" : "FAIL") << "\n\n";
 
         // [I] FIRE
-        o << "─── [I] FIRE CONVERGENCE (7 points) ───────────────────────\n";
+        o << "--- [I] FIRE CONVERGENCE (7 points) -----------------------\n";
         o << "  Iterations:   " << cr.fire_iterations << "\n";
         o << "  Final energy: " << cr.fire_final_energy << " kcal/mol\n";
         o << "  RMS force:    " << cr.fire_final_rms_force << "\n";
@@ -823,7 +823,7 @@ public:
         o << "  Wall time:    " << std::setprecision(1) << cr.fire_wall_time_ms << " ms\n\n";
 
         // [J] Conformer search
-        o << "─── [J] ALTERNATIVE GEOMETRIES (" << cr.conf_unique << " found) ────────\n";
+        o << "--- [J] ALTERNATIVE GEOMETRIES (" << cr.conf_unique << " found) --------\n";
         o << "  Trials:       " << cr.conf_trials << "\n";
         o << "  Unique:       " << cr.conf_unique << "\n";
         o << "  Duplicates:   " << cr.conf_duplicates << "\n";
@@ -848,7 +848,7 @@ public:
         o << "\n";
 
         // [K] Classification
-        o << "─── [K] CLASSIFICATION ───────────────────────────────────\n";
+        o << "--- [K] CLASSIFICATION -----------------------------------\n";
         o << "  Group:         " << group_name(cr.classification.group) << "\n";
         o << "  Sub-group:     " << subgroup_name(cr.classification.sub_group) << "\n";
         o << "  Ionic char:    " << ionic_name(cr.classification.ionic) << "\n";
@@ -860,7 +860,7 @@ public:
         o << "  Energetic:     " << (cr.is_energetic ? "YES" : "NO") << "\n\n";
 
         // [L] Stability
-        o << "─── [L] STABILITY (5 points) ──────────────────────────────\n";
+        o << "--- [L] STABILITY (5 points) ------------------------------\n";
         o << std::setprecision(4);
         o << "  Strain est:    " << cr.strain_energy_est << " kcal/mol\n";
         o << "  HOMO est:      " << cr.E_HOMO_est << " eV\n";
@@ -869,7 +869,7 @@ public:
         o << "  Global soft:   " << cr.global_softness << " eV⁻¹\n\n";
 
         // [M] Thermodynamic
-        o << "─── [M] THERMODYNAMIC ESTIMATES (5 points) ────────────────\n";
+        o << "--- [M] THERMODYNAMIC ESTIMATES (5 points) ----------------\n";
         o << "  Cv (Dulong-Petit): " << cr.heat_capacity_est << " cal/mol·K\n";
         o << "  ZPE est:           " << cr.zero_point_energy_est << " kcal/mol\n";
         o << "  Thermal E (298K):  " << cr.thermal_energy_298 << " kcal/mol\n";
@@ -877,7 +877,7 @@ public:
         o << "  G correction:      " << cr.gibbs_correction << " kcal/mol\n\n";
 
         // [N] Structural
-        o << "─── [N] STRUCTURAL DESCRIPTORS (6 points) ─────────────────\n";
+        o << "--- [N] STRUCTURAL DESCRIPTORS (6 points) -----------------\n";
         o << "  Wiener index:  " << cr.wiener_index << "\n";
         o << "  Balaban J:     " << cr.balaban_J << "\n";
         o << "  Graph diameter:" << cr.graph_diameter << "\n";
@@ -885,9 +885,9 @@ public:
         o << "  Surface area:  " << cr.surface_area_est << " ų\n";
         o << "  Compactness:   " << cr.compactness << "\n\n";
 
-        o << "╔══════════════════════════════════════════════════════════════════════════════╗\n";
-        o << "║  CENSUS COMPLETE — " << std::setw(3) << cr.total_data_points << " data points                                      ║\n";
-        o << "╚══════════════════════════════════════════════════════════════════════════════╝\n";
+        o << "+==============================================================================+\n";
+        o << "|  CENSUS COMPLETE  -  " << std::setw(3) << cr.total_data_points << " data points                                      |\n";
+        o << "+==============================================================================+\n";
 
         return o.str();
     }
@@ -896,7 +896,7 @@ private:
     const PeriodicTable& pt_;
     Settings settings_;
 
-    // Z → symbol helper
+    // Z -> symbol helper
     std::string Z_to_sym(uint8_t Z) const {
         const auto* e = pt_.physics_by_Z(Z);
         return e ? e->symbol : "?";
@@ -1042,7 +1042,7 @@ private:
             dy += charges[i] * mol.coords[3*i+1];
             dz += charges[i] * mol.coords[3*i+2];
         }
-        cr.dipole_x = dx * 4.8; // e·Å → Debye
+        cr.dipole_x = dx * 4.8; // e·Å -> Debye
         cr.dipole_y = dy * 4.8;
         cr.dipole_z = dz * 4.8;
         cr.dipole_moment = std::sqrt(cr.dipole_x*cr.dipole_x +
@@ -1491,7 +1491,7 @@ private:
 
         if (rotatable.empty()) {
             if (settings_.verbose) {
-                std::cout << "  No rotatable bonds — skipping conformer search.\n";
+                std::cout << "  No rotatable bonds  -  skipping conformer search.\n";
             }
             cr.conf_trials = 0;
             cr.conf_unique = 0;
@@ -1559,7 +1559,7 @@ private:
         std::ostringstream reason;
         double confidence = 0.0;
 
-        // ── Step 1: Determine Group ──
+        // -- Step 1: Determine Group --
 
         bool has_C = cr.element_counts.count("C") > 0;
         bool has_H = cr.element_counts.count("H") > 0;
@@ -1619,7 +1619,7 @@ private:
             confidence = 0.60;
         }
 
-        // ── Step 2: Determine Sub-group ──
+        // -- Step 2: Determine Sub-group --
 
         if (cls.group == MolecularGroup::ORGANIC) {
             if (cr.num_double_bonds > 0 && !has_O && !has_N) {
@@ -1686,7 +1686,7 @@ private:
             reason << "Perfluorinated (F≥6). ";
         }
 
-        // ── Step 3: Ionic Character ──
+        // -- Step 3: Ionic Character --
 
         // Compute max electronegativity difference across bonds
         double max_delta_EN = 0.0;
@@ -1741,25 +1741,25 @@ private:
             reason << "ΔEN<0.5 (covalent). ";
         }
 
-        // ── Step 4: Purpose Type ──
+        // -- Step 4: Purpose Type --
 
         // Fuel detection: small organic, high H/C ratio, combustible
         if (cls.group == MolecularGroup::ORGANIC && cr.H_to_heavy_ratio > 1.5 &&
             !has_N && cr.total_atoms <= 30) {
             cls.purpose = PurposeType::FUEL;
-            reason << "Small organic, high H/C ratio → fuel. ";
+            reason << "Small organic, high H/C ratio -> fuel. ";
             confidence = std::max(confidence, 0.75);
         }
         // Oxidizer: high O content, possibly with halogens
         else if (O_count >= 3 && !has_C && (cr.has_halogen || has_N)) {
             cls.purpose = PurposeType::OXIDIZER;
-            reason << "High O, non-organic → oxidizer. ";
+            reason << "High O, non-organic -> oxidizer. ";
             confidence = std::max(confidence, 0.70);
         }
         // Energetic material: high N+O, organic
         else if (has_C && N_count >= 3 && O_count >= 3) {
             cls.purpose = PurposeType::ENERGETIC_MATERIAL;
-            reason << "High N+O content in organic → energetic. ";
+            reason << "High N+O content in organic -> energetic. ";
             cr.is_energetic = true;
             confidence = std::max(confidence, 0.70);
         }
@@ -1767,20 +1767,20 @@ private:
         else if ((cr.element_counts.count("Li") || cr.element_counts.count("Na")) &&
                  (has_F || has_P)) {
             cls.purpose = PurposeType::BATTERY_ELECTROLYTE;
-            reason << "Li/Na + F/P → battery electrolyte. ";
+            reason << "Li/Na + F/P -> battery electrolyte. ";
             confidence = std::max(confidence, 0.70);
         }
         // Battery electrode: Li with transition metal + O
         else if (cr.element_counts.count("Li") && cr.has_metal && has_O) {
             cls.purpose = PurposeType::BATTERY_ELECTRODE;
-            reason << "Li + metal + O → battery electrode. ";
+            reason << "Li + metal + O -> battery electrode. ";
             confidence = std::max(confidence, 0.70);
         }
         // Catalyst: transition metal complex
         else if (cls.group == MolecularGroup::COORDINATION_COMPLEX ||
                  cls.group == MolecularGroup::ORGANOMETALLIC) {
             cls.purpose = PurposeType::CATALYST;
-            reason << "Metal complex → potential catalyst. ";
+            reason << "Metal complex -> potential catalyst. ";
             confidence = std::max(confidence, 0.60);
         }
         // Semiconductor
@@ -1794,33 +1794,33 @@ private:
         else if (cls.group == MolecularGroup::ORGANIC && (has_N || has_O) &&
                  cr.total_atoms >= 10 && cr.total_atoms <= 100) {
             cls.purpose = PurposeType::PHARMACEUTICAL;
-            reason << "Mid-size organic with heteroatoms → pharmaceutical candidate. ";
+            reason << "Mid-size organic with heteroatoms -> pharmaceutical candidate. ";
             confidence = std::max(confidence, 0.55);
         }
         // Solvent: small organic, no metals
         else if (cls.group == MolecularGroup::ORGANIC && cr.total_atoms <= 15 &&
                  !cr.has_metal) {
             cls.purpose = PurposeType::SOLVENT;
-            reason << "Small organic → potential solvent. ";
+            reason << "Small organic -> potential solvent. ";
             confidence = std::max(confidence, 0.50);
         }
         // Refrigerant: small molecule with F
         else if (has_F && has_C && cr.total_atoms <= 10) {
             cls.purpose = PurposeType::REFRIGERANT;
-            reason << "Small fluorocarbon → refrigerant. ";
+            reason << "Small fluorocarbon -> refrigerant. ";
             confidence = std::max(confidence, 0.65);
         }
         // Fertilizer: N+P+K combination
         else if (has_N && has_P && cr.element_counts.count("K")) {
             cls.purpose = PurposeType::FERTILIZER;
-            reason << "N+P+K composition → fertilizer. ";
+            reason << "N+P+K composition -> fertilizer. ";
             confidence = std::max(confidence, 0.70);
         }
         // Propellant: energetic with Al or B
         else if ((cr.element_counts.count("Al") || cr.element_counts.count("B")) &&
                  (has_O || has_F)) {
             cls.purpose = PurposeType::PROPELLANT;
-            reason << "Al/B + oxidizer → propellant component. ";
+            reason << "Al/B + oxidizer -> propellant component. ";
             confidence = std::max(confidence, 0.65);
         }
 

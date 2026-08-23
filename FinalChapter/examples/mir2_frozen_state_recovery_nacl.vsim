@@ -1,0 +1,220 @@
+# =============================================================================
+# MIR II — Frozen-State Recovery
+# VSIM implementation: NaCl single-point snapshot
+#
+# Theory claim (MIR II):
+#   A frozen physical state can be represented by the recoverable identity
+#   content it preserves, not merely by its visible coordinates.
+#   P5 = [x, p, q, s, D] — position, momentum, charge, spin-proxy, recoverable-D.
+#   Entropy is recoverability loss, not merely disorder.
+#   A frozen state is not the whole identity history — it is a snapshot.
+#
+# Computational test:
+#   Run NaCl to thermal equilibrium (MD, 300 K). Freeze it: switch to
+#   single_point mode on the final frame. Extract the full structural record.
+#   Measure how much identity content is recoverable from the frozen snapshot:
+#     - neighbor_cutoff defines the recovery window (how far out you can see)
+#     - RDF peaks: recoverable if peaks are present, irrecoverable if smeared
+#     - coordination: recoverable if 6 for all Na and Cl, partial if disordered
+#     - scale_sampling field_projection: η_{ab} = recoverable fraction per window
+#     - mass conservation: D (recoverable mass content) is conserved or not
+#
+#   MIR II §6: R vs C recovery.
+#     In R (physical reality): the full P5 state exists.
+#     In C (our simulation): we only store what we recorded.
+#     The gap between what the kernel logged and what scale_sampling
+#     recovers IS the C-side projection loss — an analogue of R vs C recovery.
+#
+#   MIR II §4: entropy as recoverability loss.
+#     If the final MD frame has higher spatial_cv than the initial relaxed
+#     frame, thermal entropy has degraded recovery efficiency.
+#     That is entropy as defined in MIR II: not disorder alone, but
+#     reduction in recoverable identity content.
+#
+# Workflow:
+#   Phase 1 [while]: equilibrate NaCl at 300 K until energy variance settles.
+#   Phase 2 [run mode = single_point]: freeze the equilibrated frame.
+#   Phase 3 [analysis.*]: extract full structural record from frozen state.
+#   Phase 4 [verify.*]: check how much is recoverable against known ground truth.
+#
+# Traditional system: NaCl rocksalt
+#   Known ground state. Recoverable identity = coordination-6 + RDF peaks.
+#   Any deviation is quantified loss.
+# =============================================================================
+
+[project]
+name        = "mir2_frozen_state_recovery_nacl"
+version     = "v5.0.0-beta.9"
+seed_base   = 2020
+determinism = true
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+# ---------------------------------------------------------------------------
+# Phase 1: equilibrate
+# MIR II §1: frozen-state concept — we need a well-defined state to freeze.
+# Run MD first, then freeze. The [while] gate ensures we freeze at
+# a representative equilibrium state, not an initial transient.
+# ---------------------------------------------------------------------------
+[while]
+name          = "thermal_equilibration"
+condition     = "energy_var > 0.008"
+max_iters     = 15
+body_steps    = 400
+measure       = energy_var
+iter_delay_ms = 0
+
+[variance]
+energy_var = "energy.total" "last 80" 0.008
+
+# ---------------------------------------------------------------------------
+# Phase 2: frozen-state snapshot
+# MIR II §1: "what a system contains when evolution is paused"
+# single_point = no integration step. The frame is frozen.
+# P5 = [x, p, q, s, D] encoded in the XYZ + charge field at this frame.
+# ---------------------------------------------------------------------------
+[run]
+mode         = "single_point"
+max_steps    = 1
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[simulation]
+periodic    = true
+use_ewald   = true
+ewald_alpha = 0.3
+ewald_rcut  = 12.0
+ewald_kmax  = 5
+
+# ---------------------------------------------------------------------------
+# Phase 3: recovery analysis on frozen state
+# MIR II §3: recoverable information D
+# scale_sampling η_{ab} = recovered fraction per projection window
+# MIR II §6: the gap between field_projection at small vs large window
+#            is the C-side projection loss
+# ---------------------------------------------------------------------------
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.6    # recovery window: how far out can we see?
+contact_cutoff_A  = 3.0
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = false   # single frame — MSD undefined
+min_frames_for_motion = 1
+min_frames_for_msd    = 999     # effectively disabled
+unwrap_pbc            = true
+
+# MIR II §6: R vs C recovery gap visible in scale_sampling output
+# Small window (2.82 Å): near-atom scale, high recovery expected
+# Large window (22.56 Å): supercell scale, long-range correlations tested
+[analysis.scale_sampling]
+enabled                            = true
+compute_field_projection           = true
+compute_rve_sampling               = true
+compute_emergence_metrics          = true
+field_grid                         = [8, 8, 8]
+rve_window_lengths_A               = [2.82, 5.64, 11.28, 22.56]
+rve_windows_per_level              = 6
+rve_window_placement               = "grid"
+min_particles_for_scale_sampling   = 64
+spatial_cv_threshold               = 0.30
+temporal_drift_threshold           = 0.10   # single frame: no temporal drift
+scale_drift_threshold              = 0.25
+temporal_drift_metric              = "block_difference"
+scale_drift_metric                 = "successive_window_difference"
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Observables at frozen state
+# MIR II §3: D (recoverable content) measured through these
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 1    # single point: only one frame
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = false
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Verification — MIR II §7: snapshot vs identity
+# If the frozen snapshot recovers coordination-6 and correct RDF peaks,
+# the P5 content at this frame is sufficient for identity reconstruction.
+# If not, thermal entropy has caused irrecoverable loss at this snapshot.
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "mir2_frozen_recovery_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.82
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.82, 3.99, 4.88]
+peak_tolerance_A   = 0.22    # slightly loose: 300 K thermal broadening
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export
+# ---------------------------------------------------------------------------
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_scale_sampling_json  = true
+write_manifest_json        = true
+output_dir                 = "out/mir2_nacl_frozen"
+
+[report]
+title                   = "mir2_frozen_state_recovery_nacl"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type            = "terminal_overlay_cycle"
+render_interval        = 1
+show_convergence_trace = true
+show_symbolic_trace    = true
+show_audit_table       = true
+overlay_sequence       = energy_map,coordination,rdf

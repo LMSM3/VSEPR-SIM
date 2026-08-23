@@ -1,0 +1,181 @@
+[project]
+name = "formation_parent_molecule_scan"
+version = "v5.1.x"
+seed_base = 9302
+determinism = true
+description = "Formation scan around a parent organic chain using chemistry events and isomer analysis."
+
+[seed]
+foundation = 9302
+formation = 15302
+placement = 20302
+thermal = 17302
+
+[simulation]
+fire_max_steps = 1500
+fire_dt_fs = 1.0
+box_size_ang = 60.0
+periodic = false
+formation_preset = "polymer"
+use_ewald = false
+step_delay_ms = 0
+smooth_resim = true
+
+[[simulation.molecule]]
+formula = "C6H12"
+count = 1
+temperature = 600.0
+lattice = "none"
+layer_mode = ""
+n_layers = 1
+
+[[simulation.molecule]]
+formula = "H2"
+count = 12
+temperature = 600.0
+lattice = "none"
+layer_mode = ""
+n_layers = 1
+
+[material]
+formula = "C6H12"
+structure = "linear_chain"
+phase = "gas"
+
+[run]
+mode = "scan"
+max_steps = 5000
+dt_fs = 0.8
+temperature_K = 600.0
+converge = true
+output_level = "verbose"
+
+[environment]
+periodic = false
+temperature = 600.0
+pressure = 0.0
+medium = "argon_gas"
+humidity = 0.0
+field_x = 0.0
+field_y = 0.0
+field_z = 0.0
+
+[cell]
+lx = 60.0
+ly = 60.0
+lz = 60.0
+units = "angstrom"
+
+[boundary]
+x = "open"
+y = "open"
+z = "open"
+
+[chemistry]
+chemistry = "isomer_scan"
+heat = -1
+reaction_events = true
+track_species_state = true
+event_registry = true
+min_score_threshold = 0.30
+max_reactions_per_step = 6
+
+[analysis.isomers]
+enabled = true
+mode = "graph_geometry"
+formula_guard = true
+graph_validation = true
+valence_check = true
+connectivity_check = true
+formal_charge_check = true
+radical_check = false
+canonical_hash = true
+geometry_rmsd = true
+relaxation_check = true
+known_database_check = false
+allow_fragments = false
+allow_charged = false
+allow_radicals = false
+allow_strained = true
+max_bond_order = 3
+bond_tolerance_scale = 1.20
+rmsd_tolerance = 0.05
+angle_tolerance_deg = 3.0
+bond_source = "hybrid"
+geometry_build = "vsepr"
+report_level = "detailed"
+
+[generator.isomers]
+enabled = true
+formula = "C6H12"
+allow_fragments = false
+allow_charged = false
+allow_radicals = false
+allow_strained = true
+max_bond_order = 3
+deduplicate = "canonical_graph_hash"
+
+[analysis.structure]
+enabled = true
+
+[analysis.sampling]
+enabled = true
+compute_rdf = true
+compute_msd = true
+
+[analysis.inference]
+enabled = true
+mode = "rule_based_61d"
+
+[observe]
+metrics = ["reaction_events", "chemical_state", "exothermic_count", "avg_delta_E", "formation"]
+output_format = "json"
+every_n_steps = 10
+
+[verify]
+enabled = true
+profile = "formation_parent_molecule_scan"
+write_verify_report = true
+write_verify_tsv = true
+
+[verify.mass]
+enabled = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz = true
+write_xyzf = true
+write_xyzfull = true
+write_analysis_json = true
+write_metrics_tsv = true
+write_cluster_json = true
+write_fingerprint_json = true
+write_events_json = true
+write_symbolic_trace_json = true
+write_report_md = true
+write_summary_csv = true
+write_dashboard_json = true
+write_manifest_json = true
+write_dashboard_svg = true
+output_dir = "out/formation_parent_molecule_scan"
+
+[export.visual]
+write_svg_figures = true
+write_rdf_svg = true
+write_energy_trace_svg = true
+write_cluster_map_svg = true
+write_html_dashboard = true
+write_report_html = true
+visual_output_dir = "figures"
+
+[visual]
+output_type = "terminal_overlay_cycle"
+animation_mode = "overlay"
+render_interval = 10
+show_proxy_table = true
+show_convergence_trace = true
+show_event_timeline = true
+show_bar_chart = true
+show_symbolic_trace = true
+show_audit_table = true
+show_rdf_plot = true

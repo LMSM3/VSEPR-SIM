@@ -1,0 +1,60 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# simple_md_run.vsim
+# =============================================================================
+# Demo 07 — Simple NVT MD: N2 diatomic gas
+# =============================================================================
+# 32 N2 molecules at 400 K. The simplest possible MD run to check that
+# the full formation -> run -> export -> analysis pipeline works end to end.
+#
+# Run:  vsepr run scripts/demos/simple_md_run.vsim
+# =============================================================================
+
+[project]
+name        = "simple_md_demo"
+version     = "v5.1.4"
+seed_base   = 1007
+description = "N2x32 NVT 400 K — minimal end-to-end pipeline check"
+
+[formation]
+enabled              = true
+history              = true
+track_events         = false
+track_energy_path    = true
+track_structure_changes = false
+
+[simulation]
+box_size_ang     = 35.0
+periodic         = true
+fire_max_steps   = 100
+fire_dt_fs       = 0.5
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "N2"
+count         = 32
+temperature_K = 400.0
+lattice       = "none"
+
+[run]
+mode           = "gas"
+num_steps      = 1000
+dt             = 1.0
+integrator     = "velocity_verlet"
+temperature_K  = 400.0
+sample_interval   = 100
+render_interval   = 100
+
+[export]
+xyz      = true
+xyzFull  = true
+dynx     = true
+report   = true
+
+[analysis]
+rmsd            = true
+energy_trace    = true
+stationarity    = true
+diffusion       = true
+

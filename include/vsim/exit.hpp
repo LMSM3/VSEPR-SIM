@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * vsim_parser.hpp — .vsim file parser
+ * vsim_parser.hpp  -  .vsim file parser
  * ====================================
  *
  * Parses TOML-subset .vsim scripts into VsimDocument.
@@ -18,25 +18,25 @@
  *   IDENTIFIER  := [A-Za-z_][A-Za-z0-9_]*
  *
  * Known sections handled structurally:
- *   [project]             → ProjectSection
- *   [simulation]          → SimulationSection + MoleculeEntry sub-blocks
- *   [export]              → ExportSection
- *   [material]            → MaterialSection          (WO-VSIM-03B)
- *   [run]                 → RunSection               (WO-VSIM-03B)
- *   [environment]         → EnvironmentSection       (WO-VSIM-03B)
- *   [excite.<type>]       → ExciteSection registry   (WO-VSIM-03B)
- *   [observe]             → ObserveSection           (WO-VSIM-03B)
- *   [[override.particle]] → vector<ParticleOverrideEntry> (WO-VSIM-03B)
- *   [[raw.object]]        → vector<RawObjectEntry>   (WO-VSIM-03B)
- *   [defaults.run]        → GoldenDefaultsSection::run
- *   [defaults.analysis]   → GoldenDefaultsSection::analysis
- *   [test.<name>]         → GoldenTestEntry (appended to golden_tests)
- *   [test.<name>.run]     → GoldenTestEntry::run
- *   [test.<name>.analysis]→ GoldenTestEntry::analysis
- *   [suite]               → SuiteSection
- *   [suite.limits]        → SuiteSection limits
- *   [suite.smoke]         → SuiteSection smoke subset
- *   [report]              → GoldenReportSection
+ *   [project]             -> ProjectSection
+ *   [simulation]          -> SimulationSection + MoleculeEntry sub-blocks
+ *   [export]              -> ExportSection
+ *   [material]            -> MaterialSection          (WO-VSIM-03B)
+ *   [run]                 -> RunSection               (WO-VSIM-03B)
+ *   [environment]         -> EnvironmentSection       (WO-VSIM-03B)
+ *   [excite.<type>]       -> ExciteSection registry   (WO-VSIM-03B)
+ *   [observe]             -> ObserveSection           (WO-VSIM-03B)
+ *   [[override.particle]] -> vector<ParticleOverrideEntry> (WO-VSIM-03B)
+ *   [[raw.object]]        -> vector<RawObjectEntry>   (WO-VSIM-03B)
+ *   [defaults.run]        -> GoldenDefaultsSection::run
+ *   [defaults.analysis]   -> GoldenDefaultsSection::analysis
+ *   [test.<name>]         -> GoldenTestEntry (appended to golden_tests)
+ *   [test.<name>.run]     -> GoldenTestEntry::run
+ *   [test.<name>.analysis]-> GoldenTestEntry::analysis
+ *   [suite]               -> SuiteSection
+ *   [suite.limits]        -> SuiteSection limits
+ *   [suite.smoke]         -> SuiteSection smoke subset
+ *   [report]              -> GoldenReportSection
  *
  * Unknown sections are captured in VsimDocument::raw_sections.
  *
@@ -50,7 +50,7 @@
 namespace vsim {
 
 // ============================================================================
-// ParseError — carries line number for diagnostics
+// ParseError  -  carries line number for diagnostics
 // ============================================================================
 
 struct ParseError : std::runtime_error {

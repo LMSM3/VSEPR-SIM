@@ -1,0 +1,669 @@
+﻿% ============================================================================
+% WO-VSEPR_SIM-63A-ARCHIVE
+% Day 63 Archive: Hierarchical Sampling and Convergence Testing
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+\usepackage[top=1.0in, bottom=1.0in, left=1.15in, right=1.15in, headheight=14pt]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amsmath, amssymb, mathtools}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM Work Order Archive}}
+\fancyhead[R]{\small\textit{WO-VSEPR\_SIM-63A}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+
+\newcommand{\R}{\mathbb{R}}
+\DeclareMathOperator{\CV}{CV}
+
+\begin{document}
+
+\begin{center}
+  {\LARGE\bfseries WO-VSEPR\_SIM-63A-ARCHIVE}\\[0.4em]
+  {\Large\bfseries Hierarchical Sampling and Convergence Testing for High-$N$ Bead Simulation}\\[1.0em]
+  {\normalsize VSEPR-SIM Development Day 63}\\[0.3em]
+  {\small Archive Draft}
+\end{center}
+
+\vspace{0.5em}
+\hrule
+\vspace{1.2em}
+
+\begin{abstract}
+This work order archive defines a practical hierarchy for high-$N$ bead-resolved simulation in VSEPR-SIM. Direct all-pairs interaction evaluation scales as $O(N^2)$ and becomes infeasible for million-bead regimes. The document uses octree decomposition as the computational baseline and introduces a dynamic tree sampling method in which local subdivision depth and measurement density adapt to bead concentration, variance, defect concentration, and convergence instability. The purpose is constrained: not to claim atomistic electronic truth from encoded beads, but to test whether bead-level interaction rules converge toward stable macro-scale measurements under increasing sample count and representative-volume scale. Limitations and validation gates are made explicit to prevent overclaiming.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+Pairwise interaction models scale quadratically:
+\begin{equation}
+\text{cost}_{\text{all-pairs}} = O(N^2)
+\end{equation}
+For $N=10^6$ beads, direct evaluation implies approximately
+\begin{equation}
+N(N-1)/2 \approx 5\times 10^{11}
+\end{equation}
+interaction checks per step (order of $10^{12}$ operations when force kernels and bookkeeping are included).
+
+This is the core bottleneck in large-bead simulation.
+
+\subsection{Why high-\texorpdfstring{$N$}{N} is still valuable}
+
+Low-$N$ runs reveal local structure and implementation behavior. High-$N$ runs are needed for:
+\begin{itemize}
+  \item distribution-level measurements,
+  \item finite-size convergence testing,
+  \item representative-volume behavior,
+  \item macro-property stability under repeated seeds.
+\end{itemize}
+
+\textbf{Key statement:} high-$N$ improves statistical convergence, not microscopic truth by itself.
+
+\section{Established Octree Method}
+
+In 3D, each cube is subdivided into $2\times 2\times 2 = 8$ child cubes.
+This gives the canonical octree hierarchy.
+
+The force decomposition is:
+\begin{equation}
+\mathbf{F}_i = \mathbf{F}_{i,\mathrm{near}} + \mathbf{F}_{i,\mathrm{far}}
+\end{equation}
+Near-field terms are evaluated explicitly; far-field terms are approximated via aggregate node descriptors.
+
+The Barnes--Hut acceptance condition is:
+\begin{equation}
+\frac{s}{d} < \theta
+\end{equation}
+where:
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning \\
+\midrule
+$s$ & node size \\
+$d$ & distance from target bead to node center \\
+$\theta$ & approximation tolerance \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+This relation provides the computational backbone: node aggregation is accepted only when geometric separation supports bounded approximation error.
+
+\section{VSEPR-SIM High-\texorpdfstring{$N$}{N} Bead Interpretation}
+
+To prevent overclaiming, the simulated units are defined as \emph{bead-resolved state carriers}, not guaranteed fully resolved quantum atoms.
+
+A bead state may encode:
+\begin{equation}
+\{m,\mathbf{r},q,\epsilon,\sigma,T,\mathbf{x},\mathbf{v},\text{state},\text{material\_tag}\}
+\end{equation}
+
+High-$N$ targets improvement in stable measured properties such as:
+\begin{equation}
+\rho(\mathbf{x}),\; \phi,\; D_{\mathrm{eff}},\; \text{coordination},\; \text{defect fraction},\; \text{local variance},\; \text{representative-volume stability}
+\end{equation}
+
+These outputs are interpreted as convergence behavior of the encoded model, not direct proof of chemical or electronic correctness.
+
+\section{Dynamic Tree Method (Day 63 Contribution)}
+
+The standard octree is geometry-driven and mostly static in refinement policy.
+The dynamic tree method extends this by making local refinement and sampling adaptive to measurement quality.
+
+\subsection{Adaptive refinement criteria}
+
+Possible split triggers for node $\nu$:
+\begin{align}
+ n_{\nu} &> n_{\max} \\
+ \sigma_{\rho}(\nu) &> \tau_{\rho} \\
+ \sigma_{P}(\nu) &> \tau_{P} \\
+ \lvert \nabla P(\nu) \rvert &> \tau_{\nabla} \\
+ E_{\mathrm{local}}(\nu) &> \tau_{E}
+\end{align}
+where $P$ is a sampled property (porosity, density, coordination, defect fraction, or other tracked field).
+
+\subsection{Dynamic behavior rules}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{lX}
+\toprule
+Condition & Action \\
+\midrule
+too many beads in node & subdivide \\
+low variation & keep coarse \\
+high defect variance & refine \\
+high boundary/edge error & resample or reject \\
+stable measurement & stop refining \\
+unstable measurement & increase samples \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+This reframes the method as \textbf{adaptive hierarchical sampling for bead-resolved material inference}.
+
+\section{Why Not Purely Random Cube Sampling}
+
+Random cube probes are useful for analysis,
+\begin{equation}
+C_k = \mathrm{cube}(\mathbf{x}_k, s_k)
+\end{equation}
+but unconstrained random size creates scale bias because $V=s^3$ and large cubes dominate aggregate statistics.
+
+Recommended design:
+\begin{equation}
+\text{fixed scale bands} + \text{random centers} + \text{convergence reporting}
+\end{equation}
+
+Example scale set:
+\begin{equation}
+s \in \{5,10,25,50,100,250,500\}
+\end{equation}
+
+For each scale $s$, report:
+\begin{equation}
+\mu_P(s),\; \sigma_P(s),\; \CV_P(s)
+\end{equation}
+with coefficient of variation
+\begin{equation}
+\CV_P(s) = \frac{\sigma_P(s)}{\mu_P(s)}
+\end{equation}
+
+This measures stability directly rather than smoothing away heterogeneity.
+
+\section{Limitations in Goodness Fitting}
+
+The method cannot prove that encoded beads are physically correct. It can test whether the encoded bead model converges to stable measured properties under increased sample size and scale.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{lX}
+\toprule
+Limitation & Meaning \\
+\midrule
+bead encoding quality & poor bead rules can converge to stable but unphysical output \\
+interaction law choice & force law determines what is physically represented \\
+sampling scale & too small over-amplifies local noise \\
+large-volume dominance & large samples can hide local critical variation \\
+smoothing risk & smoothing can erase true heterogeneity \\
+parameter explosion & too many fit knobs can become non-identifiable \\
+validation shortage & without empirical anchors, no truth claim is justified \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Core sentence:} high-$N$ improves convergence of the model, not correctness of the model.
+
+\section{Proposed Convergence Gates}
+
+Use explicit acceptance gates instead of high-dimensional ad hoc goodness functions.
+A property $P$ is scale-stable if:
+\begin{equation}
+\CV_P(s) < \tau
+\end{equation}
+and
+\begin{equation}
+\left|\frac{\mu_P(s_{k+1})-\mu_P(s_k)}{\mu_P(s_k)}\right| < \epsilon
+\end{equation}
+across multiple random seeds.
+
+Example defaults:
+\begin{equation}
+\tau = 0.05,\qquad \epsilon = 0.03,\qquad \text{seed\_repeat\_count}=3
+\end{equation}
+
+This yields a conservative and defensible validation layer.
+
+\subsection{Gate decision table}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{lX}
+\toprule
+Gate result & Interpretation \\
+\midrule
+$\CV_P(s) < \tau$ and drift $<\epsilon$ across seeds & Scale-stable for property $P$ at tested bands \\
+$\CV_P(s) < \tau$ but drift $\ge \epsilon$ & Local variance controlled, but inter-scale consistency unresolved \\
+$\CV_P(s) \ge \tau$ and drift $<\epsilon$ & Mean appears stable while fluctuations remain too high \\
+$\CV_P(s) \ge \tau$ and drift $\ge \epsilon$ & Not converged; refine tree, increase samples, or revisit encoding \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Seed-robust pass policy}
+
+For each property $P$, accept only if at least $2/3$ seed runs pass both gates
+on the two largest scale bands. This avoids false positives caused by
+single-seed luck in heterogeneous regions.
+
+\section{Day 63 Framing}
+
+Day 63 scope should prioritize hierarchical sampling and convergence testing, not new physics extensions.
+The octree path supplies scalable structure; the dynamic tree layer supplies adaptive measurement discipline.
+
+\subsection{Update-loop doctrine (Day 63+)}
+
+Instead of a permanently one-way pipeline
+\begin{equation}
+\text{property prediction} \rightarrow \text{bead dynamics}
+\end{equation}
+the Day 63+ direction is a recursive coupling:
+\begin{equation}
+S_t \rightarrow P_t \rightarrow D_t \rightarrow S_{t+\Delta t}
+\end{equation}
+with
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+Symbol & Meaning \\
+\midrule
+$S_t$ & bead state at time $t$ (positions, velocities, identities, local structure) \\
+$P_t$ & inferred property field at time $t$ (density, porosity, coordination, transport proxy) \\
+$D_t$ & bead-dynamics operator using inferred properties \\
+$S_{t+\Delta t}$ & updated bead state \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Formally:
+\begin{align}
+P_t &= I(S_t) \\
+S_{t+\Delta t} &= D(S_t, P_t) \\
+P_{t+\Delta t} &= I(S_{t+\Delta t})
+\end{align}
+
+This is not circular reasoning as validation; it is recursive state--property coupling as dynamics.
+
+\subsection{Paper-safe wording and non-claim boundary}
+
+In this framework, circularity is not used as validation; it is used as coupling.
+VSEPR-SIM infers local material descriptors from the bead-resolved state,
+then bead dynamics uses those descriptors to update the system.
+The updated state is then reanalyzed, producing a recursive state-property loop.
+This loop is valuable because many material processes are path-dependent:
+structure determines properties, while those properties govern the next structural transition.
+
+\medskip
+\noindent\textbf{Claim hygiene:}
+\begin{itemize}
+  \item Bad claim: the model proves its own properties because the dynamics reproduce them.
+  \item Good claim: the model evolves self-consistent property fields under encoded bead rules.
+  \item Better claim: the framework tests whether recursive bead-property coupling converges,
+	destabilizes, or produces path-dependent material behavior.
+\end{itemize}
+
+\noindent\textbf{Day 63+ doctrine:}
+\begin{quote}
+Circularity is forbidden as validation, but essential as dynamics.\\
+The loop is not proof. The loop is the model.
+\end{quote}
+
+Deliverables should therefore emphasize:
+\begin{itemize}
+  \item high-$N$ spatial decomposition and traversal behavior,
+  \item scale-band convergence reporting,
+  \item multi-seed stability checks,
+  \item explicit non-claim boundaries.
+\end{itemize}
+
+\subsection{Intentional Day 63 bead-model simplicity}
+
+For this paper/method, the bead model remains intentionally simple:
+\begin{enumerate}
+  \item spherical beads,
+  \item assigned mass/radius/material tag,
+  \item optional internal state,
+  \item local interaction law,
+  \item sampled property inference,
+  \item convergence reporting,
+  \item cleanup and reproducibility pass.
+\end{enumerate}
+
+\section{Implementation Notes for VSEPR-SIM}
+
+A minimal integration path:
+\begin{enumerate}
+  \item Add dynamic refinement thresholds to runtime configuration.
+  \item Record per-node variance and sample stability counters.
+  \item Export scale-band summaries as structured report tables.
+  \item Gate pass/fail by $(\CV,\epsilon)$ constraints across seeds.
+\end{enumerate}
+
+Suggested report columns per property and scale:
+\begin{equation}
+\{s,\;N_{\text{samples}},\;\mu_P,\;\sigma_P,\;\CV_P,\;\Delta\mu_{k\to k+1},\;\text{pass/fail}\}
+\end{equation}
+
+\subsection{Runtime pseudocode}
+
+\begin{verbatim}
+for each seed in seeds:
+	build root node from domain bounds
+	while refinement_queue not empty:
+		node = pop(refinement_queue)
+		sample_property(node)
+		if split_trigger(node):
+			subdivide(node)
+			push(children)
+		else:
+			commit(node)
+
+for each property P and each scale band s:
+	compute mu_P(s), sigma_P(s), CV_P(s)
+	compute drift = |mu_P(s[k+1]) - mu_P(s[k])| / mu_P(s[k])
+	evaluate convergence gates
+
+aggregate seed pass rates
+emit archive report
+\end{verbatim}
+
+\subsection{Minimal archive artifact set}
+
+Recommended outputs for reproducibility:
+\begin{itemize}
+  \item Node statistics dump: occupancy, split depth, trigger reason.
+  \item Scale-band summary table for each tracked property.
+  \item Seed-level pass/fail ledger with gate values.
+  \item Run manifest: simulation hash, threshold set, and timestamp.
+\end{itemize}
+
+\section{Particle Roles and Transient Carrier Dynamics}
+
+\subsection{Role decomposition}
+
+The bead model is extended with multiple particle classes using different
+update rules, force sensitivities, and event behavior.
+
+\begin{center}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+Class & Role & Primary behavior \\
+\midrule
+Beads & heavy state carriers & define material structure and long-range field landscape \\
+Transient charged carriers & light/mobile carriers & mediate charge redistribution, local EM effects, capture/emission \\
+Transient neutral carriers & uncharged mobile carriers & ballistic transport with stochastic collision/absorption/scattering \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+This gives a clean three-level architecture: heavy structural state,
+mobile charged response, and mobile neutral collision response.
+
+\subsection{Beads as heavy structural carriers}
+
+Each bead $i$ stores
+\begin{equation}
+\mathbf{B}_i=(\mathbf{x}_i,\mathbf{v}_i,m_i,r_i,q_i,E_i,s_i)
+\end{equation}
+with position, velocity, mass, interaction radius, charge,
+internal energy state, and material/state label.
+
+Beads provide octree aggregates such as
+$M_{\mathrm{node}}$, $Q_{\mathrm{node}}$, center-of-mass,
+and center-of-charge descriptors.
+
+\subsection{Transient charged carriers}
+
+Define charged carrier state
+\begin{equation}
+\mathbf{C}_k=(\mathbf{x}_k,\mathbf{v}_k,m_k,q_k,E_k)
+\end{equation}
+with light mass, high mobility, and subcycled time updates.
+
+Electrostatic response:
+\begin{equation}
+\mathbf{F}^{\mathrm{EM}}_k=q_k\,\mathbf{E}(\mathbf{x}_k)
+\end{equation}
+where $\mathbf{E}$ may include bead-octree fields,
+nearby charged-carrier corrections, external fields,
+and boundary contributions.
+
+Capture on bead $i$ applies deltas:
+\begin{equation}
+q_i^{\mathrm{new}}=q_i+q_k,
+\qquad
+m_i^{\mathrm{new}}=m_i+m_k
+\end{equation}
+Mass contribution from electron-like carriers may be neglected if
+the model is configured for charge-dominant updates.
+
+\subsection{Transient neutral carriers}
+
+Define neutral carrier state
+\begin{equation}
+\mathbf{N}_\ell=(\mathbf{x}_\ell,\mathbf{v}_\ell,m_\ell,E_\ell),
+\qquad q_\ell=0
+\end{equation}
+so electrostatic forcing is disabled:
+\begin{equation}
+\mathbf{F}^{\mathrm{EM}}_\ell=0
+\end{equation}
+
+Neutral motion is modeled as ballistic transport plus stochastic
+collision/scattering/absorption events with beads.
+At this scale, default behavior is \textbf{not} gravity-tree driven.
+
+\subsection{Multi-time-stepping and tree strategy}
+
+Use a slow bead step and fast transient substeps:
+\begin{equation}
+\Delta t_B=1.0\,\mathrm{fs},
+\qquad
+\Delta t_C=0.01\,\mathrm{fs},
+\qquad
+K=\frac{\Delta t_B}{\Delta t_C}=100
+\end{equation}
+
+Operational policy:
+\begin{itemize}
+  \item rebuild bead octree each bead step,
+  \item use local overlay structures for transient substeps
+	(cell list / bucket grid / local map),
+  \item store event deltas in pending logs,
+  \item apply deltas at bead step boundary (baseline) or
+	propagate deltas up the node path (higher temporal accuracy).
+\end{itemize}
+
+Hybrid trigger:
+\begin{equation}
+\text{if capture count small }\Rightarrow\text{ propagate deltas;
+else trigger early rebuild.}
+\end{equation}
+
+\subsection{Force/effect method by pair type}
+
+\begin{center}
+\begin{tabularx}{\linewidth}{l l X}
+\toprule
+Interaction & Method & Notes \\
+\midrule
+Bead $\leftrightarrow$ bead bonded & fixed bond list & springs/polymer/structural skeleton \\
+Bead $\leftrightarrow$ bead short-range & neighbor list & LJ/contact/adhesion/damping \\
+Bead $\leftrightarrow$ bead long-range & octree & electrostatic or configured long-range field \\
+Charged carrier $\leftrightarrow$ bead & bead tree + local correction & distant bead charge via tree \\
+Charged carrier $\leftrightarrow$ charged carrier & local neighbor list & avoid default $O(N_C^2)$ unless tiny $N_C$ \\
+Neutral carrier $\leftrightarrow$ bead & stochastic collision model & ballistic + event model \\
+Neutral carrier $\leftrightarrow$ neutral carrier & usually omitted & include only for dense neutral flux \\
+Carrier $\leftrightarrow$ boundary & event policy & escape/reflection/absorption by setup \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Capture, emission, and reaction events}
+
+For carrier $p$ entering bead interaction region
+$\|\mathbf{x}_p-\mathbf{x}_i\|<R_i^{\mathrm{int}}$,
+evaluate event probability by either rate model
+\begin{equation}
+P_{\mathrm{capture}}=1-\exp(-\lambda_i\Delta t)
+\end{equation}
+or path-length model
+\begin{equation}
+P_{\mathrm{capture}}=1-\exp(-\Sigma_i\Delta\ell)
+\end{equation}
+then draw $u\sim U(0,1)$ and accept event if $u<P_{\mathrm{capture}}$.
+
+Charged-capture update:
+\begin{equation}
+q_i^{\mathrm{new}}=q_i+q_p,
+\quad
+m_i^{\mathrm{new}}=m_i+m_p,
+\quad
+E_i^{\mathrm{new}}=E_i+E_p+\Delta E_{\mathrm{bind}}
+\end{equation}
+
+Neutral-capture update:
+\begin{equation}
+q_i^{\mathrm{new}}=q_i,
+\quad
+m_i^{\mathrm{new}}=m_i+m_p,
+\quad
+E_i^{\mathrm{new}}=E_i+E_p+\Delta E_{\mathrm{reaction}}
+\end{equation}
+and optional state transform
+\begin{equation}
+s_i^{\mathrm{new}}=\mathcal{R}(s_i,p)
+\end{equation}
+
+Emission event model:
+\begin{equation}
+P_{\mathrm{emit}}=1-\exp\!\bigl(-\lambda_{\mathrm{emit}}(E_i,s_i)\,\Delta t\bigr)
+\end{equation}
+with conservation updates
+\begin{equation}
+q_i^{\mathrm{new}}=q_i-q_p,
+\quad
+m_i^{\mathrm{new}}=m_i-m_p,
+\quad
+E_i^{\mathrm{new}}=E_i-E_p-E_{\mathrm{cost}}
+\end{equation}
+and emitted velocity initialization
+\begin{equation}
+\mathbf{v}_p=v_0\,\hat{\mathbf{n}}
+\end{equation}
+where $\hat{\mathbf{n}}$ is isotropic or field-biased.
+
+\subsection{Simulation loop and logging doctrine}
+
+Reference loop:
+\begin{verbatim}
+for each bead timestep:
+	rebuild bead octree
+	rebuild bead neighbor list if needed
+
+	compute bead-bead bonded/short/long-range forces
+
+	for each transient substep:
+		update charged carrier forces from bead tree
+		update charged local interactions
+		update neutral ballistic motion
+
+		check capture, emission, collision, boundary events
+		store pending bead mass/charge/energy deltas
+		optionally propagate charge deltas up tree
+
+	apply pending bead updates
+	integrate bead positions and velocities
+	write diagnostics and event log
+\end{verbatim}
+
+Event records should be separated from state trajectory outputs.
+State files store evolution; event logs store transformations.
+
+\begin{verbatim}
+{
+  "time": 125.04,
+  "event": "charged_capture",
+  "bead_id": 48291,
+  "particle_id": 903,
+  "delta_q": -1.0,
+  "delta_m": 0.00054858,
+  "delta_E": 2.31,
+  "position": [4.2, 8.1, 0.5]
+}
+\end{verbatim}
+
+\subsection{Naming and claim safety}
+
+Section naming should use
+\textbf{Transient Charged and Neutral Carrier Particles},
+with electron-like or neutron-like behavior treated as special cases.
+
+This preserves physical caution while retaining the event-driven
+architecture required for coupled bead-carrier dynamics.
+
+\subsection{Signed particle-type assignments (negative codes)}
+
+For implementation convenience, transient and special particle classes may use
+\textbf{negative type assignments}. These are \emph{classification codes},
+not physical sign assignments for mass or energy.
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+Type code & Particle class & Notes \\
+\midrule
+$+1, +2, \ldots$ & Beads (material-resolved) & Primary heavy structural carriers \\
+$-1$ & Charged transient (electron-like) & Fast mobile charge carrier \\
+$-2$ & Charged transient (ion-like) & Optional positive/negative by $q$ field \\
+$-3$ & Neutral transient (neutron-like) & Ballistic + stochastic collision model \\
+$-4$ & Neutral transient (gamma-like packet) & Event/transport packet; no rest-mass update by default \\
+$-5$ & Heavy transient (alpha-like packet) & Composite carrier/event token \\
+$-6$ and below & Reserved special channels & Decay products, diagnostics, boundary-injected particles \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Recommended rule set:
+\begin{itemize}
+  \item Type sign determines class family (positive = bead, negative = transient/special).
+  \item Physical properties remain explicit fields: $(m, q, E, s)$.
+  \item Neutrality is encoded by $q=0$, not by type sign alone.
+  \item Gamma-like behavior should be configured as an event/packet model,
+	not interpreted as a bead mass contribution unless explicitly enabled.
+\end{itemize}
+
+This convention simplifies routing and pair-dispatch logic in kernels:
+\begin{equation}
+\texttt{if type > 0 => bead path; if type < 0 => transient/special path}
+\end{equation}
+
+while preserving physically meaningful state updates through explicit
+per-particle fields.
+
+\section{Conclusion}
+
+WO-VSEPR\_SIM-63A is positioned as a methodological archive for scalable inference in bead-resolved simulation.
+The contribution is practical: combine established octree acceleration with adaptive sampling and convergence gates to decide whether macro-properties are stable under scale and seed variation.
+
+The document intentionally separates:\
+(1) computational convergence claims from\
+(2) physical truth claims.
+
+That separation is required for technically defensible high-$N$ reporting.
+
+\vfill
+\begin{center}
+\rule{0.45\linewidth}{0.4pt}\\[0.5em]
+\small WO-VSEPR\_SIM-63A-ARCHIVE\\
+\small Hierarchical sampling and convergence testing first.
+\end{center}
+
+\end{document}

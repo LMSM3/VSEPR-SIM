@@ -1,0 +1,88 @@
+# scripts/vsim_skeletons/wo83r_classify_pipeline.vsim
+# Tier A — native replacement for demo_wo83r_classify_pipeline.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+# STUB: [classify.batch] multi-formula loop not yet in VSIM language.
+#
+# The Python script loops over 5 formulas in a single Python call.
+# In native VSIM, each formula is a separate [project]+[material]+[classify]
+# invocation, OR a [classify.batch] section is added to the language (WO-84A TBD).
+
+[project]
+name    = wo83r_classify_pipeline_ch4
+version = v5.0.0
+
+[material]
+formula = CH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83r_classify_pipeline_nh3
+version = v5.0.0
+[material]
+formula = NH3
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83r_classify_pipeline_co2
+version = v5.0.0
+[material]
+formula = CO2
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83r_classify_pipeline_sf6
+version = v5.0.0
+[material]
+formula = SF6
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83r_classify_pipeline_c6h12o
+version = v5.0.0
+[material]
+formula = C6H12O
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+# [classify.expect]
+# contains = "vsepr_report"
+# contains = "organic_candidate"
+# result   = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────

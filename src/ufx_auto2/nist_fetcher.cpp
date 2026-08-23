@@ -1,4 +1,4 @@
-// src/ufx_auto2/nist_fetcher.cpp
+﻿// src/ufx_auto2/nist_fetcher.cpp
 // UFX_AUTO_2 Phase 5 -- NIST Chemistry WebBook Fetcher Implementation
 // VSEPR-SIM v5 beta8 -> beta9 target
 
@@ -41,7 +41,7 @@ std::string NISTFetcher::build_url_(const std::string& formula,
 }
 
 // ============================================================================
-// http_get_  (WinHTTP implementation — identical structure to PubChemFetcher)
+// http_get_  (WinHTTP implementation  -  identical structure to PubChemFetcher)
 // ============================================================================
 
 std::pair<int, std::string> NISTFetcher::http_get_(const std::string& url) {
@@ -124,7 +124,7 @@ std::pair<int, std::string> NISTFetcher::http_get_(const std::string& url) {
 }
 
 // ============================================================================
-// sha256_hex_  (FNV-1a 64-bit placeholder — same as PubChemFetcher)
+// sha256_hex_  (FNV-1a 64-bit placeholder  -  same as PubChemFetcher)
 // ============================================================================
 
 std::string NISTFetcher::sha256_hex_(const std::string& data) {

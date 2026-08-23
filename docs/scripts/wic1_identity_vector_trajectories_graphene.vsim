@@ -1,0 +1,157 @@
+# WIC I — Identity Vector Trajectories
+# Graphene 8×8×1 MD. V_i(t) trajectory; worldline as identity history.
+# Theory: WIC I §4-7 — particle casts a line because identity persists, not because it's a string.
+
+[project]
+name        = "wic1_identity_vector_trajectories_graphene"
+version     = "v5.1.13.5"
+seed_base   = 3001
+determinism = true
+
+[material]
+formula   = "C"
+structure = "graphene"
+cell      = "8x8x1"
+phase     = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 4000
+dt_fs        = 0.25
+temperature  = 300
+converge     = false
+output_level = "verbose"
+
+[environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "open"
+
+[simulation]
+fire_max_steps   = 500
+fire_dt_fs       = 0.25
+periodic         = true
+formation_preset = "molecular"
+
+[[simulation.molecule]]
+formula     = "C"
+count       = 128
+lattice     = "hexagonal"
+layer_mode  = "AA"
+n_layers    = 1
+temperature = 300.0
+
+[post_step]
+enabled = true
+script_block = """
+d_12 = pbc.distance(particle.position(1), particle.position(2))
+d_13 = pbc.distance(particle.position(1), particle.position(3))
+"""
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf", "interference"]
+output_format = "json"
+every_n_steps = 10
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true
+dynamic_energy   = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [10, 10, 4]
+rve_window_lengths_A             = [2.46, 4.92, 9.84, 19.68]
+rve_windows_per_level            = 8
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 32
+spatial_cv_threshold             = 0.35
+temporal_drift_threshold         = 0.20
+scale_drift_threshold            = 0.30
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 3.5
+contact_cutoff_A  = 1.8
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[verify]
+enabled             = true
+profile             = "wic1_graphene_trajectory_check"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_coordination        = 3
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 1.42
+nearest_neighbor_tolerance_A = 0.08
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [1.42, 2.46, 2.84]
+peak_tolerance_A   = 0.12
+require_peak_order = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.5
+max_slope_late       = 0.002
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                  = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_dashboard_svg        = true
+write_manifest_json        = true
+output_dir                 = "out/wic1_graphene"
+
+[report]
+title = "WIC I — Identity Vector Trajectories: Graphene"
+include_material_cards = true
+include_metric_tables  = true
+include_symbolic_trace = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 20
+show_event_timeline = true
+show_symbolic_trace = true
+overlay_sequence = energy_map,coordination,rdf,interference

@@ -1,0 +1,669 @@
+% ============================================================================
+%  chapter_20_continual_report.tex
+%  Chapter 20: The Continual Simulation Report
+%  Identity, Scale, and the Kernel Event Spine
+%  VSEPR-SIM Theoretical Division  |  v5.13 Branch Freeze Document
+%  Compile: pdflatex (twice for TOC / refs)
+% ============================================================================
+\documentclass[11pt,a4paper]{article}
+
+%% -- Encoding & fonts -------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+%% -- Core packages ----------------------------------------------------------
+\usepackage{amsmath,amssymb,amsfonts,mathtools,bm}
+\usepackage{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs,array,tabularx,longtable}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{mdframed}
+\usepackage{listings}
+\usepackage{amsthm}
+
+%% -- Page geometry ----------------------------------------------------------
+\geometry{left=2.8cm,right=2.8cm,top=3.2cm,bottom=3.0cm,headheight=15pt}
+
+%% -- Hyperref ---------------------------------------------------------------
+\hypersetup{
+  colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black,
+  pdftitle={Chapter 20 -- The Continual Simulation Report},
+  pdfsubject={VSEPR-SIM v5.13 Branch Freeze -- IKK Identity, Scale, Event Spine}
+}
+
+%% -- Section numbering: 20.0 through 20.N ----------------------------------
+\renewcommand{\thesection}{20.\arabic{section}}
+\setcounter{section}{-1}
+\renewcommand{\thesubsection}{\Alph{subsection}}
+
+%% -- Section styling --------------------------------------------------------
+\titleformat{\section}
+  {\normalfont\large\bfseries}{\thesection.}{0.6em}{}
+  [\vspace{-2pt}\rule{\textwidth}{0.4pt}]
+\titleformat{\subsection}
+  {\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\itshape}{\thesubsubsection.}{0.5em}{}
+
+%% -- Header / footer --------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{VSEPR-SIM Chapter 20 --- The Continual Simulation Report}}
+\fancyhead[R]{\small\textit{v5.13 Freeze $\cdot$ Day 82}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+%% -- Colour palette ---------------------------------------------------------
+\definecolor{vsimdark}{RGB}{26,82,118}
+\definecolor{vsimgreen}{RGB}{30,130,76}
+\definecolor{vsimred}{RGB}{192,57,43}
+\definecolor{vsimamber}{RGB}{211,84,0}
+\definecolor{codegray}{RGB}{245,245,245}
+
+%% -- Theorem environments ---------------------------------------------------
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{axiom}{Axiom}[section]
+\newtheorem{principle}{Principle}[section]
+
+%% -- Mdframed boxes ---------------------------------------------------------
+\mdfdefinestyle{doctrinebox}{
+  linecolor=vsimdark, linewidth=1.2pt,
+  backgroundcolor=blue!4,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=10pt, innerrightmargin=10pt
+}
+\mdfdefinestyle{warnbox}{
+  linecolor=vsimamber, linewidth=1.2pt,
+  backgroundcolor=yellow!8,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=10pt, innerrightmargin=10pt
+}
+\mdfdefinestyle{freezebox}{
+  linecolor=vsimgreen, linewidth=1.5pt,
+  backgroundcolor=green!5,
+  innertopmargin=8pt, innerbottommargin=8pt,
+  innerleftmargin=10pt, innerrightmargin=10pt
+}
+
+%% -- Listings ---------------------------------------------------------------
+\lstdefinestyle{eventprint}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{codegray},
+  breaklines=true, frame=single,
+  framesep=4pt, rulecolor=\color{gray!40}
+}
+
+%% -- IKK macro set (harmonised with IKK IV v1.0) ---------------------------
+\newcommand{\Dfrak}{\mathfrak{D}}
+\newcommand{\Ifrak}{\mathfrak{I}}
+\newcommand{\etaab}{\eta_{ab}}
+\newcommand{\Psihid}{|\Psi^{\mathrm{hid}}\rangle}
+\newcommand{\Drec}{D_{\mathrm{rec}}}
+\newcommand{\DeltaD}{\Delta\Dfrak}
+\newcommand{\DeltaS}{\Delta S}
+\newcommand{\Sn}{S_n}
+\newcommand{\ivec}{\bar{\imath}_f}
+
+%% -- IKK badge commands ----------------------------------------------------
+\newcommand{\Dpass}[1]{\colorbox{green!25}{\texttt{\small #1}}}
+\newcommand{\Dwarn}[1]{\colorbox{yellow!45}{\texttt{\small #1}}}
+\newcommand{\Dfail}[1]{\colorbox{red!25}{\texttt{\small #1}}}
+
+% ===========================================================================
+\begin{document}
+
+\thispagestyle{empty}
+
+\begin{center}
+  {\footnotesize\sffamily VSEPR-SIM Theoretical Division
+	\quad\textperiodcentered\quad
+	\textsc{v5.13 Branch Freeze Document}
+	\quad\textperiodcentered\quad Day 82}\\[10pt]
+  {\LARGE\bfseries\color{vsimdark} Chapter 20}\\[6pt]
+  {\Large\bfseries The Continual Simulation Report}\\[4pt]
+  {\large Identity, Scale, and the Kernel Event Spine}\\[16pt]
+  {\normalsize\itshape
+	IKK End-Tag Enrichment (WO-75A)
+	\quad\textperiodcentered\quad
+	IKK Identity Vector (WO-75B)
+	\quad\textperiodcentered\quad
+	v5.13 Freeze Summary}\\[6pt]
+  {\small 2026-06-28 \quad|\quad
+	Commit: \texttt{489d11cd} \quad|\quad
+	167/167 tests passing}
+\end{center}
+
+\vspace{12pt}
+\begin{mdframed}[style=freezebox]
+\textbf{Branch freeze notice.}\quad
+This document is the formal closure artefact for the \texttt{v5.13} arc of
+VSEPR-SIM\@.  The branch \texttt{feature/wizard-full-module-expansion} is
+frozen at this state.  All deferred items are tracked in \texttt{STAGE.md}
+and \texttt{CLOSEOUT.md}.  Work resumes on a new branch.
+\end{mdframed}
+
+\vspace{8pt}
+\tableofcontents
+\clearpage
+
+% ===========================================================================
+\section{Preamble}
+% ===========================================================================
+
+This chapter documents a single organising idea that runs through the entire
+v5.13 arc and gives every module within it its architectural justification:
+\emph{the simulation must continuously print what it knows}.
+
+The idea is not about logging.  It is not a debugging aid.  It is the
+foundational output doctrine of the platform: every event the kernel observes,
+every projection loss it incurs, every identity fraction it retains or
+discards---all of it must be expressed continuously, per step, in structured,
+human-readable, machine-parseable form.
+
+This principle existed implicitly from Day~1 in the design of the
+\texttt{KernelEventLog}.  The v5.13 arc formalised it, extended it upward into
+the IKK theoretical layer, and delivered two concrete implementations:
+the IKK End-Tag system (WO-75A) and the IKK Identity Vector (WO-75B).
+
+% ===========================================================================
+\section{The Continual Printing System}
+% ===========================================================================
+
+\subsection{Doctrine}
+
+\begin{mdframed}[style=doctrinebox]
+\textbf{Core doctrine.}\quad
+A simulation that only produces a final result is not a simulation.
+It is a calculator.  A simulation must continuously narrate its own state,
+uncertainties, and information losses across every step, every scale, and every
+event channel---so that the researcher can reconstruct not only \emph{what
+happened} but \emph{what the kernel knew}, and \emph{what it could not know},
+at every moment of the run.
+\end{mdframed}
+
+\vspace{4pt}
+This doctrine has three consequences for the architecture:
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{No silent discards.}  Every event the kernel processes is
+	emitted---to the console, to the JSONL archive, or to both.  The event
+	limiter may sample the console under load; the JSONL archive is never
+	sampled.
+
+  \item \textbf{Structured streams.}  Each physical channel emits a
+	distinguishable, grep-able prefix.  A researcher running a live session can
+	follow a specific channel without instrumenting new code.
+
+  \item \textbf{Identity accounting.}  The simulation does not only report
+	\emph{what happened}; it reports \emph{how much of what happened is still
+	recoverable} in the language of IKK distinguishability
+	($\Dfrak$) and cross-scale efficiency ($\etaab$).
+\end{enumerate}
+
+\subsection{The Four Live Print Streams}
+
+The runtime emits four structured event channels to the terminal and the
+JSONL archive simultaneously.  Each is individually grep-able and forms a
+separate column in the JSONL event archive:
+
+\begin{lstlisting}[style=eventprint,
+  caption={Representative output from all four live print channels.}]
+[PP]   step=184 t=0.184 idA=e_001 idB=pos_001 r=0.018 Erel=0.382 action=ANNIHILATE
+[CHEM] step=184 t=0.184 idA=C_004 idB=O_002 r=1.24 type=nonbond action=NONE
+[DECAY]step=522 t=0.522 id=Pu_239_001 mode=alpha daughter=U235_001 dE=0.052
+[ANN]  step=184 t=0.184 pair=e_001+pos_001 Ein=1.022 Eout=1.022 products=gamma_001,gamma_002
+\end{lstlisting}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}llp{7cm}@{}}
+\toprule
+Prefix & Channel & Trigger \\
+\midrule
+\texttt{[PP]}    & Particle--particle interaction
+  & Any pair interaction; \texttt{ANNIHILATE} on gate pass \\
+\texttt{[CHEM]}  & Chemistry bond / nonbond
+  & Bond formation, breaking, or nonbond pair event \\
+\texttt{[DECAY]} & Single-particle decay
+  & Decay event (alpha, beta, fission) \\
+\texttt{[ANN]}   & Anti-pair annihilation
+  & Triggered \texttt{AnnihilationEvent} \\
+\bottomrule
+\end{tabular}
+\caption{Live print stream channels. All four are console-visible and archived in JSONL.}
+\end{table}
+
+\subsection{The KernelEventLog}
+
+The \texttt{KernelEventLog} is the runtime substrate of the continual printing
+system.  It is the single source of truth for all downstream analysis,
+reporting, and dashboard records.
+
+\begin{principle}
+  The \texttt{KernelEventLog} owns the simulation history.  The
+  \texttt{.xyz}/\texttt{.xyzFull} files own the atomistic ground truth.
+  No other data structure may claim to represent either.  These two
+  concerns do not overlap.
+\end{principle}
+
+The event log feeds the downstream pipeline in a single directed chain:
+
+\[
+\texttt{KernelEventLog}
+  \;\to\;
+  \texttt{FormationRecord}
+  \;\to\;
+  \texttt{run\_pipeline()}
+  \;\to\;
+  \texttt{AnalysisRecord}
+  \;\to\;
+  \texttt{ReportRecord}
+  \;\to\;
+  \texttt{DashboardRecord}
+\]
+
+The IKK analysis layer taps into this chain at the \texttt{AnalysisRecord}
+boundary:
+
+\[
+\texttt{AnalysisRecord}
+  \;\xrightarrow{\;\text{WO-75A}\;}
+  \texttt{IKKEndTag}
+  \;\xrightarrow{\;\text{render}\;}
+  \texttt{ikk\_end\_tag\_md},\;\texttt{ikk\_end\_tag\_tex}
+\]
+
+% ===========================================================================
+\section{IKK End-Tag Enrichment (WO-75A, Part~A)}
+% ===========================================================================
+
+\subsection{Motivation}
+
+Before WO-75A, the simulation's identity metrics---projection loss,
+hidden residual, distinguishability fraction---were computed and stored in
+\texttt{IdentitySidecarRecord} but never \emph{explained}.
+Reports read as data dumps.
+The IKK End-Tag closes every report section with a structured block that
+interprets these numbers in the language of IKK theory
+(IKK I--IV, \textsc{Notation Registry v1.0}).
+
+\subsection{The End-Tag Block Structure}
+
+Each end-tag block emits the following fields (Markdown and \LaTeX{} variants):
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Field & Symbol & Meaning \\
+\midrule
+Scale regime      & $\Sn$          & Atomistic / molecular / material regime \\
+$D$ mean          & $\Drec$        & Recoverable distinguishability fraction $\in[0,1]$ \\
+$D$ loss          & $\DeltaD$      & Identity content lost across this run \\
+Projection loss   &                & Loss from atomistic $\to$ observable projection \\
+Hidden residual   & $\Psihid$      & Non-recoverable identity content estimate \\
+Efficiency        & $\etaab$       & Cross-scale recovery fraction $\in[0,1]$ \\
+Entropy delta     & $\DeltaS$      & Proportional to $-\DeltaD$ (IKK 2nd law) \\
+Formation memory  &                & Fraction of formation history still recoverable \\
+Second-law check  &                & \Dpass{PASS} / \Dwarn{WARN} / \Dfail{FAIL} \\
+\bottomrule
+\end{tabular}
+\caption{IKK End-Tag fields. All values are derived from \texttt{IdentitySidecarRecord}---never
+  written back into particle state or \texttt{.xyz} truth files.}
+\end{table}
+
+\subsection{Second-Law Check}
+
+The second-law badge is a mandatory assertion appended to every section:
+
+\begin{definition}[IKK Second Law]\label{def:secondlaw}
+  $\DeltaS > 0$ if and only if $\DeltaD < 0$.
+  Identity loss is monotonically paired with entropy increase in a
+  non-reversible projection across scales.
+\end{definition}
+
+Badge thresholds (configurable via \texttt{[analysis.ikk\_end\_tag]}):
+
+\begin{itemize}
+  \item \Dpass{PASS}: $\Drec \geq 0.60$ and second-law consistent.
+  \item \Dwarn{WARN}: $0.35 \leq \Drec < 0.60$ or mild second-law tension.
+  \item \Dfail{FAIL}: $\Drec < 0.35$ or second-law violated.
+\end{itemize}
+
+\subsection{Implementation Summary (Day 75)}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Deliverable & File & Status \\
+\midrule
+\texttt{VsimIkkEndTagSection} struct
+  & \texttt{include/vsim/vsim\_document.hpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\texttt{apply\_ikk\_end\_tag\_key()} parser wiring
+  & \texttt{src/vsim/vsim\_parser.cpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\texttt{IKKEndTag} struct + render functions
+  & \texttt{include/vsim/analysis/ikk\_end\_tag.hpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\texttt{IkkEndTagModule} self-registering class
+  & \texttt{src/vsim/analysis/ikk\_end\_tag.cpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\texttt{AnalysisRecord} output fields
+  & \texttt{include/vsim/analysis/i\_analysis\_module.hpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+Group~87 tests (20/20 PASS)
+  & \texttt{tests/test\_ikk\_end\_tag.cpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\midrule
+GL D-colour overlay (Part~B, \S\ref{sec:partb})
+  & \texttt{src/vis/renderer.cpp}
+  & \textcolor{vsimamber}{\textbf{DEFERRED}} \\
+\bottomrule
+\end{tabular}
+\caption{WO-75A Part~A deliverables. Part~B is fully specified but deferred to the next arc.}
+\end{table}
+
+\subsection{VSIM Script Surface}
+
+\begin{lstlisting}[style=eventprint,
+  caption={\texttt{[analysis.ikk\_end\_tag]} block in a \texttt{.vsim} script.}]
+[analysis.ikk_end_tag]
+emit_markdown      = true
+emit_latex         = false
+d_pass_threshold   = 0.60
+d_warn_threshold   = 0.35
+scale_regime       = "S3"
+section_reference  = "IKK IV sec 3.2"
+\end{lstlisting}
+
+% ===========================================================================
+\section{WO-75A Part~B --- GL D-Colour Overlay (Deferred)}\label{sec:partb}
+% ===========================================================================
+
+\begin{mdframed}[style=warnbox]
+\textbf{Deferred to next arc.}\quad
+The specification below is complete and frozen.  Nothing has been removed
+from the design; only execution is deferred.  The next arc begins here.
+\end{mdframed}
+
+\subsection{Colour Mapping Convention}
+
+The overlay maps $\Drec \in [0,1]$ to a cold-to-hot palette following IKK
+convention (cold = identity preserved; hot = identity dissolved):
+
+\[
+\Drec = 1.0 \;\longrightarrow\; \text{deep blue}
+\qquad
+\Drec = 0.75 \;\longrightarrow\; \text{cyan}
+\qquad
+\Drec = 0.5 \;\longrightarrow\; \text{green}
+\]
+\[
+\Drec = 0.25 \;\longrightarrow\; \text{amber}
+\qquad
+\Drec = 0.0 \;\longrightarrow\; \text{red}
+\]
+
+\subsection{Renderer Surface (Specified)}
+
+\begin{lstlisting}[style=eventprint,
+  caption={New renderer API surface -- WO-75A Part~B.}]
+enum class RenderPass {
+	STANDARD, DIST_OVERLAY, HIDDEN_RESIDUAL, SCALE_LADDER
+};
+
+void set_render_pass(RenderPass pass);
+void set_dist_data(const std::vector<float>& per_atom_dist);
+void set_hidden_residual_data(const std::vector<float>& per_atom_hid);
+void render_dist_legend(int width, int height);
+void render_scale_ladder_bar(int width, int height,
+							 const std::string& active_regime);
+\end{lstlisting}
+
+Toggle: \texttt{D} key cycles
+$\texttt{STANDARD} \to \texttt{DIST\_OVERLAY}
+ \to \texttt{HIDDEN\_RESIDUAL} \to \texttt{SCALE\_LADDER}
+ \to \texttt{STANDARD}$.
+
+\subsection{Scale Ladder Panel}
+
+\begin{lstlisting}[style=eventprint,
+  caption={Scale ladder bottom bar concept.}]
+S0(existence) --- S2(colour/EM) --- S3(spatial/EM) --- S4(weak) --- S_mat
+										   ^ YOU ARE HERE
+	eta_ab = 0.91   |Psi^hid| = 0.13   Delta-D = -0.11
+\end{lstlisting}
+
+% ===========================================================================
+\section{IKK Identity Vector (WO-75B)}
+% ===========================================================================
+
+\subsection{Overview}
+
+The IKK Identity Vector $\ivec$ is a five-component frame record that maps
+the simulation state at frame $f$ into the IKK identity-information space:
+
+\[
+\ivec
+=
+\begin{pmatrix}
+  x \\ y \\ z \\ t \\ w
+\end{pmatrix}
+=
+\begin{pmatrix}
+  \text{existence (presence)} \\
+  \text{EM / structural signature} \\
+  \text{spatial distinguishability} \\
+  \text{temporal coherence} \\
+  \text{internal / hidden channel}
+\end{pmatrix}
+\]
+
+The vector is a \emph{proxy} mapping in Phase~1 (v5.13.5); the full
+field-theory mapping is targeted for a future arc.
+
+\subsection{IKKIdentitySeries}
+
+Each run produces an \texttt{IKKIdentitySeries}: an ordered list of
+\texttt{IKKIdentityFrameRecord} entries, one per simulation frame.
+Each record carries $\ivec$, the frame-level $\DeltaD$, and an entropy proxy.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Deliverable & File & Status \\
+\midrule
+\texttt{IKKIdentityVector} + \texttt{IKKIdentitySeries}
+  & \texttt{include/vsim/analysis/ikk\_identity\_vector.hpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\texttt{from\_sidecar\_record()} Phase~1 proxy mapping
+  & same
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\texttt{build\_ivec\_series()} + \texttt{write\_identity\_json()}
+  & \texttt{src/vsim/analysis/ikk\_identity\_vector.cpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+Group~88 tests (28/28 PASS)
+  & \texttt{tests/test\_ikk\_identity\_vector.cpp}
+  & \textcolor{vsimgreen}{\textbf{DONE}} \\
+\midrule
+Phase~2 field-theory mapping
+  & TBD
+  & \textcolor{vsimamber}{\textbf{NEXT ARC}} \\
+\bottomrule
+\end{tabular}
+\caption{WO-75B deliverables at the v5.13 freeze.}
+\end{table}
+
+\subsection{VSIM Script Surface}
+
+\begin{lstlisting}[style=eventprint,
+  caption={\texttt{[analysis.ivec]} block in a \texttt{.vsim} script.}]
+[analysis.ivec]
+enabled             = true
+write_identity_json = true
+compute_ivec_flux   = false   # J_iv -- identity-vector crossing signature
+\end{lstlisting}
+
+% ===========================================================================
+\section{D Time-Series Plot (WO-75A-C) --- Delivered}
+% ===========================================================================
+
+\texttt{plot\_dist\_timeseries()} was added to
+\texttt{reporting/generate\_report.py} and produces a dual-axis matplotlib
+figure embedded in every consolidated report:
+
+\begin{itemize}
+  \item \textbf{Left axis:} $\Drec$ over simulation steps (blue line).
+  \item \textbf{Right axis:} entropy proxy $\DeltaS$ (red dashed line).
+  \item \textbf{Amber band:} region where $\DeltaD < 0$ (identity loss zone).
+  \item \textbf{Reference line:} $D = 0.5$ (IKK~IV property activation threshold).
+\end{itemize}
+
+Output: \texttt{out/<run\_id>/dist\_timeseries.png}, embedded in
+\texttt{report.md} with a caption auto-generated from the IKK end-tag fields.
+
+% ===========================================================================
+\section{v5.13 Branch Freeze Summary}
+% ===========================================================================
+
+\subsection{Test Registry at Freeze}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Scope & Groups & Tests \\
+\midrule
+Core / Geometry / VSEPR (Groups 1--22)        & 22 & --- \\
+Pipeline / Dashboard / Parser (Groups 23--43) & 21 & --- \\
+EigenMine / CurveFit / Release (44--46)       &  3 &  10 \\
+CTL pipeline (Groups 58--69)                  & 12 & 106 \\
+Dynx / DUB / Demo pipeline (71--77)           &  7 & 113 \\
+LengthScale / OutputFilter / GapClass (78--80)&  3 & --- \\
+ObserveMetrics / FormationHelper / Bio (81--83)&  3 & --- \\
+Replay / Discovery / CrystalMD (84--86)       &  3 & --- \\
+IKK End-Tag (Group 87)                        &  1 &  20 \\
+IKK Identity Vector (Group 88)                &  1 &  28 \\
+MCF-CAI (Group 89)                            &  1 & --- \\
+\midrule
+\textbf{Total at freeze}
+  & \textbf{89}
+  & \textbf{167 / 167\quad PASS} \\
+\bottomrule
+\end{tabular}
+\caption{Test registry at the v5.13 freeze (Day~82, commit \texttt{489d11cd}).}
+\end{table}
+
+\subsection{Arc Delivery Table}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+Version & Day & Deliverable \\
+\midrule
+v5.0.0-beta.7  & 57 & render\_interval / step emission cadence \\
+v5.0.0-beta.8  & 58 & PBC / cell / boundary / Ewald \\
+v5.0.0-beta.9  & 59 & Registry resolution engine / CLI layer \\
+v5.0.0-beta.10 & 60 & Variance / N\_evolution / while / batch sweep \\
+v5.0.0-beta.11 & 61 & Macro sampling / empirical verification \\
+v5.0.0-beta.12 & 62 & Batching upgrade / study orchestration \\
+v5.1.13        & 72 & Pillar F: empirical chemistry, Dynx, CTL pipeline \\
+v5.13.3        & 73 & Wizard modules 6--8 full field coverage \\
+v5.13.4        & 74 & Gap classifier + output filter + chemistry audit \\
+v5.13.5        & 75 & IKK End-Tag (WO-75A-A), Identity Vector (WO-75B), MCF-CAI (WO-76) \\
+\midrule
+\textbf{v5.13 FROZEN} & \textbf{82}
+  & \textbf{Branch frozen. Chapter~20 authored as freeze artefact.} \\
+\bottomrule
+\end{tabular}
+\caption{v5.13 arc delivery table. Work commenced at Day~57 (v5.0.0-beta.7).}
+\end{table}
+
+\subsection{Deprecated at Freeze}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+ID & Item & Rationale \\
+\midrule
+MF-F02
+  & GitHub Actions CI workflow
+  & Out of scope for v5.13. Not blocking any UC\@. Deferred indefinitely. \\
+\bottomrule
+\end{tabular}
+\caption{Items deprecated at the v5.13 freeze.}
+\end{table}
+
+\subsection{Deferred to Next Arc}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lll@{}}
+\toprule
+WO & Item & Next-arc entry point \\
+\midrule
+WO-75A-B
+  & IKK GL D-colour overlay
+  & \texttt{src/vis/renderer.cpp}: add \texttt{RENDER\_PASS\_DIST} \\
+WO-75B gate
+  & \texttt{vsepr doctor} full pass + tag push
+  & Runtime data path audit \\
+MF-B01
+  & \texttt{[sweep]} runtime dispatch
+  & \texttt{src/vsim/vsim\_runtime.hpp}: sweep executor \\
+\bottomrule
+\end{tabular}
+\caption{Items deferred to the next arc. All specifications are complete and frozen here.}
+\end{table}
+
+% ===========================================================================
+\section*{Closing Note}
+% ===========================================================================
+
+\addcontentsline{toc}{section}{Closing Note}
+
+The v5.13 arc set out to formalise a single idea that the project had been
+building toward since Day~1: that a simulation should not merely
+\emph{compute} but \emph{continuously account for what it knows and what it
+has lost}.
+
+This chapter documents that arc's architectural outcome.  The Continual
+Printing System is now a named, documented doctrine.  The IKK layer has been
+wired from theory (IKK I--IV) through schema
+(\texttt{VsimIkkEndTagSection}, \texttt{[analysis.ivec]}) into the runtime
+(\texttt{IkkEndTagModule}, \texttt{build\_ivec\_series()}), reporting
+(\texttt{render\_ikk\_end\_tag\_md()}, \texttt{plot\_dist\_timeseries()}),
+and test coverage (Groups 87--89, 48$+$ cases).
+
+The GL overlay (Part~B) is the one remaining visual expression of this
+system.  Its specification is complete.  The next arc begins there.
+
+\vspace{16pt}
+\begin{mdframed}[style=freezebox]
+\centering
+\textbf{v5.13 arc --- FROZEN}
+\quad|\quad Day~82
+\quad|\quad 167/167 tests
+\quad|\quad Commit \texttt{489d11cd}\\[4pt]
+\small
+Next arc opens from this state.\quad
+First task: \textbf{WO-75A-B} ---
+wire \texttt{RENDER\_PASS\_DIST} into \texttt{src/vis/renderer.cpp}.
+\end{mdframed}
+
+\end{document}

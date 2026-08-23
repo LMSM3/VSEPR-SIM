@@ -1,5 +1,5 @@
-/**
- * nacl_ewald_empirical.cpp — Empirical validation: Ewald energy for NaCl crystal
+﻿/**
+ * nacl_ewald_empirical.cpp  -  Empirical validation: Ewald energy for NaCl crystal
  * ================================================================================
  *
  * Computes the Madelung-derived Coulomb energy for an NaCl unit cell supercell
@@ -86,7 +86,7 @@ static NaClSystem build_nacl(int nx, int ny, int nz, double a = 5.6402) {
 // ============================================================================
 
 int main() {
-	const double a      = 5.6402;   // Å — experimental NaCl lattice constant
+	const double a      = 5.6402;   // Å  -  experimental NaCl lattice constant
 	const double r0     = a / 2.0;  // nearest-neighbour distance = 2.8201 Å
 	const double A_mad  = 1.7475645946; // Madelung constant (rock-salt)
 	const double Ck     = 332.0637;     // kcal·Å/(mol·e²)
@@ -95,9 +95,9 @@ int main() {
 	const double E_mad_per_pair = -A_mad * Ck / r0;
 
 	std::printf("\n");
-	std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-	std::printf("║   NaCl Ewald Empirical Validation — include/box/pbc.hpp     ║\n");
-	std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+	std::printf("+==============================================================+\n");
+	std::printf("|   NaCl Ewald Empirical Validation  -  include/box/pbc.hpp     |\n");
+	std::printf("+==============================================================+\n\n");
 
 	std::printf("Reference (Madelung, analytic):\n");
 	std::printf("  Lattice constant a         = %.4f Å\n", a);
@@ -117,7 +117,7 @@ int main() {
 
 	// Ewald parameters calibrated for 2×2×2 NaCl (L=11.28 Å)
 	EwaldParams ep;
-	ep.alpha     = 0.35;    // Splitting — α ≈ 0.3–0.35 is standard for this box size
+	ep.alpha     = 0.35;    // Splitting  -  α ≈ 0.3-0.35 is standard for this box size
 	ep.rcut_real = 5.0;     // Real-space cutoff < L/2 = 5.64 Å
 	ep.kmax      = 6;       // k-space convergence (higher = more accurate, slower)
 	ep.coulomb_k = Ck;
@@ -134,25 +134,25 @@ int main() {
 
 	double err_pct = 100.0 * std::abs(E_per_pair - E_mad_per_pair) / std::abs(E_mad_per_pair);
 
-	std::printf("╔══════════════════════════════════════════════════════════════╗\n");
-	std::printf("║   EMPIRICAL VALIDATION TABLE                                 ║\n");
-	std::printf("╠══════════════════════════════════════════════════════════════╣\n");
-	std::printf("║  Quantity                 │  Value           │  Units        ║\n");
-	std::printf("╠══════════════════════════════════════════════════════════════╣\n");
-	std::printf("║  E_Ewald total            │ %16.4f  │  kcal/mol     ║\n", E_total);
-	std::printf("║  N ion pairs              │ %16d  │  —            ║\n", N_pairs);
-	std::printf("║  E_Ewald per pair         │ %16.4f  │  kcal/mol     ║\n", E_per_pair);
-	std::printf("║  E_Madelung per pair      │ %16.4f  │  kcal/mol     ║\n", E_mad_per_pair);
-	std::printf("║  Absolute error           │ %16.4f  │  kcal/mol     ║\n", E_per_pair - E_mad_per_pair);
-	std::printf("║  Error %%                  │ %15.3f%%  │               ║\n", err_pct);
-	std::printf("╠══════════════════════════════════════════════════════════════╣\n");
+	std::printf("+==============================================================+\n");
+	std::printf("|   EMPIRICAL VALIDATION TABLE                                 |\n");
+	std::printf("╠==============================================================╣\n");
+	std::printf("|  Quantity                 |  Value           |  Units        |\n");
+	std::printf("╠==============================================================╣\n");
+	std::printf("|  E_Ewald total            | %16.4f  |  kcal/mol     |\n", E_total);
+	std::printf("|  N ion pairs              | %16d  |   -             |\n", N_pairs);
+	std::printf("|  E_Ewald per pair         | %16.4f  |  kcal/mol     |\n", E_per_pair);
+	std::printf("|  E_Madelung per pair      | %16.4f  |  kcal/mol     |\n", E_mad_per_pair);
+	std::printf("|  Absolute error           | %16.4f  |  kcal/mol     |\n", E_per_pair - E_mad_per_pair);
+	std::printf("|  Error %%                  | %15.3f%%  |               |\n", err_pct);
+	std::printf("╠==============================================================╣\n");
 
 	bool pass = err_pct < 1.0;
 	if (pass)
-		std::printf("║  RESULT: ✓ PASS — Ewald energy within 1%% of Madelung       ║\n");
+		std::printf("|  RESULT: ✓ PASS  -  Ewald energy within 1%% of Madelung       |\n");
 	else
-		std::printf("║  RESULT: ✗ FAIL — Error exceeds 1%% tolerance               ║\n");
-	std::printf("╚══════════════════════════════════════════════════════════════╝\n\n");
+		std::printf("|  RESULT: ✗ FAIL  -  Error exceeds 1%% tolerance               |\n");
+	std::printf("+==============================================================+\n\n");
 
 	// Force balance check (net force on system should be ~0)
 	double fx_tot = 0, fy_tot = 0, fz_tot = 0;

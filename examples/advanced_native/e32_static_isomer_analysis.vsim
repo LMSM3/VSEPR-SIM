@@ -1,0 +1,113 @@
+# E32 - Static constitutional-isomer analysis contract.
+# The analysis library is implemented; standard-runner dispatch remains partial.
+
+[project]
+name        = "e32_static_isomer_analysis"
+version     = "v5.14.1-examples-1"
+seed_base   = 32032
+determinism = true
+description = "Static graph and geometry analysis for C2H6O"
+
+[example]
+catalog_id        = "E32"
+compatibility     = "LIBRARY_WIRED_RUNNER_GAP"
+execution_surface = "vsepr validate; isomer analysis library"
+primary_reference = "VSIM_REFERENCE.md WO-VSIM-04A"
+acceptance_signal = "connected_valence_valid_candidates_have_stable_canonical_hashes"
+
+[material]
+formula   = "C2H6O"
+structure = "molecular"
+phase     = "gas"
+
+[simulation]
+box_size_ang     = 24.0
+periodic         = false
+fire_max_steps   = 600
+fire_dt_fs       = 0.5
+formation_preset = "molecular"
+
+[[simulation.molecule]]
+formula       = "C2H6O"
+count         = 1
+temperature_K = 0.0
+lattice       = "none"
+
+[run]
+mode         = "relax"
+max_steps    = 600
+dt_fs        = 0.5
+temperature  = 0.0
+converge     = true
+output_level = "verbose"
+
+[environment]
+periodic    = false
+temperature = 0.0
+pressure    = 0.0
+medium      = "vacuum"
+
+[analysis.isomers]
+enabled              = true
+mode                 = "graph_geometry"
+formula_guard        = true
+graph_validation     = true
+connectivity_check   = true
+valence_check        = true
+formal_charge_check  = true
+radical_check        = false
+canonical_hash       = true
+geometry_rmsd        = true
+relaxation_check     = true
+known_database_check = false
+allow_fragments      = false
+allow_charged        = false
+allow_radicals       = false
+allow_strained       = true
+max_bond_order       = 3
+bond_tolerance_scale = 1.20
+rmsd_tolerance       = 0.05
+angle_tolerance_deg  = 3.0
+bond_source          = "hybrid"
+geometry_build       = "vsepr"
+report_level         = "detailed"
+
+[observe]
+metrics       = ["formation", "energy_map", "bond_angles"]
+output_format = "json"
+every_n_steps = 25
+
+[verify]
+enabled             = true
+profile             = "e32_c2h6o_isomer_analysis"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz                 = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_events_json         = true
+write_report_md           = true
+write_manifest_json       = true
+write_symbolic_trace_json = true
+output_dir                = "out/advanced_native/e32"
+
+[report]
+title                   = "E32 Static Isomer Analysis"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type     = "none"
+gl_auto_orbit   = false
+render_interval = 25
+
+[open]
+enabled = false
+

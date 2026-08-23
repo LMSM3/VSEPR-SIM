@@ -1,5 +1,5 @@
-/**
- * test_track2_robustness.cpp — Track 2 Phase 1: Randomized Robustness Harness
+﻿/**
+ * test_track2_robustness.cpp  -  Track 2 Phase 1: Randomized Robustness Harness
  *
  * Purpose: Run large ensembles of randomized local bead scenes and verify
  * statistical properties of the environment-responsive layer.
@@ -156,7 +156,7 @@ static std::vector<double> extract(
 }
 
 // ============================================================================
-// Group A: Isotropic Baseline — Random Environments Must Not Spuriously
+// Group A: Isotropic Baseline  -  Random Environments Must Not Spuriously
 //          Activate Ordered State
 // ============================================================================
 
@@ -209,7 +209,7 @@ static void test_group_A(const std::vector<test_util::RunRecord>& iso_recs) {
 }
 
 // ============================================================================
-// Group B: Aligned Dense Baseline — Ordered Environments Must Activate
+// Group B: Aligned Dense Baseline  -  Ordered Environments Must Activate
 // ============================================================================
 
 static void test_group_B(const std::vector<test_util::RunRecord>& ali_recs) {
@@ -256,7 +256,7 @@ static void test_group_B(const std::vector<test_util::RunRecord>& ali_recs) {
 }
 
 // ============================================================================
-// Group C: Regime Separation — Aligned vs Isotropic Must Be Distinguishable
+// Group C: Regime Separation  -  Aligned vs Isotropic Must Be Distinguishable
 // ============================================================================
 
 static void test_group_C(
@@ -347,7 +347,7 @@ static void test_group_D(const std::vector<test_util::RunRecord>& mixed_recs) {
 }
 
 // ============================================================================
-// Group E: Stability — No Catastrophic Failures
+// Group E: Stability  -  No Catastrophic Failures
 // ============================================================================
 
 static void test_group_E(const std::vector<test_util::RunRecord>& all_recs) {

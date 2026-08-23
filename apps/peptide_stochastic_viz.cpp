@@ -1,4 +1,4 @@
-// peptide_stochastic_viz.cpp — Stochastic Peptide Formation Visualization Runner
+﻿// peptide_stochastic_viz.cpp  -  Stochastic Peptide Formation Visualization Runner
 // Day 48A: "Create 2D and 3D window spam of complete simulations and
 //           relaxations of random and high stochasticity in choosing"
 //
@@ -52,7 +52,7 @@ using socket_t = int;
 using namespace vsepr::chem;
 
 // ============================================================================
-// Amino acid library — the 20 standard residues
+// Amino acid library  -  the 20 standard residues
 // ============================================================================
 
 struct AminoAcidDef {
@@ -173,7 +173,7 @@ static StochasticRun generate_random_chain(int run_id, std::mt19937& rng,
             .atom_name = std::string(aa.three_letter) + "_N",
             .element_symbol = "N",
             .position = {x_offset + pos_noise(rng), pos_noise(rng), pos_noise(rng)},
-            .chem_role = VSEPR_ROLE_BACKBONE_N,
+            .chem_role = VSEPR_PEPTIDE_ROLE_BACKBONE_N,
             .partial_charge = -0.42 + charge_noise(rng),
             .covalent_radius_pm = 71.0, .vdw_radius_pm = 155.0, .mass_u = 14.007
         });
@@ -182,7 +182,7 @@ static StochasticRun generate_random_chain(int run_id, std::mt19937& rng,
             .atom_name = std::string(aa.three_letter) + "_CA",
             .element_symbol = "C",
             .position = {x_offset + 1.47 + pos_noise(rng), pos_noise(rng), pos_noise(rng)},
-            .chem_role = VSEPR_ROLE_ALPHA_C,
+            .chem_role = VSEPR_PEPTIDE_ROLE_ALPHA_C,
             .partial_charge = 0.02 + charge_noise(rng),
             .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
         });
@@ -191,7 +191,7 @@ static StochasticRun generate_random_chain(int run_id, std::mt19937& rng,
             .atom_name = std::string(aa.three_letter) + "_C",
             .element_symbol = "C",
             .position = {x_offset + 2.99 + pos_noise(rng), pos_noise(rng), pos_noise(rng)},
-            .chem_role = VSEPR_ROLE_CARBONYL_C,
+            .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_C,
             .partial_charge = 0.51 + charge_noise(rng),
             .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = 12.011
         });
@@ -200,7 +200,7 @@ static StochasticRun generate_random_chain(int run_id, std::mt19937& rng,
             .atom_name = std::string(aa.three_letter) + "_O",
             .element_symbol = "O",
             .position = {x_offset + 2.99 + pos_noise(rng), 1.23 + pos_noise(rng), pos_noise(rng)},
-            .chem_role = VSEPR_ROLE_CARBONYL_O,
+            .chem_role = VSEPR_PEPTIDE_ROLE_CARBONYL_O,
             .partial_charge = -0.51 + charge_noise(rng),
             .covalent_radius_pm = 66.0, .vdw_radius_pm = 152.0, .mass_u = 15.999
         });
@@ -229,7 +229,7 @@ static StochasticRun generate_random_chain(int run_id, std::mt19937& rng,
                     .position = {x_offset + 1.47 + sc_offset(rng),
                                  -1.0 + sc_offset(rng),
                                  sc_offset(rng)},
-                    .chem_role = VSEPR_ROLE_SIDECHAIN,
+                    .chem_role = VSEPR_PEPTIDE_ROLE_SIDECHAIN,
                     .partial_charge = charge_noise(rng),
                     .covalent_radius_pm = 76.0, .vdw_radius_pm = 170.0, .mass_u = sc_mass
                 });
@@ -446,15 +446,15 @@ struct VizBroadcaster {
 };
 
 // ============================================================================
-// TUI output — ANSI colored terminal visualization
+// TUI output  -  ANSI colored terminal visualization
 // ============================================================================
 
 static void print_header() {
     std::printf("\033[1;35m");
-    std::puts("╔═══════════════════════════════════════════════════════════════════╗");
-    std::puts("║  VSEPR-SIM  Day 48A  |  Stochastic Peptide Formation Runner     ║");
-    std::puts("║  High-stochasticity chain generation + formation + scoring       ║");
-    std::puts("╚═══════════════════════════════════════════════════════════════════╝");
+    std::puts("+===================================================================+");
+    std::puts("|  VSEPR-SIM  Day 48A  |  Stochastic Peptide Formation Runner     |");
+    std::puts("|  High-stochasticity chain generation + formation + scoring       |");
+    std::puts("+===================================================================+");
     std::printf("\033[0m\n");
 }
 
@@ -481,7 +481,7 @@ static void print_run_result(const StochasticRun& run) {
     std::printf("         E_total = %s%+10.2f kJ/mol%s  ", gold, e, reset);
     int bar_len = std::clamp(static_cast<int>(std::abs(e) / 5.0), 1, 40);
     std::printf("%s", e < 0 ? "\033[32m" : "\033[31m");
-    for (int i = 0; i < bar_len; ++i) std::putchar('█');
+    for (int i = 0; i < bar_len; ++i) std::putchar('#');
     std::printf("%s\n", reset);
 
     // Energy components
@@ -550,9 +550,9 @@ static void print_summary(const std::vector<StochasticRun>& runs) {
     }
 
     std::printf("\033[1;35m");
-    std::puts("╔═══════════════════════════════════════════════════════════════════╗");
-    std::puts("║  Stochastic Formation Summary                                   ║");
-    std::puts("╠═══════════════════════════════════════════════════════════════════╣");
+    std::puts("+===================================================================+");
+    std::puts("|  Stochastic Formation Summary                                   |");
+    std::puts("╠===================================================================╣");
     std::printf("\033[0m");
 
     std::printf("  Runs: %d total, \033[32m%d OK\033[0m, \033[31m%d FAIL\033[0m\n",
@@ -567,7 +567,7 @@ static void print_summary(const std::vector<StochasticRun>& runs) {
     }
 
     std::printf("\033[1;35m");
-    std::puts("╚═══════════════════════════════════════════════════════════════════╝");
+    std::puts("+===================================================================+");
     std::printf("\033[0m");
 }
 
@@ -620,7 +620,7 @@ static void print_energy_landscape(const std::vector<StochasticRun>& runs) {
 
     std::printf("  %4s  %10s %10s %10s %10s %10s  %s\n",
                 "Run", "Bond", "VdW", "Coulomb", "Solv", "Form", "Total Bar");
-    std::printf("  ────  ────────── ────────── ────────── ────────── ──────────  ──────────\n");
+    std::printf("  ----  ---------- ---------- ---------- ---------- ----------  ----------\n");
 
     for (const auto& r : runs) {
         if (!r.success) continue;
@@ -634,7 +634,7 @@ static void print_energy_landscape(const std::vector<StochasticRun>& runs) {
         double t = e.total_kj_mol;
         int bar = std::clamp(static_cast<int>(std::abs(t) / 10.0), 0, 30);
         std::printf("%s", t < 0 ? "\033[32m" : "\033[31m");
-        for (int i = 0; i < bar; ++i) std::putchar('█');
+        for (int i = 0; i < bar; ++i) std::putchar('#');
         std::printf("\033[0m %+.1f\n", t);
     }
 }

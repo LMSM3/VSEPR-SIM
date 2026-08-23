@@ -1,0 +1,397 @@
+# @category Green Energy Applications
+# @title    Sunwire Path — PV metallization and thermal-loss optimization
+#
+# Green Energy Pillar 3
+# Physical organization: photon field <-> silicon absorber <-> contacts <-> metal grid <-> heat sink
+#
+# Scientific intent:
+#   1. Model a silicon photovoltaic cell with passivated contacts, Cu front-grid
+#      fingers, and an Al rear conductor under nonuniform illumination.
+#   2. Couple carrier-generation proxies, contact resistance, lateral current
+#      collection, Joule heating, shading, thermal expansion, and hotspot growth.
+#   3. Optimize finger spacing, width, thickness, busbar count, contact
+#      resistivity, and rear-sheet thickness.
+#   4. Maximize delivered power and material efficiency while minimizing
+#      resistive loss, optical shading, hotspot severity, and conductor mass.
+#
+# Canonical entry point:
+#   vsper run scripts/green_energy/green_sunwire_pv_optimiser.vsim
+
+[project]
+name        = "green_sunwire_pv_optimiser"
+version     = "v0.1.0"
+seed_base   = 53001
+determinism = true
+description = "Coupled electrical, optical, and thermal optimization of PV metallization"
+author      = "VSIM Green Energy Applications"
+
+[pillar]
+id                 = "sunwire"
+name               = "Sunwire Path"
+model              = "pv_electro_thermal_transport"
+spatial_authority  = "absorber_contact_grid_thermal"
+event_authority    = "deterministic_field_plus_defect_events"
+conservation_mode  = "strict"
+
+[cell]
+type  = "orthorhombic"
+lx    = 156.0
+ly    = 156.0
+lz    = 0.220
+units = "millimeter"
+
+[boundary]
+x = "electrical_periodic"
+y = "electrical_periodic"
+z = "optical_thermal_open"
+
+[material]
+formula       = "Si_Cu_Al_SiNx"
+structure     = "passivated_contact_solar_cell"
+phase         = "solid_multilayer"
+
+[layer.absorber]
+material                  = "c_Si"
+thickness_um              = 180.0
+doping_type               = "n"
+doping_cm3                = 8.0e15
+minority_lifetime_us      = 850.0
+sheet_resistance_ohm_sq   = 92.0
+track_carrier_density     = true
+track_recombination       = true
+
+[layer.passivation]
+material                  = "SiNx"
+thickness_nm              = 74.0
+refractive_index          = 2.04
+surface_recombination_cm_s = 12.0
+track_optical_reflection  = true
+
+[layer.front_contact]
+material                    = "Cu"
+finger_width_um             = 28.0
+finger_spacing_mm           = 1.45
+finger_thickness_um         = 18.0
+busbar_count                = 9
+busbar_width_mm             = 0.32
+contact_resistivity_ohm_cm2 = 8.0e-5
+adhesion_layer              = "Ni"
+adhesion_thickness_nm       = 140.0
+track_current_crowding      = true
+track_contact_voids         = true
+
+[layer.rear_contact]
+material                    = "Al"
+thickness_um                = 28.0
+sheet_resistance_ohm_sq     = 0.0012
+contact_resistivity_ohm_cm2 = 2.0e-4
+track_back_surface_field    = true
+
+[illumination]
+spectrum                  = "AM1.5G_proxy"
+irradiance_W_m2           = 1000.0
+incidence_angle_deg       = 8.0
+spatial_profile           = "cloud_edge_plus_uniform"
+cloud_edge_contrast       = 0.28
+cloud_edge_speed_mm_s     = 18.0
+spectral_bins             = 48
+track_absorbed_photons    = true
+track_shadow_mask         = true
+
+[electrical]
+solver                    = "sheet_network_drift_diffusion_proxy"
+carrier_generation_model = "spectral_absorption_proxy"
+recombination_model      = "SRH_Auger_surface_proxy"
+contact_model            = "distributed_specific_resistance"
+grid_model               = "finite_resistance_lines"
+load_mode                 = "maximum_power_tracking"
+voltage_scan_points      = 160
+track_local_current      = true
+track_series_resistance  = true
+track_fill_factor        = true
+track_power_density      = true
+
+[thermal]
+solver                      = "layered_conduction_radiation_convection"
+ambient_temperature_K      = 303.0
+rear_mount_temperature_K   = 298.0
+front_convection_W_m2K     = 14.0
+rear_convection_W_m2K      = 6.0
+emissivity_front           = 0.84
+emissivity_rear            = 0.74
+joule_heat_coupling        = 1.0
+recombination_heat_coupling = 0.85
+track_hotspots             = true
+track_thermal_gradient     = true
+maximum_temperature_K      = 373.0
+
+[mechanical]
+model                        = "thermal_expansion_contact_stress_proxy"
+thermal_cycle_min_K          = 273.0
+thermal_cycle_max_K          = 353.0
+thermal_cycle_count          = 200
+track_finger_stress          = true
+track_contact_delamination   = true
+track_fatigue_damage         = true
+
+[event.registry]
+events = [
+    "carrier_generation",
+    "carrier_recombination",
+    "contact_transfer",
+    "current_crowding",
+    "joule_heat_release",
+    "hotspot_nucleation",
+    "contact_void_activation",
+    "finger_fatigue_increment",
+    "local_delamination"
+]
+
+[event.kinetics]
+selection                   = "field_threshold_then_damage_probability"
+electrical_update_interval = 1
+thermal_update_interval    = 4
+mechanical_update_interval = 20
+reject_negative_density    = true
+reject_energy_creation     = true
+
+[[event.channel]]
+id                   = "hotspot_nucleation"
+trigger_metric       = "local_power_loss_density"
+threshold_W_cm2      = 0.82
+temperature_gain_K   = 4.0
+damage_increment     = 0.002
+reversible           = true
+
+[[event.channel]]
+id                   = "contact_void_activation"
+trigger_metric       = "contact_current_density"
+threshold_A_cm2      = 18.0
+barrier_eV           = 0.74
+pre_exponential      = 1.0e8
+contact_resistance_multiplier = 1.12
+reversible           = false
+
+[[event.channel]]
+id                   = "finger_fatigue_increment"
+trigger_metric       = "thermal_stress_amplitude"
+threshold_MPa        = 22.0
+barrier_eV           = 0.61
+pre_exponential      = 2.0e7
+resistance_multiplier = 1.006
+reversible           = false
+
+[operating_profile]
+mode                       = "irradiance_voltage_thermal_cycle"
+steady_illumination_steps  = 3000
+cloud_edge_steps           = 1600
+voltage_sweep_steps        = 1200
+thermal_cycle_steps        = 2400
+cooldown_steps             = 600
+repeat_count               = 2
+
+[optimization]
+mode                  = "bounded_multiobjective_sweep"
+baseline_id           = "screen_printed_ag_reference_proxy"
+replicates_per_point  = 3
+selection_rule        = "pareto_then_weighted_score"
+retain_top_n          = 18
+
+[[optimization.axis]]
+key    = "layer.front_contact.finger_width_um"
+values = [16.0, 22.0, 28.0, 36.0, 48.0]
+
+[[optimization.axis]]
+key    = "layer.front_contact.finger_spacing_mm"
+values = [0.80, 1.05, 1.45, 1.90, 2.50]
+
+[[optimization.axis]]
+key    = "layer.front_contact.finger_thickness_um"
+values = [8.0, 12.0, 18.0, 26.0, 36.0]
+
+[[optimization.axis]]
+key    = "layer.front_contact.busbar_count"
+values = [5, 7, 9, 12, 15]
+
+[[optimization.axis]]
+key    = "layer.front_contact.contact_resistivity_ohm_cm2"
+values = [2.0e-5, 5.0e-5, 8.0e-5, 1.5e-4, 3.0e-4]
+
+[[optimization.axis]]
+key    = "layer.rear_contact.thickness_um"
+values = [12.0, 20.0, 28.0, 40.0]
+
+[[optimization.objective]]
+metric    = "pv.module_efficiency_proxy"
+direction = "maximize"
+weight    = 0.26
+
+[[optimization.objective]]
+metric    = "pv.fill_factor"
+direction = "maximize"
+weight    = 0.17
+
+[[optimization.objective]]
+metric    = "loss.resistive_fraction"
+direction = "minimize"
+weight    = 0.17
+
+[[optimization.objective]]
+metric    = "loss.optical_shading_fraction"
+direction = "minimize"
+weight    = 0.14
+
+[[optimization.objective]]
+metric    = "thermal.peak_temperature_K"
+direction = "minimize"
+weight    = 0.10
+
+[[optimization.objective]]
+metric    = "material.front_conductor_mass_g_m2"
+direction = "minimize"
+weight    = 0.09
+
+[[optimization.objective]]
+metric    = "reliability.damage_fraction"
+direction = "minimize"
+weight    = 0.07
+
+[constraints]
+optical_shading_fraction_max = 0.055
+peak_temperature_K_max       = 373.0
+contact_current_density_max  = 22.0
+finger_stress_max_MPa        = 80.0
+damage_fraction_max          = 0.025
+minimum_fill_factor          = 0.79
+
+[simulation]
+formation_preset    = "layered_pv_cell"
+mesh_mode           = "adaptive_sheet_volume"
+mesh_refine_contacts = true
+smooth_resim        = false
+
+[run]
+mode          = "coupled_opto_electro_thermal"
+max_steps     = 8800
+dt_ms         = 0.25
+temperature_K = 303.0
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics = [
+    "pv.open_circuit_voltage_V",
+    "pv.short_circuit_current_A",
+    "pv.maximum_power_W",
+    "pv.fill_factor",
+    "pv.module_efficiency_proxy",
+    "loss.resistive_fraction",
+    "loss.contact_fraction",
+    "loss.optical_shading_fraction",
+    "electrical.series_resistance_ohm",
+    "electrical.current_uniformity",
+    "electrical.current_crowding_peak_A_cm2",
+    "thermal.peak_temperature_K",
+    "thermal.hotspot_fraction",
+    "mechanical.finger_stress_max_MPa",
+    "reliability.damage_fraction",
+    "material.front_conductor_mass_g_m2",
+    "audit.charge_residual",
+    "audit.energy_residual"
+]
+every_n_steps = 10
+output_format = "csv"
+
+[audit.conservation]
+elements              = ["Si", "Cu", "Al", "Ni", "N"]
+charge                = true
+energy                = "optical_electrical_thermal_proxy"
+strict                = true
+check_every_n_steps   = 20
+relative_tolerance    = 1.0e-9
+absolute_tolerance    = 1.0e-11
+reject_invalid_event  = true
+
+[audit.state_rules]
+carrier_density_nonnegative   = true
+current_continuity_required   = true
+power_balance_required        = true
+thermal_field_finite          = true
+reject_impossible_transition  = true
+
+[audit.acceptance]
+requirements = [
+    "best_score > baseline_score",
+    "module_efficiency_proxy_best > module_efficiency_proxy_baseline",
+    "fill_factor_best >= 0.79",
+    "optical_shading_fraction_best <= 0.055",
+    "peak_temperature_K_best <= 373.0",
+    "damage_fraction_best <= 0.025",
+    "max_abs_charge_residual < 1.0e-9",
+    "max_abs_energy_residual < 1.0e-8"
+]
+
+[export]
+output_dir          = "out/green_energy/sunwire"
+write_xyz           = true
+write_xyzf          = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_events_json   = true
+write_manifest_json = true
+write_dashboard_svg = true
+snapshot_interval   = 40
+event_interval      = 1
+metrics_interval    = 10
+
+[export.visual]
+write_svg_figures      = true
+write_energy_trace_svg = true
+write_iv_curve_svg     = true
+write_loss_map_svg     = true
+visual_output_dir      = "figures/"
+
+[visual]
+output_type              = "terminal_chart"
+render_interval          = 10
+show_proxy_table         = true
+show_convergence_trace   = true
+show_steady_state_marker = true
+show_current_vectors     = true
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+live           = true
+
+show "scene.pv_cell" target = "pillar.sunwire" options = {
+    "color_by": "power_loss_density",
+    "show_finger_grid": true,
+    "show_current_vectors": true,
+    "show_shadow_mask": true,
+    "show_hotspots": true
+}
+
+show "data.history.timeseries" target = "run.history" options = {
+    "series": ["pv.maximum_power_W", "loss.resistive_fraction", "thermal.peak_temperature_K"],
+    "log_y": false
+}
+
+show "data.electrical.iv_curve" target = "electrical.voltage_scan"
+show "data.optimization.pareto" target = "optimization.results"
+show "data.events.timeline" target = "kernel.events"
+show "data.scalar.panel" target = "run.summary"
+
+[suite]
+groups   = ["green_energy", "sunwire", "photovoltaics", "optimization"]
+ordering = "deterministic"
+
+[suite.limits]
+timeout_s           = 360
+fail_fast           = true
+continue_on_warning = false
+
+[suite.smoke]
+groups = ["sunwire"]

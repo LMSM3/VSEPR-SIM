@@ -1,9 +1,9 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
-// src/core/stats/stationarity_gate.hpp — First Stationarity Gate (Day #56)
+// src/core/stats/stationarity_gate.hpp  -  First Stationarity Gate (Day #56)
 // =============================================================================
 // Determines when a running simulation has reached a stationary regime
-// based on recent metric statistics — not vibes, not arbitrary step counts.
+// based on recent metric statistics  -  not vibes, not arbitrary step counts.
 //
 // Design: "almost stupid first version" as specified.
 //   Gate OPENS when:
@@ -37,7 +37,7 @@ struct StationarityGate {
 	// (relative drift: tolerates different absolute scales automatically).
 	double relative_tolerance = 1e-3;   // 0.1% relative fluctuation
 
-	// Absolute fallback tolerance — used when mean ≈ 0 to avoid division.
+	// Absolute fallback tolerance  -  used when mean ≈ 0 to avoid division.
 	double absolute_tolerance = 1e-6;
 
 	// Minimum samples before the gate can open.
@@ -46,7 +46,7 @@ struct StationarityGate {
 	// Ingest one observation.
 	void push(double x) noexcept { window_stats.push(x); }
 
-	// Reset — call when the metric is restarted or the window slides.
+	// Reset  -  call when the metric is restarted or the window slides.
 	void reset() noexcept { window_stats.reset(); }
 
 	// Number of observations accumulated.
@@ -69,7 +69,7 @@ struct StationarityGate {
 	}
 
 	// Diagnostic summary string (for test output / logs).
-	// Deliberately simple — no stdlib formatting overhead in hot paths.
+	// Deliberately simple  -  no stdlib formatting overhead in hot paths.
 	const OnlineStats& stats() const noexcept { return window_stats; }
 };
 

@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * domain_extract.hpp
  *
- * Electrohydrodynamic Simulation — Stage 2: Domain Extraction
+ * Electrohydrodynamic Simulation  -  Stage 2: Domain Extraction
  *
  * Extracts the computational domains Ω_f (fluid) and Ω_s (solid) from
  * the CAD assembly description.  Performs Boolean subtraction of embedded

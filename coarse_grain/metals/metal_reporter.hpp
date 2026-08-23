@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * metal_reporter.hpp — Metals Research Output Formatter
+ * metal_reporter.hpp  -  Metals Research Output Formatter
  *
  * Produces structured per-metal comparison tables from simulation results.
  * Designed for both terminal (ANSI colour) and plain Markdown output.
@@ -28,7 +28,7 @@ namespace coarse_grain {
 namespace metals {
 
 // ============================================================================
-// MetalSimResult — output of one metal FIRE run
+// MetalSimResult  -  output of one metal FIRE run
 // ============================================================================
 
 struct MetalSimResult {
@@ -43,7 +43,7 @@ struct MetalSimResult {
     double      final_energy{};
     double      elapsed_ms{};
 
-    // L3 domain info (optional — populated by metal_sim app)
+    // L3 domain info (optional  -  populated by metal_sim app)
     int         n_l3_domains{};
     double      macro_rigidity{};
     double      macro_ductility{};
@@ -72,7 +72,7 @@ struct MetalComparisonRow {
  *      error = |sim_proxy - ref| / |ref| × 100%
  *      (This is a structural proxy, not a direct energy measurement)
  *   2. Coordination number: final_avg_C vs bulk_CN (reference)
- *   3. Lindemann ratio proxy: ~0 at T→0 from FIRE quench
+ *   3. Lindemann ratio proxy: ~0 at T->0 from FIRE quench
  *   4. Eta-bar: mean slow state η̄ (dimensionless, [0,1])
  */
 inline std::vector<MetalComparisonRow>
@@ -119,7 +119,7 @@ compute_comparisons(const MetalSimResult& r)
         row.metric     = "η̄ (slow state)";
         row.unit       = "";
         row.simulated  = r.final_avg_eta;
-        row.reference  = 0.0;   // no absolute reference — informational
+        row.reference  = 0.0;   // no absolute reference  -  informational
         row.error_pct  = 0.0;
         row.within_tolerance = r.converged;
         row.verdict    = r.converged ? "CONV" : "NCONV";
@@ -145,15 +145,15 @@ compute_comparisons(const MetalSimResult& r)
         row.metric    = "Surface energy proxy";
         row.unit      = "J/m²";
         // Very rough proxy: ε / σ² gives energy/area-like quantity
-        // Pure relative comparison — no absolute claim
-        double sigma_m2 = m.lj_sigma_ang * m.lj_sigma_ang * 1.0e-20; // Å² → m²
-        double eps_J = m.lj_epsilon_kcal * 4184.0 / 6.022e23;         // kcal/mol → J
+        // Pure relative comparison  -  no absolute claim
+        double sigma_m2 = m.lj_sigma_ang * m.lj_sigma_ang * 1.0e-20; // Å² -> m²
+        double eps_J = m.lj_epsilon_kcal * 4184.0 / 6.022e23;         // kcal/mol -> J
         row.simulated  = sigma_m2 > 0 ? eps_J / sigma_m2 : 0.0;
         row.reference  = m.surface_energy_J_m2;
         if (row.reference > 0)
             row.error_pct = std::abs(row.simulated - row.reference) / row.reference * 100.0;
         row.within_tolerance = row.error_pct < 50.0;
-        row.verdict = "---";   // proxy only — not a validation metric
+        row.verdict = "---";   // proxy only  -  not a validation metric
         rows.push_back(row);
     }
 
@@ -176,13 +176,13 @@ inline std::string format_report_terminal(const MetalSimResult& r) {
     const char* CYAN  = "\033[36m";
     const char* RESET = "\033[0m";
 
-    o << BOLD << "\n════════════════════════════════════════════════\n";
-    o << "  " << m.symbol << " — " << m.name
+    o << BOLD << "\n================================================\n";
+    o << "  " << m.symbol << "  -  " << m.name
       << "  [" << crystal_structure_name(m.structure) << "]";
     if (m.is_noble_metal)   o << "  ◈ Noble";
     if (m.is_refractory)    o << "  ◈ Refractory";
     if (m.is_magnetic)      o << "  ◈ Magnetic";
-    o << "\n════════════════════════════════════════════════" << RESET << "\n";
+    o << "\n================================================" << RESET << "\n";
 
     o << CYAN;
     o << "  Z=" << m.Z
@@ -250,7 +250,7 @@ inline std::string format_report_markdown(const MetalSimResult& r) {
     auto rows = compute_comparisons(r);
 
     std::ostringstream o;
-    o << "## " << m.symbol << " — " << m.name
+    o << "## " << m.symbol << "  -  " << m.name
       << " (" << crystal_structure_name(m.structure) << ")\n\n";
 
     o << "| Property | Value |\n|---|---|\n";

@@ -1,14 +1,14 @@
-/**
- * cg_commands.cpp — Coarse-Grained CLI Command Implementations
+﻿/**
+ * cg_commands.cpp  -  Coarse-Grained CLI Command Implementations
  *
  * Scientific operator console for the coarse-grained engine.
  *
  * Five operations:
- *   scene   — Build or configure a bead scene from presets
- *   inspect — Display bead positions, environment state, descriptors
- *   env     — Run the environment update pipeline (eta relaxation)
- *   interact — Evaluate pairwise interactions, report energy decomposition
- *   viz     — Lightweight bead visualization viewer
+ *   scene    -  Build or configure a bead scene from presets
+ *   inspect  -  Display bead positions, environment state, descriptors
+ *   env      -  Run the environment update pipeline (eta relaxation)
+ *   interact  -  Evaluate pairwise interactions, report energy decomposition
+ *   viz      -  Lightweight bead visualization viewer
  *
  * All operations route through CGSystemState (the interpretation layer).
  *
@@ -119,7 +119,7 @@ static int cg_help() {
 
 static int cmd_scene(const std::vector<std::string>& args) {
     if (has_flag(args, "--help") || has_flag(args, "-h")) {
-        Display::Header("cg scene — Build a bead scene");
+        Display::Header("cg scene  -  Build a bead scene");
         Display::BlankLine();
         std::cout << R"(USAGE:
   vsepr cg scene --preset <name> [options]
@@ -225,7 +225,7 @@ EXAMPLES:
 
 static int cmd_inspect(const std::vector<std::string>& args) {
     if (has_flag(args, "--help") || has_flag(args, "-h")) {
-        Display::Header("cg inspect — Inspect bead/system state");
+        Display::Header("cg inspect  -  Inspect bead/system state");
         Display::BlankLine();
         std::cout << R"(USAGE:
   vsepr cg inspect [options]
@@ -364,7 +364,7 @@ EXAMPLES:
 
 static int cmd_env(const std::vector<std::string>& args) {
     if (has_flag(args, "--help") || has_flag(args, "-h")) {
-        Display::Header("cg env — Run environment update pipeline");
+        Display::Header("cg env  -  Run environment update pipeline");
         Display::BlankLine();
         std::cout << R"(USAGE:
   vsepr cg env [options]
@@ -505,7 +505,7 @@ EXAMPLES:
 
 static int cmd_interact(const std::vector<std::string>& args) {
     if (has_flag(args, "--help") || has_flag(args, "-h")) {
-        Display::Header("cg interact — Evaluate pairwise interactions");
+        Display::Header("cg interact  -  Evaluate pairwise interactions");
         Display::BlankLine();
         std::cout << R"(USAGE:
   vsepr cg interact [options]
@@ -660,12 +660,12 @@ EXAMPLES:
 }
 
 // ============================================================================
-// 5. Viz Command — Lightweight Bead Viewer
+// 5. Viz Command  -  Lightweight Bead Viewer
 // ============================================================================
 
 static int cmd_viz(const std::vector<std::string>& args) {
     if (has_flag(args, "--help") || has_flag(args, "-h")) {
-        Display::Header("cg viz — Lightweight bead visualization");
+        Display::Header("cg viz  -  Lightweight bead visualization");
         Display::BlankLine();
         std::cout << R"(USAGE:
   vsepr cg viz [options]
@@ -756,12 +756,12 @@ EXAMPLES:
 }
 
 // ============================================================================
-// 6. FIRE Command — LL-FIRE Minimization on CG Bead Systems
+// 6. FIRE Command  -  LL-FIRE Minimization on CG Bead Systems
 // ============================================================================
 
 static int cmd_fire(const std::vector<std::string>& args) {
     if (has_flag(args, "--help") || has_flag(args, "-h")) {
-        Display::Header("cg fire — LL-FIRE minimization on bead system");
+        Display::Header("cg fire  -  LL-FIRE minimization on bead system");
         Display::BlankLine();
         std::cout << R"(USAGE:
   vsepr cg fire [options]

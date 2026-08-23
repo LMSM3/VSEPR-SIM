@@ -1,11 +1,11 @@
-/**
+﻿/**
  * src/vsim/register_particle_builtins.cpp
  * ==========================================
  * Registers particle.* builtins and the xyzvec3 vector constructor.
  *
  * Builtins registered:
- *   xyzvec3(x, y, z)         — construct XYZVec3 from three doubles
- *   particle.position(id)    — returns XYZVec3 wrapped position for particle id
+ *   xyzvec3(x, y, z)          -  construct XYZVec3 from three doubles
+ *   particle.position(id)     -  returns XYZVec3 wrapped position for particle id
  *
  * Particle IDs are 1-indexed in scripts.
  *
@@ -18,7 +18,7 @@ namespace vsim {
 
 void register_particle_builtins(VsimInterpreter& interp) {
 
-	// ── xyzvec3(x, y, z) → XYZVec3 ───────────────────────────────────────
+	// -- xyzvec3(x, y, z) -> XYZVec3 ---------------------------------------
 	interp.register_builtin("xyzvec3",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime&) -> Value {
 		if (args.size() != 3)
@@ -34,7 +34,7 @@ void register_particle_builtins(VsimInterpreter& interp) {
 		return r;
 	});
 
-	// ── particle.position(id) → XYZVec3 ──────────────────────────────────
+	// -- particle.position(id) -> XYZVec3 ----------------------------------
 	interp.register_builtin("particle.position",
 	[](const std::vector<Value>& args, PBCInterpreterRuntime& rt) -> Value {
 		if (args.size() != 1)

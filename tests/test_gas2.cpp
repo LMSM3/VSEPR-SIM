@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_gas2.cpp
  * -------------
  * Verification tests for gas2 module:
@@ -159,7 +159,7 @@ void test_collision_frequency() {
 void test_viscosity_positive() {
     // Chapman-Enskog (hard-sphere, Omega_22=1): eta = (5/16)*sqrt(m*kB*T/pi)/sigma^2
     // Ar at 300 K: tabulated 22.7 uPa.s; hard-sphere limit (Omega=1) ~25 uPa.s.
-    // Accept 18-30 uPa.s — correctly excludes the old wrong answer of ~8 uPa.s.
+    // Accept 18-30 uPa.s  -  correctly excludes the old wrong answer of ~8 uPa.s.
     TEST("Hard-sphere viscosity Ar 300K in [18, 30] uPa.s (tabulated 22.7)");
     double mu = vsepr::gas2::viscosity_hard_sphere(300.0, 0.039948, 3.4e-10);
     double mu_uPa = mu * 1e6;
@@ -412,7 +412,7 @@ void test_ke_hartree_300K() {
 
 void test_ke_hartree_mass_invariance() {
     TEST("KE Hartree same for He, Ar, Ne at 300K");
-    // Average translational KE is (3/2)kBT — mass-independent.
+    // Average translational KE is (3/2)kBT  -  mass-independent.
     double he = vsepr::gas2::avg_translational_ke_Eh(300.0);
     double ar = vsepr::gas2::avg_translational_ke_Eh(300.0);
     double ne = vsepr::gas2::avg_translational_ke_Eh(300.0);
@@ -596,24 +596,24 @@ void test_heatmap_grid_resolution_256() {
 
 int main() {
     std::cout << "\n\033[1;35m"
-              << "╔════════════════════════════════════════════════════════════════╗\n"
-              << "║  Test Suite: gas2 Module (Advanced Heat and Gas)              ║\n"
-              << "╚════════════════════════════════════════════════════════════════╝\n"
+              << "+================================================================+\n"
+              << "|  Test Suite: gas2 Module (Advanced Heat and Gas)              |\n"
+              << "+================================================================+\n"
               << "\033[0m\n";
 
-    std::cout << "\033[1;36m┌─ Species Database\033[0m\n";
+    std::cout << "\033[1;36m+- Species Database\033[0m\n";
     test_species_count();
     test_species_ar();
     test_species_co2();
     test_species_unknown();
 
-    std::cout << "\033[1;36m┌─ Equations of State\033[0m\n";
+    std::cout << "\033[1;36m+- Equations of State\033[0m\n";
     test_ideal_stp();
     test_vdw_ar_stp();
     test_rk_ar_stp();
     test_eos_high_pressure();
 
-    std::cout << "\033[1;36m┌─ Kinetic Theory\033[0m\n";
+    std::cout << "\033[1;36m+- Kinetic Theory\033[0m\n";
     test_dof_monoatomic();
     test_dof_diatomic();
     test_dof_polyatomic();
@@ -623,7 +623,7 @@ int main() {
     test_viscosity_positive();
     test_diffusion_positive();
 
-    std::cout << "\033[1;36m┌─ Heat Capacity & Adiabatic\033[0m\n";
+    std::cout << "\033[1;36m+- Heat Capacity & Adiabatic\033[0m\n";
     test_cv_monoatomic();
     test_gamma_monoatomic();
     test_gamma_diatomic();
@@ -631,14 +631,14 @@ int main() {
     test_adiabatic_T();
     test_jt_inversion();
 
-    std::cout << "\033[1;36m┌─ Full Analysis Pipeline\033[0m\n";
+    std::cout << "\033[1;36m+- Full Analysis Pipeline\033[0m\n";
     test_analyze_ar();
     test_analyze_unknown();
     test_format_report();
     test_format_json();
     test_thermal_report_format();
 
-    std::cout << "\033[1;36m┌─ Thermodynamic Potentials\033[0m\n";
+    std::cout << "\033[1;36m+- Thermodynamic Potentials\033[0m\n";
     test_thermal_wavelength_300K();
     test_helmholtz_ideal_negative();
     test_gibbs_greater_than_helmholtz();
@@ -646,25 +646,25 @@ int main() {
     test_maxwell_construction_ar();
     test_maxwell_supercritical_fails();
 
-    std::cout << "\033[1;36m┌─ Potential Decomposition & F[φ]\033[0m\n";
+    std::cout << "\033[1;36m+- Potential Decomposition & F[φ]\033[0m\n";
     test_potential_decomposition_total();
     test_potential_channel_access();
     test_landau_sign_flip();
     test_free_energy_functional_nonzero();
     test_monitor_snapshot_json();
 
-    std::cout << "\033[1;36m┌─ Hartree Energy Conversion\033[0m\n";
+    std::cout << "\033[1;36m+- Hartree Energy Conversion\033[0m\n";
     test_ke_hartree_300K();
     test_ke_hartree_mass_invariance();
     test_ke_hartree_total_dof();
     test_ke_hartree_in_analysis();
     test_ke_hartree_json_contains_fields();
 
-    std::cout << "\033[1;36m┌─ Maxwell-Boltzmann Sampling\033[0m\n";
+    std::cout << "\033[1;36m+- Maxwell-Boltzmann Sampling\033[0m\n";
     test_mb_deterministic();
     test_mb_rms_convergence();
 
-    std::cout << "\033[1;36m┌─ Heat Map Pipeline\033[0m\n";
+    std::cout << "\033[1;36m+- Heat Map Pipeline\033[0m\n";
     test_heatmap_vv_bins_nonzero();
     test_heatmap_vv_total_equals_samples();
     test_heatmap_atom_grid_ke_positive();
@@ -672,7 +672,7 @@ int main() {
     test_heatmap_grid_resolution_256();
 
     int total = pass_count + fail_count;
-    std::cout << "\n═══════════════════════════════════════════\n";
+    std::cout << "\n===========================================\n";
     if (fail_count == 0) {
         std::cout << "\033[0;32m✓ ALL " << total << " TESTS PASSED\033[0m ("
                   << pass_count << "/" << total << ")\n";
@@ -680,6 +680,6 @@ int main() {
         std::cout << "\033[0;31m✗ " << fail_count << " FAILED\033[0m, "
                   << pass_count << " passed (" << total << " total)\n";
     }
-    std::cout << "═══════════════════════════════════════════\n\n";
+    std::cout << "===========================================\n\n";
     return fail_count > 0 ? 1 : 0;
 }

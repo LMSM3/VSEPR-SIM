@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "state.hpp"
 #include <cmath>
 #include <algorithm>
@@ -100,7 +100,7 @@ struct Mat3 {
  * 
  * Algorithm:
  * 1. Form A^T A (symmetric 3x3)
- * 2. Diagonalize via Jacobi rotations → V and Σ²
+ * 2. Diagonalize via Jacobi rotations -> V and Σ²
  * 3. Compute U = A V Σ^{-1}
  * 
  * Accuracy: ~1e-12 for well-conditioned matrices

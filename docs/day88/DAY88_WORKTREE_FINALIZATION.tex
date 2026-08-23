@@ -1,0 +1,102 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.72in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[hidelinks]{hyperref}
+\setlist{nosep,leftmargin=1.35em}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.35em}
+\pagestyle{plain}
+
+\title{Day 88: Authoritative Worktree Finalization Specification}
+\author{VSEPR-SIM Work Order Continuity Record}
+\date{Release target v5.14.1}
+
+\begin{document}
+\maketitle
+
+\section*{Purpose and authority}
+This document governs Day 88 worktree finalization. Its purpose is to establish a reproducible repository baseline without deleting, overwriting, or silently absorbing unrelated user work. The worktree is treated as evidence: every retained, excluded, generated, moved, deleted, committed, or deferred path must receive an explicit classification. Completion means that the active release work can be built, tested, reviewed, and handed forward while all unresolved material remains recoverable.
+
+The governing principles are preservation before cleanup, evidence before status, and scoped publication. A clean Git status is not itself the objective. The objective is a trustworthy boundary between release-ready changes, generated products, experiments, legacy material, dependencies, and unresolved user edits.
+
+\section*{Required classifications}
+Every changed or untracked path shall be assigned to one of the following classes.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+Class & Required treatment \\
+\midrule
+Scoped & Required by the active Day 88 release or methodology objective; validate and include in a scoped handoff. \\
+Generated & Reproducible build, report, cache, or simulation output; exclude from source commits unless it is an approved fixture. \\
+Vendor & Third-party or fetched dependency content; preserve version identity and avoid accidental bulk publication. \\
+Legacy & Superseded project material retained for audit or migration; archive deliberately rather than delete opportunistically. \\
+Deletion & Tracked removal requiring an owner, rationale, and dependency/reference check. \\
+Unresolved & Ownership or purpose cannot yet be proven; preserve in place or in a reversible snapshot and do not stage. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+Classification shall use repository-relative paths and may operate at directory level only when all descendants share the same ownership and treatment. Large path sets require machine-readable inventories with counts, not only prose summaries.
+
+\section*{Preservation and isolation procedure}
+Before modifying the worktree, record the active branch, HEAD commit, remotes, status counts, staged state, untracked state, and diff statistics. Create a dated inventory under the Day 88 audit area. No destructive reset, clean, checkout, or mass line-ending rewrite is permitted.
+
+Recoverable work shall be isolated by the least invasive method appropriate to its class: scoped staging, a patch bundle, a directory archive, an explicit ignore rule for reproducible outputs, or a separate follow-up work order. Generated files may be removed only after their generator and regeneration command are known. Tracked deletions remain unresolved until references and build registration have been checked.
+
+The Day 88 commit boundary shall contain only files whose lineage can be stated as requirement, authoritative document, implementation, validation, artifact, and handoff. A path that lacks this lineage remains outside the finalization commit even if it appears useful.
+
+\newpage
+\section*{Methodology update requirement}
+The current \texttt{docs/METHODOLOGY\_12PAGE.tex} shall be updated after the worktree inventory establishes which architecture is real on the active branch. The update must reconcile at least the following:
+
+\begin{itemize}
+\item project identity and active release version;
+\item identity, phase, scratch, artifact, and provenance separation;
+\item VSIM scripting as the reproducible orchestration surface;
+\item scientific truth artifacts versus renderer and report sidecars;
+\item the independent OpenGL, BGFX, and native CPU/GDI consumer model;
+\item the near-meso bead direction, including resolved packet state and explicit mass/flux accounting;
+\item validation language that distinguishes model-derived evidence from experimental truth.
+\end{itemize}
+
+Content changes shall be completed before typography changes. Once content is stable, the document font may change as a distinct, reviewable operation. The resulting document must compile, remain legible, and preserve its intended condensed length. Page count shall be recorded; if it exceeds twelve pages, content organization and spacing shall be corrected without removing required doctrine.
+
+\section*{Validation baseline}
+Day 88 validation uses layered evidence:
+
+\begin{enumerate}
+\item Configure with the authoritative CMake preset.
+\item Build the scoped release targets.
+\item Execute the relevant tests; discovery-only listings are not test evidence.
+\item Verify executable version and build information.
+\item Validate changed TeX documents by compilation and page count.
+\item Run scoped diff hygiene checks while separating pre-existing unrelated failures.
+\end{enumerate}
+
+Interactive rendering, hosted sessions, and scientific accuracy require their own evidence and are not implied by a successful compile. Known failures shall identify the exact command, failing target or test, and whether the failure is scoped or pre-existing.
+
+\section*{Acceptance criteria}
+Day 88 may close only when:
+
+\begin{itemize}
+\item the worktree inventory is complete and counted by classification;
+\item recoverable work is preserved without destructive cleanup;
+\item scoped release changes are isolated from unresolved material;
+\item the methodology content is updated and its final font change is separately recorded;
+\item authoritative TeX documents compile and their page counts are known;
+\item the release baseline has current build/test evidence or explicit blockers;
+\item a handoff ledger records completed, carried, blocked, evidence, authority, and the Day 89 acceptance target.
+\end{itemize}
+
+The Day 89 target is a deterministic VSIM visual stress fixture above 1,000 particles, consumed by all three rendering systems, accompanied by a separate two-page visual-stress authority and a two-page bead packet/flux authority. Day 88 does not claim completion of that target; it only creates the stable repository boundary required to begin it.
+
+\section*{Continuity statement}
+Corrections are append-only. If later evidence invalidates a Day 88 conclusion, the handoff shall identify the original claim, original evidence, new evidence, and resulting rebase. Unverified historical claims are marked \texttt{UNCONFIRMED}; they are never promoted to \texttt{DONE} by repetition.
+
+\end{document}

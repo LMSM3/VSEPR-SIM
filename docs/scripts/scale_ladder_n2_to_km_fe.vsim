@@ -1,0 +1,247 @@
+# Scale Ladder: N2 molecular → km-scale Fe field limit
+# 6-job batch across the full IKK IV §2 length scale ladder.
+
+[project]
+name        = "scale_ladder_n2_to_km_fe"
+version     = "v5.1.13.5"
+seed_base   = 7700
+determinism = true
+
+[batch]
+print_plan = true
+
+# J01 — Molecular: 4×N2, 8 atoms, no PBC, sub-nm
+[[batch.job]]
+name            = "j01_molecular_n2_gas"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "N2"
+structure = "molecular"
+phase     = "gas"
+
+[batch.job.run]
+mode = "relax"
+max_steps = 500
+temperature = 0.0
+
+[batch.job.environment]
+periodic    = false
+temperature = 0.0
+
+[batch.job.simulation]
+box_size_ang     = 15.0
+periodic         = false
+formation_preset = "molecular"
+
+[[batch.job.simulation.molecule]]
+formula     = "N2"
+count       = 4
+temperature = 0.0
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [1.10, 2.20, 5.0, 10.0]
+field_grid           = [4, 4, 4]
+
+# J02 — Molecular crystal: N2 solid Pa-3, nm scale
+[[batch.job]]
+name            = "j02_molecular_crystal_n2_solid"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula = "N2"
+structure = "molecular_crystal"
+cell = "3x3x3"
+
+[batch.job.run]
+mode = "md"
+max_steps = 1500
+dt_fs = 0.5
+temperature = 20.0
+
+[batch.job.environment]
+periodic    = true
+temperature = 20.0
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [1.10, 2.83, 5.66, 16.98]
+field_grid           = [6, 6, 6]
+
+# J03 — Nanoparticle: Fe ~1000 atoms, no PBC
+[[batch.job]]
+name            = "j03_nanoparticle_fe_cluster"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "5x5x5"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = false
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.48, 4.96, 9.92, 28.7]
+field_grid           = [8, 8, 8]
+min_particles_for_scale_sampling = 32
+
+# J04 — Bulk crystal: Fe BCC 8×8×8, periodic
+[[batch.job]]
+name            = "j04_bulk_fe_bcc_periodic"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "8x8x8"
+
+[batch.job.run]
+mode = "md"
+max_steps = 2000
+dt_fs = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.48, 4.96, 9.92, 22.96]
+field_grid           = [8, 8, 8]
+
+# J05 — Mesoscale: Fe bead model, each bead ~10^6 atoms
+[[batch.job]]
+name            = "j05_mesoscale_fe_bead"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+structure = "bead"
+
+[batch.job.run]
+mode = "md"
+max_steps = 1000
+dt_fs = 10.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+
+[batch.job.simulation]
+formation_preset = "bead_spring"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A  = [100.0, 500.0, 2000.0, 10000.0]
+field_grid            = [4, 4, 4]
+min_particles_for_scale_sampling = 4
+spatial_cv_threshold  = 0.70
+scale_drift_threshold = 0.60
+
+# J06 — Engineering/field limit: km-scale single-point descriptor
+[[batch.job]]
+name            = "j06_engineering_scale_km_fe_field_limit"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+structure = "bead"
+
+[batch.job.run]
+mode = "single_point"
+max_steps = 1
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+
+[batch.job.simulation]
+formation_preset = "bead_spring"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A  = [1.0e9, 1.0e10, 1.0e11, 1.0e12]
+field_grid            = [2, 2, 2]
+min_particles_for_scale_sampling = 1
+spatial_cv_threshold  = 0.90
+scale_drift_threshold = 0.90
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+rve_windows_per_level            = 4
+rve_window_placement             = "grid"
+temporal_drift_threshold         = 0.20
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 3.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 100
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[verify]
+enabled             = true
+profile             = "scale_ladder_n2_to_km_fe"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/scale_ladder"
+
+[report]
+title = "Scale Ladder: N2 Molecular → km-scale Fe Field Limit"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 100
+show_bar_chart   = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination

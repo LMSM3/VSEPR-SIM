@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * orientation_potential.hpp — Orientation-Coupled Interaction Model
+ * orientation_potential.hpp  -  Orientation-Coupled Interaction Model
  *
  * Implements the reduced anisotropic interaction potential:
  *
@@ -35,15 +35,15 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * InteractionLevel — selects the fidelity tier of the interaction model.
+ * InteractionLevel  -  selects the fidelity tier of the interaction model.
  *
  * Supports adaptive resolution: use cheaper models for exploration,
  * more detailed models when directional effects dominate.
  */
 enum class InteractionLevel {
-    ISOTROPIC,               // U(r) — standard LJ, no angular dependence
-    AXISYMMETRIC,            // U(r, θ_A, θ_B, φ) — reduced orientation model
-    DESCRIPTOR_RESOLVED      // U(r, Ω_A, Ω_B, S_A, S_B) — full SH coupling
+    ISOTROPIC,               // U(r)  -  standard LJ, no angular dependence
+    AXISYMMETRIC,            // U(r, θ_A, θ_B, φ)  -  reduced orientation model
+    DESCRIPTOR_RESOLVED      // U(r, Ω_A, Ω_B, S_A, S_B)  -  full SH coupling
 };
 
 // ============================================================================
@@ -51,7 +51,7 @@ enum class InteractionLevel {
 // ============================================================================
 
 /**
- * OrientationPotentialParams — parameters for the reduced interaction model.
+ * OrientationPotentialParams  -  parameters for the reduced interaction model.
  *
  * All three λ coefficients and the baseline LJ parameters are stored
  * explicitly for inspection.
@@ -69,14 +69,14 @@ struct OrientationPotentialParams {
 // ============================================================================
 
 /**
- * OrientationPotentialResult — fully decomposed energy and torques.
+ * OrientationPotentialResult  -  fully decomposed energy and torques.
  */
 struct OrientationPotentialResult {
     // Energy decomposition
-    double E_isotropic{};     // U_0(r) — baseline LJ (kcal/mol)
-    double E_alignment{};     // λ₁·f₁(r)·cos φ — mutual normal alignment
-    double E_axis_A{};        // λ₂·f₂(r)·cos²θ_A — A alignment with axis
-    double E_axis_B{};        // λ₃·f₃(r)·cos²θ_B — B alignment with axis
+    double E_isotropic{};     // U_0(r)  -  baseline LJ (kcal/mol)
+    double E_alignment{};     // λ₁·f₁(r)·cos φ  -  mutual normal alignment
+    double E_axis_A{};        // λ₂·f₂(r)·cos²θ_A  -  A alignment with axis
+    double E_axis_B{};        // λ₃·f₃(r)·cos²θ_B  -  B alignment with axis
     double E_total{};         // Sum of all contributions
 
     // Orientation invariants (inspectable)
@@ -171,8 +171,8 @@ inline OrientationPotentialResult evaluate_orientation_potential(
 
     // ---- Torques ----
     // τ_A from cos²θ_A term:
-    //   ∂(cos θ_A)/∂Ω_A → torque direction ∝ n̂_A × r̂
-    //   ∂(cos φ)/∂Ω_A → torque direction ∝ n̂_A × n̂_B
+    //   ∂(cos θ_A)/∂Ω_A -> torque direction ∝ n̂_A × r̂
+    //   ∂(cos φ)/∂Ω_A -> torque direction ∝ n̂_A × n̂_B
     {
         // n̂_A × r̂
         double tA_r_x = ori_A.normal.y * rhat_z - ori_A.normal.z * rhat_y;

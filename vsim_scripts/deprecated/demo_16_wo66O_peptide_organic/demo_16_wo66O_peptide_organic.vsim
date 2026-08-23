@@ -1,0 +1,100 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# scripts/demo_16_wo66O_peptide_organic.vsim
+# VSEPR-SIM v5.1.4  |  Demo 16 -- WO-66O Organic/Peptide Scale Diagnostics
+# Full peptide chain (Ala-Gly-Ser-Pro-Val-Leu-Ile-Thr) + two small molecules
+# (caffeine, aspirin).  OrganicScaleSection drives per-frame diagnostics:
+# backbone torsion, ring planarity, hydrogen-bond detection, solvation shell.
+# Outputs: energy trace, torsion histogram TSV, H-bond event log, chain RMSD.
+# Run: vsper run scripts/demo_16_wo66O_peptide_organic.vsim
+
+[project]
+name        = "demo_16_wo66O_peptide_organic"
+version     = "v5.1.4"
+seed_base   = 16001
+determinism = true
+description = "WO-66O peptide + small molecule organic diagnostics -- torsion, H-bond, ring planarity"
+
+[molecules]
+peptide.chain = "Ala-Gly-Ser-Pro-Val-Leu-Ile-Thr"
+small.caffeine = "C8H10N4O2"
+small.aspirin  = "C9H8O4"
+
+[diagnostics.organic]
+enabled              = true
+chain_id             = "peptide.chain"
+track_backbone       = true
+track_sidechain      = true
+track_hbond          = true
+track_ring_planarity = true
+track_solvation      = true
+track_rmsd           = true
+rmsd_reference       = "initial"
+hbond_cutoff_A       = 3.5
+hbond_angle_deg      = 150.0
+ring_species         = ["Pro"]
+report_every_n       = 20
+
+[diagnostics.organic.small_molecules]
+caffeine_id         = "small.caffeine"
+aspirin_id          = "small.aspirin"
+track_conformation  = true
+track_ring_planarity = true
+track_charges       = true
+
+[kernel]
+pass_through   = true
+symbolic_trace = false
+
+[run]
+mode          = "md"
+max_steps     = 800
+dt_fs         = 0.25
+temperature_K = 310.0
+thermostat    = "langevin"
+converge      = false
+output_level  = "verbose"
+
+[observe]
+metrics       = ["energy", "rdf", "torsion", "hbond", "rmsd", "ring_planarity"]
+output_format = "json"
+every_n_steps = 20
+
+[export]
+write_xyz                  = true
+write_xyzFull              = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+
+[export.tables]
+torsion_histogram_tsv  = "reports/demo_16/torsion_histogram.tsv"
+hbond_events_tsv       = "reports/demo_16/hbond_events.tsv"
+chain_rmsd_tsv         = "reports/demo_16/chain_rmsd.tsv"
+ring_planarity_tsv     = "reports/demo_16/ring_planarity.tsv"
+energy_trace_tsv       = "reports/demo_16/energy_trace.tsv"
+
+[export.visual]
+write_energy_trace_svg = true
+write_rdf_svg          = true
+write_torsion_svg      = true
+write_svg_figures      = true
+write_html_dashboard   = true
+visual_output_dir      = figures/demo_16/
+
+[visual]
+output_type              = "gl_live_60fps"
+animation_mode           = "trajectory"
+show_convergence_trace   = true
+gl_show_axes             = true
+gl_show_neighbours       = true
+gl_auto_orbit            = false
+gl_window_width          = 1400
+gl_window_height         = 900
+render_interval          = 5
+
+[open]
+enabled = false

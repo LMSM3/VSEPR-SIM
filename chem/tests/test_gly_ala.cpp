@@ -1,4 +1,4 @@
-// test_gly_ala.cpp — Gly-Ala peptide bond formation and scoring tests
+﻿// test_gly_ala.cpp  -  Gly-Ala peptide bond formation and scoring tests
 // Day 48A: Organic / Peptide Formation Core
 //
 // Tests:

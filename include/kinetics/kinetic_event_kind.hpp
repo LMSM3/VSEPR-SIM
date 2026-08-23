@@ -1,11 +1,11 @@
-#pragma once
+﻿#pragma once
 /**
  * kinetic_event_kind.hpp
  * ======================
  * Universal kinetic event classification.
  *
- * Every transition the engine schedules — whether nuclear decay,
- * particle transport, molecular collision, or surface adsorption —
+ * Every transition the engine schedules  -  whether nuclear decay,
+ * particle transport, molecular collision, or surface adsorption  - 
  * is tagged with one of these kinds.
  *
  * Integration:
@@ -16,7 +16,7 @@
  *   Compatible with atomistic::kinetic::EventType
  *   (formation_kinetics.hpp) which uses a finer 28-type taxonomy
  *   for formation-specific events.  EventKind here is coarser
- *   and universal — a decay event that formation_kinetics labels
+ *   and universal  -  a decay event that formation_kinetics labels
  *   as EventType::DECAY maps to EventKind::decay here.
  */
 

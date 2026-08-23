@@ -1,4 +1,4 @@
-// src/ufx_auto2/coverage_map.cpp
+﻿// src/ufx_auto2/coverage_map.cpp
 // UFX_AUTO_2 Phase 2 -- Coverage Map Implementation
 
 #include "ufx_auto2/coverage_map.hpp"
@@ -14,7 +14,7 @@ namespace vsepr::ufx {
 
 RegionKey CoverageMap::make_key(const AxisSample& s) {
 	// Phase 2 key: element_family :: phase :: geometry
-	// Deliberately coarse — one cell per (family, phase, geometry) triple.
+	// Deliberately coarse  -  one cell per (family, phase, geometry) triple.
 	// This keeps the coverage map manageable at Phase 2 scale.
 	return s.element_family + "::" + s.phase + "::" + s.geometry;
 }

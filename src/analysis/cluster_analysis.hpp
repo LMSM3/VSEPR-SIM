@@ -1,22 +1,22 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/analysis/cluster_analysis.hpp
 // =============================================================================
 // Reference-free cluster analysis for emergence microtests.
 //
 // All labels produced here are analysis-only.  The state file (atomistic::State)
-// remains property-free.  This file contains only math and geometry — no
+// remains property-free.  This file contains only math and geometry  -  no
 // switch statement wearing a lab coat.
 //
 // Provided types
-// ──────────────
-//  XyzFullRow          — single-atom snapshot row (state audit; no labels)
-//  XyzFullFrame        — one frame of the xyzFull trajectory
-//  ClusterMetricsRow   — one row of the reference-free metrics table
-//  ClusterAnalysis     — computes all metrics from a raw trajectory
+// --------------
+//  XyzFullRow           -  single-atom snapshot row (state audit; no labels)
+//  XyzFullFrame         -  one frame of the xyzFull trajectory
+//  ClusterMetricsRow    -  one row of the reference-free metrics table
+//  ClusterAnalysis      -  computes all metrics from a raw trajectory
 //
 // Metrics (reference-free)
-// ────────────────────────
+// ------------------------
 //  pair distances          d_ij for all unique pairs
 //  mean_pair_distance      average over all pairs
 //  pair_distance_stddev    stddev over all pairs
@@ -27,7 +27,7 @@
 //  connected_components    graph union-find on r_cut neighbor graph
 //  largest_cluster_size    max component size
 //  shape_anisotropy        (max principal axis) / (min principal axis)
-//  cluster_class           analysis label — compact/chain/planar/scattered/…
+//  cluster_class           analysis label  -  compact/chain/planar/scattered/...
 //  stationary_flag         fed from external SimMetrics or computed inline
 //
 // Anti-black-box: every field public, every formula visible.
@@ -45,9 +45,9 @@
 
 namespace vsepr::cluster {
 
-// ─────────────────────────────────────────────────────────────────────────────
-// XyzFullRow  — one atom at one frame  (state audit, property-free)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// XyzFullRow   -  one atom at one frame  (state audit, property-free)
+// -----------------------------------------------------------------------------
 
 struct XyzFullRow {
 	uint64_t frame   = 0;
@@ -72,9 +72,9 @@ struct XyzFullRow {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// XyzFullFrame  — all atoms at one frame
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// XyzFullFrame   -  all atoms at one frame
+// -----------------------------------------------------------------------------
 
 struct XyzFullFrame {
 	uint64_t frame = 0;
@@ -82,9 +82,9 @@ struct XyzFullFrame {
 	std::vector<XyzFullRow> rows;
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ClusterMetricsRow  — one row of the reference-free metrics table
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// ClusterMetricsRow   -  one row of the reference-free metrics table
+// -----------------------------------------------------------------------------
 
 struct ClusterMetricsRow {
 	uint64_t frame              = 0;
@@ -133,9 +133,9 @@ struct ClusterMetricsRow {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // Internal helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 namespace detail {
 
@@ -268,7 +268,7 @@ inline std::pair<int,int> connected_components(
 
 // Shape anisotropy via inertia tensor eigenvalues (symmetric 3×3).
 // Returns ratio of largest to smallest principal moment.
-// Uses power-iteration fallback — no Eigen dependency in this analysis path.
+// Uses power-iteration fallback  -  no Eigen dependency in this analysis path.
 inline double shape_anisotropy(
 		const std::vector<vsepr::Vec3>& pos,
 		const std::vector<double>& masses) {
@@ -288,7 +288,7 @@ inline double shape_anisotropy(
 		I[2][0] -= m*z*x;  I[2][1] -= m*z*y;  I[2][2] += m*(r2 - z*z);
 	}
 
-	// Characteristic polynomial of 3×3 symmetric matrix → cubic.
+	// Characteristic polynomial of 3×3 symmetric matrix -> cubic.
 	// Use Gershgorin disk estimates then 3 Jacobi sweeps for eigenvalues.
 	// Simple but sufficient for N ≤ 10.
 	double a[3][3];
@@ -326,7 +326,7 @@ inline double shape_anisotropy(
 	}
 
 	std::sort(eig, eig+3);
-	// eig[0] ≤ eig[1] ≤ eig[2]  (moments of inertia — smallest = most elongated axis)
+	// eig[0] ≤ eig[1] ≤ eig[2]  (moments of inertia  -  smallest = most elongated axis)
 	// Anisotropy: max_moment / min_moment.  Guard divide-by-zero.
 	if (eig[0] < 1e-12) return (eig[2] < 1e-12) ? 1.0 : 1e6;
 	return eig[2] / eig[0];
@@ -334,16 +334,16 @@ inline double shape_anisotropy(
 
 } // namespace detail
 
-// ─────────────────────────────────────────────────────────────────────────────
-// classify_cluster_shape() — geometry-only label
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// classify_cluster_shape()  -  geometry-only label
+// -----------------------------------------------------------------------------
 //
-//   scattered         — n_components > 1 (atoms not all connected)
-//   collapsed         — mean_pair_distance < r_overlap (too close)
-//   elongated_chain   — anisotropy > 4
-//   planar_cluster    — moderate anisotropy (1.5–4) + low RoG
-//   compact_cluster   — anisotropy ≤ 1.5, all connected
-//   single_atom       — N == 1
+//   scattered          -  n_components > 1 (atoms not all connected)
+//   collapsed          -  mean_pair_distance < r_overlap (too close)
+//   elongated_chain    -  anisotropy > 4
+//   planar_cluster     -  moderate anisotropy (1.5-4) + low RoG
+//   compact_cluster    -  anisotropy ≤ 1.5, all connected
+//   single_atom        -  N == 1
 
 inline std::string classify_cluster_shape(
 		int    N,
@@ -361,19 +361,19 @@ inline std::string classify_cluster_shape(
 	return "compact_cluster";
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ClusterAnalysis  — computes one ClusterMetricsRow from raw frame data
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// ClusterAnalysis   -  computes one ClusterMetricsRow from raw frame data
+// -----------------------------------------------------------------------------
 //
 // Configuration (all public):
-//   r_bond      — neighbor cutoff for coordination and connectivity (Å)
-//   r_overlap   — minimum acceptable pair distance below which = "collapsed" (Å)
-//   E0          — reference energy for drift computation (kcal/mol)
+//   r_bond       -  neighbor cutoff for coordination and connectivity (Å)
+//   r_overlap    -  minimum acceptable pair distance below which = "collapsed" (Å)
+//   E0           -  reference energy for drift computation (kcal/mol)
 
 struct ClusterAnalysis {
-	double r_bond   = 5.0;   // Å — LJ minimum for Ar ≈ 3.82 Å; 5 Å catches first shell
-	double r_overlap= 2.0;   // Å — unphysically close
-	double E0       = 0.0;   // kcal/mol — set on first frame or via set_baseline()
+	double r_bond   = 5.0;   // Å  -  LJ minimum for Ar ≈ 3.82 Å; 5 Å catches first shell
+	double r_overlap= 2.0;   // Å  -  unphysically close
+	double E0       = 0.0;   // kcal/mol  -  set on first frame or via set_baseline()
 
 	void set_baseline(double E_total_0) { E0 = E_total_0; }
 
@@ -436,9 +436,9 @@ struct ClusterAnalysis {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// SweepResult  — summary row for parameter sweep (Task 6)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// SweepResult   -  summary row for parameter sweep (Task 6)
+// -----------------------------------------------------------------------------
 
 struct SweepResult {
 	std::string case_id;
@@ -477,9 +477,9 @@ struct SweepResult {
 	}
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EmergenceReport  — reference-free narrative report (Task 7)
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
+// EmergenceReport   -  reference-free narrative report (Task 7)
+// -----------------------------------------------------------------------------
 
 struct EmergenceReport {
 	std::string title;

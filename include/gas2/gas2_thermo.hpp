@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas2_thermo.hpp
  * ---------------
  * Thermodynamic Potentials and Phase Equilibrium for gas2 Module.
@@ -270,7 +270,7 @@ inline ChemicalPotentialResult chemical_potential(
 }
 
 // ============================================================================
-// Maxwell construction — saturation pressure from equal fugacity
+// Maxwell construction  -  saturation pressure from equal fugacity
 // ============================================================================
 
 struct PhasePoint {
@@ -338,7 +338,7 @@ inline PhasePoint maxwell_construction(double T, double a, double b,
     // Critical point for VdW: Tc = 8a/(27Rb), Pc = a/(27b^2)
     double Tc = 8.0 * a / (27.0 * R_gas * b);
     if (T >= Tc) {
-        pt.converged = false;  // Supercritical — no phase boundary
+        pt.converged = false;  // Supercritical  -  no phase boundary
         return pt;
     }
 
@@ -355,7 +355,7 @@ inline PhasePoint maxwell_construction(double T, double a, double b,
         auto roots = vdw_roots(T, P_mid, a, b);
 
         if (roots.size() < 2) {
-            // Only one root — above or at critical
+            // Only one root  -  above or at critical
             P_hi = P_mid;
             continue;
         }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * bench_ehd.cpp
  *
  * Performance benchmarks for the EHD multiphysics module.
@@ -58,7 +58,7 @@ private:
 };
 
 // ============================================================================
-// Optimisation Barrier — prevent dead-code elimination in Release builds
+// Optimisation Barrier  -  prevent dead-code elimination in Release builds
 // ============================================================================
 
 static volatile double g_sink = 0.0;
@@ -368,7 +368,7 @@ static void bench_bc_multi_species() {
 }
 
 // ============================================================================
-// Stage 3: Physics Benchmarks — Point Evaluations
+// Stage 3: Physics Benchmarks  -  Point Evaluations
 // ============================================================================
 
 static void bench_poiseuille_field(int n_points) {
@@ -516,7 +516,7 @@ static void bench_charge_density() {
 }
 
 // ============================================================================
-// Stage 3: Physics Benchmarks — Field Initialisation (grid scaling)
+// Stage 3: Physics Benchmarks  -  Field Initialisation (grid scaling)
 // ============================================================================
 
 static void bench_field_init_scaling() {
@@ -578,7 +578,7 @@ static void bench_field_init_scaling() {
 }
 
 // ============================================================================
-// Stage 3: Physics — Field metric extraction
+// Stage 3: Physics  -  Field metric extraction
 // ============================================================================
 
 static void bench_field_metrics() {
@@ -681,7 +681,7 @@ static void bench_field_metrics() {
 }
 
 // ============================================================================
-// Stage 3: Coupled Solver — Grid Scaling
+// Stage 3: Coupled Solver  -  Grid Scaling
 // ============================================================================
 
 static void bench_coupled_solver() {
@@ -729,7 +729,7 @@ static void bench_coupled_solver() {
 }
 
 // ============================================================================
-// Stage 3: Coupled Solver — Multi-Species Scaling
+// Stage 3: Coupled Solver  -  Multi-Species Scaling
 // ============================================================================
 
 static void bench_coupled_species_scaling() {
@@ -1140,14 +1140,14 @@ int main() {
 
     std::cout << "\n";
     std::cout << "================================================================\n";
-    std::cout << "  EHD Multiphysics Module — Performance Benchmarks\n";
+    std::cout << "  EHD Multiphysics Module  -  Performance Benchmarks\n";
     std::cout << "  Runs: " << RUNS << " (+ " << WARMUP << " warmup)\n";
     std::cout << "================================================================\n";
 
 #ifdef NDEBUG
     std::cout << "\n  Build: Release (optimizations enabled)\n";
 #else
-    std::cout << "\n  Build: Debug — timings are indicative only\n";
+    std::cout << "\n  Build: Debug  -  timings are indicative only\n";
     std::cout << "  For accurate benchmarks: cmake --build <dir> --config Release\n";
 #endif
 

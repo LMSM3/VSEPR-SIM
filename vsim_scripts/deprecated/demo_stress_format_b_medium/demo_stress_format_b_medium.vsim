@@ -1,0 +1,17 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[features]
+output_format = B
+[chem_plus]
+reaction = CH4 + 2O2 -> CO2 + 2H2O + 891 kJ
+[project]
+name = stress_b_medium
+[material]
+formula = CH4
+[run]
+max_steps = 100
+[visual]
+output_type = terminal_chart
+render_interval = 10
+

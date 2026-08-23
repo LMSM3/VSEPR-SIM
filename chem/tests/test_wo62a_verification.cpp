@@ -1,11 +1,11 @@
-// =============================================================================
+﻿// =============================================================================
 // chem/tests/test_wo62a_verification.cpp
 // =============================================================================
-// WO-VSIM-62A smoke test — Group 39
+// WO-VSIM-62A smoke test  -  Group 39
 //
 // Tests:
-//  T1   Structure coordination check: NaCl-like SC → coordination pass
-//  T2   Structure coordination check: wrong expected → fail
+//  T1   Structure coordination check: NaCl-like SC -> coordination pass
+//  T2   Structure coordination check: wrong expected -> fail
 //  T3   RDF first peak pass (uniform trajectory peak within tolerance)
 //  T4   RDF first peak fail (expected far from measured)
 //  T5   RDF multi-peak check (expected_peaks_A list)
@@ -15,14 +15,14 @@
 //  T9   Mass conservation fail (mass_leak synthetic source)
 //  T10  Full pipeline + verify: demo_01 pattern (structure only)
 //  T11  Full pipeline + verify: demo_03 pattern (full 61d)
-//  T12  Negative: demo_06 pattern → macro_ready=false (missing scale)
-//  T13  Negative: demo_07 pattern → mass_conserved=false, verify.mass fail
-//  T14  Negative: demo_08 pattern → RVE window invalid, pipeline rejected
+//  T12  Negative: demo_06 pattern -> macro_ready=false (missing scale)
+//  T13  Negative: demo_07 pattern -> mass_conserved=false, verify.mass fail
+//  T14  Negative: demo_08 pattern -> RVE window invalid, pipeline rejected
 //  T15  Parser: [verify.structure] fields round-trip
 //  T16  Parser: [verify.rdf] expected_peaks_A list round-trip
 //  T17  Parser: [verify.msd] fields round-trip
 //  T18  Parser: [verify.mass] fields round-trip
-//  T19  VerificationResult: disabled verify → empirical_pass = true, no checks
+//  T19  VerificationResult: disabled verify -> empirical_pass = true, no checks
 // =============================================================================
 
 #include "analysis/pipeline_config.hpp"
@@ -40,7 +40,7 @@ using namespace vsim::verification;
 using namespace vsepr::scale;
 using namespace vsepr::inference;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// -- Helpers -------------------------------------------------------------------
 
 static void print_pass(int n, const char* msg) {
 	printf("  [T%d] PASS  %s\n", n, msg);
@@ -90,7 +90,7 @@ static VsimAnalysisPipelineConfig make_full_61d_config(const std::string& source
 }
 
 // =============================================================================
-// T1 — Structure coordination check: pass
+// T1  -  Structure coordination check: pass
 // =============================================================================
 static void test_t1() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -113,7 +113,7 @@ static void test_t1() {
 }
 
 // =============================================================================
-// T2 — Structure coordination check: intentional fail
+// T2  -  Structure coordination check: intentional fail
 // =============================================================================
 static void test_t2() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -136,7 +136,7 @@ static void test_t2() {
 }
 
 // =============================================================================
-// T3 — RDF first peak pass
+// T3  -  RDF first peak pass
 // =============================================================================
 static void test_t3() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -154,13 +154,13 @@ static void test_t3() {
 	assert(c != nullptr);
 	// May skip if rdf_first_peak_A is unavailable in 1-frame synthetic
 	// Just verify the check ran without crashing
-	printf("    rdf.first_peak_A: %s — %s\n",
+	printf("    rdf.first_peak_A: %s  -  %s\n",
 		c->passed() ? "PASS" : (c->failed() ? "FAIL" : "SKIP"), c->detail.c_str());
 	print_pass(3, "RDF first peak check executed without error");
 }
 
 // =============================================================================
-// T4 — RDF first peak intentional fail
+// T4  -  RDF first peak intentional fail
 // =============================================================================
 static void test_t4() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -169,7 +169,7 @@ static void test_t4() {
 
 	if (!std::isfinite(out.sampling.rdf_first_peak_A) ||
 		out.sampling.rdf_first_peak_A == vsepr::structure::UNAVAILABLE) {
-		print_pass(4, "rdf_first_peak_A unavailable in this config — skip intentional-fail subtest");
+		print_pass(4, "rdf_first_peak_A unavailable in this config  -  skip intentional-fail subtest");
 		return;
 	}
 
@@ -187,7 +187,7 @@ static void test_t4() {
 }
 
 // =============================================================================
-// T5 — RDF multi-peak list check
+// T5  -  RDF multi-peak list check
 // =============================================================================
 static void test_t5() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -209,7 +209,7 @@ static void test_t5() {
 }
 
 // =============================================================================
-// T6 — MSD bounded solid pass (generous bounds for synthetic)
+// T6  -  MSD bounded solid pass (generous bounds for synthetic)
 // =============================================================================
 static void test_t6() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -230,7 +230,7 @@ static void test_t6() {
 }
 
 // =============================================================================
-// T7 — MSD bounded solid fail (too-tight bound)
+// T7  -  MSD bounded solid fail (too-tight bound)
 // =============================================================================
 static void test_t7() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory");
@@ -239,7 +239,7 @@ static void test_t7() {
 
 	if (!std::isfinite(out.sampling.msd_proxy_A2) ||
 		out.sampling.msd_proxy_A2 == vsepr::structure::UNAVAILABLE) {
-		print_pass(7, "msd_proxy_A2 unavailable — skip tight-bound fail test");
+		print_pass(7, "msd_proxy_A2 unavailable  -  skip tight-bound fail test");
 		return;
 	}
 
@@ -257,7 +257,7 @@ static void test_t7() {
 }
 
 // =============================================================================
-// T8 — Mass conservation pass (clean uniform trajectory)
+// T8  -  Mass conservation pass (clean uniform trajectory)
 // =============================================================================
 static void test_t8() {
 	VsimAnalysisPipelineConfig cfg = make_full_61d_config("synthetic:uniform_512_trajectory");
@@ -272,14 +272,14 @@ static void test_t8() {
 	auto vr = run_verification(vs, out.structure, out.sampling, out.scale_sampling);
 	const auto* c = vr.find("mass.conservation");
 	assert(c != nullptr);
-	printf("    mass.conservation: %s — %s\n",
+	printf("    mass.conservation: %s  -  %s\n",
 		c->passed() ? "PASS" : (c->failed() ? "FAIL" : "SKIP"), c->detail.c_str());
 	// May skip if field_projection not valid; verify no crash
 	print_pass(8, "mass conservation check executed on clean trajectory");
 }
 
 // =============================================================================
-// T9 — Mass conservation fail (mass_leak source)
+// T9  -  Mass conservation fail (mass_leak source)
 // =============================================================================
 static void test_t9() {
 	VsimAnalysisPipelineConfig cfg = make_full_61d_config("synthetic:mass_leak_128_trajectory", 62009);
@@ -318,7 +318,7 @@ static void test_t9() {
 }
 
 // =============================================================================
-// T10 — Full pipeline + verify: demo_01 pattern (structure only)
+// T10  -  Full pipeline + verify: demo_01 pattern (structure only)
 // =============================================================================
 static void test_t10() {
 	VsimAnalysisPipelineConfig cfg = make_structure_config("synthetic:dense_64_static", 62010);
@@ -343,7 +343,7 @@ static void test_t10() {
 }
 
 // =============================================================================
-// T11 — Full pipeline + verify: demo_03 pattern (full 61d)
+// T11  -  Full pipeline + verify: demo_03 pattern (full 61d)
 // =============================================================================
 static void test_t11() {
 	VsimAnalysisPipelineConfig cfg = make_full_61d_config("synthetic:uniform_512_trajectory", 62011);
@@ -363,23 +363,23 @@ static void test_t11() {
 }
 
 // =============================================================================
-// T12 — Negative: demo_06 pattern → macro_ready=false (missing scale)
+// T12  -  Negative: demo_06 pattern -> macro_ready=false (missing scale)
 // =============================================================================
 static void test_t12() {
 	VsimAnalysisPipelineConfig cfg = make_sampling_config("synthetic:uniform_512_trajectory", 62012);
 	cfg.inference.enabled = true;
 	cfg.inference.mode    = "rule_based_61d"; // no scale sampling configured
-	// scale_sampling.enabled = false by default → ScaleSampleRecord will be empty
+	// scale_sampling.enabled = false by default -> ScaleSampleRecord will be empty
 	auto out = run_vsim_analysis_pipeline(cfg);
 	assert(out.ok);
 
 	printf("    macro_ready(61d, no scale)=%s\n", out.inference.macro_ready ? "true" : "false");
 	assert(!out.inference.macro_ready); // hard-blocked: no valid field projection
-	print_pass(12, "demo_06 negative: rule_based_61d without scale → macro_ready=false");
+	print_pass(12, "demo_06 negative: rule_based_61d without scale -> macro_ready=false");
 }
 
 // =============================================================================
-// T13 — Negative: demo_07 pattern → mass_conserved=false, verify.mass fail
+// T13  -  Negative: demo_07 pattern -> mass_conserved=false, verify.mass fail
 // =============================================================================
 static void test_t13() {
 	VsimAnalysisPipelineConfig cfg = make_full_61d_config("synthetic:mass_leak_128_trajectory", 62013);
@@ -407,11 +407,11 @@ static void test_t13() {
 		assert(c->failed());
 		assert(!out.verification.empirical_pass);
 	}
-	print_pass(13, "demo_07 negative: mass_leak → mass_conserved=false, macro_ready=false");
+	print_pass(13, "demo_07 negative: mass_leak -> mass_conserved=false, macro_ready=false");
 }
 
 // =============================================================================
-// T14 — Negative: demo_08 pattern → invalid RVE window rejected
+// T14  -  Negative: demo_08 pattern -> invalid RVE window rejected
 // =============================================================================
 static void test_t14() {
 	VsimAnalysisPipelineConfig cfg = make_structure_config("synthetic:uniform_512_trajectory", 62014);
@@ -439,7 +439,7 @@ static void test_t14() {
 }
 
 // =============================================================================
-// T15 — Parser: [verify.structure] fields round-trip
+// T15  -  Parser: [verify.structure] fields round-trip
 // =============================================================================
 static void test_t15() {
 	const char* src = R"vsim(
@@ -473,7 +473,7 @@ expected_density_relation    = "rocksalt_supercell"
 }
 
 // =============================================================================
-// T16 — Parser: [verify.rdf] expected_peaks_A list round-trip
+// T16  -  Parser: [verify.rdf] expected_peaks_A list round-trip
 // =============================================================================
 static void test_t16() {
 	const char* src = R"vsim(
@@ -499,7 +499,7 @@ require_peak_order = true
 }
 
 // =============================================================================
-// T17 — Parser: [verify.msd] fields round-trip
+// T17  -  Parser: [verify.msd] fields round-trip
 // =============================================================================
 static void test_t17() {
 	const char* src = R"vsim(
@@ -525,7 +525,7 @@ expect_regime        = "solid_bounded"
 }
 
 // =============================================================================
-// T18 — Parser: [verify.mass] fields round-trip
+// T18  -  Parser: [verify.mass] fields round-trip
 // =============================================================================
 static void test_t18() {
 	const char* src = R"vsim(
@@ -545,7 +545,7 @@ relative_tolerance = 1e-10
 }
 
 // =============================================================================
-// T19 — VerificationResult: disabled verify → empirical_pass = true, no checks
+// T19  -  VerificationResult: disabled verify -> empirical_pass = true, no checks
 // =============================================================================
 static void test_t19() {
 	VsimVerifySection vs;
@@ -565,7 +565,7 @@ static void test_t19() {
 // Main
 // =============================================================================
 int main() {
-	printf("\n=== WO-VSIM-62A Group 39 — Empirical Verification Tests ===\n\n");
+	printf("\n=== WO-VSIM-62A Group 39  -  Empirical Verification Tests ===\n\n");
 
 	test_t1();
 	test_t2();

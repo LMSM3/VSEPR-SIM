@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * excel_export.hpp — Excel-Compatible OOXML (.xlsx) Export
+ * excel_export.hpp  -  Excel-Compatible OOXML (.xlsx) Export
  *
  * Generates an Office Open XML spreadsheet from SnapshotGraphCollector data.
  * The output can be opened directly in Microsoft Excel, LibreOffice Calc,
@@ -17,7 +17,7 @@
  *   xl/styles.xml
  *
  * Anti-black-box: every exported value matches the in-memory graph series.
- * Deterministic: same data → identical xlsx content (before ZIP compression).
+ * Deterministic: same data -> identical xlsx content (before ZIP compression).
  *
  * Reference: copilot-instructions.md §9.1 (report-ready outputs)
  */
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-// Minimal ZIP support not included — this module writes a flat XML
+// Minimal ZIP support not included  -  this module writes a flat XML
 // spreadsheet (.xml) that Excel can open via "Open > XML Spreadsheet".
 // For true .xlsx, the Python export_excel() in visualize_seed_bead.py
 // should be used (requires openpyxl).

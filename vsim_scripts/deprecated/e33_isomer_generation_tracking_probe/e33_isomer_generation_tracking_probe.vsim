@@ -1,0 +1,92 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# E33 - Parser contract for planned isomer generation and trajectory tracking.
+# Do not use this file as scientific evidence until both runner gaps are closed.
+
+[project]
+name        = "e33_isomer_generation_tracking_probe"
+version     = "v5.14.1-examples-1"
+seed_base   = 33033
+determinism = true
+description = "Development probe for C3H6O isomer enumeration and transition tracking"
+
+[example]
+catalog_id        = "E33"
+compatibility     = "PARSED_NOT_WIRED"
+execution_surface = "vsepr validate only"
+primary_reference = "VSIM_REFERENCE.md WO-VSIM-04A implementation status"
+missing_runtime   = ["isomer_generator_dispatch", "trajectory_walker"]
+
+[material]
+formula   = "C3H6O"
+structure = "molecular"
+phase     = "gas"
+
+[simulation]
+box_size_ang     = 28.0
+periodic         = false
+fire_max_steps   = 400
+fire_dt_fs       = 0.5
+formation_preset = "molecular"
+
+[[simulation.molecule]]
+formula       = "C3H6O"
+count         = 1
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode         = "single_point"
+max_steps    = 1
+dt_fs        = 0.5
+temperature  = 300.0
+converge     = false
+output_level = "minimal"
+
+[environment]
+periodic    = false
+temperature = 300.0
+pressure    = 0.0
+medium      = "vacuum"
+
+[generator.isomers]
+enabled         = true
+formula         = "C3H6O"
+allow_fragments = false
+allow_charged   = false
+allow_radicals  = false
+allow_strained  = true
+max_bond_order  = 3
+deduplicate     = "canonical_graph_hash"
+
+[analysis.isomer_tracking]
+enabled              = true
+source               = "out/advanced_native/e33/c3h6o_candidates.xyzf"
+sample_every         = 10
+detect_bond_changes  = true
+detect_hash_changes  = true
+write_transition_log = true
+
+[export]
+write_xyz           = false
+write_xyzf          = false
+write_analysis_json = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/advanced_native/e33"
+
+[report]
+title                   = "E33 Isomer Generation and Tracking Probe"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+
+[visual]
+output_type   = "none"
+gl_auto_orbit = false
+
+[open]
+enabled = false
+
+

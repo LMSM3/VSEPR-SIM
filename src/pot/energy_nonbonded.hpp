@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /*
 energy_nonbonded.hpp - Nonbonded van der Waals (VSEPR MODE)
 ------------------------------------------------------------
@@ -43,7 +43,7 @@ Cutoff modes:
   Hard:          Truncate at rcut (force discontinuous - use only for testing)
 
 Parameter Optimization Strategy:
-════════════════════════════════════════════════════════════════════════════
+============================================================================
 Goal: Select defaults that are:
   - Structurally invariant (geometry stable under parameter perturbation)
   - Topology-correct (scaled pairs behave as intended)
@@ -71,11 +71,11 @@ Mode Guidance:
 Validation Procedure (first-pass):
   1. Freeze base geometry: bonds + VSEPR stable without LJ
   2. ε-insensitivity sweep: vary ε by 100×; angles must change < 0.5°
-  3. σ hard-core sanity: nonbonded approach → repulsion, no collapse
+  3. σ hard-core sanity: nonbonded approach -> repulsion, no collapse
   4. s13 sweep (key): disable angles; sweep s13; geometry matches s13=0
   5. Cutoff convergence: compare no-cutoff vs rcut; choose smallest
      with acceptable ΔE/N and stable forces
-════════════════════════════════════════════════════════════════════════════
+============================================================================
 */
 
 #include "pot/energy.hpp"

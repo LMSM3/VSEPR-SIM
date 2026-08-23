@@ -1,7 +1,7 @@
-/**
+﻿/**
  * molecule_alias.cpp
  * ------------------
- * Common-name → canonical-formula resolver implementation.
+ * Common-name -> canonical-formula resolver implementation.
  *
  * Contains the master alias table (~80+ entries), oxalate fallback pool,
  * case-insensitive matching, and formula pass-through detection.
@@ -186,7 +186,7 @@ static const std::vector<AliasEntry>& build_alias_table() {
         {"calcium oxalate",     "CaC2O4",       "calcium ethanedioate",         "oxalate", 7},
         {"iron oxalate",        "FeC2O4",       "iron(II) ethanedioate",        "oxalate", 7},
 
-        // --- Alias chains (alternate names → same molecule) ---
+        // --- Alias chains (alternate names -> same molecule) ---
         {"dihydrogen monoxide", "H2O",          "dihydrogen monoxide",          "inorganic", 3},
         {"dhmo",                "H2O",          "dihydrogen monoxide",          "inorganic", 3},
         {"table salt",          "NaCl",         "sodium chloride",              "inorganic", 2},
@@ -244,7 +244,7 @@ bool looks_like_formula(const std::string& input) {
 
 Result<AliasEntry> resolve_alias(const std::string& input, uint64_t seed) {
     if (input.empty()) {
-        // Empty input → random oxalate
+        // Empty input -> random oxalate
         AliasEntry entry = random_oxalate(seed);
         return Result<AliasEntry>::ok(entry);
     }
@@ -278,7 +278,7 @@ Result<AliasEntry> resolve_alias(const std::string& input, uint64_t seed) {
         return Result<AliasEntry>::ok(passthrough);
     }
 
-    // Step 4: Unrecognized name → random oxalate default
+    // Step 4: Unrecognized name -> random oxalate default
     AliasEntry fallback = random_oxalate(seed);
     return Result<AliasEntry>::ok(fallback);
 }

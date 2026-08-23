@@ -1,7 +1,7 @@
-#pragma once
+﻿#pragma once
 /**
  * matrix_ops.hpp
- * ──────────────
+ * --------------
  * Dynamically allocated matrix with flat storage for cache efficiency.
  * C++26 / C++23 features: std::expected, trailing return types.
  *
@@ -14,7 +14,7 @@
 #include <stdexcept>
 #include <cmath>
 
-/// Explicitly defined Matrix structure — flat row-major storage
+/// Explicitly defined Matrix structure  -  flat row-major storage
 struct Matrix {
     size_t rows;
     size_t cols;

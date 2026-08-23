@@ -1,0 +1,274 @@
+# =============================================================================
+# IKK V — Field Identity and the Infinite-Radius Limit
+# VSIM implementation: Fe BCC, progressively enlarged supercells
+#
+# Theory claim (IKK V):
+#   A field is not a separate ontological category.
+#   It is the large-radius limit of identity-bearing structure:
+#
+#     F = lim_{r_P → ∞} P(r_P)
+#
+#   Identity is preserved across the limit. Category is not.
+#   A particle becomes field-like not by changing its nature but
+#   by being observed through a projection window larger than its
+#   identity radius r_P.
+#
+# Computational test:
+#   Run Fe BCC at three supercell sizes: 4×4×4, 8×8×8, 16×16×16.
+#   For each, run scale_sampling with the largest RVE window
+#   approaching the supercell edge length.
+#
+#   IKK V §2: as the RVE window → system size, field_projection
+#   should become uniform (spatial_cv → 0). This is the observable
+#   signature of field-like identity: no internal structure visible
+#   at the observation scale.
+#
+#   IKK V §3: field/particle continuity.
+#     Small window (2.48 Å): particle-like. coordination = 8, RDF peaks present.
+#     Large window (~system size): field-like. spatial_cv low, emergence_candidate
+#     may flip depending on whether coherent structure survives projection.
+#
+#   IKK V §5: cost asymmetry (pointer to MIR IV).
+#     C_R(F) ≈ 0: field identity has no physical storage cost.
+#     C_C(F) >> 0: representing a field in simulation costs enormously more
+#     than representing the equivalent particle count.
+#     The 16×16×16 cell (8192 atoms) vs the 4×4×4 cell (128 atoms) demonstrates
+#     this numerically: same physical identity structure, 64× more computational
+#     cost to represent it.
+#
+# Traditional system: Fe BCC (A2_Fe)
+#   Canonical metallic. EAM-appropriate. Well-defined bulk limit.
+#   Coordination 8 is particle-scale observable; disappears at field limit.
+# =============================================================================
+
+[project]
+name        = "ikk5_field_identity_fe_large"
+version     = "v5.1.13.5"
+seed_base   = 5000
+determinism = true
+
+[batch]
+print_plan = true
+
+
+# ============================================================
+# Cell A: 4×4×4 — particle scale
+# r_P ~ 2 unit cells. Coordination clearly 8. Particle identity.
+# ============================================================
+[[batch.job]]
+name            = "cell_4x4x4_particle_scale"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1500
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+# Fe a = 2.87 Å. 4×4×4 edge = 11.5 Å.
+# Windows span from bond to approaching system edge.
+# At 10 Å window the system is nearly fully enclosed — field limit begins.
+rve_window_lengths_A = [2.48, 4.96, 7.44, 10.0]
+field_grid           = [8, 8, 8]
+
+[batch.job.verify.structure]
+enabled                     = true
+expected_coordination       = 8
+coordination_tolerance      = 0
+expected_nearest_neighbor_A = 2.48
+nearest_neighbor_tolerance_A = 0.10
+
+
+# ============================================================
+# Cell B: 8×8×8 — transition scale
+# r_P ~ 4 unit cells. Coordination still 8 locally.
+# At largest window, field-like behavior should begin to appear.
+# IKK V §3: identity preserved (still Fe BCC); category shifting.
+# ============================================================
+[[batch.job]]
+name            = "cell_8x8x8_transition_scale"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "8x8x8"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1500
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+# 8×8×8 edge = 22.96 Å.
+# Largest window (20 Å) approaches system edge.
+rve_window_lengths_A = [2.48, 4.96, 9.92, 19.84]
+field_grid           = [8, 8, 8]
+
+[batch.job.verify.structure]
+enabled                     = true
+expected_coordination       = 8
+coordination_tolerance      = 0
+expected_nearest_neighbor_A = 2.48
+nearest_neighbor_tolerance_A = 0.10
+
+
+# ============================================================
+# Cell C: 16×16×16 — field limit approach
+# r_P ~ 8 unit cells. 8192 atoms.
+# C_C(F) >> C_C(particle): this is IKK V §5 cost asymmetry made concrete.
+# At the largest window (~45 Å), spatial_cv should approach 0.
+# emergence_candidate at full-system window = field-like identity.
+#
+# IKK V §6 limits:
+#   This does not say field quanta or gauge structure.
+#   It only demonstrates the observable signature of the large-radius limit:
+#   uniform field projection, bounded MSD, coordination still locally 8.
+# ============================================================
+[[batch.job]]
+name            = "cell_16x16x16_field_limit"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "16x16x16"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1000    # shorter: 8192 atoms, computationally heavy
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+# 16×16×16 edge = 45.92 Å.
+# Largest window (44 Å) is nearly the full system — true field limit probe.
+# Expected result: spatial_cv(44 Å) < spatial_cv(2.48 Å)
+# That inversion is the field-limit signature.
+rve_window_lengths_A = [2.48, 9.92, 22.96, 44.0]
+field_grid           = [8, 8, 8]
+
+[batch.job.verify.structure]
+enabled                     = true
+expected_coordination       = 8
+coordination_tolerance      = 0
+expected_nearest_neighbor_A = 2.48
+nearest_neighbor_tolerance_A = 0.10
+
+
+# ---------------------------------------------------------------------------
+# Shared config
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+rve_windows_per_level            = 6
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+spatial_cv_threshold             = 0.30
+temporal_drift_threshold         = 0.15
+scale_drift_threshold            = 0.25
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.0
+contact_cutoff_A  = 3.0
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 50
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = false
+defect_events    = false
+dynamic_energy   = true
+
+[verify]
+enabled             = true
+profile             = "ikk5_field_limit_fe"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.48, 2.87, 4.05]
+peak_tolerance_A   = 0.15
+require_peak_order = true
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 2.5
+max_slope_late       = 0.002
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+[export]
+write_xyz             = true
+write_analysis_json   = true
+write_metrics_tsv     = true
+write_report_md       = true
+write_manifest_json   = true
+write_scale_sampling_json = true
+output_dir            = "out/ikk5_fe_field_limit"
+
+[report]
+title                   = "IKK V — Field Identity Fe BCC: 4x4x4 → 8x8x8 → 16x16x16"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type      = "terminal_overlay_cycle"
+render_interval  = 50
+show_bar_chart   = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination

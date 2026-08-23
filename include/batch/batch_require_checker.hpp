@@ -1,8 +1,8 @@
-#pragma once
+﻿#pragma once
 /**
  * include/batch/batch_require_checker.hpp
  * =========================================
- * WO-VSIM-62C — [batch.require] Enforcement
+ * WO-VSIM-62C  -  [batch.require] Enforcement
  *
  * Evaluated after each run completes.  Checks that declared files exist
  * in the run output directory, and that declared check names appear in

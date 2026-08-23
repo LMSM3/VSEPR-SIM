@@ -1,0 +1,389 @@
+﻿{
+    "branch":  "day84t-chemplus-declarative-vsepr",
+    "subsystems":  [
+                       {
+                           "public_interfaces":  [
+                                                     "ElementDatabase",
+                                                     "PeriodicTable",
+                                                     "ElementIndexTracker",
+                                                     "Status"
+                                                 ],
+                           "runtime_dependencies":  [
+
+                                                    ],
+                           "notes":  "Required for all element-aware simulation and inspection",
+                           "role":  "Element data, linear algebra, status, identity, statistics",
+                           "name":  "core",
+                           "files":  59,
+                           "disposition":  "RETAIN",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "src/core",
+                                         "include/core"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "atomistic::State",
+                                                     "atomistic::classify",
+                                                     "atomistic::fire"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "core",
+                                                        "pot"
+                                                    ],
+                           "notes":  "Kernel is reused; classification moves to live-state observers, not ownership",
+                           "role":  "Molecular state, VSEPR classification, geometry, FIRE minimization",
+                           "name":  "atomistic",
+                           "files":  113,
+                           "disposition":  "ADAPT",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "atomistic",
+                                         "include/atomistic"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "Bead",
+                                                     "BeadSystem",
+                                                     "MappingScheme"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "core",
+                                                        "atomistic"
+                                                    ],
+                           "notes":  "Retain bead reduction logic; retire CG-as-owner visualization loops",
+                           "role":  "Bead reduced representation, CG interaction engine, mapping",
+                           "name":  "coarse_grain",
+                           "files":  83,
+                           "disposition":  "ADAPT",
+                           "priority":  "P1",
+                           "paths":  [
+                                         "coarse_grain",
+                                         "include/coarse_grain"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "peptide_formation",
+                                                     "reaction_bridge"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "atomistic",
+                                                        "core"
+                                                    ],
+                           "notes":  "Useful after initial DFAE proof",
+                           "role":  "Chemistry-specific utilities: peptide, reaction, dissolution",
+                           "name":  "chem",
+                           "files":  16,
+                           "disposition":  "RETAIN",
+                           "priority":  "P2",
+                           "paths":  [
+                                         "chem",
+                                         "include/chem"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "vsepr_sim library"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "atomistic",
+                                                        "core",
+                                                        "coarse_grain"
+                                                    ],
+                           "notes":  "Separate builders from runtime authority; runtime owns state lifecycle",
+                           "role":  "Builders, runners, and orchestration helpers",
+                           "name":  "sim",
+                           "files":  42,
+                           "disposition":  "REBUILD",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "src/sim",
+                                         "include/sim",
+                                         "sim"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "VsimDocument",
+                                                     "VsimRuntime",
+                                                     "VsimParser"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "pipeline",
+                                                        "kernel",
+                                                        "core"
+                                                    ],
+                           "notes":  "Keep declarative parser and runtime bridge; runtime becomes authoritative",
+                           "role":  "VSIM parser, document model, scripting runtime, registry",
+                           "name":  "vsim_runtime",
+                           "files":  110,
+                           "disposition":  "ADAPT",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "src/vsim",
+                                         "include/vsim"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "vsepr inspect",
+                                                     "vsepr run",
+                                                     "vsepr validate",
+                                                     "cmd_*"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "vsepr_cli library"
+                                                    ],
+                           "notes":  "Primary control surface for V6",
+                           "role":  "Command router and headless commands",
+                           "name":  "cli",
+                           "files":  75,
+                           "disposition":  "RETAIN",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "src/cli",
+                                         "include/cli",
+                                         "apps/vsepr.cpp"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "xyz_format",
+                                                     "molecular_io"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "core"
+                                                    ],
+                           "notes":  "Scientific truth export; update to emit state deltas",
+                           "role":  "XYZ, xyzFull, trajectory, and molecular I/O",
+                           "name":  "io",
+                           "files":  11,
+                           "disposition":  "RETAIN",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "src/io",
+                                         "include/io"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "run_pipeline",
+                                                     "stage_*"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "v4::FormationRecord"
+                                                    ],
+                           "notes":  "Keep pure transforms; feed from live FormationEvent stream",
+                           "role":  "Formation-\u003efingerprint-\u003ecluster-\u003eanalysis-\u003ereport-\u003edashboard",
+                           "name":  "pipeline",
+                           "files":  6,
+                           "disposition":  "ADAPT",
+                           "priority":  "P1",
+                           "paths":  [
+                                         "include/pipeline"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "thermal_properties"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "core"
+                                                    ],
+                           "notes":  "Retain useful inference; avoid hidden fallbacks",
+                           "role":  "Thermodynamics property inference stubs",
+                           "name":  "thermal",
+                           "files":  6,
+                           "disposition":  "ADAPT",
+                           "priority":  "P2",
+                           "paths":  [
+                                         "src/thermal",
+                                         "include/thermal"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "RouteRecommender",
+                                                     "PropertyTrend"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "core"
+                                                    ],
+                           "notes":  "Rebuild on live-state features rather than ad-hoc scoring",
+                           "role":  "Material property route recommender/trend stubs",
+                           "name":  "ml",
+                           "files":  2,
+                           "disposition":  "RETYPE",
+                           "priority":  "P3",
+                           "paths":  [
+                                         "src/ml",
+                                         "include/ml"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "MaterialPresetCache",
+                                                     "FormationLUT"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "core",
+                                                        "io"
+                                                    ],
+                           "notes":  "Useful for validated element/precomputed data cache",
+                           "role":  "Material preset and formation lookup caches",
+                           "name":  "cache",
+                           "files":  9,
+                           "disposition":  "ADAPT",
+                           "priority":  "P2",
+                           "paths":  [
+                                         "src/cache",
+                                         "include/vsim/cache"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "ufx_*"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "v4/uff"
+                                                    ],
+                           "notes":  "Large external-dependency surface; review before migration",
+                           "role":  "UFF/web material generation and validation",
+                           "name":  "ufx_auto2",
+                           "files":  33,
+                           "disposition":  "QUARANTINE",
+                           "priority":  "P3",
+                           "paths":  [
+                                         "src/ufx_auto2",
+                                         "include/ufx_auto2"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "supported_viewer",
+                                                     "viewer_launcher"
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "VTK",
+                                                        "Qt6"
+                                                    ],
+                           "notes":  "Render-only consumer; must not own simulation loop",
+                           "role":  "VTK/Qt3D and supported viewer abstractions",
+                           "name":  "vis",
+                           "files":  58,
+                           "disposition":  "QUARANTINE",
+                           "priority":  "P2",
+                           "paths":  [
+                                         "src/vis",
+                                         "include/vis"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+
+                                                 ],
+                           "runtime_dependencies":  [
+
+                                                    ],
+                           "notes":  "No remaining consumers",
+                           "role":  "Legacy render helpers",
+                           "name":  "render",
+                           "files":  2,
+                           "disposition":  "REMOVE",
+                           "priority":  "PX",
+                           "paths":  [
+                                         "src/render"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+
+                                                 ],
+                           "runtime_dependencies":  [
+
+                                                    ],
+                           "notes":  "Retired with standalone viewer authority",
+                           "role":  "ImGui/Qt GUI fragments",
+                           "name":  "gui",
+                           "files":  7,
+                           "disposition":  "REMOVE",
+                           "priority":  "PX",
+                           "paths":  [
+                                         "src/gui"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "all"
+                                                    ],
+                           "notes":  "Keep physics tests; remove orchestration-dependent shells",
+                           "role":  "Unit, regression, and acceptance tests",
+                           "name":  "tests",
+                           "files":  265,
+                           "disposition":  "ADAPT",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "tests"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "libraries"
+                                                    ],
+                           "notes":  "Reduce to dfae + canonical CLI tools",
+                           "role":  "Standalone demo and batch executables",
+                           "name":  "apps",
+                           "files":  75,
+                           "disposition":  "ADAPT",
+                           "priority":  "P1",
+                           "paths":  [
+                                         "apps"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+                                                     "PeriodicTableJSON.json"
+                                                 ],
+                           "runtime_dependencies":  [
+
+                                                    ],
+                           "notes":  "Source of truth for element registry migration",
+                           "role":  "Periodic table JSON and validated element data",
+                           "name":  "data",
+                           "files":  50,
+                           "disposition":  "RETAIN",
+                           "priority":  "P0",
+                           "paths":  [
+                                         "data"
+                                     ]
+                       },
+                       {
+                           "public_interfaces":  [
+
+                                                 ],
+                           "runtime_dependencies":  [
+                                                        "vsim_runtime"
+                                                    ],
+                           "notes":  "Keep declarative examples; remove orchestration debris",
+                           "role":  "Declarative VSIM examples and demo scripts",
+                           "name":  "scripts",
+                           "files":  250,
+                           "disposition":  "RETAIN",
+                           "priority":  "P1",
+                           "paths":  [
+                                         "scripts"
+                                     ]
+                       }
+                   ],
+    "exported_at":  "2026-08-05T16:41:28",
+    "version":  "5.16.0"
+}

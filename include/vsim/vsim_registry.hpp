@@ -1,10 +1,10 @@
 ﻿#pragma once
 // =============================================================================
-// vsim_registry.hpp  —  WO-VSIM-03C  Registry Resolution Engine
+// vsim_registry.hpp   -   WO-VSIM-03C  Registry Resolution Engine
 // =============================================================================
 //
-// RegistryBundle  — crystallographic expansion of a resolved prototype key.
-// RegistryResolver — maps prototype keys to RegistryBundles + logs [REGISTRY].
+// RegistryBundle   -  crystallographic expansion of a resolved prototype key.
+// RegistryResolver  -  maps prototype keys to RegistryBundles + logs [REGISTRY].
 //
 // Include this header AFTER or ALONGSIDE vsim_document.hpp.
 // vsim_runtime.hpp includes it explicitly.
@@ -26,7 +26,7 @@ namespace vsim {
 // Produced by RegistryResolver::resolve(MaterialSection&, ostream&).
 //
 struct RegistryBundle {
-    // ── Core structure fields (B9-1 / B9-2) ──────────────────────────────────
+    // -- Core structure fields (B9-1 / B9-2) ----------------------------------
     std::string prototype;            // Canonical key: "B1_NaCl", "A4_diamond"
     std::string space_group;          // Hermann-Mauguin: "Fm-3m", "Fd-3m"
     std::string basis;                // "Na:0,0,0; Cl:0.5,0.5,0.5"
@@ -36,45 +36,45 @@ struct RegistryBundle {
     bool        is_periodic   = true; // false for molecules / 0-D structures
     bool        populated     = false;// true when at least one field was resolved
 
-    // ── Sub-registry fields (B9-3 through B9-11) ─────────────────────────────
+    // -- Sub-registry fields (B9-3 through B9-11) -----------------------------
     // Each field is the registry default; apply_registry_defaults() merges
     // these into VsimDocument only when the user has not set the field explicitly.
 
-    // B9-3: material_class — broad family: "ionic", "metallic", "molecular",
+    // B9-3: material_class  -  broad family: "ionic", "metallic", "molecular",
     //        "covalent", "polymer", "bead", "porous", "ceramic"
     std::string material_class;
 
-    // B9-4: run_mode — preferred run mode for this material family
+    // B9-4: run_mode  -  preferred run mode for this material family
     //        e.g. "relax", "md", "nvt", "npt"
     std::string default_run_mode;
 
-    // B9-5: environment defaults — periodic flag already covered by is_periodic;
+    // B9-5: environment defaults  -  periodic flag already covered by is_periodic;
     //        medium hint for MD setup
     std::string default_medium;       // "vacuum", "water", "inert_gas"
     double      default_temperature = 300.0;
     double      default_pressure    = 0.0;
 
-    // B9-6: solver — integration scheme hint
+    // B9-6: solver  -  integration scheme hint
     //        "fire", "verlet", "leapfrog", "runge_kutta4"
     std::string default_solver;
 
-    // B9-7: forcefield — potential family to use
+    // B9-7: forcefield  -  potential family to use
     //        "ewald_formal", "lj_neutral", "tersoff", "reaxff", "bead_spring"
     std::string default_forcefield;
 
-    // B9-8: observables — comma-separated list of analysis quantities
+    // B9-8: observables  -  comma-separated list of analysis quantities
     //        the runtime should compute by default for this material class
     std::string default_observables;
 
-    // B9-9: export_profile — named export preset (resolved by resolve_export_profile)
+    // B9-9: export_profile  -  named export preset (resolved by resolve_export_profile)
     //        "minimal", "standard", "research_report", "publication"
     std::string default_export_profile;
 
-    // B9-10: geometry_source — how the initial geometry is generated
+    // B9-10: geometry_source  -  how the initial geometry is generated
     //         "lattice_builder", "basis_expand", "from_cif", "random_pack", "bead_builder"
     std::string geometry_source;
 
-    // B9-11: radiation — applicable radiation type for excite.* defaults
+    // B9-11: radiation  -  applicable radiation type for excite.* defaults
     //         "none", "laser_visible", "laser_uv", "xray", "electron_beam", "neutron"
     std::string default_radiation;
 
@@ -87,7 +87,7 @@ struct RegistryBundle {
 
 struct RegistryResolver {
 
-    // resolve — expand MaterialSection resolved prototype into a RegistryBundle.
+    // resolve  -  expand MaterialSection resolved prototype into a RegistryBundle.
     // Logs each resolved field to log with the [REGISTRY] prefix.
     static RegistryBundle resolve(const MaterialSection& mat, std::ostream& log) {
         const std::string proto = mat.resolved_prototype();
@@ -95,7 +95,7 @@ struct RegistryResolver {
         return resolve_proto(proto, alias, log);
     }
 
-    // Convenience overload — logs to std::cout.
+    // Convenience overload  -  logs to std::cout.
     static RegistryBundle resolve(const MaterialSection& mat) {
         return resolve(mat, std::cout);
     }
@@ -117,7 +117,7 @@ struct RegistryResolver {
             emit(field, std::to_string(val));
         };
 
-        // ── ionic / salts ────────────────────────────────────────────────────
+        // -- ionic / salts ----------------------------------------------------
         if (proto == "B1_NaCl" || proto == "B1_MgO"
                 || proto == "magnesia" || proto == "halite") {
             b.space_group = (proto == "B1_MgO" || proto == "magnesia") ? "Fm-3m" : "Fm-3m";
@@ -165,12 +165,12 @@ struct RegistryResolver {
             b.basis = "A:0,0,0; B:0.625,0.625,0.625; O:0.375,0.375,0.375";
             b.generator = "ionic_spinel"; b.coordination = 4;
             b.default_charge_model = "formal"; b.is_periodic = true;
-        // ── oxides / ceramics ─────────────────────────────────────────────────
+        // -- oxides / ceramics -------------------------------------------------
         } else if (proto == "D5_Al2O3_corundum" || proto == "alpha_alumina" || proto == "corundum") {
             b.space_group = "R-3c"; b.basis = "Al:0,0,0.352; O:0.306,0,0.25";
             b.generator = "ionic_corundum"; b.coordination = 6;
             b.default_charge_model = "formal"; b.is_periodic = true;
-        // ── elemental metals / simple crystals ────────────────────────────────
+        // -- elemental metals / simple crystals --------------------------------
         } else if (proto == "A_cP1" || proto == "A1_cubic" || proto == "simple_cubic") {
             b.space_group = "Pm-3m"; b.basis = "X:0,0,0";
             b.generator = "simple_cubic"; b.coordination = 6;
@@ -201,7 +201,7 @@ struct RegistryResolver {
             b.space_group = "P6/mmm"; b.basis = "C:0,0,0; C:0.333,0.667,0";
             b.generator = "graphene_2d"; b.coordination = 3;
             b.default_charge_model = "neutral"; b.is_periodic = false;
-        // ── molecular geometry ────────────────────────────────────────────────
+        // -- molecular geometry ------------------------------------------------
         } else if (proto == "geom_linear" || proto == "linear") {
             b.basis = "A:0,0,0; B:0,0,1"; b.generator = "geom_linear";
             b.coordination = 2; b.default_charge_model = "neutral"; b.is_periodic = false;
@@ -236,7 +236,7 @@ struct RegistryResolver {
             b.basis = "A:0,0,0; B:1,0,0; B:-1,0,0; B:0,1,0";
             b.generator = "geom_t_shaped"; b.coordination = 3;
             b.default_charge_model = "neutral"; b.is_periodic = false;
-        // ── polymers / organics ───────────────────────────────────────────────
+        // -- polymers / organics -----------------------------------------------
         } else if (proto == "polymer_linear_chain" || proto == "linear_chain") {
             b.generator = "polymer_linear_chain"; b.coordination = 2;
             b.default_charge_model = "neutral"; b.is_periodic = false;
@@ -252,7 +252,7 @@ struct RegistryResolver {
         } else if (proto == "organic_cycloalkane" || proto == "cycloalkane") {
             b.generator = "organic_cycloalkane"; b.coordination = 2;
             b.default_charge_model = "neutral"; b.is_periodic = false;
-        // ── porous / framework ────────────────────────────────────────────────
+        // -- porous / framework ------------------------------------------------
         } else if (proto == "framework_zeolite" || proto == "zeolite") {
             b.generator = "framework_zeolite"; b.coordination = 4;
             b.default_charge_model = "formal"; b.is_periodic = true;
@@ -266,7 +266,7 @@ struct RegistryResolver {
             b.space_group = "Fm-3m"; b.basis = "Fe:0,0,0; C:0.25,0,0; N:0.35,0,0";
             b.generator = "framework_prussian_blue"; b.coordination = 6;
             b.default_charge_model = "formal"; b.is_periodic = true;
-        // ── bead / premacro ───────────────────────────────────────────────────
+        // -- bead / premacro ---------------------------------------------------
         } else if (proto == "bead_linear_chain" || proto == "bead_chain") {
             b.generator = "bead_linear_chain"; b.coordination = 2;
             b.default_charge_model = "neutral"; b.is_periodic = false;
@@ -292,7 +292,7 @@ struct RegistryResolver {
 
         b.populated = !b.generator.empty();
 
-        // ── Sub-registry pass (B9-3 through B9-11) ───────────────────────────
+        // -- Sub-registry pass (B9-3 through B9-11) ---------------------------
         // Derive defaults from generator family. These are applied AFTER the
         // main structural resolution so every branch only sets what it needs.
         if (b.populated) {

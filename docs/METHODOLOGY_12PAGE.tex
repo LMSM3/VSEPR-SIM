@@ -1,9 +1,9 @@
 \documentclass[11pt, a4paper]{article}
 \usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
+\usepackage{newtxtext,newtxmath}
 \usepackage{microtype}
-\usepackage{amsmath, amssymb, amsthm}
+\usepackage{amsmath}
 \usepackage{bm}
 \usepackage{booktabs}
 \usepackage{array}
@@ -17,7 +17,7 @@
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[L]{\small\textit{Formation Engine Methodology}}
-\fancyhead[R]{\small\textit{Condensed Reference (v3.0.0)}}
+\fancyhead[R]{\small\textit{Condensed Reference (v5.14.1)}}
 \fancyfoot[C]{\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
 
@@ -44,7 +44,7 @@
 {\LARGE\bfseries Formation Engine}\\[0.3em]
 {\LARGE\bfseries Canonical Simulation Methodology}\\[0.8em]
 {\large Condensed Reference (12 pages)}\\[0.5em]
-{\normalsize Version 3.0.0 --- January 2025}\\[0.3em]
+{\normalsize Version 5.14.1 --- Day 88 Continuity Revision}\\[0.3em]
 {\small Covers \S0--\S13 of the full 186-page methodology}
 \end{center}
 
@@ -59,7 +59,7 @@
 
 \subsection{The Problem}
 
-Modern computational materials science has a gap at intermediate scales (100--10,000 atoms).  Quantum methods are too expensive; continuum models assume structure rather than generating it.  The Formation Engine fills this gap: a reproducible instrument for generating physically admissible structures under explicit assumptions.
+Modern computational materials science has a gap between fully resolved molecular dynamics and continuum descriptions. Quantum methods are too expensive at intermediate scales, while continuum models assume constitutive behaviour rather than generating it. VSEPR-SIM treats the Formation Engine, VSIM orchestration, artifact pipeline, and near-meso bead layer as one reproducible instrument for generating and interrogating physically admissible states under explicit assumptions.
 
 It is positioned as an \emph{instrument}, not a prediction claim---analogous to a microscope that enables observation rather than asserting theory.
 
@@ -72,7 +72,7 @@ It is positioned as an \emph{instrument}, not a prediction claim---analogous to 
 
 \item \textbf{Deterministic core.}  Given identical state, the trajectory is identical.  All randomness is controlled by the seed.
 
-\item \textbf{Periodic table as sole authority.}  No molecular databases, no empirical crystal structures.  Parameters derived from $Z$, atomic weight, covalent/VDW radii, electronegativity, ionization energy, and electron affinity via UFF.
+\item \textbf{Traceable authority.} The periodic table anchors particle identity. Reference molecular or materials records may extend identity only when source, method, confidence, and transformation lineage are explicit; model-derived records never become experimental truth silently.
 \end{enumerate}
 
 \subsection{Physical Admissibility}
@@ -88,7 +88,7 @@ Admissibility does \emph{not} imply thermodynamic equilibrium, synthetic feasibi
 
 \subsection{Explicit Scope Boundaries}
 
-Extension points (quantum corrections, reactive potentials, ML surrogates) are architecturally reserved but not implemented in v3.0.0.
+Extension points (quantum corrections, reactive potentials, ML surrogates, hosted control, and open-system bead exchange) remain capability-gated. Their presence in a schema or renderer does not establish scientific validation.
 
 
 % ═══════════════════════════════════════════════════════════════════════════
@@ -134,6 +134,12 @@ Scratch & $\mathbf{F}, \mathcal{E}, \mathcal{L}, \mathcal{B}$ & Recomputed from 
 \end{center}
 
 This decomposition enforces consistency: forces are zeroed before every evaluation, masses are locked to the periodic table via $\boldsymbol{\tau}$, and topology is inferred from geometry rather than stored as input.
+
+\subsection{VSIM, Artifacts, and Presentation}
+
+VSIM is the reproducible orchestration surface. A script declares identity, state evolution, analysis, and export intent; execution produces scientific truth artifacts and a manifest linking source hash, seed, engine version, and generated files. Renderer and report products are sidecars: they may consume positions, states, events, and metrics but do not own or mutate scientific state.
+
+The renderer-neutral contract permits independent OpenGL, BGFX, native CPU/GDI, R, XLSX, and hosted HTML consumers. A successful renderer launch proves presentation availability only. Scientific evidence requires the upstream artifact, schema, provenance, and validation result.
 
 \subsection{Energy Ledger}
 
@@ -391,7 +397,8 @@ Scale & $N$ & Method \\
 Molecular & 2--50 & Full MM + FIRE \\
 Cluster & 50--500 & MD + quench \\
 Bulk & 500--10k & PBC + supercell replication \\
-Coarse-Grained & 10k+ & CG placeholder \\
+Near-meso bead & $10^3$--$10^6$ packets & Resolved packet state + exchange ledger \\
+Continuum handoff & model dependent & Conserved boundary flux summaries \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -401,6 +408,15 @@ $\mathbf{r}_{i,pqr} = \mathbf{r}_i + p\,\mathbf{a} + q\,\mathbf{b} + r\,\mathbf{
 for $p \in [0, n_a)$, etc.  Bond graph re-inferred from supercell geometry (not replicated from unit cell) as a validation sanity check.
 
 Provenance chain: \texttt{unit\_cell.xyz $\to$ supercell(2,2,2) $\to$ relax(FIRE) $\to$ final.xyzC}.
+
+\subsection{Resolved Bead Packets and Open Exchange}
+
+A bead is not merely a display sphere. It is a classical near-meso control volume containing a resolved example packet: constituent identity summary, represented mass, momentum, energy, local observables, internal memory state, and provenance. Mass, momentum, energy, and selected species may enter or leave through explicit flux events. For bead $b$ over $\Delta t$,
+\begin{equation}
+\Delta M_b = \Delta t\sum_f \dot{m}_{b,f}, \qquad
+\Delta E_b = \Delta t\sum_f \dot{E}_{b,f} + W_b + Q_b,
+\end{equation}
+with equivalent vector accounting for momentum. Every exchange is recorded in a conservation ledger; no visual interpolation may create or destroy represented mass. Closing the system reduces net boundary exchange to zero, while an open system requires declared sources, sinks, and residual tolerances.
 
 
 % ═══════════════════════════════════════════════════════════════════════════
@@ -444,7 +460,7 @@ Given $(\text{formula},\, \text{seed},\, \text{parameters})$, the engine must pr
 \section{Validation Doctrine (\S12)}
 % ═══════════════════════════════════════════════════════════════════════════
 
-35 hierarchical tests across 5 levels.  Each test has an explicit pass/fail criterion defined \emph{before} execution.
+Validation is evidence-scoped. Unit, integration, stress, artifact, renderer, and scientific-reference checks each require criteria defined \emph{before} execution. Test discovery is inventory only; a build does not imply runtime, interactive, or scientific correctness.
 
 \begin{center}
 \begin{tabular}{llccl}
@@ -464,7 +480,7 @@ Level & Category & Tests & Pass & Key Criterion \\
 
 \textbf{Known failure:} Level 3 Langevin temperature target for small systems (finite-size thermostat coupling).
 
-\textbf{Production certified for:} Noble gases (Ar, Xe, Kr), hydrocarbons (CH$_4$, benzene, alkanes), small organics (H$_2$O, NH$_3$, CH$_3$OH), molecular clusters.
+\textbf{Evidence status:} validated regimes, model-derived regimes, exploratory regimes, and rejected regimes are reported separately. No blanket production certification is inferred from aggregate pass counts.
 
 \textbf{Requires fix before production:} Ionic MD (NaCl, MgO) --- use FIRE only until Coulomb coupling resolved.
 
@@ -476,12 +492,12 @@ Level & Category & Tests & Pass & Key Criterion \\
 Ordered by impact-to-effort ratio:
 
 \begin{enumerate}
-\item \textbf{Neighbour lists} --- Cell-linked or Verlet lists for $O(N)$ force evaluation ($50\times$ speedup for $N > 1000$)
+\item \textbf{Visual and runtime stress above 1,000 particles} --- shared-artifact parity across OpenGL, BGFX, and native CPU/GDI consumers
 \item \textbf{NPT barostat} --- Pressure control via Parrinello--Rahman for crystal structure relaxation
 \item \textbf{Reactive bond orders} --- ReaxFF-style continuous bond order for dynamic bond breaking/formation
 \item \textbf{Quantum corrections} --- Delta-learning: $U = U_\text{classical} + \Delta U_\text{QM}$ from single-point DFT
 \item \textbf{ML potentials} --- SchNet/MACE surrogates trained on formation engine ensembles
-\item \textbf{Grand canonical} --- $\mu VT$ ensemble for variable-composition systems
+\item \textbf{Resolved bead exchange} --- mass, momentum, energy, and species flux ledgers for open near-meso control volumes
 \item \textbf{Explicit solvent} --- TIP3P/SPC/E water models
 \end{enumerate}
 
@@ -493,7 +509,7 @@ All extensions preserve the core contract: determinism, explicit units, provenan
 \small
 Full methodology: 11 \LaTeX\ source files in \texttt{docs/}.\\
 Repository: \url{https://github.com/LMSM3/VSEPR-SIM}\\
-License: MIT \quad|\quad 821 source files \quad|\quad 35 validation tests
+License: MIT \quad|\quad active development \quad|\quad evidence-scoped validation
 \end{center}
 
 \end{document}

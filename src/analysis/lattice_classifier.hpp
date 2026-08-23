@@ -1,22 +1,22 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/analysis/lattice_classifier.hpp
 // =============================================================================
 // Per-atom and system-level lattice type classification.
-// Analysis-only — nothing is stored in State or xyzFull.
+// Analysis-only  -  nothing is stored in State or xyzFull.
 //
 // Method: Steinhardt bond-order parameters (Q_l, W_l) + coordination number.
 //
 // Q_l = sqrt(4π/(2l+1) · Σ_m |q_lm_bar|²)
-//   where q_lm_bar = (1/N_b) Σ_j Y_lm(r_ij)  — averaged over neighbors
+//   where q_lm_bar = (1/N_b) Σ_j Y_lm(r_ij)   -  averaged over neighbors
 //
 // W_l = Σ_{m1+m2+m3=0} (l  l  l ) q_lm1 q_lm2 q_lm3
 //                        (m1 m2 m3)
-//   (Wigner 3j symbols — sign of W6 discriminates FCC from HCP)
+//   (Wigner 3j symbols  -  sign of W6 discriminates FCC from HCP)
 //
 // Reference fingerprints (noise-free ideal structures):
 //   Structure    CN   Q4      Q6      W6 (sign)
-//   ─────────────────────────────────────────────
+//   ---------------------------------------------
 //   SC            6   0.764   0.354   ≈0
 //   BCC           8   0.036   0.511   +
 //   FCC          12   0.191   0.575   −
@@ -52,11 +52,11 @@
 namespace vsepr::xtal {
 
 // =============================================================================
-// Spherical Harmonics Y_lm — real form used in Steinhardt
+// Spherical Harmonics Y_lm  -  real form used in Steinhardt
 // Implemented explicitly for l=4 and l=6 to avoid external dependencies.
 // =============================================================================
 
-// Y_lm(θ,φ) — complex spherical harmonics for l=4 and l=6
+// Y_lm(θ,φ)  -  complex spherical harmonics for l=4 and l=6
 // Using the convention of Steinhardt et al. (1983).
 // Returns complex Y_lm for given unit vector r̂.
 static inline std::complex<double> Ylm(int l, int m, double x, double y, double z)
@@ -129,7 +129,7 @@ static inline std::complex<double> Ylm(int l, int m, double x, double y, double 
 	return norm * P * exp_imphi;
 }
 
-// Wigner 3j symbol (l l l / m1 m2 m3) — precomputed via Racah formula
+// Wigner 3j symbol (l l l / m1 m2 m3)  -  precomputed via Racah formula
 // Only non-zero when m1+m2+m3=0 and triangle condition satisfied.
 // We use a recursive implementation sufficient for l=4 and l=6.
 static inline double wigner3j_lll(int l, int m1, int m2, int m3)
@@ -147,7 +147,7 @@ static inline double wigner3j_lll(int l, int m1, int m2, int m3)
 	};
 
 	int J = 2 * l;    // j1+j2+j3 = 3l, but for (l l l): J = 3l
-	// Check triangle condition: |j1-j2| <= j3 <= j1+j2 → always OK for (l l l)
+	// Check triangle condition: |j1-j2| <= j3 <= j1+j2 -> always OK for (l l l)
 
 	// Prefactor
 	double num = factorial(J - 2*l) * factorial(J - 2*l) * factorial(J - 2*l);
@@ -184,7 +184,7 @@ static inline double wigner3j_lll(int l, int m1, int m2, int m3)
 }
 
 // =============================================================================
-// Steinhardt Parameters — per-atom
+// Steinhardt Parameters  -  per-atom
 // =============================================================================
 
 struct SteinhardtParams {
@@ -298,7 +298,7 @@ struct AtomClassRecord {
 	int         atom_index = -1;
 	SteinhardtParams sp;
 	LatticeType type       = LatticeType::Unknown;
-	double      confidence = 0.0;   // [0,1] — how close to the reference fingerprint
+	double      confidence = 0.0;   // [0,1]  -  how close to the reference fingerprint
 	std::string note;               // disambiguation note
 };
 
@@ -320,7 +320,7 @@ static const std::vector<LatticeReference> LATTICE_REFS = {
 	//
 	// NOTE: BCC Q6=0.511 is computed with the FULL first+second neighbor shell
 	// (8 NN + 6 NNN = 14 neighbors). With only 8 NN, BCC gives Q6≈0.629 (same as
-	// Diamond) — a geometric degeneracy. Always use a cutoff that captures CN=14.
+	// Diamond)  -  a geometric degeneracy. Always use a cutoff that captures CN=14.
 	// CsCl (8 body-diagonal unlike-species neighbors) gives Q6≈0.629 like Diamond.
 	{ LatticeType::SC,          5,  7,  0.764,  0.354,  0.10,  0.10,  0.0,  0.00 },
 	{ LatticeType::BCC,        12, 16,  0.036,  0.511,  0.12,  0.10, +1.0,  0.02 },
@@ -336,7 +336,7 @@ static const std::vector<LatticeReference> LATTICE_REFS = {
 };
 
 // =============================================================================
-// classify_atom() — per-atom classification from SteinhardtParams
+// classify_atom()  -  per-atom classification from SteinhardtParams
 // =============================================================================
 
 static inline AtomClassRecord classify_atom(int idx, const SteinhardtParams& sp)
@@ -345,21 +345,21 @@ static inline AtomClassRecord classify_atom(int idx, const SteinhardtParams& sp)
 	rec.atom_index = idx;
 	rec.sp = sp;
 
-	// Liquid / gas — very low Q6 and high CN variability
+	// Liquid / gas  -  very low Q6 and high CN variability
 	if (sp.Q6 < 0.15 && sp.Q4 < 0.15 && sp.CN >= 2) {
 		rec.type = LatticeType::Liquid;
 		rec.confidence = 0.5;
 		return rec;
 	}
 
-	// Amorphous — low Q6
+	// Amorphous  -  low Q6
 	if (sp.Q6 < 0.25 && sp.Q4 < 0.20) {
 		rec.type = LatticeType::Amorphous;
 		rec.confidence = 0.5;
 		return rec;
 	}
 
-	// Interstitial — unusually high CN beyond any known bulk lattice
+	// Interstitial  -  unusually high CN beyond any known bulk lattice
 	// BCC with first+second shell has CN=14, so threshold is 16.
 	if (sp.CN > 16) {
 		rec.type = LatticeType::Interstitial;
@@ -368,7 +368,7 @@ static inline AtomClassRecord classify_atom(int idx, const SteinhardtParams& sp)
 		return rec;
 	}
 
-	// Match against reference table — find closest in Q4/Q6 space
+	// Match against reference table  -  find closest in Q4/Q6 space
 	double best_dist = 1e9;
 	const LatticeReference* best = nullptr;
 
@@ -384,7 +384,7 @@ static inline AtomClassRecord classify_atom(int idx, const SteinhardtParams& sp)
 		// W6 sign check (FCC vs HCP, Diamond vs Wurtzite)
 		if (ref.W6_sign != 0.0 && std::abs(sp.W6) >= ref.W6_abs_min) {
 			double sign_match = sp.W6 * ref.W6_sign;
-			if (sign_match < 0.0) continue;  // wrong sign — skip this candidate
+			if (sign_match < 0.0) continue;  // wrong sign  -  skip this candidate
 		}
 
 		double dist = std::sqrt(dQ4*dQ4 + dQ6*dQ6);
@@ -402,17 +402,17 @@ static inline AtomClassRecord classify_atom(int idx, const SteinhardtParams& sp)
 
 		// Disambiguation note for ambiguous pairs
 		if (best->type == LatticeType::FCC || best->type == LatticeType::HCP)
-			rec.note = (sp.W6 < 0) ? "W6<0→FCC" : "W6>0→HCP";
+			rec.note = (sp.W6 < 0) ? "W6<0->FCC" : "W6>0->HCP";
 		else if (best->type == LatticeType::BCC || best->type == LatticeType::CsCl)
-			rec.note = "W6>0→BCC/CsCl";
+			rec.note = "W6>0->BCC/CsCl";
 		else if (best->type == LatticeType::Diamond || best->type == LatticeType::ZincBlende)
-			rec.note = (sp.W6 < 0) ? "W6<0→Diamond/ZB" : "W6>0→Wurtzite";
+			rec.note = (sp.W6 < 0) ? "W6<0->Diamond/ZB" : "W6>0->Wurtzite";
 		else if (best->type == LatticeType::Wurtzite)
-			rec.note = "W6>0→Wurtzite";
+			rec.note = "W6>0->Wurtzite";
 		return rec;
 	}
 
-	// No reference matched — call it Amorphous
+	// No reference matched  -  call it Amorphous
 	rec.type = LatticeType::Amorphous;
 	rec.confidence = 0.2;
 	return rec;
@@ -431,7 +431,7 @@ struct SystemLatticeRecord {
 	double      dominant_frac   = 0.0;   // fraction of atoms with dominant label
 	double      mean_confidence = 0.0;
 
-	// Coverage breakdown: type → count
+	// Coverage breakdown: type -> count
 	std::map<LatticeType, int> type_counts;
 
 	// Steinhardt distribution summary
@@ -473,7 +473,7 @@ struct SystemLatticeRecord {
 		std::printf("  %-16s  %5s  %6s  %6s  %6s  %6s  %6s  %s\n",
 					"type", "count", "frac", "Q4", "Q6", "W6", "conf", "note");
 		for (const auto& ar : atoms) {
-			// Just print summary — caller can iterate atoms for full detail
+			// Just print summary  -  caller can iterate atoms for full detail
 			(void)ar;
 		}
 		for (const auto& [lt, cnt] : type_counts) {
@@ -486,7 +486,7 @@ struct SystemLatticeRecord {
 };
 
 // =============================================================================
-// LatticeClassifier — main entry point
+// LatticeClassifier  -  main entry point
 // =============================================================================
 
 class LatticeClassifier {

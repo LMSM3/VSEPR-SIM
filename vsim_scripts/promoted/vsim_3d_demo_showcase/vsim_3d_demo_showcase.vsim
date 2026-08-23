@@ -1,0 +1,256 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║                  VSEPR-SIM — 3D DEMONSTRATION SHOWCASE                 ║
+# ║                                                                          ║
+# ║  Full capability demonstration in one script.                            ║
+# ║                                                                          ║
+# ║  What this shows:                                                        ║
+# ║    1. 3D ionic crystal: NaCl 4×4×4 BCC — Ewald + PBC + 3D projection  ║
+# ║    2. Equilibration loop → frozen single-point snapshot (MIR II)         ║
+# ║    3. Full analysis pipeline: S_op → P_op → M_op → I_op                ║
+# ║    4. Scale sampling across 3D RVE windows — spatial_cv heatmap         ║
+# ║    5. GL live view: auto-orbit, overlay cycle, 60fps render              ║
+# ║    6. Room heat-field: lab preset, 3D thermal field simulation           ║
+# ║    7. Workspace panel suite: helix / events / scalar / heatfield         ║
+# ║    8. Full verify suite: structure + RDF + MSD + mass                   ║
+# ║                                                                          ║
+# ║  Theory: Doc 0, IKK II, MIR II — projection, identity, recoverability   ║
+# ║  Version: v5.1.13.5  Seed: 9000  Determinism: true                     ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+[project]
+name        = "vsim_3d_demo_showcase"
+version     = "v5.1.13.5"
+seed_base   = 9000
+determinism = true
+
+# ── 1. MATERIAL ───────────────────────────────────────────────────────────────
+# NaCl rocksalt — canonical ionic crystal. Best showcase material:
+#   - Clear 6-coordinate structure, visually distinct Na/Cl species
+#   - Requires Ewald summation — exercises the long-range interaction path
+#   - Well-characterised RDF peaks at 2.82 / 3.99 / 4.88 Å
+#   - Suitable for all analysis passes including field projection
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+phase     = "solid"
+
+# ── 2. EQUILIBRATION LOOP ────────────────────────────────────────────────────
+# Run MD until energy variance falls below threshold, then freeze.
+# Demonstrates [while] convergence + MIR II frozen-state pattern.
+
+[while]
+name          = "thermal_equilibration"
+condition     = "energy_var > 0.008"
+max_iters     = 20
+body_steps    = 300
+measure       = energy_var
+iter_delay_ms = 0
+
+[variance]
+energy_var = "energy.total" "last 60" 0.008
+
+# ── 3. PRIMARY RUN — single-point freeze ─────────────────────────────────────
+# After equilibration loop above, a frozen snapshot is taken.
+# max_steps = 1: one evaluation pass, no further integration.
+
+[run]
+mode         = "single_point"
+max_steps    = 1
+output_level = "verbose"
+
+# ── 4. ENVIRONMENT + PBC TRIPLE ──────────────────────────────────────────────
+
+[environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[pbc]
+minimum_image = true
+track_images  = true
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[simulation]
+periodic    = true
+use_ewald   = true      # required for ionic: long-range Coulomb via Ewald summation
+ewald_alpha = 0.3       # damping parameter
+ewald_rcut  = 12.0      # real-space cutoff (Å)
+ewald_kmax  = 5         # reciprocal space shell
+
+[[simulation.molecule]]
+formula     = "NaCl"
+count       = 64
+lattice     = "fcc_ionic"
+temperature = 300.0
+
+# ── 5. ANALYSIS PIPELINE: S_op → P_op → M_op → I_op ─────────────────────────
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 5.6    # ~2× NaCl bond length (2.82 Å)
+contact_cutoff_A  = 3.0    # ~1× bond length
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = false      # single-point: no trajectory; MSD disabled
+min_frames_for_msd    = 999        # gate: disable MSD on 1-frame runs
+unwrap_pbc            = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true    # 3D volumetric density field
+compute_rve_sampling             = true    # RVE window scan across 3D cell
+compute_emergence_metrics        = true
+field_grid                       = [8, 8, 8]       # 512-cell 3D grid
+rve_window_lengths_A             = [2.82, 5.64, 11.28, 22.56]   # NaCl shell multiples
+rve_windows_per_level            = 8
+rve_window_placement             = "grid"
+min_particles_for_scale_sampling = 64
+spatial_cv_threshold             = 0.30
+temporal_drift_threshold         = 0.10    # tight: single-point, minimal drift expected
+scale_drift_threshold            = 0.25
+scale_drift_metric               = "successive_window_difference"
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"    # scale evidence hard-gates macro_ready
+
+# ── 6. OBSERVABLES ────────────────────────────────────────────────────────────
+
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 1          # single-point: emit on every step (just one)
+
+# ── 7. KERNEL + EVENT TRACE ──────────────────────────────────────────────────
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true
+dynamic_energy   = true
+
+# ── 8. ROOM HEAT-FIELD SIMULATION ────────────────────────────────────────────
+# 3D thermal field across the lab volume.
+# Runs alongside the crystal simulation. Exposed as room.solver viewable node.
+# Workspace panel "room.heatfield" renders the 3D thermal map.
+
+[room]
+preset          = "lab"       # ambient | cold | hot | lab | reactor | large_volume
+n_steps         = 200
+record_interval = 25
+
+# ── 9. VERIFICATION SUITE ─────────────────────────────────────────────────────
+
+[verify]
+enabled             = true
+profile             = "demo_showcase_nacl_300k"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.structure]
+enabled                      = true
+expected_prototype           = "B1_NaCl"
+expected_coordination        = 6
+coordination_tolerance       = 0
+expected_nearest_neighbor_A  = 2.82
+nearest_neighbor_tolerance_A = 0.15
+
+[verify.rdf]
+enabled            = true
+expected_peaks_A   = [2.82, 3.99, 4.88]    # a/2, a/√2, a√3/2 for a = 5.64 Å
+peak_tolerance_A   = 0.22
+require_peak_order = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ── 10. EXPORT ────────────────────────────────────────────────────────────────
+
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_metrics_tsv          = true
+write_report_md            = true
+write_events_json          = true
+write_symbolic_trace_json  = true
+write_scale_sampling_json  = true
+write_dashboard_svg        = true
+write_manifest_json        = true
+output_dir                 = "out/demo_3d_showcase"
+
+# ── 11. REPORT ────────────────────────────────────────────────────────────────
+
+[report]
+title                   = "VSEPR-SIM 3D Demonstration — NaCl 4×4×4"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+# ── 12. GL LIVE VIEW ─────────────────────────────────────────────────────────
+# OpenGL 3D renderer with auto-orbit, overlay cycle, and external frame export.
+# Requires build with -DVSEPR_HAS_GL.
+# In headless / CI environments: set output_type = "terminal_overlay_cycle"
+
+[visual]
+output_type               = "gl_overlay_cycle"   # OpenGL overlay panels cycling
+animation_mode            = "overlay"
+render_interval           = 1                     # emit every step for demo clarity
+gl_auto_orbit             = true                  # slow camera orbit around cell
+gl_overlay_hold_s         = 3.0                   # 3 s per overlay panel
+gl_window_width           = 1280
+gl_window_height          = 800
+show_proxy_table          = true
+show_convergence_trace    = true
+show_steady_state_marker  = true
+show_event_timeline       = true
+show_bar_chart            = true
+show_symbolic_trace       = true
+show_audit_table          = true
+overlay_sequence          = energy_map,coordination,rdf
+
+[visual.external]
+enabled           = true
+render_interval   = 1
+export_format     = "png"
+export_frame_png  = true
+export_trajectory = false
+show_progress     = true
+
+# ── 13. WORKSPACE PANEL SUITE ─────────────────────────────────────────────────
+# Qt workspace panels launched when the script runs inside the workspace host.
+# Silently ignored in headless or terminal-only runs.
+
+[visual.workspace]
+enabled        = true
+default_layout = "tabs"
+auto_open_tree = true
+live           = false
+
+# Panel 1 — calibration helix: identity recovery arc over equilibration history
+show "calibration.helix"    target = "run.history"
+
+# Panel 2 — event timeline: formation + defect + transport events in sequence
+show "data.events.timeline" target = "kernel.events"
+
+# Panel 3 — scalar summary: energy, coordination, RDF peak positions per step
+show "data.scalar.panel"    target = "run.summary"
+
+# Panel 4 — 3D room heat-field: thermal distribution across lab volume
+show "room.heatfield"       target = "room.solver" options = { "subsample": 80000 }

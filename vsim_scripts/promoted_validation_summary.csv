@@ -1,0 +1,17 @@
+Script,OK,ExitCode,LastLine
+vsim_scripts/promoted\demo_acid_contamination_fe2o3\demo_acid_contamination_fe2o3.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 112: expected '=' in: 2[Fe(H2O)5(OSO3)^+]_{aq} <-> [Fe(H2O)4-O-SO2-O-Fe(H2O)4]^{4+}_{aq} + 2[H2O]_{l}
+vsim_scripts/promoted\golden_tests\golden_tests.vsim,False,2,"[0;31mparse error:[0m vsim parse error at line 382: expected '=' in: group:ionic_crystal,"
+vsim_scripts/promoted\golden_tests_1\golden_tests_1.vsim,False,2,"[0;31mparse error:[0m vsim parse error at line 382: expected '=' in: group:ionic_crystal,"
+vsim_scripts/promoted\green_carbon_ree_capture_fibre\green_carbon_ree_capture_fibre.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 50: [boundary] unknown mode 'flow'; expected: periodic | open
+vsim_scripts/promoted\green_loom_regeneration_retention\green_loom_regeneration_retention.vsim,True,0,[0;32mOK[0m  -  document is valid (1 warning(s))
+vsim_scripts/promoted\green_northwind_magnet_optimiser\green_northwind_magnet_optimiser.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 42: [cell] unknown units 'nanometer'; expected angstrom
+vsim_scripts/promoted\green_sunwire_pv_optimiser\green_sunwire_pv_optimiser.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 41: [cell] unknown units 'millimeter'; expected angstrom
+vsim_scripts/promoted\group_27_kernel_safety_tests\group_27_kernel_safety_tests.vsim,True,0,[0;32mOK[0m  -  document is valid
+vsim_scripts/promoted\group_27_kernel_safety_tests_1\group_27_kernel_safety_tests_1.vsim,True,0,[0;32mOK[0m  -  document is valid
+vsim_scripts/promoted\ikk3_carbon_allotropes_batch\ikk3_carbon_allotropes_batch.vsim,True,0,[0;32mOK[0m  -  document is valid (1 warning(s))
+vsim_scripts/promoted\ikk3_matrix_wave_bridge_si_1\ikk3_matrix_wave_bridge_si_1.vsim,True,0,[0;32mOK[0m  -  document is valid (1 warning(s))
+vsim_scripts/promoted\scale_ladder_n2_to_km_fe_1\scale_ladder_n2_to_km_fe_1.vsim,True,0,[0;32mOK[0m  -  document is valid (1 warning(s))
+vsim_scripts/promoted\suite_ceramic_oxide_properties\suite_ceramic_oxide_properties.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ï»¿
+vsim_scripts/promoted\suite_gas_plasma_properties\suite_gas_plasma_properties.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ï»¿
+vsim_scripts/promoted\suite_metal_steam_properties\suite_metal_steam_properties.vsim,False,2,[0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ï»¿
+vsim_scripts/promoted\vsim_3d_demo_showcase\vsim_3d_demo_showcase.vsim,True,0,[0;32mOK[0m  -  document is valid

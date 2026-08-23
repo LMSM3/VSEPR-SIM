@@ -1,5 +1,5 @@
-/**
- * bead_fire_report_test.cpp — Test and demonstrate BeadFIRE outcome reporting
+﻿/**
+ * bead_fire_report_test.cpp  -  Test and demonstrate BeadFIRE outcome reporting
  *
  * Verifies that:
  *   1. Report generation produces valid Markdown

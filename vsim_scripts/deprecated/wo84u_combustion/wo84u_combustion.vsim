@@ -1,0 +1,13 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[project]
+name = wo84u_combustion
+
+[formula]
+formula = CH4
+
+[chem_plus]
+reaction = CH4 + 2O2 -> CO2 + 2H2O + 891 kJ
+vsepr_link = true
+

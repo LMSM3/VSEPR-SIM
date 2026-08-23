@@ -1,0 +1,16 @@
+﻿# wo84e_export_report_goal.vsim
+# Day 84 -- WO-84E  --  Export + Known-Bug Closure
+# Status: GOAL_ONLY
+
+print_console "Day 84 -- VSEPR Revival Arc"
+print_console "Work Order: WO-84E"
+print_console "Status: GOAL_ONLY"
+print_console "Purpose: test JSON-lite and Markdown report export"
+print_console "Expected: provider source, fallback status, geometry, rings, and aromaticity exported"
+print_console "Known gaps: unresolved scene hints must be listed explicitly"
+print_console ""
+print_console "Acceptance: CTest Group 103"
+print_console "  Group 103a -> vsepr_to_json, vsepr_lone_pair_source, vsepr_central_site_index"
+print_console "  Group 103b -> organic_candidate_to_json, derive_scene_hints, build_markdown_report"
+print_console ""
+print_console "CLI: vsepr classify <script.vsim> --report-json out.json --report-md out.md"

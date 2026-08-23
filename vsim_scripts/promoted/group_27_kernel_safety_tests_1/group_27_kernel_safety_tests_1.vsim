@@ -1,0 +1,324 @@
+# scripts/group_27_kernel_safety_tests.vsim
+# ==========================================
+# VSEPR-SIM  |  v5.0.0-beta.7.1  |  Group 27 — VSIM Runtime Day #2 Tests
+#
+# Six behavioral tests for the VSIM scripting runtime, exercised in
+# priority order (5 → 2 → 3 → 4 → 1 → 6):
+#
+#   test 5  while_loop_safety_cap      — [while] max_iters hard stop
+#   test 2  batch_artifact_isolation   — [batch] per-case log isolation
+#   test 3  visual_decimation          — [visual.external] render interval
+#   test 4  N_evolution_event_counter  — [N_evolution] spawn/remove/stable
+#   test 1  cached_metric_guard        — [variance]+[while] cached eval
+#   test 6  open_closed_boundary_dispatch — [boundary] routing rules
+#
+# Run:
+#   beta10_demo.exe --headless --script scripts/group_27_kernel_safety_tests.vsim
+#
+# WO-56C  |  v5.0.0-beta.7.1  |  beta-10 milestone
+
+[project]
+name        = group_27_kernel_safety_tests
+version     = v5.0.0-beta.7.1
+seed_base   = 2700
+determinism = true
+description = "Group 27: Day #2 runtime safety and dispatch tests"
+
+# ── Kernel instrumentation (raw section — captured in raw_sections) ─────────
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events  = true
+defect_events     = true
+transport_events  = true
+dynamic_energy    = true
+
+# ── Universal simulation controls (raw section) ──────────────────────────────
+
+[universal_controls]
+dt               = 0.001
+steps_form       = 5000
+steps_relax      = 3000
+save_every       = 50
+temperature_low  = 300
+temperature_mid  = 900
+temperature_high = 1800
+
+# ============================================================================
+# [simulation] — required for runtime execution
+# Ar lattice used as a neutral stress substrate for all six tests.
+# ============================================================================
+
+[simulation]
+fire_max_steps   = 200
+fire_dt_fs       = 1.0
+box_size_ang     = 0.0
+periodic         = false
+formation_preset = gas
+step_delay_ms    = 0
+resim_delay_ms   = 0
+smooth_resim     = false
+
+[simulation.molecule]
+formula     = Ar
+count       = 64
+temperature = 300.0
+lattice     = none
+
+# ============================================================================
+# [variance] — statistical spread probes
+#
+# D_var  : displacement variance — used by test 5 (safety cap) and
+#          test 1 (cached_metric_guard) as the while-loop guard signal.
+# Syntax : probe_name = "field  window  [threshold]"
+# ============================================================================
+
+[variance]
+print_results    = false
+D_var            = "displacement  all  0.001"
+
+# ============================================================================
+# [N_evolution] — population growth-rate probes
+#
+# Three probes map to the three sub-scenarios of test 4:
+#   particle_spawn  — growth phase  (dN/dt > 0)
+#   particle_remove — removal phase (dN/dt < 0)
+#   particle_stable — stable phase  (dN/dt ≈ 0)
+#
+# Syntax: probe_name = "target  window  [threshold]"
+# ============================================================================
+
+[N_evolution]
+print_results    = false
+particle_spawn   = "particle_count  last 10  0.0"
+particle_remove  = "particle_count  last 10  0.0"
+particle_stable  = "particle_count  all  0.0"
+
+# ============================================================================
+# [while] — conditional simulation continuation
+#
+# Guard declarations are processed sequentially.
+# body_steps / max_iters / measure / iter_delay_ms apply to the
+# LAST declared guard in this block.
+#
+# Test 5 — while_loop_safety_cap (priority 1)
+#   Condition: variance D_var > 0.001
+#   Designed to never converge (high-variance substrate).
+#   max_iters = 20 is the hard safety ceiling.
+#   Expected outcome: exits at exactly max_iters=20, partial events preserved.
+#
+# Test 1 — cached_metric_guard (priority 5)
+#   Condition: variance D_var > 0.001
+#   emit_fn collapses variance on the first iteration.
+#   Expected outcome: exits well before max_iters=20.
+#   Caching path: guard re-reads D_var from updated log (O(1) read of cached
+#   EvalResult; O(N) only on the log snapshot, not a full particle scan).
+# ============================================================================
+
+[while]
+# Test 5 — safety cap (non-converging, max_iters is the only exit)
+while_loop_safety_cap = "variance D_var > 0.001"
+body_steps            = 50
+max_iters             = 20
+iter_delay_ms         = 0
+measure               = D_var
+
+# Test 1 — cached metric guard (variance collapses after first iteration)
+cached_metric_guard   = "variance D_var > 0.001"
+body_steps            = 50
+max_iters             = 20
+iter_delay_ms         = 0
+measure               = D_var
+
+# ============================================================================
+# [visual.external] — output-side render requests
+#
+# Test 3 — visual_decimation (priority 3)
+#   render svg every 100 frames across 1000 simulated frames.
+#   Expected renders: exactly 10 (frames 100, 200, …, 1000).
+#   Frame 0 is never rendered — no state to show before the first step.
+#   Render is external (non-blocking); core simulation advances unaffected.
+#
+# Note: render_interval is expressed as a comment annotation here because
+# VisualExternalSection does not carry a numeric interval field — the interval
+# is enforced by the render dispatch loop in the runner (frame % interval == 0).
+# The gif_frame_skip field in [export.visual] carries equivalent semantics for
+# animated outputs.
+# ============================================================================
+
+[visual.external]
+enabled           = true
+render            = state_current
+export_format     = svg
+export_frame_png  = false
+show_progress     = false
+# render_interval = 100   (enforced in runner: frame % 100 == 0 && frame > 0)
+
+# ============================================================================
+# [batch] — parameter sweep execution
+#
+# Test 2 — batch_artifact_isolation (priority 2)
+#   Three defect cases × 1 seed = 3 clean runs.
+#   The runtime calls log.clear() before each run — zero event bleed
+#   between vacancy_case, interstitial_case, and thermal_jitter_case.
+#   Expected: each run starts with an empty log; case identity preserved.
+# ============================================================================
+
+[batch]
+print_plan    = false
+abort_on_fail = false
+
+job           = defect_sweep
+defect        = ["vacancy_case", "interstitial_case", "thermal_jitter_case"]
+seed_count    = 1
+export_each   = false
+aggregate     = true
+analyze       = variance displacement
+
+# ============================================================================
+# [boundary] — open/closed/ambient dispatch rules  (raw section)
+#
+# Test 6 — open_closed_boundary_dispatch (priority 6)
+# Declares the routing table that the VSIM runtime must enforce when boundary
+# annotations are first-class primitives.
+#
+# Rule matrix (12 combinations):
+#   closed  + inlet/outlet/heat/drag      → reject
+#   open    + inlet_spawn / outlet_remove → allow
+#   open    + heat/drag                   → reject
+#   ambient + heat/drag                   → allow
+#   ambient + inlet/outlet (no flag)      → reject
+#   ambient + inlet/outlet (ambient_open) → allow
+#
+# Systems declared here are tested by test_open_closed_boundary_dispatch in
+# test_vsim_runtime_day2.cpp via the boundary_allows() dispatch table.
+# ============================================================================
+
+[boundary.sealed_box]
+type          = closed
+description   = "No mass exchange of any kind permitted"
+inlet_spawn   = reject
+outlet_remove = reject
+heat_coupling = reject
+drag_coupling = reject
+
+[boundary.pipe_A]
+type          = open
+description   = "Inlet and outlet spawn/remove permitted"
+inlet_spawn   = allow
+outlet_remove = allow
+heat_coupling = reject
+drag_coupling = reject
+
+[boundary.exposed_solid]
+type          = ambient
+ambient_open  = false
+description   = "External heat and drag coupling permitted; no mass exchange"
+inlet_spawn   = reject
+outlet_remove = reject
+heat_coupling = allow
+drag_coupling = allow
+
+[boundary.exposed_solid_open]
+type          = ambient
+ambient_open  = true
+description   = "Ambient with explicit mass exchange declared"
+inlet_spawn   = allow
+outlet_remove = allow
+heat_coupling = allow
+drag_coupling = allow
+
+# ============================================================================
+# Test metadata (raw sections — documentation only, not executed by runtime)
+# ============================================================================
+
+[test.while_loop_safety_cap]
+id                          = test_while_loop_safety_cap
+priority                    = 1
+group                       = 27
+exit_count_equals_max_iters = true
+no_crash_on_exit            = true
+partial_events_preserved    = true
+expected_primary            = loop_exits_exactly_at_max_iters
+
+[test.batch_artifact_isolation]
+id                            = test_batch_artifact_isolation
+priority                      = 2
+group                         = 27
+log_clear_called_per_case     = true
+cross_contamination_zero      = true
+total_clean_runs_equals_cases = true
+expected_primary              = each_case_starts_with_empty_log
+
+[test.visual_decimation]
+id                    = test_visual_decimation
+priority              = 3
+group                 = 27
+total_frames          = 1000
+render_interval       = 100
+expected_render_count = 10
+no_render_at_frame_0  = true
+expected_primary      = exactly_10_renders_at_interval_multiples
+
+[test.n_evolution_event_counter]
+id               = test_n_evolution_event_counter
+priority         = 4
+group            = 27
+sub_scenarios    = spawn,remove,stable
+spawn_dndt       = positive
+remove_dndt      = negative
+stable_dndt      = near_zero
+expected_primary = dndt_sign_matches_sub_scenario_intent
+
+[test.cached_metric_guard]
+id                    = test_cached_metric_guard
+priority              = 5
+group                 = 27
+early_exit            = true
+exit_before_max_iters = true
+cached_metric_updated = true
+variance_collapsed    = true
+expected_primary      = loop_exits_well_before_max_iters
+
+[test.open_closed_boundary_dispatch]
+id                          = test_open_closed_boundary_dispatch
+priority                    = 6
+group                       = 27
+total_combinations          = 12
+all_combinations_checked    = true
+closed_boundary_always_rejects = true
+expected_primary            = dispatch_table_exhaustive_12_rule_coverage
+
+# ============================================================================
+# [export] — ground-truth data outputs
+# ============================================================================
+
+[export]
+write_xyz                 = true
+write_xyzf                = true
+write_analysis_json       = true
+write_metrics_tsv         = true
+write_report_md           = false
+write_events_json         = false
+write_symbolic_trace_json = true
+output_dir                = out/group_27/
+
+# ============================================================================
+# [export.visual] — rendered artifacts
+# gif_frame_skip = 100 carries the visual decimation interval for animated output.
+# ============================================================================
+
+[export.visual]
+write_energy_trace_svg = true
+write_svg_figures      = false
+write_html_dashboard   = false
+gif_frame_skip         = 100
+visual_output_dir      = figures/group_27/
+
+[sweep]
+enabled = false

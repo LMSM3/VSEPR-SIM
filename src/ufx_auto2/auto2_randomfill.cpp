@@ -1,4 +1,4 @@
-// src/ufx_auto2/auto2_randomfill.cpp
+﻿// src/ufx_auto2/auto2_randomfill.cpp
 // UFX_AUTO_2 Phase 2 -- Random Fill Main Loop
 // VSEPR-SIM v5 beta8 -> beta9
 //
@@ -158,7 +158,7 @@ RandomFillResult run_auto2_randomfill(const Auto2RandomFillOptions& opt) {
 		int64_t rowid = ufx_insert_material_record(db, record);
 
 		if (rowid == -2) {
-			// Duplicate key — not an error, just a collision
+			// Duplicate key  -  not an error, just a collision
 			++skipped;
 		} else if (rowid > 0) {
 			// Write generation_axes row

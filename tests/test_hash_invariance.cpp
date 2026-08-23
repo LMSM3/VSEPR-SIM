@@ -1,5 +1,5 @@
-/**
- * test_hash_invariance.cpp — Hash Invariance & Provenance Audit Test Suite
+﻿/**
+ * test_hash_invariance.cpp  -  Hash Invariance & Provenance Audit Test Suite
  * =========================================================================
  *
  * Tests the 5 invariance properties that a real provenance layer requires:
@@ -195,7 +195,7 @@ static vsepr::Molecule rotate_axis(const vsepr::Molecule& mol,
 }
 
 // ============================================================================
-// Utility: reflect through XY plane (z → -z)
+// Utility: reflect through XY plane (z -> -z)
 // ============================================================================
 
 static vsepr::Molecule reflect_z(const vsepr::Molecule& mol) {
@@ -242,7 +242,7 @@ static vsepr::Molecule permute_atoms(const vsepr::Molecule& mol,
 // ============================================================================
 
 static void test_topo_invariance_under_perturbation() {
-    std::cout << "\n\033[1m  ═══ Test 1: Topology Invariance Under Coordinate Perturbation ═══\033[0m\n\n";
+    std::cout << "\n\033[1m  === Test 1: Topology Invariance Under Coordinate Perturbation ===\033[0m\n\n";
 
     struct Case {
         std::string name;
@@ -284,7 +284,7 @@ static void test_topo_invariance_under_perturbation() {
 // ============================================================================
 
 static void test_geom_invariance_under_rigid_transforms() {
-    std::cout << "\n\033[1m  ═══ Test 2: Geometry Invariance Under Rigid Transforms ═══\033[0m\n\n";
+    std::cout << "\n\033[1m  === Test 2: Geometry Invariance Under Rigid Transforms ===\033[0m\n\n";
 
     struct Case {
         std::string name;
@@ -341,7 +341,7 @@ static void test_geom_invariance_under_rigid_transforms() {
 // ============================================================================
 
 static void test_permutation_invariance() {
-    std::cout << "\n\033[1m  ═══ Test 3: Atom-Order Permutation Invariance ═══\033[0m\n\n";
+    std::cout << "\n\033[1m  === Test 3: Atom-Order Permutation Invariance ===\033[0m\n\n";
 
     // H2O: swap the two hydrogens
     {
@@ -392,7 +392,7 @@ static void test_permutation_invariance() {
         auto mol = make_sf6();
         auto id_orig = vsepr::identity::compute_identity(mol, z_sym);
 
-        // Cyclic shift: S stays, F1→F6, F2→F1, ... F6→F5
+        // Cyclic shift: S stays, F1->F6, F2->F1, ... F6->F5
         auto mol_cyc = permute_atoms(mol, {0, 6, 1, 2, 3, 4, 5});
         auto id_cyc = vsepr::identity::compute_identity(mol_cyc, z_sym);
         check(id_orig.topology_hash == id_cyc.topology_hash,
@@ -415,7 +415,7 @@ static void test_permutation_invariance() {
 // ============================================================================
 
 static void test_near_degenerate_sensitivity() {
-    std::cout << "\n\033[1m  ═══ Test 4: Near-Degenerate Geometry Sensitivity ═══\033[0m\n\n";
+    std::cout << "\n\033[1m  === Test 4: Near-Degenerate Geometry Sensitivity ===\033[0m\n\n";
 
     // 4a: Linear vs almost-linear (CO2-like)
     {
@@ -480,7 +480,7 @@ static void test_near_degenerate_sensitivity() {
               "SF6 geom differs under axial compression (0.1 A)");
     }
 
-    // 4d: Very small perturbation — below tolerance
+    // 4d: Very small perturbation  -  below tolerance
     {
         auto mol = make_h2o();
         auto id_orig = vsepr::identity::compute_identity(mol, z_sym);
@@ -490,18 +490,18 @@ static void test_near_degenerate_sensitivity() {
 
         check(id_orig.topology_hash == id_tiny.topology_hash,
               "H2O topo unchanged under sub-tolerance perturbation (0.001 A)");
-        // Geom may or may not change depending on tolerance grid — document behavior
+        // Geom may or may not change depending on tolerance grid  -  document behavior
         std::cout << "    \033[90m(geom " << (id_orig.geometry_hash == id_tiny.geometry_hash ? "unchanged" : "changed")
-                  << " — tolerance-dependent, both behaviors acceptable)\033[0m\n";
+                  << "  -  tolerance-dependent, both behaviors acceptable)\033[0m\n";
     }
 }
 
 // ============================================================================
-// TEST 5: Scale test — collision detection
+// TEST 5: Scale test  -  collision detection
 // ============================================================================
 
 static void test_scale_collision() {
-    std::cout << "\n\033[1m  ═══ Test 5: Scale Test — Collision Detection ═══\033[0m\n\n";
+    std::cout << "\n\033[1m  === Test 5: Scale Test  -  Collision Detection ===\033[0m\n\n";
 
     // Generate many molecules by varying bond lengths and angles
     std::mt19937 rng(12345);
@@ -577,7 +577,7 @@ static void test_scale_collision() {
 // ============================================================================
 
 static void test_provenance_record() {
-    std::cout << "\n\033[1m  ═══ Test 6: 3-Tier Provenance Record ═══\033[0m\n\n";
+    std::cout << "\n\033[1m  === Test 6: 3-Tier Provenance Record ===\033[0m\n\n";
 
     struct Case {
         std::string name;
@@ -657,17 +657,17 @@ static void test_provenance_record() {
 
 int main() {
     std::cout << "\n\033[1m";
-    std::cout << "  ╔══════════════════════════════════════════════════════════════════╗\n";
-    std::cout << "  ║     Hash Invariance & Provenance Audit Test Suite               ║\n";
-    std::cout << "  ║     3-Tier Identity · Topology · Geometry                      ║\n";
-    std::cout << "  ╠══════════════════════════════════════════════════════════════════╣\n";
-    std::cout << "  ║  Test 1: Topo invariance under coordinate perturbation         ║\n";
-    std::cout << "  ║  Test 2: Geom invariance under rigid transforms                ║\n";
-    std::cout << "  ║  Test 3: Atom-order permutation invariance                     ║\n";
-    std::cout << "  ║  Test 4: Near-degenerate geometry sensitivity                  ║\n";
-    std::cout << "  ║  Test 5: Scale test (500 molecules, collision detection)       ║\n";
-    std::cout << "  ║  Test 6: 3-Tier provenance record correctness                 ║\n";
-    std::cout << "  ╚══════════════════════════════════════════════════════════════════╝\n";
+    std::cout << "  +==================================================================+\n";
+    std::cout << "  |     Hash Invariance & Provenance Audit Test Suite               |\n";
+    std::cout << "  |     3-Tier Identity · Topology · Geometry                      |\n";
+    std::cout << "  ╠==================================================================╣\n";
+    std::cout << "  |  Test 1: Topo invariance under coordinate perturbation         |\n";
+    std::cout << "  |  Test 2: Geom invariance under rigid transforms                |\n";
+    std::cout << "  |  Test 3: Atom-order permutation invariance                     |\n";
+    std::cout << "  |  Test 4: Near-degenerate geometry sensitivity                  |\n";
+    std::cout << "  |  Test 5: Scale test (500 molecules, collision detection)       |\n";
+    std::cout << "  |  Test 6: 3-Tier provenance record correctness                 |\n";
+    std::cout << "  +==================================================================+\n";
     std::cout << "\033[0m\n";
 
     test_topo_invariance_under_perturbation();
@@ -679,14 +679,14 @@ int main() {
 
     // Summary
     std::cout << "\n\033[1m";
-    std::cout << "  ════════════════════════════════════════════════════════════════\n";
+    std::cout << "  ================================================================\n";
     std::printf("   Results: %d/%d passed", g_pass, g_total);
     if (g_fail > 0) {
         std::printf("  (\033[91m%d FAILED\033[0m\033[1m)", g_fail);
     } else {
         std::printf("  (\033[92mALL PASS\033[0m\033[1m)");
     }
-    std::cout << "\n  ════════════════════════════════════════════════════════════════\n";
+    std::cout << "\n  ================================================================\n";
     std::cout << "\033[0m\n";
 
     return g_fail > 0 ? 1 : 0;

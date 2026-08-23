@@ -1,4 +1,4 @@
-/**
+﻿/**
  * atomistic-discover: Deterministic Reaction Discovery System
  * 
  * Systematically explores chemical reaction space using:
@@ -130,9 +130,9 @@ DISCOVERY METHODOLOGY:
 
 OUTPUT:
     discovery_output/
-    ├── reactions.csv           # All proposed reactions with scores
-    ├── discovery_report.md     # Summary statistics and patterns
-    └── molecules/              # Generated test molecules (if --save-mols)
+    +-- reactions.csv           # All proposed reactions with scores
+    +-- discovery_report.md     # Summary statistics and patterns
+    +-- molecules/              # Generated test molecules (if --save-mols)
 
 SCORING:
     Overall = 0.4·Reactivity + 0.3·Geometric + 0.3·Thermodynamic
@@ -235,7 +235,7 @@ bool parse_args(int argc, char** argv, DiscoverOptions& opts) {
 // ============================================================================
 
 int mode_discover(const DiscoverOptions& opts) {
-    std::cout << "═══ DISCOVERY MODE ═══\n\n";
+    std::cout << "=== DISCOVERY MODE ===\n\n";
     
     DiscoveryConfig config;
     config.molecules_per_batch = opts.num_molecules;
@@ -258,7 +258,7 @@ int mode_discover(const DiscoverOptions& opts) {
 }
 
 int mode_test(const DiscoverOptions& opts) {
-    std::cout << "═══ TEST MODE ═══\n\n";
+    std::cout << "=== TEST MODE ===\n\n";
     
     // Load molecules
     std::cout << "Loading molecules...\n";
@@ -303,7 +303,7 @@ int mode_test(const DiscoverOptions& opts) {
         all_proposals.insert(all_proposals.end(), proposals.begin(), proposals.end());
     }
     
-    std::cout << "\n═══ RESULTS ═══\n\n";
+    std::cout << "\n=== RESULTS ===\n\n";
     std::cout << "Total feasible reactions: " << all_proposals.size() << "\n\n";
     
     if (all_proposals.empty()) {
@@ -355,7 +355,7 @@ int mode_test(const DiscoverOptions& opts) {
 }
 
 int mode_analyze(const DiscoverOptions& opts) {
-    std::cout << "═══ ANALYZE MODE ═══\n\n";
+    std::cout << "=== ANALYZE MODE ===\n\n";
     
     std::cout << "Loading reaction database: " << opts.database_file << "\n\n";
     
@@ -403,7 +403,7 @@ int mode_analyze(const DiscoverOptions& opts) {
 }
 
 int mode_generate(const DiscoverOptions& opts) {
-    std::cout << "═══ GENERATE MODE ═══\n\n";
+    std::cout << "=== GENERATE MODE ===\n\n";
     
     std::cout << "Generating " << opts.num_molecules << " random molecules...\n\n";
     

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/core/stats/displacement_tracker.hpp
 // =============================================================================
@@ -6,13 +6,13 @@
 //
 //   mean_displacement = (1/N) Σ_i |r_i(t) - r_i(0)|
 //
-// This is a blunt but fast metric — no Kabsch alignment, no rotation removal.
+// This is a blunt but fast metric  -  no Kabsch alignment, no rotation removal.
 // It tells you the average particle travel distance from the starting layout.
 //
 // Use as a support metric alongside RMSD and structural residual.
 // Do not use as the sole truth judge:
-//   - All atoms shifting rigidly → high displacement, structure unchanged.
-//   - Single-site defect forming  → low average displacement, but real damage.
+//   - All atoms shifting rigidly -> high displacement, structure unchanged.
+//   - Single-site defect forming  -> low average displacement, but real damage.
 //
 // Anti-black-box: all fields public.
 // =============================================================================

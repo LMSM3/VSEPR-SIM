@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // tests/test_lattice_classifier.cpp
 // =============================================================================
 // Demo + validation for vsepr::xtal::LatticeClassifier.
@@ -7,18 +7,18 @@
 // runs the Steinhardt-based classifier, and reports per-structure results.
 //
 // Structures tested:
-//   1.  SC         — simple cubic
-//   2.  BCC        — body-centered cubic
-//   3.  FCC        — face-centered cubic
-//   4.  HCP        — hexagonal close-packed (ABAB stacking)
-//   5.  Diamond    — diamond cubic (C/Si/Ge)
-//   6.  ZincBlende — zinc blende (two-species diamond)
-//   7.  Wurtzite   — wurtzite (two-species HCP-derived)
-//   8.  NaCl       — rock salt (two-species SC-derived)
-//   9.  CsCl       — caesium chloride (two-species BCC-derived)
-//  10.  Icosahedral — local icosahedral order (Mackay cluster)
-//  11.  Amorphous  — randomly displaced atoms
-//  12.  Interstitial — FCC + extra atoms injected into octahedral voids
+//   1.  SC          -  simple cubic
+//   2.  BCC         -  body-centered cubic
+//   3.  FCC         -  face-centered cubic
+//   4.  HCP         -  hexagonal close-packed (ABAB stacking)
+//   5.  Diamond     -  diamond cubic (C/Si/Ge)
+//   6.  ZincBlende  -  zinc blende (two-species diamond)
+//   7.  Wurtzite    -  wurtzite (two-species HCP-derived)
+//   8.  NaCl        -  rock salt (two-species SC-derived)
+//   9.  CsCl        -  caesium chloride (two-species BCC-derived)
+//  10.  Icosahedral  -  local icosahedral order (Mackay cluster)
+//  11.  Amorphous   -  randomly displaced atoms
+//  12.  Interstitial  -  FCC + extra atoms injected into octahedral voids
 // =============================================================================
 
 #include "analysis/lattice_classifier.hpp"
@@ -268,7 +268,7 @@ static std::vector<Vec3> gen_icosahedral(double r)
 	return pos;
 }
 
-// Generate amorphous — random positions in a box
+// Generate amorphous  -  random positions in a box
 static std::vector<Vec3> gen_amorphous(int N, double box, uint64_t seed)
 {
 	std::mt19937_64 rng(seed);
@@ -354,15 +354,15 @@ static void run_test(const TestCase& tc)
 int main()
 {
 	std::printf("=============================================================\n");
-	std::printf("  VSEPR-SIM — Lattice Type Classifier — Steinhardt Q4/Q6/W6\n");
+	std::printf("  VSEPR-SIM  -  Lattice Type Classifier  -  Steinhardt Q4/Q6/W6\n");
 	std::printf("=============================================================\n");
 	std::printf("%-18s  %-22s  %-22s  %-6s  %-6s  %-6s  %-4s\n",
 		"structure", "expected", "detected", "frac", "Q4", "Q6", "CN");
-	std::printf("─────────────────────────────────────────────────────────────\n");
+	std::printf("-------------------------------------------------------------\n");
 
-	// ─── Single-species structures (PBC — full bulk coordination) ───────────────
+	// --- Single-species structures (PBC  -  full bulk coordination) ---------------
 
-	// 1. SC — 4×4×4 supercell, a=2.87 Å
+	// 1. SC  -  4×4×4 supercell, a=2.87 Å
 	{
 		TestCase tc;
 		tc.name    = "SC_4x4x4";
@@ -374,7 +374,7 @@ int main()
 		run_test(tc);
 	}
 
-	// 2. BCC — 4×4×4 supercell, a=2.87 Å (Fe)
+	// 2. BCC  -  4×4×4 supercell, a=2.87 Å (Fe)
 	// Steinhardt Q6=0.511 for BCC requires 8 NN + 6 NNN = 14 neighbors.
 	// NN distance = 2.87*√3/2=2.485 Å, NNN = 2.87 Å. Cutoff must exceed 2.87.
 	{
@@ -388,7 +388,7 @@ int main()
 		run_test(tc);
 	}
 
-	// 3. FCC — 3×3×3 supercell, a=4.05 Å (Al)
+	// 3. FCC  -  3×3×3 supercell, a=4.05 Å (Al)
 	{
 		TestCase tc;
 		tc.name    = "FCC_3x3x3";
@@ -400,8 +400,8 @@ int main()
 		run_test(tc);
 	}
 
-	// 4. HCP — 4-atom orthorhombic supercell with PBC, a=3.21 Å (Mg)
-	// All 12 NN are at distance exactly a under PBC — perfect for Steinhardt.
+	// 4. HCP  -  4-atom orthorhombic supercell with PBC, a=3.21 Å (Mg)
+	// All 12 NN are at distance exactly a under PBC  -  perfect for Steinhardt.
 	{
 		double a_hcp = 3.21;
 		double by    = a_hcp * std::sqrt(3.0);
@@ -429,7 +429,7 @@ int main()
 		}
 	}
 
-	// 5. Diamond — 3×3×3 supercell, a=5.43 Å (Si)
+	// 5. Diamond  -  3×3×3 supercell, a=5.43 Å (Si)
 	{
 		TestCase tc;
 		tc.name    = "Diamond_3x3x3";
@@ -441,7 +441,7 @@ int main()
 		run_test(tc);
 	}
 
-	// 6. Icosahedral cluster — test the SHELL atoms (each has 5 shell neighbors + center
+	// 6. Icosahedral cluster  -  test the SHELL atoms (each has 5 shell neighbors + center
 	// = CN=6). The center atom has CN=12 and Q6≈0.663 (ideal icosahedral).
 	// Strategy: build a 3-shell Mackay cluster so interior atoms dominate.
 	// For simplicity we classify the 13-atom cluster and check that Icosahedral
@@ -464,7 +464,7 @@ int main()
 		(void)res; // full result already printed
 	}
 
-	// 7. Amorphous — random positions, no long-range order
+	// 7. Amorphous  -  random positions, no long-range order
 	{
 		TestCase tc;
 		tc.name    = "Amorphous";
@@ -475,7 +475,7 @@ int main()
 		run_test(tc);
 	}
 
-	// 8. FCC + interstitials — dominant type FCC; interstitial atoms in coverage with CN>16
+	// 8. FCC + interstitials  -  dominant type FCC; interstitial atoms in coverage with CN>16
 	{
 		TestCase tc;
 		tc.name    = "FCC+Interstitial";
@@ -487,9 +487,9 @@ int main()
 		run_test(tc);
 	}
 
-	// ─── Two-species structures (PBC) ─────────────────────────────────────────
+	// --- Two-species structures (PBC) -----------------------------------------
 
-	// 9. ZincBlende — 3×3×3, a=5.65 Å (GaAs)
+	// 9. ZincBlende  -  3×3×3, a=5.65 Å (GaAs)
 	{
 		TestCase tc;
 		tc.name    = "ZincBlende_3x3x3";
@@ -501,12 +501,12 @@ int main()
 		run_test(tc);
 	}
 
-	// 10. Wurtzite — 4×4×4, a=3.25 Å (ZnS), orthorhombic PBC box
+	// 10. Wurtzite  -  4×4×4, a=3.25 Å (ZnS), orthorhombic PBC box
 	// NOTE: Wurtzite and ZincBlende have identical single-shell Steinhardt Q4/Q6/W6.
 	// Both are tetrahedral CN=4 structures differing only in stacking sequence (ABAB vs ABCABC).
-	// Single-shell Steinhardt cannot separate them — CNA or 2nd-shell averaging is required.
+	// Single-shell Steinhardt cannot separate them  -  CNA or 2nd-shell averaging is required.
 	// This test verifies the tetrahedral two-species label is correctly assigned.
-	// Expected label: ZincBlende or Wurtzite (both acceptable — polytypism pair).
+	// Expected label: ZincBlende or Wurtzite (both acceptable  -  polytypism pair).
 	{
 		double a_w  = 3.25;
 		double by_w = a_w * std::sqrt(3.0);
@@ -530,7 +530,7 @@ int main()
 		if (!pass) res.print_coverage();
 	}
 
-	// 11. NaCl — rock salt, a=5.64 Å → sub-lattice spacing 2.82 Å
+	// 11. NaCl  -  rock salt, a=5.64 Å -> sub-lattice spacing 2.82 Å
 	{
 		TestCase tc;
 		tc.name    = "NaCl_rock_salt";
@@ -542,7 +542,7 @@ int main()
 		run_test(tc);
 	}
 
-	// 12. CsCl — 4×4×4, a=4.12 Å
+	// 12. CsCl  -  4×4×4, a=4.12 Å
 	// Body-diagonal NN distance = 4.12*√3/2 = 3.567 Å. Use cutoff < 4.12 to get CN=8.
 	{
 		TestCase tc;
@@ -555,10 +555,10 @@ int main()
 		run_test(tc);
 	}
 
-	std::printf("─────────────────────────────────────────────────────────────\n");
+	std::printf("-------------------------------------------------------------\n");
 	std::printf("\n");
 	std::printf("Notes:\n");
-	std::printf("  FCC vs HCP disambiguation uses sign of W6 (W6<0→FCC, W6>0→HCP).\n");
+	std::printf("  FCC vs HCP disambiguation uses sign of W6 (W6<0->FCC, W6>0->HCP).\n");
 	std::printf("  Diamond vs ZincBlende uses multi-species neighbor check.\n");
 	std::printf("  SC vs NaCl uses multi-species neighbor check.\n");
 	std::printf("  BCC vs CsCl uses multi-species neighbor check.\n");

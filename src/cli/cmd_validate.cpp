@@ -1,10 +1,11 @@
-/**
- * cmd_validate.cpp — vsper validate subcommand implementation
+﻿/**
+ * cmd_validate.cpp  -  vsper validate subcommand implementation
  *
  * WO-56C  |  v5.0.0-beta.7
  */
 
 #include "cli/cmd_validate.hpp"
+#include "vsim/console_render.hpp"
 #include "vsim/vsim_parser.hpp"
 
 #include <iostream>
@@ -62,6 +63,35 @@ int cmd_validate(const std::vector<std::string>& args) {
 	std::cout << doc.summary() << "\n";
 	std::cout << std::string(60, '-') << "\n";
 
+	std::cout << BOLD << "Capability status" << RESET << "\n";
+	std::cout << "  [dissolution]       "
+			  << (doc.dissolution.enabled ? "runtime-wired" : "parsed, disabled")
+			  << "\n";
+	std::cout << "  [analysis.sampling] "
+			  << (doc.pipeline_sampling.enabled
+				  ? "runtime-wired: enabled, RDF/MSD, frame thresholds, PBC unwrap"
+				  : "parsed, disabled")
+			  << "\n";
+	for (const char* section : {"dissolution", "analysis.sampling"}) {
+		const auto raw = doc.raw_sections.find(section);
+		if (raw == doc.raw_sections.end() || raw->second.empty()) continue;
+		std::cout << YELLOW << "  [" << section << "] raw-only keys:"
+				  << RESET;
+		for (const auto& [key, value] : raw->second) {
+			(void)value;
+			std::cout << " " << key;
+		}
+		std::cout << " (retained, no runtime effect)\n";
+	}
+	std::cout << std::string(60, '-') << "\n";
+
+	// -----------------------------------------------------------------------
+	// Console narration  (WO-84 Preflight)  -  script-encoded print_console
+	// Generalised beyond run/classify: validate now surfaces the same
+	// [console] block from the parsed document via the shared helper.
+	// -----------------------------------------------------------------------
+	vsim::render_console_block(doc.console_prints, std::cout, /*color=*/true);
+
 	// -----------------------------------------------------------------------
 	// Warnings
 	// -----------------------------------------------------------------------
@@ -81,7 +111,7 @@ int cmd_validate(const std::vector<std::string>& args) {
 		}
 		std::cout << "\n"
 				  << RED << "INVALID" << RESET
-				  << " — " << result.errors.size() << " error(s), "
+				  << "  -  " << result.errors.size() << " error(s), "
 				  << result.warnings.size() << " warning(s)\n\n";
 		return 1;
 	}
@@ -90,7 +120,7 @@ int cmd_validate(const std::vector<std::string>& args) {
 	// Success
 	// -----------------------------------------------------------------------
 	std::cout << GREEN << "OK" << RESET
-			  << " — document is valid";
+			  << "  -  document is valid";
 	if (!result.warnings.empty())
 		std::cout << " (" << result.warnings.size() << " warning(s))";
 	std::cout << "\n\n";

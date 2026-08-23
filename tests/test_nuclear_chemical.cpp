@@ -1,7 +1,7 @@
-/**
+﻿/**
  * test_nuclear_chemical.cpp
  * =========================
- * Phase 6 — Nuclear Chemical Module validation.
+ * Phase 6  -  Nuclear Chemical Module validation.
  *
  * Tests:
  *   F1  Z=79-102 predictions are physically plausible (bounded, monotone
@@ -256,7 +256,7 @@ static void test_F5_period7_rms() {
 
 int main() {
     std::printf("============================================================\n");
-    std::printf(" Phase 6 — Nuclear Chemical Module\n");
+    std::printf(" Phase 6  -  Nuclear Chemical Module\n");
     std::printf("============================================================\n");
 
     test_F1_heavy_plausibility();

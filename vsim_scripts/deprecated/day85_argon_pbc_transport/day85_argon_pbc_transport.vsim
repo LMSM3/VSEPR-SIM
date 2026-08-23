@@ -1,0 +1,101 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+# day85_argon_pbc_transport.vsim
+# =============================================================================
+# Day 85 — Periodic Ar gas transport demonstration
+#
+# Demonstrates older PBC controls: minimum-image distances, after-step wrapping,
+# image tracking, and unwrapped coordinates for transport analysis.
+#
+# Run: vsepr run scripts/demos/day85_argon_pbc_transport.vsim
+# =============================================================================
+
+print_console "VSEPR-SIM Day 85: periodic argon transport demonstration"
+print_console "Image tracking retains unwrapped paths while positions wrap in-box."
+
+[project]
+name        = "day85_argon_pbc_transport"
+version     = "v5.1.4"
+seed_base   = 8517
+determinism = true
+description = "Deterministic periodic argon gas with diffusion-ready image tracking"
+
+[cell]
+type  = "orthorhombic"
+lx    = 30.0
+ly    = 30.0
+lz    = 30.0
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[formation]
+enabled           = true
+history           = true
+track_events      = false
+track_energy_path = true
+
+[simulation]
+fire_max_steps   = 200
+fire_dt_fs       = 1.0
+box_size_ang     = 30.0
+periodic         = true
+formation_preset = "gas"
+
+[[simulation.molecule]]
+formula       = "Ar"
+count         = 64
+temperature_K = 300.0
+lattice       = "none"
+
+[run]
+mode            = "md"
+num_steps       = 1000
+dt              = 1.0
+integrator      = "velocity_verlet"
+temperature_K   = 300.0
+sample_interval = 50
+render_interval = 50
+
+[analysis]
+rmsd         = true
+energy_trace = true
+diffusion    = true
+stationarity = true
+
+[export]
+output_dir          = "out/day85_argon_pbc_transport"
+write_xyz           = true
+write_xyzf          = true
+write_xyzfull       = true
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_manifest_json = true
+
+[export.visual]
+write_svg_figures      = true
+write_rdf_svg          = true
+write_energy_trace_svg = true
+write_report_html      = true
+visual_output_dir      = "figures"
+
+[visual]
+output_type            = "terminal_rdf"
+render_interval        = 50
+show_proxy_table       = true
+show_convergence_trace = true
+show_rdf_plot          = true
+
+print_console "Inspect the full state export to replay wrapped and unwrapped transport."
+

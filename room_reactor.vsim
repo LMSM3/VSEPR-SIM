@@ -1,0 +1,311 @@
+# room_reactor.vsim
+# Conceptual VSIM scene: room-scale reactor surrogate / thermal-shielding model.
+# Non-operational by design: no fissile loading, no enrichment, no criticality controls, no build instructions.
+# Because civilization apparently needs this warning stapled to every glowing-rock thought experiment.
+
+[meta]
+name = "room_reactor"
+version = "0.1"
+author = "SM"
+purpose = "conceptual room-scale reactor geometry, thermal transport, shielding proxy, formation-history capture"
+safety_class = "inert_surrogate_only"
+operational_reactor = false
+criticality_enabled = false
+neutronics_enabled = false
+decay_heat_enabled = false
+formation_required = true
+
+[aliases]
+datacapture = "export.analysis_json, export.metrics_tsv, export.events_json, export.report_md, export.summary_csv"
+thermal_snapshot = "observe.temperature_field, observe.heat_flux, observe.wall_loss"
+room_core = "object.room + object.reactor_vessel + object.shield_shell + object.coolant_loop"
+formation_parent = "formation.room_reactor_surrogate"
+
+[constants]
+sigma_SB = 5.670374419e-8
+g = 9.80665
+ambient_temperature_K = 293.15
+reference_pressure_Pa = 101325
+air_density_kg_m3 = 1.184
+air_cp_J_kgK = 1005
+air_k_W_mK = 0.0262
+
+[world]
+dimension = 3
+unit_length = "m"
+unit_time = "s"
+unit_energy = "J"
+unit_temperature = "K"
+coordinate_basis = "x,y,z"
+origin = "room_floor_center"
+pbc = "F F F"
+gravity = "0,0,-9.80665"
+
+[room]
+shape = "rectangular_prism"
+length_x_m = 4.000
+width_y_m = 3.000
+height_z_m = 2.700
+wall_material = "gypsum_air_gap_concrete_proxy"
+floor_material = "concrete_proxy"
+ceiling_material = "gypsum_proxy"
+ambient_temperature_K = 293.15
+ventilation_model = "lumped_exchange"
+air_exchange_rate_1_s = 0.00035
+surface_loss_model = "convection_plus_radiation"
+
+[geometry]
+# Every object uses center/radius/height/size fields instead of naked position blocks,
+# because parse errors are how parsers express disappointment.
+coordinate_mode = "explicit_assignments"
+object_count = 7
+main_axis = "z"
+symmetry_hint = "cylindrical_core_inside_rectangular_room"
+
+[material.air]
+type = "fluid_gas"
+rho_kg_m3 = 1.184
+cp_J_kgK = 1005
+k_W_mK = 0.0262
+mu_Pa_s = 1.85e-5
+formation_state = "ambient_room_fill"
+
+[material.concrete_proxy]
+type = "solid_bulk"
+rho_kg_m3 = 2300
+cp_J_kgK = 880
+k_W_mK = 1.4
+emissivity = 0.90
+formation_state = "cast_cured_bulk"
+
+[material.steel_proxy]
+type = "solid_metal"
+rho_kg_m3 = 7850
+cp_J_kgK = 486
+k_W_mK = 45.0
+emissivity = 0.70
+formation_state = "rolled_formed_welded_surrogate"
+
+[material.graphite_proxy]
+type = "solid_carbon"
+rho_kg_m3 = 1800
+cp_J_kgK = 710
+k_W_mK = 80.0
+emissivity = 0.85
+formation_state = "pressed_sintered_machined_surrogate"
+
+[material.water_proxy]
+type = "fluid_liquid"
+rho_kg_m3 = 997
+cp_J_kgK = 4182
+k_W_mK = 0.607
+mu_Pa_s = 0.00089
+formation_state = "coolant_surrogate"
+
+[object.room_air]
+geometry = "rectangular_volume"
+material = "air"
+center_m = "0,0,1.35"
+size_m = "4.000,3.000,2.700"
+initial_temperature_K = 293.15
+state_role = "thermal_bath"
+
+[object.reactor_vessel]
+geometry = "closed_cylinder"
+material = "steel_proxy"
+center_m = "0,0,0.900"
+radius_m = 0.320
+height_m = 1.100
+wall_thickness_m = 0.018
+initial_temperature_K = 293.15
+state_role = "surrogate_core_container"
+
+[object.inert_core]
+geometry = "packed_bead_cylinder"
+material = "graphite_proxy"
+center_m = "0,0,0.900"
+radius_m = 0.240
+height_m = 0.780
+bead_radius_m = 0.012
+packing_fraction = 0.58
+initial_temperature_K = 293.15
+state_role = "inert_heat_capacity_mass"
+source_term = "none"
+
+[object.shield_shell]
+geometry = "annular_cylinder"
+material = "concrete_proxy"
+center_m = "0,0,0.900"
+inner_radius_m = 0.390
+outer_radius_m = 0.620
+height_m = 1.250
+initial_temperature_K = 293.15
+state_role = "attenuation_and_thermal_mass_proxy"
+
+[object.coolant_loop]
+geometry = "pipe_loop_rectangular"
+material = "steel_proxy"
+coolant_material = "water_proxy"
+center_m = "0,0,1.050"
+path_points_m = "-0.62,-0.48,0.62; 0.62,-0.48,0.62; 0.62,0.48,1.48; -0.62,0.48,1.48; -0.62,-0.48,0.62"
+pipe_outer_radius_m = 0.025
+pipe_inner_radius_m = 0.018
+flow_rate_kg_s = 0.020
+initial_temperature_K = 293.15
+state_role = "coolant_transport_proxy"
+
+[object.thermal_panel]
+geometry = "flat_plate"
+material = "steel_proxy"
+center_m = "1.40,0,1.30"
+normal = "-1,0,0"
+size_m = "0.80,1.20,0.012"
+initial_temperature_K = 293.15
+state_role = "radiator_panel_proxy"
+
+[object.sensor_array]
+geometry = "point_cloud"
+material = "air"
+points_m = "0.0,0.0,0.3; 0.0,0.0,1.3; 0.8,0.0,1.3; 1.4,0.0,1.3; -1.5,0.0,1.3; 0.0,1.0,1.3; 0.0,-1.0,1.3"
+state_role = "observation_points"
+sample_temperature = true
+sample_flux = true
+sample_gradient = true
+
+[formation.room_reactor_surrogate]
+enabled = true
+parent_molecule_or_object = "room_reactor_surrogate"
+formation_history_mode = "required"
+sequence = "room_casting -> vessel_forming -> shield_shell_placement -> inert_core_packing -> coolant_loop_install -> sensor_array_place -> thermal_relaxation"
+reaction_mode = "none"
+pathway_helper_enabled = true
+pathway_helper_program = "formation_pathway_check"
+store_lineage = true
+store_event_log = true
+formation_variables = "rho,cp,k,emissivity,packing_fraction,wall_thickness,flow_rate,geometry_hash"
+note = "Formation data is captured as object history, not as proof of physical reactor feasibility."
+
+[physics]
+mode = "thermal_surrogate"
+mechanics = "rigid_geometry"
+fluid_model = "lumped_coolant_plus_air_exchange"
+radiation_model = "graybody_surface_proxy"
+conduction_model = "finite_volume_proxy"
+convection_model = "newton_cooling_proxy"
+source_model = "external_test_heat_only"
+nuclear_transport = "disabled"
+criticality = "disabled"
+decay_chain = "disabled"
+
+[thermal]
+# No nuclear source. Use an external dummy calibration heater so the model tests heat flow only.
+test_heat_enabled = true
+test_heat_object = "inert_core"
+test_heat_power_W = 120.0
+test_heat_ramp_s = 600.0
+heat_equation = "rho*cp*dTdt = div(k*grad(T)) + Q_test - Q_loss"
+wall_loss_equation = "Q_loss = h*A*(T_surface - T_air) + emissivity*sigma_SB*A*(T_surface^4 - T_ambient^4)"
+coolant_equation = "mdot*cp*dT = Q_absorbed"
+stability_gate = "max_temperature_K < 360 and dTdt_abs_K_s < 0.02 after relaxation"
+
+[shielding]
+mode = "geometric_attenuation_proxy"
+radiation_source = "none"
+attenuation_equation = "I_out = I_in * exp(-mu_proxy*x)"
+mu_proxy_1_m = 0.0
+dose_model = "disabled"
+note = "Shield shell is geometric and thermal mass only unless a validated radiation module is explicitly supplied."
+
+[bead_model]
+enabled = true
+target_object = "inert_core"
+bead_state = "thermal_mass_carrier"
+bead_radius_m = 0.012
+bead_distribution = "seeded_random_packed_cylinder"
+seed = 41041
+velocity_model = "settled"
+gradient_forcing = "thermal_gradient_only"
+equation = "dvdt = A*(u-v) + B*G + C*H"
+H_definition = "-grad(T)"
+track_lineage = true
+track_local_temperature = true
+track_neighbor_count = true
+
+[observe]
+temperature_field = true
+heat_flux = true
+wall_loss = true
+coolant_delta_T = true
+bead_temperature_distribution = true
+formation_events = true
+geometry_hash = true
+energy_balance = true
+sensor_array = true
+report_every_steps = 50
+
+[run]
+mode = "thermal_relaxation"
+integrator = "semi_implicit_euler"
+dt_s = 1.0
+num_steps = 3600
+sample_interval = 50
+render_interval = 100
+checkpoint_interval = 300
+random_seed = 41041
+stop_on_stability_gate = true
+
+[export]
+xyz = true
+xyzfull = true
+pdb = false
+analysis_json = true
+metrics_tsv = true
+cluster_json = false
+fingerprint_json = true
+events_json = true
+report_md = true
+summary_csv = true
+dashboard_svg = true
+manifest_json = true
+step_file = true
+vtp_mesh = true
+output_dir = "exports/room_reactor"
+
+[export.visual]
+svg_figures = true
+rdf_svg = false
+energy_trace_svg = true
+cluster_map_svg = false
+defect_map_svg = false
+trajectory_gif = true
+html_dashboard = true
+report_html = true
+
+[visual]
+output_type = "terminal_spark"
+viewer = "optional"
+show_room = true
+show_vessel = true
+show_shield_shell = true
+show_coolant_loop = true
+show_sensor_array = true
+show_temperature_overlay = true
+show_flux_vectors = true
+camera_position_m = "4.2,-4.6,3.0"
+camera_target_m = "0,0,1.0"
+
+[report]
+title = "Room Reactor Surrogate Thermal Study"
+include_safety_note = true
+include_formation_history = true
+include_geometry_table = true
+include_material_table = true
+include_energy_balance = true
+include_missing_modules = true
+missing_modules = "validated_neutronics, radiation_transport, real_coolant_CFD, thermal_contact_resistance, uncertainty_propagation, external_LAMMPS_comparison"
+conclusion_template = "This run evaluates geometry and heat transport for an inert surrogate assembly only."
+
+[notes]
+n1 = "This is a room-scale reactor-shaped thermal scene, not a reactor design."
+n2 = "All nuclear behavior is disabled. The heat source is an external calibration heater."
+n3 = "Formation history is mandatory because material simulations without formation history are just expensive geometry cosplay."

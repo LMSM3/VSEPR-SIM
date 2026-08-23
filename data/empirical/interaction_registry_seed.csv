@@ -1,0 +1,23 @@
+﻿object_id,family,primary_scale,casting,description
+pi_1,pi_N,S2,field_field,Single pi stacking interaction
+pi_3,pi_N,S2,field_field,Triple pi stacking interaction
+pi_7,pi_N,S3,field_field,Seven-ring pi stacking / ligand-pocket interaction
+pi_12,pi_N,S3,field_field,Extended aromatic pi stack
+HB_1,HB_N,S1,force_force,Single hydrogen bond
+HB_3,HB_N,S2,force_force,Cooperative HB trimer
+HB_N,HB_N,S2,force_force,General N-body hydrogen bond network
+vdW_1,vdW_N,S2,field_field,Pair vdW interaction
+vdW_N,vdW_N,S3,field_field,Many-body vdW dispersion network
+disp_N,disp_N,S3,field_field,N-body dispersion (London forces)
+rep_N,rep_N,S1,force_force,Short-range repulsion (Pauli exclusion)
+sign_halo,sign_halo,S2,field_field,Sigma/pi halo interaction (halogen bond family)
+sigma_hole,sigma_hole,S2,field_field,Sigma-hole directed halogen bond
+pi_hole,pi_hole,S2,field_field,Pi-hole directed interaction
+metal_ligand,metal_ligand,S2,force_force,Metal-ligand coordination bond
+ML_N,metal_ligand,S3,force_force,N-body metal-ligand coordination shell
+solvation,solvation,S3,field_field,Solvation shell interaction
+solv_N,solvation,S4,field_field,Extended solvation/bulk screening
+surface,surface,S4,mixed,Surface adsorption interaction
+ion_dipole,sign_halo,S2,force_force,Ion-dipole interaction (classified under sign_halo family)
+lone_pair_halo,sign_halo,S2,field_field,Lone-pair halo interaction
+halogen_bond,sign_halo,S2,field_field,Classic halogen bond

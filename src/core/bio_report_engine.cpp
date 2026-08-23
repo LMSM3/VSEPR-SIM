@@ -1,4 +1,4 @@
-/**
+﻿/**
  * bio_report_engine.cpp
  * ---------------------
  * Organic / biochemical report-generation engine implementation.
@@ -130,7 +130,7 @@ const char* season_name(Season s) {
 }
 
 // ============================================================================
-// Compound Property Engine — Curated Compound Table
+// Compound Property Engine  -  Curated Compound Table
 // ============================================================================
 //
 // Each record:
@@ -273,7 +273,7 @@ CompoundPropertyEngine::compound_table() {
 }
 
 // ============================================================================
-// Compound Property Engine — Implementation
+// Compound Property Engine  -  Implementation
 // ============================================================================
 
 CompoundPropertyEngine::CompoundPropertyEngine() {}
@@ -661,7 +661,7 @@ ExperimentResult BioExperimentRunner::uv_reflectance_pattern(const BioCase& bc) 
 
     // Model UV absorption vs reflectance across petal surface
     // Radial position 0 (centre) to 1 (tip)
-    // Flavonoids/phenolics concentrated at centre → UV-absorbing bullseye
+    // Flavonoids/phenolics concentrated at centre -> UV-absorbing bullseye
     double total_uv_contrast = 0.0;
 
     for (int pi = 0; pi <= 20; ++pi) {
@@ -709,7 +709,7 @@ ExperimentResult BioExperimentRunner::separation_efficiency(const BioCase& bc) c
     r.experiment_name = bio_experiment_name(BioExperimentType::SEPARATION_EFFICIENCY);
 
     // Model extraction: polar (aqueous) vs nonpolar (organic) partition
-    // Compounds partition by logP: positive → organic, negative → aqueous
+    // Compounds partition by logP: positive -> organic, negative -> aqueous
     double aqueous_mass = 0.0, organic_mass = 0.0, lost_mass = 0.0;
     double total_mass = 0.0;
 
@@ -925,7 +925,7 @@ ExperimentResult BioExperimentRunner::pathway_constraint_analysis(const BioCase&
         if (c.name.find("Delphinidin") != std::string::npos) has_delphinidin = true;
     }
     if (!has_delphinidin) {
-        r.notes += "; F3'5'H pathway absent — blue pigmentation not accessible";
+        r.notes += "; F3'5'H pathway absent  -  blue pigmentation not accessible";
     }
 
     return r;
@@ -981,7 +981,7 @@ BioCase BioCaseGenerator::generate_for_domain(SystemDomain domain) {
 
 BioCase BioCaseGenerator::generate_floral_pigment() {
     BioCase bc;
-    bc.description = "Floral pigment palette — colour chemistry";
+    bc.description = "Floral pigment palette  -  colour chemistry";
     bc.level = ComplexityLevel::L2_BINARY;
 
     static const char* flower_names[] = {
@@ -1015,7 +1015,7 @@ BioCase BioCaseGenerator::generate_floral_pigment() {
 
 BioCase BioCaseGenerator::generate_floral_volatile() {
     BioCase bc;
-    bc.description = "Floral volatile emission — scent chemistry";
+    bc.description = "Floral volatile emission  -  scent chemistry";
     bc.level = ComplexityLevel::L2_BINARY;
 
     static const char* flower_names[] = {
@@ -1058,7 +1058,7 @@ BioCase BioCaseGenerator::generate_leaf_seasonal() {
     int si = static_cast<int>(rng_() % 4);
     Season season = static_cast<Season>(si);
     bc.organism.season = season;
-    bc.description = std::string("Leaf pigment isolation — ") + season_name(season);
+    bc.description = std::string("Leaf pigment isolation  -  ") + season_name(season);
 
     static const char* tree_names[] = {
         "Acer saccharum", "Quercus rubra", "Betula pendula",
@@ -1099,7 +1099,7 @@ BioCase BioCaseGenerator::generate_leaf_seasonal() {
 
 BioCase BioCaseGenerator::generate_leaf_structure() {
     BioCase bc;
-    bc.description = "Leaf microstructure — transport and extraction targets";
+    bc.description = "Leaf microstructure  -  transport and extraction targets";
     bc.level = ComplexityLevel::L3_ANISOTROPIC;
 
     static const char* species[] = {
@@ -1133,7 +1133,7 @@ BioCase BioCaseGenerator::generate_developmental() {
 
     int si = static_cast<int>(rng_() % 4);
     bc.organism.stage = static_cast<DevelopmentalStage>(si);
-    bc.description = std::string("Developmental staging — ") +
+    bc.description = std::string("Developmental staging  -  ") +
                      stage_name(bc.organism.stage);
 
     static const char* flowers[] = {
@@ -1368,13 +1368,13 @@ void BioAutonomousEngine::analyze_report(TechnicalReport& report, const BioCase&
         if (c.uv_active) { has_uv = true; break; }
     }
     if (has_uv) {
-        report.findings.push_back("UV-active compounds present — hidden optical signaling likely");
+        report.findings.push_back("UV-active compounds present  -  hidden optical signaling likely");
     }
 
     for (const auto& e : report.experiments) {
         if (e.experiment_name == bio_experiment_name(BioExperimentType::PATHWAY_CONSTRAINT_ANALYSIS)) {
             if (e.notes.find("F3'5'H") != std::string::npos) {
-                report.findings.push_back("Delphinidin pathway absent — blue pigmentation not accessible");
+                report.findings.push_back("Delphinidin pathway absent  -  blue pigmentation not accessible");
             }
             if (e.secondary_value > 0) {
                 report.findings.push_back(fmt_d(e.secondary_value, 0) +

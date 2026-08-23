@@ -1,0 +1,93 @@
+# DEPRECATED: small or non-visual script moved during vsim_scripts consolidation.
+# Class: deprecated
+#
+[meta]
+name    = "neutron_beta_decay_minimal"
+version = "5.1.4"
+purpose = "Minimal weak gate test: n -> p + e- + nu_e_bar"
+
+[system]
+mode  = "weak_decay_test"
+space = "3d"
+units = "reduced_particle"
+seed  = 4201
+
+[particles.neutron]
+count          = 1
+family         = "hadron"
+gen            = 1
+mass           = 939.565
+charge         = 0.0
+baryon_number  = 1
+lepton_e       = 0
+spin           = 0.5
+lifetime       = 880.2
+scale_mask     = [0, 1, 3, 4]
+position       = [0.0, 0.0, 0.0]
+velocity       = [0.01, 0.0, 0.0]
+
+[particles.proton_observer]
+count          = 1
+family         = "hadron"
+gen            = 1
+mass           = 938.272
+charge         = 1.0
+baryon_number  = 1
+lepton_e       = 0
+spin           = 0.5
+lifetime       = 0.0
+scale_mask     = [0, 1, 3]
+position       = [5.0, 0.0, 0.0]
+velocity       = [-0.01, 0.0, 0.0]
+
+[identity_matrices]
+default_particle   = true
+quark_component    = true
+lepton_identity    = true
+boson_identity     = true
+event_annihilation = true
+relation_particle  = false
+proper_time        = false
+dark_projection    = false
+
+[weak]
+enabled        = true
+mediator       = "W_boson_virtual"
+channels       = ["neutron_beta_minus"]
+conserve_charge  = true
+conserve_baryon  = true
+conserve_lepton  = true
+log_residuals    = true
+
+[extras.togglescale]
+enabled      = true
+default_mode = "pin"
+slots        = [0, 1, 3, 4]
+guard_xd     = true
+
+[verification]
+run_all          = true
+compare          = false
+convergence      = true
+persistent_state = true
+
+[verification.modes]
+gluon_dynamic = false
+gluon_normal  = false
+scheq_only    = true
+
+[run]
+steps           = 2000
+dt              = 0.001
+sample_interval = 1
+
+[outputs]
+trajectory   = "neutron_decay.xyzf"
+events_jsonl = "neutron_decay_events.jsonl"
+live_log     = "neutron_decay_live.log"
+summary      = "neutron_decay_summary.md"
+
+[observe]
+particle_particle = true
+decay             = true
+weak_transition   = true

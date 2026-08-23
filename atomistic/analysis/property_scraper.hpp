@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * property_scraper.hpp — Post-Formation Property Extraction
+ * property_scraper.hpp  -  Post-Formation Property Extraction
  * ==========================================================
  *
  * Pure-function property scraper that extracts physically meaningful
@@ -235,11 +235,11 @@ struct FormationPropertyRecord {
 };
 
 // ============================================================================
-// Scraper Functions — pure, deterministic, read-only
+// Scraper Functions  -  pure, deterministic, read-only
 // ============================================================================
 
 /**
- * scrape_geometry — extract bond lengths, angles, dihedrals, Rg.
+ * scrape_geometry  -  extract bond lengths, angles, dihedrals, Rg.
  */
 inline GeometricProperties scrape_geometry(const State& s) {
     GeometricProperties gp;
@@ -354,7 +354,7 @@ inline GeometricProperties scrape_geometry(const State& s) {
 }
 
 /**
- * scrape_energy — extract energy ledger decomposition.
+ * scrape_energy  -  extract energy ledger decomposition.
  */
 inline EnergyProperties scrape_energy(const State& s) {
     EnergyProperties ep;
@@ -377,7 +377,7 @@ inline EnergyProperties scrape_energy(const State& s) {
 }
 
 /**
- * scrape_inertia — compute inertia tensor, principal moments, asymmetry.
+ * scrape_inertia  -  compute inertia tensor, principal moments, asymmetry.
  */
 inline InertialProperties scrape_inertia(const State& s) {
     InertialProperties ip;
@@ -479,7 +479,7 @@ inline InertialProperties scrape_inertia(const State& s) {
 
     // Rotational constants: B = ħ² / (2I) in cm⁻¹
     // ħ = 1.054571817e-34 J·s, but in amu·Å²/fs: 16.857630
-    // Conversion: ħ²/(2I) in amu·Å² → cm⁻¹ = 16.857630² / (2·I) * (1/c_cm)
+    // Conversion: ħ²/(2I) in amu·Å² -> cm⁻¹ = 16.857630² / (2·I) * (1/c_cm)
     // Standard: B(cm⁻¹) = h/(8π²cI) = 505379.07 / I(amu·Å²)
     constexpr double ROTATIONAL_CONST = 505379.07;
     if (ip.I_A > 1e-6) ip.A_rot = ROTATIONAL_CONST / ip.I_A;
@@ -490,7 +490,7 @@ inline InertialProperties scrape_inertia(const State& s) {
 }
 
 /**
- * scrape_electrostatics — dipole moment, quadrupole tensor.
+ * scrape_electrostatics  -  dipole moment, quadrupole tensor.
  */
 inline ElectrostaticProperties scrape_electrostatics(const State& s) {
     ElectrostaticProperties ep;
@@ -538,7 +538,7 @@ inline ElectrostaticProperties scrape_electrostatics(const State& s) {
 }
 
 /**
- * scrape_topology — connectivity invariants, coordination, ring statistics.
+ * scrape_topology  -  connectivity invariants, coordination, ring statistics.
  */
 inline TopologicalProperties scrape_topology(const State& s) {
     TopologicalProperties tp;
@@ -642,7 +642,7 @@ inline TopologicalProperties scrape_topology(const State& s) {
 }
 
 /**
- * scrape_emergence — anisotropy, VSEPR recovery, quality score.
+ * scrape_emergence  -  anisotropy, VSEPR recovery, quality score.
  */
 inline EmergenceProperties scrape_emergence(
     const State& s,
@@ -690,7 +690,7 @@ inline EmergenceProperties scrape_emergence(
         double p2 = (G[0][0]-q)*(G[0][0]-q) + (G[1][1]-q)*(G[1][1]-q)
                    + (G[2][2]-q)*(G[2][2]-q) + 2.0*p1;
         double p = std::sqrt(p2 / 6.0);
-        // Not worth full Jacobi here — use approximate eigenvalues
+        // Not worth full Jacobi here  -  use approximate eigenvalues
         // via trace/det/p for the quality score
         em.anisotropy_ratio = 1.0 + std::sqrt(p1) * 10.0;  // Proxy
         em.asphericity = p1 / (p2 + 1e-30);
@@ -805,7 +805,7 @@ inline EmergenceProperties scrape_emergence(
 }
 
 /**
- * scrape_properties — the master function.
+ * scrape_properties  -  the master function.
  * Pure, deterministic, read-only extraction from converged State.
  */
 inline FormationPropertyRecord scrape_properties(const State& s) {
@@ -833,7 +833,7 @@ inline FormationPropertyRecord scrape_properties(const State& s) {
 }
 
 /**
- * summary — human-readable property report.
+ * summary  -  human-readable property report.
  */
 inline std::string FormationPropertyRecord::summary() const {
     std::ostringstream out;

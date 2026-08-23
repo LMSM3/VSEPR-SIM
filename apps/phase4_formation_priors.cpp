@@ -1,12 +1,12 @@
-/**
- * phase4_formation_priors.cpp — Phase 4: Formalize Formation Priors
+﻿/**
+ * phase4_formation_priors.cpp  -  Phase 4: Formalize Formation Priors
  *
  * Self-testing executable.  Verifies that the crystal preset library and
  * the formation-prior layer (VSEPR seeds, crystal motifs) are correctly
  * separated from the physical kernel and produce well-formed State objects.
  *
  * Exercises the end-user crystal pipeline:
- *   presets::X() → UnitCell → to_state() → model->eval() → energy
+ *   presets::X() -> UnitCell -> to_state() -> model->eval() -> energy
  *
  * Checks:
  *   4.1  Crystal preset atom counts and lattice constants
@@ -61,7 +61,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 4 — Formation Priors\n");
+    std::printf("  Phase 4  -  Formation Priors\n");
     std::printf("=============================================================\n\n");
 
     auto model = create_lj_coulomb_model();
@@ -102,7 +102,7 @@ int main()
     // ------------------------------------------------------------------
     // 4.2  to_state() produces valid State with PBC
     // ------------------------------------------------------------------
-    std::printf("\n--- 4.2 UnitCell → State Conversion ---\n");
+    std::printf("\n--- 4.2 UnitCell -> State Conversion ---\n");
     {
         for (auto& t : targets) {
             State s = t.uc.to_state();

@@ -15,13 +15,14 @@
 
 # ============================================================================
 # Eigen3 (header-only linear algebra — used only by analysis/bridge code)
-# Prefer a system install; FetchContent fallback keeps the build self-contained.
+# Always use FetchContent so find_package never picks up a partial FetchContent
+# build dir that lacks Eigen3Targets.cmake (generated only during install).
 # DO NOT link vsepr_eigen to state or simulation targets.  Analysis only.
 # ============================================================================
 include(FetchContent)
-find_package(Eigen3 3.4 QUIET NO_MODULE)
-if(NOT Eigen3_FOUND)
-    message(STATUS "Eigen3 not found on system — fetching via FetchContent...")
+FetchContent_GetProperties(eigen)
+if(NOT eigen_POPULATED)
+    message(STATUS "Eigen3 — fetching via FetchContent...")
     FetchContent_Declare(
         eigen
         GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
@@ -32,15 +33,12 @@ if(NOT Eigen3_FOUND)
     set(EIGEN_BUILD_PKGCONFIG  OFF CACHE BOOL "" FORCE)
     set(BUILD_TESTING          OFF CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(eigen)
+    FetchContent_GetProperties(eigen)
 endif()
 
 # Thin INTERFACE target so analysis headers can link cleanly
 add_library(vsepr_eigen INTERFACE)
-if(Eigen3_FOUND)
-    target_link_libraries(vsepr_eigen INTERFACE Eigen3::Eigen)
-else()
-    target_include_directories(vsepr_eigen INTERFACE ${eigen_SOURCE_DIR})
-endif()
+target_include_directories(vsepr_eigen INTERFACE ${eigen_SOURCE_DIR})
 
 # --- Core Library (header-only, everything depends on this) ---
 add_library(vsepr_core INTERFACE)
@@ -126,6 +124,19 @@ endif()
 add_library(vsepr_viz_lib STATIC
     src/core/viz_server.cpp
 )
+
+# --- Bond Graph Generator (C++ backend: random molecule gen + web launcher) ---
+add_library(vsepr_bond_gen STATIC
+    src/core/bond_graph_gen.cpp
+)
+target_include_directories(vsepr_bond_gen PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_bond_gen PUBLIC vsepr_core)
+if(WIN32)
+    target_link_libraries(vsepr_bond_gen PUBLIC ws2_32)
+endif()
 target_include_directories(vsepr_viz_lib PUBLIC
     ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/src
@@ -216,6 +227,16 @@ list(FILTER SIM_SOURCES EXCLUDE REGEX ".*sim_thread\\.cpp$")
 add_library(vsepr_sim STATIC ${SIM_SOURCES})
 target_link_libraries(vsepr_sim PUBLIC vsepr_core)
 target_include_directories(vsepr_sim PUBLIC src/sim)
+
+# --- Multiscale Object Foundation (geometry truth and immutable snapshots) ---
+add_library(vsepr_multiscale STATIC
+    src/multiscale/dynamic_object.cpp
+)
+target_include_directories(vsepr_multiscale PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_multiscale PUBLIC vsepr_core)
 
 # --- Potentials Library (header-only) ---
 add_library(vsepr_pot INTERFACE)
@@ -336,6 +357,13 @@ target_link_libraries(vsepr_demo PUBLIC vsepr_core)
 # --- Atomistic Simulation Library (canonical CoreState, parsers, compilers, TUI) ---
 add_subdirectory(atomistic)
 
+# --- Golden Run GR-1 (renderer-independent deterministic condensation contract) ---
+add_library(vsepr_gr1 STATIC
+    atomistic/golden_run/gr1_condensation.cpp
+)
+target_include_directories(vsepr_gr1 PUBLIC ${PROJECT_SOURCE_DIR})
+target_link_libraries(vsepr_gr1 PUBLIC vsepr_core)
+
 # --- Coarse-Grained Modeling Library (bead mapping, reduced representation) ---
 add_subdirectory(coarse_grain)
 
@@ -348,6 +376,12 @@ add_library(vsepr_chem STATIC
     chem/organic/organic_formula_parser.cpp
     src/vsim/node_accessor.cpp
     src/vsim/vsim_parser.cpp
+    src/vsim/vsim_parser_pillars.cpp
+    src/vsim/dissolution_bridge.cpp
+    src/vsim/analysis/mcf_cai.cpp
+    src/vsim/bridge/bridge_parse.cpp   # WO-67N/67O bridge constructor parser
+    src/vsim/bridge/dem_bridge.cpp     # WO-67N DEM bridge validate + export
+    src/vsim/bridge/fea_bridge.cpp     # WO-67O FEA bridge validate + export
 )
 target_include_directories(vsepr_chem PUBLIC
     ${PROJECT_SOURCE_DIR}/chem
@@ -357,8 +391,38 @@ target_include_directories(vsepr_chem PUBLIC
 )
 target_link_libraries(vsepr_chem PUBLIC vsepr_core)
 
-# --- VSEPR Module targets (pipe_thermal, etc.) — after atomistic ---
-include(VSEPR/cmake/CoreBuild.cmake)
+# --- .X Bundle Format (WO-72A) ---
+add_library(vsepr_xbundle STATIC
+    src/xbundle/xbundle_reader.cpp
+    src/xbundle/xbundle_writer.cpp
+    src/xbundle/xbundle_validator.cpp
+)
+target_include_directories(vsepr_xbundle PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(vsepr_xbundle PUBLIC vsepr_core)
+
+# --- Demo Stack (WO-OUTPUT-P2) ---
+add_library(vsepr_demo_stack STATIC
+    src/vsim/io/demo_frame_sampler.cpp
+    src/vsim/io/demo_bundle_writer.cpp
+    src/vsim/io/dynx_writer.cpp
+    src/vsim/io/dynx_reader.cpp
+    src/vsim/io/dynx_emitter.cpp
+    src/vsim/io/dynx_session.cpp
+)
+target_include_directories(vsepr_demo_stack PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+)
+target_link_libraries(vsepr_demo_stack PUBLIC vsepr_core vsepr_xbundle)
+
+# --- Legacy VSEPR/ pipe-thermal module targets archived ---
+# The VSEPR/ sibling tree (pipe_thermal tui/viewer/tests) has been moved to
+# archive/pipe-thermal-legacy-2026-07-28. No active build target consumes it.
 
 # --- UFF Parameter Table + Auto-Creator Core (v4.1.0 UFX Foundation) ---
 add_library(vsepr_uff STATIC
@@ -375,6 +439,22 @@ target_include_directories(vsepr_uff PUBLIC
     ${PROJECT_SOURCE_DIR}/include
 )
 target_link_libraries(vsepr_uff PUBLIC vsepr_core)
+
+# ============================================================================
+# vsepr_presolve  —  WO-XSUITE-02B  Live Persistent Instance + Presolve Layer
+# ============================================================================
+add_library(vsepr_presolve STATIC
+    src/presolve/eigenmine.cpp
+    src/presolve/solve_batch.cpp
+    src/presolve/curvefit_presolve.cpp
+    src/presolve/release_gate.cpp
+    src/presolve/basis_archive.cpp
+)
+target_include_directories(vsepr_presolve PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_presolve PUBLIC vsepr_core)
 
 # ============================================================================
 # 2. Headless Applications (BUILD_APPS)
@@ -400,8 +480,16 @@ if(BUILD_APPS)
         src/cli/cmd_therm.cpp
         src/cli/cmd_tui.cpp
         src/cli/cmd_ufx.cpp
+        src/cli/script_expansion.cpp
+        src/cli/cmd_classify.cpp
         src/cli/cmd_validate.cpp
         src/cli/cmd_run_vsim.cpp
+        src/vsim/console_render.cpp
+        src/cli/cmd_doctor_tests.cpp
+        src/cli/cmd_x_suite.cpp
+        src/cli/cmd_ui.cpp
+        src/cli/cmd_batch.cpp
+        src/cli/cmd_batch_sweep.cpp
         src/v4/uff/ufx_schema.cpp
     )
     target_include_directories(vsepr_cli PUBLIC include/ ${PROJECT_SOURCE_DIR})
@@ -411,15 +499,22 @@ if(BUILD_APPS)
         target_include_directories(sqlite3_bundled PUBLIC ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
         set_target_properties(sqlite3_bundled PROPERTIES POSITION_INDEPENDENT_CODE ON)
     endif()
-    target_link_libraries(vsepr_cli PUBLIC vsepr_core vsepr_chem vsepr_tracker atomistic vsepr_io coarse_grain sqlite3_bundled)
+    target_link_libraries(vsepr_cli PUBLIC vsepr_core vsepr_infra vsepr_chem vsepr_tracker atomistic vsepr_io coarse_grain sqlite3_bundled vsepr_bond_gen)
     target_include_directories(vsepr_cli PUBLIC ${PROJECT_SOURCE_DIR}/src ${PROJECT_SOURCE_DIR}/third_party/sqlite3)
 
     # Unified CLI executable
     add_executable(vsepr apps/vsepr.cpp)
-    target_link_libraries(vsepr vsepr_cli vsepr_sim vsepr_pot vsepr_io vsepr_thermal atomistic vsepr_gas vsepr_gas2 vsepr_gas3 vsepr_live_lib vsepr_viz_lib)
+    target_link_libraries(vsepr vsepr_cli vsepr_sim vsepr_pot vsepr_io vsepr_thermal atomistic vsepr_gas vsepr_gas2 vsepr_gas3 vsepr_live_lib vsepr_viz_lib vsepr_cache vsepr_ml $<$<PLATFORM_ID:Windows>:ws2_32>)
     target_include_directories(vsepr PRIVATE src/ include/ ${PROJECT_SOURCE_DIR})
+    install(TARGETS vsepr DESTINATION bin)
 
-    # UFX AUTO2 command-registry CLI (apps/cli.cpp -- CommandRegistry-based router)
+    # Batch inlet  (standalone vsepr-batch.exe, same logic as `vsepr batch`)
+    add_executable(vsepr-batch apps/vsepr-batch/main.cpp)
+    target_link_libraries(vsepr-batch vsepr_cli vsepr_sim vsepr_pot vsepr_io vsepr_thermal atomistic vsepr_gas vsepr_gas2 vsepr_gas3 vsepr_live_lib vsepr_viz_lib vsepr_cache vsepr_ml $<$<PLATFORM_ID:Windows>:ws2_32>)
+    target_include_directories(vsepr-batch PRIVATE src/ include/ ${PROJECT_SOURCE_DIR})
+    install(TARGETS vsepr-batch DESTINATION bin)
+
+    # UFX AUTO2
     add_executable(vsepr-ufx apps/cli.cpp
         src/cli/cmd_build.cpp
         src/cli/cmd_help.cpp
@@ -600,6 +695,10 @@ if(BUILD_APPS)
     target_link_libraries(atomistic-sim atomistic vsepr_io vsepr_core vsepr_pot)
     target_include_directories(atomistic-sim PRIVATE ${PROJECT_SOURCE_DIR})
 
+    add_executable(gr1-condensation apps/gr1_condensation.cpp)
+    target_link_libraries(gr1-condensation PRIVATE vsepr_gr1)
+    target_include_directories(gr1-condensation PRIVATE ${PROJECT_SOURCE_DIR})
+
     add_executable(atomistic-discover apps/atomistic-discover.cpp)
     target_link_libraries(atomistic-discover atomistic vsepr_io vsepr_core vsepr_pot)
     target_include_directories(atomistic-discover PRIVATE ${PROJECT_SOURCE_DIR})
@@ -607,6 +706,11 @@ if(BUILD_APPS)
     add_executable(continual_runner apps/continual_runner.cpp)
     target_link_libraries(continual_runner atomistic vsepr_io vsepr_core vsepr_pot)
     target_include_directories(continual_runner PRIVATE ${PROJECT_SOURCE_DIR})
+
+    # WO-VSIM-74-PROP-TRAIN  -  Property-based training over continual runner
+    add_executable(property_train apps/property_train.cpp)
+    target_link_libraries(property_train vsepr_core)
+    target_include_directories(property_train PRIVATE ${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/include)
 
     add_executable(atomistic-align apps/atomistic-align.cpp)
     target_link_libraries(atomistic-align atomistic vsepr_io vsepr_core)
@@ -807,6 +911,17 @@ endif()
 install(TARGETS vsepr-entry DESTINATION bin)
 
 # --- Module Registry + Gas Module + Live Server Tests ---
+add_executable(test_gr1_condensation tests/test_gr1_condensation.cpp)
+target_link_libraries(test_gr1_condensation PRIVATE vsepr_gr1)
+target_include_directories(test_gr1_condensation PRIVATE ${PROJECT_SOURCE_DIR})
+add_test(NAME GR1CondensationTest COMMAND test_gr1_condensation)
+set_tests_properties(GR1CondensationTest PROPERTIES WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} LABELS "golden;atomistic;determinism;render")
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+    add_test(NAME GR1ReportRendererTest COMMAND ${Python3_EXECUTABLE} ${PROJECT_SOURCE_DIR}/tests/test_gr1_report_renderer.py)
+    set_tests_properties(GR1ReportRendererTest PROPERTIES LABELS "golden;report;xlsx;png")
+endif()
+
 add_executable(test_modules tests/test_modules.cpp)
 target_include_directories(test_modules PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(test_modules vsepr_gas vsepr_live_lib vsepr_core)
@@ -885,4 +1000,122 @@ target_compile_options(test_gallery_parse PRIVATE -Wno-unused-parameter)
 add_test(NAME GalleryParseTest COMMAND test_gallery_parse)
 set_tests_properties(GalleryParseTest PROPERTIES LABELS "core;vsim;gallery;visual;quick")
 
+# ============================================================================
+# WO-73D  —  Length-Scale Fitter  (empirical recovery curve fitting)
+# ============================================================================
+add_library(vsepr_length_fitter STATIC
+    src/multiscale/length_scale_fitter.cpp
+)
+target_include_directories(vsepr_length_fitter PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_length_fitter PUBLIC vsepr_core)
 
+# ============================================================================
+# WO-73E  —  VSIM Output Filter  (raw VSIM -> EmpiricalDB normalisation)
+# ============================================================================
+add_library(vsepr_vsim_filter STATIC
+    src/multiscale/vsim_output_filter.cpp
+)
+target_include_directories(vsepr_vsim_filter PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_vsim_filter PUBLIC vsepr_core)
+
+# ============================================================================
+# WO-74  —  Continual Run Controller  (ContinualRunRecord + prior update)
+# WO-74A: gap_classifier_wo74c.cpp merged into gap_classifier.cpp
+# ============================================================================
+add_library(vsepr_continual STATIC
+    src/multiscale/continual_run.cpp
+    src/multiscale/gap_classifier.cpp
+)
+target_include_directories(vsepr_continual PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_continual PUBLIC vsepr_core)
+
+
+
+# ============================================================================
+# WO-72V  --  Precomputed Cache Subsystem
+# ============================================================================
+add_library(vsepr_cache STATIC
+    src/cache/material_preset_cache.cpp
+    src/cache/formation_lut.cpp
+    src/cache/property_table.cpp
+    src/cache/trajectory_index.cpp
+    src/cli/cmd_cache.cpp
+)
+target_include_directories(vsepr_cache PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_cache PUBLIC vsepr_core)
+# ============================================================================
+# WO-72W  --  Material-Property ML / Pretraining Layer
+# ============================================================================
+add_library(vsepr_ml STATIC
+    src/ml/property_trend.cpp
+    src/ml/route_recommender.cpp
+    src/cli/cmd_mlprop.cpp
+)
+target_include_directories(vsepr_ml PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+
+# ============================================================================
+# WO-75A  --  FinalChapter Analysis Helpers
+# ============================================================================
+add_library(vsepr_analysis_helpers STATIC
+    src/analysis/bond_angle_analysis.cpp
+    src/analysis/spectral_response_analysis.cpp
+    src/analysis/interference_analysis.cpp
+)
+target_include_directories(vsepr_analysis_helpers PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_analysis_helpers PUBLIC vsepr_core)
+if(TARGET vsepr_cli)
+    target_link_libraries(vsepr_cli PUBLIC vsepr_analysis_helpers)
+endif()
+
+# ============================================================================
+# WO-75B  --  Laser Excitation Module
+# ============================================================================
+add_library(vsepr_excite STATIC
+    src/excite/laser_excite_module.cpp
+)
+target_include_directories(vsepr_excite PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_excite PUBLIC vsepr_core)
+
+# ============================================================================
+# WO-75C  --  Formation Pathway Helper  (standalone executable)
+# ============================================================================
+add_executable(vsim_formation_helper
+    src/tools/vsim_formation_helper.cpp
+)
+target_include_directories(vsim_formation_helper PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+
+# ============================================================================
+# WO-75D  --  .vsim-pre Precompiler  (standalone executable)
+# ============================================================================
+add_executable(vsim_precompile
+    src/tools/vsim_precompile.cpp
+)
+target_include_directories(vsim_precompile PRIVATE
+    ${PROJECT_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/src
+)
+target_link_libraries(vsepr_ml PUBLIC vsepr_core)

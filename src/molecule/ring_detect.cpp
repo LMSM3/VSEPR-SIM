@@ -1,5 +1,5 @@
-// ============================================================================
-// ring_detect.cpp — Glass Module: Small Cycle Detection
+﻿// ============================================================================
+// ring_detect.cpp  -  Glass Module: Small Cycle Detection
 // ============================================================================
 // Bounded-DFS ring finder.  For each bond, attempts to close a cycle back
 // to the start atom via a short path (≤ max_size).  Deduplicates by

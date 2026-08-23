@@ -1,24 +1,24 @@
-#pragma once
+﻿#pragma once
 // =============================================================================
 // src/analysis/packing_analysis.hpp
 // =============================================================================
-// Task 13  — Bead/powder packing measurement layer
+// Task 13   -  Bead/powder packing measurement layer
 //            (contact network, coordination, void fraction, wall proxy)
-// Task 13B — Macro packing property inference layer
+// Task 13B  -  Macro packing property inference layer
 //            (bulk density, porosity, compressibility, permeability,
 //             sintering readiness, macro class)
 //
 // Core principle
-// ──────────────
+// --------------
 //  Porosity is NOT an input.  It is computed from measured geometry.
 //  Bulk density is NOT an input.  It is computed from mass and volume.
 //  Compressibility and permeability are proxies derived from contact/void data.
 //
 // Property hierarchy
-// ──────────────────
-//  xyzFull row          → positions / identities / radii only
-//  PackingRecord        → per-frame geometry measurement (13)
-//  PackingInference     → per-case macro inference (13B)
+// ------------------
+//  xyzFull row          -> positions / identities / radii only
+//  PackingRecord        -> per-frame geometry measurement (13)
+//  PackingInference     -> per-case macro inference (13B)
 //
 // Forbidden in state/xyzFull
 //   porosity, bulk_density, compressibility, permeability, sintering_fraction
@@ -82,7 +82,7 @@ struct PackingBox {
 };
 
 // =============================================================================
-// Task 13 — Per-frame measurement record
+// Task 13  -  Per-frame measurement record
 // =============================================================================
 
 struct PackingRecord {
@@ -95,7 +95,7 @@ struct PackingRecord {
 	double   mean_coordination           = 0.0;   // contacts per bead
 	double   coordination_stddev         = 0.0;
 	double   largest_cluster_fraction    = 0.0;   // largest connected cluster / N
-	double   wall_force_proxy            = 0.0;   // Å — mean z-deviation of boundary beads
+	double   wall_force_proxy            = 0.0;   // Å  -  mean z-deviation of boundary beads
 	double   mean_contact_lifetime       = 0.0;   // frames contacts have persisted
 	double   persistent_contact_fraction = 0.0;   // fraction of contacts existing > 1 frame
 	double   void_connectivity_proxy     = 0.0;   // [0,1] fraction of void accessible
@@ -139,7 +139,7 @@ struct PackingRecord {
 };
 
 // =============================================================================
-// Task 13B — Per-case macro packing inference record
+// Task 13B  -  Per-case macro packing inference record
 // =============================================================================
 
 struct PackingInference {
@@ -219,13 +219,13 @@ struct PackingInference {
 };
 
 // =============================================================================
-// Task 13 — PackingTracker
+// Task 13  -  PackingTracker
 // =============================================================================
 // Feed frames of bead positions + radii; produces a PackingRecord per frame.
 //
 // Usage
 //   PackingTracker tr;
-//   tr.r_contact = 0.1;          // Å — extra gap beyond radii to count contact
+//   tr.r_contact = 0.1;          // Å  -  extra gap beyond radii to count contact
 //   tr.set_box({Lx, Ly, Lz});
 //   tr.set_baseline(E0);
 //   for each frame:
@@ -234,7 +234,7 @@ struct PackingInference {
 struct PackingTracker {
 	// Configuration
 	double   r_contact       = 0.5;   // Å gap beyond sum of radii = contact
-	double   settling_MSD_thresh = 0.01; // Å² — MSD below this = settled
+	double   settling_MSD_thresh = 0.01; // Å²  -  MSD below this = settled
 	double   E0              = 0.0;
 
 	void set_box(const PackingBox& b)     { box_ = b; }
@@ -260,10 +260,10 @@ struct PackingTracker {
 		if (N == 0) return row;
 		row.bead_count = static_cast<uint32_t>(N);
 
-		// ── Container volume ──────────────────────────────────────────────────
+		// -- Container volume --------------------------------------------------
 		row.container_volume = box_.valid() ? box_.volume() : infer_box_volume(pos);
 
-		// ── Occupied volume (sum of sphere volumes, no overlap correction) ────
+		// -- Occupied volume (sum of sphere volumes, no overlap correction) ----
 		if (!radii.empty()) {
 			for (int i = 0; i < N && i < static_cast<int>(radii.size()); ++i)
 				row.occupied_volume += (4.0/3.0) * M_PI * std::pow(radii[i], 3);
@@ -275,7 +275,7 @@ struct PackingTracker {
 		if (row.container_volume > 0)
 			row.packing_fraction_measured = row.occupied_volume / row.container_volume;
 
-		// ── Contact network + coordination ────────────────────────────────────
+		// -- Contact network + coordination ------------------------------------
 		std::vector<int> coord(N, 0);
 		std::vector<std::vector<int>> adj(N);
 		auto r_i = [&](int i){ return (i < static_cast<int>(radii.size())) ? radii[i] : 1.0; };
@@ -302,7 +302,7 @@ struct PackingTracker {
 		const double var_coord = sum_sq / N - (sum_coord/N) * (sum_coord/N);
 		row.coordination_stddev = std::sqrt(std::max(0.0, var_coord));
 
-		// ── Largest connected cluster (BFS) ───────────────────────────────────
+		// -- Largest connected cluster (BFS) -----------------------------------
 		std::vector<bool> visited(N, false);
 		int largest = 0;
 		for (int s = 0; s < N; ++s) {
@@ -318,7 +318,7 @@ struct PackingTracker {
 		}
 		row.largest_cluster_fraction = static_cast<double>(largest) / N;
 
-		// ── Wall force proxy — mean z-distance of top 10% beads from ceiling ─
+		// -- Wall force proxy  -  mean z-distance of top 10% beads from ceiling -
 		{
 			std::vector<double> zvals(N);
 			for (int i = 0; i < N; ++i) zvals[i] = pos[i].z;
@@ -331,7 +331,7 @@ struct PackingTracker {
 			row.wall_force_proxy = sum_gap / top_n;
 		}
 
-		// ── Contact persistence tracking ──────────────────────────────────────
+		// -- Contact persistence tracking --------------------------------------
 		// Total contacts available from coordination sum; used for persistence fraction below.
 
 		if (!prev_contacts_.empty()) {
@@ -356,12 +356,12 @@ struct PackingTracker {
 		row.mean_contact_lifetime = (contact_lifetime_frames_ > 1)
 			? contact_lifetime_sum_ / (contact_lifetime_frames_ - 1) : 0.0;
 
-		// ── Void connectivity proxy (simple: 1 - packing_fraction) ────────────
+		// -- Void connectivity proxy (simple: 1 - packing_fraction) ------------
 		// Real void connectivity would need flood-fill on a voxel grid.
 		// We label this a proxy transparently.
 		row.void_connectivity_proxy = std::max(0.0, 1.0 - row.packing_fraction_measured);
 
-		// ── Settling flag — MSD below threshold ───────────────────────────────
+		// -- Settling flag  -  MSD below threshold -------------------------------
 		if (!prev_pos_.empty()) {
 			double msd = 0;
 			for (int i = 0; i < N && i < static_cast<int>(prev_pos_.size()); ++i) {
@@ -404,7 +404,7 @@ private:
 };
 
 // =============================================================================
-// Task 13B — PackingAnalyzer
+// Task 13B  -  PackingAnalyzer
 // =============================================================================
 // Consumes a PackingRecord log and optionally a compressed-state log to infer
 // macro bulk properties.
@@ -416,7 +416,7 @@ private:
 //   pa.compute_compressibility(inf, initial_records, compressed_records);
 
 struct PackingAnalyzer {
-	double drift_threshold             = 0.05;   // rel energy drift → "unstable"
+	double drift_threshold             = 0.05;   // rel energy drift -> "unstable"
 	double load_bearing_coord_min      = 4.0;    // min mean CN for load-bearing network
 	double sintering_persistence_min   = 0.6;    // persistent fraction for sintering candidate
 
@@ -445,7 +445,7 @@ struct PackingAnalyzer {
 		inf.coordination_stddev= last.coordination_stddev;
 		inf.largest_cluster_fraction = last.largest_cluster_fraction;
 
-		// ── Energy status ─────────────────────────────────────────────────────
+		// -- Energy status -----------------------------------------------------
 		const double max_drift = [&](){
 			double m = 0;
 			for (const auto& r : log) m = std::max(m, std::abs(r.E_rel_drift));
@@ -460,29 +460,29 @@ struct PackingAnalyzer {
 			inf.valid_for_macro_inference = true;
 		}
 
-		// ── Bulk density ──────────────────────────────────────────────────────
+		// -- Bulk density ------------------------------------------------------
 		inf.bulk_density_proxy = (inf.container_volume > 0)
 			? inf.occupied_volume / inf.container_volume : 0.0;
 		if (inf.mass_basis_available && inf.container_volume > 0)
 			inf.bulk_density_inferred = total_mass / inf.container_volume;
 
-		// ── Porosity ─────────────────────────────────────────────────────────
+		// -- Porosity ---------------------------------------------------------
 		inf.porosity_inferred           = std::max(0.0, 1.0 - last.packing_fraction_measured);
 		inf.porosity_proxy_uncorrected  = inf.porosity_inferred;
 
-		// ── Load-bearing network score ────────────────────────────────────────
+		// -- Load-bearing network score ----------------------------------------
 		// Score = (mean_coord / load_bearing_min) × largest_cluster_fraction, clipped [0,1]
 		inf.load_bearing_network_score = std::min(1.0,
 			(inf.mean_coordination / load_bearing_coord_min)
 			* inf.largest_cluster_fraction);
 
-		// ── Packing stability ─────────────────────────────────────────────────
+		// -- Packing stability -------------------------------------------------
 		// Settling flag fraction over the log
 		int settled_count = 0;
 		for (const auto& r : log) if (r.settling_flag) ++settled_count;
 		inf.packing_stability_score = static_cast<double>(settled_count) / log.size();
 
-		// ── Permeability proxy (Kozeny-Carman inspired, proxy only) ───────────
+		// -- Permeability proxy (Kozeny-Carman inspired, proxy only) -----------
 		// k_proxy ∝ ε³ / (1-ε)²   where ε = porosity
 		// We compute this as an order-of-magnitude proxy; label it accordingly.
 		{
@@ -496,7 +496,7 @@ struct PackingAnalyzer {
 		for (const auto& r : log) void_sum += r.void_connectivity_proxy;
 		inf.flow_accessibility_score = void_sum / log.size();
 
-		// ── Sintering readiness ────────────────────────────────────────────────
+		// -- Sintering readiness ------------------------------------------------
 		// Based on persistent contact fraction and cluster connectivity
 		const double mean_persistence = [&](){
 			double s = 0;
@@ -507,7 +507,7 @@ struct PackingAnalyzer {
 		inf.neck_growth_candidate_score = (mean_persistence > sintering_persistence_min)
 			? inf.largest_cluster_fraction : 0.0;
 
-		// ── Macro class ───────────────────────────────────────────────────────
+		// -- Macro class -------------------------------------------------------
 		if (!inf.valid_for_macro_inference) {
 			inf.packing_macro_class = "invalid_energy_drift";
 		} else if (last.packing_fraction_measured > 0.72) {

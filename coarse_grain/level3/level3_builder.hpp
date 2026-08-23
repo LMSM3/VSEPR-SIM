@@ -1,13 +1,13 @@
-#pragma once
+﻿#pragma once
 /**
- * level3_builder.hpp — L2 → L3 Aggregation Engine
+ * level3_builder.hpp  -  L2 -> L3 Aggregation Engine
  *
  * Converts a converged set of Level 2 beads (from the 6+9 FIRE stepper)
  * into Level 3 domain beads suitable for macro-DM handoff.
  *
  * Algorithm: greedy nearest-neighbour clustering
  *   1. Start from the bead with highest eta (most converged)
- *   2. Collect all beads within r_domain of the seed → domain
+ *   2. Collect all beads within r_domain of the seed -> domain
  *   3. Mark those beads as assigned
  *   4. Repeat until all beads are assigned or below min_members threshold
  *   5. Underpopulated clusters are merged to their nearest valid domain
@@ -170,7 +170,7 @@ static inline std::vector<qm::QMNeighbour> build_qm_neighbours(
 // ============================================================================
 
 /**
- * aggregate_to_l3 — convert a converged L2 bead system to L3 domains.
+ * aggregate_to_l3  -  convert a converged L2 bead system to L3 domains.
  *
  * @param beads        Converged L2 bead system
  * @param env_states   Per-bead environment state after FIRE convergence
@@ -276,7 +276,7 @@ inline std::vector<Level3HandoffRecord> aggregate_to_l3(
         proxy.mean_eta         = mean_eta;
         proxy.mean_rho         = mean_rho;
         proxy.mean_C           = mean_C;
-        proxy.mean_P2_hat      = (mean_P2 + 0.5) / 1.5;  // P2 → [0,1]
+        proxy.mean_P2_hat      = (mean_P2 + 0.5) / 1.5;  // P2 -> [0,1]
         proxy.var_eta          = var_eta;
         proxy.var_rho          = var_rho;
         proxy.converged        = all_conv;

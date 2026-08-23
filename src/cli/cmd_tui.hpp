@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * cmd_tui.hpp
  * -----------
@@ -9,10 +9,10 @@
  * Dispatches all four XYZ formats into the ANSI terminal renderer via
  * the xyz_tui_bridge translation layer:
  *
- *   .xyz   → static geometry preview
- *   .xyza  → forces / velocity arrows + metadata panel
- *   .xyzc  → checkpoint state + atom preview
- *   .xyzf  → animated multi-frame trajectory
+ *   .xyz   -> static geometry preview
+ *   .xyza  -> forces / velocity arrows + metadata panel
+ *   .xyzc  -> checkpoint state + atom preview
+ *   .xyzf  -> animated multi-frame trajectory
  *
  * Usage:
  *   vsepr tui <file.[xyz|xyza|xyzc|xyzf]> [options]

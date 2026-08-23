@@ -1,0 +1,52 @@
+# scripts/vsim_skeletons/wo83l_rotatable_bond.vsim
+# Tier B — native replacement for demo_wo83l_rotatable_bond_stub.py
+#
+# STUB: [classify.providers] section does not exist in vsim_document.hpp yet.
+# DEFERRED WO-84C: Rotatable bond count excludes ring bonds via RingProvider.
+#                  Until WO-84C, ring bonds are not excluded, so the count is
+#                  wrong for cyclic molecules.  Linear chains like C4H10 are
+#                  correct today (no rings to exclude).
+#
+# Python equivalent:
+#   assert "rotatable_bonds:" in out_butane   # field present
+#   # No assertion on numeric value — count may be wrong for cyclic molecules
+
+[project]
+name    = wo83l_rotatable_bond_c4h10
+version = v5.0.0
+
+[material]
+formula = C4H10
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.providers]
+# ring = null                         # STUB: field not parsed (WO-84A)
+#                                     # DEFERRED WO-84C: RingProvider needed to
+#                                     # correctly exclude ring bonds from rotatable
+#                                     # bond count for cyclic molecules
+#
+# [classify.expect]
+# field_present = "rotatable_bonds"   # field must appear; value not asserted
+# result        = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83l_rotatable_bond_ch4
+version = v5.0.0
+
+[material]
+formula = CH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = organic
+#
+# [classify.expect]
+# rotatable_bonds = 0                 # single carbon, no rotatable bonds
+# result          = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────

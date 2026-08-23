@@ -1,4 +1,4 @@
-// Forces.hpp - Force vector storage and analysis
+﻿// Forces.hpp - Force vector storage and analysis
 // Extends Crystal with computed force fields
 
 #pragma once
@@ -10,9 +10,9 @@
 
 namespace vsepr::data {
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Force vector data structures
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 struct ForceVector {
     Vec3 direction;      // Unit vector (direction)
@@ -42,25 +42,25 @@ struct AtomForces {
     int num_contributors;            // Number of neighbors contributing
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Forces: The force field wrapper
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 class Forces {
 public:
-    // ─── Core data ───
+    // --- Core data ---
     std::string xyz_path;            // Source geometry (foo.xyz)
     std::string xyzF_path;           // Force field file (foo.xyzF)
     
     std::vector<AtomForces> atom_forces;
     
-    // ─── Metadata ───
+    // --- Metadata ---
     std::string units;               // "kcal_mol_A" or "eV_A"
     std::string model;               // "LJ", "LJ+Coulomb", etc.
     std::optional<float> temperature;// Temperature (K) if MD
     std::optional<int> frame;        // Frame number if trajectory
     
-    // ─── Provenance ───
+    // --- Provenance ---
     struct Computation {
         std::string method;          // "pairwise_lj", "bonded_mm", etc.
         std::unordered_map<std::string, std::string> params;
@@ -68,12 +68,12 @@ public:
         std::string hash;            // SHA256 of geometry + params
     } computation;
     
-    // ─── Statistics ───
+    // --- Statistics ---
     float max_force;                 // Global max |F|
     float mean_force;                // Mean |F| over all atoms
     float rms_force;                 // RMS force
     
-    // ─── Methods ───
+    // --- Methods ---
     static Forces compute_from_crystal(const Crystal& cryst,
                                        const std::string& model = "LJ+Coulomb");
     
@@ -89,9 +89,9 @@ public:
     std::vector<std::tuple<Vec3, Vec3, float>> get_primary_arrows() const; // Only primary interactions
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // Force computation engine
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 class ForceComputer {
 public:
@@ -115,9 +115,9 @@ private:
     const Crystal& cryst_;
 };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 // xyzF file I/O
-// ════════════════════════════════════════════════════════════════════════════
+// ============================================================================
 
 class XYZFParser {
 public:

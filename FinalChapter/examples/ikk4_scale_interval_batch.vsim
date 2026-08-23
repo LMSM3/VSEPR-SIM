@@ -1,0 +1,251 @@
+# =============================================================================
+# IKK IV — Scale Interval, Length Scales, and Dimensional Structure
+# VSIM implementation: batch sweep across material scales
+#
+# Theory claim (IKK IV):
+#   Field, particle, and macro structure are not separate ontological
+#   categories. They are different representational limits of identity-bearing
+#   structure along the scale axis w. The scale ladder S_n defines intervals
+#   across which the same identity content produces qualitatively different
+#   observable forms — not because the identity changed, but because the
+#   projection window changed.
+#
+# Computational test:
+#   Batch sweep across four systems at four distinct scale regimes:
+#     Job 1 — molecular (CH4):     sub-nanometre, covalent, 0-D
+#     Job 2 — atomic crystal (Si): nanometre, covalent periodic, 3-D
+#     Job 3 — ionic crystal (NaCl): nanometre, long-range Coulomb, 3-D
+#     Job 4 — metallic crystal (Fe-BCC): nanometre, EAM potential, 3-D
+#
+#   Each job runs [analysis.scale_sampling] with rve_window_lengths_A set
+#   to span the system's characteristic length scale.
+#
+#   IKK IV §2: the length scale ladder maps particle → atomic → molecular
+#   → macro scales. Here we compress that into four representative stops.
+#
+#   IKK IV §5: physical size vs representational size. The rve_window is
+#   the representational window; the system size is the physical container.
+#   If emergence_candidate flips between windows, you've found the scale
+#   interval where the representation changes class.
+#
+#   IKK IV §6 (field limit pointer): at the largest rve_window (approaching
+#   supercell size), the field projection should approach the bulk-field
+#   limit. mass_conserved and spatial_cv near zero = field-like identity.
+#
+# Traditional systems:
+#   CH4 (molecular), Si (covalent), NaCl (ionic), Fe (metallic)
+#   — one from each material_class in the registry
+# =============================================================================
+
+[project]
+name        = "ikk4_scale_interval_batch"
+version     = "v5.0.0-beta.9"
+seed_base   = 4000
+determinism = true
+
+# ---------------------------------------------------------------------------
+# Batch: four scale regimes
+# IKK IV §2 — length scale ladder: molecular → atomic → ionic → metallic
+# IKK IV §5 — physical size vs representational window per job
+# ---------------------------------------------------------------------------
+[batch]
+print_plan = true
+
+# --- Job 1: molecular scale — CH4, sub-nm, 0-D -------------------------
+[[batch.job]]
+name            = "molecular_scale_ch4"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "CH4"
+structure = "molecular"
+phase     = "gas"
+
+[batch.job.run]
+mode        = "relax"
+max_steps   = 800
+temperature = 0.0
+
+[batch.job.environment]
+periodic    = false
+temperature = 0.0
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [1.0, 2.0, 4.0]
+field_grid           = [4, 4, 4]
+
+# --- Job 2: covalent crystal — Si, nm scale, 3-D periodic -------------
+[[batch.job]]
+name            = "covalent_scale_si"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Si"
+prototype = "A4_Si"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1500
+dt_fs       = 0.5
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.71, 5.43, 10.86, 21.72]
+field_grid           = [8, 8, 8]
+
+# --- Job 3: ionic crystal — NaCl, nm scale, long-range Coulomb ----------
+[[batch.job]]
+name            = "ionic_scale_nacl"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1500
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.82, 5.64, 11.28, 22.56]
+field_grid           = [8, 8, 8]
+
+# --- Job 4: metallic crystal — Fe BCC, nm scale, EAM -------------------
+[[batch.job]]
+name            = "metallic_scale_fe"
+seed_count      = 1
+per_run_actions = ["analyze.variance", "export"]
+
+[batch.job.material]
+formula   = "Fe"
+prototype = "A2_Fe"
+cell      = "4x4x4"
+
+[batch.job.run]
+mode        = "md"
+max_steps   = 1500
+dt_fs       = 1.0
+temperature = 300
+
+[batch.job.environment]
+periodic    = true
+temperature = 300
+medium      = "vacuum"
+
+[batch.job.scale_sampling]
+rve_window_lengths_A = [2.48, 4.96, 9.92, 19.84]
+field_grid           = [8, 8, 8]
+
+# ---------------------------------------------------------------------------
+# Shared scale sampling config — applied to all jobs
+# IKK IV §3: fifth axis w as spatial-scale direction
+# The successive_window_difference across jobs IS the cross-scale delta
+# that IKK IV §1 defines as the scale interval boundary
+# ---------------------------------------------------------------------------
+[analysis.scale_sampling]
+enabled                            = true
+compute_field_projection           = true
+compute_rve_sampling               = true
+compute_emergence_metrics          = true
+rve_windows_per_level              = 6
+rve_window_placement               = "grid"
+min_particles_for_scale_sampling   = 16
+spatial_cv_threshold               = 0.35
+temporal_drift_threshold           = 0.20
+scale_drift_threshold              = 0.30
+temporal_drift_metric              = "block_difference"
+scale_drift_metric                 = "successive_window_difference"
+
+[analysis.structure]
+enabled           = true
+neighbor_cutoff_A = 6.0
+contact_cutoff_A  = 3.5
+
+[analysis.sampling]
+enabled     = true
+compute_rdf = true
+compute_msd = true
+unwrap_pbc  = true
+
+[analysis.inference]
+enabled = true
+mode    = "rule_based_61d"
+
+# ---------------------------------------------------------------------------
+# Observables — same set across all scale regimes
+# Allows direct comparison: does the observable class change with scale?
+# IKK IV §2: if coordination changes from 4 (Si) → 6 (NaCl) → 8 (Fe),
+# that is a representational-limit shift, not an ontological category shift
+# ---------------------------------------------------------------------------
+[observe]
+metrics       = ["energy_map", "coordination", "rdf"]
+output_format = "json"
+every_n_steps = 50
+
+[kernel]
+pass_through   = true
+symbolic_trace = true
+event_registry = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+dynamic_energy   = true
+
+# ---------------------------------------------------------------------------
+# Verification — one gate per job material class
+# Shared tolerances; individual expected values derived per prototype
+# ---------------------------------------------------------------------------
+[verify]
+enabled             = true
+profile             = "ikk4_scale_ladder_batch"
+write_verify_report = true
+write_verify_tsv    = true
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-10
+
+# ---------------------------------------------------------------------------
+# Export — comparison_summary written at batch completion
+# This is the IKK IV §2 cross-scale evidence table
+# ---------------------------------------------------------------------------
+[export]
+write_xyz             = true
+write_analysis_json   = true
+write_metrics_tsv     = true
+write_report_md       = true
+write_manifest_json   = true
+output_dir            = "out/ikk4_batch"
+
+[report]
+title                   = "ikk4_scale_interval_batch"
+include_material_cards  = true
+include_metric_tables   = true
+include_expected_trends = true
+include_symbolic_trace  = true
+
+[visual]
+output_type     = "terminal_overlay_cycle"
+render_interval = 50
+show_bar_chart  = true
+show_proxy_table = true
+overlay_sequence = energy_map,coordination

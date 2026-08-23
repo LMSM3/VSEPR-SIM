@@ -1,0 +1,1203 @@
+% ============================================================================
+%  Scale-Packing Residual Analysis — LAMMPS Validation Layer
+%  VSEPR-SIM-ORGANICS & METALLICS {release}
+%  99_backmatter — Complete Back Matter
+%  Appendices A–F, Glossary, References, Future Work
+%  Compile with pdflatex (twice for refs).
+% ============================================================================
+\documentclass[11pt, a4paper, oneside]{article}
+
+% --- Geometry ----------------------------------------------------------------
+\usepackage[
+  top=1.0in, bottom=1.0in, left=1.15in, right=1.15in,
+  headheight=14pt
+]{geometry}
+
+% --- Fonts / encoding --------------------------------------------------------
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% --- Math --------------------------------------------------------------------
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage{bm}
+
+% --- Tables ------------------------------------------------------------------
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{multirow}
+
+% --- Code listings -----------------------------------------------------------
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.13,0.13,0.9}
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codeblue}\bfseries,
+  commentstyle=\color{codegreen}\itshape,
+  numberstyle=\tiny\color{codegray},
+  numbers=left, numbersep=6pt,
+  breaklines=true, frame=single,
+  rulecolor=\color{codegray},
+  captionpos=b, showstringspaces=false,
+  tabsize=2
+}
+
+% --- Lists -------------------------------------------------------------------
+\usepackage{enumitem}
+\setlist{nosep, leftmargin=1.5em}
+
+% --- Headers / footers -------------------------------------------------------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textit{Scale-Packing MD Implementation}}
+\fancyhead[R]{\small\textit{Back Matter}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Section formatting ------------------------------------------------------
+\usepackage{titlesec}
+\titleformat{\section}{\Large\bfseries}{\S\thesection}{1em}{}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% --- Hyperlinks --------------------------------------------------------------
+\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue]{hyperref}
+
+% --- Appendix numbering ------------------------------------------------------
+\usepackage{appendix}
+
+% --- Custom operators --------------------------------------------------------
+\newcommand{\Pack}[1]{\Pi_{#1}}
+\newcommand{\Ann}{\mathcal{A}}
+\newcommand{\Comp}[1]{\mathbf{C}_{#1}}
+\newcommand{\Ident}[1]{\mathbf{I}_{#1}}
+\newcommand{\Resid}[1]{\mathbf{R}_{#1}}
+\newcommand{\Proj}[2]{P_{#1 \leftarrow #2}}
+\newcommand{\Embed}[2]{E_{#2 \leftarrow #1}}
+\newcommand{\ProjEM}{P_{\mathrm{EM}}}
+\newcommand{\ProjG}{P_{G}}
+\newcommand{\ProjDet}{P_{\mathrm{det}}}
+\newcommand{\RecDet}{\mathcal{R}_{\mathrm{det}}}
+\newcommand{\TrueLoc}{\xi_i^*}
+\newcommand{\ObsLoc}{r_i^{\mathrm{obs}}}
+\newcommand{\FuzzR}{r_f}
+\newcommand{\ScaleL}{\ell_S}
+\newcommand{\FuzzRatio}{\Phi_{i,S}}
+\newcommand{\HiddenAct}{H_j}
+\newcommand{\DiagMode}{\Lambda}
+\newcommand{\DarkDens}{\rho_{\mathrm{dark}}}
+
+% ============================================================================
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\Huge\bfseries Scale-Packing Residual Analysis\par}
+  \vspace{0.5cm}
+  {\LARGE LAMMPS Validation Layer\par}
+  \vspace{0.3cm}
+  {\large VSEPR-SIM-ORGANICS \& METALLICS \{release\}\par}
+  \vspace{1.5cm}
+  {\LARGE\bfseries Back Matter\par}
+  \vspace{0.5cm}
+  {\large Appendices A--F\,|\,Glossary\,|\,References\,|\,Future Work\par}
+  \vspace{2cm}
+  {\normalsize Verification is the focus.\par}
+  \vspace{1cm}
+  {\large VSEPR-SIM Theoretical Division\par}
+  {\large Development Day 64\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================================
+\begin{appendices}
+
+% ============================================================================
+\section{Notation}
+\label{app:A}
+% ============================================================================
+
+This appendix centralises every symbol used in the implementation document.
+All entries are listed in definition order, not alphabetical order, so that
+the logical construction of the framework is visible in the table.
+
+\subsection*{A.1 Core Packing Algebra}
+
+\begin{longtable}{p{3.2cm} p{2.2cm} p{8.8cm}}
+  \toprule
+  \textbf{Symbol} & \textbf{Type} & \textbf{Definition} \\
+  \midrule
+  \endhead
+  $\Pack{n}$ & operator &
+	Packing operator at scale $n$. Maps component matrix
+	$\Comp{n}$ to packed identity vector $\Ident{n+1}$:
+	$\Comp{n} \xrightarrow{\Pack{n}} \Ident{n+1}$.
+	Packing is irreversible without energy $\geq E_{\mathrm{bind}}$. \\[4pt]
+
+  $\Ann$ & operator &
+	Annihilation / unpacking map.
+	$\Ident{n+1} \xrightarrow{\Ann} \Comp{n,\mathrm{out}}$.
+	Destroys or transforms the original packed identity.
+	Used in CERN-layer collision analysis. \\[4pt]
+
+  $\Comp{n}$ & matrix &
+	Component matrix at scale $n$.
+	Rows are components; columns are physical channels
+	(charge, mass, position, velocity, \ldots).
+	Populated from atomistic trajectory fields. \\[4pt]
+
+  $\Ident{n+1}$ & vector &
+	Packed identity vector at scale $n+1$.
+	Result of applying $\Pack{n}$ to $\Comp{n}$.
+	For chemistry: molecule-level descriptor.
+	For solids: unit-cell or grain-level descriptor. \\[4pt]
+
+  $\Resid{n}$ & vector / tensor &
+	Packing residual at scale $n$:
+	$\Resid{n} = \Comp{n} - \Embed{n}{n+1}\!\bigl(\Ident{n+1}\bigr)$.
+	Non-zero when packing is lossy. \\[4pt]
+
+  \midrule
+  \multicolumn{3}{l}{\textit{Projection and embedding}} \\
+  \midrule
+
+  $\Proj{A}{B}$ & operator &
+	Projection from space $B$ into space $A$.
+	$\Proj{C}{A}$: atomistic $\to$ chemical.
+	$\Proj{S}{A}$: atomistic $\to$ solid-state.
+	$\Proj{R}{A}$: atomistic $\to$ residual descriptor. \\[4pt]
+
+  $\Embed{A}{B}$ & operator &
+	Embedding / reconstruction from $A$ back into $B$.
+	$\Embed{C}{A}$: chemical identity $\to$ atomistic-space prediction.
+	Used to measure projection loss. \\[4pt]
+
+  $\ProjEM$ & operator &
+	Electromagnetic / visible projection.
+	Retains only components at scales with
+	$L_m \leq L_{\mathrm{EM}}$. \\[4pt]
+
+  $\ProjG$ & operator &
+	Gravitational projection.
+	Couples to all scale levels; $\int K_G(w)\,dw = 1$. \\[4pt]
+
+  $\ProjDet$ & operator &
+	Detector forward projection.
+	Maps parent collision identity to expected detector signals.
+	Reserved for CERN high-energy verification layer. \\[4pt]
+
+  $\RecDet$ & operator &
+	Detector reconstruction operator.
+	Inverse of $\ProjDet$ over observed final-state debris.
+	Reserved for CERN layer. \\[4pt]
+
+  \midrule
+  \multicolumn{3}{l}{\textit{Position and fuzz metrics}} \\
+  \midrule
+
+  $\TrueLoc$ & vector &
+	True identity-location barycenter (identity anchor) of particle $i$:
+	$\TrueLoc = \frac{\sum_k \alpha_k c_k}{\sum_k \alpha_k}$.
+	Not directly observable. \\[4pt]
+
+  $\ObsLoc$ & vector &
+	Observed 3D projected position of particle $i$:
+	$\ObsLoc = P_{3D}(\TrueLoc)$.
+	The only quantity accessible to the MD dump. \\[4pt]
+
+  $\FuzzR$ & scalar &
+	Fuzz radius: weighted RMS spread of component 3D projections
+	around the observed position:
+	$\FuzzR^2 = \frac{\sum_k \alpha_k \|P_{3D}(c_k) - \ObsLoc\|^2}
+					 {\sum_k \alpha_k}$. \\[4pt]
+
+  $\ScaleL$ & scalar &
+	Scale resolution: characteristic length of scale $S$.
+	Used to normalise the fuzz radius. \\[4pt]
+
+  $\FuzzRatio$ & scalar &
+	Fuzz ratio: $\FuzzRatio = \FuzzR / \ScaleL$.
+	$\FuzzRatio \ll 1$: point-like at scale $S$.
+	$\FuzzRatio \sim 1$: fuzz-zone.
+	$\FuzzRatio > 1$: non-point-defined at scale $S$. \\[4pt]
+
+  \midrule
+  \multicolumn{3}{l}{\textit{Hidden activity and residual modes}} \\
+  \midrule
+
+  $\HiddenAct$ & scalar &
+	Hidden column activity for component $j$:
+	$H_j = \mathbf{c}_j^\top \mathbf{W}\, \mathbf{c}_j$.
+	Non-zero even when the observable channel
+	$I_j = \bm{\alpha}^\top \mathbf{c}_j = 0$. \\[4pt]
+
+  $\DiagMode$ & matrix &
+	Diagonalised internal mode intensity matrix.
+	Eigenvalues of $\mathbf{C}_n^\top \mathbf{W} \mathbf{C}_n$.
+	Each non-zero eigenvalue represents a structurally active
+	mode invisible in the projected observable. \\[4pt]
+
+  $\DarkDens$ & scalar field &
+	Gravitational-minus-visible projection residual density:
+	$\DarkDens(x,y,z;\,t) = \int \rho(x,y,z,w;\,t)
+	[K_G(w) - K_{\mathrm{EM}}(w)]\,dw$.
+	Defined for completeness; not computed in LAMMPS layer. \\[4pt]
+
+  \bottomrule
+\end{longtable}
+
+\subsection*{A.2 Index conventions}
+
+\begin{tabular}{ll}
+  \toprule
+  Index & Meaning \\
+  \midrule
+  $i$ & Particle / atom index (1-indexed, matching LAMMPS \texttt{id}) \\
+  $j$ & Component channel index within a component matrix column \\
+  $k$ & Component row index within a component matrix \\
+  $n$ & Scale level (0 = existence, 1--5 standard, $D$ = dark) \\
+  $t$ & Trajectory frame time (LAMMPS timestep units) \\
+  $f$ & Frame index in trajectory tensor \\
+  \bottomrule
+\end{tabular}
+
+\subsection*{A.3 Typeface conventions}
+
+\begin{tabular}{ll}
+  \toprule
+  Typeface & Meaning \\
+  \midrule
+  $\mathbf{C}$ & Component matrix (bold, capital) \\
+  $\mathbf{I}$ & Packed identity (bold, capital; not identity matrix) \\
+  $\mathbf{R}$ & Residual vector or tensor (bold, capital) \\
+  $\mathbf{W}$ & Hidden-intensity weight matrix (bold, capital) \\
+  $\bm{\alpha}$ & Projection weight vector (bold, lowercase Greek) \\
+  $P, E$ & Projection and embedding operators (italic capital) \\
+  $\mathcal{A}$ & Annihilation map (calligraphic) \\
+  $\mathcal{I}$ & Full identity state (calligraphic, when not matrix) \\
+  \bottomrule
+\end{tabular}
+
+% ============================================================================
+\section{LAMMPS Field Map}
+\label{app:B}
+% ============================================================================
+
+This appendix defines exactly which LAMMPS \texttt{dump custom} fields are
+required, preferred, or optional for the atomistic component matrix, and
+specifies the handling rule for each.
+
+\subsection*{B.1 Minimum required dump command}
+
+\begin{lstlisting}[language=bash, caption={Minimum LAMMPS dump for
+	Scale-Packing analysis}]
+dump    spra all custom 100 trajectory.dump &
+		id type mol x y z vx vy vz fx fy fz q mass
+dump_modify spra sort id
+\end{lstlisting}
+
+If \texttt{mol} is not defined by the atom style, replace with \texttt{0}
+via a constant column or omit and flag as missing.
+If \texttt{q} is not defined, set column to \texttt{0.0} and record
+\texttt{charge\_available = false} in the metadata block.
+
+\subsection*{B.2 Complete field map}
+
+\begin{longtable}{p{2.2cm} p{2.5cm} p{1.8cm} p{7.1cm}}
+  \toprule
+  \textbf{LAMMPS field} & \textbf{Component matrix column} &
+  \textbf{Status} & \textbf{Notes} \\
+  \midrule
+  \endhead
+
+  \texttt{id}       & \texttt{atom\_id}     & Required &
+	1-indexed integer. Row identity for the component matrix. \\
+
+  \texttt{type}     & \texttt{atom\_type}   & Required &
+	Integer type index. Mapped to element symbol via
+	LAMMPS \texttt{mass} table or user-supplied type map. \\
+
+  \texttt{mol}      & \texttt{mol\_id}      & Preferred &
+	Molecule-group ID. Used to assemble $\Comp{A}$ rows into
+	molecule-level packing groups. Set to 0 if atom style has
+	no molecule concept (solids). \\
+
+  \texttt{x y z}    & \texttt{x, y, z}     & Required &
+	Wrapped coordinates. Used when \texttt{xu yu zu} not available.
+	Periodic-unwrapping applied using \texttt{ix iy iz} image flags. \\
+
+  \texttt{xu yu zu} & \texttt{x, y, z}     & Preferred &
+	Unwrapped coordinates. Use in preference to wrapped
+	\texttt{x y z} when available. Bypasses image-flag arithmetic. \\
+
+  \texttt{vx vy vz} & \texttt{vx, vy, vz}  & Required &
+	Per-atom velocity. Used for kinetic energy and momentum
+	channels in $\Comp{A}$. \\
+
+  \texttt{fx fy fz} & \texttt{fx, fy, fz}  & Required &
+	Per-atom force. Used for force-residual and stress-proxy
+	channels. \\
+
+  \texttt{q}        & \texttt{charge}       & Preferred &
+	Per-atom charge. Required for charge-projection operators
+	and hidden column activity in ionic systems.
+	Set to 0.0 if not available; flag \texttt{charge\_available}
+	accordingly. \\
+
+  \texttt{mass}     & \texttt{mass}         & Required &
+	Per-atom mass (a.m.u.). Used in anchor weight $\alpha_k$
+	and fuzz-radius computation. \\
+
+  \texttt{ix iy iz} & (internal)           & Preferred &
+	Image flags for periodic-boundary unwrapping.
+	Required when using wrapped \texttt{x y z}. \\
+
+  \texttt{timestep} & \texttt{frame\_time}  & Required &
+	Simulation time at dump frame. Stored in trajectory metadata;
+	not a component matrix column. \\
+
+  Box bounds        & \texttt{cell}         & Required &
+	Simulation cell vectors. Read from dump header.
+	Required for periodic minimum-image distance. \\
+
+  \midrule
+
+  \texttt{c\_pe[]}  & \texttt{pe\_atom}     & Optional &
+	Per-atom potential energy (requires \texttt{compute pe/atom}).
+	Used as additional energy channel when available. \\
+
+  \texttt{c\_stress[][]} & \texttt{stress}  & Optional &
+	Per-atom stress tensor components.
+	Used in solid-state strain-residual operators. \\
+
+  \texttt{c\_cn[]}  & \texttt{coord\_num}   & Optional &
+	Per-atom coordination number (requires neighbour compute).
+	Used in solid-state neighbor graph construction. \\
+
+  \bottomrule
+\end{longtable}
+
+\subsection*{B.3 Missing-field policy}
+
+\begin{enumerate}
+  \item \textbf{Required field absent}: abort parsing; emit error
+	\texttt{[FIELD\_MISSING] <field>} to analysis log.
+  \item \textbf{Preferred field absent}: continue; set column to
+	\texttt{0.0}; write \texttt{[FIELD\_DEFAULT] <field> = 0.0} to log.
+  \item \textbf{Optional field absent}: silently skip dependent
+	operators; mark operator as \texttt{INACTIVE} in metadata.
+  \item \textbf{Wrapped vs.\ unwrapped coordinates}: if
+	\texttt{xu yu zu} absent, apply unwrapping:
+	\[
+	  x_i^{\mathrm{unwrap}} = x_i + i_x \cdot L_x, \quad
+	  y_i^{\mathrm{unwrap}} = y_i + i_y \cdot L_y, \quad
+	  z_i^{\mathrm{unwrap}} = z_i + i_z \cdot L_z
+	\]
+	where $L_x, L_y, L_z$ are box lengths and
+	$i_x, i_y, i_z$ are image flags.
+	If image flags also absent: flag \texttt{unwrap\_unavailable}.
+\end{enumerate}
+
+% ============================================================================
+\section{Projection Operator Catalog}
+\label{app:C}
+% ============================================================================
+
+Each operator entry states: input space, output space, recovered variables,
+lost variables, residual definition, metadata required, and validation method.
+
+\subsection*{C.1 Operator naming convention}
+
+\[
+  P_{X \leftarrow Y}: \text{ projection from space } Y \text{ into space } X
+\]
+
+Operators are composable:
+$P_{R \leftarrow A} \circ P_{A \leftarrow M}$ maps molecule-level to
+residual space via atomistic intermediate.
+
+\subsection*{C.2 Catalog}
+
+\subsubsection*{$P_{C \leftarrow A}$ --- Atomistic to Chemical}
+
+\begin{tabularx}{\linewidth}{l X}
+  \toprule
+  Input space & Atomistic component matrix $\Comp{A}$
+	(one row per atom; columns: position, velocity, force,
+	charge, mass) \\
+  Output space & Chemical identity vector $\Ident{C}$
+	(one row per molecule; columns: molecular formula,
+	center of mass, total charge, total mass, bond graph hash) \\
+  Recovered & Molecular identity, stoichiometry, charge, CoM, geometry \\
+  Lost & Per-atom sub-molecular detail; intra-molecular
+	velocity spread; internal force distribution \\
+  Residual & $\Resid{A \to C} = \Comp{A}
+	- \Embed{C}{A}\!\bigl(\Ident{C}\bigr)$. Per-atom deviation
+	from the chemical-identity prediction. \\
+  Metadata & Molecule group assignments (\texttt{mol\_id});
+	bond graph at current frame; atom-type map \\
+  Validation & NaCl crystal: $Q_\text{mol} = 0$ for each NaCl pair;
+	water cluster: $Q_\text{mol} = 0$, CoM stable \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{1em}
+
+\subsubsection*{$P_{S \leftarrow A}$ --- Atomistic to Solid-State}
+
+\begin{tabularx}{\linewidth}{l X}
+  \toprule
+  Input space & Atomistic component matrix $\Comp{A}$ \\
+  Output space & Solid-state identity vector $\Ident{S}$
+	(one row per unit cell or grain;
+	columns: lattice parameter estimates, packing fraction,
+	mean coordination number, defect density) \\
+  Recovered & Crystal symmetry proxies, packing order, neighbour structure \\
+  Lost & Individual atomic displacements from ideal lattice sites;
+	local stress heterogeneity \\
+  Residual & $\Resid{A \to S}$: per-atom deviation from
+	ideal lattice prediction. Large values indicate
+	defects, strain, or amorphization. \\
+  Metadata & Reference lattice parameters; neighbour cutoff radius;
+	species type map \\
+  Validation & Silicon lattice: residual near zero at equilibrium;
+	spike at vacancy site \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{1em}
+
+\subsubsection*{$P_{R \leftarrow A}$ --- Atomistic to Residual Descriptor}
+
+\begin{tabularx}{\linewidth}{l X}
+  \toprule
+  Input space & Atomistic component matrix $\Comp{A}$ \\
+  Output space & Residual descriptor vector per atom:
+	(fuzz radius, hidden column activity,
+	diagonal mode intensity, packing loss norm) \\
+  Recovered & Structured diagnostic: where projection fails and how \\
+  Lost & Not applicable; this is a loss-measuring operator \\
+  Residual & This operator \emph{is} the residual output. No further
+	residual is defined. \\
+  Metadata & Scale resolution $\ScaleL$ for fuzz-ratio normalisation;
+	weight matrix $\mathbf{W}$ per channel \\
+  Validation & Argon LJ gas: fuzz radius $\sim k_BT$ thermal spread;
+	NaCl: hidden charge activity $> 0$ despite neutral pairs \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{1em}
+
+\subsubsection*{$P_{R_\mathrm{chem} \leftarrow A}$ --- Reactive Chemical Residual}
+
+\begin{tabularx}{\linewidth}{l X}
+  \toprule
+  Input space & Atomistic component matrix + bond-order matrix $\mathbf{B}$
+	at frames $t$ and $t + \Delta t$ \\
+  Output space & Reactive event residual: bond-change delta,
+	charge redistribution, species-transition confidence \\
+  Recovered & Bond formation/breaking events; charge flow; species
+	identity change \\
+  Lost & Sub-timestep bond dynamics; quantum transition amplitudes \\
+  Residual & $\Resid{\mathrm{react}}$: difference between
+	graph state before and after event; includes bond-order
+	fractional change and partial-charge delta \\
+  Metadata & Bond-order cutoffs; species definition table;
+	persistence threshold (number of frames) \\
+  Validation & ReaxFF hydrocarbon case: bond-breaking events match
+	known reaction channels \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{1em}
+
+\subsubsection*{$P_{\mathrm{EM}}$ --- Electromagnetic Projection}
+
+\begin{tabularx}{\linewidth}{l X}
+  \toprule
+  Input space & Full identity state $\mathcal{I}$ over scale ladder \\
+  Output space & EM-observable density:
+	retains components with $L_m \leq L_{\mathrm{EM}}$ \\
+  Recovered & Charge distribution, photon-coupled interactions \\
+  Lost & Higher-scale components ($w > L_{\mathrm{EM}}$) \\
+  Residual & $\DarkDens = P_G(\rho) - P_{\mathrm{EM}}(\rho)$ \\
+  Notes & Used in theoretical layer only; not computed in LAMMPS kernel \\
+  \bottomrule
+\end{tabularx}
+
+\vspace{1em}
+
+\subsubsection*{$P_{\mathrm{det}}$ and $\mathcal{R}_{\mathrm{det}}$ --- Detector Projection / Reconstruction}
+
+\begin{tabularx}{\linewidth}{l X}
+  \toprule
+  Status & \textbf{Reserved.} CERN high-energy verification layer only.
+	Not implemented in LAMMPS-primary release. \\
+  Purpose & $P_{\mathrm{det}}$: maps collision parent identity to
+	expected detector hit pattern.
+	$\mathcal{R}_{\mathrm{det}}$: reconstructs parent identity
+	from observed final-state debris. \\
+  Validation target & $J/\psi \to \mu^+\mu^-$;
+	$H \to ZZ \to 4\ell$ channels \\
+  \bottomrule
+\end{tabularx}
+
+% ============================================================================
+\section{Residual Metric Definitions}
+\label{app:D}
+% ============================================================================
+
+This appendix defines every residual metric to ensure that outputs across
+chemistry, solids, and reactive cases are numerically comparable.
+
+\subsection*{D.1 Packing loss norms}
+
+\textbf{Chemical packing loss:}
+\begin{equation}
+  \varepsilon_{A \to C}
+  = \frac{\|\Resid{A \to C}\|_F}{\|\Comp{A}\|_F}
+  \tag{D.1}
+\end{equation}
+
+\textbf{Solid packing loss:}
+\begin{equation}
+  \varepsilon_{A \to S}
+  = \frac{\|\Resid{A \to S}\|_F}{\|\Comp{A}\|_F}
+  \tag{D.2}
+\end{equation}
+
+\textbf{Reactive packing loss:}
+\begin{equation}
+  \varepsilon_{\mathrm{react}}
+  = \frac{\|\Resid{\mathrm{react}}\|_1}{N_{\mathrm{atoms,event}}}
+  \tag{D.3}
+\end{equation}
+
+where $\|\cdot\|_F$ is the Frobenius norm and $\|\cdot\|_1$ is the
+element-wise $\ell^1$ norm. Normalisation by $\|\Comp{A}\|_F$ makes
+$\varepsilon \in [0, 1]$.
+
+\subsection*{D.2 Residual vectors}
+
+\textbf{Atomistic-to-chemical residual} (per atom $i$):
+\begin{equation}
+  \mathbf{R}_{i,\,A \to C}
+  = \mathbf{c}_i^{(A)} - \Embed{C}{A}\!\bigl(\Ident{C}[\mathrm{mol}(i)]\bigr)
+  \tag{D.4}
+\end{equation}
+
+\textbf{Atomistic-to-solid residual} (per atom $i$):
+\begin{equation}
+  \mathbf{R}_{i,\,A \to S}
+  = \mathbf{c}_i^{(A)} - \mathbf{c}_i^{\mathrm{lattice}}
+  \tag{D.5}
+\end{equation}
+where $\mathbf{c}_i^{\mathrm{lattice}}$ is the atom's predicted position
+and velocity on the ideal reference lattice.
+
+\subsection*{D.3 Hidden column activity}
+
+For component vector $\mathbf{c}_j \in \mathbb{R}^m$:
+\begin{equation}
+  I_j = \bm{\alpha}^\top \mathbf{c}_j
+  \tag{D.6}
+\end{equation}
+\begin{equation}
+  H_j = \mathbf{c}_j^\top \mathbf{W}\, \mathbf{c}_j
+  \tag{D.7}
+\end{equation}
+
+Hidden-active condition: $I_j = 0$, $H_j > 0$.
+Standard choice $\mathbf{W} = \mathbf{I}$ gives $H_j = \|\mathbf{c}_j\|^2$.
+
+\subsection*{D.4 Diagonal residual mode intensity}
+
+Let $\mathbf{G} = \Comp{n}^\top \mathbf{W}\, \Comp{n}$. Eigendecompose:
+\begin{equation}
+  \mathbf{G} = \mathbf{Q}\, \DiagMode\, \mathbf{Q}^\top
+  \tag{D.8}
+\end{equation}
+$\DiagMode = \mathrm{diag}(\lambda_1, \lambda_2, \ldots, \lambda_m)$.
+Each $\lambda_j > 0$ indicates an internal mode with non-zero intensity
+even when the corresponding observable channel sums to zero.
+
+\subsection*{D.5 Fuzz radius and fuzz ratio}
+
+\begin{equation}
+  \FuzzR^2
+  = \frac{\sum_k \alpha_k
+		  \bigl\|P_{3D}(\mathbf{c}_k) - \ObsLoc\bigr\|^2}
+		 {\sum_k \alpha_k}
+  \tag{D.9}
+\end{equation}
+\begin{equation}
+  \FuzzRatio = \frac{\FuzzR}{\ScaleL}
+  \tag{D.10}
+\end{equation}
+
+\subsection*{D.6 Threshold bands}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  Metric & Healthy range & Elevated / investigate \\
+  \midrule
+  $\varepsilon_{A \to C}$ & $< 0.05$ & $> 0.15$ (reactive transition) \\
+  $\varepsilon_{A \to S}$ & $< 0.02$ at $T=0$ & $> 0.10$ (defect / melt) \\
+  $\varepsilon_{\mathrm{react}}$ & $< 0.01$ (no event) & $> 0.05$ (event) \\
+  $H_j / \|\mathbf{c}_j\|^2$ & $< 0.1$ (charge-neutral) & $> 0.5$ (internal activity) \\
+  $\FuzzRatio$ & $\ll 1$ (point-like) & $\sim 1$ (fuzz-zone) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\textit{Threshold values are initial estimates subject to calibration
+against LAMMPS validation cases in Section~10 of the main document.}
+
+% ============================================================================
+\section{Reactive Event Schema}
+\label{app:E}
+% ============================================================================
+
+\subsection*{E.1 JSON event record format}
+
+Each reactive event is recorded as one JSON object.
+The full trajectory event log is a JSON array of these objects.
+
+\begin{lstlisting}[language={},caption={Reactive event record (JSON schema)}]
+{
+  "event_id":          "string (UUID-4)",
+  "time":              "float  (LAMMPS timestep units)",
+  "frame":             "int    (trajectory frame index, 0-based)",
+  "event_type":        "string (see E.2)",
+  "atoms_involved":    ["int", "..."],
+  "bonds_formed":      [["int","int"], "..."],
+  "bonds_broken":      [["int","int"], "..."],
+  "charge_delta":      "float  (net charge change summed over atoms_involved)",
+  "species_before":    {"atom_id": "symbol", "..."},
+  "species_after":     {"atom_id": "symbol", "..."},
+  "graph_before_hash": "string (FNV-1a of adjacency list before event)",
+  "graph_after_hash":  "string (FNV-1a of adjacency list after event)",
+  "residual_before":   "float  (||R_react|| before event)",
+  "residual_after":    "float  (||R_react|| after event)",
+  "confidence_score":  "float  in [0, 1]  (see E.3)"
+}
+\end{lstlisting}
+
+\subsection*{E.2 Event type enumeration}
+
+\begin{longtable}{p{5.5cm} p{9.0cm}}
+  \toprule
+  \textbf{Event type string} & \textbf{Meaning} \\
+  \midrule
+  \endhead
+  \texttt{bond\_formation}        & New bond detected between two atoms whose
+	bond order crossed threshold from below. \\
+  \texttt{bond\_breaking}         & Existing bond lost; bond order fell below
+	threshold. \\
+  \texttt{charge\_redistribution} & Per-atom charge changed by $> \delta q$
+	without bond-order crossing. \\
+  \texttt{species\_change}        & Atom identity (effective element or
+	functional group) changed based on coordination
+	and charge context. \\
+  \texttt{coordination\_change}   & Coordination number changed by $\geq 1$
+	without a bond-order threshold event. \\
+  \texttt{fragmentation}          & Connected component of the molecular
+	graph split into two or more disconnected graphs. \\
+  \texttt{recombination}          & Two previously disconnected graph
+	components merged into one. \\
+  \texttt{ambiguous\_transition}  & Bond order is in the hysteresis window
+	$[B_{\mathrm{lo}}, B_{\mathrm{hi}}]$ for $> N_{\mathrm{persist}}$
+	frames. Not yet classified as formed or broken. \\
+  \bottomrule
+\end{longtable}
+
+\subsection*{E.3 Confidence score definition}
+
+\begin{equation}
+  \mathrm{confidence} = w_b\,s_b + w_q\,s_q + w_p\,s_p
+  \tag{E.1}
+\end{equation}
+
+where:
+\begin{itemize}
+  \item $s_b = \min(1,\, (B - B_{\mathrm{hi}}) / B_{\mathrm{range}})$:
+	bond-order margin above hysteresis window
+  \item $s_q = \min(1,\, |\Delta q| / \Delta q_{\mathrm{ref}})$:
+	charge-delta relative to reference scale
+  \item $s_p = N_{\mathrm{persist}} / N_{\mathrm{persist,\,ref}}$:
+	persistence fraction
+  \item Default weights: $w_b = 0.5$, $w_q = 0.3$, $w_p = 0.2$
+\end{itemize}
+
+Events with $\mathrm{confidence} < 0.3$ are tagged
+\texttt{ambiguous\_transition} regardless of bond-order classification.
+
+\subsection*{E.4 Persistence and hysteresis rule}
+
+A bond-order change is not recorded as an event until it persists for
+$N_{\mathrm{persist}} \geq 3$ consecutive frames. This suppresses
+thermal-fluctuation noise at the bond-order threshold. The hysteresis
+window $[B_{\mathrm{lo}}, B_{\mathrm{hi}}]$ should be set per
+species pair based on the force field in use.
+
+% ============================================================================
+\section{Validation Assignment Table}
+\label{app:F}
+% ============================================================================
+
+\subsection*{F.1 Validation case matrix}
+
+\begin{longtable}{p{4.5cm} p{4.5cm} p{5.5cm}}
+  \toprule
+  \textbf{Validation case} & \textbf{Modules tested} & \textbf{Pass criterion} \\
+  \midrule
+  \endhead
+
+  Argon LJ gas\newline
+  (NVT, 300 K, 1000 atoms)
+  &
+  MD mapping, trajectory parsing, $P_{R \leftarrow A}$
+  &
+  Fuzz radius tracks $\sqrt{k_B T / m_{\mathrm{Ar}}}$;
+  $\varepsilon_{A \to C} < 0.05$;
+  no hidden column activity (monatomic) \\
+  \midrule
+
+  Water cluster\newline
+  (H$_2$O)$_{32}$, NPT 300 K
+  &
+  $P_{C \leftarrow A}$, chemical projection, geometry, CoM
+  &
+  Each molecule: $Q_{\mathrm{mol}} = 0 \pm 10^{-6}e$;
+  CoM velocity $\sim$ Maxwell-Boltzmann;
+  O--H bond lengths $1.0 \pm 0.05$\,\AA \\
+  \midrule
+
+  NaCl crystal\newline
+  ($4 \times 4 \times 4$ supercell, 300 K)
+  &
+  $P_{C \leftarrow A}$, $P_{S \leftarrow A}$, charge channels,
+  hidden activity
+  &
+  Ion pairs: $Q_{\mathrm{pair}} = 0$;
+  $H_j > 0$ (internal charge activity);
+  $\varepsilon_{A \to S} < 0.02$ at equilibrium \\
+  \midrule
+
+  Silicon lattice\newline
+  (diamond cubic, 512 atoms, 300 K)
+  &
+  $P_{S \leftarrow A}$, neighbour graph, lattice projection
+  &
+  All atoms $\mathrm{CN} = 4$;
+  $\varepsilon_{A \to S} < 0.01$;
+  fuzz ratio $\ll 1$ \\
+  \midrule
+
+  Vacancy + interstitial\newline
+  (Si lattice $+$ Frenkel pair)
+  &
+  $P_{S \leftarrow A}$, $P_{R \leftarrow A}$, defect descriptors
+  &
+  Vacancy atom: $\FuzzRatio > 1$;
+  $\varepsilon_{A \to S} > 0.10$ at defect sites;
+  interstitial: $\mathrm{CN} \neq 4$ \\
+  \midrule
+
+  Diffusion case\newline
+  (Na in NaCl at 900 K)
+  &
+  MSD computation, $D_{\mathrm{eff}}$, trajectory tensor
+  &
+  $D_{\mathrm{Na}}$ within 20\,\% of experimental value;
+  MSD linear regime identified \\
+  \midrule
+
+  Reactive hydrocarbon\newline
+  (ReaxFF CH$_4$ combustion, 3000 K)
+  &
+  $P_{R_{\mathrm{chem}} \leftarrow A}$, bond-order matrix,
+  reactive event detection
+  &
+  C--H bond-breaking events detected with
+  confidence $> 0.5$;
+  no ghost events in equilibrium run \\
+  \midrule
+
+  Oxidation / corrosion\newline
+  (Fe slab + O$_2$, ReaxFF)
+  &
+  Reactive residual, charge redistribution,
+  species change
+  &
+  Fe$^{2+}$/Fe$^{3+}$ species detected;
+  $\varepsilon_{\mathrm{react}} > 0.05$ at oxide growth sites \\
+  \midrule
+
+  Thermal solid case\newline
+  (NaCl heated to 1000 K)
+  &
+  Fuzz radius, displacement residual, solid projection
+  &
+  $\FuzzRatio$ increases monotonically with $T$;
+  $\varepsilon_{A \to S}$ jumps at melting transition \\
+  \midrule
+
+  \bottomrule
+\end{longtable}
+
+\subsection*{F.2 Case input file status}
+
+\begin{tabular}{ll}
+  \toprule
+  Case & Input file status \\
+  \midrule
+  Argon LJ gas            & TODO \\
+  Water cluster           & TODO \\
+  NaCl crystal            & TODO \\
+  Silicon lattice         & TODO \\
+  Vacancy + interstitial  & TODO \\
+  Diffusion case          & TODO \\
+  Reactive hydrocarbon    & TODO \\
+  Oxidation / corrosion   & TODO \\
+  Thermal solid           & TODO \\
+  \bottomrule
+\end{tabular}
+
+\textit{Input files (LAMMPS data + in-script) to be added to
+\texttt{10\_validation\_examples/} as each case is constructed.}
+
+\end{appendices}
+
+% ============================================================================
+\section*{Glossary}
+\addcontentsline{toc}{section}{Glossary}
+\label{sec:glossary}
+% ============================================================================
+
+\begin{description}[style=nextline, leftmargin=3.5cm, labelwidth=3.2cm]
+
+  \item[Scale packing]
+	The process by which lower-scale components
+	$\Comp{n}$ self-assemble into a higher-scale packed identity
+	$\Ident{n+1}$ via packing operator $\Pack{n}$.
+	Information not preserved by this map becomes the packing residual.
+
+  \item[Packed identity]
+	A compressed representation of a system at a given scale level.
+	For chemistry: a molecule-level descriptor.
+	For solids: a unit-cell or grain-level descriptor.
+	A packed identity exists at a scale \emph{above} its components.
+
+  \item[Component matrix]
+	The matrix $\Comp{n}$ whose rows are individual components at
+	scale $n$ and whose columns are physical channels
+	(position, velocity, charge, mass, force, \ldots).
+	Populated directly from LAMMPS trajectory fields.
+
+  \item[Projection operator]
+	An operator $P_{X \leftarrow Y}$ that maps a state in space $Y$
+	to a representation in space $X$, discarding information not
+	observable at scale $X$.
+
+  \item[Annihilation map]
+	The inverse of packing: $\Ann: \Ident{n+1} \to \Comp{n,\mathrm{out}}$.
+	Physically realised in collision experiments.
+	Destroys the original packed identity.
+
+  \item[Embedding operator]
+	The operator $E_{Y \leftarrow X}$ that lifts a representation
+	from space $X$ back into space $Y$ for comparison.
+	Used to define the residual:
+	$\Resid{} = \Comp{n} - \Embed{C}{A}(\Ident{C})$.
+
+  \item[Residual]
+	The difference between the full component state and the
+	embedding of its packed identity:
+	$\Resid{} = \Comp{n} - \Embed{n}{n+1}(\Ident{n+1})$.
+	Non-zero when packing is lossy.
+	Interpreted as a physically useful diagnostic,
+	not as numerical error.
+
+  \item[Hidden column activity]
+	The quantity $H_j = \mathbf{c}_j^\top \mathbf{W} \mathbf{c}_j$
+	for a component vector $\mathbf{c}_j$.
+	Measures internal structural intensity that is invisible
+	when the observable channel $I_j = \bm{\alpha}^\top \mathbf{c}_j = 0$.
+
+  \item[Diagonal residual mode]
+	An eigenvalue $\lambda_j > 0$ of the matrix
+	$\mathbf{G} = \Comp{n}^\top \mathbf{W} \Comp{n}$.
+	Each positive eigenvalue represents an internal mode
+	with non-zero intensity that projects to zero in the
+	observable channel.
+
+  \item[Fuzz radius]
+	The weighted RMS spread of component 3D projections
+	around the observed position $\ObsLoc$.
+	Measures how non-point-like a packed identity is at its
+	observed scale.
+
+  \item[Fuzz zone]
+	The regime $\FuzzRatio \sim 1$ where a particle or system
+	cannot be meaningfully treated as a point at the current
+	observation scale. Not to be confused with classical positional
+	uncertainty alone.
+
+  \item[Atomistic projection]
+	A projection from the full atom-level LAMMPS state into
+	a higher-level (chemical or solid-state) descriptor space.
+	Implemented as one of the $P_{X \leftarrow A}$ operators.
+
+  \item[Chemical graph]
+	The bond graph derived from per-atom positions and bond-order
+	thresholds. Nodes are atoms; edges are bonds with order $> B_{\mathrm{lo}}$.
+	The basis of reactive chemistry support.
+
+  \item[Solid-state projection]
+	The operator $P_{S \leftarrow A}$ that maps atomistic states
+	to lattice-level descriptors: coordination numbers, packing
+	fraction, defect density, strain proxy.
+
+  \item[Reactive residual]
+	The residual $\Resid{\mathrm{react}}$ measuring the
+	structural change in the molecular graph and charge state
+	across a reactive event window.
+
+  \item[Detector projection]
+	The operator $P_{\mathrm{det}}$ mapping a collision parent
+	identity to expected detector signals.
+	Reserved for CERN high-energy verification layer.
+
+  \item[Detector reconstruction]
+	The inverse operator $\mathcal{R}_{\mathrm{det}}$ that
+	reconstructs a parent identity estimate from observed
+	final-state detector hits.
+	Reserved for CERN layer.
+
+  \item[LAMMPS validation layer]
+	The primary verification stage of this implementation.
+	Uses LAMMPS trajectories for chemistry- and solids-focused
+	MD validation. Runs before CERN data is introduced.
+
+  \item[CERN high-energy verification layer]
+	A later verification stage involving advanced projection,
+	reconstruction, annihilation mapping, and detector-scale
+	identity separation. Not implemented in this release.
+
+\end{description}
+
+% ============================================================================
+\section*{References}
+\addcontentsline{toc}{section}{References}
+\label{sec:references}
+% ============================================================================
+
+\subsection*{LAMMPS}
+
+\begin{enumerate}[label={[\arabic*]}, leftmargin=2.2em]
+
+  \item A.P.\ Thompson et al.,
+	``LAMMPS --- A flexible simulation tool for particle-based
+	materials modeling at the atomic, meso, and continuum scales,''
+	\textit{Computer Physics Communications}, 271 (2022) 108171.
+	\url{https://doi.org/10.1016/j.cpc.2021.108171}
+
+  \item LAMMPS Documentation: \texttt{dump custom} command.
+	\url{https://docs.lammps.org/dump.html}
+
+  \item LAMMPS Documentation: ReaxFF pair style (\texttt{pair\_style reaxff}).
+	\url{https://docs.lammps.org/pair_reaxff.html}
+
+\end{enumerate}
+
+\subsection*{Reactive force fields}
+
+\begin{enumerate}[resume, label={[\arabic*]}, leftmargin=2.2em]
+
+  \item A.C.T.\ van Duin et al.,
+	``ReaxFF: A Reactive Force Field for Hydrocarbons,''
+	\textit{Journal of Physical Chemistry A}, 105 (2001) 9396.
+
+  \item K.\ Chenoweth, A.C.T.\ van Duin, W.A.\ Goddard III,
+	``ReaxFF Reactive Force Field for Molecular Dynamics
+	Simulations of Hydrocarbon Oxidation,''
+	\textit{Journal of Physical Chemistry A}, 112 (2008) 1040.
+
+\end{enumerate}
+
+\subsection*{Bond-order and species analysis}
+
+\begin{enumerate}[resume, label={[\arabic*]}, leftmargin=2.2em]
+
+  \item J.\ Tersoff,
+	``New empirical approach for the structure and energy of covalent systems,''
+	\textit{Physical Review B}, 37 (1988) 6991.
+
+  \item LAMMPS \texttt{compute bond/local} and \texttt{compute coord/atom}
+	documentation. \url{https://docs.lammps.org/compute.html}
+
+\end{enumerate}
+
+\subsection*{MD and materials defect analysis}
+
+\begin{enumerate}[resume, label={[\arabic*]}, leftmargin=2.2em]
+
+  \item A.\ Stukowski,
+	``Visualization and analysis of atomistic simulation data with
+	OVITO --- the Open Visualization Tool,''
+	\textit{Modelling Simul.\ Mater.\ Sci.\ Eng.}, 18 (2010) 015012.
+
+  \item C.L.\ Kelchner, S.J.\ Plimpton, J.C.\ Hamilton,
+	``Dislocation nucleation and defect structure during surface indentation,''
+	\textit{Physical Review B}, 58 (1998) 11085.
+
+\end{enumerate}
+
+\subsection*{Diffusion and MSD}
+
+\begin{enumerate}[resume, label={[\arabic*]}, leftmargin=2.2em]
+
+  \item D.\ Frenkel, B.\ Smit,
+	\textit{Understanding Molecular Simulation}, 2nd ed.\
+	Academic Press (2002). Ch.\ 4: Mean-squared displacement.
+
+\end{enumerate}
+
+\subsection*{Theoretical framework}
+
+\begin{enumerate}[resume, label={[\arabic*]}, leftmargin=2.2em]
+
+  \item Inverse Kaluza-Klein Scale Symmetry Framework.
+	VSEPR-SIM Internal Document Series.
+	\textit{IKK\_Doc\_I\_Schrodinger\_Alternative.tex},
+	\textit{IKK\_Doc\_II\_Initial\_Draft.tex}.
+	VSEPR-SIM Theoretical Division, Day 64.
+
+\end{enumerate}
+
+\subsection*{Reserved: CERN / high-energy}
+
+\begin{enumerate}[resume, label={[\arabic*]}, leftmargin=2.2em]
+
+  \item CERN Open Data Portal. \url{https://opendata.cern.ch}
+	(Reserved for CERN high-energy verification layer.)
+
+  \item CMS Collaboration, ``Observation of a new boson at a mass of
+	125 GeV with the CMS experiment at the LHC,''
+	\textit{Physics Letters B}, 716 (2012) 30.
+	(Reserved for detector-projection validation, CERN layer.)
+
+\end{enumerate}
+
+% ============================================================================
+\section*{Future Work}
+\addcontentsline{toc}{section}{Future Work}
+\label{sec:futurework}
+% ============================================================================
+
+Items are listed in approximate priority order.
+Dependency notation: item $A \to B$ means $A$ should precede $B$.
+
+\begin{enumerate}[leftmargin=2em]
+
+  \item \textbf{Native LAMMPS compute/fix integration.}
+	Port the post-processing analysis layer into a LAMMPS
+	\texttt{compute} or \texttt{fix} for in-situ per-step computation.
+	Currently the layer reads \texttt{dump} files offline.
+	In-situ avoids I/O bottleneck on large systems.
+	\textit{Depends on: stable post-processing API.}
+
+  \item \textbf{Live residual-stream output.}
+	Stream per-step residual metrics to a JSON-lines or SSE endpoint
+	compatible with the VSEPR-SIM dashboard record format.
+	Enables real-time monitoring of packing loss and event detection
+	during long production runs.
+	\textit{Depends on: item 1 or a separate Python bridge daemon.}
+
+  \item \textbf{VSEPR-SIM xyzFull bridge.}
+	Extend the \texttt{.xyzfull} format to carry per-atom
+	residual columns, fuzz-radius annotations, and event markers.
+	Enables the existing VSEPR-SIM visualization layer to render
+	residual overlays directly.
+	\textit{Depends on: xyzFull format extension WO; Section 9 schema.}
+
+  \item \textbf{Batch validation campaigns.}
+	Automate the nine validation cases in Appendix~F using the
+	VSEPR-SIM batch system (\texttt{[batch]}, \texttt{[batch.design]}).
+	Produces a reproducible validation matrix with hashes and
+	pass/fail ledger.
+	\textit{Depends on: Section 10 input files; WO-VSIM-62C batch runner.}
+
+  \item \textbf{Solid-state defect benchmark suite.}
+	Extend the vacancy/interstitial case to a systematic
+	benchmark: vacancy, interstitial, Frenkel pair, Schottky pair,
+	dislocation loop, grain boundary.
+	Calibrate $\varepsilon_{A \to S}$ threshold bands against
+	known defect formation energies.
+	\textit{Depends on: item 4.}
+
+  \item \textbf{Reactive chemistry event benchmark suite.}
+	Systematic benchmark against known ReaxFF reaction channels for
+	hydrocarbons, water splitting, and metal oxidation.
+	Calibrate confidence score weights and persistence thresholds.
+	\textit{Depends on: item 4; Appendix E schema implementation.}
+
+  \item \textbf{Detector projection / CERN verification layer.}
+	Implement $P_{\mathrm{det}}$ and $\mathcal{R}_{\mathrm{det}}$
+	using CERN Open Data collision events.
+	Begin with $J/\psi \to \mu^+\mu^-$ (clean dilepton channel)
+	before moving to $H \to ZZ \to 4\ell$.
+	\textit{Depends on: LAMMPS layer validated; items 5 and 6 complete.}
+
+  \item \textbf{High-energy annihilation-map module.}
+	Full implementation of the annihilation map
+	$\Ann: \Ident{\mathrm{parent}} \to \Comp{\mathrm{final}}$
+	and detector reconstruction
+	$\Comp{\mathrm{final}} \to \widehat{\Ident{\mathrm{parent}}}$.
+	This is the collision-physics analogue of
+	inverse packing.
+	\textit{Depends on: item 7.}
+
+  \item \textbf{Dark-sector projection toy model.}
+	Implement the dark density residual
+	$\DarkDens = P_G(\rho) - P_{\mathrm{EM}}(\rho)$
+	as a numerical toy model using parameterised
+	kernels $K_G(w)$ and $K_{\mathrm{EM}}(w)$.
+	Goal: derive constraints on $\chi_w(w)$ from
+	known dark-matter fraction $f_{\mathrm{dark}} \approx 0.27$.
+	\textit{Depends on: items 7 and 8; IKK theory document.}
+
+  \item \textbf{Full theory-to-simulation companion paper.}
+	Joint document connecting the IKK theoretical framework
+	(Documents I and II) to the validated LAMMPS implementation.
+	Includes derivation of projection operators from the
+	scale ladder, residual-metric physical interpretation,
+	and quantitative comparison with existing MD literature.
+	\textit{Depends on: all validation campaigns complete.}
+
+\end{enumerate}
+
+% ============================================================================
+\vfill
+\begin{center}
+  \rule{0.4\textwidth}{0.4pt}\\[0.5em]
+  \textit{Scale-Packing MD Implementation ---
+	VSEPR-SIM-ORGANICS \& METALLICS \{release\}\\
+	Back Matter complete.
+	Verification is the focus.}
+\end{center}
+
+\end{document}

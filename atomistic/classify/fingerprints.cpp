@@ -1,4 +1,4 @@
-#include "atomistic/classify/fingerprints.hpp"
+﻿#include "atomistic/classify/fingerprints.hpp"
 #include <cmath>
 #include <algorithm>
 #include <numeric>
@@ -105,7 +105,7 @@ ProtoFingerprint::ProtoFingerprint()
 {}
 
 double ProtoFingerprint::distance(const ProtoFingerprint& other) const {
-    // Topology hash mismatch → large distance
+    // Topology hash mismatch -> large distance
     if (topology_hash != other.topology_hash) {
         return 1e6;
     }

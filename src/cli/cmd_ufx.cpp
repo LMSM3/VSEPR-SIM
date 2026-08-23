@@ -1,4 +1,4 @@
-// src/cli/cmd_ufx.cpp
+﻿// src/cli/cmd_ufx.cpp
 // UFX AUTO2 CLI Command Implementation -- Phases 2-10
 // Formation Engine v4.1.0 / VSEPR-SIM v5 beta9
 
@@ -33,7 +33,7 @@ namespace vsepr::cli {
 
 std::string UfxCommand::Help() const {
 	return R"(
-UFX AUTO2 — Materials State Database Generator
+UFX AUTO2  -  Materials State Database Generator
 ===============================================
 
 USAGE:
@@ -112,7 +112,7 @@ int UfxCommand::Execute(const std::vector<std::string>& args) {
 	if (subcmd == "backfill-provenance")   return run_backfill_provenance_ (sub_args);
 	if (subcmd == "clear-block")           return run_clear_block_         (sub_args);
 
-	// ── Phase 6-10 — parse options once, dispatch via registry ──────────────
+	// -- Phase 6-10  -  parse options once, dispatch via registry --------------
 	const Auto2Options opt = parse_auto2_options_(sub_args);
 
 	if (opt.db_path.empty()) {
@@ -369,7 +369,7 @@ int UfxCommand::run_backfill_provenance_(const std::vector<std::string>& args) c
 }
 
 // ============================================================================
-// ufx auto2 clear-block  — purge property_values rows for a named block
+// ufx auto2 clear-block   -  purge property_values rows for a named block
 //   so the fill step will re-compute them with updated physics.
 //   Usage: vsepr ufx auto2 clear-block --block <name> --db <path>
 //   Allowed block names: thermo eos crystal mechanical transport meta
@@ -432,7 +432,7 @@ int UfxCommand::run_clear_block_(const std::vector<std::string>& args) const {
 }
 
 // ============================================================================
-// ufx auto2 validate-web  (Phase 5 stub — full implementation in step-8)
+// ufx auto2 validate-web  (Phase 5 stub  -  full implementation in step-8)
 // ============================================================================
 
 int UfxCommand::run_validate_web_(const std::vector<std::string>& args) const {

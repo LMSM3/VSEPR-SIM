@@ -1,4 +1,4 @@
-#include "xyz_parser.hpp"
+﻿#include "xyz_parser.hpp"
 #include <stdexcept>
 #include <map>
 
@@ -41,7 +41,7 @@ State from_xyz(const vsepr::io::XYZMolecule& mol) {
     s.type.reserve(s.N);
     s.F.resize(s.N);
 
-    // Build type map (element symbol → type ID)
+    // Build type map (element symbol -> type ID)
     // type must be the atomic number Z so that the LJ model
     // indexes into its per-element parameter table correctly.
     std::map<std::string, uint32_t> type_map;

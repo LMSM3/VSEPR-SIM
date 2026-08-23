@@ -1,14 +1,14 @@
-/*
- * latex_markup.h — Permanent hardcoded LaTeX revision-markup colour system
+﻿/*
+ * latex_markup.h  -  Permanent hardcoded LaTeX revision-markup colour system
  * =========================================================================
  *
  * Provides a fixed, non-negotiable colour scheme for LaTeX document edits:
  *
- *     GREEN   (#27AE60) — additions / new text
- *     RED     (#E74C3C) — deletions / removed text
- *     YELLOW  (#F1C40F) — edits / modified text (with dark bg for readability)
- *     CYAN    (#1ABC9C) — figure references and figure environments
- *     DARKRED (#C0392B) — chart references and chart environments
+ *     GREEN   (#27AE60)  -  additions / new text
+ *     RED     (#E74C3C)  -  deletions / removed text
+ *     YELLOW  (#F1C40F)  -  edits / modified text (with dark bg for readability)
+ *     CYAN    (#1ABC9C)  -  figure references and figure environments
+ *     DARKRED (#C0392B)  -  chart references and chart environments
  *
  * These colours are PERMANENT.  They must not be changed.  Every LaTeX
  * document produced by VSEPR-SIM uses this exact colour mapping for
@@ -25,7 +25,7 @@
  *   - Shell scripts: use inject_latex_markup_preamble() or the companion .sh
  *   - Python: use pykernel/latex_markup.py (identical colour definitions)
  *
- * VSEPR-SIM 3.0.0 — permanent infrastructure
+ * VSEPR-SIM 3.0.0  -  permanent infrastructure
  */
 
 #pragma once
@@ -41,7 +41,7 @@ extern "C" {
 #endif
 
 /* =========================================================================
- * Hardcoded colour hex values — DO NOT CHANGE
+ * Hardcoded colour hex values  -  DO NOT CHANGE
  * ====================================================================== */
 #define MARKUP_GREEN_HEX    "27AE60"
 #define MARKUP_RED_HEX      "E74C3C"
@@ -55,11 +55,11 @@ extern "C" {
  *
  * Drop this verbatim into any .tex preamble (after \usepackage{xcolor}).
  * Defines five named colours and five semantic markup commands:
- *   \vsadd{text}    — green highlight for additions
- *   \vsdel{text}    — red strikethrough for deletions
- *   \vsedit{text}   — yellow-highlighted edit marker
- *   \vsfig{text}    — cyan for figure references
- *   \vschart{text}  — dark red for chart references
+ *   \vsadd{text}     -  green highlight for additions
+ *   \vsdel{text}     -  red strikethrough for deletions
+ *   \vsedit{text}    -  yellow-highlighted edit marker
+ *   \vsfig{text}     -  cyan for figure references
+ *   \vschart{text}   -  dark red for chart references
  *
  * Also defines framed environments for block-level markup:
  *   \begin{vsaddblock}...\end{vsaddblock}
@@ -69,17 +69,17 @@ extern "C" {
  *   \begin{vschartblock}...\end{vschartblock}
  * ====================================================================== */
 static const char LATEX_MARKUP_PREAMBLE[] =
-    "%% ═══════════════════════════════════════════════════════════════════\n"
-    "%% VSEPR-SIM Revision Markup — permanent colour definitions\n"
+    "%% ===================================================================\n"
+    "%% VSEPR-SIM Revision Markup  -  permanent colour definitions\n"
     "%% DO NOT EDIT these definitions.  They are hardcoded project-wide.\n"
-    "%% ═══════════════════════════════════════════════════════════════════\n"
+    "%% ===================================================================\n"
     "\\usepackage{xcolor}\n"
     "\\usepackage{soul}\n"
     "\\usepackage[normalem]{ulem}\n"
     "\\usepackage{tcolorbox}\n"
     "\\tcbuselibrary{skins,breakable}\n"
     "\n"
-    "%% ── Hardcoded colours ──────────────────────────────────────────────\n"
+    "%% -- Hardcoded colours ----------------------------------------------\n"
     "\\definecolor{vsgreen}{HTML}{27AE60}     %% additions\n"
     "\\definecolor{vsred}{HTML}{E74C3C}       %% deletions\n"
     "\\definecolor{vsyellow}{HTML}{F1C40F}    %% edits\n"
@@ -87,19 +87,19 @@ static const char LATEX_MARKUP_PREAMBLE[] =
     "\\definecolor{vscyan}{HTML}{1ABC9C}      %% figures\n"
     "\\definecolor{vsdarkred}{HTML}{C0392B}   %% charts\n"
     "\n"
-    "%% ── Inline markup commands ────────────────────────────────────────\n"
+    "%% -- Inline markup commands ----------------------------------------\n"
     "\\newcommand{\\vsadd}[1]{\\textcolor{vsgreen}{\\textbf{+}~#1}}\n"
     "\\newcommand{\\vsdel}[1]{\\textcolor{vsred}{\\sout{#1}}}\n"
     "\\newcommand{\\vsedit}[1]{\\sethlcolor{vsyellowbg}\\hl{\\textcolor{black}{#1}}}\n"
     "\\newcommand{\\vsfig}[1]{\\textcolor{vscyan}{\\textit{[Fig]~#1}}}\n"
     "\\newcommand{\\vschart}[1]{\\textcolor{vsdarkred}{\\textit{[Chart]~#1}}}\n"
     "\n"
-    "%% ── Margin annotations ────────────────────────────────────────────\n"
+    "%% -- Margin annotations --------------------------------------------\n"
     "\\newcommand{\\vsaddnote}[1]{\\marginpar{\\tiny\\textcolor{vsgreen}{+#1}}}\n"
     "\\newcommand{\\vsdelnote}[1]{\\marginpar{\\tiny\\textcolor{vsred}{-#1}}}\n"
     "\\newcommand{\\vseditnote}[1]{\\marginpar{\\tiny\\textcolor{vsyellow}{\\textrm{#1}}}}\n"
     "\n"
-    "%% ── Block-level environments (tcolorbox) ──────────────────────────\n"
+    "%% -- Block-level environments (tcolorbox) --------------------------\n"
     "\\newtcolorbox{vsaddblock}{%\n"
     "  colback=vsgreen!8, colframe=vsgreen, title=\\textbf{Addition},\n"
     "  fonttitle=\\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}\n"
@@ -115,9 +115,9 @@ static const char LATEX_MARKUP_PREAMBLE[] =
     "\\newtcolorbox{vschartblock}{%\n"
     "  colback=vsdarkred!8, colframe=vsdarkred, title=\\textbf{Chart},\n"
     "  fonttitle=\\small, breakable, left=4pt, right=4pt, top=2pt, bottom=2pt}\n"
-    "%% ═══════════════════════════════════════════════════════════════════\n"
+    "%% ===================================================================\n"
     "%% END VSEPR-SIM Revision Markup\n"
-    "%% ═══════════════════════════════════════════════════════════════════\n"
+    "%% ===================================================================\n"
     "\n";
 
 /* =========================================================================
@@ -169,7 +169,7 @@ static inline int latex_markup_chart_block(char *buf, size_t sz, const char *bod
 }
 
 /* =========================================================================
- * Preamble writer — write the preamble block to a FILE*
+ * Preamble writer  -  write the preamble block to a FILE*
  * ====================================================================== */
 static inline void latex_markup_write_preamble(FILE *fp) {
     fputs(LATEX_MARKUP_PREAMBLE, fp);
@@ -204,7 +204,7 @@ static inline int inject_latex_markup_preamble(const char *src_path,
 
     /* Check idempotency */
     if (strstr(content, "VSEPR-SIM Revision Markup")) {
-        /* Already injected — just copy unchanged */
+        /* Already injected  -  just copy unchanged */
         FILE *fout = fopen(dst_path, "w");
         if (!fout) { free(content); return -1; }
         fputs(content, fout);
@@ -216,7 +216,7 @@ static inline int inject_latex_markup_preamble(const char *src_path,
     /* Find insertion point: after first \documentclass line */
     char *insert_pt = strstr(content, "\\documentclass");
     if (!insert_pt) {
-        /* No \documentclass — prepend */
+        /* No \documentclass  -  prepend */
         FILE *fout = fopen(dst_path, "w");
         if (!fout) { free(content); return -1; }
         fputs(LATEX_MARKUP_PREAMBLE, fout);

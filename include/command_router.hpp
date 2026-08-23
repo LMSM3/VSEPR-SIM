@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 /**
  * command_router.hpp
  * ------------------
@@ -7,8 +7,8 @@
  * Architecture:
  * - Single authority for all command I/O (text in, structured out)
  * - Bidirectional queues: Router ↔ SimThread
- *   - cmd_q: Router → SimThread (CmdEnvelope)
- *   - res_q: SimThread → Router (CmdResult)
+ *   - cmd_q: Router -> SimThread (CmdEnvelope)
+ *   - res_q: SimThread -> Router (CmdResult)
  * - Router normalizes, parses, validates, and assigns cmd_id
  * - SimThread executes and returns structured results
  * - Router routes results to all registered output callbacks
@@ -60,7 +60,7 @@ inline const char* source_name(CommandSource src) {
 }
 
 // ============================================================================
-// Command Envelope (Router → SimThread)
+// Command Envelope (Router -> SimThread)
 // ============================================================================
 
 /**
@@ -113,7 +113,7 @@ inline const char* status_name(ResultStatus status) {
 }
 
 // ============================================================================
-// Command Result (SimThread → Router)
+// Command Result (SimThread -> Router)
 // ============================================================================
 
 /**
@@ -350,8 +350,8 @@ private:
     std::atomic<uint64_t> next_cmd_id_;
     
     // Bidirectional queues
-    CommandQueue command_queue_;    // Router → SimThread
-    ResultQueue result_queue_;      // SimThread → Router
+    CommandQueue command_queue_;    // Router -> SimThread
+    ResultQueue result_queue_;      // SimThread -> Router
     
     // Output history (thread-safe)
     mutable std::mutex output_mutex_;

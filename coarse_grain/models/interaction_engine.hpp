@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * interaction_engine.hpp — Harmonic-Space Pairwise Interaction Engine
+ * interaction_engine.hpp  -  Harmonic-Space Pairwise Interaction Engine
  *
  * Implements the Anisotropic Bead Model specification §4:
  *
@@ -21,7 +21,7 @@
  * Anti-black-box: per-channel, per-ℓ energy contributions are all
  * individually reported.
  *
- * Reference: "Anisotropic Bead Model — Implementation Specification"
+ * Reference: "Anisotropic Bead Model  -  Implementation Specification"
  *            section of section_anisotropic_beads.tex
  */
 
@@ -44,7 +44,7 @@ namespace coarse_grain {
 // ============================================================================
 
 /**
- * InteractionParams — full parameter set for the interaction engine.
+ * InteractionParams  -  full parameter set for the interaction engine.
  */
 struct InteractionParams {
     ChannelKernelParams kernel_params{};
@@ -60,7 +60,7 @@ struct InteractionParams {
 // ============================================================================
 
 /**
- * ChannelInteractionResult — decomposed per-channel energy output.
+ * ChannelInteractionResult  -  decomposed per-channel energy output.
  */
 struct ChannelInteractionResult {
     Channel channel{Channel::Steric};
@@ -76,7 +76,7 @@ struct ChannelInteractionResult {
 // ============================================================================
 
 /**
- * InteractionResult — complete decomposed energy output.
+ * InteractionResult  -  complete decomposed energy output.
  */
 struct InteractionResult {
     double E_total{};
@@ -228,7 +228,7 @@ inline InteractionResult interaction_energy(
     if (result.frames_valid) {
         R = compute_relative_rotation(desc_A.frame, desc_B.frame);
     } else {
-        // Identity rotation (no frame → no rotation)
+        // Identity rotation (no frame -> no rotation)
         R(0,0) = 1.0; R(1,1) = 1.0; R(2,2) = 1.0;
     }
 

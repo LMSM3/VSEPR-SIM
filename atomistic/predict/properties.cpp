@@ -1,4 +1,4 @@
-#include "properties.hpp"
+﻿#include "properties.hpp"
 #include "../core/state.hpp"
 #include "pot/periodic_db.hpp"
 #include <cmath>
@@ -40,7 +40,7 @@ ElectronicProperties predict_electronic_properties(const State& s) {
             if (edge.i == i || edge.j == i) coordination++;
         }
         
-        // Higher coordination → more electropositive
+        // Higher coordination -> more electropositive
         chi[i] -= 0.1 * coordination;
     }
     

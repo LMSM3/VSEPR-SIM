@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * scattering_pattern.hpp — Deterministic X-ray Scattering Pattern Generator
+ * scattering_pattern.hpp  -  Deterministic X-ray Scattering Pattern Generator
  *
  * Computes SAXS/WAXS-like scattering intensity profiles directly from bead
  * positions using the Debye scattering equation. NO Monte Carlo sampling.
@@ -10,22 +10,22 @@
  *   I(q) = Σ_i Σ_j f_i(q) · f_j(q) · sin(q·r_ij) / (q·r_ij)
  *
  * where:
- *   q = 4π·sin(θ)/λ   — scattering vector magnitude (Å⁻¹)
- *   r_ij = |r_i - r_j| — pair distance
- *   f_i(q) = Z_i · exp(-B_i · q²/(16π²)) — atomic form factor (Gaussian approx)
+ *   q = 4π·sin(θ)/λ    -  scattering vector magnitude (Å⁻¹)
+ *   r_ij = |r_i - r_j|  -  pair distance
+ *   f_i(q) = Z_i · exp(-B_i · q²/(16π²))  -  atomic form factor (Gaussian approx)
  *
  * This produces the concentric ring patterns seen in the SAXS/WAXS images:
- *   - Sharp Bragg peaks → crystalline order (silicon-like)
- *   - Broad rings → polycrystalline (welded Cu, stainless steel)
- *   - Diffuse halo → amorphous (wood, carbon fibre)
+ *   - Sharp Bragg peaks -> crystalline order (silicon-like)
+ *   - Broad rings -> polycrystalline (welded Cu, stainless steel)
+ *   - Diffuse halo -> amorphous (wood, carbon fibre)
  *
- * For a cluster of N beads, the full Debye sum is O(N²) — acceptable for
- * our cluster sizes (64–512 beads, ~4000 pairs max for 64).
+ * For a cluster of N beads, the full Debye sum is O(N²)  -  acceptable for
+ * our cluster sizes (64-512 beads, ~4000 pairs max for 64).
  *
  * Application contexts:
  *   - Mesocrystal analysis (internal symmetry verification)
  *   - Defect detection (missing Bragg peaks)
- *   - Phase identification (peak positions → d-spacings)
+ *   - Phase identification (peak positions -> d-spacings)
  *   - Radiation damage assessment (peak broadening)
  *
  * References:
@@ -52,7 +52,7 @@ namespace metals {
 struct ScatteringPoint {
     double q{};                 ///< Scattering vector (Å⁻¹)
     double two_theta_deg{};     ///< 2θ (degrees) at reference λ
-    double intensity{};         ///< I(q) — Debye sum result
+    double intensity{};         ///< I(q)  -  Debye sum result
     double d_spacing_ang{};     ///< d = 2π/q (Å)
 };
 
@@ -69,8 +69,8 @@ struct ScatteringProfile {
     double peak_q{};                ///< q at maximum intensity
     double peak_d_spacing{};        ///< d-spacing at peak (Å)
     double peak_intensity{};        ///< I(q_peak)
-    double crystallinity_index{};   ///< peak_I / mean_I — sharpness indicator
-    bool   has_bragg_peaks{};       ///< Peak/mean > 5 → crystalline
+    double crystallinity_index{};   ///< peak_I / mean_I  -  sharpness indicator
+    bool   has_bragg_peaks{};       ///< Peak/mean > 5 -> crystalline
 };
 
 // ============================================================================
@@ -82,7 +82,7 @@ struct ScatteringProfile {
  *
  *   f(q) = Z · exp(-B · q² / (16π²))
  *
- * B = Debye–Waller factor (Å²). Typical metallic value: 0.5–1.0 Å².
+ * B = Debye-Waller factor (Å²). Typical metallic value: 0.5-1.0 Å².
  * For a deterministic model, we use B from Debye temperature:
  *   B ≈ 3ℏ²/(m·k_B·Θ_D) ≈ 8π²·⟨u²⟩
  * Simplified: B_proxy = 150.0 / Θ_D (approximate scaling)
@@ -169,7 +169,7 @@ inline ScatteringProfile compute_debye_pattern(
         for (const auto& pd : pairs) {
             double qr = q * pd.r;
             double sinc = (qr > 1.0e-8) ? std::sin(qr) / qr : 1.0;
-            I += 2.0 * f2 * sinc;  // all same element → f_i = f_j
+            I += 2.0 * f2 * sinc;  // all same element -> f_i = f_j
         }
 
         double two_theta = 2.0 * std::asin(q * lambda_ang / (4.0 * M_PI));
@@ -217,8 +217,8 @@ inline std::string scattering_summary_terminal(const ScatteringProfile& prof) {
     char buf[512];
     std::snprintf(buf, sizeof(buf),
         "%s\n  Scattering Profile: %s  (N=%u, λ=%.4f Å)%s\n"
-        "%s  Peak q = %.4f Å⁻¹  →  d = %.3f Å  (2θ = %.2f°)\n"
-        "  Crystallinity index = %.2f  →  %s%s%s\n"
+        "%s  Peak q = %.4f Å⁻¹  ->  d = %.3f Å  (2θ = %.2f°)\n"
+        "  Crystallinity index = %.2f  ->  %s%s%s\n"
         "  q range: [%.2f, %.2f] Å⁻¹  (%u bins)\n%s\n",
         BOLD, prof.material.c_str(), prof.n_beads, prof.lambda_ang, RESET,
         CYAN, prof.peak_q, prof.peak_d_spacing,

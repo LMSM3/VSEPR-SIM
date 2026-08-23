@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "xyz/xyz_vec3.hpp"   // XYZVec3, Int3, and conversion helpers
 
@@ -10,7 +10,7 @@
 
 namespace vsim {
 
-// ── VsimRuntimeError ─────────────────────────────────────────────────────────
+// -- VsimRuntimeError ---------------------------------------------------------
 // Thrown by value accessors on type mismatch, and by interpreter builtins.
 
 struct VsimRuntimeError : std::runtime_error {
@@ -18,7 +18,7 @@ struct VsimRuntimeError : std::runtime_error {
 		: std::runtime_error(msg) {}
 };
 
-// ── Value variant ─────────────────────────────────────────────────────────────
+// -- Value variant -------------------------------------------------------------
 // Ordered: bool before int64 before double before string before list before
 // XYZVec3 before Int3.
 // parse_value() probes in this order.
@@ -77,14 +77,14 @@ inline Int3 as_int3(const Value& v) {
 	return std::get<Int3>(v);
 }
 
-// Numeric coercion (int → double promotion) ----------------------------------
+// Numeric coercion (int -> double promotion) ----------------------------------
 inline double numeric(const Value& v) {
 	if (value_is_int(v))    return static_cast<double>(as_int(v));
 	if (value_is_double(v)) return as_double(v);
 	return 0.0;
 }
 
-// String coercion (any scalar → string representation) ----------------------
+// String coercion (any scalar -> string representation) ----------------------
 inline std::string to_string(const Value& v) {
 	if (value_is_bool(v))   return as_bool(v) ? "true" : "false";
 	if (value_is_int(v))    return std::to_string(as_int(v));

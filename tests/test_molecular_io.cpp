@@ -1,4 +1,4 @@
-/**
+﻿/**
  * test_molecular_io.cpp
  * ---------------------
  * Comprehensive test suite for the unified molecular I/O API.
@@ -29,7 +29,7 @@ static int g_failed = 0;
             std::cout << "  PASS  " #name "\n"; \
             ++g_passed; \
         } catch (const std::exception& ex) { \
-            std::cout << "  FAIL  " #name " — " << ex.what() << "\n"; \
+            std::cout << "  FAIL  " #name "  -  " << ex.what() << "\n"; \
             ++g_failed; \
         } \
     }} _reg_##name; \
@@ -80,7 +80,7 @@ static vsepr::io::XYZMolecule make_methane() {
 }
 
 // ============================================================================
-// Week 1 — Core API
+// Week 1  -  Core API
 // ============================================================================
 
 TEST(detect_format_xyz) {

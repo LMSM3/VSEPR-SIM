@@ -1,8 +1,8 @@
-// =============================================================================
-// tests/pbc_phase5_regression.cpp — Group 25: PBC Core
+﻿// =============================================================================
+// tests/pbc_phase5_regression.cpp  -  Group 25: PBC Core
 // =============================================================================
 //
-// Phase 5 — Golden regression tests for vsepr::BoxOrtho.
+// Phase 5  -  Golden regression tests for vsepr::BoxOrtho.
 // Validates PBC implementation against reference data across refactors.
 //
 // Day #57A  |  WO-56C
@@ -57,8 +57,17 @@ struct PBC : public BoxOrtho {
     }
 
     Vec3 unwrap_position(const Vec3& wrapped, const Vec3& reference) {
-        // Simple unwrap: find closest image to reference
-        return wrapped;  // TODO: proper unwrap implementation
+        // Minimum-image unwrap: return the periodic image of `wrapped` closest to `reference`
+        Vec3 result = wrapped;
+        auto nearest = [](double w, double ref, double boxL) -> double {
+            double d = w - ref;
+            d -= std::round(d / boxL) * boxL;
+            return ref + d;
+        };
+        result.x = nearest(wrapped.x, reference.x, L.x);
+        result.y = nearest(wrapped.y, reference.y, L.y);
+        result.z = nearest(wrapped.z, reference.z, L.z);
+        return result;
     }
 };
 
@@ -235,9 +244,9 @@ void run_golden_unwrapping_test(const GoldenPBCTest& test) {
 // ============================================================================
 
 int main() {
-    std::cout << "╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  PBC Phase 5: Golden Regression Tests                    ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "+===========================================================+\n";
+    std::cout << "|  PBC Phase 5: Golden Regression Tests                    |\n";
+    std::cout << "+===========================================================+\n";
     std::cout << "\nTolerance: " << TOLERANCE << " Å (0.0001 pm)\n";
     std::cout << "Status: STUB - Placeholder golden data\n";
     std::cout << "\nNOTE: This test uses placeholder golden reference data.\n";
@@ -263,9 +272,9 @@ int main() {
     }
     
     // Summary
-    std::cout << "\n╔═══════════════════════════════════════════════════════════╗\n";
-    std::cout << "║  All golden regression tests PASSED                      ║\n";
-    std::cout << "╚═══════════════════════════════════════════════════════════╝\n";
+    std::cout << "\n+===========================================================+\n";
+    std::cout << "|  All golden regression tests PASSED                      |\n";
+    std::cout << "+===========================================================+\n";
     std::cout << "\nNote: This is a STUB test with placeholder data.\n";
     std::cout << "      Real golden regression testing requires validated\n";
     std::cout << "      reference data from production PBC implementation.\n\n";

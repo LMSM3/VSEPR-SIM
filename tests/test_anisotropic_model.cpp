@@ -1,5 +1,5 @@
-/**
- * test_anisotropic_model.cpp — Tests for Anisotropic Bead Model Specification
+﻿/**
+ * test_anisotropic_model.cpp  -  Tests for Anisotropic Bead Model Specification
  *
  * Validates the consolidated implementation against the formal specification:
  *
@@ -7,7 +7,7 @@
  *   2. Per-ℓ steric kernel: exp(-α_s·r) / (1+ℓ)
  *   3. Per-ℓ electrostatic kernel: 1 / r^(ℓ+1)
  *   4. Per-ℓ dispersion kernel: -C₆ / r^(6+ℓ)
- *   5. Kernel decay with ℓ (higher ℓ → smaller contribution)
+ *   5. Kernel decay with ℓ (higher ℓ -> smaller contribution)
  *   6. SH rotation: ℓ=0 scalar invariance
  *   7. SH rotation: ℓ=1 vector rotation
  *   8. SH rotation: identity rotation preserves coefficients
@@ -17,8 +17,8 @@
  *  12. Channel interaction: per-ℓ decomposition
  *  13. Full interaction_energy: aligned identical beads
  *  14. Full interaction_energy: inactive channels contribute zero
- *  15. Adaptive refinement: below threshold → no promotion
- *  16. Adaptive refinement: above threshold → promotion
+ *  15. Adaptive refinement: below threshold -> no promotion
+ *  16. Adaptive refinement: above threshold -> promotion
  *  17. Adaptive refinement: cap at max_l_max
  *  18. Benzene bead: kernel evaluation at reference distance
  *
@@ -152,19 +152,19 @@ static void test_kernel_decay() {
 
     double r = 3.0;
 
-    // Steric: higher l → smaller kernel (1/(1+l) factor)
+    // Steric: higher l -> smaller kernel (1/(1+l) factor)
     double ks0 = channel_kernel(Channel::Steric, 0, r, p);
     double ks2 = channel_kernel(Channel::Steric, 2, r, p);
     double ks4 = channel_kernel(Channel::Steric, 4, r, p);
     check(std::abs(ks0) > std::abs(ks2), "steric: |K(l=0)| > |K(l=2)|");
     check(std::abs(ks2) > std::abs(ks4), "steric: |K(l=2)| > |K(l=4)|");
 
-    // Electrostatic: higher l → smaller kernel (1/r^(l+1))
+    // Electrostatic: higher l -> smaller kernel (1/r^(l+1))
     double ke0 = channel_kernel(Channel::Electrostatic, 0, r, p);
     double ke2 = channel_kernel(Channel::Electrostatic, 2, r, p);
     check(std::abs(ke0) > std::abs(ke2), "electrostatic: |K(l=0)| > |K(l=2)|");
 
-    // Dispersion: higher l → smaller magnitude (1/r^(6+l))
+    // Dispersion: higher l -> smaller magnitude (1/r^(6+l))
     double kd0 = channel_kernel(Channel::Dispersion, 0, r, p);
     double kd2 = channel_kernel(Channel::Dispersion, 2, r, p);
     check(std::abs(kd0) > std::abs(kd2), "dispersion: |K(l=0)| > |K(l=2)|");
@@ -195,7 +195,7 @@ static void test_rotation_l1() {
     std::printf("\n--- 7. SH rotation: l=1 vector rotation ---\n");
 
     coarse_grain::Mat3 R;
-    // 90-degree rotation about z: x→y, y→-x, z→z
+    // 90-degree rotation about z: x->y, y->-x, z->z
     R(0, 0) = 0; R(0, 1) = -1; R(0, 2) = 0;
     R(1, 0) = 1; R(1, 1) =  0; R(1, 2) = 0;
     R(2, 0) = 0; R(2, 1) =  0; R(2, 2) = 1;
@@ -206,9 +206,9 @@ static void test_rotation_l1() {
 
     auto rotated = coarse_grain::rotate_sh_coefficients(coeffs, 1, R);
 
-    // After 90° about z: x→y  So c11(x)→c1-1(y)
+    // After 90° about z: x->y  So c11(x)->c1-1(y)
     check(std::abs(rotated[0]) < 1e-12, "c00 unchanged (zero)");
-    check(std::abs(rotated[1] - 1.0) < 1e-10, "c1-1 gets x→y contribution");
+    check(std::abs(rotated[1] - 1.0) < 1e-10, "c1-1 gets x->y contribution");
     check(std::abs(rotated[2]) < 1e-12, "c10 (z) unchanged (zero)");
     check(std::abs(rotated[3]) < 1e-10, "c11 (x) rotated away");
 }
@@ -256,7 +256,7 @@ static void test_relative_rotation() {
     check(std::abs(R(0, 0) - 1.0) < 1e-12 &&
           std::abs(R(1, 1) - 1.0) < 1e-12 &&
           std::abs(R(2, 2) - 1.0) < 1e-12,
-          "same frame → identity rotation");
+          "same frame -> identity rotation");
 
     // Frame B rotated 90° about z
     B.axis1 = {0, 1, 0}; B.axis2 = {-1, 0, 0}; B.axis3 = {0, 0, 1};
@@ -281,7 +281,7 @@ static void test_interaction_inactive() {
     auto result = coarse_grain::channel_interaction(
         A, B_rot, coarse_grain::Channel::Steric, 3.0);
 
-    check(std::abs(result.energy) < 1e-15, "inactive channel → zero energy");
+    check(std::abs(result.energy) < 1e-15, "inactive channel -> zero energy");
 }
 
 // ============================================================================
@@ -379,15 +379,15 @@ static void test_full_interaction_inactive() {
     atomistic::Vec3 r_vec = {4.0, 0.0, 0.0};
     auto result = coarse_grain::interaction_energy(desc, desc, r_vec);
 
-    check(std::abs(result.electrostatic.energy) < 1e-15, "inactive electrostatic → zero");
-    check(std::abs(result.dispersion.energy) < 1e-15, "inactive dispersion → zero");
-    check(std::abs(result.steric.energy) > 1e-15, "active steric → nonzero");
+    check(std::abs(result.electrostatic.energy) < 1e-15, "inactive electrostatic -> zero");
+    check(std::abs(result.dispersion.energy) < 1e-15, "inactive dispersion -> zero");
+    check(std::abs(result.steric.energy) > 1e-15, "active steric -> nonzero");
     check(std::abs(result.E_total - result.steric.energy) < 1e-15,
           "E_total = steric only");
 }
 
 // ============================================================================
-// 15. Adaptive refinement: below threshold → no promotion
+// 15. Adaptive refinement: below threshold -> no promotion
 // ============================================================================
 static void test_adapt_no_promotion() {
     std::printf("\n--- 15. Adaptive refinement: below threshold ---\n");
@@ -420,7 +420,7 @@ static void test_adapt_no_promotion() {
 }
 
 // ============================================================================
-// 16. Adaptive refinement: above threshold → promotion
+// 16. Adaptive refinement: above threshold -> promotion
 // ============================================================================
 static void test_adapt_promotion() {
     std::printf("\n--- 16. Adaptive refinement: above threshold ---\n");

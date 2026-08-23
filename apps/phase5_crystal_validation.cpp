@@ -1,5 +1,5 @@
-/**
- * phase5_crystal_validation.cpp — Phase 5: Crystal Structure Validation
+﻿/**
+ * phase5_crystal_validation.cpp  -  Phase 5: Crystal Structure Validation
  *
  * Self-testing executable.  Emits crystal presets, evaluates them under
  * PBC with the LJ model, relaxes with FIRE, and verifies that:
@@ -82,7 +82,7 @@ int main()
 {
     std::printf("\n");
     std::printf("=============================================================\n");
-    std::printf("  Phase 5 — Crystal Structure Validation\n");
+    std::printf("  Phase 5  -  Crystal Structure Validation\n");
     std::printf("=============================================================\n\n");
 
     auto model = create_lj_coulomb_model();
@@ -176,7 +176,7 @@ int main()
     // ------------------------------------------------------------------
     // 5.4  Per-atom energy convergence (FCC Cu: 3×3×3 vs 4×4×4)
     //
-    // Cu a=3.61, so 3×3×3 → L=10.83 > rc, 4×4×4 → L=14.44.
+    // Cu a=3.61, so 3×3×3 -> L=10.83 > rc, 4×4×4 -> L=14.44.
     // Per-atom energy should converge as both cells are > rc.
     // ------------------------------------------------------------------
     std::printf("\n--- 5.4 Per-Atom Energy Convergence (FCC Cu) ---\n");

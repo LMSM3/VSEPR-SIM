@@ -1,0 +1,13 @@
+state_label,Lambda_bar_nm,sigma_nm,description,typical_objects,typical_dielectric,typical_temp_K,notes
+gas,0.45,0.20,"Isolated or low-density molecular state; minimal environment effects","isolated pi_N, dipole, ion pair",1.0,298,"Field objects weakly screened; ideal for unperturbed interaction recovery"
+plasma,0.30,0.25,"Ionized / electron-rich state; strong screening by free charges","ionized species, electron-field, recombination products",>100,5000–50000,"Debye screening dominates; Lambda compressed by charge density"
+liquid,0.70,0.25,"Condensed fluid; moderate screening and packing","small organics, molecular liquids",20–35,250–400,"Intermediate screening; packing effects begin to appear"
+solution,0.95,0.30,"Solvated chemical state; solvent shells and dielectric screening active","flavonoid_like, H-bond networks, drug molecules",35–80,250–370,"Most common state for biological and pharmaceutical interaction objects"
+crystal,1.10,0.35,"Periodic solid; lattice geometry constrains interaction geometry","vdW packing, lattice fields, molecular crystals",2–5,100–400,"Lambda shifted by packing geometry; anisotropy matters"
+amorphous_solid,0.90,0.40,"Disordered solid; no long-range periodicity","disordered organic solids, glassy materials",2–10,200–400,"High sigma due to structural disorder; recovery spread is wide"
+surface_adsorbed,0.80,0.30,"Object bound to a surface; geometry constrained by surface topology","graphite pi-surface, adsorbed aromatics, sign halos on surfaces",varies,200–600,"Normal vs. tangential Lambda may differ; surface specificity high"
+interface_bound,0.85,0.35,"Object located at phase boundary; two-environment exposure","lipid bilayer, water-oil interface, membrane",varies,280–340,"Dual dielectric environment; Lambda intermediate between both phases"
+biological_pocket,1.00,0.35,"Protein / biological microenvironment; residue fields + solvation + hydrophobic core","pi_7 in binding pocket, H-bond in active site, vdW packing in core",4–30,310,"Most complex state; all interaction families may be simultaneously active"
+molten_salt,0.55,0.30,"Ionic high-temperature liquid; strong electrostatic environment","ionic fields, coordination shells",varies,>700,"Lambda compressed by strong ionic screening; thermal motion broadens sigma"
+supercritical_fluid,0.65,0.35,"Supercritical phase; intermediate density, strong pressure dependence","CO2 extraction, high-pressure reactions",1.0–25,>304 (CO2),"Lambda pressure-sensitive; phase boundary ambiguities possible"
+macro_composite,2.50,1.00,"Macroscale composite material; interaction objects embedded in heterogeneous medium","pipe wall, thermal stress regions, structural composites",varies,200–800,"Lambda at macro scale; scale S5-S6 range; engineering context"

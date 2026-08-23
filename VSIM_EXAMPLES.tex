@@ -1,0 +1,2329 @@
+% VSIM_EXAMPLES.tex
+% VSEPR-SIM v5.14.1  |  VSIM Scripting Language — Examples
+% Companion to VSIM_EXAMPLES.md
+%
+% Build:  pdflatex VSIM_EXAMPLES.tex  (twice for TOC/hyperlinks)
+% Deps:   tcolorbox, listings, xcolor, geometry, hyperref, booktabs,
+%         fontenc, inputenc, microtype, parskip, enumitem, mdframed
+%
+\documentclass[11pt,a4paper]{article}
+
+%──────────────────────────────────────────────────────────────────────────────
+% Packages
+%──────────────────────────────────────────────────────────────────────────────
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{microtype}
+\usepackage{parskip}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{mdframed}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage[colorlinks=true,linkcolor=vsimblue,urlcolor=vsimblue,
+			citecolor=vsimblue]{hyperref}
+
+%──────────────────────────────────────────────────────────────────────────────
+% Colour palette
+%──────────────────────────────────────────────────────────────────────────────
+\definecolor{vsimblue}   {HTML}{1A73E8}
+\definecolor{vsimgreen}  {HTML}{34A853}
+\definecolor{vsimorange} {HTML}{FA7B17}
+\definecolor{vsimgrey}   {HTML}{5F6368}
+\definecolor{vsimltgrey} {HTML}{F1F3F4}
+\definecolor{vsimcode}   {HTML}{202124}
+\definecolor{vsimcodebg} {HTML}{F8F9FA}
+\definecolor{vsimrule}   {HTML}{DADCE0}
+\definecolor{vsimkw}     {HTML}{1967D2}
+\definecolor{vsimstr}    {HTML}{188038}
+\definecolor{vsimcmt}    {HTML}{80868B}
+\definecolor{vsimnum}    {HTML}{D93025}
+\definecolor{vsimwarn}   {HTML}{F29900}
+\definecolor{vsimdoctrinebg}{HTML}{FFF8E1}
+\definecolor{vsimdoctrinetop}{HTML}{F29900}
+
+%──────────────────────────────────────────────────────────────────────────────
+% VSIM listings style
+%──────────────────────────────────────────────────────────────────────────────
+\lstdefinelanguage{vsim}{
+  sensitive    = true,
+  morecomment  = [l]{\#},
+  morestring   = [b]",
+  morekeywords = {
+	project, material, run, simulation, molecule,
+	cell, boundary, pbc, environment, excite, chemistry, system,
+	observe, variance, while, batch, job,
+	export, visual, report, kernel, trace,
+	analysis, structure, sampling, scale_sampling, inference,
+	ikk_end_tag, ivec,
+	object, macro, chemical, fundamental,
+	carrier, action, information,
+	override, particle, raw,
+	room, N_evolution, dissolution
+  },
+}
+
+\lstdefinestyle{vsimlst}{
+  language         = vsim,
+  basicstyle       = \ttfamily\small\color{vsimcode},
+  backgroundcolor  = \color{vsimcodebg},
+  commentstyle     = \color{vsimcmt}\itshape,
+  keywordstyle     = \color{vsimkw}\bfseries,
+  stringstyle      = \color{vsimstr},
+  numberstyle      = \color{vsimnum},
+  showstringspaces = false,
+  breaklines       = true,
+  breakatwhitespace= true,
+  tabsize          = 4,
+  xleftmargin      = 4pt,
+  xrightmargin     = 4pt,
+  frame            = none,
+  aboveskip        = 0pt,
+  belowskip        = 0pt,
+}
+
+\lstdefinestyle{terminallst}{
+  basicstyle       = \ttfamily\footnotesize\color{white},
+  backgroundcolor  = \color{vsimcode},
+  showstringspaces = false,
+  breaklines       = true,
+  frame            = none,
+  aboveskip        = 0pt,
+  belowskip        = 0pt,
+  xleftmargin      = 6pt,
+  xrightmargin     = 6pt,
+}
+
+\lstdefinestyle{jsonlst}{
+  basicstyle       = \ttfamily\footnotesize\color{vsimcode},
+  backgroundcolor  = \color{vsimcodebg},
+  showstringspaces = false,
+  breaklines       = true,
+  frame            = none,
+  aboveskip        = 0pt,
+  belowskip        = 0pt,
+  xleftmargin      = 4pt,
+  xrightmargin     = 4pt,
+  morestring       = [b]",
+}
+
+%──────────────────────────────────────────────────────────────────────────────
+% tcolorbox styles
+%──────────────────────────────────────────────────────────────────────────────
+
+% Main script box
+\tcbset{
+  scriptbox/.style={
+	enhanced, breakable,
+	colback   = vsimcodebg,
+	colframe  = vsimrule,
+	arc       = 3pt,
+	boxrule   = 0.6pt,
+	left      = 4pt, right = 4pt, top = 4pt, bottom = 4pt,
+	before upper = {\vspace{-2pt}},
+  },
+  % Header strip for the script box
+  scriptheader/.style={
+	attach boxed title to top left={yshift=-2pt, xshift=6pt},
+	boxed title style={
+	  colback=vsimblue, colframe=vsimblue,
+	  arc=2pt, boxrule=0pt,
+	  left=4pt, right=4pt, top=2pt, bottom=2pt,
+	},
+	fonttitle=\ttfamily\bfseries\small\color{white},
+  },
+}
+
+% Terminal output box
+\tcbset{
+  termbox/.style={
+	enhanced, breakable,
+	colback   = vsimcode,
+	colframe  = vsimcode,
+	arc       = 3pt,
+	boxrule   = 0pt,
+	left      = 6pt, right = 6pt, top = 4pt, bottom = 4pt,
+  },
+}
+
+% Doctrine / callout box
+\tcbset{
+  doctrinebox/.style={
+	enhanced, breakable,
+	colback   = vsimdoctrinebg,
+	colframe  = vsimdoctrinetop,
+	arc       = 3pt,
+	boxrule   = 1pt,
+	left      = 8pt, right = 8pt, top = 4pt, bottom = 4pt,
+	fontupper = \small,
+  },
+}
+
+% Key-fields table box
+\tcbset{
+  tablebox/.style={
+	enhanced, breakable,
+	colback   = vsimltgrey,
+	colframe  = vsimrule,
+	arc       = 3pt,
+	boxrule   = 0.4pt,
+	left      = 6pt, right = 6pt, top = 4pt, bottom = 4pt,
+  },
+}
+
+% Example header banner
+\tcbset{
+  exampleheader/.style={
+	enhanced,
+	colback   = vsimblue,
+	colframe  = vsimblue,
+	arc       = 4pt,
+	boxrule   = 0pt,
+	left      = 10pt, right = 10pt, top = 6pt, bottom = 6pt,
+	fontupper = \bfseries\large\color{white},
+  },
+}
+
+% Variation / tip box
+\tcbset{
+  tipbox/.style={
+	enhanced,
+	colback   = {green!7!white},
+	colframe  = vsimgreen,
+	arc       = 3pt,
+	boxrule   = 0.8pt,
+	left      = 8pt, right = 8pt, top = 3pt, bottom = 3pt,
+	fontupper = \small,
+  },
+}
+
+%──────────────────────────────────────────────────────────────────────────────
+% Helpers
+%──────────────────────────────────────────────────────────────────────────────
+\newcommand{\exsection}[3]{%
+  % #1 = label  #2 = number  #3 = title
+  \newpage
+  \phantomsection
+  \addcontentsline{toc}{subsection}{#2 — #3}%
+  \begin{tcolorbox}[exampleheader]
+	#2 \quad #3
+  \end{tcolorbox}%
+}
+
+\newcommand{\vsimscript}[2]{%
+  % #1 = filename  #2 = caption
+  \begin{tcolorbox}[scriptbox, scriptheader, title={#1}]
+	\lstinputlisting[style=vsimlst]{#2}
+  \end{tcolorbox}%
+}
+
+% Inline script using lstlisting directly (for embedded code)
+\newenvironment{vsimblock}[1][script.vsim]{%
+  \begin{tcolorbox}[scriptbox, scriptheader, title={#1}]%
+  \lstset{style=vsimlst}%
+  \lstset{aboveskip=0pt,belowskip=0pt}%
+}{%
+  \end{tcolorbox}%
+}
+
+\newenvironment{termblock}{%
+  \begin{tcolorbox}[termbox]%
+  \lstset{style=terminallst}%
+}{%
+  \end{tcolorbox}%
+}
+
+\newenvironment{doctrine}{%
+  \begin{tcolorbox}[doctrinebox]%
+  \textbf{\color{vsimdoctrinetop}Doctrine\quad}%
+}{%
+  \end{tcolorbox}%
+}
+
+\newenvironment{tip}{%
+  \begin{tcolorbox}[tipbox]%
+  \textbf{\color{vsimgreen}Variation / Tip\quad}%
+}{%
+  \end{tcolorbox}%
+}
+
+% Key-fields table (tabular wrapper)
+\newenvironment{keyfields}{%
+  \begin{tcolorbox}[tablebox]%
+  \footnotesize%
+  \begin{tabular}{@{}lp{4cm}p{7.5cm}@{}}%
+  \toprule%
+  \textbf{Field} & \textbf{Value used} & \textbf{Effect} \\%
+  \midrule%
+}{%
+  \bottomrule%
+  \end{tabular}%
+  \end{tcolorbox}%
+}
+
+\newenvironment{keyfieldsnv}{%
+  \begin{tcolorbox}[tablebox]%
+  \footnotesize%
+  \begin{tabular}{@{}lp{9cm}@{}}%
+  \toprule%
+  \textbf{Field} & \textbf{Effect} \\%
+  \midrule%
+}{%
+  \bottomrule%
+  \end{tabular}%
+  \end{tcolorbox}%
+}
+
+%──────────────────────────────────────────────────────────────────────────────
+% Title & document
+%──────────────────────────────────────────────────────────────────────────────
+\title{%
+  {\Huge\bfseries\color{vsimblue} VSIM Scripting Language}\\[6pt]
+  {\large Examples — Purpose-Driven Reference}\\[3pt]
+	{\normalsize VSEPR-SIM v5.14.1 \quad|\quad companion: \texttt{VSIM\_EXAMPLES.md}}%
+}
+\author{VSEPR-SIM Development}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{mdframed}[linecolor=vsimrule, backgroundcolor=vsimltgrey,
+				 skipabove=4pt, skipbelow=4pt]
+\textbf{How to read this document.}
+Each example is self-contained and can be saved to a \texttt{.vsim} file and
+run with \texttt{vsper run <script>} or validated with
+\texttt{vsper validate <script>}.
+Jump directly to the section you need — no serial reading required.
+\end{mdframed}
+
+\tableofcontents
+\clearpage
+
+%══════════════════════════════════════════════════════════════════════════════
+\section*{Contents overview}
+\addcontentsline{toc}{section}{Contents overview}
+%══════════════════════════════════════════════════════════════════════════════
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}clp{8cm}@{}}
+\toprule
+\textbf{\#} & \textbf{Title} & \textbf{Concepts covered} \\
+\midrule
+E01 & Hello Atom              & Absolute minimum · static GL spin viewer \\
+E02 & H\textsubscript{2}O Molecule Relax
+							  & FIRE solver · terminal chart · per-atom override \\
+E03 & NaCl Crystal --- Level-0 Intent
+							  & Registry resolver · PBC · \texttt{research\_report} \\
+E04 & Silicon Diamond with RDF
+							  & Covalent prototype · Tersoff · \texttt{[observe]} \\
+E05 & Argon Gas NVT           & Thermostat · MSD · \texttt{[[simulation.molecule]]} \\
+E06 & TiO\textsubscript{2} Oxidation + While Loop
+							  & \texttt{[chemistry]} · \texttt{[variance]} · \texttt{[while]} \\
+E07 & Batch Temperature Sweep & \texttt{[batch]} · sweep axis · aggregate report \\
+E08 & GL Visualizer Controls  & \texttt{gl\_interactive} · spin · orbit · overlay \\
+E09 & IKK Identity Vector     & \texttt{[analysis.ivec]} · \texttt{.identity.json} · WO-75B \\
+E10 & MCF-CAI Object State    & \texttt{[object.<layer>.<basis>]} · sidecar doctrine · WO-76 \\
+E11 & Full Research Pipeline  & All major sections combined end-to-end \\
+QR  & Quick-Reference Card    & One-page field cheatsheet \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e01}{E01}{Hello Atom}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} the absolute minimum script that opens a GL window with a
+spinning hydrogen atom.
+
+\textit{Key concepts:} \texttt{[project]} · \texttt{[material]} · \texttt{[run]}
+· \texttt{[visual]} · \texttt{gl\_spin}
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e01\_hello\_atom.vsim}]
+\begin{lstlisting}[style=vsimlst]
+# e01_hello_atom.vsim — minimum viable VSIM script
+[project]
+name    = "e01_hello_atom"
+version = "v5.14.1"
+
+[material]
+formula   = "H"
+prototype = "noble_gas"
+phase     = "gas"
+
+[run]
+mode      = "md"
+max_steps = 1
+dt_fs     = 1.0
+converge  = false    # no convergence needed — display run only
+
+[[simulation.molecule]]
+formula     = "H"
+count       = 1
+temperature = 0.0
+lattice     = "none"
+
+[export]
+write_xyz  = true
+output_dir = "out/e01"
+
+[visual]
+output_type       = "gl_live_60fps"
+gl_spin           = true
+gl_spin_axis      = "y"
+gl_spin_deg_per_s = 45.0
+gl_show_axes      = true
+gl_window_width   = 960
+gl_window_height  = 720
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{keyfields}
+\texttt{mode} + \texttt{max\_steps=1} & & One step; no integration \\
+\texttt{converge = false}             & & Never exits on convergence \\
+\texttt{output\_type = "gl\_live\_60fps"} & & Smooth 60\,fps OpenGL window \\
+\texttt{gl\_spin = true}              & & Continuous viewer rotation \\
+\texttt{gl\_spin\_deg\_per\_s}        & \texttt{45.0} & Try \texttt{180.0} for fast spin \\
+\end{keyfields}
+
+\begin{tip}
+Change \texttt{gl\_spin\_axis} to \texttt{"x"} or \texttt{"z"}, or set
+\texttt{gl\_spin\_deg\_per\_s = -30.0} for reverse spin.
+\end{tip}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e02}{E02}{H\textsubscript{2}O Molecule Relax}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} relax a water molecule to its energy minimum and display live
+convergence in the terminal.
+
+\textit{Key concepts:} FIRE solver · \texttt{terminal\_chart}
+· \texttt{[[override.particle]]} · export flags
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e02\_h2o\_relax.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e02_h2o_relax"
+version     = "v5.14.1"
+seed_base   = 42
+determinism = true
+
+[material]
+formula   = "H2O"
+structure = "water_molecule"   # registry alias -> SPC/E geometry
+phase     = "gas"
+
+[run]
+mode         = "relax"
+max_steps    = 800
+converge     = true
+output_level = "verbose"
+
+[simulation]
+fire_max_steps = 800
+fire_dt_fs     = 0.5
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = "out/e02"
+
+[visual]
+output_type            = "terminal_chart"
+render_interval        = 25
+show_convergence_trace = true
+show_proxy_table       = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{termblock}
+\begin{lstlisting}[style=terminallst]
+  VSEPR-SIM  relax  e02_h2o_relax          step 247 / 800
+  ─────────────────────────────────────────────────────
+  E_total   -219.341 eV  ▼  converging
+  F_max       0.0031 eV/Å ▼
+  RMSD        0.0008 Å
+  Energy  ╔══════════════════════════════════╗
+		  ║▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░░░░░░║  -219.3
+		  ╚══════════════════════════════════╝
+  CONVERGED at step 247   F_max = 0.0028 eV/Å
+\end{lstlisting}
+\end{termblock}
+
+\begin{tip}
+To freeze the oxygen and let only the hydrogens relax, append:
+\begin{lstlisting}[style=vsimlst]
+[[override.particle]]
+element = "O"
+fixed   = true
+\end{lstlisting}
+\end{tip}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e03}{E03}{NaCl Crystal --- Level-0 Intent}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} run a full PBC crystal relaxation with the minimum possible
+authoring — let the registry fill in the details.
+
+\textit{Key concepts:} level-0 \texttt{structure} alias · \texttt{RegistryResolver}
+· PBC · \texttt{research\_report} export profile
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e03\_nacl\_crystal.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e03_nacl_crystal"
+version     = "v5.14.1"
+seed_base   = 3001
+determinism = true
+
+# Level-0: "rocksalt" alias resolved to prototype "B1_NaCl" by
+# RegistryResolver. Registry fills: solver=fire, forcefield=ewald_formal,
+# export_profile=research_report, observables=ionic_set.
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+cell      = "3x3x3"
+phase     = "solid"
+
+[run]
+mode         = "relax"
+max_steps    = 1200
+converge     = true
+output_level = "verbose"
+
+[cell]
+type = "orthorhombic"
+lx   = 16.86    # 3 x a_NaCl (5.62 A)
+ly   = 16.86
+lz   = 16.86
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image  = true
+wrap_positions = "after_step"
+
+[simulation]
+periodic         = true
+use_ewald        = true
+ewald_alpha      = 0.3
+ewald_rcut       = 8.0
+ewald_kmax       = 5
+formation_preset = "ionic"
+
+[export]
+export_profile = "research_report"
+output_dir     = "out/e03"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_rdf_plot            = true
+show_steady_state_marker = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\noindent\textbf{Registry resolution log:}
+\begin{termblock}
+\begin{lstlisting}[style=terminallst]
+[REGISTRY] material.prototype   <- "B1_NaCl"
+[REGISTRY] material.space_group <- "Fm-3m"
+[REGISTRY] run.solver           <- "fire"
+[REGISTRY] run.forcefield       <- "ewald_formal"
+[REGISTRY] export.profile       <- "research_report"
+[REGISTRY] observe.metrics      <- "energy_map,coordination,rdf,defect"
+\end{lstlisting}
+\end{termblock}
+
+\begin{keyfieldsnv}
+\texttt{structure = "rocksalt"}         & Level-0: registry resolves prototype \\
+\texttt{cell = "3x3x3"}                 & Supercell expansion factor \\
+\texttt{export\_profile = "research\_report"} & Named profile sets 7 output flags \\
+\texttt{output\_type = "terminal\_overlay\_cycle"} & Cycles RDF/energy/coordination panels \\
+\end{keyfieldsnv}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e04}{E04}{Silicon Diamond with RDF}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} relax a Si diamond-cubic supercell, compute RDF, and visualise
+the analysis overlay.
+
+\textit{Key concepts:} covalent prototype · Tersoff FF
+· \texttt{[observe]} · \texttt{[analysis.structure]}
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e04\_silicon\_diamond.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e04_silicon_diamond"
+version     = "v5.14.1"
+seed_base   = 4001
+determinism = true
+
+[material]
+formula   = "Si"
+prototype = "A4_Si"       # diamond cubic; registry fills Tersoff + Fd-3m
+cell      = "2x2x2"
+phase     = "solid"
+
+[run]
+mode      = "relax"
+max_steps = 1000
+converge  = true
+
+[cell]
+type = "orthorhombic"
+lx   = 10.86    # 2 x a_Si (5.43 A)
+ly   = 10.86
+lz   = 10.86
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image  = true
+wrap_positions = "after_step"
+
+[analysis.structure]
+enabled              = true
+compute_rdf          = true
+rdf_dr               = 0.05
+rdf_rmax             = 5.0
+compute_coordination = true
+coordination_cutoff  = 2.8
+
+[observe]
+metrics       = ["rdf", "coordination", "energy_map", "formation"]
+output_format = "json"
+every_n_steps = 100
+
+[export]
+write_xyz           = true
+write_analysis_json = true
+write_report_md     = true
+output_dir          = "out/e04"
+
+[export.visual]
+write_rdf_svg     = true
+visual_output_dir = "figures/e04"
+
+[visual]
+output_type            = "terminal_chart"
+render_interval        = 50
+show_convergence_trace = true
+show_rdf_plot          = true
+show_proxy_table       = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{keyfieldsnv}
+\texttt{prototype = "A4\_Si"} & Registry resolves Tersoff FF and Fd-3m space group \\
+\texttt{compute\_rdf = true}  & Enables radial distribution function computation \\
+\texttt{rdf\_dr = 0.05}       & Bin width in \AA{} --- smaller is finer but slower \\
+\texttt{write\_rdf\_svg}      & Outputs RDF as SVG to \texttt{figures/e04/} \\
+\end{keyfieldsnv}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e05}{E05}{Argon Gas NVT}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} simulate an Ar$_{64}$ ensemble with a thermostat and track MSD
+and diffusion.
+
+\textit{Key concepts:} \texttt{[[simulation.molecule]]} · NVT MD · MSD
+· \texttt{[observe]}
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e05\_argon\_gas\_nvt.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e05_argon_gas"
+version     = "v5.14.1"
+seed_base   = 5001
+determinism = true
+
+[run]
+mode          = "md"
+max_steps     = 5000
+dt_fs         = 2.0
+temperature_K = 300.0
+converge      = false
+
+[[simulation.molecule]]
+formula     = "Ar"
+count       = 64
+temperature = 300.0
+lattice     = "random_pack"
+
+[environment]
+temperature = 300.0
+pressure    = 0.0
+medium      = "vacuum"
+
+[cell]
+type = "orthorhombic"
+lx   = 20.0
+ly   = 20.0
+lz   = 20.0
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true   # required for correct MSD
+
+[observe]
+metrics       = ["msd", "rdf", "diffusion_coefficient",
+				 "temperature", "energy_map"]
+output_format = "json"
+every_n_steps = 50
+
+[export]
+write_xyz     = true
+write_xyzf    = true
+write_metrics_tsv = true
+output_dir    = "out/e05"
+
+[visual]
+output_type     = "terminal_chart"
+animation_mode  = "spark"
+render_interval = 100
+show_proxy_table = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{keyfieldsnv}
+\texttt{count = 64}                   & 64 argon atoms in the molecule block \\
+\texttt{lattice = "random\_pack"}     & Initial positions from random packing \\
+\texttt{unwrap\_for\_diffusion = true}& PBC images unwrapped so MSD is not truncated \\
+\texttt{"diffusion\_coefficient"}     & Computes $D$ from linear MSD slope \\
+\end{keyfieldsnv}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e06}{E06}{TiO\textsubscript{2} Oxidation + While Loop}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} run ambient oxidation MD on a TiO$_2$ rutile supercell and
+continue automatically until energy variance settles.
+
+\textit{Key concepts:} \texttt{[environment]} · \texttt{[chemistry]}
+· \texttt{[variance]} · \texttt{[while]} convergence guard
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e06\_tio2\_oxidation.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e06_tio2_oxidation"
+version     = "v5.14.1"
+seed_base   = 6001
+determinism = true
+
+[material]
+formula   = "TiO2"
+structure = "rutile"
+cell      = "2x2x2"
+phase     = "solid"
+
+[run]
+mode          = "md"
+max_steps     = 2000
+dt_fs         = 0.5
+temperature_K = 600.0
+converge      = false
+
+[cell]
+type = "orthorhombic"
+lx   = 9.186    # 2 x 4.593 A
+ly   = 9.186
+lz   = 5.918    # 2 x 2.959 A
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[environment]
+temperature = 600.0
+pressure    = 0.0
+medium      = "argon_gas"
+
+# heat = -1: auto-derive from environment.temperature
+[chemistry]
+chemistry              = "oxidation"
+heat                   = -1
+reaction_events        = true
+track_species_state    = true
+min_score_threshold    = 0.25
+max_reactions_per_step = 4
+
+[observe]
+metrics       = ["reaction_events", "exothermic_count", "avg_delta_E",
+				 "formation", "transport", "defect"]
+output_format = "json"
+every_n_steps = 50
+
+# Variance probe — guard variable used by [while]
+[variance]
+energy_var = "energy.total  last 100  0.05"
+
+# Re-run 200-step blocks until energy_var <= 0.05 or 10 iterations done
+[while]
+name          = "settle_energy"
+condition     = "variance energy_var > 0.05"
+body_steps    = 200
+max_iters     = 10
+measure       = ["energy_var"]
+iter_delay_ms = 150
+
+[export]
+write_xyz                  = true
+write_xyzf                 = true
+write_analysis_json        = true
+write_events_json          = true
+write_report_md            = true
+write_dashboard_svg        = true
+write_manifest_json        = true
+write_pipeline_audit_jsonl = true
+output_dir                 = "out/e06"
+
+[visual]
+output_type            = "terminal_chart"
+animation_mode         = "spark"
+render_interval        = 50
+show_proxy_table       = true
+show_convergence_trace = true
+show_event_timeline    = true
+show_rdf_plot          = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\noindent\textbf{While-loop execution trace:}
+\begin{termblock}
+\begin{lstlisting}[style=terminallst]
+[while] settle_energy — iter 1/10   variance = 0.148  CONTINUE
+[while] settle_energy — iter 2/10   variance = 0.091  CONTINUE
+[while] settle_energy — iter 3/10   variance = 0.047  EXIT  OK
+\end{lstlisting}
+\end{termblock}
+
+\begin{keyfieldsnv}
+\texttt{chemistry = "oxidation"}       & Activates oxidation reaction rule family \\
+\texttt{heat = -1}                     & Auto-derive reaction heat from temperature \\
+\texttt{energy\_var = "... last 100 0.05"} & Probe: variance of last 100 readings, threshold 0.05 \\
+\texttt{condition = "variance ... > 0.05"} & While continues while above threshold \\
+\texttt{max\_iters = 10}               & Hard cap --- exits even if not converged \\
+\end{keyfieldsnv}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e07}{E07}{Batch Temperature Sweep}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} automatically run NaCl at five temperatures and aggregate
+the results into a single comparative report.
+
+\textit{Key concepts:} \texttt{[batch]} · sweep axis · \texttt{seed\_count}
+· \texttt{aggregate}
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e07\_batch\_temperature\_sweep.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e07_batch_sweep"
+version     = "v5.14.1"
+seed_base   = 7001
+determinism = true
+
+[material]
+formula   = "NaCl"
+prototype = "B1_NaCl"
+cell      = "3x3x3"
+phase     = "solid"
+
+[run]
+mode         = "md"
+max_steps    = 1000
+dt_fs        = 1.0
+converge     = false
+output_level = "minimal"
+
+[variance]
+energy_var = "energy.total  last 50  0.05"
+
+[batch]
+print_plan    = true
+abort_on_fail = false
+
+# Job 1: temperature sweep (5 temps x 1 seed = 5 sub-runs)
+job         = nacl_temp_sweep
+temperature = ["300", "600", "900", "1300", "2000"]
+seed_count  = 1
+aggregate   = true
+analyze     = variance energy.total
+measure     = energy_var
+
+# Job 2: seed statistics at 900 K (1 temp x 5 seeds = 5 sub-runs)
+job         = nacl_seed_stats
+temperature = ["900"]
+seed_count  = 5
+aggregate   = true
+analyze     = rmsd
+measure     = energy_var
+
+[export]
+write_analysis_json = true
+write_metrics_tsv   = true
+write_report_md     = true
+write_manifest_json = true
+output_dir          = "out/e07"
+
+[visual]
+output_type      = "terminal_chart"
+animation_mode   = "bar"
+render_interval  = 100
+show_bar_chart   = true
+show_proxy_table = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{keyfieldsnv}
+\texttt{job = nacl\_temp\_sweep} & Starts a new named job entry \\
+\texttt{temperature = ["300","600",...]} & Sweep axis --- one sub-run per value \\
+\texttt{seed\_count = 5}         & Repeats each parameter point with different seeds \\
+\texttt{aggregate = true}        & Merges sub-run results into a single report \\
+\end{keyfieldsnv}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e08}{E08}{GL Visualizer Controls}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} demonstrate all major interactive GL visualizer options.
+
+\textit{Key concepts:} \texttt{gl\_interactive} · spin · orbit · overlay cycle
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e08\_gl\_visualizer.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name    = "e08_gl_visualizer"
+version = "v5.14.1"
+
+[material]
+formula   = "Cu"
+structure = "fcc"
+cell      = "3x3x3"
+phase     = "solid"
+
+[run]
+mode      = "relax"
+max_steps = 500
+converge  = true
+
+[export]
+write_xyz  = true
+output_dir = "out/e08"
+
+[visual]
+output_type       = "gl_interactive"    # full ImGui viewer
+gl_window_width   = 1280
+gl_window_height  = 800
+gl_auto_orbit     = false
+gl_spin           = true
+gl_spin_axis      = "y"
+gl_spin_deg_per_s = 20.0
+gl_show_axes      = true
+render_interval   = 10
+\end{lstlisting}
+\end{tcolorbox}
+
+\noindent\textbf{\texttt{output\_type} comparison:}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}llll@{}}
+\toprule
+\texttt{output\_type} & Window? & Interactive? & Best for \\
+\midrule
+\texttt{"none"}              & No  & No      & Headless batch, CI \\
+\texttt{"terminal\_chart"}   & No  & ASCII   & Live monitoring, SSH \\
+\texttt{"gl\_interactive"}   & Yes & Yes     & 3D inspection, ImGui \\
+\texttt{"gl\_live\_60fps"}   & Yes & No      & Smooth demos \\
+\texttt{"gl\_crystal\_grid"} & Yes & No      & Crystal structures \\
+\texttt{"gl\_overlay\_cycle"}& Yes & No      & Cycling analysis panels \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tip}
+\texttt{gl\_spin} and \texttt{gl\_auto\_orbit} are mutually exclusive.
+Setting \texttt{gl\_spin = true} disables \texttt{gl\_auto\_orbit} for that run.
+Use \texttt{gl\_spin\_deg\_per\_s = 0.0} for a static frozen view.
+\end{tip}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e09}{E09}{IKK Identity Vector}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} enable the IKK identity-vector analysis to output a
+\texttt{.identity.json} file tracking $\bar{I}_f$ across frames.
+
+\textit{Key concepts:} \texttt{[analysis.ivec]} · I-vector axes
+· \texttt{.identity.json} · WO-75B Phase 1
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e09\_ikk\_identity\_vector.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name    = "nacl_ikk"
+version = "v5.14.1"
+
+[material]
+formula   = "NaCl"
+structure = "rocksalt"
+cell      = "2x2x2"
+phase     = "solid"
+
+[run]
+mode      = "md"
+max_steps = 500
+dt_fs     = 1.0
+converge  = false
+
+[cell]
+type = "orthorhombic"
+lx   = 11.24
+ly   = 11.24
+lz   = 11.24
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image  = true
+wrap_positions = "after_step"
+
+# IKK identity-vector analysis (WO-75B Phase 1)
+# Phase 1 proxy mapping (one aggregate per frame):
+#   x = 1 - dataloss       (existence)
+#   y = 1 - hidden_channel (EM)
+#   z = recoverable_info   (spatial)
+#   t = 1 - projection_loss(temporal)
+#   w = 1-identity_residual(internal)
+[analysis.ivec]
+enabled       = true
+write_json    = true
+include_delta = true
+include_var   = false
+output_dir    = "out/e09"
+
+[analysis.ikk_end_tag]
+enabled           = true
+emit_markdown     = true
+d_pass_threshold  = 0.65
+d_warn_threshold  = 0.40
+scale_regime      = "S3"
+section_reference = "IV.9"
+
+[export]
+write_xyz       = true
+write_report_md = true
+output_dir      = "out/e09"
+
+[visual]
+output_type      = "terminal_chart"
+render_interval  = 50
+show_proxy_table = true
+\end{lstlisting}
+\end{tcolorbox}
+
+\noindent\textbf{I-vector axis mapping (Phase 1):}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}cll@{}}
+\toprule
+Axis & Sidecar field & Interpretation \\
+\midrule
+$x$ & $1 - \texttt{dataloss}$          & Existence: identity preservation fraction \\
+$y$ & $1 - \texttt{hidden\_channel}$   & EM: complement of hidden-interaction proxy \\
+$z$ & $\texttt{recoverable\_info}$      & Spatial: recoverable fraction \\
+$t$ & $1 - \texttt{projection\_loss}$  & Temporal: complement of scale-crossing loss \\
+$w$ & $1 - \texttt{identity\_residual}$& Internal: complement of prototype deviation \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Axis order $(x,y,z,t,w)$ is \textbf{fixed and non-permutable}.
+
+\begin{doctrine}
+\texttt{[analysis.ivec]} is derived data only.
+It reads from \texttt{IdentitySidecarSeries} and never writes back to
+\texttt{.xyz} or \texttt{.xyzFull} truth-state files.
+\end{doctrine}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e10}{E10}{MCF-CAI Object State Grid}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} populate the $3\times3$ MCF-CAI object state grid for a carbon
+diamond bead.
+
+\textit{Key concepts:} \texttt{[object.<layer>.<basis>]}
+· Information-column doctrine · WO-76
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e10\_mcf\_cai.vsim}]
+\begin{lstlisting}[style=vsimlst]
+# Grid: rows = macro|chemical|fundamental
+#       cols = carrier|action|information (information is sidecar-only)
+
+[project]
+name    = "e10_mcf_cai"
+version = "v5.14.1"
+
+[material]
+formula   = "C"
+prototype = "A4_diamond"
+cell      = "1x1x1"
+phase     = "solid"
+
+[run]
+mode      = "relax"
+max_steps = 400
+converge  = true
+
+[export]
+write_xyz  = true
+output_dir = "out/e10"
+
+[visual]
+output_type     = "terminal_chart"
+render_interval = 50
+
+# ── MACRO row ─────────────────────────────────────────────────
+[object.macro.carrier]
+centre_x    = 0.0
+phase_label = "diamond_cubic"
+grain_count = 1
+
+[object.macro.action]
+stress_proxy    = 0.0
+fracture_prob   = 0.0
+
+[object.macro.information]         # sidecar only
+formation_age_fs = 0.0
+defect_memory    = 0.0
+
+# ── CHEMICAL row ──────────────────────────────────────────────
+[object.chemical.carrier]
+atomic_number       = 6            # Carbon
+mass                = 12.011
+coordination_number = 4            # sp3
+
+[object.chemical.action]
+reaction_active = false
+oxidation_state = 0
+
+[object.chemical.information]      # sidecar only
+bond_entropy_loss = 0.0
+d_chem            = 0.0
+formation_route   = "tetrahedral_sp3"
+
+# ── FUNDAMENTAL row ────────────────────────────────────────────
+[object.fundamental.carrier]
+net_charge    = 0.0
+spin_proxy    = 0.0
+isotope_label = "C12"
+
+[object.fundamental.action]
+em_coupling  = 0.0
+strong_proxy = 1.0
+
+[object.fundamental.information]   # sidecar only
+psi_hid         = 0.0
+projection_loss = 0.0
+entropy_trace   = 0.0
+\end{lstlisting}
+\end{tcolorbox}
+
+\noindent\textbf{MCF-CAI grid:}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}l|l|l|l@{}}
+\toprule
+ & \textbf{carrier} & \textbf{action} & \textbf{information (sidecar)} \\
+\midrule
+\textbf{macro}       & centre, phase\_label, grain\_count & stress, heat\_flux, fracture & formation\_age\_fs, defect\_memory \\
+\textbf{chemical}    & Z, mass, CN, bond\_order          & reaction, oxidation, ionisation & bond\_entropy, d\_chem, route \\
+\textbf{fundamental} & net\_charge, spin, isotope        & em, strong, weak, decay & psi\_hid, projection\_loss, entropy \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{doctrine}
+\texttt{information}-column cells are sidecar/audit data only.
+Their fields must \textbf{never} be passed to the dynamics force kernel and
+must \textbf{never} be written back to truth-state files (\texttt{.xyz} /
+\texttt{.xyzFull}).
+\end{doctrine}
+
+%══════════════════════════════════════════════════════════════════════════════
+\exsection{e11}{E11}{Full Research Pipeline}
+%══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Goal:} combine every major section into one production-grade research
+run on FeO w\"{u}stite.
+
+\textit{Key concepts:} every section working together
+· \texttt{publication} export profile · IKK end-tag · MCF-CAI
+
+\begin{tcolorbox}[scriptbox, scriptheader, title={e11\_full\_pipeline.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name        = "e11_feo_full_pipeline"
+version     = "v5.14.1"
+seed_base   = 11001
+determinism = true
+
+[material]
+formula   = "FeO"
+structure = "wustite"
+cell      = "2x2x2"
+phase     = "solid"
+
+[run]
+mode          = "md"
+max_steps     = 3000
+dt_fs         = 0.5
+temperature_K = 800.0
+converge      = false
+output_level  = "verbose"
+
+[cell]
+type = "orthorhombic"
+lx   = 8.60
+ly   = 8.60
+lz   = 8.60
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+wrap_positions       = "after_step"
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+periodic         = true
+use_ewald        = true
+ewald_alpha      = 0.3
+ewald_rcut       = 7.0
+ewald_kmax       = 5
+formation_preset = "ionic"
+
+[environment]
+temperature = 800.0
+pressure    = 0.0
+medium      = "argon_gas"
+
+[chemistry]
+chemistry              = "oxidation"
+heat                   = -1
+reaction_events        = true
+track_species_state    = true
+min_score_threshold    = 0.20
+max_reactions_per_step = 6
+
+[observe]
+metrics       = ["rdf", "coordination", "msd", "energy_map",
+				 "reaction_events", "defect", "transport"]
+output_format = "json"
+every_n_steps = 100
+
+[analysis.structure]
+enabled              = true
+compute_rdf          = true
+rdf_dr               = 0.05
+rdf_rmax             = 6.0
+compute_coordination = true
+coordination_cutoff  = 2.6
+
+[analysis.ikk_end_tag]
+enabled           = true
+emit_markdown     = true
+emit_latex        = true
+d_pass_threshold  = 0.65
+d_warn_threshold  = 0.40
+scale_regime      = "S3"
+section_reference = "IV.11"
+
+[analysis.ivec]
+enabled       = true
+write_json    = true
+include_delta = true
+output_dir    = "out/e11"
+
+[object.macro.carrier]
+phase_label = "wustite_B1"
+grain_count = 8
+
+[object.chemical.carrier]
+atomic_number       = 26
+mass                = 55.845
+coordination_number = 6
+
+[object.chemical.action]
+reaction_active = true
+oxidation_state = 2
+
+[object.fundamental.carrier]
+net_charge    = 2.0
+spin_proxy    = 2.0
+isotope_label = "Fe56"
+
+[object.fundamental.information]
+psi_hid         = 0.0
+projection_loss = 0.0
+entropy_trace   = 0.0
+
+[variance]
+energy_var = "energy.total  last 150  0.04"
+
+[while]
+name          = "settle_energy"
+condition     = "variance energy_var > 0.04"
+body_steps    = 300
+max_iters     = 8
+measure       = ["energy_var"]
+iter_delay_ms = 200
+
+[export]
+export_profile             = "publication"
+write_pipeline_audit_jsonl = true
+output_dir                 = "out/e11"
+
+[export.visual]
+write_svg_figures         = true
+write_rdf_svg             = true
+write_energy_trace_svg    = true
+write_packing_heatmap_svg = true
+visual_output_dir         = "figures/e11"
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "spark"
+render_interval          = 50
+show_proxy_table         = true
+show_convergence_trace   = true
+show_event_timeline      = true
+show_rdf_plot            = true
+show_steady_state_marker = true
+show_audit_table         = true
+
+[report]
+title                  = "FeO Wustite - Full Research Pipeline"
+include_material_cards = true
+include_metric_tables  = true
+\end{lstlisting}
+\end{tcolorbox}
+
+%══════════════════════════════════════════════════════════════════════════════
+\newpage
+\section*{QR — Quick-Reference Card}
+\addcontentsline{toc}{section}{QR — Quick-Reference Card}
+%══════════════════════════════════════════════════════════════════════════════
+
+\subsection*{Mandatory fields}
+\begin{tcolorbox}[scriptbox]
+\begin{lstlisting}[style=vsimlst]
+[project]
+name    = "<name>"      # required
+version = "v5.14.1"     # recommended
+
+[material]
+formula = "<formula>"   # required; everything else can be registry-filled
+
+[run]
+mode    = "<relax|md>"  # required
+\end{lstlisting}
+\end{tcolorbox}
+
+\subsection*{Common \texttt{[run]} patterns}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+Intent & Fields \\
+\midrule
+Energy minimisation  & \texttt{mode="relax"}, \texttt{max\_steps=1000}, \texttt{converge=true} \\
+NVT molecular dynamics & \texttt{mode="md"}, \texttt{dt\_fs=1.0}, \texttt{temperature\_K=300.0}, \texttt{converge=false} \\
+Static display only  & \texttt{mode="md"}, \texttt{max\_steps=1}, \texttt{converge=false} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{Export profiles}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+Profile & Files emitted \\
+\midrule
+\texttt{minimal}         & \texttt{.xyz} \\
+\texttt{standard}        & \texttt{.xyz} + \texttt{.analysis.json} + \texttt{.metrics.tsv} + \texttt{.report.md} \\
+\texttt{research\_report}& standard + events, manifest, dashboard SVG \\
+\texttt{publication}     & research\_report + symbolic trace + pipeline audit JSONL \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection*{PBC quick setup}
+\begin{tcolorbox}[scriptbox]
+\begin{lstlisting}[style=vsimlst]
+[cell]
+type = "orthorhombic"
+lx = 10.0  ly = 10.0  lz = 10.0
+
+[boundary]
+x = "periodic"  y = "periodic"  z = "periodic"
+
+[pbc]
+minimum_image  = true
+wrap_positions = "after_step"
+\end{lstlisting}
+\end{tcolorbox}
+
+\subsection*{Analysis section summary}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+Section & Purpose & WO \\
+\midrule
+\texttt{[analysis.structure]}       & RDF, coordination number          & --- \\
+\texttt{[analysis.sampling]}        & Scalar sampling, MSD              & --- \\
+\texttt{[analysis.scale\_sampling]} & Field projection, RVE, emergence  & WO-61D \\
+\texttt{[analysis.inference]}       & Property inference                & WO-61B \\
+\texttt{[analysis.ikk\_end\_tag]}   & IKK report end-tag badge          & WO-75A \\
+\texttt{[analysis.ivec]}            & I-vector series $\to$ \texttt{.identity.json} & WO-75B \\
+\texttt{[object.<layer>.<basis>]}   & MCF-CAI $3\times3$ object state   & WO-76  \\
+\texttt{[object.surface]}           & Surface analysis master block     & Surface \\
+\texttt{[[object.surface]]}         & Per-surface probe definition      & Surface \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%==============================================================================
+\newpage
+\section*{Surface Analysis Examples (E12--E27)}
+%==============================================================================
+
+\begin{tcolorbox}[
+  enhanced, breakable,
+  colback=vsimdoctrinebg, colframe=vsimdoctrinetop,
+  arc=3pt, boxrule=1pt,
+  fonttitle=\sffamily\bfseries\small\color{white},
+  title={Doctrine: Analysis-Only Probes},
+]
+\texttt{[[object.surface]]} sections are \textbf{measurement-only}.
+They never modify particle positions, velocities, or forces, and they
+never touch the canonical \texttt{.xyz} truth-state.
+All metrics land in a \texttt{.surface.json} sidecar keyed by \texttt{output\_tag}.
+\end{tcolorbox}
+
+\medskip
+\begin{center}\footnotesize
+\begin{tabular}{@{}cll@{}}
+\toprule
+Symbol & Field & Meaning \\
+\midrule
+$\Phi$   & \texttt{compute\_flux}           & Net particle crossings / (area\,$\cdot$\,step) \\
+$Q$      & \texttt{compute\_energy\_flux}   & Kinetic energy flux / (area\,$\cdot$\,step) \\
+$P$      & \texttt{compute\_momentum\_flux} & Normal momentum transfer / (area\,$\cdot$\,step) \\
+$J_s$    & \texttt{compute\_species\_flux}  & Per-species crossing table \\
+$J_m$    & \texttt{compute\_mass\_flux}     & Mass-weighted crossing flux \\
+$J_{iv}$ & \texttt{compute\_ivec\_flux}     & IVec crossing signature (needs \texttt{[analysis.ivec]}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\bigskip
+
+%------------------------------------------------------------------------------
+\subsection*{E12 --- Minimal Rectangular Surface Probe}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} simplest possible \texttt{[[object.surface]]} usage ---
+a rectangle counts particle crossings at the XZ mid-plane, no flux metric.\\
+\textbf{Key concepts:} \texttt{[object.surface]} master block \textbullet{}
+\texttt{[[object.surface]]} per-probe entry \textbullet{}
+\texttt{log\_crossings} \textbullet{} analysis-only doctrine
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e12\_surface\_probe\_minimal.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e12/surfaces"
+
+[[object.surface]]
+name          = "midplane_XZ"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 0.0
+normal_y      = 1.0
+normal_z      = 0.0
+width         = 20.0
+height        = 20.0
+log_crossings = true
+compute_flux  = false
+output_tag    = "surf_midXZ"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E13 --- Particle Number Flux ($\Phi$)}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} compute net signed particle flux $\Phi$ through a rectangular
+channel probe in an Ar gas.\\
+\textbf{Key concepts:} \texttt{compute\_flux = true} \textbullet{} $\Phi$ =
+net crossings / (area\,$\cdot$\,step) \textbullet{} \texttt{.surface.json} sidecar
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e13\_surface\_particle\_flux.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e13/surfaces"
+
+[[object.surface]]
+name          = "channel_probe"
+geometry      = "rectangle"
+center_x      = 0.0
+center_y      = 0.0
+center_z      = 0.0
+normal_x      = 1.0
+normal_y      = 0.0
+normal_z      = 0.0
+width         = 30.0
+height        = 30.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_channel"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E14 --- Time-Averaged Flux Statistics}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} compute rolling time-averaged flux over a long MD run to identify steady-state vs fluctuating flow.\\
+\textbf{Key concepts:} \texttt{compute\_flux} per-step data \textbullet{}
+temporal statistics \textbullet{} quasi-steady-state detection
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e14\_surface\_time\_averaged\_flux.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e14/surfaces"
+
+[[object.surface]]
+name          = "flux_temporal_probe"
+geometry      = "rectangle"
+normal_y      = 1.0
+width         = 25.0
+height        = 25.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_temporal"
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[enhanced, colback=vsimcodebg, colframe=vsimrule,
+  arc=3pt, boxrule=0.6pt, fonttitle=\sffamily\small\bfseries\color{vsimkw},
+  title={Tip}]
+\footnotesize
+Extract the \texttt{flux} array from \texttt{.surface.json} and compute
+rolling mean/variance over a sliding window (e.g.\ 500 steps) to detect
+quasi-steady-state.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E15 --- Species-Filtered Flux}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} two co-located probes record Na$^+$ and Cl$^-$ flux separately.\\
+\textbf{Key concepts:} \texttt{species\_filter} \textbullet{}
+\texttt{compute\_mass\_flux} \textbullet{} dual-probe comparative output
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e15\_surface\_species\_filtered\_flux.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e15/surfaces"
+
+[[object.surface]]          # Na-only probe
+name              = "na_membrane"
+geometry          = "rectangle"
+normal_y          = 1.0
+width             = 25.0
+height            = 20.0
+log_crossings     = true
+compute_flux      = true
+compute_mass_flux = true
+species_filter    = ["Na"]
+output_tag        = "phi_Na"
+
+[[object.surface]]          # Cl-only probe
+name              = "cl_membrane"
+geometry          = "rectangle"
+normal_y          = 1.0
+width             = 25.0
+height            = 20.0
+log_crossings     = true
+compute_flux      = true
+compute_mass_flux = true
+species_filter    = ["Cl"]
+output_tag        = "phi_Cl"
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[enhanced, colback=vsimcodebg, colframe=vsimrule,
+  arc=3pt, boxrule=0.6pt, fonttitle=\sffamily\small\bfseries\color{vsimkw},
+  title={Tip}]
+\footnotesize
+\texttt{species\_filter} accepts a TOML inline array
+\texttt{["Na",\,"Cl"]} or a single bare string \texttt{"Na"}.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E16 --- Kinetic Energy Flux ($Q$)}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} measure $Q$ through a disk probe in a hot Ar gas.\\
+\textbf{Key concepts:} \texttt{geometry = "disk"} \textbullet{}
+\texttt{radius} \textbullet{} \texttt{compute\_energy\_flux} \textbullet{} thermal plane
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e16\_surface\_energy\_flux.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e16/surfaces"
+
+[[object.surface]]
+name                = "thermal_disk_z"
+geometry            = "disk"
+center_z            = 5.0
+normal_z            = 1.0
+radius              = 12.0
+log_crossings       = true
+compute_energy_flux = true
+output_tag          = "Q_disk_z"
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+Field & Disk-specific notes \\
+\midrule
+\texttt{geometry = "disk"} & Circular probe; \texttt{radius} required \\
+\texttt{width} / \texttt{height} & Ignored for disk geometry \\
+\texttt{radius} & Half-diameter in \AA \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%------------------------------------------------------------------------------
+\subsection*{E17 --- Multi-Metric Single Probe}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} a single probe computes mass and energy flux simultaneously on one plane.\\
+\textbf{Key concepts:} \texttt{compute\_mass\_flux + compute\_energy\_flux}
+\textbullet{} combined metrics in one sidecar \textbullet{} analysis locality
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e17\_surface\_multi\_metric\_probe.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e17/surfaces"
+
+[[object.surface]]
+name                = "multi_metric_probe"
+geometry            = "rectangle"
+normal_x            = 1.0
+width               = 30.0
+height              = 30.0
+log_crossings       = true
+compute_flux        = true
+compute_mass_flux   = true
+compute_energy_flux = true
+output_tag          = "multi_metric"
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[enhanced, colback=vsimcodebg, colframe=vsimrule,
+  arc=3pt, boxrule=0.6pt, fonttitle=\sffamily\small\bfseries\color{vsimkw},
+  title={Tip}]
+\footnotesize
+A single \texttt{output\_tag} holds all requested metrics; the sidecar entry
+contains \texttt{"flux"}, \texttt{"mass\_flux"}, and \texttt{"energy\_flux"}
+keys.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E18 --- Momentum Flux / Pressure Proxy ($P$)}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} estimate the kinetic pressure gradient across an Ar slab
+using top and bottom probes at $\pm15$\,\AA.\\
+\textbf{Key concepts:} \texttt{compute\_momentum\_flux} \textbullet{}
+signed normal-velocity weighting \textbullet{} $\Delta P =
+P_\mathrm{top} - P_\mathrm{bottom}$
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e18\_surface\_momentum\_flux.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[[object.surface]]
+name                  = "slab_top"
+geometry              = "rectangle"
+center_y              = 15.0
+normal_y              = 1.0
+width                 = 30.0
+height                = 30.0
+log_crossings         = true
+compute_flux          = true
+compute_momentum_flux = true
+output_tag            = "P_top"
+
+[[object.surface]]
+name                  = "slab_bottom"
+geometry              = "rectangle"
+center_y              = -15.0
+normal_y              = 1.0
+width                 = 30.0
+height                = 30.0
+log_crossings         = true
+compute_flux          = true
+compute_momentum_flux = true
+output_tag            = "P_bottom"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E19 --- Per-Species Flux Probes}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} three co-located probes separately record Na, Cl, and Ar
+crossings in a mixed simulation.\\
+\textbf{Key concepts:} \texttt{compute\_species\_flux} \textbullet{}
+per-species sidecar subtables \textbullet{} \texttt{output\_tag} keying
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e19\_surface\_species\_flux\_multi.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[[object.surface]]
+name                 = "probe_Na"
+geometry             = "rectangle"
+normal_z             = 1.0
+width                = 20.0
+height               = 20.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Na"]
+output_tag           = "J_Na"
+
+[[object.surface]]
+name                 = "probe_Cl"
+geometry             = "rectangle"
+normal_z             = 1.0
+width                = 20.0
+height               = 20.0
+log_crossings        = true
+compute_species_flux = true
+species_filter       = ["Cl"]
+output_tag           = "J_Cl"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E20 --- Identity-Vector (IVec) Flux}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} couple surface probes to the IVec module (WO-75B) at a Si
+crystal boundary disk.\\
+\textbf{Key concepts:} \texttt{compute\_ivec\_flux} \textbullet{}
+\texttt{[analysis.ivec]} co-activation \textbullet{} WO-75B
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e20\_surface\_ivec\_flux.vsim}]
+\begin{lstlisting}[style=vsimlst]
+[analysis.ivec]
+enabled         = true
+write_json      = true
+convergence_eps = 1.0e-4
+
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e20/surfaces"
+
+[[object.surface]]
+name              = "ivec_boundary_disk"
+geometry          = "disk"
+center_z          = 0.0
+normal_z          = 1.0
+radius            = 8.0
+log_crossings     = true
+compute_ivec_flux = true
+output_tag        = "ivec_surf_z"
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[enhanced, colback=vsimdoctrinebg, colframe=vsimdoctrinetop,
+  arc=3pt, boxrule=0.8pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
+\footnotesize
+\textbf{Coupling rule:} \texttt{compute\_ivec\_flux = true} is silently
+ignored unless \texttt{[analysis.ivec] enabled = true} is also present
+in the same script.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E21 --- Spherical Surface Geometry}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} measure flux across a closed spherical shell to model a droplet
+or bubble interface.\\
+\textbf{Key concepts:} \texttt{geometry = "sphere"} \textbullet{}
+closed 3D shell with \texttt{radius} \textbullet{} isotropic flux \textbullet{}
+droplet/bubble diagnostics
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e21\_surface\_sphere\_geometry.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e21/surfaces"
+
+[[object.surface]]
+name                = "droplet_shell"
+geometry            = "sphere"
+center_x            = 0.0
+center_y            = 0.0
+center_z            = 0.0
+radius              = 10.0
+log_crossings       = true
+compute_flux        = true
+compute_energy_flux = true
+output_tag          = "sphere_evap"
+\end{lstlisting}
+\end{tcolorbox}
+
+\begin{tcolorbox}[enhanced, colback=vsimcodebg, colframe=vsimrule,
+  arc=3pt, boxrule=0.6pt, fonttitle=\sffamily\small\bfseries\color{vsimkw},
+  title={Sphere note}]
+\footnotesize
+\texttt{geometry = "sphere"} activates a closed shell; positive flux = outward
+crossing (evaporation). Area = $4\pi r^2$.
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E22 --- Multi-Probe Flux Pipeline}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} combine $\Phi$, $Q$, and $P$ probes in one script;
+build a three-metric sidecar for a 2\,048-atom Ar gas.\\
+\textbf{Key concepts:} three \texttt{[[object.surface]]} blocks \textbullet{}
+\texttt{write\_report\_md} companion \textbullet{} combined \texttt{.surface.json}
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e22\_surface\_multi\_probe\_pipeline.vsim (surface block)}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e22/surfaces"
+
+# Phi probe at Z = -10
+[[object.surface]]
+name          = "phi_probe_bottom"
+geometry      = "rectangle"
+center_z      = -10.0
+normal_z      = 1.0
+width         = 40.0
+height        = 40.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_z_neg10"
+
+# Q probe (disk) at Z = 0
+[[object.surface]]
+name                = "Q_probe_mid"
+geometry            = "disk"
+center_z            = 0.0
+normal_z            = 1.0
+radius              = 15.0
+log_crossings       = true
+compute_energy_flux = true
+output_tag          = "Q_disk_z0"
+
+# P probe at Z = +10
+[[object.surface]]
+name                  = "P_probe_top"
+geometry              = "rectangle"
+center_z              = 10.0
+normal_z              = 1.0
+width                 = 40.0
+height                = 40.0
+log_crossings         = true
+compute_momentum_flux = true
+output_tag            = "P_z_pos10"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E23 --- Batch Parameter Sweep with Surface Probes}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} integrate surface analysis with \texttt{[batch]} parameter
+expansion; sweep temperature \{300, 400, 500, 600\} K and record flux.\\
+\textbf{Key concepts:} \texttt{[batch]} matrix \textbullet{} per-job
+\texttt{.surface.json} \textbullet{} aggregated flux-vs-temperature post-analysis
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e23\_surface\_batch\_sweep.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[batch]
+enabled = true
+mode    = "matrix"
+
+[[batch.parameter]]
+section = "simulation.molecule"
+key     = "temperature"
+values  = [300.0, 400.0, 500.0, 600.0]
+
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e23/surfaces"
+
+[[object.surface]]
+name          = "batch_flux_probe"
+geometry      = "rectangle"
+normal_z      = 1.0
+width         = 30.0
+height        = 30.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_batch"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E24 --- While-Loop Convergence on Flux Stationarity}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} couple \texttt{[while]} convergence guard to surface flux
+variance; continue until quasi-steady-state flow.\\
+\textbf{Key concepts:} \texttt{[while]} criteria on flux variance
+\textbullet{} iterative simulation gated on analysis \textbullet{}
+stationarity detection
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e24\_surface\_while\_loop\_convergence.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[variance]
+name         = "flux_variance"
+target       = 0.0001
+tolerance    = 0.00005
+check_every  = 200
+max_restarts = 5
+
+[while]
+criteria    = "flux_variance"
+max_cycles  = 10
+cycle_steps = 1000
+
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e24/surfaces"
+
+[[object.surface]]
+name          = "flux_convergence_probe"
+geometry      = "rectangle"
+normal_y      = 1.0
+width         = 25.0
+height        = 25.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_while"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E25 --- Surface Flux + RDF Correlation Analysis}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} simultaneously activate \texttt{[analysis.structure]} (RDF)
+and surface probes to correlate flux with local coordination.\\
+\textbf{Key concepts:} \texttt{compute\_rdf = true} $\to$ \texttt{.rdf.json}
+\textbullet{} \texttt{compute\_flux = true} $\to$ \texttt{.surface.json}
+\textbullet{} cross-module coupling \textbullet{} liquid--solid interface
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e25\_surface\_rdf\_correlation.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[analysis.structure]
+enabled     = true
+compute_rdf = true
+rdf_rmax    = 10.0
+rdf_nbins   = 200
+
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e25/surfaces"
+
+[[object.surface]]
+name          = "interface_probe"
+geometry      = "rectangle"
+normal_z      = 1.0
+width         = 20.0
+height        = 20.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_rdf"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E26 --- Surface Flux Verification with [verify.structure]}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} combine surface analysis with the empirical verification layer
+(WO-62A) to check flux consistency with mass conservation.\\
+\textbf{Key concepts:} \texttt{[verify.structure]} + surface probes
+\textbullet{} analysis $\to$ verification pipeline \textbullet{} co-activation
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e26\_surface\_flux\_verification.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[verify]
+enabled = true
+
+[verify.structure]
+check_rdf                = true
+rdf_first_peak_min       = 3.0
+rdf_first_peak_max       = 4.0
+rdf_coordination_min     = 10.0
+rdf_coordination_max     = 14.0
+rdf_coordination_species = "Ne"
+
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e26/surfaces"
+
+[[object.surface]]
+name          = "verify_flux_probe"
+geometry      = "rectangle"
+normal_x      = 1.0
+width         = 25.0
+height        = 25.0
+log_crossings = true
+compute_flux  = true
+output_tag    = "phi_verify"
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E27 --- Full Surface-Analysis Showcase}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} capstone --- five probes, all metrics, species filters, and
+IVec coupling on a NaCl\,+\,Ar system.\\
+\textbf{Key concepts:} all surface metrics simultaneously \textbullet{}
+five named probes \textbullet{} integration smoke-test
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e27\_surface\_full\_analysis\_showcase.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+# surf_A: all metrics, rectangle
+[[object.surface]]
+name                  = "surf_A_full"
+geometry              = "rectangle"
+normal_z              = 1.0
+width                 = 30.0
+height                = 30.0
+log_crossings         = true
+compute_flux          = true
+compute_energy_flux   = true
+compute_momentum_flux = true
+compute_mass_flux     = true
+output_tag            = "surf_A"
+
+# surf_E: IVec flux at crystal top
+[[object.surface]]
+name              = "surf_E_ivec_top"
+geometry          = "disk"
+center_z          = 15.0
+normal_z          = 1.0
+radius            = 8.0
+log_crossings     = true
+compute_ivec_flux = true
+output_tag        = "surf_E_ivec"
+\end{lstlisting}
+\end{tcolorbox}
+
+\textbf{Sidecar layout} (\texttt{e27.surface.json}):
+
+\begin{tcolorbox}[enhanced, breakable,
+  colback=vsimcodebg, colframe=vsimrule, arc=3pt, boxrule=0.6pt,
+  left=4pt, right=4pt, top=3pt, bottom=3pt]
+\begin{lstlisting}[style=jsonlst]
+{
+  "run": "e27_surface_full_showcase",
+  "surfaces": {
+    "surf_A":    { "crossings":[...], "flux":..., "energy_flux":...,
+                   "momentum_flux":..., "mass_flux":... },
+    "surf_B_Na": { "crossings":[...], "species_flux":{"Na":...} },
+    "surf_C_Cl": { "crossings":[...], "species_flux":{"Cl":...} },
+    "surf_D_Ar": { "crossings":[...], "mass_flux":... },
+    "surf_E_ivec":{ "crossings":[...], "ivec_flux":[...] }
+  }
+}
+\end{lstlisting}
+\end{tcolorbox}
+
+%------------------------------------------------------------------------------
+\subsection*{E28 --- Full Export Suite (All Formats + Surface)}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} activate every export format simultaneously alongside surface
+analysis to verify complete pipeline integration.\\
+\textbf{Key concepts:} \texttt{write\_xyz}, \texttt{write\_xyz\_full},
+\texttt{write\_analysis\_json}, \texttt{write\_report\_md}, \texttt{write\_rdf}
+\textbullet{} surface sidecar coexists with all formats
+\textbullet{} integration smoke-test
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e28\_surface\_export\_suite.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[analysis.structure]
+enabled     = true
+compute_rdf = true
+rdf_rmax    = 10.0
+rdf_nbins   = 200
+
+[analysis.ivec]
+enabled         = true
+write_json      = true
+convergence_eps = 1.0e-4
+
+[export]
+write_xyz           = true
+write_xyz_full      = true
+write_analysis_json = true
+write_report_md     = true
+write_rdf           = true
+output_dir          = "out/e28"
+
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e28/surfaces"
+
+[[object.surface]]
+name                = "export_suite_probe"
+geometry            = "disk"
+normal_z            = 1.0
+radius              = 15.0
+log_crossings       = true
+compute_flux        = true
+compute_energy_flux = true
+compute_ivec_flux   = true
+output_tag          = "export_suite"
+\end{lstlisting}
+\end{tcolorbox}
+
+\paragraph{Output files produced by E28}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}ll@{}}
+\toprule
+File & Source \\
+\midrule
+\texttt{e28.xyz} & \texttt{write\_xyz = true} \\
+\texttt{e28.xyzFull} & \texttt{write\_xyz\_full = true} \\
+\texttt{e28.analysis.json} & \texttt{write\_analysis\_json = true} \\
+\texttt{e28.report.md} & \texttt{write\_report\_md = true} \\
+\texttt{e28.rdf.json} & \texttt{write\_rdf = true} \\
+\texttt{e28.identity.json} & \texttt{[analysis.ivec] write\_json = true} \\
+\texttt{e28.surface.json} & \texttt{[object.surface] write\_json = true} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+%------------------------------------------------------------------------------
+\subsection*{E29 --- Surface Error Analysis and Diagnostic Patterns}
+%------------------------------------------------------------------------------
+
+\textbf{Goal:} intentionally misconfigure surface probes to demonstrate error
+handling, validation warnings, and diagnostic output.\\
+\textbf{Key concepts:} parser robustness \textbullet{} validation warnings
+(non-fatal) \textbullet{} diagnostic patterns \textbullet{} failure-mode documentation
+
+\begin{tcolorbox}[scriptbox, scriptheader,
+  title={scripts/e29\_surface\_error\_analysis.vsim (excerpt)}]
+\begin{lstlisting}[style=vsimlst]
+[object.surface]
+enabled    = true
+write_json = true
+output_dir = "out/e29/surfaces"
+
+# Probe 1: disk with ignored width/height fields
+[[object.surface]]
+name               = "disk_with_excess_fields"
+geometry           = "disk"
+radius             = 10.0
+width              = 999.0  # Ignored for disk geometry
+height             = 999.0  # Ignored for disk geometry
+log_crossings      = true
+compute_flux       = true
+output_tag         = "disk_excess"
+
+# Probe 2: species_filter referencing nonexistent species
+[[object.surface]]
+name              = "unknown_species_filter"
+geometry          = "rectangle"
+normal_y          = 1.0
+width             = 20.0
+height            = 20.0
+log_crossings     = true
+compute_flux      = true
+species_filter    = ["Nonexistent", "Ar"]
+output_tag        = "unknown_species"
+
+# Probe 3: compute_ivec_flux without [analysis.ivec]
+[[object.surface]]
+name              = "orphan_ivec_flux"
+geometry          = "rectangle"
+normal_z          = 1.0
+width             = 15.0
+height            = 15.0
+log_crossings     = false
+compute_ivec_flux = true
+output_tag        = ""  # Empty tag -> fallback to "surface_<index>"
+\end{lstlisting}
+\end{tcolorbox}
+
+\paragraph{Expected warnings (non-fatal)}
+
+\begin{itemize}[leftmargin=1em,itemsep=0pt]
+\item \texttt{"species\_filter includes unknown species: Nonexistent"}
+\item \texttt{"compute\_ivec\_flux requires [analysis.ivec] enabled; ignored"}
+\item \texttt{"output\_tag empty; using fallback `surface\_2'"}
+\end{itemize}
+
+%==============================================================================
+\newpage
+\subsection*{QR --- Updated Section \& Field Reference}
+%==============================================================================
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+Section & Purpose & WO \\
+\midrule
+\texttt{[analysis.structure]}        & RDF, coordination number         & --- \\
+\texttt{[analysis.sampling]}         & Scalar sampling, MSD             & --- \\
+\texttt{[analysis.scale\_sampling]}  & Field projection, RVE            & WO-61D \\
+\texttt{[analysis.inference]}        & Property inference               & WO-61B \\
+\texttt{[analysis.ikk\_end\_tag]}    & IKK report end-tag badge         & WO-75A \\
+\texttt{[analysis.ivec]}             & I-vector $\to$ \texttt{.identity.json} & WO-75B \\
+\texttt{[object.<layer>.<basis>]}    & MCF-CAI $3\times3$ state grid    & WO-76 \\
+\texttt{[object.surface]}            & Surface analysis master block    & Surface \\
+\texttt{[[object.surface]]}          & Per-surface probe definition     & Surface \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\medskip
+\textbf{\texttt{[[object.surface]]} field quick-reference:}
+
+\begin{center}\footnotesize
+\begin{tabular}{@{}llll@{}}
+\toprule
+Field & Type & Default & Notes \\
+\midrule
+\texttt{name}          & string & \texttt{""} & Probe label \\
+\texttt{geometry}      & string & \texttt{"rectangle"} & \texttt{"rectangle"} $|$ \texttt{"disk"} $|$ \texttt{"sphere"} \\
+\texttt{center\_x/y/z} & float  & \texttt{0.0} & Centre in \AA \\
+\texttt{normal\_x/y/z} & float  & \texttt{0,0,1} & Unit normal \\
+\texttt{width}/\texttt{height} & float & \texttt{10.0} & Rectangle half-extents in \AA \\
+\texttt{radius}        & float  & \texttt{5.0} & Disk/sphere radius in \AA \\
+\texttt{log\_crossings}       & bool & \texttt{false} & Record every event \\
+\texttt{compute\_flux}        & bool & \texttt{false} & $\Phi$ metric \\
+\texttt{compute\_mass\_flux}  & bool & \texttt{false} & $J_m$ metric \\
+\texttt{compute\_energy\_flux} & bool & \texttt{false} & $Q$ metric \\
+\texttt{compute\_momentum\_flux} & bool & \texttt{false} & $P$ metric \\
+\texttt{compute\_species\_flux} & bool & \texttt{false} & $J_s$ per-species table \\
+\texttt{compute\_ivec\_flux}  & bool & \texttt{false} & $J_{iv}$ (needs \texttt{analysis.ivec}) \\
+\texttt{species\_filter}      & list & \texttt{[]} & Restrict probe by species \\
+\texttt{output\_tag}          & string & \texttt{""} & Key in \texttt{.surface.json} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\vfill
+\hrule
+\smallskip
+{\footnotesize\color{vsimgrey}
+See also: \texttt{VSIM\_REFERENCE.md} --- complete field reference\quad|\quad
+\texttt{docs/VSIM\_LANGUAGE.md} --- language format and registry internals\quad|\quad
+\texttt{VSIM\_DEVELOPMENT.md} --- how to add new sections}
+
+\end{document}

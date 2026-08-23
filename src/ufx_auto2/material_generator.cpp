@@ -1,4 +1,4 @@
-// src/ufx_auto2/material_generator.cpp
+﻿// src/ufx_auto2/material_generator.cpp
 // UFX_AUTO_2 Phase 2 -- Material Record Generator Implementation
 
 #include "ufx_auto2/material_generator.hpp"
@@ -58,7 +58,7 @@ int MaterialRecordGenerator::period_for_Z_(int Z) noexcept {
 // ============================================================================
 // material_key derivation
 // Format: {elem}_ox{ox}_c{coord}_{geom}_{phase}_{hash4}
-// hash4 is the low 4 hex digits of std::hash over all fields — prevents
+// hash4 is the low 4 hex digits of std::hash over all fields  -  prevents
 // collisions when two records share the same axis values.
 // ============================================================================
 
@@ -225,7 +225,7 @@ ForceFieldBlock MaterialRecordGenerator::build_force_field_(const AxisSample& s)
 		ff.validated_against  = e.source_id;
 		ff.parameter_revision = "phase2_rev1";
 	} else {
-		// No entry at all — stub zeros, very low confidence
+		// No entry at all  -  stub zeros, very low confidence
 		ff.atom_type              = atom_type;
 		ff.parameter_source_class = "generated";
 		ff.parameter_confidence   = 0.05;
@@ -238,7 +238,7 @@ ForceFieldBlock MaterialRecordGenerator::build_force_field_(const AxisSample& s)
 
 // ============================================================================
 // build_provenance_
-// Always populated — hard rule.
+// Always populated  -  hard rule.
 // ============================================================================
 
 ProvenanceBlock MaterialRecordGenerator::build_provenance_(

@@ -1,5 +1,5 @@
-/**
- * test_macro_precursor_suite6.cpp — Suite #6: Macro Property Precursor Channels
+﻿/**
+ * test_macro_precursor_suite6.cpp  -  Suite #6: Macro Property Precursor Channels
  *
  * Validates the precursor layer that converts ensemble proxies into
  * candidate property channels for later calibration.
@@ -13,7 +13,7 @@
  *   direction to controlled perturbation.
  *
  * Phase 6C: Counterfactual separation
- *   Distinct channels must not collapse — states that differ in one
+ *   Distinct channels must not collapse  -  states that differ in one
  *   proxy dimension must produce different channel values where expected.
  *
  * Phase 6D: Invariance / equivariance
@@ -25,11 +25,11 @@
  *
  * Architecture position:
  *   Ensemble statistics / spatial field summaries
- *       ↓
+ *       v
  *   Macroscopic response proxies   (suite 5)
- *       ↓
- *   Macro precursor channels        ← validated here
- *       ↓
+ *       v
+ *   Macro precursor channels        <- validated here
+ *       v
  *   Later calibrated property estimator
  *
  * Reference: Macro Property Precursor Layer specification
@@ -119,7 +119,7 @@ static coarse_grain::MacroPrecursorState run_and_precursor(
 }
 
 static bool channel_bounded(const coarse_grain::MacroPrecursorChannel& ch) {
-    if (!ch.valid) return true;  // invalid channels are NaN — acceptable
+    if (!ch.valid) return true;  // invalid channels are NaN  -  acceptable
     return ch.value >= 0.0 && ch.value <= 1.0;
 }
 
@@ -151,7 +151,7 @@ static bool all_channels_finite(const coarse_grain::MacroPrecursorState& st) {
 }
 
 // ============================================================================
-// Phase 6A — Numerical Validity
+// Phase 6A  -  Numerical Validity
 // ============================================================================
 
 static void phase_6a_validity() {
@@ -159,7 +159,7 @@ static void phase_6a_validity() {
 
     auto params = default_params();
 
-    // ---- 6A.1: Valid proxy → all channels finite and bounded ----
+    // ---- 6A.1: Valid proxy -> all channels finite and bounded ----
     {
         std::printf("\n--- 6A.1: Valid proxy produces valid channels ---\n");
 
@@ -182,9 +182,9 @@ static void phase_6a_validity() {
         check(prec.fracture_susceptibility_like.valid, "fracture_susceptibility_like valid");
     }
 
-    // ---- 6A.2: Invalid proxy (small N) → invalid precursor ----
+    // ---- 6A.2: Invalid proxy (small N) -> invalid precursor ----
     {
-        std::printf("\n--- 6A.2: Invalid proxy → invalid precursor ---\n");
+        std::printf("\n--- 6A.2: Invalid proxy -> invalid precursor ---\n");
 
         auto scene = test_util::scene_pair(4.0);  // N=2 < PROXY_MIN_BEADS
         auto proxy = run_and_proxy(scene, params);
@@ -196,7 +196,7 @@ static void phase_6a_validity() {
         check(!prec.ductility_like.valid, "ductility_like invalid");
     }
 
-    // ---- 6A.3: Empty input → safe defaults ----
+    // ---- 6A.3: Empty input -> safe defaults ----
     {
         std::printf("\n--- 6A.3: Empty input ---\n");
 
@@ -291,7 +291,7 @@ static void phase_6a_validity() {
 }
 
 // ============================================================================
-// Phase 6B — Monotonic Directed Perturbation
+// Phase 6B  -  Monotonic Directed Perturbation
 // ============================================================================
 
 static void phase_6b_monotonic() {
@@ -301,9 +301,9 @@ static void phase_6b_monotonic() {
     double dt = 10.0;
     int n_steps = 500;
 
-    // ---- 6B.1: Increase cohesion → rigidity rises ----
+    // ---- 6B.1: Increase cohesion -> rigidity rises ----
     {
-        std::printf("\n--- 6B.1: Cohesion ↑ → rigidity ↑ ---\n");
+        std::printf("\n--- 6B.1: Cohesion ↑ -> rigidity ↑ ---\n");
 
         // Dense lattice (high cohesion) vs sparse lattice (low cohesion)
         auto scene_dense  = test_util::scene_cubic_lattice(3, 3.0);
@@ -313,15 +313,15 @@ static void phase_6b_monotonic() {
         auto prec_sparse = run_and_precursor(scene_sparse, params, dt, n_steps);
 
         check(prec_dense.rigidity_like.value > prec_sparse.rigidity_like.value,
-              "6B.1: dense → higher rigidity_like");
+              "6B.1: dense -> higher rigidity_like");
         check(prec_dense.cohesion_integrity_like.value >
               prec_sparse.cohesion_integrity_like.value,
-              "6B.1: dense → higher cohesion_integrity_like");
+              "6B.1: dense -> higher cohesion_integrity_like");
     }
 
-    // ---- 6B.2: Increase interface mismatch → fracture susceptibility rises ----
+    // ---- 6B.2: Increase interface mismatch -> fracture susceptibility rises ----
     {
-        std::printf("\n--- 6B.2: Interface mismatch ↑ → fracture ↑ ---\n");
+        std::printf("\n--- 6B.2: Interface mismatch ↑ -> fracture ↑ ---\n");
 
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
         auto states = test_util::run_all_beads(scene, params, dt, n_steps);
@@ -346,15 +346,15 @@ static void phase_6b_monotonic() {
 
         check(prec_degraded.fracture_susceptibility_like.value >
               prec_base.fracture_susceptibility_like.value,
-              "6B.2: degraded edges → higher fracture_susceptibility_like");
+              "6B.2: degraded edges -> higher fracture_susceptibility_like");
         check(prec_degraded.interface_penalty >
               prec_base.interface_penalty,
-              "6B.2: degraded edges → higher interface_penalty");
+              "6B.2: degraded edges -> higher interface_penalty");
     }
 
-    // ---- 6B.3: Increase surface sensitivity → reactivity rises ----
+    // ---- 6B.3: Increase surface sensitivity -> reactivity rises ----
     {
-        std::printf("\n--- 6B.3: Surface sensitivity ↑ → reactivity ↑ ---\n");
+        std::printf("\n--- 6B.3: Surface sensitivity ↑ -> reactivity ↑ ---\n");
 
         // Sparse cloud: many surface beads, high surface sensitivity
         auto scene_surface = test_util::scene_separated_cloud(27, 15.0, 2.0, 42);
@@ -366,12 +366,12 @@ static void phase_6b_monotonic() {
 
         check(prec_surface.surface_reactivity_like.value >
               prec_bulk.surface_reactivity_like.value,
-              "6B.3: surface-dominated → higher surface_reactivity_like");
+              "6B.3: surface-dominated -> higher surface_reactivity_like");
     }
 
-    // ---- 6B.4: Increase correlation length + alignment → transport rises ----
+    // ---- 6B.4: Increase correlation length + alignment -> transport rises ----
     {
-        std::printf("\n--- 6B.4: Alignment ↑ → transport ↑ ---\n");
+        std::printf("\n--- 6B.4: Alignment ↑ -> transport ↑ ---\n");
 
         // Aligned system (high texture)
         auto scene_aligned = test_util::scene_biased_stack_cloud(
@@ -385,15 +385,15 @@ static void phase_6b_monotonic() {
 
         check(prec_aligned.thermal_transport_like.value >
               prec_random.thermal_transport_like.value,
-              "6B.4: aligned → higher thermal_transport_like");
+              "6B.4: aligned -> higher thermal_transport_like");
         check(prec_aligned.electrical_transport_like.value >
               prec_random.electrical_transport_like.value,
-              "6B.4: aligned → higher electrical_transport_like");
+              "6B.4: aligned -> higher electrical_transport_like");
     }
 
-    // ---- 6B.5: Increase stabilisation, reduce mismatch → brittleness falls ----
+    // ---- 6B.5: Increase stabilisation, reduce mismatch -> brittleness falls ----
     {
-        std::printf("\n--- 6B.5: Stabilisation ↑ → brittleness ↓ ---\n");
+        std::printf("\n--- 6B.5: Stabilisation ↑ -> brittleness v ---\n");
 
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
 
@@ -402,15 +402,15 @@ static void phase_6b_monotonic() {
         // Barely started: poorly adapted
         auto prec_fresh = run_and_precursor(scene, params, dt, 5);
 
-        // Converged system has higher adapt_capacity → lower brittleness
+        // Converged system has higher adapt_capacity -> lower brittleness
         check(prec_converged.brittleness_like.value <=
               prec_fresh.brittleness_like.value + 0.05,
-              "6B.5: converged → not more brittle than fresh");
+              "6B.5: converged -> not more brittle than fresh");
     }
 
-    // ---- 6B.6: Uniformity increase → ductility rises ----
+    // ---- 6B.6: Uniformity increase -> ductility rises ----
     {
-        std::printf("\n--- 6B.6: Uniformity ↑ → ductility ↑ ---\n");
+        std::printf("\n--- 6B.6: Uniformity ↑ -> ductility ↑ ---\n");
 
         // Regular lattice (uniform) vs random cloud (non-uniform)
         auto scene_lattice = test_util::scene_cubic_lattice(3, 4.0);
@@ -442,7 +442,7 @@ static void phase_6b_monotonic() {
 
         // Both should decrease with increasing spacing
         check(coh_integ[0] > coh_integ[2],
-              "6B.7: tight spacing → higher cohesion_integrity_like");
+              "6B.7: tight spacing -> higher cohesion_integrity_like");
         // Ordering should be monotone with cohesion
         bool monotone = (coh_integ[0] >= coh_integ[1]) &&
                         (coh_integ[1] >= coh_integ[2]);
@@ -451,7 +451,7 @@ static void phase_6b_monotonic() {
 }
 
 // ============================================================================
-// Phase 6C — Counterfactual Separation
+// Phase 6C  -  Counterfactual Separation
 // ============================================================================
 
 static void phase_6c_counterfactual() {
@@ -461,9 +461,9 @@ static void phase_6c_counterfactual() {
     double dt = 10.0;
     int n_steps = 500;
 
-    // ---- 6C.1: Same cohesion, different texture → different transport ----
+    // ---- 6C.1: Same cohesion, different texture -> different transport ----
     {
-        std::printf("\n--- 6C.1: Equal cohesion, different texture → transport differs ---\n");
+        std::printf("\n--- 6C.1: Equal cohesion, different texture -> transport differs ---\n");
 
         // Same converged states, two texture extremes forced via P2_hat.
         // Cohesion is unchanged (same rho, eta, mismatch).
@@ -499,9 +499,9 @@ static void phase_6c_counterfactual() {
               "6C.1: electrical_transport differs despite same cohesion");
     }
 
-    // ---- 6C.2: Same rigidity, different surface → reactivity differs ----
+    // ---- 6C.2: Same rigidity, different surface -> reactivity differs ----
     {
-        std::printf("\n--- 6C.2: Similar rigidity, different surface → reactivity differs ---\n");
+        std::printf("\n--- 6C.2: Similar rigidity, different surface -> reactivity differs ---\n");
 
         // Tight lattice (bulk-dominated, low surface sensitivity)
         auto scene_bulk = test_util::scene_cubic_lattice(4, 4.0);
@@ -515,7 +515,7 @@ static void phase_6c_counterfactual() {
         double react_diff = std::abs(
             prec_bulk.surface_reactivity_like.value -
             prec_surface.surface_reactivity_like.value);
-        // They may have different rigidity too — the key test is that
+        // They may have different rigidity too  -  the key test is that
         // surface_reactivity is sensitive to surface fraction
         check(react_diff > 0.001 ||
               prec_surface.surface_reactivity_like.value >=
@@ -552,7 +552,7 @@ static void phase_6c_counterfactual() {
 
     // ---- 6C.4: Texture change affects anisotropy but not cohesion integrity ----
     {
-        std::printf("\n--- 6C.4: Texture → anisotropy, not cohesion integrity ---\n");
+        std::printf("\n--- 6C.4: Texture -> anisotropy, not cohesion integrity ---\n");
 
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
         auto states = test_util::run_all_beads(scene, params, dt, n_steps);
@@ -573,7 +573,7 @@ static void phase_6c_counterfactual() {
         auto prec_aniso = coarse_grain::compute_macro_precursors(proxy_aniso);
 
         check(prec_aniso.anisotropy_index > prec_iso.anisotropy_index,
-              "6C.4: aligned → higher anisotropy_index");
+              "6C.4: aligned -> higher anisotropy_index");
 
         // Cohesion integrity should be similar (same rho, eta, mismatch)
         check(std::abs(prec_aniso.cohesion_integrity_like.value -
@@ -600,13 +600,13 @@ static void phase_6c_counterfactual() {
                   prec_duct.ductility_like.value + 0.15,
                   "6C.5: higher rigidity does not produce much higher ductility");
         } else {
-            check(true, "6C.5: rigidity ordering reversed — skipped check");
+            check(true, "6C.5: rigidity ordering reversed  -  skipped check");
         }
     }
 }
 
 // ============================================================================
-// Phase 6D — Invariance
+// Phase 6D  -  Invariance
 // ============================================================================
 
 static void phase_6d_invariance() {
@@ -722,7 +722,7 @@ static void phase_6d_invariance() {
 }
 
 // ============================================================================
-// Phase 6E — Confidence and Provenance
+// Phase 6E  -  Confidence and Provenance
 // ============================================================================
 
 static void phase_6e_confidence() {
@@ -734,7 +734,7 @@ static void phase_6e_confidence() {
 
     // ---- 6E.1: Low sample count lowers confidence ----
     {
-        std::printf("\n--- 6E.1: Low sample count → lower confidence ---\n");
+        std::printf("\n--- 6E.1: Low sample count -> lower confidence ---\n");
 
         // N=8: at threshold (PROXY_MIN_BEADS)
         auto scene_small = test_util::scene_cubic_lattice(2, 4.0);  // N=8
@@ -743,7 +743,7 @@ static void phase_6e_confidence() {
         auto prec_small = run_and_precursor(scene_small, params, dt, n_steps);
         auto prec_large = run_and_precursor(scene_large, params, dt, n_steps);
 
-        // N=8 is valid but < 2×PROXY_MIN_BEADS → confidence penalty
+        // N=8 is valid but < 2×PROXY_MIN_BEADS -> confidence penalty
         check(prec_small.convergence_confidence <
               prec_large.convergence_confidence + 0.01,
               "6E.1: small N has lower confidence than large N");
@@ -751,7 +751,7 @@ static void phase_6e_confidence() {
 
     // ---- 6E.2: NaN correlation length reduces transport confidence ----
     {
-        std::printf("\n--- 6E.2: NaN ξ → lower transport confidence ---\n");
+        std::printf("\n--- 6E.2: NaN ξ -> lower transport confidence ---\n");
 
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
         auto proxy = run_and_proxy(scene, params, dt, n_steps);
@@ -771,12 +771,12 @@ static void phase_6e_confidence() {
               prec_with_xi.electrical_transport_like.confidence,
               "6E.2: NaN ξ reduces electrical_transport confidence");
         check(prec_no_xi.xi_norm == 0.0,
-              "6E.2: NaN ξ → xi_norm = 0");
+              "6E.2: NaN ξ -> xi_norm = 0");
     }
 
     // ---- 6E.3: No edge beads weakens surface reactivity confidence ----
     {
-        std::printf("\n--- 6E.3: No edge beads → lower reactivity confidence ---\n");
+        std::printf("\n--- 6E.3: No edge beads -> lower reactivity confidence ---\n");
 
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
         auto proxy = run_and_proxy(scene, params, dt, n_steps);
@@ -796,12 +796,12 @@ static void phase_6e_confidence() {
 
         check(prec_no_edge.surface_reactivity_like.confidence <=
               prec_normal.surface_reactivity_like.confidence,
-              "6E.3: no edge beads → lower surface_reactivity confidence");
+              "6E.3: no edge beads -> lower surface_reactivity confidence");
     }
 
     // ---- 6E.4: Unconverged delta state lowers confidence ----
     {
-        std::printf("\n--- 6E.4: Divergence → lower confidence ---\n");
+        std::printf("\n--- 6E.4: Divergence -> lower confidence ---\n");
 
         auto scene = test_util::scene_cubic_lattice(3, 4.0);
         auto proxy = run_and_proxy(scene, params, dt, n_steps);
@@ -830,20 +830,20 @@ static void phase_6e_confidence() {
         check(prec.source_valid, "provenance: source valid");
     }
 
-    // ---- 6E.6: Invalid proxy → zero confidence on all channels ----
+    // ---- 6E.6: Invalid proxy -> zero confidence on all channels ----
     {
-        std::printf("\n--- 6E.6: Invalid proxy → zero confidence ---\n");
+        std::printf("\n--- 6E.6: Invalid proxy -> zero confidence ---\n");
 
         auto scene = test_util::scene_pair(4.0);  // N=2
         auto proxy = run_and_proxy(scene, params);
         auto prec  = coarse_grain::compute_macro_precursors(proxy);
 
         check(prec.rigidity_like.confidence == 0.0,
-              "6E.6: invalid → rigidity confidence = 0");
+              "6E.6: invalid -> rigidity confidence = 0");
         check(prec.thermal_transport_like.confidence == 0.0,
-              "6E.6: invalid → transport confidence = 0");
+              "6E.6: invalid -> transport confidence = 0");
         check(prec.convergence_confidence == 0.0,
-              "6E.6: invalid → convergence confidence = 0");
+              "6E.6: invalid -> convergence confidence = 0");
     }
 
     // ---- 6E.7: Confidence monotone with N ----
@@ -876,7 +876,7 @@ static void phase_6e_confidence() {
 
 int main() {
     std::printf("Suite #6: Macro Property Precursor Channels\n");
-    std::printf("          Environment → Proxies → Precursors\n");
+    std::printf("          Environment -> Proxies -> Precursors\n");
     std::printf("================================================================\n");
 
     phase_6a_validity();

@@ -1,0 +1,442 @@
+# DEPRECATED: promoted script failed validation during automated batch test.
+# Class: deprecated (parse/validation failure)
+# Reason: [0;31mparse error:[0m vsim parse error at line 1: expected '=' in: ï»¿
+# Original path: vsim_scripts/promoted/suite_ceramic_oxide_properties
+#
+﻿# scripts/suite_ceramic_oxide_properties.vsim
+# =============================================================================
+#  CERAMIC OXIDE PROPERTIES SUITE
+#  Run: VSEPR scripts/suite_ceramic_oxide_properties.vsim
+# =============================================================================
+#
+#  Phase A  -  Al2O3 corundum (alpha-alumina), 6x6x6 supercell = 1296 atoms
+#              FIRE relaxation + MD equilibration at 1800 K
+#              Full structural analysis + RDF + MSD + stress field
+#
+#  Phase B  -  MgO rocksalt, 6x6x6 supercell = 864 atoms
+#              Comparison partner for oxide bonding analysis
+#              High-temperature boundary simulation at 2200 K
+#
+#  Data philosophy:
+#    Both phases share a single analysis pipeline; thermal and field probes
+#    collect the stress tensor and temperature gradient needed for ceramic
+#    continuum upscaling.  This script is the "ceramic max-sampling" reference.
+#
+#  Output tree:
+#    out/ceramic_oxide_suite/
+#      *.xyz, *.xyzf, *.xyzfull
+#      analysis.json, metrics.tsv, events.jsonl, symbolic_trace.json
+#      report.md, dashboard.svg, manifest.json
+#      pipeline/
+#      verify/
+#      figures/
+# =============================================================================
+
+[project]
+name        = "ceramic_oxide_suite"
+version     = "v5.0.2"
+seed_base   = 9200
+description = "Al2O3 corundum + MgO rocksalt ceramic oxide dual-phase max-sampling reference suite."
+
+[seed]
+foundation = 9200
+defect     = 9203
+formation  = 9206
+thermal    = 9208
+placement  = 9211
+
+# =============================================================================
+#  PHASE A  -  Al2O3 corundum, 6x6x6 supercell
+#  Reference lattice: a = 4.758 A, c = 12.991 A -> box ~28.5 A x ~28.5 A x ~38.0 A
+# =============================================================================
+
+[material]
+formula     = "Al2O3"
+structure   = "corundum"
+prototype   = "D5_1_Al2O3"
+cell        = "6x6x6"
+phase       = "solid"
+
+[run]
+mode          = "md"
+max_steps     = 6000
+dt_fs         = 0.8
+temperature   = 1800
+converge      = true
+output_level  = "verbose"
+
+[environment]
+periodic    = true
+temperature = 1800
+pressure    = 0.0
+medium      = "vacuum"
+
+[cell]
+lx = 28.55
+ly = 28.55
+lz = 38.00
+units = "angstrom"
+
+[boundary]
+x = "periodic"
+y = "periodic"
+z = "periodic"
+
+[pbc]
+minimum_image        = true
+track_images         = true
+unwrap_for_diffusion = true
+
+[simulation]
+fire_max_steps    = 2500
+fire_dt_fs        = 0.4
+box_size_ang      = 28.55
+periodic          = true
+formation_preset  = "oxide"
+use_ewald         = true
+step_delay_ms     = 0
+
+[[simulation.molecule]]
+formula     = "Al2O3"
+count       = 216
+temperature = 1800.0
+lattice     = "corundum"
+
+# -- Phase B ------------------------------------------------------------------
+# MgO rocksalt: 864 atoms in an adjacent sublattice block
+# Provides oxide-pair bonding reference for Al-O vs Mg-O comparison
+
+[[simulation.molecule]]
+formula        = "MgO"
+count          = 432
+temperature    = 2200.0
+region         = "corner_zpzp"
+velocity_drift = 0.0
+
+# =============================================================================
+#  KERNEL & TRACING
+# =============================================================================
+
+[kernel]
+pass_through        = true
+symbolic_trace      = true
+event_registry      = true
+continual_reporting = true
+
+[kernel.trace]
+formation_events = true
+defect_events    = true
+transport_events = true
+layer_events     = false
+dynamic_energy   = true
+
+# =============================================================================
+#  OBSERVE  -  full observable suite for ceramics
+# =============================================================================
+
+[observe]
+metrics = [
+  "energy_map",
+  "coordination",
+  "rdf",
+  "msd",
+  "displacement",
+  "packing_fraction",
+  "virial_stress",
+  "diffusion_proxy",
+  "spectral_response",
+  "order_param",
+  "phase_label",
+  "pair_distribution",
+  "cluster_count",
+  "defect_map",
+  "velocity_autocorr",
+  "angular_distribution",
+  "bond_angle",
+  "cn_distribution",
+  "thermal_conductivity_proxy",
+  "radial_velocity",
+  "dielectric_proxy",
+  "born_effective_charge_proxy"
+]
+output_format = "json"
+every_n_steps = 30
+
+# =============================================================================
+#  THERMAL PROBE  (WO-OUTPUT-PHASE2)
+# =============================================================================
+
+[thermal_probe]
+enabled                     = true
+compute_gradient            = true
+compute_heat_flux           = true
+compute_conductivity_proxy  = true
+compute_local_temperature   = true
+compute_temperature_variance = true
+compute_heat_capacity_proxy = true
+every_n_steps               = 60
+gradient_dx                 = 1.5
+region_bins                 = 8
+region                      = "all"
+output_format               = "json"
+
+# =============================================================================
+#  FIELD PROBE  (WO-OUTPUT-PHASE2)
+# =============================================================================
+
+[field_probe]
+enabled                    = true
+compute_stress_tensor      = true
+compute_stress_eigenvalues = true
+compute_von_mises          = true
+compute_density_field      = true
+compute_pressure_field     = true
+compute_velocity_field     = false
+compute_charge_density     = true
+compute_electric_field     = false
+every_n_steps              = 60
+output_format              = "json"
+write_vtp                  = true
+
+# =============================================================================
+#  VARIANCE PROBES
+# =============================================================================
+
+[variance]
+print_results = true
+
+energy_var       = "energy.total"  "last 100"  0.008
+displacement_var = "displacement"  "last 100"  0.040
+order_var        = "eta"           "last 100"  0.015
+coord_var        = "coordination"  "last  50"  0.080
+
+mgo_energy_var   = "energy.total"  "last  50"  0.015
+mgo_disp_var     = "displacement"  "last  50"  0.120
+
+# =============================================================================
+#  N_EVOLUTION PROBES
+# =============================================================================
+
+[N_evolution]
+print_results = true
+
+cluster_growth  = "cluster_count"  "last 80"  0.05
+defect_growth   = "defect_count"   "last 80"  0.05
+solid_fraction  = "solid"          "last 80"  0.01
+event_rate      = "event_count"    "last 50"  0.0
+
+# =============================================================================
+#  WHILE LOOP  -  drive Al2O3 toward equilibrium
+# =============================================================================
+
+[while]
+name          = "al2o3_equilibrate"
+condition     = "variance energy_var > 0.006"
+max_iters     = 18
+body_steps    = 400
+measure       = [energy_var, displacement_var, order_var]
+iter_delay_ms = 0
+
+# =============================================================================
+#  UNTIL LOOP  -  hold until MgO defect count stabilises
+# =============================================================================
+
+[until]
+name          = "mgo_stabilise"
+condition     = "N_evolution defect_growth < 0.010"
+max_iters     = 15
+body_steps    = 350
+measure       = [mgo_energy_var, defect_growth, event_rate]
+iter_delay_ms = 0
+export_each   = false
+
+# =============================================================================
+#  SMART LOOP  -  temperature ramp
+# =============================================================================
+
+[loop]
+name           = "ceramic_temperature_ramp"
+iterations     = 12
+body_steps     = 450
+stop_condition = "variance energy_var < 0.003"
+record_each    = true
+export_each    = true
+rand_seed      = 9201
+perturb_mode   = "combo"
+
+var = "temperature      start=1200  stop=2000  delta=66.7  mode=linear"
+var = "lattice_strain   start=0.0   stop=0.01  delta=0.0   mode=random  noise=0.002"
+var = "mgo_temperature  start=1500  stop=2500  delta=83.3  mode=combo   noise=15.0"
+var = "defect_rate      start=0.00  stop=0.08  delta=0.006 mode=combo   noise=0.001"
+
+# =============================================================================
+#  ANALYSIS PIPELINE
+# =============================================================================
+
+[analysis.sampling]
+enabled               = true
+compute_rdf           = true
+compute_msd           = true
+min_frames_for_motion = 2
+min_frames_for_msd    = 10
+unwrap_pbc            = true
+
+[analysis.scale_sampling]
+enabled                          = true
+compute_field_projection         = true
+compute_rve_sampling             = true
+compute_emergence_metrics        = true
+field_grid                       = [10, 10, 10]
+min_particles_for_scale_sampling = 128
+rve_windows_per_level            = 20
+rve_window_placement             = "stratified"
+temporal_drift_metric            = "block_difference"
+scale_drift_metric               = "successive_window_difference"
+spatial_cv_threshold             = 0.12
+temporal_drift_threshold         = 0.07
+scale_drift_threshold            = 0.10
+
+[analysis.structure]
+enabled = true
+
+[analysis.inference]
+enabled                         = true
+mode                            = "rule_based_61d"
+infer_packing_regime            = true
+infer_mobility_regime           = true
+infer_anisotropy_regime         = true
+infer_structural_stability      = true
+infer_macro_readiness           = true
+min_particles_macro_candidate   = 256
+min_frames_macro_candidate      = 25
+minimum_available_metrics_for_macro_ready = 5
+
+# =============================================================================
+#  VERIFICATION
+# =============================================================================
+
+[verify.structure]
+enabled                        = true
+expected_prototype             = "D5_1_Al2O3"
+expected_coordination          = 6
+coordination_tolerance         = 1
+expected_nearest_neighbor_A    = 1.87
+nearest_neighbor_tolerance_A   = 0.15
+expected_density_relation      = "alpha_al2o3_room_temp"
+
+[verify.rdf]
+enabled                      = true
+expected_first_peak_A        = 1.87
+first_peak_tolerance_A       = 0.15
+expected_second_peak_A       = 2.79
+second_peak_tolerance_A      = 0.20
+
+[verify.msd]
+enabled              = true
+expect_bounded_solid = true
+max_msd_A2           = 4.0
+max_slope_late       = 0.010
+expect_regime        = "solid_bounded"
+
+[verify.mass]
+enabled            = true
+relative_tolerance = 1e-9
+
+# =============================================================================
+#  EXPORT
+# =============================================================================
+
+[export]
+write_xyz                    = true
+write_xyzf                   = true
+write_xyzfull                = true
+write_pdb                    = true
+write_analysis_json          = true
+write_metrics_tsv            = true
+write_cluster_json           = true
+write_fingerprint_json       = true
+write_events_json            = true
+write_symbolic_trace_json    = true
+write_report_md              = true
+write_summary_csv            = true
+write_dashboard_json         = true
+write_manifest_json          = true
+write_dashboard_svg          = true
+write_pipeline_audit_jsonl   = true
+write_step_file              = false
+write_vtp_mesh               = true
+output_dir = "out/ceramic_oxide_suite"
+
+[output]
+output_dir    = "out/ceramic_oxide_suite/pipeline"
+output_prefix = "ceramic_oxide"
+write_structure_json      = true
+write_sampling_json       = true
+write_scale_sampling_json = true
+write_inference_json      = true
+write_sampling_manifest   = true
+
+# =============================================================================
+#  VISUAL EXPORTS
+# =============================================================================
+
+[export.visual]
+write_svg_figures          = true
+write_png_snapshots        = true
+write_rdf_svg              = true
+write_energy_trace_svg     = true
+write_packing_heatmap_svg  = true
+write_defect_map_svg       = true
+write_cluster_map_svg      = true
+write_trajectory_gif       = true
+write_overlay_cycle_gif    = true
+gif_frame_skip             = 20
+gif_delay_cs               = 6
+write_html_dashboard       = true
+write_report_html          = true
+write_report_pdf           = false
+visual_output_dir = "out/ceramic_oxide_suite/figures"
+
+# =============================================================================
+#  INTERACTIVE DISPLAY
+# =============================================================================
+
+[visual]
+output_type              = "terminal_overlay_cycle"
+animation_mode           = "overlay"
+render_interval          = 50
+show_proxy_table          = true
+show_convergence_trace    = true
+show_steady_state_marker  = true
+show_snapshot_chart       = true
+show_event_timeline       = true
+show_bar_chart            = true
+show_symbolic_trace       = true
+show_animation_cues       = true
+show_audit_table          = true
+show_rdf_plot             = true
+show_energy_heatmap       = true
+show_defect_map           = true
+show_phase_field          = true
+show_bond_events          = true
+show_charge_overlay       = true
+show_velocity_vectors     = false
+overlay_sequence  = "density,coordination,memory,orient_order"
+gl_overlay_hold_s = 2.5
+gl_auto_orbit     = true
+gl_window_width   = 1440
+gl_window_height  = 900
+
+[visual.external]
+enabled          = true
+render_interval  = 100
+export_format    = "svg"
+show_progress    = true
+
+# =============================================================================
+#  REPORT
+# =============================================================================
+
+[report]
+title                  = "ceramic_oxide_suite"
+include_material_cards = true

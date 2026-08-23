@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 /**
  * polarization_scf.hpp  --  SCF induced-dipole polarization model.
  *
@@ -46,7 +46,7 @@ namespace atomistic {
 namespace polarization {
 
 // ============================================================================
-// Atomic polarizabilities — generative model
+// Atomic polarizabilities ? generative model
 // ============================================================================
 
 /// Predict scalar isotropic polarizability alpha (Angstrom^3) for atomic number Z.

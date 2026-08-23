@@ -1,6 +1,6 @@
-#pragma once
+﻿#pragma once
 /**
- * inertia_frame.hpp — Local Coordinate Frame from Inertia Tensor
+ * inertia_frame.hpp  -  Local Coordinate Frame from Inertia Tensor
  *
  * Constructs a principal-axis frame for a group of atoms, enabling
  * orientation tracking of anisotropic coarse-grained beads.
@@ -37,7 +37,7 @@ struct Mat3 {
 };
 
 /**
- * InertiaFrame — principal-axis decomposition of an atom group.
+ * InertiaFrame  -  principal-axis decomposition of an atom group.
  *
  * Fields are all public for anti-black-box inspection.
  */

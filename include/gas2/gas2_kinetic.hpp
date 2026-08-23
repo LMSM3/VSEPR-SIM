@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gas2_kinetic.hpp
  * ----------------
  * Kinetic Theory of Gases for gas2 Module.
@@ -93,7 +93,7 @@ inline double avg_total_ke(double T, int dof) {
 }
 
 // Hartree-converted average translational KE: (3/2 kBT) / Eh
-// Mass-invariant — depends only on temperature.
+// Mass-invariant  -  depends only on temperature.
 inline double avg_translational_ke_Eh(double T) {
     return avg_translational_ke(T) / Hartree_J;
 }

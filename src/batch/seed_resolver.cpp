@@ -1,7 +1,7 @@
-/**
+﻿/**
  * src/batch/seed_resolver.cpp
  * =============================
- * WO-VSIM-62C — Seed Derivation Implementation
+ * WO-VSIM-62C  -  Seed Derivation Implementation
  *
  * WO-VSIM-62C | beta-12
  */

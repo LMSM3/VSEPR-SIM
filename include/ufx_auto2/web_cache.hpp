@@ -1,4 +1,4 @@
-// include/ufx_auto2/web_cache.hpp
+﻿// include/ufx_auto2/web_cache.hpp
 // UFX_AUTO_2 Phase 5 -- Web Response Cache
 // VSEPR-SIM v5 beta8 -> beta9 target
 //
@@ -67,7 +67,7 @@ private:
 };
 
 // ============================================================================
-// CachingFetcher — IWebFetcher decorator that wraps any IWebFetcher
+// CachingFetcher  -  IWebFetcher decorator that wraps any IWebFetcher
 //                  with a WebCache: check cache, on miss delegate to inner,
 //                  store result, return.
 // ============================================================================

@@ -1,0 +1,45 @@
+# scripts/vsim_skeletons/wo83o_strain_score.vsim
+# Tier A — native replacement for demo_wo83o_strain_score.py
+# STUB: [classify] block awaits vsim_parser.cpp wiring (WO-84A)
+#
+# Verifies strain_score is present and in [0.0, 1.0] for CH4 and SF6.
+#
+# Python equivalent:
+#   assert 0.0 <= strain_ch4 <= 1.0
+#   assert 0.0 <= strain_sf6 <= 1.0
+
+[project]
+name    = wo83o_strain_score_ch4
+version = v5.0.0
+
+[material]
+formula = CH4
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+#
+# [classify.expect]
+# contains    = "strain_score:"
+# score_range = {field = "strain_score", min = 0.0, max = 1.0}
+# result      = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
+
+---
+
+[project]
+name    = wo83o_strain_score_sf6
+version = v5.0.0
+
+[material]
+formula = SF6
+
+# ── STUB BEGIN ─────────────────────────────────────────────────────────────
+# [classify]
+# mode = vsepr_and_organic
+#
+# [classify.expect]
+# contains    = "strain_score:"
+# score_range = {field = "strain_score", min = 0.0, max = 1.0}
+# result      = PASS
+# ── STUB END ───────────────────────────────────────────────────────────────
